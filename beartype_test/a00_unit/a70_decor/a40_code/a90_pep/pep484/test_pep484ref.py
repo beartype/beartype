@@ -142,6 +142,20 @@ def test_pep484_ref_decor_fail() -> None:
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype_test._util.pytroar import raises_uncached
 
+    # ..................{ CALLABLES                          }..................
+    def of_oceans(mountainous_waste: 'ToMutualWar'):
+        '''
+        Arbitrary callable annotated by an **unresolvable relative forward
+        reference** (i.e., unqualified name of a user-defined type that is
+        *never* defined in either local or global scope).
+        '''
+
+        return mountainous_waste
+
+    # Maliciously delete the "__module__" dunder attribute of that callable to
+    # exercise an edge case below.
+    del of_oceans.__module__
+
     # ..................{ FAIL                               }..................
     #FIXME: Uncomment if and when a future Python release unconditionally
     #enables some variant of PEP 563... yet again.
@@ -181,6 +195,14 @@ def test_pep484_ref_decor_fail() -> None:
         def deep_hearts_core(i_hear_it: (
             'While.I.stand.on.the.roadway.or.on.the.pavements.0grey')):
             return i_hear_it
+
+    # Assert @beartype raises the expected exception when decorating a callable
+    # annotated by a syntactically valid forward reference type hint when the
+    # caller maliciously deletes the "__module__" dunder attribute of that
+    # callable *AFTER* defining that callable but before decorating that
+    # callable by @beartype.
+    with raises_uncached(exception_cls):
+        beartype(of_oceans)
 
 
 def test_pep484_ref_call_fail() -> None:

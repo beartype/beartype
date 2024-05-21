@@ -31,8 +31,9 @@ from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
 )
-from beartype._util.module.utilmodget import get_object_module_name
+from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
+from beartype._util.utilobject import get_object_name
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ RESOLVERS                          }....................
@@ -249,13 +250,6 @@ def resolve_hint(
         # Localize metadata for readability and efficiency. Look. Just do it.
         cls_stack = decor_meta.cls_stack
 
-        # Fully-qualified name of the module declaring the decorated callable,
-        # which also serves as the name of this module and thus global scope.
-        func_module_name = get_object_module_name(func)  # type: ignore[operator]
-
-        # Global scope of the decorated callable.
-        func_globals = get_func_globals(func=func, exception_cls=exception_cls)
-
         # If the decorated callable is nested (rather than global) and thus
         # *MAY* have a non-empty local nested scope...
         if decor_meta.func_wrappee_is_nested:
@@ -437,6 +431,38 @@ def resolve_hint(
         # empty local scope. In this case, default to the empty dictionary.
         else:
             func_locals = DICT_EMPTY
+
+        # Fully-qualified name of the module declaring the decorated callable if
+        # that callable defines the "__module__" dunder attribute *OR* "None"
+        # (i.e., if that callable fails to define that attribute).
+        func_module_name = get_object_module_name_or_none(func)  # type: ignore[operator]
+
+        # If the decorated callable fails to define the "__module__" dunder
+        # attribute, there exists *NO* known module against which to resolve
+        # this stringified type hint. Since this implies that this hint *CANNOT*
+        # be reliably resolved, raise an exception.
+        #
+        # Note that this is an uncommon edge case that nonetheless occurs
+        # frequently enough to warrant explicit handling by raising a more
+        # human-readable exception than would otherwise be raised (e.g., if the
+        # lower-level get_object_module_name() getter were called instead
+        # above). Notably, the third-party "markdown-exec" package behaved like
+        # this -- and possibly still does. See also:
+        #     https://github.com/beartype/beartype/issues/381
+        if not func_module_name:
+            raise exception_cls(
+                f'{exception_prefix}forward reference type hint "{hint}" '
+                f'unresolvable, as '
+                f'"{get_object_name(func)}.__module__" dunder attribute '
+                f'undefined (e.g., due to {repr(func)} being defined only '
+                f'dynamically in-memory). '
+                f'So much bad stuff is happening here all at once that '
+                f'@beartype can no longer cope with the explosion in badness.'
+            )
+        # Else, the decorated callable defines that attribute.
+
+        # Global scope of the decorated callable.
+        func_globals = get_func_globals(func=func, exception_cls=exception_cls)
 
         # Forward scope compositing this global and local scope of the decorated
         # callable as well as dynamically replacing each unresolved attribute of
