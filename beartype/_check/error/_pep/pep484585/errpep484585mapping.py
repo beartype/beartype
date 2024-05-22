@@ -14,13 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeStrategy
 from beartype.typing import (
+    Hashable,
     Iterable,
     Tuple,
-    Hashable,
 )
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
-from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._errortype import find_cause_type_instance_origin
+from beartype._check.error._errcause import ViolationCause
+from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -48,29 +48,31 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         f'{repr(cause.hint)} not mapping hint.')
 
     # Assert this mapping was subscripted by exactly two arguments. Note that
-    # the "typing" module should have already guaranteed this on our behalf.
+    # prior logic should have already guaranteed this on our behalf.
     assert len(cause.hint_childs) == 2, (
-        f'Mapping hint {repr(cause.hint)} subscripted by '
+        f'2-argument mapping hint {repr(cause.hint)} subscripted by '
         f'{len(cause.hint_childs)} != 2.')
     # print(f'Validating mapping {repr(cause.pith)}...')
 
-    # Shallow output cause to be returned, type-checking only whether this path
-    # is an instance of the type originating this hint (e.g., "list" for
-    # "list[str]").
+    # Shallow output cause describing the failure of this path to be a shallow
+    # instance of the type originating this hint (e.g., "dict" for the hint
+    # "dict[str, int]") if this pith is not an instance of this type *OR* "None"
+    # otherwise (i.e., if this pith is an instance of this type).
     cause_shallow = find_cause_type_instance_origin(cause)
 
     # If this pith is *NOT* an instance of this type, return this shallow cause.
     if cause_shallow.cause_str_or_none is not None:
         return cause_shallow
-    # Else, this pith is an instance of this type and is thus a mapping.
+    # Else, this pith is an instance of this type and thus a mapping.
     #
     # If this mapping is empty, all items of this mapping (of which there are
-    # none) are valid. This mapping satisfies this hint. Just go with it!
+    # none) are valid. By definition, this mapping satisfies this hint. In this
+    # case, return the passed cause as is.
     elif not cause.pith:
         return cause
     # Else, this mapping is non-empty.
 
-    # Child key and value hints subscripting this mapping hint.
+    # Child key and value hints subscripting this parent mapping hint.
     hint_key = cause.hint_childs[0]
     hint_value = cause.hint_childs[1]
 
@@ -78,16 +80,15 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     hint_key_unignorable = hint_key is not None
     hint_value_unignorable = hint_value is not None
 
-    # Arbitrary iterator vaguely satisfying the dict.items() protocol,
-    # yielding zero or more 2-tuples of the form "(key, value)", where:
+    # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
+    # zero or more 2-tuples of the form "(key, value)", where:
     # * "key" is the key of the current key-value pair.
     # * "value" is the value of the current key-value pair.
     pith_items: Iterable[Tuple[Hashable, object]] = None  # type: ignore[assignment]
 
-    # If the only the first key-value pair of this mapping was
-    # type-checked by the the parent @beartype-generated wrapper
-    # function in O(1) time, type-check only this key-value pair of this
-    # mapping in O(1) time as well.
+    # If the only the first key-value pair of this mapping was type-checked by
+    # the parent @beartype-generated wrapper function in O(1) time, type-check
+    # only this key-value pair of this mapping in O(1) time as well.
     if cause.conf.strategy is BeartypeStrategy.O1:
         # First key-value pair of this mapping.
         pith_item = next(iter(cause.pith.items()))
@@ -95,9 +96,9 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         # Tuple containing only this pair.
         pith_items = (pith_item,)
         # print(f'Checking item {pith_item_index} in O(1) time!')
-    # Else, all keys of this mapping were type-checked by the parent
-    # @beartype-generated wrapper function in O(n) time. In this case,
-    # type-check *ALL* indices of this mapping in O(n) time as well.
+    # Else, this mapping was iterated by the parent @beartype-generated wrapper
+    # function in O(n) time. In this case, type-check *ALL* key-value pairs of
+    # this mapping in O(n) time as well.
     else:
         # Iterator yielding all key-value pairs of this mapping.
         pith_items = cause.pith.items()
@@ -107,8 +108,10 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     for pith_key, pith_value in pith_items:
         # If this child key hint is unignorable...
         if hint_key_unignorable:
-            # Deep output cause, type-checking whether this key satisfies
-            # this child key hint.
+            # Deep output cause describing the failure of this key to satisfy
+            # this child key hint if this key violates this child key hint *OR*
+            # "None" otherwise (i.e., if this key satisfies this child key
+            # hint).
             cause_deep = cause.permute(
                 pith=pith_key, hint=hint_key).find_cause()
 
@@ -124,13 +127,15 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
                 # Return this cause.
                 return cause_deep
             # Else, this key is *NOT* the cause of this failure. Silently
-            # continue to this value.
+            # continue to this key's associated value.
         # Else, this child key hint is ignorable.
 
         # If this child value hint is unignorable...
         if hint_value_unignorable:
-            # Deep output cause, type-checking whether this value satisfies
-            # this child value hint.
+            # Deep output cause describing the failure of this value to satisfy
+            # this child value hint if this value violates this child value hint
+            # *OR* "None" otherwise (i.e., if this value satisfies this child
+            # value hint).
             cause_deep = cause.permute(
                 pith=pith_value, hint=hint_value).find_cause()
 

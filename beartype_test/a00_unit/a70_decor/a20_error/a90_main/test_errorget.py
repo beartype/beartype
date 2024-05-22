@@ -7,7 +7,7 @@
 **Beartype main error-handling unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.error.errorget` submodule.
+:mod:`beartype._check.error.errget` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_get_func_pith_violation() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errorget.get_func_pith_violation` getter.
+    :func:`beartype._check.error.errget.get_func_pith_violation` getter.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -38,7 +38,7 @@ def test_get_func_pith_violation() -> None:
         Union,
     )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-    from beartype._check.error.errorget import get_func_pith_violation
+    from beartype._check.error.errget import get_func_pith_violation
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
     from pytest import raises
 
@@ -147,7 +147,7 @@ def test_get_func_pith_violation() -> None:
 def test_get_func_pith_violation_conf_is_color() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errorget.get_func_pith_violation` getter with
+    :func:`beartype._check.error.errget.get_func_pith_violation` getter with
     respect to the :attr:`beartype.BeartypeConf.is_color` option.
     '''
 
@@ -159,7 +159,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
         Tuple,
         Union,
     )
-    from beartype._check.error.errorget import get_func_pith_violation
+    from beartype._check.error.errget import get_func_pith_violation
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_str_ansi
@@ -215,7 +215,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
 def test_get_func_pith_violation_conf_violation_types() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errorget.get_func_pith_violation` getter with
+    :func:`beartype._check.error.errget.get_func_pith_violation` getter with
     respect to the
     :attr:`beartype.BeartypeConf.violation_param_type` and
     :attr:`beartype.BeartypeConf.violation_return_type` options.
@@ -230,7 +230,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
         Union,
     )
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-    from beartype._check.error.errorget import get_func_pith_violation
+    from beartype._check.error.errget import get_func_pith_violation
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
 
     # ..................{ LOCALS                             }..................
@@ -285,7 +285,7 @@ def test_get_func_pith_violation_conf_violation_types() -> None:
 def test_get_func_pith_violation_conf_violation_verbosity() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errorget.get_func_pith_violation` getter with
+    :func:`beartype._check.error.errget.get_func_pith_violation` getter with
     respect to the
     :attr:`beartype.BeartypeConf.violation_verbosity` option.
     '''
@@ -301,7 +301,7 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
         Tuple,
         Union,
     )
-    from beartype._check.error.errorget import get_func_pith_violation
+    from beartype._check.error.errget import get_func_pith_violation
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
 
     # ..................{ LOCALS                             }..................
@@ -353,14 +353,14 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
 def test_get_hint_object_violation() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errorget.get_hint_object_violation` getter.
+    :func:`beartype._check.error.errget.get_hint_object_violation` getter.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-    from beartype._check.error.errorget import get_hint_object_violation
+    from beartype._check.error.errget import get_hint_object_violation
     from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
     from pytest import raises
 

@@ -138,7 +138,7 @@ class ViolationCause(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._check.error.errorget.get_func_pith_violation`
+        :func:`beartype._check.error.errget.get_func_pith_violation`
         function for further details.
     '''
 
@@ -248,7 +248,7 @@ class ViolationCause(object):
         # sanitized below, the sanitization performed by this assignment
         # effectively reduces to a noop for all type hints *EXCEPT* the root
         # type hint. Technically, this means this could be marginally optimized
-        # by externally sanitizing the root type hint in the "errorget"
+        # by externally sanitizing the root type hint in the "errget"
         # submodule. Pragmatically, doing so would only complicate an already
         # overly complex workflow for little to no tangible gain.
         self.hint = sanify_hint_child_if_unignorable_or_none(
@@ -321,12 +321,12 @@ class ViolationCause(object):
         This method is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
         the parent
-        :func:`beartype._check.error.errorget.get_func_pith_violation` function
+        :func:`beartype._check.error.errget.get_func_pith_violation` function
         calling this method is *always* passed an object *not* satisfying the
         passed hint, this method is under no such constraints. Why? Because this
         method is also called to find which of an arbitrary number of objects
         transitively nested in the object passed to
-        :func:`beartype._check.error.errorget.get_func_pith_violation` fails to
+        :func:`beartype._check.error.errget.get_func_pith_violation` fails to
         satisfy the corresponding hint transitively nested in the hint passed to
         that function.
 
@@ -386,23 +386,23 @@ class ViolationCause(object):
         # PEP-noncompliant *OR* only contextually PEP-compliant in certain
         # specific use cases. In either case...
         if self.hint_sign is None:
-            # If this hint is a tuple union...
-            if isinstance(self.hint, tuple):
-                # Avoid circular import dependencies.
-                from beartype._check.error._errortype import (
-                    find_cause_instance_types_tuple)
+            # Avoid circular import dependencies.
+            from beartype._check.error._errtype import (
+                find_cause_instance_types_tuple,
+                find_cause_instance_type,
+            )
 
-                # Defer to the getter function specific to tuple unions.
+            # If this hint is a tuple union, defer to the finder specific to
+            # tuple unions.
+            if isinstance(self.hint, tuple):
                 cause_finder = find_cause_instance_types_tuple
             # Else, this hint is *NOT* a tuple union. In this case, assume this
-            # hint to be an isinstanceable class. If this is *NOT* the case, the
-            # getter deferred to below raises a human-readable exception.
+            # hint to be an isinstanceable class by deferring to the finder
+            # specific to isinstanceable classes.
+            #
+            # Note that if this assumption is *NOT* the case, this finder
+            # subsequently raises a human-readable exception.
             else:
-                # Avoid circular import dependencies.
-                from beartype._check.error._errortype import (
-                    find_cause_instance_type)
-
-                # Defer to the getter function specific to classes.
                 cause_finder = find_cause_instance_type
         # Else, this hint is PEP-compliant.
         #
@@ -421,7 +421,7 @@ class ViolationCause(object):
         # type origin. In this case, this hint was type-checked shallowly.
         ):
             # Avoid circular import dependencies.
-            from beartype._check.error._errortype import (
+            from beartype._check.error._errtype import (
                 find_cause_type_instance_origin)
 
             # Defer to the getter function supporting hints originating from
@@ -432,7 +432,7 @@ class ViolationCause(object):
         # type-checked deeply.
         else:
             # Avoid circular import dependencies.
-            from beartype._check.error._errordata import (
+            from beartype._check.error._errdata import (
                 HINT_SIGN_TO_GET_CAUSE_FUNC)
 
             # Getter function returning the desired string for this attribute if

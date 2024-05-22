@@ -609,6 +609,7 @@ shallow type-checking code).
 
 HINT_SIGNS_SUPPORTED_DEEP = (
     HINT_SIGNS_MAPPING |
+    HINT_SIGNS_REITERABLE_ARGS_1 |
     HINT_SIGNS_SEQUENCE_ARGS_1 |
     frozenset((
     # ..................{ PEP 484                            }..................

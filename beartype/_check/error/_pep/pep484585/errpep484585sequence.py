@@ -15,8 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._errortype import find_cause_type_instance_origin
+from beartype._check.error._errcause import ViolationCause
+from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.text.utiltextansi import color_type
@@ -48,14 +48,15 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
         f'{repr(cause.hint)} not 1-argument sequence hint.')
 
     # Assert this sequence was subscripted by exactly one argument. Note that
-    # the "typing" module should have already guaranteed this on our behalf.
+    # prior logic should have already guaranteed this on our behalf.
     assert len(cause.hint_childs) == 1, (
         f'1-argument sequence hint {repr(cause.hint)} subscripted by '
         f'{len(cause.hint_childs)} != 1.')
 
-    # Shallow output cause to be returned, type-checking only whether this path
-    # is an instance of the type originating this hint (e.g., "list" for
-    # "list[str]").
+    # Shallow output cause describing the failure of this path to be a shallow
+    # instance of the type originating this hint (e.g., "list" for the hint
+    # "list[str]") if this pith is not an instance of this type *OR* "None"
+    # otherwise (i.e., if this pith is an instance of this type).
     cause_shallow = find_cause_type_instance_origin(cause)
 
     # Return either...
@@ -92,8 +93,8 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
         f'{repr(cause.hint_sign)} not "HintSignTuple".')
 
     # Shallow output cause to be returned, type-checking only whether this path
-    # is an instance of the type originating this hint (e.g., "list" for
-    # "list[str]").
+    # is an instance of the type originating this hint (e.g., "tuple" for the
+    # hint "tuple[str, ...]").
     cause_shallow = find_cause_type_instance_origin(cause)
 
     # If this pith is *NOT* a tuple, return this shallow cause.
@@ -195,7 +196,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
     satisfies or violates the **variadic sequence type hint** (i.e.,
     PEP-compliant type hint accepting one or more subscripted arguments
     constraining *all* items of this object, which necessarily satisfies the
-    :class:`collections.abc.Sequence` protocol with guaranteed ``O(1)``
+    :class:`collections.abc.Sequence` protocol with guaranteed :math:`O(1)`
     indexation across all sequence items) of that cause.
 
     Parameters
@@ -224,25 +225,27 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
     ), (f'{repr(cause.hint)} neither '
         f'standard sequence nor variadic tuple hint.')
 
-    # If this sequence is empty, all items of this sequence (of which there are
-    # none) are valid. This sequence satisfies this hint. Just go with it!
-    if not cause.pith:
-        return cause
-    # Else, this sequence is non-empty.
-
-    # First child hint subscripting this sequence hint. All remaining child
-    # hints if any are ignorable. Specifically, if this hint is:
-    # * A standard sequence (e.g., "typing.List[str]"), this hint is
-    #   subscripted by only one child hint.
+    # First child hint subscripting this parent sequence hint. All remaining
+    # child hints if any are ignorable. Specifically, if this hint is:
+    # * A standard sequence (e.g., "typing.List[str]"), this hint is subscripted
+    #   by only one child hint.
     # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
-    #   subscripted by only two child hints the latter of which is
-    #   ignorable syntactic chuff.
+    #   subscripted by only two child hints -- the latter of which is guaranteed
+    #   to be an ellipses and thus ignorable syntactic chuff.
     hint_child = cause.hint_childs[0]
 
-    # If this child hint is ignorable, this sequence satisfies this hint.
-    if hint_child is None:
+    # If either...
+    if (
+        # This sequence is empty, all items of this sequence (of which there are
+        # none) are valid *OR*...
+        not cause.pith or
+        # This child hint is ignorable...
+        hint_child is None
+    ):
+        # Then this sequence satisfies this hint. In this case, return the
+        # passed cause as is.
         return cause
-    # Else, this child hint is unignorable.
+    # Else, this sequence is non-empty *AND* this child hint is unignorable.
 
     # Arbitrary iterator satisfying the enumerate() protocol, yielding zero or
     # more 2-tuples of the form "(item_index, item)", where:
@@ -282,8 +285,9 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
 
     # For each enumerated item of this sequence...
     for pith_item_index, pith_item in pith_enumerator:
-        # Deep output cause, type-checking whether this item satisfies this
-        # child hint.
+        # Deep output cause describing the failure of this item to satisfy this
+        # child hint if this item violates this child hint *OR* "None" otherwise
+        # (i.e., if this item satisfies this child hint).
         cause_deep = cause.permute(
             pith=pith_item, hint=hint_child).find_cause()
 
@@ -300,7 +304,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
             # Return this cause.
             return cause_deep
         # Else, this item is *NOT* the cause of this failure. Silently continue
-        # to the next.
+        # to the next item.
 
     # Return this cause as is; all items of this sequence are valid, implying
     # this sequence to deeply satisfy this hint.

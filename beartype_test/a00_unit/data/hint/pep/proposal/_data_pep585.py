@@ -546,7 +546,178 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ LIST                               }................
+        # ................{ MAPPING ~ defaultdict              }................
+        # Default dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=defaultdict[int, str],
+            pep_sign=HintSignDefaultDict,
+            isinstanceable_type=defaultdict,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Default dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # String constant.
+                HintPithUnsatisfiedMetadata('High over the immeasurable main.'),
+                # Ordered dictionary mapping strings to strings. Since only the
+                # first key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=default_dict_str_to_str,
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'His eyes pursued its flight\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'Thou hast a home,' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ mapping                  }................
+        # Mapping of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=Mapping[int, str],
+            pep_sign=HintSignMapping,
+            isinstanceable_type=Mapping,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata({
+                    1: 'Who ministered with human charity',
+                    2: 'His human wants, beheld with wondering awe',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Their fleeting visitant. The mountaineer,'),
+                # Dictionary mapping strings to strings. Since only the first
+                # key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'Encountering on': 'some dizzy precipice'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Encountering on' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'some dizzy precipice' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ mutablemapping           }................
+        # Mapping of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=MutableMapping[int, str],
+            pep_sign=HintSignMutableMapping,
+            isinstanceable_type=MutableMapping,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata({
+                    1: "His troubled visage in his mother's robe",
+                    2: 'In terror at the glare of those wild eyes,',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'To remember their strange light in many a dream'),
+                # Dictionary mapping strings to strings. Since only the first
+                # key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'Of after-times;': 'but youthful maidens, taught'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Of after-times;' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'but youthful maidens, taught' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ ordereddict              }................
+        # Ordered dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=OrderedDict[int, str],
+            pep_sign=HintSignOrderedDict,
+            isinstanceable_type=OrderedDict,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Ordered dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata(OrderedDict({
+                    1: "Of his departure from their father's door.",
+                    2: 'At length upon the lone Chorasmian shore',
+                })),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'He paused, a wide and melancholy waste'),
+                # Ordered dictionary mapping strings to strings. Since only the
+                # first key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=OrderedDict({
+                        'Of putrid marshes.': 'A strong impulse urged'}),
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Of putrid marshes\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'A strong impulse urged' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ REGEX ~ match                      }................
+        # Regular expression match of only strings.
+        HintPepMetadata(
+            hint=Match[str],
+            pep_sign=HintSignMatch,
+            isinstanceable_type=Match,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Regular expression match of one or more string constants.
+                HintPithSatisfiedMetadata(re.search(
+                    r'\b[a-z]+itiat[a-z]+\b',
+                    'Vitiating novitiate Succubæ – a',
+                )),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Into Elitistly'),
+            ),
+        ),
+
+        # ................{ REGEX ~ pattern                    }................
+        # Regular expression pattern of only strings.
+        HintPepMetadata(
+            hint=Pattern[str],
+            pep_sign=HintSignPattern,
+            isinstanceable_type=Pattern,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Regular expression string pattern.
+                HintPithSatisfiedMetadata(
+                    re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Obsessing men'),
+            ),
+        ),
+
+        # ................{ SEQUENCE ~ list                    }................
         # List of ignorable objects.
         HintPepMetadata(
             hint=list[object],
@@ -836,274 +1007,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ MAPPING ~ defaultdict              }................
-        # Default dictionary of unignorable key-value pairs.
-        HintPepMetadata(
-            hint=defaultdict[int, str],
-            pep_sign=HintSignDefaultDict,
-            isinstanceable_type=defaultdict,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Default dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata(default_dict_int_to_str),
-                # String constant.
-                HintPithUnsatisfiedMetadata('High over the immeasurable main.'),
-                # Ordered dictionary mapping strings to strings. Since only the
-                # first key-value pair of dictionaries are type-checked, a
-                # dictionary of one key-value pair suffices.
-                HintPithUnsatisfiedMetadata(
-                    pith=default_dict_str_to_str,
-                    # Match that the exception message raised for this object
-                    # declares the key violating this hint.
-                    exception_str_match_regexes=(
-                        r"\bkey str 'His eyes pursued its flight\.' ",
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* declare the value of this key.
-                    exception_str_not_match_regexes=(
-                        r"\bvalue str 'Thou hast a home,' ",
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ MAPPING ~ mapping                  }................
-        # Mapping of unignorable key-value pairs.
-        HintPepMetadata(
-            hint=Mapping[int, str],
-            pep_sign=HintSignMapping,
-            isinstanceable_type=Mapping,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata({
-                    1: 'Who ministered with human charity',
-                    2: 'His human wants, beheld with wondering awe',
-                }),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Their fleeting visitant. The mountaineer,'),
-                # Dictionary mapping strings to strings. Since only the first
-                # key-value pair of dictionaries are type-checked, a
-                # dictionary of one key-value pair suffices.
-                HintPithUnsatisfiedMetadata(
-                    pith={'Encountering on': 'some dizzy precipice'},
-                    # Match that the exception message raised for this object
-                    # declares the key violating this hint.
-                    exception_str_match_regexes=(
-                        r"\bkey str 'Encountering on' ",
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* declare the value of this key.
-                    exception_str_not_match_regexes=(
-                        r"\bvalue str 'some dizzy precipice' ",
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ MAPPING ~ mutablemapping           }................
-        # Mapping of unignorable key-value pairs.
-        HintPepMetadata(
-            hint=MutableMapping[int, str],
-            pep_sign=HintSignMutableMapping,
-            isinstanceable_type=MutableMapping,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata({
-                    1: "His troubled visage in his mother's robe",
-                    2: 'In terror at the glare of those wild eyes,',
-                }),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'To remember their strange light in many a dream'),
-                # Dictionary mapping strings to strings. Since only the first
-                # key-value pair of dictionaries are type-checked, a
-                # dictionary of one key-value pair suffices.
-                HintPithUnsatisfiedMetadata(
-                    pith={'Of after-times;': 'but youthful maidens, taught'},
-                    # Match that the exception message raised for this object
-                    # declares the key violating this hint.
-                    exception_str_match_regexes=(
-                        r"\bkey str 'Of after-times;' ",
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* declare the value of this key.
-                    exception_str_not_match_regexes=(
-                        r"\bvalue str 'but youthful maidens, taught' ",
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ MAPPING ~ ordereddict              }................
-        # Ordered dictionary of unignorable key-value pairs.
-        HintPepMetadata(
-            hint=OrderedDict[int, str],
-            pep_sign=HintSignOrderedDict,
-            isinstanceable_type=OrderedDict,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Ordered dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata(OrderedDict({
-                    1: "Of his departure from their father's door.",
-                    2: 'At length upon the lone Chorasmian shore',
-                })),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'He paused, a wide and melancholy waste'),
-                # Ordered dictionary mapping strings to strings. Since only the
-                # first key-value pair of dictionaries are type-checked, a
-                # dictionary of one key-value pair suffices.
-                HintPithUnsatisfiedMetadata(
-                    pith=OrderedDict({
-                        'Of putrid marshes.': 'A strong impulse urged'}),
-                    # Match that the exception message raised for this object
-                    # declares the key violating this hint.
-                    exception_str_match_regexes=(
-                        r"\bkey str 'Of putrid marshes\.' ",
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* declare the value of this key.
-                    exception_str_not_match_regexes=(
-                        r"\bvalue str 'A strong impulse urged' ",
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ REGEX ~ match                      }................
-        # Regular expression match of only strings.
-        HintPepMetadata(
-            hint=Match[str],
-            pep_sign=HintSignMatch,
-            isinstanceable_type=Match,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Regular expression match of one or more string constants.
-                HintPithSatisfiedMetadata(re.search(
-                    r'\b[a-z]+itiat[a-z]+\b',
-                    'Vitiating novitiate Succubæ – a',
-                )),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Into Elitistly'),
-            ),
-        ),
-
-        # ................{ REGEX ~ pattern                    }................
-        # Regular expression pattern of only strings.
-        HintPepMetadata(
-            hint=Pattern[str],
-            pep_sign=HintSignPattern,
-            isinstanceable_type=Pattern,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Regular expression string pattern.
-                HintPithSatisfiedMetadata(
-                    re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Obsessing men'),
-            ),
-        ),
-
-        # ................{ SUBCLASS                           }................
-        # Any type, semantically equivalent under PEP 484 to the unsubscripted
-        # "Type" singleton.
-        HintPepMetadata(
-            hint=type[Any],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(float),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
-            ),
-        ),
-
-        # "type" superclass, semantically equivalent to the unsubscripted
-        # "Type" singleton.
-        HintPepMetadata(
-            hint=type[type],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(complex),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Had al-'),
-            ),
-        ),
-
-        # Specific class.
-        HintPepMetadata(
-            hint=type[Class],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Subclass of this class.
-                HintPithSatisfiedMetadata(Subclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Namely,'),
-                # Non-subclass of this class.
-                HintPithUnsatisfiedMetadata(str),
-            ),
-        ),
-
-        # Specific class deferred with a forward reference.
-        HintPepMetadata(
-            hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Subclass of this class.
-                HintPithSatisfiedMetadata(SubclassSubclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
-                # Non-subclass of this class.
-                HintPithUnsatisfiedMetadata(dict),
-            ),
-        ),
-
-        # Two or more specific classes.
-        HintPepMetadata(
-            hint=type[Union[Class, OtherClass,]],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # Arbitrary subclass of one class subscripting this hint.
-                HintPithSatisfiedMetadata(Subclass),
-                # Arbitrary subclass of another class subscripting this hint.
-                HintPithSatisfiedMetadata(OtherSubclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Jabberings'),
-                # Non-subclass of any classes subscripting this hint.
-                HintPithUnsatisfiedMetadata(set),
-            ),
-        ),
-
-        # Generic class.
-        HintPepMetadata(
-            hint=type[T],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_pep585_builtin_subscripted=True,
-            is_typevars=True,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(int),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Obligation, and'),
-            ),
-        ),
-
-        # ................{ TUPLE ~ fixed                      }................
+        # ................{ SEQUENCE ~ tuple : fixed           }................
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
         # with standard sequence syntax, which supports no comparable notion of
         # an "empty {insert-standard-sequence-here}" (e.g., empty list): e.g.,
@@ -1280,7 +1184,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ TUPLE ~ variadic                   }................
+        # ................{ SEQUENCE ~ tuple : variadic        }................
         # Variadic tuple.
         HintPepMetadata(
             hint=tuple[str, ...],
@@ -1328,6 +1232,102 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Concubine enthralling contractually novel'),
+            ),
+        ),
+
+        # ................{ TYPE                               }................
+        # Any type, semantically equivalent under PEP 484 to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=type[Any],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(float),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
+            ),
+        ),
+
+        # "type" superclass, semantically equivalent to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=type[type],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(complex),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Had al-'),
+            ),
+        ),
+
+        # Specific class.
+        HintPepMetadata(
+            hint=type[Class],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(Subclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Namely,'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(str),
+            ),
+        ),
+
+        # Specific class deferred with a forward reference.
+        HintPepMetadata(
+            hint=type[_TEST_PEP585_FORWARDREF_CLASSNAME],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(SubclassSubclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(dict),
+            ),
+        ),
+
+        # Two or more specific classes.
+        HintPepMetadata(
+            hint=type[Union[Class, OtherClass,]],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary subclass of one class subscripting this hint.
+                HintPithSatisfiedMetadata(Subclass),
+                # Arbitrary subclass of another class subscripting this hint.
+                HintPithSatisfiedMetadata(OtherSubclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabberings'),
+                # Non-subclass of any classes subscripting this hint.
+                HintPithUnsatisfiedMetadata(set),
+            ),
+        ),
+
+        # Generic class.
+        HintPepMetadata(
+            hint=type[T],
+            pep_sign=HintSignType,
+            isinstanceable_type=type,
+            is_pep585_builtin_subscripted=True,
+            is_typevars=True,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(int),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Obligation, and'),
             ),
         ),
 

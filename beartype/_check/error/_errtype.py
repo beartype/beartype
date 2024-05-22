@@ -23,7 +23,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
 )
-from beartype._check.error._errorcause import ViolationCause
+from beartype._check.error._errcause import ViolationCause
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,

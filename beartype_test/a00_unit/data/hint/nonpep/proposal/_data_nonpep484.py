@@ -56,8 +56,8 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
     #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
     #"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as
     #type hints. To quote official "typing" documentation:
-    #    These are not used in annotations. They are building blocks for declaring
-    #    types.
+    #    These are not used in annotations. They are building blocks for
+    #    declaring types.
     #
     #Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
     #"typing.TypedDict" subclasses are types and thus also valid type hints. So,

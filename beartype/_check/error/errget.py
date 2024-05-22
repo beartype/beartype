@@ -112,7 +112,7 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
 )
 from beartype.typing import Optional
-from beartype._check.error._errorcause import ViolationCause
+from beartype._check.error._errcause import ViolationCause
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,

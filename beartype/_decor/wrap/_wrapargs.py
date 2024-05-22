@@ -289,7 +289,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # reduced above to a different (and seemingly innocuous) type
                 # hint that does *NOT* appear to require a type stack at late
                 # *EXCEPTION RAISING TIME* (i.e., the
-                # beartype._check.error.errorget.get_func_pith_violation()
+                # beartype._check.error.errget.get_func_pith_violation()
                 # function) but actually does. Only the original unsanitized
                 # "hint_insane" is truth.
                 cls_stack = (

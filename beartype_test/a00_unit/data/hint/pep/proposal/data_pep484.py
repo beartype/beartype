@@ -44,43 +44,20 @@ from beartype_test.a00_unit.data.data_type import (
 )
 from collections.abc import (
     Callable as CallableABC,
-    Hashable as HashableABC,
-    Mapping as MappingABC,
-    MutableMapping as MutableMappingABC,
-    MutableSequence as MutableSequenceABC,
-    Sequence as SequenceABC,
     Sized as SizedABC,
 )
 from typing import (
-    Any,
-    AnyStr,
     BinaryIO,
-    Callable,
     Container,
     ContextManager,
-    DefaultDict,
-    Dict,
-    ForwardRef,
     Generic,
-    Hashable,
     IO,
     Iterable,
     List,
-    Match,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    NewType,
-    OrderedDict,
-    Pattern,
     Sequence,
-    Sized,
     TextIO,
     Tuple,
-    Type,
     TypeVar,
-    Optional,
-    Union,
 )
 
 # ....................{ TYPEVARS ~ unbounded               }....................
@@ -271,6 +248,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     )
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
     from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignAbstractSet,
         HintSignAny,
         HintSignByteString,
         HintSignCallable,
@@ -310,6 +288,36 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     from collections import (
         OrderedDict as OrderedDictType,
         defaultdict,
+    )
+    from collections.abc import (
+        Hashable as HashableABC,
+        Mapping as MappingABC,
+        MutableMapping as MutableMappingABC,
+        MutableSequence as MutableSequenceABC,
+        Sequence as SequenceABC,
+        Set as SetABC,
+    )
+    from typing import (
+        AbstractSet,
+        Any,
+        AnyStr,
+        Callable,
+        Collection,
+        DefaultDict,
+        Dict,
+        ForwardRef,
+        Hashable,
+        Match,
+        Mapping,
+        MutableMapping,
+        MutableSequence,
+        NewType,
+        OrderedDict,
+        Pattern,
+        Sized,
+        Type,
+        Optional,
+        Union,
     )
 
     # ..................{ LOCALS                             }..................
@@ -819,110 +827,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ LIST                               }................
-        # Unsubscripted "List" attribute.
-        HintPepMetadata(
-            hint=List,
-            pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=list,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_meta=(
-                # Empty list, which satisfies all hint arguments by definition.
-                HintPithSatisfiedMetadata([]),
-                # Listing containing arbitrary items.
-                HintPithSatisfiedMetadata([
-                    'Of an Autos‐respirating, ăutonomies‐gnashing machineries‐',
-                    'Laxity, and taxonomic attainment',
-                    3,
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Of acceptance.'),
-                # Tuple containing arbitrary items.
-                HintPithUnsatisfiedMetadata((
-                    'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
-                    '3. And Utter‐most, gutterly gut‐rending posts, glutton',
-                    3.1415,
-                )),
-            ),
-        ),
-
-        # List of ignorable items.
-        HintPepMetadata(
-            hint=List[object],
-            pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=list,
-            piths_meta=(
-                # Empty list, which satisfies all hint arguments by definition.
-                HintPithSatisfiedMetadata([]),
-                # List of arbitrary objects.
-                HintPithSatisfiedMetadata([
-                    'Of philomathematically bliss‐postulating Seas',
-                    'Of actuarial postponement',
-                    23.75,
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Of actual change elevating alleviation — that'),
-            ),
-        ),
-
-        # List of unignorable items.
-        HintPepMetadata(
-            hint=List[str],
-            pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=list,
-            piths_meta=(
-                # Empty list, which satisfies all hint arguments by definition.
-                HintPithSatisfiedMetadata([]),
-                # List of strings.
-                HintPithSatisfiedMetadata([
-                    'Ously overmoist, ov‐ertly',
-                    'Deverginating vertigo‐originating',
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
-                # List containing exactly one integer. Since list items are
-                # only randomly type-checked, only a list of exactly one item
-                # enables us to match the explicit index at fault below.
-                HintPithUnsatisfiedMetadata(
-                    pith=[1010011010,],  # <-- oh, we've done it now
-                    # Match that the exception message raised for this object...
-                    exception_str_match_regexes=(
-                        # Declares the index of the random list item violating
-                        # this hint.
-                        r'\b[Ll]ist index \d+ item\b',
-                        # Preserves the value of this item as is.
-                        r'\s1010011010\s',
-                    ),
-                ),
-            ),
-        ),
-
-        # Generic list.
-        HintPepMetadata(
-            hint=List[T],
-            pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=list,
-            is_typevars=True,
-            piths_meta=(
-                # Empty list, which satisfies all hint arguments by definition.
-                HintPithSatisfiedMetadata([]),
-                # List of strings.
-                HintPithSatisfiedMetadata([
-                    'Lesion this ice-scioned',
-                    'Legion',
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Lest we succumb, indelicately, to'),
-            ),
-        ),
-
         # ................{ MAPPING ~ dict                     }................
         # Unsubscripted "Dict" attribute.
         HintPepMetadata(
@@ -933,6 +837,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             is_typevars=_IS_TYPEVARS_HIDDEN,
             isinstanceable_type=dict,
             piths_meta=(
+                # Empty dictionary.
+                HintPithSatisfiedMetadata({}),
                 # Dictionary containing arbitrary key-value pairs.
                 HintPithSatisfiedMetadata({
                     'Of':         'our disappointment’s purse‐anointed ire',
@@ -1503,7 +1409,166 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ TUPLE                              }................
+        # ................{ REITERABLE ~ abstractset           }................
+        # Unsubscripted "AbstractSet" attribute.
+        HintPepMetadata(
+            hint=AbstractSet,
+            pep_sign=HintSignAbstractSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=SetABC,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Set containing arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'Rushed in dark tumult thundering,', 'as to mock', 73}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Still fled before the storm; still fled, like foam'),
+                # Tuple containing arbitrary items.
+                HintPithUnsatisfiedMetadata((
+                    'Down the steep cataract of', 'a wintry river;', 5.1413,)),
+            ),
+        ),
+
+        # Abstract set of unignorable items.
+        HintPepMetadata(
+            hint=AbstractSet[str],
+            pep_sign=HintSignAbstractSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=SetABC,
+            piths_meta=(
+                # Set of strings.
+                HintPithSatisfiedMetadata({
+                    'Now pausing on the edge of the riven wave;',
+                    'Now leaving far behind the bursting mass',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'That fell, convulsing ocean. Safely fled—'),
+                # Set of byte strings. Since only the first items of sets are
+                # type-checked, a set of one item suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={b'As if that frail and wasted human form,'},
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares the index of the random list item violating
+                        # this hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves the value of this item as is.
+                        r"\bAs if that frail and wasted human form,",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ SEQUENCE ~ list                    }................
+        # Unsubscripted "List" attribute.
+        HintPepMetadata(
+            hint=List,
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty list.
+                HintPithSatisfiedMetadata([]),
+                # List containing arbitrary items.
+                HintPithSatisfiedMetadata([
+                    'Of an Autos‐respirating, ăutonomies‐gnashing machineries‐',
+                    'Laxity, and taxonomic attainment',
+                    3,
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Of acceptance.'),
+                # Tuple containing arbitrary items.
+                HintPithUnsatisfiedMetadata((
+                    'Of their godliest Tellurion’s utterance —“Șuper‐ior!”;',
+                    '3. And Utter‐most, gutterly gut‐rending posts, glutton',
+                    3.1415,
+                )),
+            ),
+        ),
+
+        # List of ignorable items.
+        HintPepMetadata(
+            hint=List[object],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            piths_meta=(
+                # Empty list.
+                HintPithSatisfiedMetadata([]),
+                # List of arbitrary objects.
+                HintPithSatisfiedMetadata([
+                    'Of philomathematically bliss‐postulating Seas',
+                    'Of actuarial postponement',
+                    23.75,
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Of actual change elevating alleviation — that'),
+            ),
+        ),
+
+        # List of unignorable items.
+        HintPepMetadata(
+            hint=List[str],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            piths_meta=(
+                # Empty list.
+                HintPithSatisfiedMetadata([]),
+                # List of strings.
+                HintPithSatisfiedMetadata([
+                    'Ously overmoist, ov‐ertly',
+                    'Deverginating vertigo‐originating',
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Devilet‐Sublet cities waxing'),
+                # List containing exactly one integer. Since list items are
+                # only randomly type-checked, only a list of exactly one item
+                # enables us to match the explicit index at fault below.
+                HintPithUnsatisfiedMetadata(
+                    pith=[1010011010,],  # <-- oh, we've done it now
+                    # Match that the exception message raised for this object...
+                    exception_str_match_regexes=(
+                        # Declares the index of the random list item violating
+                        # this hint.
+                        r'\b[Ll]ist index \d+ item\b',
+                        # Preserves the value of this item as is.
+                        r'\s1010011010\s',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic list.
+        HintPepMetadata(
+            hint=List[T],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            is_typevars=True,
+            piths_meta=(
+                # Empty list.
+                HintPithSatisfiedMetadata([]),
+                # List of strings.
+                HintPithSatisfiedMetadata([
+                    'Lesion this ice-scioned',
+                    'Legion',
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Lest we succumb, indelicately, to'),
+            ),
+        ),
+
+        # ................{ SEQUENCE ~ tuple                   }................
         # Unsubscripted "Tuple" attribute. Note that this attribute is *NOT*
         # parametrized by one or more type variables under any Python version,
         # unlike most other unsubscripted "typing" attributes originating from
@@ -1527,7 +1592,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ TUPLE ~ fixed                      }................
+        # ................{ SEQUENCE ~ tuple : fixed           }................
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
         # with standard sequence syntax, which supports no comparable notion of
         # an "empty {insert-type-here}" (e.g., empty list). For example:
@@ -1706,7 +1771,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ TUPLE ~ variadic                   }................
+        # ................{ SEQUENCE ~ tuple : variadic        }................
         # Variadic tuple.
         HintPepMetadata(
             hint=Tuple[str, ...],
@@ -2500,6 +2565,9 @@ def hints_pep484_ignorable_shallow() -> list:
     ignorable on the trivial basis of their machine-readable representations).
     '''
 
+    # Defer fixture-specific imports.
+    from typing import Any
+
     # Return this list of all PEP-specific shallowly ignorable type hints.
     return [
         # The "Any" catch-all. By definition, *ALL* objects annotated as "Any"
@@ -2529,6 +2597,14 @@ def hints_pep484_ignorable_deep() -> list:
     List of :pep:`544`-compliant **deeply ignorable type hints** (i.e.,
     ignorable only on the non-trivial basis of their nested child type hints).
     '''
+
+    # Defer fixture-specific imports.
+    from typing import (
+        Any,
+        NewType,
+        Optional,
+        Union,
+    )
 
     # Return this list of all PEP-specific shallowly ignorable type hints.
     return [

@@ -30,7 +30,7 @@ from beartype._check.checkmagic import (
 )
 from beartype._check.convert.convsanify import sanify_hint_root_statement
 from beartype._check.code.codemake import make_check_expr
-from beartype._check.error.errorget import (
+from beartype._check.error.errget import (
     get_func_pith_violation,
     get_hint_object_violation,
 )

@@ -257,9 +257,10 @@ exactly one child type hint constraining *all* items of this pith, which
 necessarily satisfies the :class:`collections.abc.Collection` protocol with
 guaranteed :math:`O(1)` read-only access to *only* the first collection item).
 
-See the
+See Also
+--------
 :data:`beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_REITERABLE_ARGS_1`
-docstring for further commentary on reiterables.
+    Further commentary on reiterables.
 '''
 
 
