@@ -4,6 +4,46 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP] Type-check "collections.abc.Collection" and "typing.Collection" in
+#a more thoughtful manner. Currently, we only type-check collections as if they
+#were reiterables (i.e., by only type-checking the first items of those
+#collections). Although collections *ARE* guaranteed to be reiterables, they
+#could be considerably more. Specifically, for our purposes, they could be
+#sequences -- a considerably more powerful form of reiterable.
+#
+#When time permits, consider differentiating between mere reiterables (which are
+#guaranteed to be safely type-checkable only by type-checking their first items)
+#and full-blown collections (which could be sequences) as follows:
+#* Remove the "HintSignCollection" sign from the
+#  "HINT_SIGNS_REITERABLE_ARGS_1" frozen set.
+#* Define a new "CODE_PEP484585_COLLECTION" string global in the
+#  "beartype._check.code.snip.codesnipstr" submodule resembling:
+#CODE_PEP484585_COLLECTION = '''(
+# {indent_curr}    # True only if this pith is a collection *AND*...
+# {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+# {indent_curr}    # True only if either...
+# {indent_curr}    (
+# {indent_curr}        # This a collection is empty *OR*...
+# {indent_curr}        not {pith_curr_var_name} or
+# {indent_curr}        (
+# {indent_curr}            # This collection is a sequence and a random item of
+# {indent_curr}            # this collection satisfies this hint;
+# {indent_curr}            {hint_sequence_child_placeholder}
+# {indent_curr}            if isinstance({pith_curr_var_name}, SequenceABC) else
+# {indent_curr}            # Else, this collection is *NOT* a sequence. In this
+# {indent_curr}            # case, fall back to checking that the first item of
+# {indent_curr}            # this collection satisfies this hint.
+# {indent_curr}            {hint_reiterable_child_placeholder}
+# {indent_curr}        )
+# {indent_curr}    )
+# {indent_curr})'''
+
+#FIXME: [PEP] Type-check "collections.deque" and "typing.Deque" in a more
+#thoughtful manner. Currently, we only type-check deques as if they were
+#reiterables (i.e., by only type-checking the first items of those deques).
+#Although deques *ARE* guaranteed to be reiterables, they're somewhat more. We
+#should additionally be type-checking their last items as well.
+
 #FIXME: [SPEED] There exists a significant optimization that we *ABSOLUTELY*
 #should implement. Currently, the "hints_meta" data structure is represented as
 #a FixedList of size j, each item of which is a k-length tuple. If you briefly
