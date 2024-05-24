@@ -32,7 +32,7 @@ beartype will be there.
 
    pip3 install beartype
 
-Install beartype with Anaconda_, because package managers named after venomous
+Install beartype with Anaconda_, because package managers named after vicious 
 South American murder reptiles have finally inspired your team to embrace more
 mammal-friendly packages. Your horoscope also reads: "Avoid reckless ecotourism
 in places that rain alot."
