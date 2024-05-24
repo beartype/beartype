@@ -202,9 +202,9 @@ class BeartypeNodeTransformerUtilityMixin(object):
             node_sibling=node_sibling,
         )
 
-        # Node encapsulating the indexation of a dictionary by the
+        # Expression node encapsulating the indexation of a dictionary by the
         # fully-qualified name of the current module.
-        node_module_name_index: AST = None  # type: ignore[assignment]
+        node_module_name_index: expr = None  # type: ignore[assignment]
 
         # If the active Python interpreter targets Python >= 3.9...
         if IS_PYTHON_AT_LEAST_3_9:
@@ -217,7 +217,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
             # Create this node in a manner specific to Python 3.8, which
             # requires an additional intermediary node *NOT* required under
             # Python >= 3.9.
-            node_module_name_index = Index(value=node_module_name)
+            node_module_name_index = Index(value=node_module_name)  # type: ignore
 
             # Copy all source code metadata (e.g., line numbers) from this
             # sibling node onto this new node.
@@ -232,7 +232,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
         # runtime during module importation.
         node_conf = Subscript(
             value=node_module_name_to_conf,
-            slice=node_module_name_index,
+            slice=node_module_name_index,  # pyright: ignore
             ctx=NODE_CONTEXT_LOAD,
         )
 

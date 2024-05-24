@@ -1725,6 +1725,62 @@ def make_check_expr(
                 # Else, this hint is *NOT* a mapping.
                 #
                 # ..........{ REITERABLES                          }............
+                #FIXME: This logic is an almost one-for-one copy of the
+                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
+                #Unify as follows:
+                #* In the existing "datapepsigns" submodule:
+                #  * Define a new "HintSignTupleFixed" sign in the standard way.
+                #  * The existing "HintSignTuple" sign should be preserved as is
+                #    but *ONLY* match variable-length tuple type hints. Why?
+                #    Because this sign naturally matches the unsubscripted
+                #    "typing.Tuple" attribute, which is semantically equivalent
+                #    to the "typing.Tuple[object, ...]" type hint, which is the
+                #    widest possible variable-length tuple type hint.
+                #  * Refactor the get_hint_pep_sign() getter to assign *ALL*
+                #    fixed-length tuple type hints the "HintSignTupleFixed" sign
+                #    rather than the "HintSignTuple" sign.
+                #  * Refactor logic elsewhere to explicitly match
+                #    "HintSignTupleFixed" rather than matching "HintSignTuple"
+                #    and then attempting to disambiguate fixed-length tuple type
+                #    hints from that by inspecting for "Ellipses" singletons. In
+                #    theory, the only two places in the codebase this happens
+                #    *SHOULD* be:
+                #    * This submodule.
+                #    * Some "beartype.door" submodule specific to tuples.
+                #* In the existing "codesnipstr" submodule:
+                #  * Define a new
+                #    "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format"
+                #    dictionary global resembling:
+                #      # Initialized by the _init() function defined below.
+                #      HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format: Dict[HintSign, str] = {}
+                #      def _init() -> None:
+                #          _CODE_PEP484585_COLLECTION_ARGS_1 = '''(
+                #          _{indent_curr}    # True only if this pith is of this collection type *AND*...
+                #          _{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+                #          _{indent_curr}    # True only if either this collection is empty *OR* this collection
+                #          _{indent_curr}    # is both non-empty and the first item satisfies this hint.
+                #          _{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+                #          _{indent_curr})'''
+                #          _CODE_PEP484585_COLLECTION_ARGS_1_format = (
+                #              _CODE_PEP484585_COLLECTION_ARGS_1.format)
+                #
+                #          for hint_sign in (
+                #              HINT_SIGNS_REITERABLE_ARGS_1 |
+                #              HINT_SIGNS_SEQUENCE_ARGS_1 |
+                #          ):
+                #              HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format[
+                #                  hint_sign] = _CODE_PEP484585_COLLECTION_ARGS_1_format
+                #   * Generalize the existing
+                #     "CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR" and
+                #     "CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR" string
+                #     globals similarly.
+                #   * Refactor logic in this submodule to leverage the
+                #     "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format"
+                #     dictionary.
+                #   * Remove the now-obsolete family of
+                #     "CODE_PEP484585_REITERABLE_ARGS_1*" and
+                #     "CODE_PEP484585_SEQUENCE_ARGS_1*" string globals.
+
                 # If this hint is a single-argument reiterable (e.g.,
                 # "set[str]")...
                 elif hint_curr_sign in HINT_SIGNS_REITERABLE_ARGS_1:

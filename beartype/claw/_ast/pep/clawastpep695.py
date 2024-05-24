@@ -105,8 +105,9 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME)
-from beartype._data.hint.datahinttyping import NodeVisitResult
 from beartype._data.ast.dataast import NODE_CONTEXT_STORE
+from beartype._data.hint.datahinttyping import NodeVisitResult
+from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilastmake import (
     make_node_object_attr_load,
@@ -258,7 +259,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
             # Assign the key of the returned dictionary whose name is given by
             # the "BeartypeForwardRefABC.__name_beartype__" class variable of
             # this proxy, stored in the scratch variable.
-            slice=node_forwardref_name_load,
+            slice=node_forwardref_name_load,  # pyright: ignore
             ctx=NODE_CONTEXT_STORE,
         )
 
@@ -286,6 +287,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
             target=node_scratch_var_name_store,
             iter=node_forwardref_iter_call,
             body=[node_forwardref_define],
+            orelse=LIST_EMPTY,
         )
 
         # Copy all source code metadata from this type alias node onto *ALL*

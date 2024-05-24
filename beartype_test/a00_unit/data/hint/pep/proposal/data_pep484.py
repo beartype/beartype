@@ -619,6 +619,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        #FIXME: Pick up tomorrow from here, please. O_o
         # # Collection of ignorable items.
         # HintPepMetadata(
         #     hint=Collection[object],
@@ -1690,6 +1691,16 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
+
+        #FIXME: Pick up tomorrow from here, please. Notably, we still need to
+        #explicitly test:
+        # * `typing.Deque[...]`.
+        # * `typing.FrozenSet[...]`.
+        # * `typing.KeysView[...]`.
+        # * `typing.MutableSet[...]`.
+        # * `typing.Set[...]`.
+        # * `typing.ValuesView[...]`.
+        #FIXME: Also test PEP 585-specific variants of these type hints! *sigh*
 
         # ................{ SEQUENCE ~ list                    }................
         # Unsubscripted "List" attribute.

@@ -22,6 +22,7 @@ from ast import (
     ImportFrom,
     Name,
     alias,
+    expr,
     keyword,
 )
 from beartype.roar import BeartypeClawImportAstException
@@ -140,7 +141,7 @@ def make_node_object_attr_load(
         Unqualified basename of the attribute of this object to be accessed.
     node_sibling : AST
         Sibling node to copy source code metadata from.
-    node_obj : Optional[AST]
+    node_obj : Optional[expr]
         Either:
 
         * If the caller prefers supplying the name node accessing the parent
@@ -201,8 +202,8 @@ def make_node_object_attr_load(
     # Else, the caller passed *NO* unqualified basename of that object.
     #
     # In any case, the "node_obj" variable is now the desired object node.
-    assert isinstance(node_obj, AST), (
-        f'{repr(node_obj)} not AST node.')
+    assert isinstance(node_obj, expr), (
+        f'{repr(node_obj)} not AST expression node.')
 
     # Object attribute node accessing this attribute of this object.
     node_attribute_load = Attribute(
@@ -257,7 +258,7 @@ def make_node_call(
     node_sibling: AST,
 
     # Optional parameters.
-    nodes_args: NodesList = LIST_EMPTY,
+    nodes_args: List[expr] = LIST_EMPTY,
     nodes_kwargs: List[keyword] = LIST_EMPTY,
 ) -> Call:
     '''
@@ -272,11 +273,11 @@ def make_node_call(
         Fully-qualified name of the module to import this attribute from.
     node_sibling : AST
         Sibling node to copy source code metadata from.
-    nodes_args : NodesList, optional
-        List of zero or more **positional parameter AST nodes** comprising the
-        tuple of all positional parameters to be passed to this call. Defaults
-        to the empty list.
-    nodes_kwargs : NodesList, optional
+    nodes_args : List[expr], optional
+        List of zero or more **positional parameter AST expression nodes**
+        comprising the tuple of all positional parameters to be passed to this
+        call. Defaults to the empty list.
+    nodes_kwargs : List[keyword], optional
         List of zero or more **keyword parameter AST nodes** comprising the
         dictionary of all keyword parameters to be passed to this call. Defaults
         to the empty list.
@@ -289,11 +290,11 @@ def make_node_call(
     assert isinstance(nodes_args, list), f'{repr(nodes_args)} not list.'
     assert isinstance(nodes_kwargs, list), f'{repr(nodes_kwargs)} not list.'
     assert all(
-        isinstance(node_args, AST) for node_args in nodes_args), (
-        f'{repr(nodes_args)} not list of AST nodes.')
+        isinstance(node_args, expr) for node_args in nodes_args), (
+        f'{repr(nodes_args)} not list of AST expression nodes.')
     assert all(
         isinstance(node_kwargs, keyword) for node_kwargs in nodes_kwargs), (
-        f'{repr(nodes_kwargs)} not list of keyword nodes.')
+        f'{repr(nodes_kwargs)} not list of AST keyword nodes.')
 
     # Child node referencing the callable to be called.
     node_func_name = make_node_name_load(
@@ -315,7 +316,7 @@ def make_node_call(
 # ....................{ FACTORIES ~ call : arg             }....................
 #FIXME: Unit test us up, please.
 def make_node_kwarg(
-    kwarg_name: str, kwarg_value: AST, node_sibling: AST) -> keyword:
+    kwarg_name: str, kwarg_value: expr, node_sibling: AST) -> keyword:
     '''
     Create and return a new **keyword argument abstract syntax tree (AST) node**
     (i.e., node encapsulating a keyword argument of a call to an arbitrary
@@ -326,8 +327,8 @@ def make_node_kwarg(
     ----------
     kwarg_name : str
         Name of this keyword argument.
-    kwarg_value : AST
-        Node passing the value of this keyword argument.
+    kwarg_value : expr
+        Expression node passing the value of this keyword argument.
     node_sibling : AST
         Sibling node to copy source code metadata from.
 
@@ -337,7 +338,8 @@ def make_node_kwarg(
         Keyword node passing a keyword argument with this name and value.
     '''
     assert isinstance(kwarg_name, str), f'{repr(kwarg_name)} not string.'
-    assert isinstance(kwarg_value, AST), f'{repr(kwarg_value)} not AST node.'
+    assert isinstance(kwarg_value, expr), (
+        f'{repr(kwarg_value)} not AST expression node.')
 
     # Child node encapsulating this keyword argument.
     node_kwarg = keyword(arg=kwarg_name, value=kwarg_value)
@@ -380,7 +382,7 @@ def make_node_str(text: str, node_sibling: AST) -> Constant:
 
 # ....................{ FACTORIES ~ literal : f-string     }....................
 #FIXME: Unit test us up, please.
-def make_node_fstr_field(node_expr: AST, node_sibling: AST) -> FormattedValue:
+def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
     '''
     Create and return a new **f-string formatting field abstract syntax tree
     (AST) node** (i.e., node embedding the substring created and returned by the
@@ -399,7 +401,7 @@ def make_node_fstr_field(node_expr: AST, node_sibling: AST) -> FormattedValue:
 
     Parameters
     ----------
-    node_expr : AST
+    node_expr : expr
         Formatting field to be embedded in some parent f-string node.
     node_sibling : AST
         Sibling node to copy source code metadata from.
@@ -409,7 +411,8 @@ def make_node_fstr_field(node_expr: AST, node_sibling: AST) -> FormattedValue:
     Name
         Name node accessing this attribute in the current lexical scope.
     '''
-    assert isinstance(node_expr, AST), f'{repr(node_expr)} not AST node.'
+    assert isinstance(node_expr, expr), (
+        f'{repr(node_expr)} not AST expression node.')
 
     # Child node encapsulating a formatting field "{node_expr.value}" in some
     # parent node encapsulating an f-string embedding this field. For unknown
