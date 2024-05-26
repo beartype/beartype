@@ -28,8 +28,8 @@ from pytest import raises
 def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     '''
     Context manager validating that the block exercised by this manager raises
-    a **cached exception** (i.e., whose message previously containing one or
-    more instances of the magic
+    an **unmemoized exception** (i.e., whose message previously containing one
+    or more instances of the magic
     :data:`beartype._data.error.dataerrmagic.EXCEPTION_PLACEHOLDER` substring
     since replaced by the
     :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`

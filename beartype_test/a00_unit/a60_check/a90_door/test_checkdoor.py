@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) type-checking unit
-tests.**
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) type-checking**
+unit tests.
 
 This submodule unit tests the subset of the public API of the public
 :mod:`beartype.door` subpackage that pertains to type-checking.

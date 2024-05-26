@@ -162,10 +162,39 @@ def get_test_unit_data_claw_extraprocess_dir() -> Path:
     :mod:`Path` encapsulating the absolute dirname of the **mid-level
     extraprocess import hook unit test data directory** (i.e., directory
     providing sample data used throughout this project's unit tests exercising
-    import hooks published by the :mod:`beartype.claw` subpackage is Python
+    import hooks published by the :mod:`beartype.claw` subpackage in Python
     subprocesses forked from the active Python process) if found *or* raise an
     exception otherwise.
     '''
 
     # Charnel caramel!
     return DirRelative(get_test_unit_data_claw_dir(), 'extraprocess')
+
+# ....................{ GETTERS ~ dir : func : door        }....................
+@callable_cached
+def get_test_unit_data_door_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level Decidedly
+    Object-Oriented Runtime-checking (DOOR) unit test data directory** (i.e.,
+    directory providing sample data used throughout this project's unit tests
+    exercising type-checkers published by the :mod:`beartype.door` subpackage)
+    if found *or* raise an exception otherwise.
+    '''
+
+    # Supernal diurnal!
+    return DirRelative(get_test_unit_data_dir(), 'door')
+
+
+@callable_cached
+def get_test_unit_data_door_extraprocess_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    extraprocess Decidedly Object-Oriented Runtime-checking (DOOR) unit test
+    data directory** (i.e., directory providing sample data used throughout this
+    project's unit tests exercising type-checkers published by the
+    :mod:`beartype.door` subpackage in Python subprocesses forked from the
+    active Python process) if found *or* raise an exception otherwise.
+    '''
+
+    # Charnel caramel!
+    return DirRelative(get_test_unit_data_door_dir(), 'extraprocess')

@@ -107,7 +107,6 @@ def reraise_exception_placeholder(
     assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
-
     # If this is a conventional exception...
     if is_exception_message_str(exception):
         # Munged exception message globally replacing all instances of this

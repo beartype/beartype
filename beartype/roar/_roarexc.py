@@ -49,7 +49,11 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, message: str) -> None:
+    # Note that this dunder method intentionally accepts both positional and
+    # variadic arguments to support transmission of exceptions by the standard
+    # "multiprocessing" package via the standard "pickle" module. See also:
+    #     https://stackoverflow.com/a/28335286/2809027
+    def __init__(self, message: str, *args, **kwargs) -> None:
         '''
         Initialize this exception.
 
@@ -67,9 +71,18 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
                @beartyped quote_wiggum_safer() parameter lines=[] violates type
                hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as
                value [] violates validator Is[lambda lst: bool(lst)].
+
+        Parameters
+        ----------
+        message : str
+            Human-readable message describing this exception.
+
+        All remaining parameters are passed as is to the superclass
+        :meth:`__init__` method.
         '''
         assert isinstance(message, str), (
             f'{repr(message)} not exception message.')
+        # print(f'{type(self)} message: {message}')
 
         # If...
         #
@@ -88,12 +101,48 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
             message = f'{message[0].upper()}{message[1:]}'
 
         # Defer to the superclass constructor.
-        super().__init__(message)
+        super().__init__(message, *args, **kwargs)
 
         # Sanitize the fully-qualified module name of the class of this
         # exception. See the docstring for justification.
         self.__class__.__module__ = 'beartype.roar'
         # print(f'{self.__class__.__name__}: {message}')
+
+    # ..................{ DUNDERS                            }..................
+    def __str__(self) -> str:
+        '''
+        Human-readable message describing this exception.
+
+        Note that this dunder method *should* be redundant. Since the
+        :meth:`__init__` method of this subclass explicitly passes this same
+        exact message to the :meth:`__init__` method of the :exc:`Exception`
+        superclass, there should be *no* need to expose this message yet again
+        by defining this dunder method.
+
+        Indeed, this dunder method *is* redundant for almost all edge cases --
+        except one. For unknown reasons, the standard :mod:`multiprocessing`
+        package renders a non-human-readable tuple rather than this
+        human-readable message when a Python subprocess forked by a
+        multiprocessing pool raises an instance of this exception resembling:
+
+            beartype.roar.BeartypeDoorHintViolation: ('Die_if_unbearable() value
+            \x1b[1m\x1b[31m42\x1b[0m violates type hint
+            \x1b[1m\x1b[32mtyping.List[str]\x1b[0m, as \x1b[1m\x1b[33mint
+            \x1b[0m\x1b[1m\x1b[31m42\x1b[0m not instance of
+            \x1b[1m\x1b[32mlist\x1b[0m.', (42,))
+
+        Clearly, this has something inexplicable to do with exception pickling
+        internally performed by the :mod:`multiprocessing` package. Just as
+        clearly, we have neither the inclination nor the patience to get to the
+        bottom of this. Indeed, this implementation is inspired by the standard
+        :exc:`subprocess.CalledProcessError` exception subclass -- which defines
+        the ``__str__()`` dunder method in a similar manner and (presumably) for
+        the exact same reasons. This is a mess that we want nothing to do with.
+        '''
+
+        # Return the first parameter passed to the superclass __init__() method,
+        # guaranteed to be the desired human-readable exception message.
+        return self.args[0]
 
 # ....................{ DECORATOR                          }....................
 class BeartypeDecorException(BeartypeException):
@@ -555,7 +604,11 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, message: str, culprits: tuple) -> None:
+    # Note that this dunder method intentionally accepts both positional and
+    # variadic arguments to support transmission of exceptions by the standard
+    # "multiprocessing" package via the standard "pickle" module. See also:
+    #     https://stackoverflow.com/a/28335286/2809027
+    def __init__(self, message: str, culprits: tuple, *args, **kwargs) -> None:
         '''
         Initialize this type-checking exception.
 
@@ -572,6 +625,9 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
             preserves a weak reference to these culprits, which callers may then
             safely retrieve at any time via the :meth:`culprits` property.
 
+        All remaining parameters are passed as is to the superclass
+        :meth:`__init__` method.
+
         Raises
         ------
         _BeartypeUtilExceptionException
@@ -585,7 +641,13 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         from beartype._util.py.utilpyweakref import make_obj_weakref_and_repr
 
         # Initialize the superclass with the passed message.
-        super().__init__(message)
+        #
+        # Note that the call to the superclass __init__() method *MUST* pass all
+        # mandatory parameters passed to this subclass __init__() method call to
+        # support transmission of exceptions by the standard "multiprocessing"
+        # package via the standard "pickle" module. See also:
+        #     https://stackoverflow.com/a/28335286/2809027
+        super().__init__(message, culprits, *args, **kwargs)
 
         #FIXME: Unit test us up, please.
         # If the culprits are *NOT* a tuple, raise an exception.
