@@ -17,12 +17,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
+    BeartypeDecorHintPep593Exception,
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
-    BeartypeDecorHintPep593Exception,
 )
 from beartype.typing import Optional
-from beartype._cave._cavefast import TestableTypes
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
@@ -100,6 +99,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignLiteral,
     HintSignTuple,
     HintSignType,
+    HintSignUnion,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_MAPPING,
@@ -119,17 +119,19 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_object_issubclassable,
+    is_object_issubclassable,
+)
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args)
+    get_hint_pep484585_args,
+    is_hint_pep484585_tuple_empty,
+)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
-    get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.hint.pep.proposal.utilpep593 import (
@@ -1785,8 +1787,8 @@ def make_check_expr(
                 # "set[str]")...
                 elif hint_curr_sign in HINT_SIGNS_REITERABLE_ARGS_1:
                     # Python expression evaluating to the origin type of this
-                    # reiterable hint as a hidden beartype-specific parameter
-                    # injected into the signature of this wrapper function.
+                    # hint as a hidden beartype-specific parameter injected into
+                    # the signature of this wrapper function.
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this reiterable hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
@@ -1799,8 +1801,8 @@ def make_check_expr(
                     # if this child hint is ignorable).
                     hint_child = sanify_hint_child_if_unignorable_or_none(
                         # Possibly ignorable insane child hint subscripting this
-                        # parent reiterable hint, validated to be the *ONLY*
-                        # child hint subscripting this parent reiterable hint.
+                        # parent hint, validated to be the *ONLY* child hint
+                        # subscripting this parent hint.
                         hint=get_hint_pep484585_args(
                             hint=hint_curr,
                             args_len=1,
@@ -2007,57 +2009,116 @@ def make_check_expr(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
-                    #FIXME: Optimization: if the superclass is an ignorable
-                    #class (e.g., "object", "Protocol"), this type hint is
-                    #ignorable (e.g., "Type[object]", "type[Protocol]"). We'll
-                    #thus want to:
-                    #* Add that detection logic to one or more
-                    #  is_hint_*_ignorable() testers elsewhere.
-                    #* Call is_hint_ignorable() below.
-                    #* Unit test such type hints to indeed be ignorable.
-
-                    # Superclass this pith is required to be a subclass of.
-                    hint_child = get_hint_pep484585_type_superclass(
-                        hint=hint_curr,
+                    # Unignorable sane child hint sanified from this possibly
+                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
+                    # if this child hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        # Possibly ignorable insane child hint subscripting this
+                        # parent hint, validated to be the *ONLY* child hint
+                        # subscripting this parent hint.
+                        hint=get_hint_pep484585_args(
+                            hint=hint_curr,
+                            args_len=1,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ),
+                        conf=conf,
+                        cls_stack=cls_stack,
                         exception_prefix=EXCEPTION_PREFIX,
                     )
 
-                    # If this superclass is either a class *OR* tuple of
-                    # classes...
-                    if isinstance(hint_child, TestableTypes):
-                        # Python expression evaluating to this superclass.
-                        hint_curr_expr = add_func_scope_type_or_types(
-                            type_or_types=hint_child,  # type: ignore[arg-type]
-                            func_scope=func_wrapper_scope,
-                            exception_prefix=(
-                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                        )
-                    # Else, this superclass is *NOT* actually a class. By
-                    # process of elimination and the validation already
-                    # performed above by the
-                    # get_hint_pep484585_type_superclass() getter, this
-                    # superclass *MUST* be a forward reference to a class.
-                    else:
-                        # Render this forward reference accessible to the body
+                    # If this child hint is unignorable...
+                    if hint_child is not None:
+                        # Sign identifying this child hint.
+                        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+
+                        # If this child hint is a forward reference to a
+                        # superclass, expose this forward reference to the body
                         # of this wrapper function. See above for commentary.
-                        hint_curr_expr, hint_refs_type_basename = (
-                            express_func_scope_type_ref(
+                        if hint_child_sign is HintSignForwardRef:
+                            (
+                                hint_curr_expr,
+                                hint_refs_type_basename,
+                            ) = express_func_scope_type_ref(
                                 forwardref=hint_child,  # type: ignore[arg-type]
                                 forwardrefs_class_basename=(
                                     hint_refs_type_basename),
                                 func_scope=func_wrapper_scope,
                                 exception_prefix=EXCEPTION_PREFIX,
-                            ))
+                            )
+                        # Else, this child hint is *NOT* a forward reference. In
+                        # this case...
+                        else:
+                            # If this child hint is a union of superclasses,
+                            # reduce this union to a tuple of superclasses. Only
+                            # the latter is safely passable as the second
+                            # parameter to the issubclass() builtin under all
+                            # supported Python versions.
+                            if hint_child_sign is HintSignUnion:
+                                hint_child = get_hint_pep_args(hint_child)
+                            # Else, this child hint is *NOT* a union.
 
-                    # Code type-checking this pith against this superclass.
-                    func_curr_code = CODE_PEP484585_SUBCLASS_format(
-                        pith_curr_assign_expr=pith_curr_assign_expr,
-                        pith_curr_var_name=pith_curr_var_name,
-                        hint_curr_expr=hint_curr_expr,
-                        indent_curr=indent_curr,
-                    )
-                # Else, this hint is neither a PEP 484- nor 585-compliant
-                # subclass type hint.
+                            # If this child hint is *NOT* an issubclassable
+                            # object, raise an exception.
+                            #
+                            # Note that the is_object_issubclassable() tester is
+                            # considerably faster and thus called before the
+                            # considerably slower
+                            # die_unless_object_issubclassable() raiser.
+                            if not is_object_issubclassable(hint_child):  # type: ignore[arg-type]
+                                die_unless_object_issubclassable(
+                                    obj=hint_child,  # type: ignore[arg-type]
+                                    exception_prefix=(
+                                        f'{EXCEPTION_PREFIX}PEP 484 or 585 '
+                                        f'subclass type hint {repr(hint_curr)} '
+                                        f'child type hint '
+                                    ),
+                                )
+                            # Else, this child hint is an issubclassable object.
+
+                            # Python expression evaluating to this child hint.
+                            hint_curr_expr = add_func_scope_type_or_types(
+                                type_or_types=hint_child,  # type: ignore[arg-type]
+                                func_scope=func_wrapper_scope,
+                                exception_prefix=(
+                                    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                            )
+
+                        # Code type-checking this pith against this superclass.
+                        func_curr_code = CODE_PEP484585_SUBCLASS_format(
+                            pith_curr_assign_expr=pith_curr_assign_expr,
+                            pith_curr_var_name=pith_curr_var_name,
+                            hint_curr_expr=hint_curr_expr,
+                            indent_curr=indent_curr,
+                        )
+                    #FIXME: We're repeating this same block *OVER* and *OVER*
+                    #again, plainly violating DRY. The solution is probably to:
+                    #* Far above, initialize "func_curr_code = None" at the
+                    #  start of each iteration.
+                    #* Far below, simply define this fallback:
+                    #      if func_curr_code is None:
+                    #          func_curr_code = CODE_PEP484_INSTANCE_format(
+                    #              pith_curr_expr=pith_curr_expr,
+                    #              hint_curr_expr=hint_curr_expr,
+                    #          )
+
+                    # Else, this child hint is ignorable. In this case...
+                    else:
+                        # Python expression evaluating to the origin type of
+                        # this hint -- which, by definition, is the "type"
+                        # superclass. Since this superclass is a builtin (i.e.,
+                        # universally accessible object), we efficiently
+                        # hardcode the access of this superclass rather than
+                        # inject a hidden beartype-specific parameter into the
+                        # signature of this wrapper function as we usually do.
+                        hint_curr_expr = 'type'
+
+                        # Fallback to trivial code shallowly type-checking this
+                        # pith as an instance of this origin type.
+                        func_curr_code = CODE_PEP484_INSTANCE_format(
+                            pith_curr_expr=pith_curr_expr,
+                            hint_curr_expr=hint_curr_expr,
+                        )
+                # Else, this hint is *NOT* a subclass type hint.
                 #
                 # ............{ GENERIC or PROTOCOL                }............
                 # If this hint is either a:

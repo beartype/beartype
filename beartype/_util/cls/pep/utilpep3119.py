@@ -50,7 +50,7 @@ def die_unless_object_isinstanceable(
 
     Parameters
     ----------
-    obj : object
+    obj : TypeOrTupleTypes
         Object to be validated.
     is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
@@ -540,7 +540,9 @@ def die_unless_type_issubclassable(
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
 
-# ....................{ TESTERS                            }....................
+# ....................{ TESTERS ~ isinstanceable           }....................
+#FIXME: Define is_object_isinstanceable() similar to as done below, please.
+
 #FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
 def is_type_isinstanceable(
@@ -655,6 +657,117 @@ def is_type_isinstanceable(
     # Look. Just do it. *sigh*
     return True
 
+# ....................{ TESTERS ~ issubclassable           }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def is_object_issubclassable(
+    # Mandatory parameters.
+    obj: TypeOrTupleTypes,
+
+    # Optional parameters.
+    is_forwardref_valid: bool = True,
+) -> bool:
+    '''
+    :data:`True` only if the passed object is **issubclassable** (i.e., valid as
+    the second parameter to the :func:`issubclass` builtin).
+
+    This tester is memoized for efficiency.
+
+    Caveats
+    -------
+    See also the "Caveats" sections of the
+    :func:`.is_type_isinstanceable` docstring for further discussion,
+    substituting:
+
+    * ``__instancecheck__()`` for ``__subclasscheck__()``.
+    * :func:`isinstance` for :func:`issubclass`.
+
+    Parameters
+    ----------
+    obj : TypeOrTupleTypes
+        Object to be tested.
+    is_forwardref_valid : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is either:
+
+        * An issubclassable class.
+        * A tuple containing only issubclassable classes.
+        * A :pep:`604`-compliant new union.
+
+    See Also
+    --------
+    :func:`.die_unless_type_issubclassable`
+        Further details.
+    '''
+
+    # If this object is a type, defer to this lower-level type-specific tester.
+    if isinstance(obj, type):
+        return is_type_issubclassable(obj, is_forwardref_valid)
+    # Else, this object is *NOT* a type.
+
+    # Avoid circular import dependencies.
+    from beartype._util.cls.utilclstest import is_type_or_types
+    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+
+    # If this object is neither...
+    if not (
+        # A PEP 604-compliant new union *NOR*...
+        is_hint_pep604(obj) or
+        # A tuple of types...
+        is_type_or_types(obj)
+    # Then this object *CANNOT* be runtime-checkable. In this case, immediately
+    # short-circuit by returning false.
+    ):
+        return False
+    # Else, this object *COULD* be runtime-checkable. To decide whether this
+    # object is runtime-checkable, further handling is warranted.
+
+    #FIXME: *UGH*. DRY violation between this tester and the
+    #is_type_issubclassable(). Consider refactoring out into a new private
+    #_is_object_issubclassable_slow() tester, please. *sigh*
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with die_unless_type_issubclassable().
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Attempt to pass this object as the second parameter to the issubclass()
+    # builtin to decide whether or not this object is safely usable as a
+    # standard class or not.
+    #
+    # Note that this leverages an EAFP (i.e., "It is easier to ask forgiveness
+    # than permission") approach and thus imposes a minor performance penalty,
+    # but that there exists *NO* faster alternative applicable to arbitrary
+    # user-defined classes, whose metaclasses may define a __subclasscheck__()
+    # dunder method to raise exceptions and thus prohibit being passed as the
+    # second parameter to the issubclass() builtin, the primary means employed
+    # by @beartype wrapper functions to check arbitrary types.
+    try:
+        issubclass(type, obj)  # type: ignore[arg-type]
+
+        # If the prior function call raised *NO* exception, this object is
+        # probably but *NOT* necessarily issubclassable. Return true.
+    # If the prior function call raised *ANY* exception, return true only if
+    # this exception ambiguously suggests that this object could still be
+    # issubclassable.
+    except Exception as exception:
+        return _is_exception_ambiguous(exception)
+
+    # Look. Just do it. *sigh*
+    return True
+
 
 #FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
@@ -667,10 +780,9 @@ def is_type_issubclassable(
 ) -> bool:
 
     '''
-    :data:`True` only if the passed object is either an **issubclassable class**
-    (i.e., class whose metaclass does *not* define a ``__subclasscheck__()``
-    dunder method that raises a :exc:`TypeError` exception) *or* tuple
-    containing only issubclassable classes.
+    :data:`True` only if the passed object is an **issubclassable class** (i.e.,
+    class whose metaclass does *not* define a ``__subclasscheck__()`` dunder
+    method that raises a :exc:`TypeError` exception).
 
     This tester is memoized for efficiency.
 
@@ -703,10 +815,7 @@ def is_type_issubclassable(
     Returns
     -------
     bool
-        :data:`True` only if this object is either:
-
-        * An issubclassable class.
-        * A tuple containing only issubclassable classes.
+        :data:`True` only if this object is an issubclassable class.
 
     See Also
     --------
@@ -734,6 +843,10 @@ def is_type_issubclassable(
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.
+
+    #FIXME: *UGH*. DRY violation between this tester and the
+    #is_object_issubclassable(). Consider refactoring out into a new private
+    #_is_object_issubclassable_slow() tester, please. *sigh*
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_issubclassable().

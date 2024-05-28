@@ -2061,7 +2061,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ TYPE                               }................
+        # ................{ SUBCLASS                           }................
         # Unsubscripted "Type" singleton.
         HintPepMetadata(
             hint=Type,

@@ -40,6 +40,7 @@ def test_decor_pep673() -> None:
     from beartype.typing import (
         List,
         Self,
+        Type,
     )
     from pytest import raises
 
@@ -49,6 +50,25 @@ def test_decor_pep673() -> None:
         '''
         Arbitrary class decorated by :func:`.beartype`.
         '''
+
+        # ...................{ INITIALIZERS                }....................
+        def __new__(cls: Type[Self]) -> Self:
+            '''
+            Arbitrary initializer annotated by one or more :pep:`673`-compliant
+            self type hints exercising various edge cases.
+
+            This edge case effectively exercises the intersection of:
+
+            * :pep:`484` (i.e., :obj:``typing.Type`).
+            * :pep:`585` (i.e., the :class:`type` builtin).
+            * :pep:`673` (i.e., :obj:``typing.Self`).
+
+            This edge case exercises this issue:
+                https://github.com/beartype/beartype/issues/389
+            '''
+
+            # Defer to the superclass initializer.
+            return super().__new__(cls)
 
         # ...................{ DUNDERS                     }....................
         def __add__(self: Self, other: object) -> 'Self':

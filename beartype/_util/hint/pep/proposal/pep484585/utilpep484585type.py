@@ -12,170 +12,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import (
-    Tuple,
-    TypeVar,
-    Union,
-)
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignForwardRef,
-    HintSignType,
-    HintSignUnion,
-)
-from beartype._data.hint.datahinttyping import Pep484585ForwardRef
-from beartype._util.cls.pep.utilpep3119 import (
-    die_unless_type_issubclassable,
-    die_unless_object_issubclassable,
-)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     get_hint_pep484585_args)
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
 
-# ....................{ HINTS ~ private                    }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1_UNION = Union[
-    type, Tuple[type], TypeVar, Pep484585ForwardRef,]
-'''
-Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
-**subclass type hint arguments** (i.e., PEP-compliant child type hints
-subscripting (indexing) a subclass type hint).
-'''
-
-# ....................{ GETTERS                            }....................
-def get_hint_pep484585_type_superclass(
-    hint: object,
-    exception_prefix: str,
-) -> _HINT_PEP484585_SUBCLASS_ARGS_1_UNION:
-    '''
-    **Issubclassable superclass(es)** (i.e., class whose metaclass does *not*
-    define a ``__subclasscheck__()`` dunder method that raises an exception,
-    tuple of such classes, or forward reference to such a class) subscripting
-    the passed :pep:`484`- or :pep:`585`-compliant **subclass type hint**
-    (i.e., hint constraining objects to subclass that superclass).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
-
-    Returns
-    -------
-    _HINT_PEP484585_SUBCLASS_ARGS_1_UNION
-        Argument subscripting this subclass type hint, guaranteed to be either:
-
-        * An issubclassable class.
-        * A tuple of issubclassable classes.
-        * A :pep:`484`-compliant forward reference to an issubclassable class
-          that typically has yet to be declared (i.e.,
-          :class:`typing.ForwardRef` instance).
-        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
-          :class:`typing.TypeVar` instance).
-        * A :pep:`585`-compliant union of two or more issubclassable classes.
-        * A :pep:`484`-compliant type variable constrained to classes (i.e.,
-          :class:`typing.TypeVar` instance).
-
-    Raises
-    ------
-    BeartypeDecorHintPep3119Exception
-        If this superclass subscripting this type hint is *not*
-        **issubclassable** (i.e., class whose metaclass defines a
-        ``__subclasscheck__()`` dunder method raising an exception).
-    BeartypeDecorHintPep484585Exception
-        If this hint is either:
-
-        * Neither a :pep:`484`- nor :pep:`585`-compliant subclass type hint.
-        * A :pep:`484`- or :pep:`585`-compliant subclass type hint subscripted
-          by one argument that is neither a class, union of classes, nor
-          forward reference to a class.
-    BeartypeDecorHintPep585Exception
-        If this hint is either:
-
-        * A :pep:`585`-compliant subclass type hint subscripted by either:
-
-          * *No* arguments.
-          * Two or more arguments.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_sign,
-        get_hint_pep_sign_or_none,
-    )
-
-    # If this is neither a PEP 484- *NOR* PEP 585-compliant subclass type hint,
-    # raise an exception.
-    if get_hint_pep_sign(hint) is not HintSignType:
-        raise BeartypeDecorHintPep484585Exception(
-            f'{exception_prefix}{repr(hint)} '
-            f'neither PEP 484 nor 585 subclass type hint.'
-        )
-    # Else, this is a subclass type hint.
-
-    # Superclass subscripting this hint.
-    hint_superclass = get_hint_pep484585_args(
-        hint=hint, args_len=1, exception_prefix=exception_prefix)
-
-    # Sign identifying this superclass.
-    hint_superclass_sign = get_hint_pep_sign_or_none(hint_superclass)
-
-    # If this superclass is actually a union of superclasses...
-    if hint_superclass_sign is HintSignUnion:
-        # Efficiently reduce this superclass to the tuple of superclasses
-        # subscripting and thus underlying this union.
-        hint_superclass = get_hint_pep_args(hint_superclass)
-
-        # If any item of this tuple is *NOT* an issubclassable class, raise an
-        # exception.
-        # print(f'hint_superclass union arg: {hint_superclass}')
-        die_unless_object_issubclassable(
-            obj=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
-    # Else, this superclass is *NOT* a union of superclasses.
-    #
-    # If this superclass is actually a forward reference to a superclass,
-    # silently accept this reference as is. This conditional exists only to
-    # avoid raising a subsequent exception.
-    elif hint_superclass_sign is HintSignForwardRef:
-        pass
-    # Else, this superclass is *NOT* a forward reference to a superclass.
-    #
-    # If this superclass is a class...
-    elif isinstance(hint_superclass, type):
-        die_unless_type_issubclassable(
-            cls=hint_superclass, exception_prefix=exception_prefix)
-        # Else, this superclass is issubclassable.
-    # Else, this superclass is of an unexpected type. In this case, raise an
-    # exception.
-    #
-    # Note that PEP 585-compliant subclass type hints infrequently trigger this
-    # edge case. Although the "typing" module explicitly validates the
-    # arguments subscripting PEP 484-compliant type hints, the CPython
-    # interpreter applies *NO* such validation to PEP 585-compliant subclass
-    # type hints. For example, PEP 585-compliant subclass type hints are
-    # subscriptable by the empty tuple, which is technically an argument:
-    #     >>> type[()].__args__
-    #     ()   # <---- thanks fer nuthin
-    else:
-        raise BeartypeDecorHintPep484585Exception(
-            f'{exception_prefix}PEP 484 or 585 subclass type hint '
-            f'{repr(hint)} child type hint {repr(hint_superclass)} neither '
-            f'class, union of classes, nor forward reference to class.'
-        )
-
-    # Return this superclass.
-    return hint_superclass  # type: ignore[return-value]
-
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up.
+#FIXME: *PRETTY SURE THIS IS ABSOLUTE TRASH.* Seriously. Unsure what we on about
+#when we originally authored this, but *NONE* of this parses as sane at all.
+#Let's quietly unwind this, please. *facepalm*
 def reduce_hint_pep484585_type(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
@@ -238,8 +84,14 @@ def reduce_hint_pep484585_type(
 
     # If this argument is either...
     if (
-        # An ignorable type hint (e.g., "typing.Any") *OR*...
+        # An ignorable type hint (e.g., "object", "typing.Any") *OR*...
         is_hint_ignorable(hint_superclass) or
+
+        #FIXME: *UHM.* What? This isn't the case *AT ALL*, is it? I mean, aren't
+        #the only classes that subclass the "type" superclass metaclasses? Don't
+        #normal classes just subclass "object"? Aren't normal classes just
+        #*INSTANCES* of "type" rather than *SUBCLASSES* of "type"? Pretty sure
+        #we were extremely confused when we authored this. *sigh*
         # The "type" superclass, which is effectively ignorable in this
         # context of subclasses, as *ALL* classes necessarily subclass
         # that superclass.

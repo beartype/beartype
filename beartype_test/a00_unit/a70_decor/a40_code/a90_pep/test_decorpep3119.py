@@ -63,6 +63,8 @@ def test_decor_pep3119() -> None:
         guaranteed to be only partially initialized.
         '''
 
+        pass
+
 
     class NonisinstanceableProtocol(Protocol):
         '''
@@ -115,8 +117,8 @@ def test_decor_pep3119() -> None:
         thine_azure_sister_of_the_Spring_shall_blow, Pep3119Class)
 
     # ....................{ FAIL                           }....................
-    # Assert that decorating a function annotated as accepting a parameter whose
-    # value is an instance of a non-isinstanceable class raises the expected
+    # Assert that decorating a function annotated as accepting a parameter
+    # hinted as an instance of a non-isinstanceable class raises the expected
     # exception.
     with raises(BeartypeDecorHintPep3119Exception):
         @beartype
@@ -124,8 +126,9 @@ def test_decor_pep3119() -> None:
             and_lie: NonisinstanceableProtocol) -> None:
             pass
 
-    # Assert that decorating a function annotated as accepting a parameter whose
-    # value is a non-issubclassable class raises the expected exception.
+    # Assert that decorating a function annotated as accepting a parameter
+    # hinted as a subclass of a non-issubclassable class raises the expected
+    # exception.
     with raises(BeartypeDecorHintPep3119Exception):
         @beartype
         def with_living_hues_and_odours_plain(

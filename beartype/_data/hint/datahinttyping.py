@@ -381,6 +381,8 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
+#FIXME: *INSUFFICIENT.* Generalize this to additionally accept the types of PEP
+#604-compliant new unions (e.g., "int | str").
 TypeOrTupleTypes = Union[type, TupleTypes]
 '''
 PEP-compliant type hint matching either a single class *or* a tuple of zero or
