@@ -257,6 +257,16 @@ if _IS_PYTHON_AT_LEAST_3_10:
                 override as override,  # pyright: ignore
             )
 
+            # If the active Python interpreter targets Python >= 3.13...
+            if _IS_PYTHON_AT_LEAST_3_13:
+                from typing import (  # type: ignore[attr-defined]
+                    NoDefault as NoDefault,  # pyright: ignore
+                    ReadOnly as ReadOnly,  # pyright: ignore
+                    TypeIs as TypeIs,  # pyright: ignore
+                    get_protocol_members as get_protocol_members,  # pyright: ignore
+                    is_protocol as is_protocol,  # pyright: ignore
+                )
+
 # ....................{ IMPORTS ~ version : at most        }....................
 # Import all public attributes of the "typing" module both available under at
 # most some Python interpreter version (typically due to having been deprecated

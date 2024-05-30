@@ -49,17 +49,18 @@ def test_api_typing() -> None:
     import typing as official_typing
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_13,
         IS_PYTHON_AT_LEAST_3_9,
     )
 
-    # ..................{ LOCALS                             }..................
-    # Frozen set of the basenames of all erroneously publicized public
-    # attributes of all "typing" modules across all Python versions. Ideally,
-    # these attributes would have been privatized by prefixing these basenames
-    # by "_". Ideally, the "typing.__all__" list would accurately list the
-    # basenames of all explicitly exported public attributes. Since neither of
-    # these two ideals is reflected by the "typing" module, this set exists.
-    OFFICIAL_TYPING_ATTR_PUBLIC_BAD_NAMES = frozenset((
+    # ..................{ MAGIC                              }..................
+    # Set of the basenames of all erroneously publicized public attributes of
+    # all "typing" modules across all Python versions. Ideally, these attributes
+    # would have been privatized by prefixing these basenames by "_". Ideally,
+    # the "typing.__all__" list would accurately list the basenames of all
+    # explicitly exported public attributes. Since neither of these two ideals
+    # is reflected by the "typing" module, this set exists.
+    TYPING_ATTR_PUBLIC_BAD_NAMES = {
         'ABCMeta',
         'EXCLUDED_ATTRIBUTES',
         'CT_co',
@@ -95,43 +96,12 @@ def test_api_typing() -> None:
         'sys',
         'types',
         'warnings',
-    ))
+    }
 
-    # Dictionaries mapping from the basenames of all public attributes declared
-    # by the "beartype.typing" and "typing" modules to those attributes.
-    BEARTYPE_TYPING_ATTR_NAME_TO_VALUE = {
-        # Public attribute declared by the "beartype.typing" submodule.
-        beartype_typing_attr_name: getattr(
-            beartype_typing, beartype_typing_attr_name)
-        # For the basename of each attribute declared by this submodule...
-        for beartype_typing_attr_name in dir(beartype_typing)
-        # If this basename is prefixed by "_", this is a private rather than
-        # public attribute. If this basename is prefixed by "@", it is most
-        # likely either "@pytest_ar" or "@py_builtins" inserted from pytest
-        # during test execution. In either case, ignore this attribute.
-        if beartype_typing_attr_name[0] not in '@_'
-        # Else, this attribute is public and thus unignorable.
-    }
-    OFFICIAL_TYPING_ATTR_NAME_TO_VALUE = {
-        # Public attribute declared by the "typing" submodule.
-        official_typing_attr_name: getattr(
-            official_typing, official_typing_attr_name)
-        # For the basename of each attribute declared by this submodule...
-        for official_typing_attr_name in dir(official_typing)
-        # If this basename is...
-        #
-        # In this case, ignore this attribute.
-        if (
-            # Prefixed by "_" (implying this attribute to be a private rather
-            # than public attribute) *AND*...
-            official_typing_attr_name[0] != '_' and
-            # This attribute was *NOT* erroneously publicized but should have
-            # instead been privatized. Work with me here, CPython developers.
-            official_typing_attr_name not in
-                OFFICIAL_TYPING_ATTR_PUBLIC_BAD_NAMES
-        )
-        # Else, this attribute is public and thus unignorable.
-    }
+    # Set of all soft-deprecated public "typing" attributes only dynamically
+    # defined by the typing.__getattr__() dunder method and thus inaccessible to
+    # the standard introspection performed below.
+    TYPING_ATTR_PUBLIC_DYNAMIC_NAMES = set()
 
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose *VALUES* differ from those declared by the "beartype.typing"
@@ -149,16 +119,7 @@ def test_api_typing() -> None:
         'SupportsRound',
     }
 
-    # Sets of all public attributes exposed by "beartype.typing" and "typing".
-    BEARTYPE_TYPING_ATTR_NAMES = BEARTYPE_TYPING_ATTR_NAME_TO_VALUE.keys()
-    OFFICIAL_TYPING_ATTR_NAMES = OFFICIAL_TYPING_ATTR_NAME_TO_VALUE.keys()
-
-    # Set of all desynchronized public attributes (i.e., exposed in exactly one
-    # of either "beartype.typing" or "typing" but *NOT* both).
-    DIFFERENT_TYPING_ATTR_NAMES = (
-        BEARTYPE_TYPING_ATTR_NAMES ^ OFFICIAL_TYPING_ATTR_NAMES)
-
-    # ..................{ LOCALS ~ version                   }..................
+    # ..................{ MAGIC ~ version                    }..................
     # If the active Python interpreter targets Python >= 3.9 and thus supports
     # PEP 585, add all "typing" attributes deprecated by PEP 585 to this set.
     if IS_PYTHON_AT_LEAST_3_9:
@@ -203,6 +164,81 @@ def test_api_typing() -> None:
             'ValuesView',
         })
 
+        # If the active Python interpreter targets Python >= 3.13...
+        if IS_PYTHON_AT_LEAST_3_13:
+            # Add all soft-deprecated public "typing" attributes only
+            # dynamically defined by the typing.__getattr__() dunder method and
+            # thus inaccessible to the introspection performed above.
+            TYPING_ATTR_PUBLIC_DYNAMIC_NAMES.add(
+                # This is an odd one, frankly. The typing.__getattr__() dunder
+                # method now dynamically exports both the "AsyncContextManager"
+                # and "ContextManager" ABCs. For unknown reasons, the
+                # introspection performed below *ONLY* detects the former as
+                # undefined by the "typing" module. Why? No idea. Clearly, both
+                # are defined. *shrug*
+                'AsyncContextManager',  # <-- no idea, but just go with it
+            )
+
+    # ..................{ LOCALS                             }..................
+    # Set of the names of *ALL* attributes (both public and private) declared by
+    # the standard "typing" module.
+    OFFICIAL_TYPING_ATTR_NAMES = (
+        set(dir(official_typing)) | TYPING_ATTR_PUBLIC_DYNAMIC_NAMES)
+
+    # Dictionary mapping from the basenames of all public attributes declared
+    # by the "beartype.typing" subpackage to those attributes.
+    BEARTYPE_TYPING_ATTR_NAME_TO_VALUE = {
+        # Public attribute declared by the "beartype.typing" submodule.
+        beartype_typing_attr_name: getattr(
+            beartype_typing, beartype_typing_attr_name)
+        # For the basename of each attribute declared by this submodule...
+        for beartype_typing_attr_name in dir(beartype_typing)
+        # If this basename is...
+        if (
+            beartype_typing_attr_name[0] not in {
+                # Prefixed by "_", this is a private rather than public
+                # attribute. 
+                '_',
+                # Prefixed by "@", this is most likely either the "@pytest_ar"
+                # or "@py_builtins" attribute inserted from pytest during test
+                # execution. In either case, ignore this attribute.
+                '@',
+            }
+        # Then ignore this attribute.
+        )
+        # Else, this attribute is public and thus unignorable.
+    }
+
+    # Dictionary mapping from the basenames of all public attributes declared
+    # by the standard "typing" module to those attributes.
+    OFFICIAL_TYPING_ATTR_NAME_TO_VALUE = {
+        # Public attribute declared by the "typing" submodule.
+        official_typing_attr_name: getattr(
+            official_typing, official_typing_attr_name)
+        # For the basename of each attribute declared by this submodule...
+        for official_typing_attr_name in OFFICIAL_TYPING_ATTR_NAMES
+        # If this basename is...
+        if (
+            # Prefixed by "_" (implying this attribute to be a private rather
+            # than public attribute) *AND*...
+            official_typing_attr_name[0] != '_' and
+            # This attribute was *NOT* erroneously publicized but should have
+            # instead been privatized. Work with me here, CPython developers.
+            official_typing_attr_name not in TYPING_ATTR_PUBLIC_BAD_NAMES
+        # Then ignore this attribute.
+        )
+        # Else, this attribute is public and thus unignorable.
+    }
+
+    # Sets of all public attributes exposed by "beartype.typing" and "typing".
+    BEARTYPE_TYPING_ATTR_NAMES = BEARTYPE_TYPING_ATTR_NAME_TO_VALUE.keys()
+    OFFICIAL_TYPING_ATTR_NAMES = OFFICIAL_TYPING_ATTR_NAME_TO_VALUE.keys()
+
+    # Set of all desynchronized public attributes (i.e., exposed in exactly one
+    # of either "beartype.typing" or "typing" but *NOT* both).
+    DIFFERENT_TYPING_ATTR_NAMES = (
+        BEARTYPE_TYPING_ATTR_NAMES ^ OFFICIAL_TYPING_ATTR_NAMES)
+
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose values are identical to those declared by the
     # "beartype.typing" submodule.
@@ -215,7 +251,7 @@ def test_api_typing() -> None:
     # module for the active Python module, which has probably erroneously
     # publicized one or more public attributes. In this case, the names of these
     # attributes *MUST* be manually added to the
-    # "OFFICIAL_TYPING_ATTR_PUBLIC_BAD_NAMES" set defined far above.
+    # "TYPING_ATTR_PUBLIC_BAD_NAMES" set defined far above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Assert that these two modules expose the same number of public attributes.
     # Since a simple assertion statement would produce non-human-readable
