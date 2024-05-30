@@ -11,8 +11,8 @@ dynamically generated Python expressions).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ SUBCLASSES                         }....................
-class IndentLevelToCode(dict):
+# ....................{ PRIVATE ~ subclasses               }....................
+class _IndentLevelToCode(dict):
     '''
     **Indentation cache** (i.e., dictionary mapping from 1-based indentation
     levels to the corresponding indentation string constant).
@@ -69,7 +69,7 @@ class IndentLevelToCode(dict):
         return indent_code
 
 # ....................{ MAPPINGS                           }....................
-INDENT_LEVEL_TO_CODE = IndentLevelToCode()
+INDENT_LEVEL_TO_CODE = _IndentLevelToCode()
 '''
 **Indentation cache singleton** (i.e., global dictionary efficiently mapping
 from 1-based indentation levels to the corresponding indentation string

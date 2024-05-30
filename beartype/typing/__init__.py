@@ -19,44 +19,44 @@ the attributes declared by :mod:`typing`, notable differences include:
   Python 3.8-specific version of the :mod:`typing` module, thus preserving
   forward compatibility with future Python versions. These include:
 
-  * :attr:`typing.AbstractSet`.
-  * :attr:`typing.AsyncContextManager`.
-  * :attr:`typing.AsyncGenerator`.
-  * :attr:`typing.AsyncIterable`.
-  * :attr:`typing.AsyncIterator`.
-  * :attr:`typing.Awaitable`.
-  * :attr:`typing.ByteString`.
-  * :attr:`typing.Callable`.
-  * :attr:`typing.ChainMap`.
-  * :attr:`typing.Collection`.
-  * :attr:`typing.Container`.
-  * :attr:`typing.ContextManager`.
-  * :attr:`typing.Coroutine`.
-  * :attr:`typing.Counter`.
-  * :attr:`typing.DefaultDict`.
-  * :attr:`typing.Deque`.
-  * :attr:`typing.Dict`.
-  * :attr:`typing.FrozenSet`.
-  * :attr:`typing.Generator`.
-  * :attr:`typing.ItemsView`.
-  * :attr:`typing.Iterable`.
-  * :attr:`typing.Iterator`.
-  * :attr:`typing.KeysView`.
-  * :attr:`typing.List`.
-  * :attr:`typing.Mapping`.
-  * :attr:`typing.MappingView`.
-  * :attr:`typing.Match`.
-  * :attr:`typing.MutableMapping`.
-  * :attr:`typing.MutableSequence`.
-  * :attr:`typing.MutableSet`.
-  * :attr:`typing.OrderedDict`.
-  * :attr:`typing.Pattern`.
-  * :attr:`typing.Reversible`.
-  * :attr:`typing.Set`.
-  * :attr:`typing.Tuple`.
-  * :attr:`typing.Type`.
-  * :attr:`typing.Sequence`.
-  * :attr:`typing.ValuesView`.
+  * :obj:`typing.AbstractSet`.
+  * :obj:`typing.AsyncContextManager`.
+  * :obj:`typing.AsyncGenerator`.
+  * :obj:`typing.AsyncIterable`.
+  * :obj:`typing.AsyncIterator`.
+  * :obj:`typing.Awaitable`.
+  * :obj:`typing.ByteString`.
+  * :obj:`typing.Callable`.
+  * :obj:`typing.ChainMap`.
+  * :obj:`typing.Collection`.
+  * :obj:`typing.Container`.
+  * :obj:`typing.ContextManager`.
+  * :obj:`typing.Coroutine`.
+  * :obj:`typing.Counter`.
+  * :obj:`typing.DefaultDict`.
+  * :obj:`typing.Deque`.
+  * :obj:`typing.Dict`.
+  * :obj:`typing.FrozenSet`.
+  * :obj:`typing.Generator`.
+  * :obj:`typing.ItemsView`.
+  * :obj:`typing.Iterable`.
+  * :obj:`typing.Iterator`.
+  * :obj:`typing.KeysView`.
+  * :obj:`typing.List`.
+  * :obj:`typing.Mapping`.
+  * :obj:`typing.MappingView`.
+  * :obj:`typing.Match`.
+  * :obj:`typing.MutableMapping`.
+  * :obj:`typing.MutableSequence`.
+  * :obj:`typing.MutableSet`.
+  * :obj:`typing.OrderedDict`.
+  * :obj:`typing.Pattern`.
+  * :obj:`typing.Reversible`.
+  * :obj:`typing.Set`.
+  * :obj:`typing.Tuple`.
+  * :obj:`typing.Type`.
+  * :obj:`typing.Sequence`.
+  * :obj:`typing.ValuesView`.
 
 Usage
 ----------
@@ -134,10 +134,14 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_MOST_3_15  as _IS_PYTHON_AT_MOST_3_15,
+    IS_PYTHON_AT_MOST_3_13  as _IS_PYTHON_AT_MOST_3_13,
+    IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
     IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9  as _IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_MOST_3_8   as _IS_PYTHON_AT_MOST_3_8,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -158,7 +162,6 @@ from beartype._util.py.utilpyversion import (
 from typing import (
     TYPE_CHECKING as TYPE_CHECKING,
     Any as Any,
-    AnyStr as AnyStr,
     BinaryIO as BinaryIO,
     ClassVar as ClassVar,
     Final as Final,  # pyright: ignore
@@ -189,16 +192,16 @@ from typing import (
     overload as overload,
 )
 
-# ....................{ IMPORTS ~ version                  }....................
-# Import all public attributes of the "typing" module both available under a
-# subset of supported Python versions and *NOT* deprecated by a subsequent
-# Python version under their original names.
+# ....................{ IMPORTS ~ version : at least       }....................
+# Import all public attributes of the "typing" module both available under at
+# least some Python interpreter version *AN* not yet deprecated by a subsequent
+# Python interpreter version under their original names.
 
 #FIXME: mypy is now emitting non-fatal warnings about our failing to import from
 #"typing_extensions", which is both an overly strongly opinionated position for
-#mypy to stake out *AND* a bad opinion at that, because "typing_extensions"
-#fails to comply with the runtime API of the "typing" module and is thus mostly
-#unusable at runtime. These warnings resemble:
+#mypy to stake out *AND* a bad opinion at that, because "typing_extensions" is
+#a third-party package. Ideally, mypy shouldn't be pushing *ANY* third-party
+#packages. These warnings resemble:
 #    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Final` instead
 #    beartype/typing/__init__.py:145: note: See https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-new-additions-to-the-typing-module
 #    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Literal` instead
@@ -254,10 +257,38 @@ if _IS_PYTHON_AT_LEAST_3_10:
                 override as override,  # pyright: ignore
             )
 
+# ....................{ IMPORTS ~ version : at most        }....................
+# Import all public attributes of the "typing" module both available under at
+# most some Python interpreter version (typically due to having been deprecated
+# by a prior Python interpreter version).
+
+# If the active Python interpreter targets at most Python <= 3.15...
+if _IS_PYTHON_AT_MOST_3_15:
+    # "typing.AnyStr" has been scheduled for removal under Python 3.16 by
+    # upstream CPython issue:
+    #     https://github.com/python/cpython/issues/105578
+    from typing import AnyStr as AnyStr
+
+    # If the active Python interpreter targets at most Python <= 3.13...
+    if _IS_PYTHON_AT_MOST_3_13:
+        # Both "collections.abc.ByteString" *AND* "typing.ByteString" have been
+        # scheduled for removal under Python 3.14 by upstream CPython issue:
+        #     https://github.com/python/cpython/issues/91896
+        #
+        # If this interpreter is either performing static type-checking (e.g., via mypy)
+        # *OR* targets Python 3.8 and thus fails to support PEP 585, import the
+        # "typing.ByteString" attribute since deprecated by PEP 585.
+        if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
+            from typing import ByteString as ByteString
+        # Else, the active Python interpreter targets Python >= 3.9 and thus
+        # supports PEP 585. In this case, import the non-deprecated
+        # "collections.abc.ByteString" attribute.
+        else:
+            from collections.abc import ByteString as ByteString
+
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is performing static type-checking (e.g., via mypy), defer
-# to the standard library versions of the family of "Supports*" protocols
-# available under Python < 3.8.
+# to the standard library versions of the family of "Supports*" protocols.
 if TYPE_CHECKING:
     from typing import (  # type: ignore[attr-defined]
         Protocol as Protocol,  # pyright: ignore
@@ -287,16 +318,16 @@ else:
 
 # ....................{ PEP ~ 585                          }....................
 # If this interpreter is either performing static type-checking (e.g., via mypy)
-# *OR* targets Python < 3.9 and thus fails to support PEP 585, import *ALL*
+# *OR* targets Python 3.8 and thus fails to support PEP 585, import *ALL*
 # public attributes of the "typing" module deprecated by PEP 585 as their
 # original values.
 #
 # This is intentionally performed *BEFORE* the corresponding "else:" branch
 # below handling the Python >= 3.9 case. Why? Because mypy. If the order of
-# these two branches is reversed, mypy emits errors under Python < 3.9 when
+# these two branches is reversed, mypy emits errors under Python 3.8 when
 # attempting to subscript any of the builtin types (e.g., "Tuple"): e.g.,
 #     error: "tuple" is not subscriptable  [misc]
-if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
+if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
     from typing import (
         AbstractSet as AbstractSet,
         AsyncContextManager as AsyncContextManager,
@@ -304,7 +335,6 @@ if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
         AsyncIterable as AsyncIterable,
         AsyncIterator as AsyncIterator,
         Awaitable as Awaitable,
-        ByteString as ByteString,
         Callable as Callable,
         ChainMap as ChainMap,
         Collection as Collection,
@@ -337,9 +367,10 @@ if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
         Sequence as Sequence,
         ValuesView as ValuesView,
     )
-# If the active Python interpreter targets Python >= 3.9 and thus supports PEP
-# 585, alias *ALL* public attributes of the "typing" module deprecated by PEP
-# 585 to their equivalent values elsewhere in the standard library.
+# Else, the active Python interpreter targets Python >= 3.9 and thus supports
+# PEP 585. In this case, alias *ALL* public attributes of the "typing" module
+# deprecated by PEP 585 to their equivalent values elsewhere in the standard
+# library.
 else:
     from collections import (
         ChainMap as ChainMap,
@@ -353,7 +384,6 @@ else:
         AsyncIterator as AsyncIterator,
         AsyncGenerator as AsyncGenerator,
         Awaitable as Awaitable,
-        ByteString as ByteString,
         Callable as Callable,
         Collection as Collection,
         Container as Container,

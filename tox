@@ -30,11 +30,11 @@ set -e
 # Note that the "-X dev" option enabling the Python Development Mode (PDM) need
 # *NOT* be explicitly passed to "tox", as the ${PYTHONDEVMODE} shell variable
 # in the "tox.ini" file already enables the PDM.
-# PYTHON_ARGS=( command python3 )
+PYTHON_ARGS=( command python3 )
 # PYTHON_ARGS=( command python3.8 )
 # PYTHON_ARGS=( command python3.9 )
 # PYTHON_ARGS=( command python3.10 )
-PYTHON_ARGS=( command python3.11 )
+# PYTHON_ARGS=( command python3.11 )
 # PYTHON_ARGS=( command pypy3.7 )
 
 # ....................{ FUNCTIONS                          }....................

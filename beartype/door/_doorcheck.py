@@ -157,13 +157,15 @@ def is_subhint(subhint: object, superhint: object) -> bool:
 
     Examples
     --------
-        >>> from beartype.door import is_subhint
-        >>> is_subhint(int, int)
-        True
-        >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
-        True
-        >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
-        False
+    .. code-block:: pycon
+
+       >>> from beartype.door import is_subhint
+       >>> is_subhint(int, int)
+       True
+       >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
+       True
+       >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
+       False
     '''
 
     # Avoid circular import dependencies.
@@ -278,11 +280,13 @@ def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
 
     Examples
     --------
-        >>> from beartype.door import is_bearable
-        >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
-        True
-        >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
-        False
+    .. code-block:: pycon
+
+       >>> from beartype.door import is_bearable
+       >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
+       True
+       >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
+       False
     '''
 
     # Memoized low-level type-checking tester function returning true only if

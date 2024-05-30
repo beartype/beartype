@@ -362,6 +362,12 @@ def make_check_expr(
     hints_meta_index_last = -1
 
     # ..................{ LOCALS ~ func : code               }..................
+    #FIXME: [SPEED] Consider refactoring this into a "collections.deque[str]"
+    #data structure instead -- assuming that calling the deque.append() method
+    #is actually faster than performing string concatenations as we currently
+    #do, anyway. In theory, a deque *SHOULD* be substantially faster -- but
+    #everything depends on Python's internal implementation, really.
+
     # Python code snippet type-checking the current pith against the currently
     # visited hint (to be appended to the "func_wrapper_code" string).
     func_curr_code: str = None  # type: ignore[assignment]
