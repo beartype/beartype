@@ -27,6 +27,7 @@ def test_hint_signs_origin_isinstanceable_args() -> None:
     type hint factories published by the :mod:`typing` module.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     import typing
     from beartype._data.hint.pep.sign.datapepsignset import (
@@ -36,6 +37,7 @@ def test_hint_signs_origin_isinstanceable_args() -> None:
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
+    # ....................{ LOCALS                         }....................
     # Tuple of 2-tuples "(args_len, args_signs)", where:
     # * "args_len" is the number of arguments accepted by this kind of type hint
     #   factory originating from an isinstanceable origin type.
@@ -48,11 +50,14 @@ def test_hint_signs_origin_isinstanceable_args() -> None:
         (3, HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3),
     )
 
+    # ....................{ ASSERTS                        }....................
     # For each number of arguments and set of signs uniquely identifying type
     # hint factories subscriptable by this number of arguments...
     for args_len_belief, args_signs in ARGS_LEN_TO_SIGNS:
         # For each such sign...
         for args_sign in args_signs:
+            # print(f'Inspecting {args_len_belief}-argument sign {args_sign}...')
+
             # Type hint factory published by the "typing" module with this name.
             args_factory = getattr(typing, args_sign.name)
 
