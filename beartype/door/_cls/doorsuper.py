@@ -146,7 +146,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             object
         )
 
-        # Tuple of all low-level child type hints of this hint.
+        # Tuple of all low-level child type hints of this hint *AFTER* defining
+        # all other instance variables. Deferring this call allows subclass
+        # _make_args() implementations to access these instance variables.
         self._args = self._make_args()
 
     # ..................{ DUNDERS                            }..................

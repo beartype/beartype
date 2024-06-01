@@ -413,14 +413,11 @@ def resolve_hint(
                 # Ergo, the local scopes for parent classes of this class
                 # (including the root decorated class) are irrelevant.
                 cls_curr_locals = get_type_locals(
-                    cls=cls_curr,
-                    exception_cls=exception_cls,
-                )
+                    cls=cls_curr, exception_cls=exception_cls)
 
-                # Forcefully merge this local scope into the current
-                # local scope, implicitly overwriting any locals of the
-                # same name. Class locals necessarily assume lexical
-                # precedence over:
+                # Forcefully merge this local scope into the current local
+                # scope, implicitly overwriting any locals of the same name.
+                # Class locals necessarily assume lexical precedence over:
                 # * These classes themselves.
                 # * Locals defined by higher-level parent classes.
                 # * Locals defined by closures defining these classes.

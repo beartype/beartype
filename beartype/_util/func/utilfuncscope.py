@@ -20,6 +20,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._util.utilobject import get_object_basename_scoped
+from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
@@ -215,16 +216,16 @@ def get_func_locals(
 
     # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
-    from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
     from beartype._util.func.utilfuncframe import iter_frames
     from beartype._util.func.utilfunctest import is_func_nested
+    from beartype._util.module.utilmodget import get_object_module_name_or_none
 
     # ..................{ NOOP                               }..................
     # Fully-qualified name of the module declaring the passed callable if that
     # callable was physically declared by an on-disk module *OR* "None"
     # otherwise (i.e., if that callable was dynamically declared in-memory).
-    func_module_name = func.__module__
+    func_module_name = get_object_module_name_or_none(func)
 
     # Note that we intentionally return the local scope for this wrapper rather
     # than wrappee callable, as local scope can *ONLY* be obtained by
@@ -493,6 +494,34 @@ def get_func_locals(
             # scope of this nested callable is *EXACTLY* the local scope of the
             # body of this parent callable. Well, isn't that special?
             func_scope = func_frame.f_locals
+
+            # If this local scope is *NOT* a "dict" instance, coerce this local
+            # scope into a "dict" instance. Why? Several justifiable reasons:
+            # * This getter is annotated as returning a "LexicalScope", which is
+            #   currently just a readable alias for "DictStrToAny", which is
+            #   itself an efficiency alias for "Dict[Str, object]". Ergo, static
+            #   type-checkers expect this getter to return "dict" instances.
+            # * Under Python <= 3.12, the "func_frame.f_locals" instance
+            #   variable actually is a "dict" instance.
+            # * Under Python >= 3.12, the "func_frame.f_locals" instance
+            #   variable actually is instead a "mappingproxy" instance. Although
+            #   interchangeable for many purposes, "dict" and "mappingproxy"
+            #   instances are *NOT* perfectly interchangeable. In particular,
+            #   callers of this function frequently pass this local scope to
+            #   the dict.update() method -- which expects the passed mapping to
+            #   also be a "dict" instance: e.g.,
+            #       cls_curr_locals = get_type_locals(
+            #           cls=cls_curr, exception_cls=exception_cls)
+            #   >   func_locals.update(cls_curr_locals)
+            #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
+            #   Why? No idea. Ideally, the dict.update() method would accept
+            #   arbitrary mappings -- but it doesn't. Since it doesn't, we have
+            #   *NO* recourse but to preserve forward compatibility with future
+            #   Python versions by coercing non-"dict" to "dict" instances here
+            #   on behalf of the caller. It is what it is. We sigh! *sigh*
+            if not isinstance(func_scope, dict):
+                func_scope = dict(func_scope)
+            # Else, this local scope is already a "dict" instance.
 
             # Halt iteration.
             break

@@ -232,8 +232,8 @@ def test_decor_type_descriptor_builtin() -> None:
 
     # Assert this class method docstring has been preserved as is.
     assert OrDidASeaOfFire.envelop_once_this_silent_snow.__doc__ is not None
-    assert OrDidASeaOfFire.envelop_once_this_silent_snow.__doc__.startswith('''
-            Arbitrary class method''')
+    assert 'Arbitrary class method decorated first by the builtin' in (
+       OrDidASeaOfFire.envelop_once_this_silent_snow.__doc__)
 
     # Assert this static method accessed on both this instance and this class
     # when passed a valid parameter returns the expected value.
@@ -248,10 +248,8 @@ def test_decor_type_descriptor_builtin() -> None:
         OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__ is not
         None
     )
-    assert (
-        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__.startswith('''
-            Arbitrary static method''')
-    )
+    assert 'Arbitrary static method decorated first by the builtin' in (
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__)
 
     # Assert this property getter method accessed on this instance returns the
     # expected value.
@@ -270,8 +268,8 @@ def test_decor_type_descriptor_builtin() -> None:
 
     # Assert this property method docstring has been preserved as is.
     assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__ is not None
-    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__.startswith('''
-            Arbitrary property getter method''')
+    assert 'Arbitrary property getter method decorated first by the builtin' in (
+        OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__)
 
     # ....................{ FAIL                           }....................
     # Assert this static method accessed on both this instance and this class

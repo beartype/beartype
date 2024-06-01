@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) testers** (i.e.,
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) testers** (i.e.,
 callables testing and validating :class:`beartype.door.TypeHint` instances).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -25,7 +25,7 @@ def die_unless_typehint(obj: object) -> None:
         Arbitrary object to be validated.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeDoorException
         If this object is *not* a type hint wrapper.
     '''

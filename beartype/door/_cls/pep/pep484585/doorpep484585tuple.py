@@ -12,19 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import _TypeHintSubscripted
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.typing import Any
 
 # ....................{ SUBCLASSES                         }....................
 # FIXME: Document all public and private attributes of this class, please.
-class _TupleTypeHint(_TypeHintSubscripted):
+class _TupleTypeHint(TypeHint):
     '''
     **Tuple type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Tuple[...]`` type hint).
-
-    Attributes (Private)
-    --------
     '''
 
     # ..................{ INITIALIZERS                       }..................

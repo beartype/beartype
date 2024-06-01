@@ -12,48 +12,32 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import abstractmethod
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.roar import BeartypeDoorException
-# from beartype.typing import (
-#     Any,
-# )
-# from beartype._util.cache.utilcachecall import property_cached
-# from beartype._util.cls.utilclstest import is_type_subclass
+from beartype.roar import BeartypeDoorPepArgsLenException
+from beartype._data.hint.pep.sign.datapepsignmap import (
+    HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Excise us up, please. Globally replace all instances of
-#"_TypeHintSubscripted" with simply "TypeHint".
-class _TypeHintSubscripted(TypeHint):
+class TypeHintGeneric(TypeHint):
     '''
-    **Subscripted type hint wrapper** (i.e., high-level object encapsulating a
-    low-level parent type hint subscripted (indexed) by one or more equally
-    low-level children type hints).
+    **Generic type hint wrapper** (i.e., high-level object encapsulating a
+    low-level subclass of the :pep:`484`-compliant :class:`typing.Generic`
+    superclass, :pep:`544`-compliant :class:`typing.Protocol` superclass, or any
+    :pep:`585`-compliant subscripted type hint (e.g., ``class
+    GenericListOfStrs(list[str]): ...``).
     '''
 
     pass
 
-# ....................{ SUBCLASSES ~ isinstanceable        }....................
-class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
+# ....................{ PRIVATE ~ subclasses               }....................
+class _TypeHintOriginIsinstanceable(TypeHint):
     '''
-    **Isinstanceable type hint wrapper** (i.e., high-level object
-    encapsulating a low-level parent type hint subscripted (indexed) by exactly
-    one or more low-level child type hints originating from isinstanceable
-    classes such that *all* objects satisfying those hints are instances of
-    those class).
+    **Isinstanceable type hint wrapper** (i.e., high-level object encapsulating
+    a low-level parent type hint that both **(A)** originates from an
+    isinstanceable class such that *all* objects satisfying this hint are
+    instances of that class and **(B)** is subscripted (indexed) by one or more
+    low-level child type hints).
     '''
-
-    # ..................{ PRIVATE ~ properties               }..................
-    @property
-    @abstractmethod
-    def _args_len_expected(self) -> int:
-        '''
-        Number of child type hints that this instance of a concrete subclass of
-        this abstract base class (ABC) is expected to be subscripted (indexed)
-        by.
-        '''
-
-        pass
 
     # ..................{ PRIVATE ~ factories                }..................
     def _make_args(self) -> tuple:
@@ -62,8 +46,32 @@ class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
         # (indexing) the low-level parent type hint wrapped by this wrapper.
         args = super()._make_args()
 
+        # Argument length range (i.e., "range" object covering the minimum and
+        # maximum number of child type hints that may subscript this low-level
+        # parent type hint factory) if this factory has been associated with
+        # such a range *OR* "None" otherwise (i.e., if this factory has *NOT*
+        # been associated with such a range).
+        args_len_range = HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.get(
+            self._hint_sign)  # type: ignore[arg-type]
+
+        # If this factory has *NOT* been associated with such a range, raise an
+        # exception. Note that this edge case should *NEVER occur. ----gulp----
+        if args_len_range is None:  # pragma: no cover
+            raise BeartypeDoorPepArgsLenException(  # pragma: no cover
+                f'Type hint {repr(self._hint)} argument length range unknown.')
+        # Else, this factory has been associated with such a range.
+
+        #FIXME: Consider actually testing this. This *IS* technically
+        #testable and should thus *NOT* be marked as "pragma: no cover".
+
         # If this hint was subscripted by an unexpected number of child hints...
-        if len(args) != self._args_len_expected:
+        #
+        # Note that this edge case commonly occurs with PEP 585-compliant type
+        # hints (e.g., "list[str]"), which fail to validate their number of
+        # child type hints: e.g.,
+        #     >>> list[str, int]
+        #     list[str, int]  # <-- wat
+        if len(args) not in args_len_range:  # pragma: no cover
             #FIXME: This seems sensible, but currently provokes test failures.
             #Let's investigate further at a later time, please.
             # # If this hint was subscripted by *NO* parameters, comply with PEP
@@ -72,17 +80,45 @@ class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
             # if len(self._args) == 0:
             #     return (Any,)*self._args_len_expected
 
-            #FIXME: Consider raising a less ambiguous exception type, yo.
-            #FIXME: Consider actually testing this. This *IS* technically
-            #testable and should thus *NOT* be marked as "pragma: no cover".
-
-            # In most cases it will be hard to reach this exception, since most
-            # of the typing library's subscripted type hints will raise an
-            # exception if constructed improperly.
-            raise BeartypeDoorException(  # pragma: no cover
-                f'{type(self)} type must have {self._args_len_expected} '
-                f'argument(s), but got {len(args)}.'
+            # Exception message to be raised.
+            exception_message = (
+                f'PEP 585 type hint {repr(self._hint)} '
+                f'not subscripted (indexed) by '
             )
+
+            # Minimum and maximum number of arguments accepted by this factory.
+            #
+            # Note that the "stop" instance variable defined by "range" objects
+            # is exclusive rather than inclusive. Substracting 1 from that
+            # yields the inclusive maximum of this range.
+            ARGS_LEN_MIN = args_len_range.start
+            ARGS_LEN_MAX = args_len_range.stop - 1
+
+            # If this factory accepts a constant (rather than variable) number
+            # of child hints, raise a human-readable exception denoting this.
+            if ARGS_LEN_MIN == ARGS_LEN_MAX:
+                # Human-readable noun describing the grammatically correct
+                # plurality of the number of expected child type hints. English!
+                exception_noun = (
+                    'child type hint' if len(args) == 1 else 'child type hints')
+
+                # Append this number to this exception message.
+                exception_message += (
+                    f'{ARGS_LEN_MAX} {exception_noun} (i.e., '
+                    f'subscripted by {len(args)} != '
+                    f'{ARGS_LEN_MAX} child type hints).'
+                )
+            # Else, this factory accepts a variable number of child hints. Raise
+            # a human-readable exception denoting this.
+            else:
+                # Append this number to this exception message.
+                exception_message += (
+                    f'[{ARGS_LEN_MIN}, {ARGS_LEN_MAX}] arguments (i.e., '
+                    f'subscripted by {len(args)} child type hints).'
+                )
+
+            # Raise this exception.
+            raise BeartypeDoorPepArgsLenException(exception_message)
         # Else, this hint was subscripted by the expected number of child hints.
 
         # Return these child hints.
@@ -126,43 +162,3 @@ class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
             for this_child, that_child in zip(
                 self._args_wrapped_tuple, other._args_wrapped_tuple)
         )
-
-
-class _TypeHintOriginIsinstanceableArgs1(_TypeHintOriginIsinstanceable):
-    '''
-    **1-argument isinstanceable type hint wrapper** (i.e., high-level object
-    encapsulating a low-level parent type hint subscripted (indexed) by exactly
-    one low-level child type hint originating from an isinstanceable class such
-    that *all* objects satisfying that hint are instances of that class).
-    '''
-
-    @property
-    def _args_len_expected(self) -> int:
-        return 1
-
-
-class _TypeHintOriginIsinstanceableArgs2(_TypeHintOriginIsinstanceable):
-    '''
-    **2-argument isinstanceable type hint wrapper** (i.e., high-level object
-    encapsulating a low-level parent type hint subscripted (indexed) by exactly
-    two low-level child type hints originating from isinstanceable classes such
-    that *all* objects satisfying those hints are instances of those classes).
-    '''
-
-    @property
-    def _args_len_expected(self) -> int:
-        return 2
-
-
-class _TypeHintOriginIsinstanceableArgs3(_TypeHintOriginIsinstanceable):
-    '''
-    **3-argument isinstanceable type hint wrapper** (i.e., high-level object
-    encapsulating a low-level parent type hint subscripted (indexed) by exactly
-    three low-level child type hints originating from isinstanceable classes
-    such that *all* objects satisfying those hints are instances of those
-    classes).
-    '''
-
-    @property
-    def _args_len_expected(self) -> int:
-        return 3

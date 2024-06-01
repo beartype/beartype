@@ -156,13 +156,14 @@ def get_hint_pep484585_args(
 
         # Human-readable noun describing the grammatically correct plurality of
         # the number of expected child type hints. English! Why!?!?
-        exception_noun = 'argument' if args_len == 1 else 'arguments'
+        exception_noun = (
+            'child type hint' if args_len == 1 else 'child type hints')
 
         # Raise an exception.
         raise BeartypeDecorHintPep585Exception(
             f'{exception_prefix}PEP 585 type hint {repr(hint)} '
             f'not subscripted (indexed) by {args_len} {exception_noun} (i.e., '
-            f'subscripted by {len(hint_args)} != {args_len} arguments).'
+            f'subscripted by {len(hint_args)} != {args_len} child type hints).'
         )
     # Else, this hint is subscripted by the expected number of child type hints.
 

@@ -13,12 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import _TypeHintSubscripted
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.typing import Iterable
 
 # ....................{ SUBCLASSES                         }....................
-class UnionTypeHint(_TypeHintSubscripted):
+class UnionTypeHint(TypeHint):
     '''
     **Union type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`-compliant :attr:`typing.Optional` or

@@ -12,12 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import _TypeHintSubscripted
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.typing import Tuple
 
 # ....................{ SUBCLASSES                         }....................
-class LiteralTypeHint(_TypeHintSubscripted):
+class LiteralTypeHint(TypeHint):
     '''
     **Literal type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`586`-compliant :attr:`typing.Literal` type hint).

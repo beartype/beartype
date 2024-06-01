@@ -20,8 +20,8 @@ from beartype.roar import (
     BeartypeCallHintReturnViolation,
     BeartypeDoorHintViolation,
 )
-from beartype.roar._roarwarn import (
-    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
+# from beartype.roar._roarwarn import (
+#     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (

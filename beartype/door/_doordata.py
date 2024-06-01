@@ -12,17 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import (
-    _TypeHintOriginIsinstanceableArgs1,
-    _TypeHintOriginIsinstanceableArgs2,
-    _TypeHintOriginIsinstanceableArgs3,
-    _TypeHintSubscripted,
-)
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype.door._cls.doorsub import TypeHintGeneric
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
 from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
+from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
@@ -48,7 +43,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    # get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
@@ -65,13 +59,13 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         Low-level type hint to be inspected.
 
     Returns
-    ----------
+    -------
     Type[TypeHint]
         Concrete subclass of the abstract :mod:`TypeHint` superclass handling
         this hint.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeDoorNonpepException
         If this API does *not* currently support the passed hint.
     beartype.roar.BeartypeDecorHintPepSignException
@@ -147,7 +141,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignAnnotated: AnnotatedTypeHint,
     HintSignCallable:  CallableTypeHint,
-    HintSignGeneric:   _TypeHintSubscripted,
+    HintSignGeneric:   TypeHintGeneric,
     HintSignLiteral:   LiteralTypeHint,
     HintSignNewType:   NewTypeTypeHint,
     HintSignTuple:     _TupleTypeHint,
@@ -175,22 +169,16 @@ def _init() -> None:
     '''
 
     # Isolate function-specific imports.
-    from beartype._data.hint.pep.sign.datapepsignset import (
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
-        HINT_SIGNS_UNION,
-    )
+    from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
+    from beartype._data.hint.pep.sign.datapepsignmap import (
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
+    from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 
-    # Fully initialize the "HINT_SIGN_TO_TYPEHINT" dictionary declared above.
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
-        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs1
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
-        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs2
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
-        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs3
-    for sign in HINT_SIGNS_UNION:
-        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = UnionTypeHint
+    # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_CLS" global dictionary.
+    for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.keys():
+        _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = _TypeHintOriginIsinstanceable
+    for hint_sign in HINT_SIGNS_UNION:
+        _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = UnionTypeHint
 
     # For each concrete "TypeHint" subclass registered with this dictionary
     # (*AFTER* initializing this dictionary)...

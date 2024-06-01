@@ -12,11 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import _TypeHintSubscripted
-from beartype.door._cls.doorsuper import (
-    TypeHint,
-    # T,
-)
+from beartype.door._cls.doorsuper import TypeHint
 from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     Any,
@@ -33,7 +29,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
 # ....................{ SUBCLASSES                         }....................
-class CallableTypeHint(_TypeHintSubscripted):
+class CallableTypeHint(TypeHint):
     '''
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).

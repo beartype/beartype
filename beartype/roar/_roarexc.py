@@ -991,7 +991,7 @@ class BeartypeDoorHintViolation(BeartypeCallHintViolation):
 
     pass
 
-# ....................{ API ~ door : pep                   }....................
+# ....................{ API ~ door : non-pep               }....................
 class BeartypeDoorNonpepException(BeartypeDoorException):
     '''
     **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-noncompliant type
@@ -1005,7 +1005,7 @@ class BeartypeDoorNonpepException(BeartypeDoorException):
 
     pass
 
-
+# ....................{ API ~ door : pep                   }....................
 class BeartypeDoorPepException(BeartypeDoorException):
     '''
     **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
@@ -1015,6 +1015,21 @@ class BeartypeDoorPepException(BeartypeDoorException):
     and classes on receiving an **invalid PEP-compliant type hint** (i.e.,
     type hint complying with PEP standards currently supported by the
     :mod:`beartype.door` API but otherwise invalid for various reasons).
+    '''
+
+    pass
+
+
+class BeartypeDoorPepArgsLenException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
+    argument length exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **improperly subscripted PEP-compliant type
+    hint** (i.e., type hint complying with PEP standards currently supported by
+    the :mod:`beartype.door` API but otherwise invalid due to having been
+    subscripted by an invalid number of child type hints).
     '''
 
     pass
