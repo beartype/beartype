@@ -12,55 +12,252 @@
 # Welcome to project distribution hell, where only twenty distinct files in
 # twenty distinct formats suffice to distribute a single project.
 #
-# --------------------( MOTIVATION                         )--------------------
-# This configuration is now required in various edge cases to avoid fatal errors
-# under Python's modern build toolchain. Notably, "pip" now refuses to install
-# this project under containerized environments (e.g., Docker, which the popular
-# documentation host ReadTheDocs (RTD) leverages) with extremely verbose and
-# thus mostly unreadable fatal errors resembling:
-#     Processing /home/docs/checkouts/readthedocs.org/user_builds/beartype/checkouts/latest
-#       Preparing metadata (setup.py): started
-#       Preparing metadata (setup.py): finished with status 'error'
-#       error: subprocess-exited-with-error
+# --------------------( USAGE                              )--------------------
+# Common Hatch commands include:
 #
-#       × python setup.py egg_info did not run successfully.
-#       │ exit code: 1
-#       ╰─> [1 lines of output]
-#           ERROR: Can not execute `setup.py` since setuptools is not available in the build environment.
-#           [end of output]
+#     # Validate this file. *ALWAYS* run this command after modifying this file.
+#     $ hatch project metadata | less
 #
-#       note: This error originates from a subprocess, and is likely not a problem with pip.
-#     error: metadata-generation-failed
-#
-#     × Encountered error while generating package metadata.
-#     ╰─> See above for output.
-#
-#     note: This is an issue with the package mentioned above, not pip.
-#     hint: See above for details.
+#     # Build both a source (tarball) *AND* binary distribution (wheel).
+#     $ hatch build -t sdist -t wheel
 #
 # --------------------( SEE ALSO                           )--------------------
-# * https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
-#   Official "setuptools" documentation on integrating "setuptools" with PEP 621
-#   (i.e., this file).
 # * https://snarky.ca/clarifying-pep-518
 #   "Clarifying PEP 518 (a.k.a. pyproject.toml)", a human-readable article from
 #   one of the principal authors of the "pyproject.toml" standard.
 
-# ....................{ BUILDING                           }....................
+# ....................{ PEP 621                            }....................
+# PEP 621-compliant section generically defining project metadata in a build
+# tool-agnostic manner.
+[project]
+
+# Fully-qualified name of this project's top-level Python package.
+name = "beartype"
+
+# Human-readable single-line synopsis of this project.
+#
+# Note that, by PyPI design, this string *MUST*:
+# * Not span multiple lines or paragraphs.
+# * Prefix each newline in this string with a continuation character, which then
+#   forces line wrapping.
+description = """\
+Unbearably fast runtime type-checking in pure Python.
+"""
+
+# Relative filename of the top-level file describing project licensing.
+#
+# Note that PEP 621 prohibits this table (i.e., dictionary) from defining both
+# the "file" and "text" keys (e.g., 'text = "MIT"'). While defining both would
+# certainly be preferable, the "file" key takes precedence over the "text" key.
+license = { file = "LICENSE" }
+
+# Relative filename of the top-level file describing this project. Read it and
+# then weep as your eyes bleed! \o/
+readme = "README.rst"
+
+# List of all lowercase alphabetic keywords synopsising this project.
+#
+# These keywords may be arbitrarily selected so as to pretend to improve search
+# engine optimization (SEO). In actuality, they do absolutely nothing.
+keywords = [
+    "python",
+    "annotations",
+    "type checking",
+    "type hints",
+]
+
+# List of all PyPI-specific trove classifier strings synopsizing this project.
+# Each such string *MUST* contain either two or three " :: " substrings
+# delimiting human-readable capitalized English words formally recognized by the
+# "distutils"-specific register() command. See also:
+# * https://pypi.org/classifiers
+#   Plaintext list of all trove classifier strings recognized by PyPI.
+classifiers = [
+    # PyPI-specific version type. The number specified here is a magic constant
+    # with no relation to this package's version numbering scheme. *sigh*
+    "Development Status :: 5 - Production/Stable",
+
+    # Miscellaneous metadata.
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
+
+# List of all principal authors of this package as a list of tables (i.e.,
+# dictionaries) defining both the names and e-mail addresses of these authors.
+#
+# These authors should be thought of as the corresponding authors of a paper.
+# Ideally, correspondence should be redirected to these authors.
+authors = [
+    { name="Cecil Curry", email="leycec@gmail.com" },
+]
+
+# List of all secondary authors of this package as a list of tables (i.e.,
+# dictionaries) defining both the names and e-mail addresses of these authors.
+#
+# These authors significantly contributed to the development of this project,
+# but lack the "expertise" [read: "they're too smart for this"] to respond to
+# external inquiries. Ideally, correspondence should *NOT* be redirected to
+# these authors.
+# maintainers = [
+#     { name="Cecil Curry", email="leycec@gmail.com" },  # <-- it's me all the way down, huh?
+# ]
+
+# ....................{ PEP 621 ~ dependencies             }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Changes to this Python interpreter version specifier *MUST* be
+# synchronized with:
+# * Continuous integration (CI) test matrices, including:
+#   * The top-level "tox.ini" file.
+#   * The "jobs/tests/strategy/matrix/{tox-env,include/python-version}"
+#     settings of the GitHub Actions-specific
+#     ".github/workflows/python_test.yml" file.
+# * Front-facing documentation (e.g., "doc/src/pep.rst").
+# * Signs declared by the private "beartype._data.hint.pep.datapepsign"
+#   submodule, which *MUST* be synchronized against the "__all__" dunder list
+#   global of the "typing" module bundled with the most recent CPython release.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Minimum Python interpreter version required by this package.
+#
+# As a tradeoff between backward compatibility, security, and maintainability,
+# this package strongly attempts to preserve compatibility with the first stable
+# release of the oldest version of CPython still under active development.
+# Obsolete and insecure versions of CPython that have reached their official End
+# of Life (EoL) (e.g., Python 3.7) are explicitly unsupported.
+requires-python = ">=3.8"
+
+# ....................{ PEP 621 ~ urls                     }....................
+# Table (i.e., dictionary) mapping from the PyPI-recognized name of each
+# relevant project URL to that URL.
+[project.urls]
+Docs =     "https://beartype.readthedocs.io"
+GitHub =   "https://github.com/beartype/beartype"
+Forums =   "https://github.com/beartype/discussions"
+Issues =   "https://github.com/beartype/beartype/issues"
+Releases = "https://github.com/beartype/beartype/releases"
+
+# ....................{ PEP 517                            }....................
+# PEP 517-compliant section declaring the third-party build tools required to
+# install this "pyproject.toml"-based project.
 [build-system]
 
-# List of all Python packages required to build (i.e., install) this project
-# from both codebase tarballs and binary wheels.
+# List of all third-party Python packages required to build (i.e., install) this
+# project from both codebase tarballs and binary wheels.
+requires = ["hatchling >=1.14.0"]
+
+# Fully-qualified name of the Python submodule of a third-party Python package
+# listed above to be imported at runtime by third-party Python package managers
+# (e.g., "pip") to build this project.
+build-backend = "hatchling.build"
+
+# ....................{ NON-PEP ~ hatch                    }....................
+# PEP-noncompliant section declaring Hatch-specific version settings. See also:
+# * Official documentation for this section.
+#   https://hatch.pypa.io/latest/version
+[tool.hatch.version]
+
+# Relative filename of the Python submodule defining either a PEP 8-compliant
+# "__version__" dunder global *OR* a PEP-noncompliant "VERSION" global, which
+# Hatch then statically parses to obtain the current version of this project.
+path = "beartype/__init__.py"
+
+# ....................{ NON-PEP ~ hatch : path             }....................
+# PEP-noncompliant section declaring Hatch-specific build settings. Note that:
+# * Hatch silently ignores *ALL* pathnames matched by ".gitignore" files
+#   distributed throughout this codebase.
+[tool.hatch.build]
+
+# PEP-noncompliant section declaring Hatch-specific build settings when
+# building binary distributions (e.g., wheels).
+[tool.hatch.build.targets.wheel]
+
+# Whitelist of one or more Bash-style glob expressions matching the relative
+# pathnames of all paths to be included in binary distributions (e.g., wheels)
+# but *NOT* source distributions (e.g., tarballs) created by Hatch.
+include = [
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with glob expressions for source distributions below.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's package directory.
+    "/beartype/**/*.py",
+
+    # Relative dirname of this project's data subdirectory (i.e., unimportable
+    # subdirectory bundled with this project containing *ONLY* Python-agnostic
+    # media files).
+    "/beartype/data/",
+]
+
+# PEP-noncompliant section declaring Hatch-specific build settings when
+# building source distributions (e.g., tarballs).
+[tool.hatch.build.targets.sdist]
+
+# Whitelist of one or more Bash-style glob expressions matching the relative
+# pathnames of all paths to be included in source distributions (e.g., tarballs)
+# but *NOT* binary distributions (e.g., wheels) created by Hatch.
 #
 # Note that:
-# * Setuptools 50.0 is fundamentally broken in numerous ways (including ways
-#   that both break and do not break installation of this project) and *MUST*
-#   thus be blacklisted. See also:
-#   https://github.com/pypa/setuptools/issues/2350
-#   https://github.com/pypa/setuptools/issues/2352
-#   https://github.com/pypa/setuptools/issues/2353
-requires = ['setuptools !=50.0']
+# * This setting is the Hatch-specific equivalent of the setuptools-specific
+#   "MANIFEST.in" file, which serves a similar (albeit non-standard, poorly
+#   documented, and obfuscatory) purpose in the setuptools community.
+# * Hatch *ALWAYS* implicitly includes at least these files in source
+#   distributions:
+#   * ".gitignore".
+#   * "AUTHORS".
+#   * "LICENSE".
+#   * "README*".
+#   * "pyproject.toml".
+#
+# Nonetheless, explicit is better than implicit. Trusting all future versions of
+# Hatch to preserve this contract is a bridge too far for us. Ergo, we
+# explicitly match *ALL* paths to be included in source distributions here.
+include = [
+    # Relative basenames of all requisite files residing in *ANY* directory.
+    ".gitignore",
 
-# Explicitly notify "pip" that we leverage the top-level "setuptools"-backed
-# "setup.py" script as our installation infrastructure.
-build-backend = 'setuptools.build_meta'
+    # Relative basenames of all requisite top-level installation-time files.
+    "/LICENSE",
+    "/README.rst",
+    "/conftest.py",
+    "/mypy",
+    "/mypy.ini",
+    "/pyproject.toml",
+    "/pyright",
+    "/pyrightconfig.json",
+    "/pytest",
+    "/pytest.ini",
+    "/sphinx",
+    "/tox",
+    "/tox.ini",
+    "/.codecov.yml",
+    "/.coveragerc",
+    "/.readthedocs.yaml",
+
+    # Relative dirnames of all requisite top-level installation-time
+    # directories, including:
+    # * All files documenting this project.
+    "/doc/Makefile",
+    "/doc/*.bat",
+    "/doc/*.rst",
+    "/doc/src",
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's test suite.
+    "/beartype_test/**/*.py",
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with glob expressions for binary distributions above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Glob expression recursively matching *ALL* Python submodules in this
+    # project's package directory.
+    "/beartype/**/*.py",
+]
+

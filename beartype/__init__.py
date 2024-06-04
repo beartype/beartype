@@ -34,59 +34,55 @@ constants are commonly inspected (and thus expected) by external automation.
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ IMPORTS ~ meta                     }....................
-# For PEP 8 compliance, versions constants expected by external automation are
-# imported under their PEP 8-mandated names.
-from beartype.meta import VERSION as __version__
-from beartype.meta import VERSION_PARTS as __version_info__
-
 # ....................{ IMPORTS ~ non-meta                 }....................
-from sys import modules as _modules
+# Publicize the private @beartype._decor.beartype decorator as
+# @beartype.beartype, preserving all implementation details as private.
+from beartype._decor.decormain import (
+    beartype as beartype)
 
-# If this submodule is being imported at install time from our top-level
-# "setup.py" script, avoid implicitly importing from *ANY* "beartype" submodule
-# other than the "beartype.meta" submodule. By sheer force of will,
-# "beartype.meta" is the *ONLY* "beartype" submodule guaranteed to be safely
-# importable at install time. All other "beartype" submodules should be assumed
-# to be unsafe due to potentially importing one or more optional runtime
-# dependencies yet to be installed (e.g., "typing_extensions").
-#
-# See "setup.py" for gruesome details you do *NOT* want to know about.
-if 'beartype.__is_installing__' not in _modules:
-    # Publicize the private @beartype._decor.beartype decorator as
-    # @beartype.beartype, preserving all implementation details as private.
-    from beartype._decor.decormain import (
-        beartype as beartype)
+# Publicize all top-level configuration attributes required to configure the
+# @beartype.beartype decorator.
+from beartype._conf.confcls import (
+    BeartypeConf as BeartypeConf)
+from beartype._conf.confenum import (
+    BeartypeDecorationPosition as BeartypeDecorationPosition,
+    BeartypeStrategy as BeartypeStrategy,
+    BeartypeViolationVerbosity as BeartypeViolationVerbosity,
+)
+from beartype._conf.confoverrides import (
+    BeartypeHintOverrides as BeartypeHintOverrides)
 
-    # Publicize all top-level configuration attributes required to configure the
-    # @beartype.beartype decorator.
-    from beartype._conf.confcls import (
-        BeartypeConf as BeartypeConf)
-    from beartype._conf.confenum import (
-        BeartypeDecorationPosition as BeartypeDecorationPosition,
-        BeartypeStrategy as BeartypeStrategy,
-        BeartypeViolationVerbosity as BeartypeViolationVerbosity,
-    )
-    from beartype._conf.confoverrides import (
-        BeartypeHintOverrides as BeartypeHintOverrides)
-# Else, this submodule is *NOT* being imported at install time.
-
-# Delete the temporarily imported "sys.modules" global for ultimate safety.
-del _modules
-
-# ....................{ GLOBALS                           }....................
-# Document all global variables imported into this namespace above.
-
-__version__ = __version__
+# ....................{ GLOBALS                            }....................
+__version__ = '0.19.0'
 '''
 Human-readable package version as a ``.``-delimited string.
 
 For PEP 8 compliance, this specifier has the canonical name ``__version__``
 rather than that of a typical global (e.g., ``VERSION_STR``).
+
+Note that this is the canonical version specifier for this package. Indeed, the
+top-level ``pyproject.toml`` file dynamically derives its own ``version`` string
+from this string global.
+
+See Also
+--------
+pyproject.toml
+   The Hatch-specific ``[tool.hatch.version]`` subsection of the top-level
+   ``pyproject.toml`` file, which parses its version from this string global.
 '''
 
+# ....................{ GLOBALS ~ __version_info__         }....................
+def _convert_version_str_to_tuple(version_str: str):  # -> _Tuple[int, ...]:
+    '''
+    Convert the passed human-readable ``.``-delimited version string into a
+    machine-readable version tuple of corresponding integers.
+    '''
+    assert isinstance(version_str, str), f'"{version_str}" not version string.'
 
-__version_info__ = __version_info__
+    return tuple(int(version_part) for version_part in version_str.split('.'))
+
+
+__version_info__ = _convert_version_str_to_tuple(__version__)
 '''
 Machine-readable package version as a tuple of integers.
 
@@ -96,8 +92,13 @@ For PEP 8 compliance, this specifier has the canonical name
 '''
 
 
+# Delete temporary attributes defined above to avoid polluting this namespace.
+del _convert_version_str_to_tuple
+
+# ....................{ GLOBALS ~ __all__                  }....................
 __all__ = [
     'BeartypeConf',
+    'BeartypeDecorationPosition',
     'BeartypeHintOverrides',
     'BeartypeStrategy',
     'BeartypeViolationVerbosity',
@@ -128,12 +129,12 @@ example, :mod:`mypy` emits an error resembling:
 '''
 
 # ....................{ DEPRECATIONS                       }....................
-def __getattr__(attr_deprecated_name: str) -> object:
+def __getattr__(attr_name: str) -> object:
     '''
-    Dynamically retrieve a deprecated attribute with the passed unqualified
-    name from this submodule and emit a non-fatal deprecation warning on each
-    such retrieval if this submodule defines this attribute *or* raise an
-    exception otherwise.
+    Dynamically retrieve a deprecated attribute with the passed unqualified name
+    from this submodule and emit a non-fatal deprecation warning on each such
+    retrieval if this submodule defines this attribute *or* raise an exception
+    otherwise.
 
     The Python interpreter implicitly calls this :pep:`562`-compliant module
     dunder function under Python >= 3.7 *after* failing to directly retrieve an
@@ -143,21 +144,21 @@ def __getattr__(attr_deprecated_name: str) -> object:
 
     Parameters
     ----------
-    attr_deprecated_name : str
+    attr_name : str
         Unqualified name of the deprecated attribute to be retrieved.
 
     Returns
-    ----------
+    -------
     object
         Value of this deprecated attribute.
 
     Warns
-    ----------
+    -----
     DeprecationWarning
         If this attribute is deprecated.
 
     Raises
-    ----------
+    ------
     AttributeError
         If this attribute is unrecognized and thus erroneous.
     '''
@@ -175,20 +176,19 @@ def __getattr__(attr_deprecated_name: str) -> object:
     # *NOT* unconditionally import and expose the "beartype.door" submodule
     # above. That submodule does *NOT* exist in the globals() dictionary
     # defaulted to above and *MUST* now be forcibly injected there.
-    if attr_deprecated_name == 'abby':
+    if attr_name == 'abby':
         from beartype import door
         attr_nondeprecated_name_to_value = {'door': door}
         attr_nondeprecated_name_to_value.update(globals())
     #FIXME: To support attribute-based deferred importation ala "lazy loading"
     #of heavyweight subpackages like "beartype.door" and "beartype.vale", it
     #looks like we'll need to manually add support here for that: e.g.,
-    #    elif attr_deprecated_name in {'cave', 'claw', 'door', 'vale',}:
+    #    elif attr_name in {'cave', 'claw', 'door', 'vale',}:
     #        #FIXME: Dynamically import this attribute here... somehow. Certainly, if
     #        #such functionality does *NOT* exist, add it to the existing
     #        #"utilmodimport" submodule: e.g.,
-    #        attr_value = import_module_attr(f'beartype.{attr_deprecated_name}')
-    #        attr_nondeprecated_name_to_value = {attr_deprecated_name: attr_value}
-    #FIXME: Rename "attr_deprecated_name" to merely "attr_name", please.
+    #        attr_value = import_module_attr(f'beartype.{attr_name}')
+    #        attr_nondeprecated_name_to_value = {attr_name: attr_value}
     #FIXME: Revise docstring accordingly, please.
     #FIXME: Exhaustively test this, please. Because we'll never manage to keep
     #this in sync, we *ABSOLUTELY* should author a unit test that:
@@ -200,9 +200,7 @@ def __getattr__(attr_deprecated_name: str) -> object:
 
     # Return the value of this deprecated attribute and emit a warning.
     return deprecate_module_attr(
-        attr_deprecated_name=attr_deprecated_name,
-        attr_deprecated_name_to_nondeprecated_name={
-            'abby': 'door',
-        },
+        attr_deprecated_name=attr_name,
+        attr_deprecated_name_to_nondeprecated_name={'abby': 'door',},
         attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
     )

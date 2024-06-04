@@ -22,20 +22,29 @@ obsolete and insecure versions of CPython that have reached their official End
 of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
+#FIXME: [DRY] This submodule currently violates DRY by duplicating metadata
+#already present in our top-level "pyproject.toml" file. Deduplicate this
+#metadata by refactoring this submodule to instead:
+#* Leverage the standard "importlib.metadata" submodule to dynamically retrieve
+#  a proper subset of *SOME* of the metadata published by "pyproject.toml".
+#  Conveniently, note that "importlib.metadata" has been available since Python
+#  3.8. *FIST PUMP*
+#
+#Note that a wide variety of metadata exists: e.g.,
+#    >>> list(metadata('beartype'))  
+#    ['Metadata-Version', 'Name', 'Version', 'Summary', 'Home-page', 'Author',
+#    'Author-email', 'Maintainer', 'Maintainer-email', 'License', 'Project-URL',
+#    'Project-URL', 'Project-URL', 'Keywords', 'Platform', 'Classifier',
+#    'Classifier', 'Classifier', 'Classifier', 'Classifier', 'Classifier',
+#    'Classifier', 'Classifier', 'Classifier', 'Classifier', 'Classifier',
+#    'Classifier', 'Requires-Python', 'Provides-Extra', 'Requires-Dist',
+#    'Requires-Dist']
+#
+#  Notably, the current version is trivially retrieved as:
+#      from importlib.metadata import version as _get_package_version
+#      VERSION = _get_package_version('beartype')
+
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: To avoid accidental importation of optional runtime dependencies
-# (e.g., "typing-extensions") at installation time *BEFORE* the current package
-# manager has installed those dependencies, this module may *NOT* import from
-# any submodules of the current package. This includes *ALL* "beartype._util"
-# submodules, most of which import from "beartype.typing", which conditionally
-# imports optional runtime dependencies under certain contexts.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: To avoid race conditions during setuptools-based installation, this
-# module may import *ONLY* from modules guaranteed to exist at the start of
-# installation. This includes all standard Python and package modules but
-# *NOT* third-party dependencies, which if currently uninstalled will only be
-# installed at some later time in the installation.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
@@ -186,10 +195,9 @@ if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
 
 # ....................{ METADATA ~ version                 }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: When modifying the current version of this package below,
-# consider adhering to the Semantic Versioning schema. Specifically, the
-# version should consist of three "."-delimited integers
-# "{major}.{minor}.{patch}", where:
+# WARNING: When modifying the current version of this package below, consider
+# adhering to the Semantic Versioning schema. Specifically, the version should
+# consist of three "."-delimited integers "{major}.{minor}.{patch}", where:
 #
 # * "{major}" specifies the major version, incremented only when either:
 #   * Breaking backward compatibility in this package's public API.
@@ -221,7 +229,7 @@ Machine-readable package version as a tuple of integers.
 '''
 
 # ....................{ METADATA ~ synopsis                }....................
-SYNOPSIS = 'Unbearably fast runtime type checking in pure Python.'
+SYNOPSIS = 'Unbearably fast runtime type-checking in pure Python.'
 '''
 Human-readable single-line synopsis of this package.
 
@@ -669,7 +677,7 @@ selected the theme with:
    settings and directives).
 
 Furo
-----------
+----
 Furo_ handily bested all other themes across the first three criteria. Furo is
 very well-maintained, frequently closes out open issues and merges open PRs, and
 sports the highest quantity of GitHub stars by an overwhelming margin. Sadly,
@@ -703,7 +711,7 @@ We fundamentally disagree with those goals and have thus permanently switched
 away from Furo. Unjustified opinions are the little death of sanity.
 
 PyData
-======
+------
 Furo and PyData are neck-and-neck with respect to git commit history; both are
 extremely well-maintained. Furo leaps ahead with respect to both issue and PR
 resolution, however; PyData has an extreme number of open issues and PRs, where
@@ -775,7 +783,7 @@ optional dependency, omitting these optional dependencies here imposes no undue
 hardships while improving usability.
 
 See Also
-----------
+--------
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
 '''
@@ -801,7 +809,7 @@ For consistency, these dependencies are strictly constrained to force RTD to
 build against a single well-tested configuration known to work reliably.
 
 See Also
-----------
+--------
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
 '''
@@ -818,7 +826,7 @@ This tuple includes all mandatory test- and documentation build-time package
 dependencies and is thus a convenient shorthand for those lower-level tuples.
 
 See Also
-----------
+--------
 :data:`LIBS_RUNTIME_OPTIONAL`
     Further details.
 '''
