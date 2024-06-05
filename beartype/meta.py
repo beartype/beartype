@@ -31,7 +31,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #  3.8. *FIST PUMP*
 #
 #Note that a wide variety of metadata exists: e.g.,
-#    >>> list(metadata('beartype'))  
+#    >>> list(metadata('beartype'))
 #    ['Metadata-Version', 'Name', 'Version', 'Summary', 'Home-page', 'Author',
 #    'Author-email', 'Maintainer', 'Maintainer-email', 'License', 'Project-URL',
 #    'Project-URL', 'Project-URL', 'Keywords', 'Platform', 'Classifier',

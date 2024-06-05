@@ -109,6 +109,14 @@ authors = [
 #     { name="Cecil Curry", email="leycec@gmail.com" },  # <-- it's me all the way down, huh?
 # ]
 
+# List of the names of all "[project]" fields to be resolved dynamically through
+# build toolchain-specific plugins (rather than defined statically above).
+dynamic = [
+    # Dynamically resolve the "[project]" "version" field via the Hatch-specific
+    # "[tool.hatch.version]" subsection, subsequently defined below.
+    "version",
+]
+
 # ....................{ PEP 621 ~ dependencies             }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this Python interpreter version specifier *MUST* be
@@ -131,6 +139,297 @@ authors = [
 # Obsolete and insecure versions of CPython that have reached their official End
 # of Life (EoL) (e.g., Python 3.7) are explicitly unsupported.
 requires-python = ">=3.8"
+
+# Mandatory runtime dependencies. This package intentionally requires no
+# mandatory runtime dependencies and hopefully never will.
+dependencies = []
+
+# ....................{ PEP 621 ~ dependencies : optional  }....................
+# Optional dependencies specified as a set of zero or more assignments of the
+# form "{extra_name} = [{extra_dependency_1}, ...]", where:
+# * "{extra_name}" is the arbitrary name of a project-specific "extra" (i.e.,
+#   category of optional dependencies).
+# * "{{extra_dependency_1}, ..." is a comma-delimited list of optional
+#   dependencies installed under this "extra".
+#
+# When installing this project with "pip", users may additionally install these
+# optional dependencies by subscripting the name of this project by these
+# extras in comma-delimited fashion: e.g.,
+#     $ pip install beartype[doc-rtd,test-tox]
+#
+# Note that PEP 621 explicitly supports dependency composition through
+# self-referential "extras". See also this awesome StackOverflow answer:
+#     https://stackoverflow.com/a/72524073/2809027
+[project.optional-dependencies]
+
+# Read The Docs (RTD)-specific documentation-time package dependencies required
+# to automatically build documentation for this project from the third-party RTD
+# hosting service. For consistency, these dependencies are often constrained to
+# build documentation with a single well-tested configuration.
+doc-rtd = [
+    #FIXME: Relax the maximum Sphinx version restriction (e.g., by simply
+    #removing the restriction on "<6.0.0").
+    # Sphinx itself. Specifically, this project requires:
+    # * sphinx >= 4.2.0, which resolved a severe compatibility issue under
+    #   Python >= 3.10. See also this upstream issue:
+    #       https://github.com/sphinx-doc/sphinx/issues/9816
+    # * sphinx < 6.0.0, as more recent versions currently conflict with our
+    #   Sphinx theme. See again the same upstream issue as above.
+    "sphinx >=4.2.0,<6.0.0",
+
+    #FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great.
+    #However, there are numerous obvious eccentricities in "pydata-sphinx-theme"
+    #that we strongly disagree with -- especially that theme's oddball division
+    #in TOC heading levels between the top and left sidebars.
+    #
+    #Enter "sphinx-book-theme", stage left. "sphinx-book-theme" is based on
+    #"pydata-sphinx-theme", but entirely dispenses with all of the obvious
+    #eccentricities that hamper usage of "pydata-sphinx-theme". We no longer
+    #have adequate time to maintain custom documentation CSS against the moving
+    #target that is "pydata-sphinx-theme". Ergo, we should instead let
+    #"sphinx-book-theme" do all of that heavy lifting for us. Doing so will
+    #enable us to:
+    #* Lift the horrifying constraint above on a maximum Sphinx version. *gulp*
+    #* Substantially simplify our Sphinx configuration. Notably, the entire
+    #  fragile "doc/src/_templates/" subdirectory should be *ENTIRELY* excised
+    #  away.
+    #
+    #Please transition to "sphinx-book-theme" as time permits.
+
+    # Third-party Sphinx theme (i.e., extension providing the custom HTML theme
+    # preferred by this documentation). This theme was selected according to
+    # mostly objective (albeit ultimately subjective) heuristic criteria. In
+    # descending order of importance, we selected the theme with:
+    #
+    # 1. The most frequent git commit history.
+    # 2. The open issues and pull requests (PRs).
+    # 3. The most GitHub stars as a crude proxy for aggregate rating.
+    # 4. **IS NOT STRONGLY OPINIONATED** (i.e., is configurable with standard
+    #    Sphinx settings and directives).
+    #
+    # Furo
+    # ----
+    # Furo handily bested all other themes across the first three criteria. Furo
+    # is very well-maintained, frequently closes out open issues and merges open
+    # PRs, and sports the highest quantity of GitHub stars by an overwhelming
+    # margin. Sadly, Furo handily loses against literally unmaintained themes
+    # across the final criteria. Furo is absurdly strongly opinionated to an
+    # authoritarian degree we rarely find in open-source software. Why? Because
+    # it's principal maintainer is. Like maintainer, like software. Furo
+    # routinely ignores standard Sphinx settings and directives due to
+    # subjective opinions held by its maintainer, including:
+    #
+    # * Most user-defined ":toctree:" settings used to configure both global and
+    #   local tables of contents (TOCs) and thus the leftmost navigation
+    #   sidebar, effectively preventing users from using that sidebar to
+    #   navigate to anything. We are *NOT* kidding. ":toctree:" settings
+    #   ignored by Furo include:
+    #
+    #   * ":maxdepth:". Internally, Furo forces the ":titlesonly:" setting by
+    #     passing "titles_only=True" to Sphinx's "toctree()" function at
+    #     runtime. Doing so effectively coerces ":maxdepth: 1", thus
+    #     intentionally hiding *all* document structure from the navigation
+    #     sidebar -- where (usually) *all* document structure is displayed.
+    #     Users thus have no means of directly jumping from the root landing
+    #     page to child leaf documents, significantly obstructing user
+    #     experience (UX) and usability. See also this feature request
+    #     discussion to relax these constraints:
+    #         https://github.com/pradyunsg/furo/discussions/146
+    #
+    #     ...to which the Furo maintainer caustically replied:
+    #
+    #         No, there isn't any (supported) way to do this.
+    #
+    #         Separating the page content hierarchy and site structure was an
+    #         explicit design goal.
+    #
+    # We fundamentally disagree with those goals and thus permanently switched
+    # away from Furo. Unjustified opinions are the little death of sanity.
+    #
+    # PyData
+    # ------
+    # Furo and PyData are neck-and-neck with respect to git commit history; both
+    # are extremely well-maintained. Furo leaps ahead with respect to both issue
+    # and PR resolution, however; PyData has an extreme number of open issues
+    # and PRs, where Furo enjoys none. Moreover, Furo also enjoys dramatically
+    # more GitHub stars.
+    #
+    # Nonetheless, PyData is *NOT* strongly opinionated; Furo is. PyData does
+    # *not* silently ignore standard Sphinx settings and directives for largely
+    # indefensible reasons. Consequently, PyData wins by default. In fact, *ANY*
+    # other theme (including even unmaintained dead themes) wins by default;
+    # *NO* other theme (to my limited knowledge) forcefully ignores standard
+    # Sphinx settings and directives to the extent that Furo does.
+    #
+    # PyData wins by literally doing nothing. Laziness prevails. All hail
+    # La-Z-Boy.
+    "pydata-sphinx-theme <=0.7.2",
+
+    # Third-party Sphinx extensions.
+    "autoapi >=0.9.0",
+    "sphinxext-opengraph >=0.7.5",
+]
+
+# Tox-specific test-time dependencies required to test this package via
+# the third-party "tox" command at the command line.
+#
+# Note that:
+# * The "extras" key of the top-level "tox.ini" file explicitly references this
+#   extra.
+# * Failure to list *ALL* optional test-time dependencies here commonly results
+#   in errors from mypy, which raises false positives on parsing import
+#   statements for uninstalled third-party packages (e.g., "import numpy").
+test-tox = [
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Avoid constraining optional test-time dependencies to version
+    # ranges, which commonly fail for edge-case test environments -- including:
+    # * The oldest Python version still supported by @beartype, which typically
+    #   is *NOT* supported by newer versions of these dependencies.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # ....................{ CORE                           }....................
+    # A relatively modern version of "pytest" is required. It's probably quite
+    # old by now. I feel depressed just reading comments like this...
+    "pytest >=4.0.0",
+
+    # ....................{ DOCOS                          }....................
+    # Documentation-centric optional test-time dependencies.
+
+    # Required by optional Sphinx-specific integration tests.
+    #
+    # Note that Sphinx currently provokes unrelated test failures under Python
+    # 3.7 with  obscure deprecation warnings. Since *ALL* of this only applies
+    # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
+    # installing Sphinx under Python 3.7. The exception resembles:
+    #     FAILED
+    #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
+    #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module
+    #     "pkg_resources.__init__" importation exception DeprecationWarning:
+    #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
+    "sphinx; python_version >= '3.8.0'",
+
+    # ....................{ SCIENCE ~ data                 }....................
+    # Data science-centric optional test-time dependencies.
+
+    #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
+    #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
+    #explicitly supporting PyPy.
+    # Require NumPy. NumPy has become *EXTREMELY* non-trivial to install under
+    # macOS with "pip", due to the conjunction of multiple issues. These
+    # include:
+    # * NumPy > 1.18.0, whose initial importation now implicitly detects
+    #   whether the BLAS implementation NumPy was linked against is sane and
+    #   raises a "RuntimeError" exception if that implementation is insane:
+    #       RuntimeError: Polyfit sanity test emitted a warning, most
+    #       likely due to using a buggy Accelerate backend. If you
+    #       compiled yourself, more information is available at
+    #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+    #       Otherwise report this to the vendor that provided NumPy.
+    #       RankWarning: Polyfit may be poorly conditioned
+    # * Apple's blatantly broken multithreaded implementation of their
+    #   "Accelerate" BLAS replacement, which neither NumPy nor "pip" have *ANY*
+    #   semblance of control over.
+    # * "pip" under PyPy, which for unknown reasons fails to properly install
+    #   NumPy even when the "--force-reinstall" option is explicitly passed to
+    #   "pip". Oddly, passing that option to "pip" under CPython resolves this
+    #   issue -- which is why we only selectively disable NumPy installation
+    #   under macOS + PyPy.
+    #
+    # See also this upstream NumPy issue:
+    #     https://github.com/numpy/numpy/issues/15947
+    "numpy; sys_platform != 'darwin' and platform_python_implementation != 'PyPy'",
+
+    # Required by optional Pandera-specific integration tests.
+    "pandera",
+
+    # ....................{ SCIENCE ~ data : ml            }....................
+    # Machine learning-centric optional test-time dependencies. These
+    # dependencies are well-known to be extremely non-trivial to install,
+    # typically due to conditionally depending on low-level C(++)-driven
+    # hardware GPU and TPU compute APIs (e.g., Nvidia CUDA, AMD OpenCL). To
+    # improve the likelihood of success on both local and remote workflows,
+    # these dependencies are intentionally confined to Linux.
+
+    # Required by optional Equinox-specific integration tests. Note that Equinox
+    # requires JAX.
+    "equinox; sys_platform == 'linux'",
+
+    # Required by optional JAX-specific integration tests and JAX-dependent
+    # packages (e.g., Equinox). Note that JAX *MUST* be installed with one or
+    # more subscripted extras. Omitting extras installs only the high-level
+    # pure-Python "jax" package *WITHOUT* also installing a low-level
+    # hardware-specific variant of the typically C-based "jaxlib" package, which
+    # results in the "jax" package being unimportable and thus non-working.
+    # In this case, specifying the "cpu" extra also installs a low-level
+    # CPU-specific variant of the typically C-based "jaxlib" package. Since
+    # GitHub Actions-based continuous integration (CI) workflows are unlikely to
+    # reliably provide GPU or TPU compute hardware or APIs, the only safe and
+    # reliable alternative is CPU-specific.
+    "jax[cpu]; sys_platform == 'linux'",
+
+    # Required by optional JAX- and Equinox-specific integration tests.
+    "jaxtyping; sys_platform == 'linux'",
+
+    #FIXME: Temporarily disabled for sanity.
+    # Required by optional PyTorch-specific integration tests.
+    #
+    # Note that PyTorch has yet to release a Python >= 3.12-compatible version.
+    # 'torch; python_version < "3.12.0"',
+
+    # ....................{ TYPING                         }....................
+    # Typing-centric optional test-time dependencies.
+
+    # Require a reasonably recent version of mypy known to behave well. Less
+    # recent versions are significantly deficient with respect to error
+    # reporting and *MUST* thus be blacklisted.
+    #
+    # Note that PyPy currently fails to support mypy. See also this official
+    # documentation discussing this regrettable incompatibility:
+    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    "mypy >=0.800; platform_python_implementation != 'PyPy'",
+
+    # Required to exercise third-party backports of type hint factories
+    # published by the standard "typing" module under newer versions of Python.
+    # Dismantled, this is:
+    # * "typing-extensions >=3.10.0.0", which backports *ALL* "typing"
+    #   attributes unavailable under older Python interpreters supported by the
+    #   @beartype decorator.
+    'typing-extensions >=3.10.0.0',
+
+    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
+    #Actions-hosted continuous integration (CI) for the moment. Doing so is
+    #non-trivial enough under local testing workflows. *sigh*
+    # Require a reasonably recent version of nuitka if the current platform is a
+    # Linux distribution *AND* the active Python interpreter targets Python >=
+    # 3.8. For questionable reasons best ignored, nuitka fails to compile
+    # beartype under Python <= 3.7.
+    # "nuitka >=1.2.6; sys_platform == 'linux' and python_version >= '3.8.0'",
+]
+
+# Tox-specific test-time coverage dependencies required to measure test coverage
+# for this package.
+#
+# Note that the "extras" key of the top-level "tox.ini" file explicitly
+# references this extra.
+test-tox-coverage = [
+    "coverage >=5.5",
+]
+
+# Developer-specific test-time dependencies required to test this package via
+# the third-party "pytest" and "tox" commands at the command line.
+test = [
+    # Tox-specific test-time dependencies.
+    "beartype[test-tox,test-tox-coverage]",
+
+    # A relatively modern version of "tox" is required. It's probably quite old
+    # by now. I feel depressed just reading comments like this...
+    'tox >=3.20.1',
+]
+
+# Developer-specific dependencies required to develop and contribute pull
+# requests (PRs) for this project. Notably, this includes *ALL* test- and
+# documentation-time dependencies.
+dev = ["beartype[doc-rtd,test]"]
 
 # ....................{ PEP 621 ~ urls                     }....................
 # Table (i.e., dictionary) mapping from the PyPI-recognized name of each
@@ -189,10 +488,8 @@ include = [
     # project's package directory.
     "/beartype/**/*.py",
 
-    # Relative dirname of this project's data subdirectory (i.e., unimportable
-    # subdirectory bundled with this project containing *ONLY* Python-agnostic
-    # media files).
-    "/beartype/data/",
+    # Relative filenames of all requisite package-level installation-time files.
+    "/beartype/py.typed",
 ]
 
 # PEP-noncompliant section declaring Hatch-specific build settings when
@@ -259,5 +556,7 @@ include = [
     # Glob expression recursively matching *ALL* Python submodules in this
     # project's package directory.
     "/beartype/**/*.py",
-]
 
+    # Relative filenames of all requisite package-level installation-time files.
+    "/beartype/py.typed",
+]
