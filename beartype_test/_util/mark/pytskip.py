@@ -273,19 +273,14 @@ def skip_if_python_version_greater_than_or_equal_to(version: str):
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
-
-    See Also
-    --------
-    :mod:`beartype.meta`
-        Similar logic performed at :mod:`beartype` importation time.
     '''
     assert isinstance(version, str), f'{repr(version)} not string.'
 
     # Defer test-specific imports.
-    from beartype.meta import _convert_version_str_to_tuple
+    from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 
     # Machine-readable required version of Python as a tuple of integers.
-    version_tuple = _convert_version_str_to_tuple(version)
+    version_tuple = convert_str_version_to_tuple(version)
 
     # Skip this test if the current Python version exceeds this requirement.
     return skip_if(
@@ -310,19 +305,14 @@ def skip_if_python_version_less_than(version: str):
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
-
-    See Also
-    --------
-    :mod:`beartype.meta`
-        Similar logic performed at :mod:`beartype` importation time.
     '''
     assert isinstance(version, str), f'{repr(version)} not string.'
 
     # Defer test-specific imports.
-    from beartype.meta import _convert_version_str_to_tuple
+    from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 
     # Machine-readable required version of Python as a tuple of integers.
-    version_tuple = _convert_version_str_to_tuple(version)
+    version_tuple = convert_str_version_to_tuple(version)
 
     # Skip this test if the current Python version is less than this
     # requirement.

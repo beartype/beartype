@@ -51,8 +51,8 @@ from pathlib import Path
 # Note that the comparable Path.absolute() method was neither documented nor
 # tested before Python 3.11. See also this relevant StackOverflow answer:
 #     https://stackoverflow.com/a/44569249/2809027
-# Dismantled, this is:
 #
+# Dismantled, this is:
 # * ".resolve(...)", creating and returning a new high-level "Path" object
 #   canonicalizing the relative dirname with which the original "Path" object
 #   was instantiated into an absolute dirname.

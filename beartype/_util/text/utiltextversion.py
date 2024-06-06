@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **version string utilities** (i.e., low-level callables handling
+Project-wide **version specifier utilities** (i.e., low-level callables handling
 human-readable ``.``-delimited version strings).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -24,7 +24,7 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
     comparison operators (e.g., ``<``, ``==``).
 
     Caveats
-    ----------
+    -------
     **This converter strictly requires each ``.``-delimited substring of this
     string to be a non-negative integer.** The exception is the last
     ``.``-prefixed substring of this string, which this converter permits to
@@ -50,12 +50,12 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
         Version string to be converted.
 
     Returns
-    ----------
+    -------
     Tuple[int, ...]
         Machine-readable version tuple of corresponding integers.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTextVersionException
         If this string is syntactically invalid as a version.
     '''

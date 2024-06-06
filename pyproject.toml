@@ -437,7 +437,7 @@ dev = ["beartype[doc-rtd,test]"]
 [project.urls]
 Docs =     "https://beartype.readthedocs.io"
 GitHub =   "https://github.com/beartype/beartype"
-Forums =   "https://github.com/beartype/discussions"
+Forums =   "https://github.com/beartype/beartype/discussions"
 Issues =   "https://github.com/beartype/beartype/issues"
 Releases = "https://github.com/beartype/beartype/releases"
 
@@ -464,7 +464,7 @@ build-backend = "hatchling.build"
 # Relative filename of the Python submodule defining either a PEP 8-compliant
 # "__version__" dunder global *OR* a PEP-noncompliant "VERSION" global, which
 # Hatch then statically parses to obtain the current version of this project.
-path = "beartype/__init__.py"
+path = "beartype/meta.py"
 
 # ....................{ NON-PEP ~ hatch : path             }....................
 # PEP-noncompliant section declaring Hatch-specific build settings. Note that:
