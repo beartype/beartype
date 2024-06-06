@@ -65,21 +65,21 @@ Beartype is releasable to all supported platforms as follows:
       PyPI-hosted page <PyPI beartype_>`__ for this project and verify by
       cursory inspection that this project's description is rendered as HTML.
 
-#. (\ *Optional*\ ) **Install** wheel_, a third-party pure-Python package
+#. (\ *Optional*\ ) **Install** Hatch_, a third-party pure-Python package
    permitting this release to be packaged into a cross-platform pre-compiled
    binary distribution supported by both PyPI_ and ``pip``. This optional
-   dependency augments setuptools with the ``bdist_wheel`` subcommand invoked
-   below when locally testing the generation of binary wheels.
+   dependency installs the ``hatch`` command invoked below when locally testing
+   the generation of source tarballs and/or binary wheels. 
 
    .. code-block:: shell-session
 
-      $ sudo pip3 install wheel
+      $ sudo pip3 install hatch
 
 #. (\ *Optional*\ ) **Test packaging both a source tarball and binary wheel.**
 
    .. code-block:: shell-session
 
-      $ python3 setup.py sdist bdist_wheel
+      $ hatch build -t sdist -t wheel
 
 #. (\ *Optional*\ ) **List the contents of this source tarball,** where
    ``${version}`` is the purely numeric version of this release (e.g.,
@@ -577,6 +577,8 @@ When in doubt, bump only the minor version and reset only the patch version.
    https://github.com/betsee/betse
 .. _BETSEE:
    https://github.com/betsee/betsee
+.. _Hatch:
+   https://hatch.pypa.io
 
 .. # ------------------( LINKS ~ py : pypi                   )------------------
 .. _Test PyPI:
