@@ -65,7 +65,24 @@ HintSignLiteral      = _HintSign(name='Literal')
 HintSignOptional     = _HintSign(name='Optional')
 HintSignParamSpec    = _HintSign(name='ParamSpec')
 HintSignProtocol     = _HintSign(name='Protocol')
+
 HintSignTuple        = _HintSign(name='Tuple')
+'''
+Sign uniquely identifying **variable-length tuple type hints,** including:
+
+* :pep:`484`-compliant type hints of the form ``typing.Tuple[{hint_child_1},
+  ...]`` where the last child type hint subscripting this parent hint is an
+  ellipses (i.e., ``"..."`` string, :data:`Ellipses` singleton).
+* :pep:`585`-compliant type hints of the form ``tuple[{hint_child_1}, ...]``
+  where the last child type hint subscripting this parent hint is an ellipses
+  (i.e., ``"..."`` string, :data:`Ellipses` singleton).
+
+See Also
+--------
+HintSignTupleFixed
+    Sign uniquely identifying **fixed-length tuple type hints.**
+'''
+
 HintSignType         = _HintSign(name='Type')
 HintSignTypeVar      = _HintSign(name='TypeVar')
 HintSignTypeVarTuple = _HintSign(name='TypeVarTuple')
@@ -197,10 +214,35 @@ HintSignUnpack          = _HintSign(name='Unpack')
 
 HintSignNone = _HintSign(name='None')
 '''
-:pep:`484` explicitly supports the :data:`None` singleton, albeit implicitly:
+Sign uniquely identifying the :data:`None` singleton, explicitly supported by
+:pep:`484` but lacking an explicit analogue in the standard :mod:`typing`
+module:
 
     When used in a type hint, the expression None is considered equivalent to
     type(None).
+'''
+
+
+HintSignTupleFixed = _HintSign(name='TupleFixed')
+'''
+Sign uniquely identifying **fixed-length tuple type hints,** including:
+
+* :pep:`484`-compliant type hints of the form ``typing.Tuple[{hint_child_1},
+  ..., {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
+  ``"..."`` string, :data:`Ellipses` singleton).
+* :pep:`585`-compliant type hints of the form ``tuple[{hint_child_1}, ...,
+  {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
+  ``"..."`` string, :data:`Ellipses` singleton).
+
+Note that:
+
+* The ``"..."`` substring above is *not* a literal ellipses but simply denotes
+  an arbitrary number of non-ellipses child type hints.
+* The existing :data:`.HintSignTuple` sign uniquely identifies variable-length
+  tuple type hints. Why? Because that sign naturally matches the unsubscripted
+  :obj:`typing.Tuple` type hint factory, which is semantically equivalent to the
+  ``typing.Tuple[object, ...]`` type hint, which is the widest possible
+  variable-length tuple type hint.
 '''
 
 # ....................{ SIGNS ~ implicit : lib             }....................

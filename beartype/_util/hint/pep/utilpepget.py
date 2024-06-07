@@ -37,6 +37,8 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
+    HintSignTuple,
+    HintSignTupleFixed,
     HintSignTypedDict,
     HintSignPep585BuiltinSubscriptedUnknown,
 )
@@ -108,8 +110,8 @@ else:
         # Under python < 3.9, unparametrized generics have the attribute
         # "_special" set to True despite the actual "__args__" typically being a
         # "TypeVar" instance. Because we want to differentiate between
-        # unparametrized and parametrized generics, check whether the hint is
-        # "_special" and if so, we return the empty tuple instead of that
+        # unparametrized and parametrized generics, we check whether the hint is
+        # "_special" and if so, return the empty tuple instead of that
         # "TypeVar" instance.
         if getattr(hint, '_special', False):
             return ()
@@ -168,13 +170,15 @@ get_hint_pep_args.__doc__ = '''
 
     Examples
     --------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_args)
-        >>> get_hint_pep_args(typing.Any)
-        ()
-        >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str]])
-        (int, str, typing.Dict[str, str])
+    .. code-block:: python
+
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpepget import (
+       ...     get_hint_pep_args)
+       >>> get_hint_pep_args(typing.Any)
+       ()
+       >>> get_hint_pep_args(typing.List[int, str, typing.Dict[str, str]])
+       (int, str, typing.Dict[str, str])
     '''
 
 # ....................{ GETTERS ~ typevars                 }....................
@@ -260,15 +264,17 @@ get_hint_pep_typevars.__doc__ = '''
 
     Examples
     --------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_typevars)
-        >>> S = typing.TypeVar('S')
-        >>> T = typing.TypeVar('T')
-        >>> get_hint_pep_typevars(typing.Any)
-        ()
-        >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
-        (T, S)
+    .. code-block:: python
+
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpepget import (
+       ...     get_hint_pep_typevars)
+       >>> S = typing.TypeVar('S')
+       >>> T = typing.TypeVar('T')
+       >>> get_hint_pep_typevars(typing.Any)
+       ()
+       >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
+       (T, S)
     '''
 
 # ....................{ GETTERS ~ sign                     }....................
@@ -316,7 +322,7 @@ def get_hint_pep_sign(
 
     See Also
     --------
-    :func:`get_hint_pep_sign_or_none`
+    :func:`.get_hint_pep_sign_or_none`
         Further details.
     '''
 
@@ -433,26 +439,28 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     Examples
     --------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_sign_or_none)
+    .. code-block:: python
 
-        >>> get_hint_pep_sign_or_none(typing.Any)
-        typing.Any
-        >>> get_hint_pep_sign_or_none(typing.Union[str, typing.Sequence[int]])
-        typing.Union
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpepget import (
+       ...     get_hint_pep_sign_or_none)
 
-        >>> T = typing.TypeVar('T')
-        >>> get_hint_pep_sign_or_none(T)
-        HintSignTypeVar
+       >>> get_hint_pep_sign_or_none(typing.Any)
+       typing.Any
+       >>> get_hint_pep_sign_or_none(typing.Union[str, typing.Sequence[int]])
+       typing.Union
 
-        >>> class Genericity(typing.Generic[T]): pass
-        >>> get_hint_pep_sign_or_none(Genericity)
-        HintSignGeneric
+       >>> T = typing.TypeVar('T')
+       >>> get_hint_pep_sign_or_none(T)
+       HintSignTypeVar
 
-        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_pep_sign_or_none(Duplicity)
-        HintSignGeneric
+       >>> class Genericity(typing.Generic[T]): pass
+       >>> get_hint_pep_sign_or_none(Genericity)
+       HintSignGeneric
+
+       >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
+       >>> get_hint_pep_sign_or_none(Duplicity)
+       HintSignGeneric
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -561,26 +569,43 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
             hint_repr_prefix)
 
         # If this hint is identifiable by its necessarily subscripted
-        # representation, return this sign.
+        # representation...
         if hint_sign:
+            # If this is a tuple hint, disambiguate between the following two
+            # fundamentally distinct kinds of tuple hints:
+            # * Fixed-length tuple type hints of the form
+            #   "tuple[{hint_child_1}, ..., {hint_child_N}]", which this getter
+            #   unambiguously reassigns the sign "HintSignTupleFixed".
+            # * Variable-length tuple type hints of the form
+            #   "tuple[{hint_child_1}, ...]", which this getter unambiguously
+            #   preserves the sign "HintSignTuple".
+            if hint_sign is HintSignTuple:
+                # Child hints subscripting this parent tuple hint.
+                hint_childs = get_hint_pep_args(hint)
+
+                # If it is *NOT* the case that...
+                if not (
+                    # This parent tuple hint is subscripted by exactly two child
+                    # hints *AND*...
+                    len(hint_childs) == 2 and
+                    # The second child hint is the ellipsis singleton (i.e.,
+                    # the unquoted character sequence "...")...
+                    hint_childs[1] is Ellipsis
+                # Then this is a fixed-length tuple hint. In this case,
+                # reassign this hint the "HintSignTupleFixed" sign identifying
+                # these hints.
+                ):
+                    #FIXME: Enable us up tomorrow, please! *sigh*
+                    # return HintSignTupleFixed
+                    pass
+                # Else, this is a variable-length tuple hint. In this case,
+                # preserve the "HintSignTuple" sign identifying these hints.
+            # Else, this is *NOT* a tuple hint.
+
+            # Return this sign.
             return hint_sign
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
-
-        # # If this hint is inconsistent with respect to PEP 604-style new unions,
-        # # raise an exception. Although awkward, this is ultimately the ideal
-        # # location for this validation. Why? Because this validation:
-        # # * *ONLY* applies to hints permissible as items of PEP 604-compliant
-        # #   new unions; this means classes and subscripted generics. If this
-        # #   hint is identifiable by its classname, this hint is neither a class
-        # #   *NOR* subscripted generic. Since this hint is *NOT* identifiable by
-        # #   its classname, however, this hint could still be either a class *OR*
-        # #   subscripted generic. It's best not to ask.
-        # # * Does *NOT* apply to well-known type hints detected above (e.g.,
-        # #   those produced by Python itself, the standard library, and
-        # #   well-known third-party type hint factories), which are all
-        # #   guaranteed to be consistent with respect to PEP 604.
-        # die_if_hint_pep604_inconsistent(hint)
     # Else, this representation (and thus this hint) is unsubscripted.
 
     # ..................{ PHASE ~ repr : trie                }..................

@@ -98,6 +98,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignLiteral,
     HintSignTuple,
+    HintSignTupleFixed,
     HintSignType,
     HintSignUnion,
 )
@@ -268,7 +269,7 @@ def make_check_expr(
 
     # Python expression evaluating to an isinstanceable type (e.g., origin type)
     # associated with the currently visited type hint if any.
-    hint_curr_expr = None
+    hint_curr_expr: str = None  # type: ignore[assignment]
 
     # Placeholder string to be globally replaced in the Python code snippet to
     # be returned (i.e., "func_wrapper_code") by a Python code snippet
@@ -362,12 +363,6 @@ def make_check_expr(
     hints_meta_index_last = -1
 
     # ..................{ LOCALS ~ func : code               }..................
-    #FIXME: [SPEED] Consider refactoring this into a "collections.deque[str]"
-    #data structure instead -- assuming that calling the deque.append() method
-    #is actually faster than performing string concatenations as we currently
-    #do, anyway. In theory, a deque *SHOULD* be substantially faster -- but
-    #everything depends on Python's internal implementation, really.
-
     # Python code snippet type-checking the current pith against the currently
     # visited hint (to be appended to the "func_wrapper_code" string).
     func_curr_code: str = None  # type: ignore[assignment]
@@ -569,6 +564,14 @@ def make_check_expr(
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
     # below with a snippet type-checking the root pith against the root hint.
+    #
+    # Note that, shockingly, brute-force string concatenation has been
+    # personally profiled by @leycec to be substantially faster than *ALL*
+    # alternatives under CPython up to a large number of iterations (e.g.,
+    # 100,000). This includes these popular alternatives, *ALL* of which are
+    # orders of magnitude slower than brute-force string concatenation:
+    # * deque.append().
+    # * list.append().
     func_wrapper_code = func_root_code
 
     # ..................{ SEARCH                             }..................
@@ -627,6 +630,12 @@ def make_check_expr(
         # assert hint_curr_placeholder in func_wrapper_code, (
         #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
         #         hint_curr_exception_prefix, hint, hint_curr_placeholder, func_wrapper_code))
+
+        # Code snippet type-checking the current pith against the current hint.
+        func_curr_code = None  # type: ignore[assignment]
+
+        # Code expression evaluating to the origin type of the current hint.
+        hint_curr_expr = None  # type: ignore[assignment]
 
         # ................{ PEP                                }................
         # If this hint is PEP-compliant...
@@ -1454,11 +1463,6 @@ def make_check_expr(
                     # Else, this child hint is ignorable. In this case, fallback
                     # to trivial code shallowly type-checking this pith as an
                     # instance of this origin type.
-                    else:
-                        func_curr_code = CODE_PEP484_INSTANCE_format(
-                            pith_curr_expr=pith_curr_expr,
-                            hint_curr_expr=hint_curr_expr,
-                        )
                 # Else, this hint is neither a standard sequence *NOR* variadic
                 # tuple.
                 #
@@ -1725,11 +1729,6 @@ def make_check_expr(
                     # ignorable. In this case, fallback to trivial code
                     # shallowly type-checking this pith as an instance of this
                     # origin type.
-                    else:
-                        func_curr_code = CODE_PEP484_INSTANCE_format(
-                            pith_curr_expr=pith_curr_expr,
-                            hint_curr_expr=hint_curr_expr,
-                        )
                 # Else, this hint is *NOT* a mapping.
                 #
                 # ..........{ REITERABLES                          }............
@@ -1737,13 +1736,6 @@ def make_check_expr(
                 #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
                 #Unify as follows:
                 #* In the existing "datapepsigns" submodule:
-                #  * Define a new "HintSignTupleFixed" sign in the standard way.
-                #  * The existing "HintSignTuple" sign should be preserved as is
-                #    but *ONLY* match variable-length tuple type hints. Why?
-                #    Because this sign naturally matches the unsubscripted
-                #    "typing.Tuple" attribute, which is semantically equivalent
-                #    to the "typing.Tuple[object, ...]" type hint, which is the
-                #    widest possible variable-length tuple type hint.
                 #  * Refactor the get_hint_pep_sign() getter to assign *ALL*
                 #    fixed-length tuple type hints the "HintSignTupleFixed" sign
                 #    rather than the "HintSignTuple" sign.
@@ -1836,25 +1828,9 @@ def make_check_expr(
                                 CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format(
                                     pith_curr_var_name=pith_curr_var_name)),
                         )
-                    #FIXME: We're repeating this same block *OVER* and *OVER*
-                    #again, plainly violating DRY. The solution is probably to:
-                    #* Far above, initialize "func_curr_code = None" at the
-                    #  start of each iteration.
-                    #* Far below, simply define this fallback:
-                    #      if func_curr_code is None:
-                    #          func_curr_code = CODE_PEP484_INSTANCE_format(
-                    #              pith_curr_expr=pith_curr_expr,
-                    #              hint_curr_expr=hint_curr_expr,
-                    #          )
-
                     # Else, this child hint is ignorable. In this case, fallback
                     # to trivial code shallowly type-checking this pith as an
                     # instance of this origin type.
-                    else:
-                        func_curr_code = CODE_PEP484_INSTANCE_format(
-                            pith_curr_expr=pith_curr_expr,
-                            hint_curr_expr=hint_curr_expr,
-                        )
                 # Else, this hint is *NOT* a single-argument reiterable.
                 #
                 # ............{ ANNOTATED                          }............
@@ -2096,17 +2072,6 @@ def make_check_expr(
                             hint_curr_expr=hint_curr_expr,
                             indent_curr=indent_curr,
                         )
-                    #FIXME: We're repeating this same block *OVER* and *OVER*
-                    #again, plainly violating DRY. The solution is probably to:
-                    #* Far above, initialize "func_curr_code = None" at the
-                    #  start of each iteration.
-                    #* Far below, simply define this fallback:
-                    #      if func_curr_code is None:
-                    #          func_curr_code = CODE_PEP484_INSTANCE_format(
-                    #              pith_curr_expr=pith_curr_expr,
-                    #              hint_curr_expr=hint_curr_expr,
-                    #          )
-
                     # Else, this child hint is ignorable. In this case...
                     else:
                         # Python expression evaluating to the origin type of
@@ -2120,10 +2085,6 @@ def make_check_expr(
 
                         # Fallback to trivial code shallowly type-checking this
                         # pith as an instance of this origin type.
-                        func_curr_code = CODE_PEP484_INSTANCE_format(
-                            pith_curr_expr=pith_curr_expr,
-                            hint_curr_expr=hint_curr_expr,
-                        )
                 # Else, this hint is *NOT* a subclass type hint.
                 #
                 # ............{ GENERIC or PROTOCOL                }............
@@ -2329,15 +2290,11 @@ def make_check_expr(
         #   were the root type hint, it would have already been passed into a
         #   faster submodule generating PEP-noncompliant code instead.
         elif isinstance(hint_curr, type):
-            # Code type-checking the current pith against this type.
-            func_curr_code = CODE_PEP484_INSTANCE_format(
-                pith_curr_expr=pith_curr_expr,
-                # Python expression evaluating to this type.
-                hint_curr_expr=add_func_scope_type(
-                    cls=hint_curr,
-                    func_scope=func_wrapper_scope,
-                    exception_prefix=EXCEPTION_PREFIX_HINT,
-                ),
+            # Python expression evaluating to this type.
+            hint_curr_expr = add_func_scope_type(
+                cls=hint_curr,
+                func_scope=func_wrapper_scope,
+                exception_prefix=EXCEPTION_PREFIX_HINT,
             )
         # ................{ NON-PEP ~ bad                      }................
         # Else, this hint is neither PEP-compliant *NOR* a class. In this case,
@@ -2358,6 +2315,23 @@ def make_check_expr(
             )
 
         # ................{ CLEANUP                            }................
+        # If prior logic generated *NO* code snippet type-checking the current
+        # pith against the currently visited hint, fall back to a trivial code
+        # snippet shallowly type-checking this pith as an instance of the origin
+        # type of this hint.
+        if func_curr_code is None:
+            assert hint_curr_expr is not None, (
+                f'{EXCEPTION_PREFIX}type hint {repr(hint_curr)} '
+                f'expression undefined.'
+            )
+
+            func_curr_code = CODE_PEP484_INSTANCE_format(
+                pith_curr_expr=pith_curr_expr,
+                hint_curr_expr=hint_curr_expr,
+            )
+        # Else, prior logic generated a code snippet type-checking the current
+        # pith against the currently visited hint. Preserve this snippet.
+
         # Inject this code into the body of this wrapper.
         func_wrapper_code = replace_str_substrs(
             text=func_wrapper_code,
