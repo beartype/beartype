@@ -22,7 +22,10 @@ from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
-from beartype.door._cls.pep.pep484585.doorpep484585tuple import _TupleTypeHint
+from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
+    TupleFixedTypeHint,
+    TupleVariableTypeHint,
+)
 from beartype.roar import (
     BeartypeDoorNonpepException,
     # BeartypeDoorPepUnsupportedException,
@@ -39,6 +42,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignLiteral,
     HintSignNewType,
     HintSignTuple,
+    HintSignTupleFixed,
     HintSignTypeVar,
 )
 from beartype._util.hint.pep.utilpepget import (
@@ -80,6 +84,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     # Private concrete subclass of this ABC handling this hint if any *OR*
     # "None" otherwise (i.e., if no such subclass has been authored yet).
     wrapper_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)  # type: ignore[arg-type]
+    # print(f'hint: {repr(hint)}; sign: {repr(hint_sign)}; wrapper: {repr(wrapper_subclass)}')
 
     # If this hint appears to be currently unsupported...
     if wrapper_subclass is None:
@@ -139,13 +144,14 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.
 _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
-    HintSignAnnotated: AnnotatedTypeHint,
-    HintSignCallable:  CallableTypeHint,
-    HintSignGeneric:   TypeHintGeneric,
-    HintSignLiteral:   LiteralTypeHint,
-    HintSignNewType:   NewTypeTypeHint,
-    HintSignTuple:     _TupleTypeHint,
-    HintSignTypeVar:   TypeVarTypeHint,
+    HintSignAnnotated:  AnnotatedTypeHint,
+    HintSignCallable:   CallableTypeHint,
+    HintSignGeneric:    TypeHintGeneric,
+    HintSignLiteral:    LiteralTypeHint,
+    HintSignNewType:    NewTypeTypeHint,
+    HintSignTuple:      TupleVariableTypeHint,
+    HintSignTupleFixed: TupleFixedTypeHint,
+    HintSignTypeVar:    TypeVarTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
@@ -175,8 +181,22 @@ def _init() -> None:
     from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 
     # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_CLS" global dictionary.
+    #
+    # For each sign in the dictionary mapping from signs uniquely identifying
+    # type hint factories originating from isinstanceable types to the fixed
+    # number of child type hints subscripting those factories...
     for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.keys():
-        _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = _TypeHintOriginIsinstanceable
+        # If this sign has *NOT* already been mapped to an existing "TypeHint"
+        # subclass, map this sign to the generic private
+        # "_TypeHintOriginIsinstanceable" subclass.
+        if hint_sign not in _HINT_SIGN_TO_TYPEHINT_CLS:
+            _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = (
+                _TypeHintOriginIsinstanceable)
+        # Else, this sign has already been mapped to an existing "TypeHint"
+        # subclass. Preserve this mapping as is.
+
+    # For each sign uniquely identifying a union, map this sign to the
+    # union-specific "TypeHint" subclass.
     for hint_sign in HINT_SIGNS_UNION:
         _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = UnionTypeHint
 

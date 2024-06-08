@@ -30,6 +30,7 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     import typing
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
     from beartype._data.hint.pep.sign.datapepsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -41,6 +42,21 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
     for hint_sign, args_len_range in (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.items()):
         # print(f'Inspecting {args_len_belief}-argument sign {args_sign}...')
+
+        # If this is the sign uniquely identifying fixed-length tuple type hints
+        # (e.g., "tuple[int, str]"), silently ignore the corresponding
+        # "typing.Tuple" type hint factory and proceed to the next sign. Why?
+        # Because that factory ambiguously supports both fixed- and variable-
+        # length tuple type hints and thus defines:
+        #     >>> from typing import Tuple
+        #     >>> Tuple._nparams
+        #     -1
+        #
+        # Needless to say, "-1" is an invalid number of arguments. *sigh*
+        if hint_sign is HintSignTuple:
+            return
+        # Else, this is *NOT* the sign uniquely identifying fixed-length tuple
+        # type hints.
 
         # Type hint factory published by the "typing" module with this name.
         hint_factory = getattr(typing, hint_sign.name)

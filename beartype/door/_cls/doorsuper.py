@@ -811,7 +811,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
 
         # If that branch is unsubscripted, assume that branch to have been
-        # subscripted by "Any" and simply check for compatible origin types.
+        # subscripted by "Any" by simply checking for compatible origin types.
         if branch._is_args_ignorable:
             # print(f'is_subhint_branch({self}, {branch} [unsubscripted])')
             return issubclass(self._origin, branch._origin)

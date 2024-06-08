@@ -48,6 +48,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
+    HintSignTuple,
     HintSignType,
     HintSignValuesView,
 )
@@ -128,6 +129,7 @@ HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
     HintSignMapping: _ARGS_LEN_2,
     HintSignMutableMapping: _ARGS_LEN_2,
     HintSignOrderedDict: _ARGS_LEN_2,
+    HintSignTuple: _ARGS_LEN_2,
 
     # Type hint factories subscriptable by exactly three child type hints.
     HintSignCoroutine: _ARGS_LEN_3,

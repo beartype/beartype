@@ -126,13 +126,13 @@ from beartype._util.cls.pep.utilpep3119 import (
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args,
-    is_hint_pep484585_tuple_empty,
-)
+    get_hint_pep484585_args)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,
 )
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    is_hint_pep484585_tuple_empty)
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.hint.pep.proposal.utilpep593 import (
@@ -1374,30 +1374,15 @@ def make_check_expr(
                 # Else, this hint is *NOT* a union.
                 #
                 # ..........{ SEQUENCES ~ variadic                 }............
-                # If this hint is either...
-                elif (
-                    # A standard sequence (e.g., "typing.List[int]") *OR*...
-                    hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1 or (
-                        # A tuple *AND*...
-                        hint_curr_sign is HintSignTuple and
-                        # This tuple is subscripted by exactly two child hints
-                        # *AND*...
-                        hint_childs_len == 2 and
-                        # The second child hint is just an unquoted ellipsis...
-                        hint_childs[1] is Ellipsis
-                    )
-                    # Then this hint is of the form "Tuple[{typename}, ...]",
-                    # typing a tuple accepting a variadic number of items all
-                    # satisfying the "{typename}" child hint. Since this case
-                    # is semantically equivalent to that of standard sequences,
-                    # we transparently handle both here for maintainability.
-                    #
-                    # See below for logic handling fixed-length tuples.
-                # Then this hint is either a single-argument sequence *OR* a
-                # similar hint semantically resembling a single-argument
-                # sequence subscripted by one argument and one or more
-                # ignorable arguments. In this case...
-                ):
+                # If this hint is either:
+                # * A standard single-argument sequence (e.g., "list[int]").
+                # * A similar hint semantically resembling a single-argument
+                #   sequence subscripted by one argument and one or more
+                #   ignorable arguments (e.g., "tuple[str, ...]").
+                #
+                # Then this hint is effectively a standard single-argument
+                # sequence. In this case...
+                elif hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1:
                     # Python expression evaluating to the origin type of this
                     # sequence hint as a hidden beartype-specific parameter
                     # injected into the signature of this wrapper function.
@@ -1407,16 +1392,16 @@ def make_check_expr(
                         func_scope=func_wrapper_scope,
                         exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     )
-
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
                     # Possibly ignorable insane child hint subscripting this
                     # sequence hint, defined as either...
                     hint_child = (
-                        # If this hint is a variadic tuple, the parent "if"
-                        # statement above has already validated the contents of
-                        # this tuple. In this case, efficiently get the lone
-                        # child hint of this parent hint *WITHOUT* validation.
+                        # If this hint is a variable-length tuple, the
+                        # get_hint_pep_sign() getter called above has already
+                        # validated the contents of this tuple. In this case,
+                        # efficiently get the lone child hint of this parent
+                        # hint *WITHOUT* validation.
                         hint_childs[0]
                         if hint_curr_sign is HintSignTuple else
                         # Else, this hint is a single-argument sequence, in
@@ -1467,8 +1452,8 @@ def make_check_expr(
                 # tuple.
                 #
                 # ............{ SEQUENCES ~ tuple : fixed          }............
-                # If this hint is a tuple, this tuple is *NOT* of the variadic
-                # form and *MUST* thus be of the fixed-length form.
+                # If this hint is a fixed-length tuple (e.g., "tuple[int,
+                # str]")...
                 #
                 # Note that if this hint is a:
                 # * PEP 484-compliant "typing.Tuple"-based hint, this hint is
@@ -1499,15 +1484,7 @@ def make_check_expr(
                 #   ellipses.
                 #
                 # This is what happens when unreadable APIs are promoted.
-                elif hint_curr_sign is HintSignTuple:
-                    # Assert this tuple is *NOT* of the syntactic form
-                    # "typing.Tuple[{typename}, ...]" handled by prior logic.
-                    assert (
-                        hint_childs_len <= 1 or
-                        hint_childs[1] is not Ellipsis
-                    ), (f'{EXCEPTION_PREFIX}variadic tuple type hint '
-                        f'{repr(hint_curr)} unhandled.')
-
+                elif hint_curr_sign is HintSignTupleFixed:
                     # Initialize the code type-checking this pith against this
                     # tuple to the substring prefixing all such code.
                     func_curr_code = CODE_PEP484585_TUPLE_FIXED_PREFIX
@@ -1574,7 +1551,7 @@ def make_check_expr(
                         indent_curr=indent_curr,
                         pith_curr_assign_expr=pith_curr_assign_expr,
                     )
-                # Else, this hint is *NOT* a tuple.
+                # Else, this hint is *NOT* a fixed-length tuple.
                 #
                 # ..........{ MAPPINGS                             }............
                 # If this hint is a standard mapping (e.g., "dict[str, int]")...

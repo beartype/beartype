@@ -60,6 +60,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignPattern,
         HintSignSequence,
         HintSignTuple,
+        HintSignTupleFixed,
         HintSignType,
     )
     from beartype_test.a00_unit.data.data_type import (
@@ -1018,7 +1019,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         #     TypeError: Parameters to generic types must be types. Got [].
         HintPepMetadata(
             hint=tuple[()],
-            pep_sign=HintSignTuple,
+            pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
@@ -1042,7 +1043,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of only ignorable child hints.
         HintPepMetadata(
             hint=tuple[Any, object,],
-            pep_sign=HintSignTuple,
+            pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
@@ -1066,7 +1067,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of at least one ignorable child hint.
         HintPepMetadata(
             hint=tuple[float, Any, str,],
-            pep_sign=HintSignTuple,
+            pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
@@ -1164,7 +1165,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic fixed-length tuple.
         HintPepMetadata(
             hint=tuple[S, T],
-            pep_sign=HintSignTuple,
+            pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
             is_typevars=True,

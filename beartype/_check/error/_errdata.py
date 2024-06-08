@@ -43,7 +43,7 @@ def _init() -> None:
         HintSignGeneric,
         HintSignLiteral,
         HintSignNoReturn,
-        HintSignTuple,
+        HintSignTupleFixed,
         HintSignType,
     )
     from beartype._data.hint.pep.sign.datapepsignset import (
@@ -62,7 +62,7 @@ def _init() -> None:
     from beartype._check.error._pep.errpep484604 import find_cause_union
     from beartype._check.error._pep.errpep586 import find_cause_literal
     from beartype._check.error._pep.errpep593 import find_cause_annotated
-    from beartype._check.error._pep.pep484585.errpep484585generic import ( 
+    from beartype._check.error._pep.pep484585.errpep484585generic import (
         find_cause_generic)
     from beartype._check.error._pep.pep484585.errpep484585mapping import (
         find_cause_mapping)
@@ -70,7 +70,7 @@ def _init() -> None:
         find_cause_reiterable)
     from beartype._check.error._pep.pep484585.errpep484585sequence import (
         find_cause_sequence_args_1,
-        find_cause_tuple,
+        find_cause_tuple_fixed,
     )
 
     # Map each originative sign to the appropriate finder *BEFORE* any other
@@ -106,7 +106,7 @@ def _init() -> None:
         HintSignGeneric: find_cause_generic,
         HintSignLiteral: find_cause_literal,
         HintSignNoReturn: find_cause_noreturn,
-        HintSignTuple: find_cause_tuple,
+        HintSignTupleFixed: find_cause_tuple_fixed,
         HintSignType: find_cause_subclass_type,
     })
 

@@ -37,8 +37,6 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
-    HintSignTuple,
-    HintSignTupleFixed,
     HintSignTypedDict,
     HintSignPep585BuiltinSubscriptedUnknown,
 )
@@ -50,6 +48,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     is_hint_pep484_newtype_pre_python310)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     is_hint_pep484585_generic)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    get_hint_pep484585_sign_tuplefixed_or_same)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_builtin_subscripted,
@@ -553,10 +553,15 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # identifiable by its possibly unsubscripted representation *OR* "None".
     hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
 
-    # If this hint is identifiable by its possibly unsubscripted
-    # representation, return this sign.
+    # If this hint is identifiable by its possibly unsubscripted representation,
+    # return this sign.
     if hint_sign:
-        return hint_sign
+        # print(f'hint: {hint}; sign: {hint_sign}')
+        # Return this sign as is if this is any sign other than the ambiguous
+        # "HintSignTuple" sign *OR* reassign this sign to the unambiguous
+        # "HintSignTupleFixed" sign if this is a fixed-length tuple hint.
+        return get_hint_pep484585_sign_tuplefixed_or_same(
+            hint=hint, hint_sign=hint_sign)
     # Else, this hint is *NOT* identifiable by its possibly unsubscripted
     # representation.
     #
@@ -571,39 +576,12 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # If this hint is identifiable by its necessarily subscripted
         # representation...
         if hint_sign:
-            # If this is a tuple hint, disambiguate between the following two
-            # fundamentally distinct kinds of tuple hints:
-            # * Fixed-length tuple type hints of the form
-            #   "tuple[{hint_child_1}, ..., {hint_child_N}]", which this getter
-            #   unambiguously reassigns the sign "HintSignTupleFixed".
-            # * Variable-length tuple type hints of the form
-            #   "tuple[{hint_child_1}, ...]", which this getter unambiguously
-            #   preserves the sign "HintSignTuple".
-            if hint_sign is HintSignTuple:
-                # Child hints subscripting this parent tuple hint.
-                hint_childs = get_hint_pep_args(hint)
-
-                # If it is *NOT* the case that...
-                if not (
-                    # This parent tuple hint is subscripted by exactly two child
-                    # hints *AND*...
-                    len(hint_childs) == 2 and
-                    # The second child hint is the ellipsis singleton (i.e.,
-                    # the unquoted character sequence "...")...
-                    hint_childs[1] is Ellipsis
-                # Then this is a fixed-length tuple hint. In this case,
-                # reassign this hint the "HintSignTupleFixed" sign identifying
-                # these hints.
-                ):
-                    #FIXME: Enable us up tomorrow, please! *sigh*
-                    # return HintSignTupleFixed
-                    pass
-                # Else, this is a variable-length tuple hint. In this case,
-                # preserve the "HintSignTuple" sign identifying these hints.
-            # Else, this is *NOT* a tuple hint.
-
-            # Return this sign.
-            return hint_sign
+            # Return this sign as is if this is any sign other than the
+            # ambiguous "HintSignTuple" sign *OR* reassign this sign to the
+            # unambiguous "HintSignTupleFixed" sign if this is a fixed-length
+            # tuple hint.
+            return get_hint_pep484585_sign_tuplefixed_or_same(
+                hint=hint, hint_sign=hint_sign)
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
     # Else, this representation (and thus this hint) is unsubscripted.

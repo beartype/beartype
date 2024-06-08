@@ -12,12 +12,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignTuple,
+    HintSignTupleFixed,
+)
+from beartype._data.hint.pep.sign.datapepsignmap import (
+    HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
 from beartype._check.error._errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextprefix import prefix_pith_type
@@ -45,185 +50,21 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
     assert cause.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1, (
-        f'{repr(cause.hint)} not 1-argument sequence hint.')
-
-    # Assert this sequence was subscripted by exactly one argument. Note that
-    # prior logic should have already guaranteed this on our behalf.
-    assert len(cause.hint_childs) == 1, (
-        f'1-argument sequence hint {repr(cause.hint)} subscripted by '
-        f'{len(cause.hint_childs)} != 1.')
-
-    # Shallow output cause describing the failure of this path to be a shallow
-    # instance of the type originating this hint (e.g., "list" for the hint
-    # "list[str]") if this pith is not an instance of this type *OR* "None"
-    # otherwise (i.e., if this pith is an instance of this type).
-    cause_shallow = find_cause_type_instance_origin(cause)
-
-    # Return either...
-    return (
-        # If this pith is *NOT* an instance of this type, this shallow cause;
-        cause_shallow
-        if cause_shallow.cause_str_or_none is not None else
-        # Else, this pith is an instance of this type and is thus a sequence.
-        # In this case, defer to this function supporting arbitrary sequences.
-        _find_cause_sequence(cause)
+        f'{repr(cause.hint)} neither '
+        f'1-argument sequence nor variable-length tuple hint.'
     )
 
+    # Number of child type hints expected to be subscripting this hint.
+    hints_child_len_expected = (
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[cause.hint_sign])
 
-def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
-    '''
-    Output cause describing whether the pith of the passed input cause either
-    satisfies or violates the **tuple type hint** (i.e., PEP-compliant type hint
-    accepting either zero or more subscripted arguments iteratively constraining
-    each item of this fixed-length tuple *or* exactly one subscripted arguments
-    constraining *all* items of this variadic tuple) of that cause.
-
-    Parameters
-    ----------
-    cause : ViolationCause
-        Input cause providing this data.
-
-    Returns
-    -------
-    ViolationCause
-        Output cause type-checking this data.
-    '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignTuple, (
-        f'{repr(cause.hint_sign)} not "HintSignTuple".')
-
-    # Shallow output cause to be returned, type-checking only whether this path
-    # is an instance of the type originating this hint (e.g., "tuple" for the
-    # hint "tuple[str, ...]").
-    cause_shallow = find_cause_type_instance_origin(cause)
-
-    # If this pith is *NOT* a tuple, return this shallow cause.
-    if cause_shallow.cause_str_or_none is not None:
-        return cause_shallow
-    # Else, this pith is a tuple.
-    #
-    # If this hint is a tuple...
-    elif (
-        # Subscripted by exactly two child hints *AND*...
-        len(cause.hint_childs) == 2 and
-        # The second child hint is just an unquoted ellipsis...
-        cause.hint_childs[1] is Ellipsis
-    ):
-    # Then this hint is of the variadic form "Tuple[{typename}, ...]", typing a
-    # tuple accepting a variadic number of items all satisfying the
-    # child hint "{typename}". Since this case semantically reduces to a simple
-    # sequence, defer to this function supporting arbitrary sequences.
-        return _find_cause_sequence(cause)
-    # Else, this hint is of the fixed-length form "Tuple[{typename1}, ...,
-    # {typenameN}]", typing a tuple accepting a fixed number of items each
-    # satisfying a unique child hint.
-    #
-    # If this hint is the empty fixed-length tuple, validate this pith to be
-    # the empty tuple.
-    elif is_hint_pep484585_tuple_empty(cause.hint):
-        # If this pith is the empty tuple, this path satisfies this hint.
-        if not cause.pith:
-            return cause
-        # Else, this tuple is non-empty and thus fails to satisfy this hint.
-
-        # Deep output cause to be returned, permuted from this input cause
-        # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
-            f'tuple {represent_pith(cause.pith)} non-empty'))
-
-        # Return this cause.
-        return cause_deep
-    # Else, this hint is a standard fixed-length tuple.
-
-    # If this pith and hint are of differing lengths, this tuple fails to
-    # satisfy this hint. In this case...
-    if len(cause.pith) != len(cause.hint_childs):
-        # Deep output cause to be returned, permuted from this input cause
-        # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
-            f'tuple {represent_pith(cause.pith)} length '
-            f'{len(cause.pith)} != {len(cause.hint_childs)}'
-        ))
-
-        # Return this cause.
-        return cause_deep
-    # Else, this pith and hint are of the same length.
-
-    # For each enumerated item of this tuple...
-    for pith_item_index, pith_item in enumerate(cause.pith):
-        # Child hint corresponding to this tuple item. Since this pith and
-        # hint are of the same length, this child hint exists.
-        hint_child = cause.hint_childs[pith_item_index]
-        # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
-
-        # If this child hint is ignorable, continue to the next.
-        if hint_child is None:
-            continue
-        # Else, this child hint is unignorable.
-
-        # Deep output cause to be returned, type-checking whether this tuple
-        # item satisfies this child hint.
-        # sleuth_copy = cause.permute(pith=pith_item, hint=hint_child)
-        # pith_item_cause = sleuth_copy.find_cause()
-        cause_deep = cause.permute(
-            pith=pith_item, hint=hint_child).find_cause()
-
-        # If this item is the cause of this failure...
-        if cause_deep.cause_str_or_none is not None:
-            # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
-
-            # Human-readable substring prefixing this failure with metadata
-            # describing this item.
-            cause_deep.cause_str_or_none = (
-                f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
-                f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
-                f'item {cause_deep.cause_str_or_none}'
-            )
-
-            # Return this cause.
-            return cause_deep
-        # Else, this item is *NOT* the cause of this failure. Silently
-        # continue to the next.
-
-    # Return this cause as is; all items of this fixed-length tuple are valid,
-    # implying this pith to deeply satisfy this hint.
-    return cause
-
-# ....................{ PRIVATE ~ finders                  }....................
-def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
-    '''
-    Output cause describing whether the pith of the passed input cause either
-    satisfies or violates the **variadic sequence type hint** (i.e.,
-    PEP-compliant type hint accepting one or more subscripted arguments
-    constraining *all* items of this object, which necessarily satisfies the
-    :class:`collections.abc.Sequence` protocol with guaranteed :math:`O(1)`
-    indexation across all sequence items) of that cause.
-
-    Parameters
-    ----------
-    cause : ViolationCause
-        Input cause providing this data.
-
-    Returns
-    -------
-    ViolationCause
-        Output cause type-checking this data.
-    '''
-    # Assert this type hint to describe a variadic sequence. See the parent
-    # find_cause_sequence_args_1() and find_cause_tuple()
-    # functions for derivative logic.
-    #
-    # Note that this pith need *NOT* be validated to be an instance of the
-    # expected variadic sequence, as the caller guarantees this to be the case.
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert (
-        cause.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1 or (
-            cause.hint_sign is HintSignTuple and
-            len(cause.hint_childs) == 2 and
-            cause.hint_childs[1] is Ellipsis
-        )
-    ), (f'{repr(cause.hint)} neither '
-        f'standard sequence nor variadic tuple hint.')
+    # Assert this hint was subscripted by the expected number of child type
+    # hints. Note that prior logic should have already guaranteed this.
+    assert len(cause.hint_childs) in hints_child_len_expected, (
+        f'Sequence hint {repr(cause.hint)} subscripted by '
+        f'{len(cause.hint_childs)} != {hints_child_len_expected} '
+        f'child type hints.'
+    )
 
     # First child hint subscripting this parent sequence hint. All remaining
     # child hints if any are ignorable. Specifically, if this hint is:
@@ -234,10 +75,21 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
     #   to be an ellipses and thus ignorable syntactic chuff.
     hint_child = cause.hint_childs[0]
 
+    # Shallow output cause describing the failure of this path to be a shallow
+    # instance of the type originating this hint (e.g., "list" for the hint
+    # "list[str]") if this pith is not an instance of this type *OR* "None"
+    # otherwise (i.e., if this pith is an instance of this type).
+    cause_shallow = find_cause_type_instance_origin(cause)
+
+    # If this pith is *NOT* an instance of this type, return this shallow cause.
+    if cause_shallow.cause_str_or_none is not None:
+        return cause_shallow
+    # Else, this pith is an instance of this type.
+    #
     # If either...
-    if (
+    elif (
         # This sequence is empty, all items of this sequence (of which there are
-        # none) are valid *OR*...
+        # none) are necessarily valid *OR*...
         not cause.pith or
         # This child hint is ignorable...
         hint_child is None
@@ -308,4 +160,109 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
 
     # Return this cause as is; all items of this sequence are valid, implying
     # this sequence to deeply satisfy this hint.
+    return cause
+
+
+def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
+    '''
+    Output cause describing whether the pith of the passed input cause either
+    satisfies or violates the **fixed-length tuple type hint** (i.e.,
+    PEP-compliant type hint accepting zero or more subscripted arguments
+    iteratively constraining each item of this fixed-length tuple) of that
+    cause.
+
+    Parameters
+    ----------
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    -------
+    ViolationCause
+        Output cause type-checking this data.
+    '''
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignTupleFixed, (
+        f'{repr(cause.hint_sign)} not "HintSignTupleFixed".')
+
+    # Shallow output cause describing the failure of this path to be a shallow
+    # instance of the type originating this hint (e.g., "tuple" for the hint
+    # "tuple[str]") if this pith is not an instance of this type *OR* "None"
+    # otherwise (i.e., if this pith is an instance of this type).
+    cause_shallow = find_cause_type_instance_origin(cause)
+
+    # If this pith is *NOT* a tuple, return this shallow cause.
+    if cause_shallow.cause_str_or_none is not None:
+        return cause_shallow
+    # Else, this pith is a tuple.
+    #
+    # If this hint is the empty fixed-length tuple, validate this pith to be
+    # the empty tuple.
+    elif is_hint_pep484585_tuple_empty(cause.hint):
+        # If this pith is the empty tuple, this path satisfies this hint.
+        if not cause.pith:
+            return cause
+        # Else, this tuple is non-empty and thus fails to satisfy this hint.
+
+        # Deep output cause to be returned, permuted from this input cause
+        # with a human-readable string describing this failure.
+        cause_deep = cause.permute(cause_str_or_none=(
+            f'tuple {represent_pith(cause.pith)} non-empty'))
+
+        # Return this cause.
+        return cause_deep
+    # Else, this hint is a standard fixed-length tuple.
+    #
+    # If this pith and hint are of differing lengths, this tuple fails to
+    # satisfy this hint. In this case...
+    elif len(cause.pith) != len(cause.hint_childs):
+        # Deep output cause to be returned, permuted from this input cause
+        # with a human-readable string describing this failure.
+        cause_deep = cause.permute(cause_str_or_none=(
+            f'tuple {represent_pith(cause.pith)} length '
+            f'{len(cause.pith)} != {len(cause.hint_childs)}'
+        ))
+
+        # Return this cause.
+        return cause_deep
+    # Else, this pith and hint are of the same length.
+
+    # For each enumerated item of this tuple...
+    for pith_item_index, pith_item in enumerate(cause.pith):
+        # Child hint corresponding to this tuple item. Since this pith and
+        # hint are of the same length, this child hint exists.
+        hint_child = cause.hint_childs[pith_item_index]
+        # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
+
+        # If this child hint is ignorable, continue to the next.
+        if hint_child is None:
+            continue
+        # Else, this child hint is unignorable.
+
+        # Deep output cause to be returned, type-checking whether this tuple
+        # item satisfies this child hint.
+        # sleuth_copy = cause.permute(pith=pith_item, hint=hint_child)
+        # pith_item_cause = sleuth_copy.find_cause()
+        cause_deep = cause.permute(
+            pith=pith_item, hint=hint_child).find_cause()
+
+        # If this item is the cause of this failure...
+        if cause_deep.cause_str_or_none is not None:
+            # print(f'tuple pith: {sleuth_copy.pith}\ntuple hint child: {sleuth_copy.hint}\ncause: {pith_item_cause}')
+
+            # Human-readable substring prefixing this failure with metadata
+            # describing this item.
+            cause_deep.cause_str_or_none = (
+                f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
+                f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
+                f'item {cause_deep.cause_str_or_none}'
+            )
+
+            # Return this cause.
+            return cause_deep
+        # Else, this item is *NOT* the cause of this failure. Silently
+        # continue to the next.
+
+    # Return this cause as is; all items of this fixed-length tuple are valid,
+    # implying this pith to deeply satisfy this hint.
     return cause

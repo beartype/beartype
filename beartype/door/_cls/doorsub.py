@@ -33,10 +33,14 @@ class TypeHintGeneric(TypeHint):
 class _TypeHintOriginIsinstanceable(TypeHint):
     '''
     **Isinstanceable type hint wrapper** (i.e., high-level object encapsulating
-    a low-level parent type hint that both **(A)** originates from an
-    isinstanceable class such that *all* objects satisfying this hint are
-    instances of that class and **(B)** is subscripted (indexed) by one or more
-    low-level child type hints).
+    a low-level parent type hint satisfying various conditions).
+
+    Notably, this wrapper wraps hints that both:
+
+    * Originate from an **isinstanceable class** such that *all* objects
+      satisfying this hint are instances of that class.
+    * Are subscripted (indexed) by a predetermined number of one or more
+      low-level child type hints.
     '''
 
     # ..................{ PRIVATE ~ factories                }..................

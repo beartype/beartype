@@ -77,6 +77,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSized,
     HintSignTextIO,
     HintSignTuple,
+    HintSignTupleFixed,
     HintSignType,
     HintSignTypedDict,
     HintSignTypeGuard,
@@ -286,6 +287,7 @@ HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
     HintSignList,
     HintSignMutableSequence,
     HintSignSequence,
+    HintSignTuple,
 ))
 '''
 Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
@@ -293,6 +295,14 @@ identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted by
 exactly one child type hint constraining *all* items of compliant sequences,
 which necessarily satisfy the :class:`collections.abc.Sequence` protocol with
 guaranteed :math:`O(1)` indexation across all sequence items).
+
+This set intentionally includes the:
+
+* :data:`.HintSignTuple` sign, identifying variable-length tuple type hints
+  subscripted by a single child type hint followed by an ignorable
+  :data:`Ellipses` object (i.e., `"..."` substring sans quotes). As such,
+  callers should explicitly ignore :data:`Ellipses` objects that are the second
+  child type hints subscripting type hints whose signs are in this set.
 
 This set intentionally excludes the:
 
@@ -316,8 +326,9 @@ This set intentionally excludes the:
 * :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
   :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
   thus handled elsewhere as a PEP-noncompliant type hint.
-* :obj:`typing.Tuple` sign, which accepts a variadic number of subscripted
-  arguments and thus requires special-cased handling.
+* :data:`.HintSignTupleFixed` sign, identifying fixed-length tuple type hints
+  subscripted by an arbitrary number of child type hints and thus requiring
+  special-cased handling.
 
 .. _collections.deque:
    https://docs.python.org/3/library/collections.html#collections.deque
@@ -387,6 +398,7 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE: _FrozenSetHintSign = frozenset((
     HintSignSet,
     HintSignSized,
     HintSignTuple,
+    HintSignTupleFixed,
     HintSignType,
     HintSignValuesView,
 
@@ -571,7 +583,6 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
 
     # ..................{ PEP (484|585)                      }..................
     HintSignGeneric,
-    HintSignTuple,
     HintSignType,
 
     # ..................{ PEP 544                            }..................
