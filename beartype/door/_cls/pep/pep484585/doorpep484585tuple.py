@@ -61,10 +61,19 @@ class TupleFixedTypeHint(TypeHint):
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
-        # If the other hint is a variable-length tuple, then this fixed-length
-        # tuple is commensurable (i.e., comparable) with that other hint despite
-        # having a differing class. In this case...
-        if isinstance(branch, TupleVariableTypeHint):
+        # print(f'self: {repr(self)}; branch: {repr(branch)}')
+
+        # If the other hint branch is unsubscripted (e.g., "typing.Callable"),
+        # assume that hint to be subscripted as "typing.Callable[..., Any]" by
+        # reducing to a test for compatible origin types.
+        if branch._is_args_ignorable:
+            return issubclass(self._origin, branch._origin)
+        # Else, that hint is subscripted.
+        #
+        # If that hint is a variable-length tuple, then this fixed-length tuple
+        # is commensurable (i.e., comparable) with that hint despite having a
+        # differing class. In this case...
+        elif isinstance(branch, TupleVariableTypeHint):
             # Child hint subscripting that variable-length tuple.
             branch_child = branch._args_wrapped_tuple[0]
 

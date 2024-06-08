@@ -172,6 +172,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Unqualified name of the concrete subclass wrapping this hint.
         hint_wrapper_basename = get_object_type_basename(self)
+        # print('hint_wrapper_basename: {hint_wrapper_basename}')
 
         # If this concrete subclass is currently private, deviously hide this
         # implementation detail by defaulting to the unqualified name of this

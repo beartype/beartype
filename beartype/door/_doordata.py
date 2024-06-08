@@ -88,21 +88,22 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 
     # If this hint appears to be currently unsupported...
     if wrapper_subclass is None:
-        #FIXME: This condition is kinda intense. Should we really be conflating
-        #typing attributes that aren't types with objects that are types? Let's
-        #investigate exactly which kinds of type hints require this and
-        #contemplate something considerably more elegant.
-
         # If either...
         if (
             # This hint is a PEP-noncompliant isinstanceable class *OR*...
             isinstance(hint, type) or
+
+            #FIXME: This condition is kinda intense. Should we really be
+            #conflating typing attributes that aren't types with objects that
+            #are types? Let's investigate exactly which kinds of type hints
+            #require this and contemplate something considerably more elegant.
             # An unsupported kind of PEP-compliant type hint (e.g.,
             # "typing.TypedDict" instance)...
             is_hint_pep_typing(hint)
         # Return the concrete "TypeHint" subclass handling all such classes.
         ):
             wrapper_subclass = ClassTypeHint
+            # print(f'[type fallback] hint: {repr(hint)}; sign: {repr(hint_sign)}; wrapper: {repr(wrapper_subclass)}')
         # Else, raise an exception.
         else:
             raise BeartypeDoorNonpepException(

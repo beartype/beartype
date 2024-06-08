@@ -25,7 +25,7 @@ class ClassTypeHint(TypeHint):
     low-level :pep:`484`-compliant type hint that is, in fact, a simple class).
 
     Caveats
-    ----------
+    -------
     This wrapper also intentionally wraps :pep:`484`-compliant :data:``None`
     type hints as the simple type of the :data:``None` singleton, as :pep:`484`
     standardized the reduction of the former to the latter:
@@ -62,7 +62,7 @@ class ClassTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ methods                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
-        # print(f'is_subhint({repr(self)}, {repr(branch)})?')
+        print(f'is_subhint({repr(self)}, {repr(branch)})?')
         # print(f'{repr(self)}._origin: {self._origin}')
         # # print(f'{repr(self)}._origin.__args__: {self._origin.__args__}')
         # print(f'{repr(self)}._origin.__parameters__: {self._origin.__parameters__}')

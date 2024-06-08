@@ -256,8 +256,9 @@ class CallableTypeHint(TypeHint):
     #FIXME: Internally comment us up, please.
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
-        # If that branch is unsubscripted, assume it is subscripted as
-        # "typing.Callable[..., Any]" and just test for compatible origins.
+        # If that branch is unsubscripted (e.g., "typing.Callable"), assume that
+        # branch to be subscripted as "typing.Callable[..., Any]" by reducing to
+        # a test for compatible origin types.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
         elif not isinstance(branch, CallableTypeHint):
