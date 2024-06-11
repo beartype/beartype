@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignTuple,
-    HintSignTupleFixed,
-)
+from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsignset import (

@@ -32,8 +32,9 @@ TUPLE_EMPTY: Tuple[Any, ...] = ()
 **Empty tuple singleton.**
 
 Yes, we know exactly what you're thinking: "Why would anyone do this, @leycec?
-Why not just directly access the empty tuple singleton as ()?" Because Python
-insanely requires us to do this under Python >= 3.8 to detect empty tuples:
+Why not just directly access the empty tuple singleton as ``()``?" Because
+Python insanely requires us to do this under Python >= 3.8 to detect empty
+tuples:
 
 .. code-block:: bash
 

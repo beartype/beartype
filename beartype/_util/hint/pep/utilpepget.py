@@ -93,8 +93,9 @@ if IS_PYTHON_AT_LEAST_3_9:
         #   continued to correctly declare an "__args__" dunder attribute of
         #   "((),)" until Python 3.11.
         #
-        # Disambiguate these two cases on behalf of callers by returning a tuple
-        # containing only the empty tuple rather than returning the empty tuple.
+        # Disambiguate these two cases on behalf of callers by returning a
+        # 1-tuple containing only the empty tuple (i.e., "((),)") rather than
+        # returning the empty tuple (i.e., "()").
         elif not hint_args:
             return _HINT_ARGS_EMPTY_TUPLE
         # Else, this hint is either subscripted *OR* is unsubscripted but not
@@ -141,7 +142,20 @@ get_hint_pep_args.__doc__ = '''
     logic attempting to directly access this attribute. Thus this function,
     which "fills in the gaps" by implementing this oversight.
 
-    **This getter never lies, unlike the comparable**
+    **This getter lies rarely due to subscription erasure** (i.e., the malicious
+    destruction of child type hints by parent type hint factories at
+    subscription time). Callers should not assume that the objects originally
+    subscripting this hint are still accessible. Although *most* hints preserve
+    their subscripted objects over their lifetimes, a small subset of edge-case
+    hints erase those objects at subscription time. This includes:
+
+    * :pep:`585`-compliant empty tuple type hints (i.e., ``tuple[()]``), which
+      despite being explicitly subscripted erroneously erase that subscription
+      at subscription time. This does *not* extend to :pep:`484`-compliant
+      empty tuple type hints (i.e., ``typing.Tuple[()]``), which correctly
+      preserve that subscripted empty tuple.
+
+    **This getter lies less than the comparable**
     :func:`get_hint_pep_typevars` **getter.** Whereas
     :func:`get_hint_pep_typevars` synthetically propagates type variables from
     child to parent type hints (rather than preserving the literal type
@@ -234,6 +248,14 @@ get_hint_pep_typevars.__doc__ = '''
     hint declaration time ignoring duplicates) if any *or* the empty tuple
     otherwise.
 
+    This getter correctly handles both:
+
+    * **Direct parametrizations** (i.e., cases in which this object itself is
+      directly parametrized by type variables).
+    * **Superclass parametrizations** (i.e., cases in which this object is
+      indirectly parametrized by one or more superclasses of its class being
+      directly parametrized by type variables).
+
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
@@ -247,6 +269,31 @@ get_hint_pep_typevars.__doc__ = '''
     guaranteeing :class:`AttributeError` exceptions from all general-purpose
     logic attempting to directly access this attribute. Thus this function,
     which "fills in the gaps" by implementing this oversight.
+
+    **Generics** (i.e., PEP-compliant type hints whose classes subclass one or
+    more public :mod:`typing` pseudo-superclasses) are often but *not* always
+    typevared. For example, consider the untypevared generic:
+
+    .. code-block:: pycon
+
+       >>> from typing import List
+       >>> class UntypevaredGeneric(List[int]): pass
+       >>> UntypevaredGeneric.__mro__
+       (__main__.UntypevaredGeneric, list, typing.Generic, object)
+       >>> UntypevaredGeneric.__parameters__
+       ()
+
+    Likewise, typevared hints are often but *not* always generic. For example,
+    consider the typevared non-generic:
+
+    .. code-block:: pycon
+
+       >>> from typing import List, TypeVar
+       >>> TypevaredNongeneric = List[TypeVar('T')]
+       >>> type(TypevaredNongeneric).__mro__
+       (typing._GenericAlias, typing._Final, object)
+       >>> TypevaredNongeneric.__parameters__
+       (~T,)
 
     Parameters
     ----------
@@ -262,17 +309,37 @@ get_hint_pep_typevars.__doc__ = '''
           value of that attribute.
         * Else, the empty tuple.
 
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a PEP-compliant type hint
+        parametrized by one or more type variables.
+
     Examples
     --------
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> import typing
        >>> from beartype._util.hint.pep.utilpepget import (
        ...     get_hint_pep_typevars)
+
        >>> S = typing.TypeVar('S')
        >>> T = typing.TypeVar('T')
+       >>> class UserList(typing.List[T]): pass
+
        >>> get_hint_pep_typevars(typing.Any)
        ()
+       >>> get_hint_pep_typevars(typing.List[int])
+       ()
+       >>> get_hint_pep_typevars(typing.List[T])
+       (T)
+       >>> get_hint_pep_typevars(UserList)
+       (T)
        >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
        (T, S)
     '''

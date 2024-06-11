@@ -54,7 +54,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     from beartype.vale import Is
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignNumpyArray,
-        HintSignTuple,
+        HintSignTupleFixed,
     )
     from beartype._util.api.utilapityping import import_typing_attr
     # from beartype._util.api.utilapityping import get_typing_attrs
@@ -236,7 +236,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
             hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
-            pep_sign=HintSignTuple,
+            pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=Tuple is tuple,
             piths_meta=(

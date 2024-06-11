@@ -21,6 +21,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAsyncIterator,
     HintSignAsyncIterable,
     HintSignAwaitable,
+    # HintSignByteString,
     HintSignChainMap,
     HintSignCollection,
     HintSignContainer,
@@ -61,6 +62,14 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 # * The final "stop" integer is *EXCLUSIVE* (i.e., the instantiated range
 #   excludes this integer).
 
+_ARGS_LEN_0 = range(0, 1)  # == [0, 1) == [0, 0]
+'''
+**Zero-argument length range** (i.e., :class:`range` instance effectively
+equivalent to the integer ``0``, describing type hint factories subscriptable by
+*no* child type hints).
+'''
+
+
 _ARGS_LEN_1 = range(1, 2)  # == [1, 2) == [1, 1]
 '''
 **One-argument length range** (i.e., :class:`range` instance effectively
@@ -100,6 +109,7 @@ HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: Dict[HintSign, range] = {
     HintSignAsyncIterable: _ARGS_LEN_1,
     HintSignAsyncIterator: _ARGS_LEN_1,
     HintSignAwaitable: _ARGS_LEN_1,
+    # HintSignByteString: _ARGS_LEN_1,
     HintSignCollection: _ARGS_LEN_1,
     HintSignContainer: _ARGS_LEN_1,
     HintSignCounter: _ARGS_LEN_1,

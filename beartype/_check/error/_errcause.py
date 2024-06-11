@@ -63,10 +63,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
 )
-from beartype._util.hint.pep.utilpeptest import (
-    is_hint_pep,
-    is_hint_pep_args,
-)
+from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 
@@ -412,8 +409,7 @@ class ViolationCause(object):
             # type-checked against that type *AND is either...
             self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 # Unsubscripted *OR*...
-                not is_hint_pep_args(self.hint) or
-                #FIXME: Remove this branch *AFTER* deeply supporting all hints.
+                not get_hint_pep_args(self.hint) or
                 # Currently unsupported with deep type-checking...
                 self.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
             )

@@ -35,13 +35,13 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
     # Defer test-specific imports.
     from beartype.typing import Tuple
     from beartype._util.hint.pep.utilpepget import (
-        _HINT_ARGS_EMPTY_TUPLE,
         get_hint_pep_args,
+        _HINT_ARGS_EMPTY_TUPLE,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
-    # ....................{ PASS                           }....................
+    # ....................{ ASSERTS                        }....................
     # For each PEP-compliant hint, assert this getter returns...
     for hint_pep_meta in hints_pep_meta:
         # Tuple of all arguments subscripting this hint.
@@ -55,10 +55,13 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
         else:
             assert hint_args == ()
 
-    # ....................{ PASS ~ pep                     }....................
-    #FIXME: Explicitly validate that this getter handles both PEP 484- and 585-
-    #compliant empty tuples by returning "_HINT_ARGS_EMPTY_TUPLE" as expected,
-    #please. This is sufficiently critical that we *NEED* to ensure this.
+    # Assert this getter returns *NO* type variables for non-"typing" hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert get_hint_pep_args(not_hint_pep) == ()
+
+    # ....................{ ASSERTS ~ tuple                }....................
+    # Explicitly validate that this getter handles both PEP 484- and 585-
+    # compliant empty tuples by returning "_HINT_ARGS_EMPTY_TUPLE" as expected.
 
     # Assert that this getter when passed a PEP 484-compliant empty tuple type
     # hint returns a tuple containing an empty tuple for disambiguity.
@@ -69,11 +72,6 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
     # type hint returns a tuple containing an empty tuple for disambiguity.
     if IS_PYTHON_AT_LEAST_3_9:
         assert get_hint_pep_args(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
-
-    # ....................{ FAIL                           }....................
-    # Assert this getter returns *NO* type variables for non-"typing" hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep_args(not_hint_pep) == ()
 
 
 def test_get_hint_pep_typevars(hints_pep_meta) -> None:
@@ -89,6 +87,7 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
         type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
     from beartype._util.hint.pep.utilpepget import (
@@ -97,6 +96,7 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
+    # ....................{ ASSERTS                        }....................
     # For each PEP-compliant hint, assert this getter returns...
     for hint_pep_meta in hints_pep_meta:
         # Tuple of all type variables subscripting this hint.

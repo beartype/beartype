@@ -87,7 +87,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
 
     See Also
     --------
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevars`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
         Commentary on the relation between generics and parametrized hints.
     '''
 

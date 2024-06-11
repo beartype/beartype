@@ -283,7 +283,6 @@ Reiterable items are thus preserved (rather than modified) by reiteration.
 
 HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
-    HintSignByteString,
     HintSignList,
     HintSignMutableSequence,
     HintSignSequence,
@@ -310,10 +309,21 @@ This set intentionally excludes the:
   :class:`bytes` types as its sole subscripted argument, which does *not*
   unconditionally constrain *all* items (i.e., unencoded and encoded characters
   respectively) of compliant sequences but instead parametrizes this attribute.
-* :obj:`typing.ByteString` sign, which accepts *no* subscripted arguments.
-  :obj:`typing.ByteString` is simply an alias for the
-  :class:`collections.abc.ByteString` abstract base class (ABC) and thus
-  already handled by our fallback logic for supported PEP-compliant type hints.
+* :obj:`typing.ByteString` sign, which conditionally accepts either no or an
+  arbitrary number of subscripted arguments depending on whether that sign
+  identifies:
+
+  * A :pep:`484`-compliant ``typing.ByteString`` type hint subscriptable *no*
+    child type hints.
+  * A :pep:`585`-compliant ``collections.abc.ByteString[...]`` type hint
+    subscriptable by an arbitrary number of child type hints (but typically
+    simply :class:`str`).
+
+  Since neither PEP 484 nor 585 comment on ``ByteString`` in detail (or at all,
+  really), this non-orthogonality remains inexplicable, frustrating, and utterly
+  unsurprising. We elect to merely shrug. In all likelihood, this is an
+  ignorable error that no one particularly cares about -- especially since both
+  type hint factories have now been scheduled for removal as deprecated.
 * :obj:`typing.Deque` sign, whose compliant objects (i.e.,
   :class:`collections.deque` instances) only `guarantee O(n) indexation across
   all sequence items <collections.deque_>`__:
@@ -583,6 +593,7 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
 
     # ..................{ PEP (484|585)                      }..................
     HintSignGeneric,
+    HintSignTupleFixed,
     HintSignType,
 
     # ..................{ PEP 544                            }..................

@@ -148,7 +148,6 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
-    is_hint_pep_args,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
@@ -764,9 +763,7 @@ def make_check_expr(
                 # type-checked against that type *AND is either...
                 hint_curr_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                     # Unsubscripted *OR*...
-                    not is_hint_pep_args(hint_curr) or
-                    #FIXME: Remove this branch *AFTER* deeply supporting all
-                    #hints.
+                    not get_hint_pep_args(hint_curr) or
                     # Currently unsupported with deep type-checking...
                     hint_curr_sign not in HINT_SIGNS_SUPPORTED_DEEP
                 )
@@ -774,6 +771,8 @@ def make_check_expr(
             # Then generate trivial code shallowly type-checking the current
             # pith as an instance of the origin type originating this sign
             # (e.g., "list" for the hint "typing.List[int]").
+                # print(f'Shallow checking unsubscripted hint {repr(hint_curr)}...')
+
                 # Code type-checking the current pith against this origin type.
                 func_curr_code = CODE_PEP484_INSTANCE_format(
                     pith_curr_expr=pith_curr_expr,
@@ -1414,6 +1413,7 @@ def make_check_expr(
                             exception_prefix=EXCEPTION_PREFIX,
                         )
                     )
+                    # print(f'Sanifying sequence hint {repr(hint_curr)} child hint {repr(hint_child)}...')
 
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,

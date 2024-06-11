@@ -21,33 +21,6 @@ from pytest import raises
 # Fine-grained tests are intentionally performed *BEFORE* coarse-grained tests,
 # dramatically improving readability of test failures.
 
-# ....................{ TESTS ~ kind : typevar             }....................
-def test_is_hint_pep_typevars(hints_pep_meta) -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevars`
-    tester.
-
-    Parameters
-    ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
-        List of PEP-compliant type hint metadata describing sample PEP-compliant
-        type hints exercising edge cases in the :mod:`beartype` codebase.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevars
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
-
-    # Assert that various "TypeVar"-centric types are correctly detected.
-    for hint_pep_meta in hints_pep_meta:
-        assert is_hint_pep_typevars(hint_pep_meta.hint) is (
-            hint_pep_meta.is_typevars)
-
-    # Assert that various "TypeVar"-agnostic types are correctly detected.
-    for nonhint_pep in HINTS_NONPEP:
-        assert is_hint_pep_typevars(nonhint_pep) is False
-
 # ....................{ TESTS ~ typing                     }....................
 def test_is_hint_pep_typing(hints_pep_meta) -> None:
     '''
@@ -144,33 +117,6 @@ def test_is_hint_pep(hints_pep_meta, hints_nonpep_meta) -> None:
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert is_hint_pep(not_hint_pep) is False
-
-
-def test_is_hint_pep_args(hints_pep_meta) -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_args`
-    tester.
-
-    Parameters
-    ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
-        List of PEP-compliant type hint metadata describing sample PEP-compliant
-        type hints exercising edge cases in the :mod:`beartype` codebase.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_args
-    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-
-    # Assert this tester accepts PEP-compliant subscripted type hints.
-    for hint_pep_meta in hints_pep_meta:
-        assert is_hint_pep_args(hint_pep_meta.hint) is (
-            hint_pep_meta.is_args)
-
-    # Assert this tester rejects non-PEP-compliant type hints.
-    for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_args(not_hint_pep) is False
 
 
 #FIXME: Implement us up, please.
