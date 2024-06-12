@@ -12,10 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import (
+    Callable,
+    Dict,
+)
 from beartype._check.checkmagic import (
     VAR_NAME_RANDOM_INT,
 )
-from collections.abc import Callable
+from beartype._data.hint.datahinttyping import CallableStrFormat
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ HINT ~ placeholder : child         }....................
 CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
@@ -140,6 +145,47 @@ The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
+'''
+
+# ....................{ HINT ~ pep : (484|585) : container }....................
+# Initialized by the _init() function defined below.
+HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format: (
+    Dict[HintSign, CallableStrFormat]) = {}
+'''
+Dictionary mapping from the sign uniquely identifying each applicable kind of
+**single-argument standard container type hint** (i.e., :pep:`484`- or
+:pep:`585`-compliant type hint describing a standard container, subscripted by
+exactly one child type hint constraining the type of *all* items residing in
+that container) to the :meth:`str.format` method bound to a code snippet
+type-checking the current pith against that kind of container.
+
+Caveats
+-------
+**Each such snippet must not contain ternary conditionals.** For unknown reasons
+suggesting a critical defect in the current implementation of Python 3.8's
+assignment expressions, this snippet raises :exc:`UnboundLocalError` exceptions
+resembling the following when this snippet contains one or more ternary
+conditionals:
+
+    UnboundLocalError: local variable '__beartype_pith_1' referenced before
+    assignment
+
+In particular, the initial draft of these snippets guarded against empty
+sequences with a seemingly reasonable ternary conditional:
+
+.. code-block:: python
+
+   CODE_PEP484585_SEQUENCE_ARGS_1 = \'\'\'(
+   {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+   {indent_curr}    {hint_child_placeholder} if {pith_curr_var_name} else True
+   {indent_curr})\'\'\'
+
+That should behave as expected, but doesn't, presumably due to obscure scoping
+rules and a non-intuitive implementation of ternary conditionals in CPython.
+Ergo, the current version of this snippet guards against empty sequences with
+disjunctions and conjunctions (i.e., ``or`` and ``and`` operators) instead.
+Happily, the current version is more efficient than the equivalent approach
+based on ternary conditional (albeit slightly less intuitive).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : mapping   }....................
@@ -583,57 +629,97 @@ means of accomplishing this, this approach is the optimally efficient.
 # ..................{ FORMATTERS                             }..................
 # str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
 # This is an absurd micro-optimization. *fight me, github developer community*
-CODE_PEP484_INSTANCE_format: Callable = (
+CODE_PEP484_INSTANCE_format: CallableStrFormat = (
     CODE_PEP484_INSTANCE.format)
-CODE_PEP484585_GENERIC_CHILD_format: Callable = (
+CODE_PEP484585_GENERIC_CHILD_format: CallableStrFormat = (
     CODE_PEP484585_GENERIC_CHILD.format)
-CODE_PEP484585_MAPPING_format: Callable = (
+CODE_PEP484585_MAPPING_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING.format)
-CODE_PEP484585_MAPPING_KEY_ONLY_format: Callable = (
+CODE_PEP484585_MAPPING_KEY_ONLY_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_ONLY.format)
-CODE_PEP484585_MAPPING_KEY_VALUE_format: Callable = (
+CODE_PEP484585_MAPPING_KEY_VALUE_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_VALUE.format)
-CODE_PEP484585_MAPPING_VALUE_ONLY_format: Callable = (
+CODE_PEP484585_MAPPING_VALUE_ONLY_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_VALUE_ONLY.format)
-CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR.format)
-CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR.format)
-CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR.format)
-CODE_PEP484585_REITERABLE_ARGS_1_format: Callable = (
+CODE_PEP484585_REITERABLE_ARGS_1_format: CallableStrFormat = (
     CODE_PEP484585_REITERABLE_ARGS_1.format)
-CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR.format)
-CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
+CODE_PEP484585_SEQUENCE_ARGS_1_format: CallableStrFormat = (
     CODE_PEP484585_SEQUENCE_ARGS_1.format)
-CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format)
-CODE_PEP484585_SUBCLASS_format: Callable = (
+CODE_PEP484585_SUBCLASS_format: CallableStrFormat = (
     CODE_PEP484585_SUBCLASS.format)
-CODE_PEP484585_TUPLE_FIXED_EMPTY_format: Callable = (
+CODE_PEP484585_TUPLE_FIXED_EMPTY_format: CallableStrFormat = (
     CODE_PEP484585_TUPLE_FIXED_EMPTY.format)
-CODE_PEP484585_TUPLE_FIXED_LEN_format: Callable = (
+CODE_PEP484585_TUPLE_FIXED_LEN_format: CallableStrFormat = (
     CODE_PEP484585_TUPLE_FIXED_LEN.format)
-CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format: Callable = (
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format: CallableStrFormat = (
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD.format)
-CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format)
-CODE_PEP484604_UNION_CHILD_PEP_format: Callable = (
+CODE_PEP484604_UNION_CHILD_PEP_format: CallableStrFormat = (
     CODE_PEP484604_UNION_CHILD_PEP.format)
-CODE_PEP484604_UNION_CHILD_NONPEP_format: Callable = (
+CODE_PEP484604_UNION_CHILD_NONPEP_format: CallableStrFormat = (
     CODE_PEP484604_UNION_CHILD_NONPEP.format)
-# CODE_PEP572_PITH_ASSIGN_AND_format: Callable = (
+# CODE_PEP572_PITH_ASSIGN_AND_format: CallableStrFormat = (
 #     CODE_PEP572_PITH_ASSIGN_AND.format)
-CODE_PEP572_PITH_ASSIGN_EXPR_format: Callable = (
+CODE_PEP572_PITH_ASSIGN_EXPR_format: CallableStrFormat = (
     CODE_PEP572_PITH_ASSIGN_EXPR.format)
-CODE_PEP586_LITERAL_format: Callable = (
+CODE_PEP586_LITERAL_format: CallableStrFormat = (
     CODE_PEP586_LITERAL.format)
-CODE_PEP586_PREFIX_format: Callable = (
+CODE_PEP586_PREFIX_format: CallableStrFormat = (
     CODE_PEP586_PREFIX.format)
-CODE_PEP593_VALIDATOR_IS_format: Callable = (
+CODE_PEP593_VALIDATOR_IS_format: CallableStrFormat = (
     CODE_PEP593_VALIDATOR_IS.format)
-CODE_PEP593_VALIDATOR_METAHINT_format: Callable = (
+CODE_PEP593_VALIDATOR_METAHINT_format: CallableStrFormat = (
     CODE_PEP593_VALIDATOR_METAHINT.format)
-CODE_PEP593_VALIDATOR_SUFFIX_format: Callable = (
+CODE_PEP593_VALIDATOR_SUFFIX_format: CallableStrFormat = (
     CODE_PEP593_VALIDATOR_SUFFIX.format)
+
+# ..................{ PRIVATE ~ main                         }..................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Defer function-specific imports.
+    from beartype._data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_REITERABLE_ARGS_1,
+        HINT_SIGNS_SEQUENCE_ARGS_1,
+    )
+
+    # PEP 484- and 585-compliant code snippet generically type-checking the
+    # current pith against *any* arbitrary kind of single-argument standard
+    # container type hint.
+    _CODE_PEP484585_CONTAINER_ARGS_1 = '''(
+    _{indent_curr}    # True only if this pith is of this container type *AND*...
+    _{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+    _{indent_curr}    # True only if either this container is empty *OR* this container
+    _{indent_curr}    # is both non-empty and the first item satisfies this hint.
+    _{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+    _{indent_curr})'''
+
+    # str.format() method bound to this snippet.
+    _CODE_PEP484585_CONTAINER_ARGS_1_format = (
+        _CODE_PEP484585_CONTAINER_ARGS_1.format)
+
+    # For each sign identifying some kind of single-argument container hint...
+    for hint_sign in (
+        HINT_SIGNS_REITERABLE_ARGS_1 |
+        HINT_SIGNS_SEQUENCE_ARGS_1
+    ):
+        # Map this sign to this str.format() method.
+        HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format[
+            hint_sign] = _CODE_PEP484585_CONTAINER_ARGS_1_format
+
+
+# Initialize this submodule.
+_init()

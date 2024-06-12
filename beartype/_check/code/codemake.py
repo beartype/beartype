@@ -1712,24 +1712,13 @@ def make_check_expr(
                 #FIXME: This logic is an almost one-for-one copy of the
                 #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
                 #Unify as follows:
-                #* In the existing "datapepsigns" submodule:
-                #  * Refactor the get_hint_pep_sign() getter to assign *ALL*
-                #    fixed-length tuple type hints the "HintSignTupleFixed" sign
-                #    rather than the "HintSignTuple" sign.
-                #  * Refactor logic elsewhere to explicitly match
-                #    "HintSignTupleFixed" rather than matching "HintSignTuple"
-                #    and then attempting to disambiguate fixed-length tuple type
-                #    hints from that by inspecting for "Ellipses" singletons. In
-                #    theory, the only two places in the codebase this happens
-                #    *SHOULD* be:
-                #    * This submodule.
-                #    * Some "beartype.door" submodule specific to tuples.
                 #* In the existing "codesnipstr" submodule:
                 #  * Define a new
                 #    "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format"
                 #    dictionary global resembling:
                 #      # Initialized by the _init() function defined below.
-                #      HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format: Dict[HintSign, str] = {}
+                #      HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format: (
+                #          Dict[HintSign, Callable[..., str]]) = {}
                 #      def _init() -> None:
                 #          _CODE_PEP484585_COLLECTION_ARGS_1 = '''(
                 #          _{indent_curr}    # True only if this pith is of this collection type *AND*...

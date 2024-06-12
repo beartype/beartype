@@ -277,7 +277,7 @@ PEP-compliant type hint matching the standard type of the single positional
 argument accepted by the ``__getitem__` dunder method.
 '''
 
-# ....................{ CALLABLE ~ decor                   }....................
+# ....................{ CALLABLE ~ decorator               }....................
 BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
 '''
 PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
@@ -292,6 +292,13 @@ BeartypeReturn = Union[BeartypeableT, BeartypeConfedDecorator]
 PEP-compliant type hint matching any possible value returned by any invocation
 of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
+'''
+
+# ....................{ CALLABLE ~ decorator               }....................
+CallableStrFormat = Callable[..., str]
+'''
+PEP-compliant type hint matching the signature of the standard
+:meth:`str.format` method.
 '''
 
 # ....................{ DICT                               }....................
