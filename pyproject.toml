@@ -41,7 +41,7 @@ name = "beartype"
 # * Prefix each newline in this string with a continuation character, which then
 #   forces line wrapping.
 description = """\
-Unbearably fast runtime type-checking in pure Python.
+Unbearably fast near-real-time hybrid runtime-static type-checking in pure Python.
 """
 
 # Relative filename of the top-level file describing project licensing.

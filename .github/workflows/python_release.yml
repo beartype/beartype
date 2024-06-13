@@ -53,7 +53,7 @@ jobs:
       - name: "Publishing GitHub release..."
         uses: 'ncipollo/release-action@v1'
         with:
-          name: "beartype ${{ github.ref }}"
+          name: "Beartype ${{ github.ref }}"
           body: ${{ github.event.commits[0].message }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,6 +63,29 @@ jobs:
   pypi:
     name: "Publish tagged release to PyPI"
     runs-on: ubuntu-latest
+
+    # GitHub Environment associated with this job.
+    #
+    # Note that PyPI strongly recommends use of a GitHub Environment as an
+    # additional security precaution for GitHub repositories that grant push
+    # access to different users with differing permissions. So, basically *ALL*
+    # GitHub repositories is what we are saying. See also:
+    # * "Publishing to PyPI with a Trusted Publisher."
+    #   https://docs.pypi.org/trusted-publishers
+    # * "Using environments for deployment."
+    #   https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment
+    environment:
+      # Arbitrary name of this environment.
+      name: bear_den
+
+      # Arbitrary URL associated with this environment.
+      url: https://pypi.org/project/beartype
+
+    # Enable the "write" permission as required for PyPI Trusted Publishing.
+    # See also:
+    #     https://github.com/pypa/gh-action-pypi-publish
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
 
     # Perform this job *ONLY* if the prior job succeeded.
     needs: release
@@ -81,19 +104,24 @@ jobs:
           set -xe
           python -VV
           python -m site
-          python -m pip --quiet install --upgrade pip setuptools wheel
-      - name: 'Installing package dependencies...'
-        run: |
-          python -m pip --quiet install --upgrade twine
+          python -m pip --quiet install --upgrade pip hatch wheel
+
+      #FIXME: Pretty sure that "twine" is no longer required. *shrug*
+      # - name: 'Installing package dependencies...'
+      #   run: |
+      #     python -m pip --quiet install --upgrade twine
+
       - name: "Creating source tarball and binary wheel..."
         run: |
           set -xe
-          python setup.py sdist bdist_wheel
+          hatch build -t sdist -t wheel
       - name: "Publishing PyPI release from tag..."
         uses: 'pypa/gh-action-pypi-publish@release/v1'
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        #FIXME: This should no longer be required. See also:
+        #    https://github.com/pypa/gh-action-pypi-publish
+        # with:
+        #   user: __token__
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
 
       #FIXME: Enable after integrating this "pypi" job into the "release" job
       #above. In theory, this should be trivial. Let's test this later, eh?
