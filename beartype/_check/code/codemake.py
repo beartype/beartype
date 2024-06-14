@@ -74,6 +74,8 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX_format,
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format,
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_PITH_CHILD_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none,
@@ -103,6 +105,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnion,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_CONTAINER_ARGS_1,
     HINT_SIGNS_MAPPING,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_REITERABLE_ARGS_1,
@@ -372,10 +375,9 @@ def make_check_expr(
     # by this Python code snippet.
     func_wrapper_scope: LexicalScope = {}
 
-    # True only if one or more PEP-compliant type hints visitable from this
-    # root hint require a pseudo-random integer. If true, the higher-level
-    # beartype._decor.wrap.wrapmain.generate_code() function prefixes the body
-    # of this wrapper function with code generating such an integer.
+    # True only if one or more possibly nested type hints visitable from this
+    # root hint require a pseudo-random integer. If true, logic below prefixes
+    # the body of this wrapper function with code generating this integer.
     is_var_random_int_needed = False
 
     # ..................{ LOCALS ~ indentation               }..................
@@ -1709,44 +1711,6 @@ def make_check_expr(
                 # Else, this hint is *NOT* a mapping.
                 #
                 # ..........{ REITERABLES                          }............
-                #FIXME: This logic is an almost one-for-one copy of the
-                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
-                #Unify as follows:
-                #* In the existing "codesnipstr" submodule:
-                #  * Define a new
-                #    "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format"
-                #    dictionary global resembling:
-                #      # Initialized by the _init() function defined below.
-                #      HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format: (
-                #          Dict[HintSign, Callable[..., str]]) = {}
-                #      def _init() -> None:
-                #          _CODE_PEP484585_COLLECTION_ARGS_1 = '''(
-                #          _{indent_curr}    # True only if this pith is of this collection type *AND*...
-                #          _{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-                #          _{indent_curr}    # True only if either this collection is empty *OR* this collection
-                #          _{indent_curr}    # is both non-empty and the first item satisfies this hint.
-                #          _{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
-                #          _{indent_curr})'''
-                #          _CODE_PEP484585_COLLECTION_ARGS_1_format = (
-                #              _CODE_PEP484585_COLLECTION_ARGS_1.format)
-                #
-                #          for hint_sign in (
-                #              HINT_SIGNS_REITERABLE_ARGS_1 |
-                #              HINT_SIGNS_SEQUENCE_ARGS_1 |
-                #          ):
-                #              HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format[
-                #                  hint_sign] = _CODE_PEP484585_COLLECTION_ARGS_1_format
-                #   * Generalize the existing
-                #     "CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR" and
-                #     "CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR" string
-                #     globals similarly.
-                #   * Refactor logic in this submodule to leverage the
-                #     "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format"
-                #     dictionary.
-                #   * Remove the now-obsolete family of
-                #     "CODE_PEP484585_REITERABLE_ARGS_1*" and
-                #     "CODE_PEP484585_SEQUENCE_ARGS_1*" string globals.
-
                 # If this hint is a single-argument reiterable (e.g.,
                 # "set[str]")...
                 elif hint_curr_sign in HINT_SIGNS_REITERABLE_ARGS_1:
@@ -1781,6 +1745,104 @@ def make_check_expr(
                     # the type of the current pith *AND* the first item of this
                     # pith. Specifically...
                     if hint_child is not None:
+                        # Code type-checking this pith against this type.
+                        func_curr_code = CODE_PEP484585_REITERABLE_ARGS_1_format(
+                            indent_curr=indent_curr,
+                            pith_curr_assign_expr=pith_curr_assign_expr,
+                            pith_curr_var_name=pith_curr_var_name,
+                            hint_curr_expr=hint_curr_expr,
+                            hint_child_placeholder=_enqueue_hint_child(
+                                # Python expression yielding the first item of
+                                # this pith to be type-checked against this
+                                # child hint.
+                                CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format(
+                                    pith_curr_var_name=pith_curr_var_name)),
+                        )
+                    # Else, this child hint is ignorable. In this case, fallback
+                    # to trivial code shallowly type-checking this pith as an
+                    # instance of this origin type.
+                # Else, this hint is *NOT* a single-argument reiterable.
+                #
+                # ..........{ CONTAINERS                           }............
+                #FIXME: This logic is an almost one-for-one copy of the
+                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
+                #Unify as follows:
+                #* In this submodule:
+                #   * Refactor logic to leverage the
+                #     "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format" and
+                #     "HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_PITH_CHILD_EXPR_format"
+                #     dictionaries.
+                #   * Remove the "REITERABLES" and "SEQUENCES" sections above.
+                #* In the existing "codesnipstr" submodule:
+                #   * Remove the now-obsolete family of
+                #     "CODE_PEP484585_REITERABLE_ARGS_1*" and
+                #     "CODE_PEP484585_SEQUENCE_ARGS_1*" string globals.
+                #* In the "beartype._check.error" subpackage, similarly
+                #  generalize the existing find_cause_reiterable_args_1() and
+                #  find_cause_sequence_args_1() functions to internally leverage
+                #  a common private utility function implementing *ALL* common
+                #  logic shared between those two public functions -- which
+                #  should be most of it, honestly.
+
+                # If this hint is either:
+                # * A single-argument container (e.g., "list[int]", "set[str]").
+                # * A similar hint semantically resembling a single-argument
+                #   container subscripted by one argument and one or more
+                #   ignorable arguments (e.g., "tuple[str, ...]").
+                # Then this hint is effectively (for all intents and purposes) a
+                # standard single-argument container. In this case...
+                elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:
+                    # Python expression evaluating to the origin type of this
+                    # hint as a hidden beartype-specific parameter injected into
+                    # the signature of this wrapper function.
+                    hint_curr_expr = add_func_scope_type(
+                        # Origin type of this reiterable hint.
+                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
+                        func_scope=func_wrapper_scope,
+                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                    )
+                    # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
+
+                    # Possibly ignorable insane child hint subscripting this
+                    # parent hint, defined as either...
+                    hint_child = (
+                        # If this hint is a variable-length tuple, the
+                        # get_hint_pep_sign() getter called above has already
+                        # validated the contents of this tuple. In this case,
+                        # efficiently get the lone child hint of this parent
+                        # hint *WITHOUT* validation.
+                        hint_childs[0]
+                        if hint_curr_sign is HintSignTuple else
+                        # Else, this hint is a single-argument container, in
+                        # which case the contents of this container have yet to
+                        # be validated. In this case, inefficiently get the lone
+                        # child hint of this parent hint *WITH* validation.
+                        get_hint_pep484585_args(
+                            hint=hint_curr,
+                            args_len=1,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        )
+                    )
+                    # print(f'Sanifying sequence hint {repr(hint_curr)} child hint {repr(hint_child)}...')
+
+                    # Unignorable sane child hint sanified from this possibly
+                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
+                    # if this child hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        hint=hint_child,
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    # If this child hint is unignorable, deeply type-check both
+                    # the type of the current pith *AND* an efficiently
+                    # retrievable item of this pith. Specifically...
+                    if hint_child is not None:
+                        #FIXME: Generalize this, please.
+                        # Record that a pseudo-random integer is now required.
+                        is_var_random_int_needed = True
+
                         # Code type-checking this pith against this type.
                         func_curr_code = CODE_PEP484585_REITERABLE_ARGS_1_format(
                             indent_curr=indent_curr,

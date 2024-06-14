@@ -237,6 +237,29 @@ pair).
 '''
 
 
+HINT_SIGNS_UNION: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP 484                            }..................
+    HintSignOptional,
+    HintSignUnion,
+))
+'''
+Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
+:pep:`484`- and :pep:`604`-compliant type hints unifying one or more subscripted
+type hint arguments into a disjunctive set union of these arguments).
+
+If the active Python interpreter targets:
+
+* Python >= 3.9, the :obj:`typing.Optional` and :obj:`typing.Union`
+  attributes are distinct.
+* Python < 3.9, the :obj:`typing.Optional` attribute reduces to the
+  :obj:`typing.Union` attribute, in which case this set is technically
+  semantically redundant. Since tests of both object identity and set
+  membership are :math:`O(1)`, this set incurs no significant performance
+  penalty versus direct usage of the :obj:`typing.Union` attribute and is thus
+  unconditionally used as is irrespective of Python version.
+'''
+
+# ....................{ SETS ~ kind : container            }....................
 HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignAbstractSet,
@@ -255,9 +278,9 @@ HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
     HintSignDeque,
 ))
 '''
-Frozen set of all **standard reiterable signs** (i.e., arbitrary objects
-uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted
-by exactly one child type hint constraining *all* items of compliant
+Frozen set of all **standard single-argument reiterable signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+subscripted by exactly one child type hint constraining *all* items of compliant
 collections, which necessarily satisfy the :class:`collections.abc.Collection`
 protocol with guaranteed :math:`O(1)` read-only access to *only* the first
 collection item).
@@ -270,14 +293,13 @@ proper subset of all collections *not* matched by any other such frozen set.
 
 Equivalently, this frozen set only matches the proper subset of all collections
 that are **reiterable** (i.e., that may be safely reiterated multiple times,
-where "safely" implies side effect-free idempotency). Each call of the:
+where "safely" implies side effect-free idempotency). Reiterable items are thus
+preserved (rather than modified) by reiteration such that each call of the:
 
 * :func:`iter` builtin passed the same reiterable effectively creates and
   returns the same iterator.
-* :func:`next` builtin passed the same reiterable deterministically returns the
-  same items in the same order.
-
-Reiterable items are thus preserved (rather than modified) by reiteration.
+* :func:`next` builtin passed the same reiterable deterministically returns
+  the same items in the same order.
 '''
 
 
@@ -289,11 +311,11 @@ HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
     HintSignTuple,
 ))
 '''
-Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
-identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted by
-exactly one child type hint constraining *all* items of compliant sequences,
-which necessarily satisfy the :class:`collections.abc.Sequence` protocol with
-guaranteed :math:`O(1)` indexation across all sequence items).
+Frozen set of all **standard single-argument sequence signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+subscripted by exactly one child type hint constraining *all* items of compliant
+sequences, which necessarily satisfy the :class:`collections.abc.Sequence`
+protocol with guaranteed :math:`O(1)` indexation across all sequence items).
 
 This set intentionally includes the:
 
@@ -345,26 +367,16 @@ This set intentionally excludes the:
 '''
 
 
-HINT_SIGNS_UNION: _FrozenSetHintSign = frozenset((
-    # ..................{ PEP 484                            }..................
-    HintSignOptional,
-    HintSignUnion,
-))
+HINT_SIGNS_CONTAINER_ARGS_1: _FrozenSetHintSign = (
+    HINT_SIGNS_REITERABLE_ARGS_1 |
+    HINT_SIGNS_SEQUENCE_ARGS_1
+)
 '''
-Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-:pep:`484`- and :pep:`604`-compliant type hints unifying one or more subscripted
-type hint arguments into a disjunctive set union of these arguments).
-
-If the active Python interpreter targets:
-
-* Python >= 3.9, the :obj:`typing.Optional` and :obj:`typing.Union`
-  attributes are distinct.
-* Python < 3.9, the :obj:`typing.Optional` attribute reduces to the
-  :obj:`typing.Union` attribute, in which case this set is technically
-  semantically redundant. Since tests of both object identity and set
-  membership are :math:`O(1)`, this set incurs no significant performance
-  penalty versus direct usage of the :obj:`typing.Union` attribute and is thus
-  unconditionally used as is irrespective of Python version.
+Frozen set of all **standard single-argument container signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+describing standard containers satisfying at least the
+:class:`collections.abc.Container` protocol subscripted by exactly one child
+type hint constraining *all* items contained in that container).
 '''
 
 # ....................{ SIGNS ~ origin                     }....................

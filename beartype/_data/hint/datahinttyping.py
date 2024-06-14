@@ -311,6 +311,15 @@ number of type hint factories defined by an external third-party package to
 their identifying sign).
 '''
 
+
+HintSignToCallableStrFormat = Dict[HintSign, CallableStrFormat]
+'''
+PEP-compliant type hint matching a **sign-to-string-formatter map** (i.e.,
+dictionary mapping from signs uniquely identifying type hints to
+:meth:`str.format` methods bound to code snippets type-checking various aspects
+of those type hints).
+'''
+
 # ....................{ DICT ~ any                         }....................
 DictStrToAny = Dict[str, Any]
 '''
