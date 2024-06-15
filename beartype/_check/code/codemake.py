@@ -74,8 +74,6 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX_format,
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format,
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_PITH_CHILD_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none,
