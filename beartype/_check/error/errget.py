@@ -12,6 +12,44 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [DESIGN] The external
+#"beartype._check.checkmagic.ARG_NAME_GET_VIOLATION" hidden parameter is
+#inefficient in both time and space. Now that we unconditionally pass
+#"ARG_NAME_CHECK_META" to *ALL* wrapper functions, we should instead:
+#* Rename "ARG_NAME_CHECK_META" to "ARG_NAME_ERROR_META".
+#* Define a new "beartype._check.error.errmeta" submodule.
+#* Rename the existing "beartype._check.metadata.metacheck.BeartypeCheckMeta"
+#  dataclass into a new "beartype._check.error.errmeta.BeartypeErrorMeta"
+#  full-blown class.
+#* Remove the "beartype._check.metadata.metacheck" submodule.
+#* Refactor *ALL* public methods defined below into methods of that class --
+#  which then simply accesses the instance variables of this class rather than
+#  having those instance variables be externally passed. To do so sanely, we
+#  might consider:
+#* Refactor the get_func_pith_violation() function defined below into a new
+#  get_func_pith_violation() method of "BeartypeErrorMeta" with signature
+#  resembling:
+#    class BeartypeErrorMeta(object):
+#        ...
+#        def get_func_pith_violation(
+#            self,
+#
+#            # Mandatory parameters.
+#            pith_name: str,
+#            pith_value: object,
+#
+#            # Optional keyword parameters.
+#            **kwargs
+#        ) -> Exception:
+#* Remove the "beartype._check.checkmagic.ARG_NAME_GET_VIOLATION" global.
+#* Refactor all snippets referencing "ARG_NAME_GET_VIOLATION" to instead
+#  reference "ARG_NAME_ERROR_META".
+#
+#Oh... wait. That last point is the sticking point, huh? Refactoring those
+#snippets isn't quite so easy, sadly. We reference "ARG_NAME_GET_VIOLATION" for
+#a reason. Doing so allows us to trivially switch between various competing
+#getter functions defined by this submodule. Oh, well. We shrug! *shrug*
+
 #FIXME: [ACCESS] Generalizing the "random_int" concept (i.e., the optional
 #"random_int" parameter accepted by the get_func_pith_violation() function) that
 #enables O(1) exception handling to containers that do *NOT* provide efficient
@@ -63,6 +101,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #  over all container items in O(n) brute-force time. Obviously, extreme care
 #  must be taken here to ensure that this exception handling algorithm visits
 #  containers in the exact same order as visited by our testing algorithm.
+#FIXME: *UHH.* I honestly have *NO* idea what any of the above is on about. It's
+#likely we overthought the above commentary to extreme overkill. Notably,
+#@beartype does (in fact) now deeply type-check both maps and sets. Works great,
+#actually. No need for any of the above insanity, either. Let's re-read this
+#and, if bollocks, excise all of the above. Overkill, thy name is that "FIXME:".
 
 #FIXME: [COLOR] The call to the strip_text_ansi() function below is inefficient
 #and thus non-ideal. Since efficiency isn't a pressing concern in an exception

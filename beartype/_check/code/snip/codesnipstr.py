@@ -12,13 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Dict
-from beartype._check.checkmagic import VAR_NAME_RANDOM_INT
-from beartype._data.hint.datahinttyping import (
-    CallableStrFormat,
-    HintSignToCallableStrFormat,
-)
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.datahinttyping import CallableStrFormat
 
 # ....................{ HINT ~ placeholder : child         }....................
 CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
@@ -244,94 +238,6 @@ hints subscripting a parent standard mapping type.
 This snippet intentionally type-checks both keys and values is thus unsuitable
 for type-checking mappings with ignorable key or value child type hints (e.g.,
 ``dict[object, str]``, ``dict[str, object]``).
-'''
-
-# ....................{ HINT ~ pep : (484|585) : reiterable  }....................
-#FIXME: Excise after enabling the
-#"HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format" global, please.
-CODE_PEP484585_REITERABLE_ARGS_1 = '''(
-{indent_curr}    # True only if this pith is of this reiterable type *AND*...
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either this reiterable is empty *OR* this reiterable
-{indent_curr}    # is both non-empty and the first item satisfies this hint.
-{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
-{indent_curr})'''
-'''
-:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
-against a parent **standard reiterable type** (i.e., type hint subscripted by
-exactly one child type hint constraining *all* items of this pith, which
-necessarily satisfies the :class:`collections.abc.Collection` protocol with
-guaranteed :math:`O(1)` read-only access to *only* the first collection item).
-
-See Also
---------
-:data:`beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_REITERABLE_ARGS_1`
-    Further commentary on reiterables.
-'''
-
-
-#FIXME: Excise after enabling the
-#"HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format" global, please.
-CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR = (
-    '''next(iter({pith_curr_var_name}))''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
-first item of the current reiterable pith.
-'''
-
-# ....................{ HINT ~ pep : (484|585) : sequence  }....................
-#FIXME: Excise after enabling the
-#"HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format" global, please.
-CODE_PEP484585_SEQUENCE_ARGS_1 = '''(
-{indent_curr}    # True only if this pith is of this sequence type *AND*...
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either this sequence is empty *OR* this sequence
-{indent_curr}    # is both non-empty and a random item satisfies this hint.
-{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
-{indent_curr})'''
-'''
-:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
-against a parent **standard sequence type** (i.e., type hint subscripted by
-exactly one child type hint constraining *all* items of this pith, which
-necessarily satisfies the :class:`collections.abc.Sequence` protocol with
-guaranteed :math:`O(1)` indexation across all sequence items).
-
-Caveats
--------
-**This snippet cannot contain ternary conditionals.** For unknown reasons
-suggesting a critical defect in the current implementation of Python 3.8's
-assignment expressions, this snippet raises :class:`UnboundLocalError`
-exceptions resembling the following when this snippet contains one or more
-ternary conditionals:
-
-    UnboundLocalError: local variable '__beartype_pith_1' referenced before assignment
-
-In particular, the initial draft of this snippet guarded against empty
-sequences with a seemingly reasonable ternary conditional:
-
-.. code-block:: python
-
-   CODE_PEP484585_SEQUENCE_ARGS_1 = \'\'\'(
-   {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-   {indent_curr}    {hint_child_placeholder} if {pith_curr_var_name} else True
-   {indent_curr})\'\'\'
-
-That should behave as expected, but doesn't, presumably due to obscure scoping
-rules and a non-intuitive implementation of ternary conditionals in CPython.
-Ergo, the current version of this snippet guards against empty sequences with
-disjunctions and conjunctions (i.e., ``or`` and ``and`` operators) instead.
-Happily, the current version is more efficient than the equivalent approach
-based on ternary conditional (albeit slightly less intuitive).
-'''
-
-
-#FIXME: Excise after enabling the
-#"HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_CODE_format" global, please.
-CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
-    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression yielding the value of a
-randomly indexed item of the current sequence pith.
 '''
 
 # ....................{ HINT ~ pep : (484|585) : tuple     }....................
@@ -613,14 +519,6 @@ CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR.format)
 CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR.format)
-CODE_PEP484585_REITERABLE_ARGS_1_format: CallableStrFormat = (
-    CODE_PEP484585_REITERABLE_ARGS_1.format)
-CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
-    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR.format)
-CODE_PEP484585_SEQUENCE_ARGS_1_format: CallableStrFormat = (
-    CODE_PEP484585_SEQUENCE_ARGS_1.format)
-CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format)
 CODE_PEP484585_SUBCLASS_format: CallableStrFormat = (
     CODE_PEP484585_SUBCLASS.format)
 CODE_PEP484585_TUPLE_FIXED_EMPTY_format: CallableStrFormat = (

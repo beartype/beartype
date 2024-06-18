@@ -51,10 +51,6 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_REITERABLE_ARGS_1_format,
-    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_SEQUENCE_ARGS_1_format,
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SUBCLASS_format,
     CODE_PEP484585_TUPLE_FIXED_EMPTY_format,
     CODE_PEP484585_TUPLE_FIXED_LEN_format,
@@ -79,6 +75,8 @@ from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none,
     sanify_hint_child,
 )
+from beartype._check.logic.logicmap import (
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import (
@@ -106,8 +104,6 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1,
     HINT_SIGNS_MAPPING,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-    HINT_SIGNS_REITERABLE_ARGS_1,
-    HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
 )
@@ -1372,39 +1368,48 @@ def make_check_expr(
                     release_object_typed(hint_childs_pep)
                 # Else, this hint is *NOT* a union.
                 #
-                # ..........{ SEQUENCES ~ variadic                 }............
+                # ..........{ CONTAINERS                           }............
+                #FIXME: This logic is an almost one-for-one copy of the
+                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
+                #Unify as follows:
+                #* In the "beartype._check.error" subpackage, similarly
+                #  generalize the existing find_cause_reiterable_args_1() and
+                #  find_cause_sequence_args_1() functions to internally leverage
+                #  a common private utility function implementing *ALL* common
+                #  logic shared between those two public functions -- which
+                #  should be most of it, honestly.
+
                 # If this hint is either:
-                # * A standard single-argument sequence (e.g., "list[int]").
+                # * A single-argument container like list[int] or set[str].
                 # * A similar hint semantically resembling a single-argument
-                #   sequence subscripted by one argument and one or more
-                #   ignorable arguments (e.g., "tuple[str, ...]").
-                #
-                # Then this hint is effectively a standard single-argument
-                # sequence. In this case...
-                elif hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1:
+                #   container subscripted by one argument and one or more
+                #   ignorable arguments like tuple[str, ...].
+                # Then this hint is effectively (for all intents and purposes) a
+                # standard single-argument container. In this case...
+                elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:
                     # Python expression evaluating to the origin type of this
-                    # sequence hint as a hidden beartype-specific parameter
-                    # injected into the signature of this wrapper function.
+                    # hint as a hidden beartype-specific parameter injected into
+                    # the signature of this wrapper function.
                     hint_curr_expr = add_func_scope_type(
-                        # Origin type of this sequence hint.
+                        # Origin type underlying this hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
                         exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     )
-                    # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
+                    # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
                     # Possibly ignorable insane child hint subscripting this
-                    # sequence hint, defined as either...
+                    # parent hint, defined as either...
                     hint_child = (
-                        # If this hint is a variable-length tuple, the
+                        # If this parent hint is a variable-length tuple, the
                         # get_hint_pep_sign() getter called above has already
                         # validated the contents of this tuple. In this case,
                         # efficiently get the lone child hint of this parent
                         # hint *WITHOUT* validation.
                         hint_childs[0]
                         if hint_curr_sign is HintSignTuple else
-                        # Else, this hint is a single-argument sequence, in
-                        # which case the contents of this sequence have yet to
+                        # Else, this hint is a single-argument container, in
+                        # which case the contents of this container have yet to
                         # be validated. In this case, inefficiently get the lone
                         # child hint of this parent hint *WITH* validation.
                         get_hint_pep484585_args(
@@ -1425,31 +1430,53 @@ def make_check_expr(
                         exception_prefix=EXCEPTION_PREFIX,
                     )
 
-                    # If this child hint is unignorable, deeply type-check both
-                    # the type of the current pith *AND* a randomly indexed item
-                    # of this pith. Specifically...
+                    # If this child hint is unignorable:
+                    # * Shallowly type-check the type of the current pith.
+                    # * Deeply type-check an efficiently retrievable item of
+                    #   this pith.
                     if hint_child is not None:
-                        # Record that a pseudo-random integer is now required.
-                        is_var_random_int_needed = True
+                        # Hint sign logic type-checking this sign if any *OR*
+                        # "None" otherwise.
+                        hint_sign_logic = HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
+                            hint_curr_sign)
 
-                        # Code type-checking this pith against this type.
-                        func_curr_code = CODE_PEP484585_SEQUENCE_ARGS_1_format(
+                        # If *NO* hint sign logic type-checks this sign, raise
+                        # an exception. Note that, though this logic should
+                        # *ALWAYS* be non-"None", assumptions make a donkey.
+                        if hint_sign_logic is None:  # pragma: no cover
+                            raise BeartypeDecorHintPepException(
+                                f'{EXCEPTION_PREFIX} '
+                                f'1-argument container type hint '
+                                f'{repr(hint_curr)} '
+                                f'beartype sign {repr(hint_curr_sign)} '
+                                f'code generation logic not found.'
+                            )
+                        # Else, some hint sign logic type-checks this sign.
+
+                        # If this logic requires a pseudo-random integer, record
+                        # this to be the case.
+                        is_var_random_int_needed |= (
+                            hint_sign_logic.is_var_random_int_needed)
+                        # Else, this logic requires *NO* pseudo-random integer.
+
+                        # Python expression deeply type-checking this pith
+                        # against this parent hint.
+                        func_curr_code = hint_sign_logic.code_format(
                             indent_curr=indent_curr,
                             pith_curr_assign_expr=pith_curr_assign_expr,
                             pith_curr_var_name=pith_curr_var_name,
                             hint_curr_expr=hint_curr_expr,
                             hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding a randomly indexed
-                                # item of this pith to be type-checked against
-                                # this child hint.
-                                CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format(
+                                # Python expression efficiently yielding some
+                                # item of this pith to be deeply type-checked
+                                # against this child hint.
+                                hint_sign_logic.pith_child_expr_format(
                                     pith_curr_var_name=pith_curr_var_name)),
                         )
                     # Else, this child hint is ignorable. In this case, fallback
                     # to trivial code shallowly type-checking this pith as an
                     # instance of this origin type.
-                # Else, this hint is neither a standard sequence *NOR* variadic
-                # tuple.
+                # Else, this hint is *NOT* a standard single-argument container.
                 #
                 # ............{ SEQUENCES ~ tuple : fixed          }............
                 # If this hint is a fixed-length tuple (e.g., "tuple[int,
@@ -1707,157 +1734,6 @@ def make_check_expr(
                     # shallowly type-checking this pith as an instance of this
                     # origin type.
                 # Else, this hint is *NOT* a mapping.
-                #
-                # ..........{ REITERABLES                          }............
-                # If this hint is a single-argument reiterable (e.g.,
-                # "set[str]")...
-                elif hint_curr_sign in HINT_SIGNS_REITERABLE_ARGS_1:
-                    # Python expression evaluating to the origin type of this
-                    # hint as a hidden beartype-specific parameter injected into
-                    # the signature of this wrapper function.
-                    hint_curr_expr = add_func_scope_type(
-                        # Origin type of this reiterable hint.
-                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-                    )
-
-                    # Unignorable sane child hint sanified from this possibly
-                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
-                    # if this child hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
-                        # Possibly ignorable insane child hint subscripting this
-                        # parent hint, validated to be the *ONLY* child hint
-                        # subscripting this parent hint.
-                        hint=get_hint_pep484585_args(
-                            hint=hint_curr,
-                            args_len=1,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        ),
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-
-                    # If this child hint is unignorable, deeply type-check both
-                    # the type of the current pith *AND* the first item of this
-                    # pith. Specifically...
-                    if hint_child is not None:
-                        # Code type-checking this pith against this type.
-                        func_curr_code = CODE_PEP484585_REITERABLE_ARGS_1_format(
-                            indent_curr=indent_curr,
-                            pith_curr_assign_expr=pith_curr_assign_expr,
-                            pith_curr_var_name=pith_curr_var_name,
-                            hint_curr_expr=hint_curr_expr,
-                            hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the first item of
-                                # this pith to be type-checked against this
-                                # child hint.
-                                CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format(
-                                    pith_curr_var_name=pith_curr_var_name)),
-                        )
-                    # Else, this child hint is ignorable. In this case, fallback
-                    # to trivial code shallowly type-checking this pith as an
-                    # instance of this origin type.
-                # Else, this hint is *NOT* a single-argument reiterable.
-                #
-                # ..........{ CONTAINERS                           }............
-                #FIXME: This logic is an almost one-for-one copy of the
-                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
-                #Unify as follows:
-                #* In this submodule:
-                #   * Refactor logic to leverage the
-                #     "HINT_SIGN_TO_CODE_PEP484585_CONTAINER_ARGS_1_format" and
-                #     "HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_PITH_CHILD_EXPR_format"
-                #     dictionaries.
-                #   * Remove the "REITERABLES" and "SEQUENCES" sections above.
-                #* In the existing "codesnipstr" submodule:
-                #   * Remove the now-obsolete family of
-                #     "CODE_PEP484585_REITERABLE_ARGS_1*" and
-                #     "CODE_PEP484585_SEQUENCE_ARGS_1*" string globals.
-                #* In the "beartype._check.error" subpackage, similarly
-                #  generalize the existing find_cause_reiterable_args_1() and
-                #  find_cause_sequence_args_1() functions to internally leverage
-                #  a common private utility function implementing *ALL* common
-                #  logic shared between those two public functions -- which
-                #  should be most of it, honestly.
-
-                # If this hint is either:
-                # * A single-argument container (e.g., "list[int]", "set[str]").
-                # * A similar hint semantically resembling a single-argument
-                #   container subscripted by one argument and one or more
-                #   ignorable arguments (e.g., "tuple[str, ...]").
-                # Then this hint is effectively (for all intents and purposes) a
-                # standard single-argument container. In this case...
-                elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:
-                    # Python expression evaluating to the origin type of this
-                    # hint as a hidden beartype-specific parameter injected into
-                    # the signature of this wrapper function.
-                    hint_curr_expr = add_func_scope_type(
-                        # Origin type of this reiterable hint.
-                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-                    )
-                    # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
-
-                    # Possibly ignorable insane child hint subscripting this
-                    # parent hint, defined as either...
-                    hint_child = (
-                        # If this hint is a variable-length tuple, the
-                        # get_hint_pep_sign() getter called above has already
-                        # validated the contents of this tuple. In this case,
-                        # efficiently get the lone child hint of this parent
-                        # hint *WITHOUT* validation.
-                        hint_childs[0]
-                        if hint_curr_sign is HintSignTuple else
-                        # Else, this hint is a single-argument container, in
-                        # which case the contents of this container have yet to
-                        # be validated. In this case, inefficiently get the lone
-                        # child hint of this parent hint *WITH* validation.
-                        get_hint_pep484585_args(
-                            hint=hint_curr,
-                            args_len=1,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        )
-                    )
-                    # print(f'Sanifying sequence hint {repr(hint_curr)} child hint {repr(hint_child)}...')
-
-                    # Unignorable sane child hint sanified from this possibly
-                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
-                    # if this child hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
-                        hint=hint_child,
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-
-                    # If this child hint is unignorable, deeply type-check both
-                    # the type of the current pith *AND* an efficiently
-                    # retrievable item of this pith. Specifically...
-                    if hint_child is not None:
-                        #FIXME: Generalize this, please.
-                        # Record that a pseudo-random integer is now required.
-                        is_var_random_int_needed = True
-
-                        # Code type-checking this pith against this type.
-                        func_curr_code = CODE_PEP484585_REITERABLE_ARGS_1_format(
-                            indent_curr=indent_curr,
-                            pith_curr_assign_expr=pith_curr_assign_expr,
-                            pith_curr_var_name=pith_curr_var_name,
-                            hint_curr_expr=hint_curr_expr,
-                            hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the first item of
-                                # this pith to be type-checked against this
-                                # child hint.
-                                CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format(
-                                    pith_curr_var_name=pith_curr_var_name)),
-                        )
-                    # Else, this child hint is ignorable. In this case, fallback
-                    # to trivial code shallowly type-checking this pith as an
-                    # instance of this origin type.
-                # Else, this hint is *NOT* a single-argument reiterable.
                 #
                 # ............{ ANNOTATED                          }............
                 # If this hint is a PEP 593-compliant type metahint, this
@@ -2289,8 +2165,8 @@ def make_check_expr(
                     raise BeartypeDecorHintPepUnsupportedException(
                         f'{EXCEPTION_PREFIX_HINT}'
                         f'{repr(hint_curr)} unsupported but '
-                        f'erroneously detected as supported with '
-                        f'beartype sign {hint_curr_sign}.'
+                        f'erroneously detected as supported under '
+                        f'beartype sign {repr(hint_curr_sign)}.'
                     )
 
         # ................{ NON-PEP                            }................
@@ -2347,7 +2223,7 @@ def make_check_expr(
         # type of this hint.
         if func_curr_code is None:
             assert hint_curr_expr is not None, (
-                f'{EXCEPTION_PREFIX}type hint {repr(hint_curr)} '
+                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
                 f'expression undefined.'
             )
 

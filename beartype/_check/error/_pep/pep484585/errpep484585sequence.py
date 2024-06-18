@@ -58,9 +58,8 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_childs) in hints_child_len_expected, (
-        f'Sequence hint {repr(cause.hint)} subscripted by '
-        f'{len(cause.hint_childs)} != {hints_child_len_expected} '
-        f'child type hints.'
+        f'Sequence type hint {repr(cause.hint)} number of child type hints '
+        f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
     )
 
     # First child hint subscripting this parent sequence hint. All remaining
@@ -137,8 +136,7 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
         # Deep output cause describing the failure of this item to satisfy this
         # child hint if this item violates this child hint *OR* "None" otherwise
         # (i.e., if this item satisfies this child hint).
-        cause_deep = cause.permute(
-            pith=pith_item, hint=hint_child).find_cause()
+        cause_deep = cause.permute(pith=pith_item, hint=hint_child).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:
