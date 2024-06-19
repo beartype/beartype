@@ -428,7 +428,7 @@ class ViolationCause(object):
         # type-checked deeply.
         else:
             # Avoid circular import dependencies.
-            from beartype._check.error._errdata import (
+            from beartype._check.error._errmap import (
                 HINT_SIGN_TO_GET_CAUSE_FUNC)
 
             # Getter function returning the desired string for this attribute if

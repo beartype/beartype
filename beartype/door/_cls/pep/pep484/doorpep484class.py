@@ -109,7 +109,7 @@ class ClassTypeHint(TypeHint):
         #* In that submodule:
         #  * Define a new "GenericTypeHint" subclass initially simply
         #    copy-pasted from this subclass.
-        #* Incorporate that subclass into the "beartype.door._doordata"
+        #* Incorporate that subclass into the "beartype.door._doormap"
         #  submodule.
         #* Validate that tests still pass.
         #* Begin implementing custom generic-specific logic in the

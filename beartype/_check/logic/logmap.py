@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Dict
-from beartype._check.logic.logiccls import (
+from beartype._check.logic.logcls import (
     HintSignLogicContainerArgs1,
     HintSignLogicReiterableArgs1,
     HintSignLogicSequenceArgs1,
@@ -49,17 +49,21 @@ def _init() -> None:
     )
 
     # ....................{ DEFINE                         }....................
+    # Hint sign logic singletons.
+    HINT_SIGN_LOGIC_REITERABLE_ARGS_1 = HintSignLogicReiterableArgs1()
+    HINT_SIGN_LOGIC_SEQUENCE_ARGS_1 = HintSignLogicSequenceArgs1()
+
     # For each sign identifying a single-argument reiterable hint...
     for hint_sign in HINT_SIGNS_REITERABLE_ARGS_1:
         # Map this sign to this logic dataclass.
         HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC[hint_sign] = (
-            HintSignLogicReiterableArgs1())
+            HINT_SIGN_LOGIC_REITERABLE_ARGS_1)
 
     # For each sign identifying a single-argument sequence hint...
     for hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1:
         # Map this sign to this logic dataclass.
         HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC[hint_sign] = (
-            HintSignLogicSequenceArgs1())
+            HINT_SIGN_LOGIC_SEQUENCE_ARGS_1)
 
 
 # Initialize this submodule.

@@ -27,6 +27,7 @@ from beartype.typing import (
     Dict,
     ForwardRef,
     Iterable,
+    Iterator,
     List,
     Literal,
     Mapping,
@@ -376,6 +377,17 @@ func_wrapper_scope, hint_refs_type_basename)``, where:
 IterableStrs = Iterable[str]
 '''
 PEP-compliant type hint matching *any* iterable of zero or more strings.
+'''
+
+# ....................{ ITERATOR                           }....................
+Enumerator = Iterator[Tuple[int, object]]
+'''
+PEP-compliant type hint matching *any* **enumerator** (i.e., arbitrary iterator
+satisfying the :func:`enumerate` protocol). This iterator is expected to yield
+zero or more 2-tuples of the form ``(item_index, item)``, where:
+
+* ``item_index`` is the 0-based index of the currently enumerated item.
+* ``item`` is the currently enumerated item.
 '''
 
 # ....................{ PATH                               }....................

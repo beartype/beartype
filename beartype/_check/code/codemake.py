@@ -41,6 +41,21 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     CODE_PEP484_INSTANCE_format,
+    CODE_PEP572_PITH_ASSIGN_EXPR_format,
+)
+from beartype._check.convert.convsanify import (
+    sanify_hint_child_if_unignorable_or_none,
+    sanify_hint_child,
+)
+from beartype._check.logic.logmap import (
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+from beartype._conf.confcls import BeartypeConf
+from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
+from beartype._data.code.datacodemagic import (
+    LINE_RSTRIP_INDEX_AND,
+    LINE_RSTRIP_INDEX_OR,
+)
+from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
@@ -58,30 +73,23 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_TUPLE_FIXED_PREFIX,
     CODE_PEP484585_TUPLE_FIXED_SUFFIX,
+)
+from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_CHILD_PEP_format,
     CODE_PEP484604_UNION_CHILD_NONPEP_format,
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
-    CODE_PEP572_PITH_ASSIGN_EXPR_format,
+)
+from beartype._data.code.pep.datacodepep586 import (
     CODE_PEP586_LITERAL_format,
     CODE_PEP586_PREFIX_format,
     CODE_PEP586_SUFFIX,
+)
+from beartype._data.code.pep.datacodepep593 import (
     CODE_PEP593_VALIDATOR_IS_format,
     CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX_format,
-)
-from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none,
-    sanify_hint_child,
-)
-from beartype._check.logic.logicmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
-from beartype._conf.confcls import BeartypeConf
-from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
-from beartype._data.code.datacodemagic import (
-    LINE_RSTRIP_INDEX_AND,
-    LINE_RSTRIP_INDEX_OR,
 )
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
