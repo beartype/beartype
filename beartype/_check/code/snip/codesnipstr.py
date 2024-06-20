@@ -11,6 +11,9 @@ boolean expressions type-checking arbitrary objects against various type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+#FIXME: Refactor the gutted remainder of this submodule into new submodules
+#residing in the new "beartype._data.code.pep" subpackage, please. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.datahinttyping import CallableStrFormat
 

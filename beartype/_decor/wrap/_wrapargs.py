@@ -133,9 +133,10 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     arg_kind: ArgKind = None  # type: ignore[assignment]
     arg_name: str     = None  # type: ignore[assignment]
 
-    # Default value of this parameter if this parameter is optional *OR* the
-    # "ArgMandatory" singleton otherwise (i.e., if this parameter is mandatory).
-    arg_default: object = None
+    #FIXME: Uncomment as needed, please. *sigh*
+    # # Default value of this parameter if this parameter is optional *OR* the
+    # # "ArgMandatory" singleton otherwise (i.e., if this parameter is mandatory).
+    # arg_default: object = None
 
     # For the 0-based index of each parameter accepted by that callable and the
     # "ParameterMeta" object describing this parameter (in declaration order)...
@@ -164,17 +165,6 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
             arg_name,
             arg_default,
         ) = arg_meta
-
-        # #FIXME: [SPEED] Optimize this by assigning all at once via tuple
-        # #unpacking, please. See "codemake" for similar optimizations.
-        # # Kind and name of this parameter.
-        # arg_kind: ArgKind = arg_meta[ARG_META_INDEX_KIND]  # type: ignore[assignment]
-        # arg_name: str     = arg_meta[ARG_META_INDEX_NAME]  # type: ignore[assignment]
-        #
-        # # Default value of this parameter if this parameter is optional *OR* the
-        # # "ArgMandatory" singleton otherwise (i.e., if this parameter is
-        # # mandatory).
-        # arg_default: object = arg_meta[ARG_META_INDEX_DEFAULT]
 
         # Type hint annotating this parameter if any *OR* the sentinel
         # placeholder otherwise (i.e., if this parameter is unannotated).

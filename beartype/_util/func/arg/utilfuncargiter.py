@@ -165,9 +165,9 @@ def iter_func_args(
 # syntax governing the latter is overly verbose and largely unhelpful.
 ) -> Iterable[ArgMeta]:
     '''
-    Generator yielding one **parameter metadata tuple** (i.e., tuple whose
-    items describe a single parameter) for each parameter accepted by the
-    passed pure-Python callable.
+    Generator yielding one **parameter metadata tuple** (i.e., tuple whose items
+    describe a single parameter) for each parameter accepted by the passed
+    pure-Python callable.
 
     For consistency with the official grammar for callable signatures
     standardized by :pep:`570`, this generator is guaranteed to yield parameter
@@ -223,9 +223,9 @@ def iter_func_args(
         descriptor (rather than the low-level parameters accepted by the unbound
         method encapsulated by this bound method descriptor). While the default
         behaviour is typically desirable, valid use cases for the non-default
-        behaviour do exist (e.g., crudely detecting that callable's kind based
-        on whether the unbound method encapsulated by this bound method
-        descriptor accepts a first parameter named ``cls`` or ``self``).
+        behaviour do exist (e.g., crudely detecting the kind of that based on
+        whether the unbound method encapsulated by this bound method descriptor
+        accepts a first parameter named ``cls`` or ``self``).
 
         The default behaviour enables:
 
