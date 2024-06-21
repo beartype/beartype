@@ -4,21 +4,26 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`484`- and :pep:`585`-compliant **sequence type hint violation
-describers** (i.e., functions returning human-readable strings explaining
-violations of :pep:`484`- and :pep:`585`-compliant sequence type hints).
+Beartype :pep:`484`- and :pep:`585`-compliant **single-argument sequence type
+hint violation finders** (i.e., functions returning human-readable strings
+explaining violations of :pep:`484`- and :pep:`585`-compliant type hints
+subscripted by one child type hint constraining *all* items contained in that
+container satisfying the :class:`collections.abc.Container` protocol).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype._check.logic.logmap import (
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+from beartype._check.error.errcause import ViolationCause
+from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._check.error._errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_type_instance_origin
+    HINT_SIGNS_CONTAINER_ARGS_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.text.utiltextansi import color_type
@@ -26,30 +31,27 @@ from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
-def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
+def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
-    satisfies or violates the **single-argument variadic sequence type hint**
-    (i.e., PEP-compliant type hint accepting exactly one subscripted argument
-    constraining *all* items of this pith, which necessarily satisfies the
-    :class:`collections.abc.Sequence` protocol with guaranteed :math:`O(1)`
-    indexation across all sequence items) of that cause.
+    satisfies or violates the **single-argument container type hint**
+    (i.e., :pep:`484`- or :pep:`585`-compliant type hint subscripted by one
+    child type hint constraining *all* items contained in that container
+    satisfying the :class:`collections.abc.Container` protocol) of that cause.
 
     Parameters
     ----------
     cause : ViolationCause
-        Input cause providing this data.
+        Input violation cause finder to be inspected.
 
     Returns
     -------
     ViolationCause
-        Output cause type-checking this data.
+        Output violation cause finder type-checking this input.
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert cause.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1, (
-        f'{repr(cause.hint)} neither '
-        f'1-argument sequence nor variable-length tuple hint.'
-    )
+    assert cause.hint_sign in HINT_SIGNS_CONTAINER_ARGS_1, (
+        f'{repr(cause.hint)} not 1-argument container type hint.')
 
     # Number of child type hints expected to be subscripting this hint.
     hints_child_len_expected = (
@@ -62,9 +64,9 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
         f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
     )
 
-    # First child hint subscripting this parent sequence hint. All remaining
+    # First child hint subscripting this parent container hint. All remaining
     # child hints if any are ignorable. Specifically, if this hint is:
-    # * A standard sequence (e.g., "typing.List[str]"), this hint is subscripted
+    # * A standard container (e.g., "typing.List[str]"), this hint is subscripted
     #   by only one child hint.
     # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
     #   subscripted by only two child hints -- the latter of which is guaranteed
@@ -84,54 +86,39 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
     #
     # If either...
     elif (
-        # This sequence is empty, all items of this sequence (of which there are
+        # This container is empty, all items of this container (of which there are
         # none) are necessarily valid *OR*...
         not cause.pith or
         # This child hint is ignorable...
         hint_child is None
     ):
-        # Then this sequence satisfies this hint. In this case, return the
+        # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
         return cause
-    # Else, this sequence is non-empty *AND* this child hint is unignorable.
+    # Else, this container is non-empty *AND* this child hint is unignorable.
 
-    # Arbitrary iterator satisfying the enumerate() protocol, yielding zero or
-    # more 2-tuples of the form "(item_index, item)", where:
-    # * "item_index" is the 0-based index of this item.
-    # * "item" is an arbitrary item of this sequence.
-    pith_enumerator = None
+    # Hint sign logic type-checking this sign if any *OR* "None" otherwise.
+    hint_sign_logic = HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
+        cause.hint_sign)
 
-    # If this sequence was indexed by the parent @beartype-generated wrapper
-    # function by a pseudo-random integer in O(1) time, type-check *ONLY* the
-    # same index of this sequence also in O(1) time. Since the current call to
-    # that function failed a type-check, either this index is the index
-    # responsible for that failure *OR* this sequence is valid and another
-    # container is responsible for that failure. In either case, no other
-    # indices of this sequence need be checked.
-    if cause.random_int is not None:
-        # 0-based index of this item calculated from this random integer in the
-        # *SAME EXACT WAY* as in the parent @beartype-generated wrapper.
-        pith_item_index = cause.random_int % len(cause.pith)
+    # If *NO* hint sign logic type-checks this sign, raise an exception. Note
+    # that this logic should *ALWAYS* be non-"None". Nonetheless, assumptions.
+    if hint_sign_logic is None:  # pragma: no cover
+        raise _BeartypeCallHintPepRaiseException(
+            f'{cause.exception_prefix}1-argument container type hint '
+            f'{repr(cause.hint)} beartype sign {repr(cause.hint_sign)} '
+            f'code generation logic not found.'
+        )
+    # Else, some hint sign logic type-checks this sign.
 
-        # Pseudo-random item with this index in this sequence.
-        pith_item = cause.pith[pith_item_index]
+    # Arbitrary iterator over this container configured by this beartype
+    # configuration satisfying the enumerate() protocol. This iterator yields
+    # zero or more 2-tuples of the form "(item_index, item)", where:
+    # * "item_index" is the 0-based index of each item.
+    # * "item" is an arbitrary item of this container.
+    pith_enumerator = hint_sign_logic.enumerate_cause_items(cause)
 
-        # 2-tuple of this index and item in the same order as the 2-tuples
-        # returned by the enumerate() builtin.
-        pith_enumeratable = (pith_item_index, pith_item)
-
-        # Iterator yielding only this 2-tuple.
-        pith_enumerator = iter((pith_enumeratable,))
-        # print(f'Checking item {pith_item_index} in O(1) time!')
-    # Else, this sequence was iterated by the parent @beartype-generated wrapper
-    # function in O(n) time. In this case, type-check *ALL* indices of this
-    # sequence in O(n) time as well.
-    else:
-        # Iterator yielding all indices and items of this sequence.
-        pith_enumerator = enumerate(cause.pith)
-        # print('Checking sequence in O(n) time!')
-
-    # For each enumerated item of this sequence...
+    # For each enumerated item of this container...
     for pith_item_index, pith_item in pith_enumerator:
         # Deep output cause describing the failure of this item to satisfy this
         # child hint if this item violates this child hint *OR* "None" otherwise
@@ -153,8 +140,8 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
         # Else, this item is *NOT* the cause of this failure. Silently continue
         # to the next item.
 
-    # Return this cause as is; all items of this sequence are valid, implying
-    # this sequence to deeply satisfy this hint.
+    # Return this cause as is; all items of this container are valid, implying
+    # this container to deeply satisfy this hint.
     return cause
 
 
@@ -169,12 +156,12 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     Parameters
     ----------
     cause : ViolationCause
-        Input cause providing this data.
+        Input violation cause finder to be inspected.
 
     Returns
     -------
     ViolationCause
-        Output cause type-checking this data.
+        Output violation cause finder type-checking this input.
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
     assert cause.hint_sign is HintSignTupleFixed, (

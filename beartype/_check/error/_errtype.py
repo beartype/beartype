@@ -23,7 +23,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
     HintSignUnion,
 )
-from beartype._check.error._errcause import ViolationCause
+from beartype._check.error.errcause import ViolationCause
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_object_issubclassable,

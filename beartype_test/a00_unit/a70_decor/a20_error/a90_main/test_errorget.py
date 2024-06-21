@@ -83,6 +83,7 @@ def test_get_func_pith_violation() -> None:
             b'I am awaiting the sunrise',
             b'Gazing modestly through the coldest morning',
         ],
+        random_int=0,
     )
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
@@ -96,6 +97,7 @@ def test_get_func_pith_violation() -> None:
             b'Once it came you lied,'
             b"Embracing us over autumn's proud treetops."
         ),
+        random_int=1,
     )
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
@@ -109,6 +111,7 @@ def test_get_func_pith_violation() -> None:
             'Sunbirds leave their dark recesses.',
             'Shadows glide the archways.',
         ],
+        random_int=0,
     )
     assert isinstance(violation, BeartypeCallHintReturnViolation)
 
@@ -123,6 +126,7 @@ def test_get_func_pith_violation() -> None:
                 'And your voice is vast and achromatic,'
                 'But still so precious.'
             ),
+            random_int=1,
         )
 
     # Assert this function raises the expected exception when passed a
@@ -141,6 +145,7 @@ def test_get_func_pith_violation() -> None:
                 'When we both walk the shadows,'
                 'It will set ablaze and vanish.'
             ),
+            random_int=5,
         )
 
 # ....................{ TESTS ~ pith : conf                }....................

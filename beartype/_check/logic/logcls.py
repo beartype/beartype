@@ -14,22 +14,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
-from beartype._conf.confcls import BeartypeConf
+from beartype.typing import (
+    TYPE_CHECKING,
+)
+from beartype._check.error.errcause import ViolationCause
+from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import (
     CallableStrFormat,
+    EnumeratorItem,
     Enumerator,
 )
 from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_CONTAINER_ARGS_1_format,
     CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
-)
-from beartype.typing import (
-    TYPE_CHECKING,
-    Optional,
-)
-from collections.abc import (
-    Container as ContainerABC,
 )
 
 # ....................{ SUPERCLASSES                       }....................
@@ -166,29 +164,19 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        pith_child_expr_format : CallableStrFormat
+        pith_child_expr_format: CallableStrFormat
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
-        self,
-
-        # Optional parameters.
-        #
-        # For convenience, permit callers to avoid having to initially define
-        # all possible parameters all-at-once by defaulting all parameters to
-        # *REASONABLY* sane defaults.
-        pith_child_expr_format: Optional[CallableStrFormat] = None,
-        **kwargs
-    ) -> None:
+        self, pith_child_expr_format: CallableStrFormat, **kwargs) -> None:
         '''
         Initialize this hint sign logic.
 
         Parameters
         ----------
-        All passed keyword parameters are passed as is to the superclass
+        See the class docstring for further details. All remaining passed
+        keyword parameters are passed as is to the superclass
         :meth:`HintSignLogicABC.__init__` method.
-
-        See the class docstring for further details.
         '''
 
         # Initialize our superclass.
@@ -196,49 +184,91 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
             code_format=CODE_PEP484585_CONTAINER_ARGS_1_format, **kwargs)
 
         # Classify all passed parameters.
-        self.pith_child_expr_format = pith_child_expr_format  # type: ignore[assignment]
+        self.pith_child_expr_format = pith_child_expr_format
 
     # ..................{ ITERATORS                          }..................
-    #FIXME: Implement concrete implementations below, please.
-    #FIXME: Uncomment this abstract definition afterwards, please.
-    # @abstractmethod
-    # def enumerate_pith(
-    #     self,
-    #     pith: ContainerABC,
-    #     conf: BeartypeConf,
-    # ) -> Enumerator:
-    #     '''
-    #     Arbitrary iterator satisfying the :func:`enumerate` protocol over a
-    #     subset or possibly all items contained in the current pith as configured
-    #     by the passed beartype configuration.
-    #
-    #     Parameters
-    #     ----------
-    #     pith : ContainerABC
-    #         Container to enumerate items over.
-    #     conf : BeartypeConf
-    #         Beartype configuration configuring how many items this iterator
-    #         enumerates over. In particular, if this configuration enables:
-    #
-    #         * The default :math:`O1` constant-time type-checking strategy (i.e.,
-    #           if ``conf.strategy is beartype.BeartypeStrategy.O1``), this
-    #           iterator efficiently enumerates over only a fixed number of
-    #           (typically only one or two) items of this container.
-    #         * The :math:`On` linear-time type-checking strategy (i.e., if
-    #           ``conf.strategy is beartype.BeartypeStrategy.On``), this iterator
-    #           inefficiently enumerates over *all* items of this container.
-    #
-    #     Returns
-    #     -------
-    #     Enumerator
-    #         Iterator yielding zero or more 2-tuples of the standard form
-    #         ``(item_index, item)`` such that:
-    #
-    #         * ``item_index`` is the 0-based index of the currently item.
-    #         * ``item`` is an arbitrary item of this reiterable.
-    #     '''
-    #
-    #     pass
+    def enumerate_cause_items(self, cause: ViolationCause) -> Enumerator:
+        '''
+        Arbitrary iterator satisfying the :func:`enumerate` protocol over a
+        subset or possibly all items contained in the current pith as configured
+        by the beartype configuration of the passed violation cause.
+
+        This configuration configures how many items this iterator enumerates
+        over. In particular, if this configuration enables:
+
+        * The default :math:`O1` constant-time type-checking strategy (i.e., if
+          ``conf.strategy is beartype.BeartypeStrategy.O1``), this iterator
+          efficiently enumerates over only a fixed number of (typically only one
+          or two) items of this pith.
+        * The :math:`On` linear-time type-checking strategy (i.e., if
+          ``conf.strategy is beartype.BeartypeStrategy.On``), this iterator
+          inefficiently enumerates over *all* items of this pith.
+
+        Parameters
+        ----------
+        cause: ViolationCause
+            Type-checking violation cause finder to be inspected.
+
+        Returns
+        -------
+        Enumerator
+            Iterator yielding zero or more 2-tuples of the standard form
+            ``(item_index, item)``, where:
+
+            * ``item_index`` is the 0-based index of the currently enumerated
+              item.
+            * ``item`` is an arbitrary item of this pith.
+        '''
+
+        # Iterator to be returned.
+        container_enumerator: Enumerator = None  # type: ignore[assignment]
+
+        # If the only a single item of this container was type-checked by the
+        # parent @beartype-generated wrapper function in O(1) time, type-check
+        # only the same single item of this container in O(1) time as well.
+        if cause.conf.strategy is BeartypeStrategy.O1:
+            # 2-tuple of the index and value of an arbitrary item in the same
+            # order as the 2-tuples returned by the enumerate() builtin.
+            container_enumerator_item = self._get_cause_enumerator_item(cause)
+
+            # Iterator yielding only this 2-tuple.
+            container_enumerator = iter((container_enumerator_item,))
+        # Else, *ALL* items of this container were type-checked by the parent
+        # @beartype-generated wrapper function in O(n) time. In this case,
+        # type-check *ALL* items of this container in O(n) time as well.
+        else:
+            # Iterator yielding all indices and items of this container.
+            container_enumerator = enumerate(cause.pith)
+
+        # Return this iterator.
+        return container_enumerator
+
+    # ..................{ PRIVATE ~ getters                  }..................
+    @abstractmethod
+    def _get_cause_enumerator_item(
+        self, cause: ViolationCause) -> EnumeratorItem:
+        '''
+        2-tuple ``(item_index, item)`` describing an arbitrary item efficiently
+        accessed from the passed container, satisfying the format of the items
+        yielded by the :func:`enumerate` iterator.
+
+        Parameters
+        ----------
+        cause: ViolationCause
+            Type-checking violation cause finder to be inspected.
+
+        Returns
+        -------
+        EnumeratorItem
+            2-tuple of the standard form ``(item_index, item)`` returned by the
+            :func:`enumerate` builtin, where:
+
+            * ``item_index`` is the 0-based index of an arbitrary item
+              efficiently accessed from this container.
+            * ``item`` is that item.
+        '''
+
+        pass
 
 
 class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):
@@ -264,6 +294,19 @@ class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):
             pith_child_expr_format=(
                 CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format),
         )
+
+    # ..................{ PRIVATE ~ getters                  }..................
+    def _get_cause_enumerator_item(
+        self, cause: ViolationCause) -> EnumeratorItem:
+
+        # First item of this container.
+        item = next(iter(cause.pith))
+
+        # 0-based index of this item for readability purposes.
+        item_index = 0
+
+        # Return a 2-tuple "(item_index, item)" describing this item.
+        return (item_index, item)
 
 
 class HintSignLogicSequenceArgs1(HintSignLogicContainerArgs1):
@@ -291,3 +334,19 @@ class HintSignLogicSequenceArgs1(HintSignLogicContainerArgs1):
             pith_child_expr_format=(
                 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format),
         )
+
+    # ..................{ PRIVATE ~ getters                  }..................
+    def _get_cause_enumerator_item(
+        self, cause: ViolationCause) -> EnumeratorItem:
+        assert cause.random_int is not None, (
+            f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+
+        # 0-based index of this item calculated from this random integer in the
+        # *SAME EXACT WAY* as in the parent @beartype-generated wrapper.
+        item_index = cause.random_int % len(cause.pith)
+
+        # Pseudo-random item with this index in this sequence.
+        item = cause.pith[item_index]
+
+        # Return a 2-tuple "(item_index, item)" describing this item.
+        return (item_index, item)

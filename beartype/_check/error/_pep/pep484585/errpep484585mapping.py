@@ -19,7 +19,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
-from beartype._check.error._errcause import ViolationCause
+from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith

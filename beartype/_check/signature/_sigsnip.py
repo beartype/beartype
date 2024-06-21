@@ -63,7 +63,7 @@ of that callable.
 #      '''
 #      __beartype_random_int = next(__beartype_random_int_generator)
 #      '''
-#Note that thread concurrency issues are probable ignorable here, but that
+#Note that thread concurrency issues are probable ignorably here, but that
 #there's still a great deal of maintenance and refactoring that would need to
 #happen to sanely support this. In other words, ain't happenin' anytime soon.
 #FIXME: To support both NumPy and non-NumPy code paths transparently, design a

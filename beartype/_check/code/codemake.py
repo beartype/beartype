@@ -1449,8 +1449,8 @@ def make_check_expr(
                             hint_curr_sign)
 
                         # If *NO* hint sign logic type-checks this sign, raise
-                        # an exception. Note that, though this logic should
-                        # *ALWAYS* be non-"None", assumptions make a donkey.
+                        # an exception. Note that this logic should *ALWAYS* be
+                        # non-"None". Nonetheless, assumptions make a donkey.
                         if hint_sign_logic is None:  # pragma: no cover
                             raise BeartypeDecorHintPepException(
                                 f'{EXCEPTION_PREFIX} '

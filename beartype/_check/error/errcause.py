@@ -70,10 +70,10 @@ from beartype._check.convert.convsanify import (
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
     '''
-    **Type-checking error cause sleuth** (i.e., object recursively fabricating
-    the human-readable string describing the failure of the pith associated
-    with this object to satisfy this PEP-compliant type hint also associated
-    with this object).
+    **Type-checking violation cause finder** (i.e., object recursively
+    fabricating the human-readable string describing the failure of the pith
+    associated with this finder to satisfy this PEP-compliant type hint also
+    associated with this finder).
 
     Attributes
     ----------
@@ -199,7 +199,7 @@ class ViolationCause(object):
         cause_str_or_none: Optional[str] = None,
     ) -> None:
         '''
-        Initialize this object.
+        Initialize this type-checking violation cause finder.
 
         Parameters
         ----------

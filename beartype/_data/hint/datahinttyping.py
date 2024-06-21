@@ -380,7 +380,19 @@ PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
 # ....................{ ITERATOR                           }....................
-Enumerator = Iterator[Tuple[int, object]]
+EnumeratorItem = Tuple[int, object]
+'''
+PEP-compliant type hint matching *any* **enumerator item** (i.e., item of the
+iterator created and returned by the :func:`enumerate` builtin). An enumerator
+item is a 2-tuple of the form ``(item_index, item)``, where:
+
+* ``item_index`` is the 0-based index of the currently enumerated item.
+* ``item`` is the currently enumerated item.
+'''
+
+
+
+Enumerator = Iterator[EnumeratorItem]
 '''
 PEP-compliant type hint matching *any* **enumerator** (i.e., arbitrary iterator
 satisfying the :func:`enumerate` protocol). This iterator is expected to yield

@@ -16,7 +16,7 @@ from beartype.typing import (
     Dict,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._check.error._errcause import ViolationCause
+from beartype._check.error.errcause import ViolationCause
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.
@@ -49,8 +49,7 @@ def _init() -> None:
     from beartype._data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_MAPPING,
         HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-        HINT_SIGNS_REITERABLE_ARGS_1,
-        HINT_SIGNS_SEQUENCE_ARGS_1,
+        HINT_SIGNS_CONTAINER_ARGS_1,
         HINT_SIGNS_UNION,
     )
     from beartype._check.error._errtype import (
@@ -62,40 +61,32 @@ def _init() -> None:
     from beartype._check.error._pep.errpep484604 import find_cause_union
     from beartype._check.error._pep.errpep586 import find_cause_literal
     from beartype._check.error._pep.errpep593 import find_cause_annotated
+    from beartype._check.error._pep.pep484585.errpep484585container import (
+        find_cause_container_args_1,
+        find_cause_tuple_fixed,
+    )
     from beartype._check.error._pep.pep484585.errpep484585generic import (
         find_cause_generic)
     from beartype._check.error._pep.pep484585.errpep484585mapping import (
         find_cause_mapping)
-    from beartype._check.error._pep.pep484585.errpep484585reiterable import (
-        find_cause_reiterable)
-    from beartype._check.error._pep.pep484585.errpep484585sequence import (
-        find_cause_sequence_args_1,
-        find_cause_tuple_fixed,
-    )
 
     # Map each originative sign to the appropriate finder *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by
     # sign-specific finders below.
-    for pep_sign_origin_isinstanceable in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
-            find_cause_type_instance_origin)
+    for hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
+        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_type_instance_origin
+
+    # Map each 1-argument container sign to its corresponding finder.
+    for hint_sign in HINT_SIGNS_CONTAINER_ARGS_1:
+        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_container_args_1
 
     # Map each 2-argument mapping sign to its corresponding finder.
-    for pep_sign_mapping in HINT_SIGNS_MAPPING:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_mapping] = find_cause_mapping
-
-    # Map each 1-argument reiterable sign to its corresponding finder.
-    for pep_sign_reiterable in HINT_SIGNS_REITERABLE_ARGS_1:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_reiterable] = find_cause_reiterable
-
-    # Map each 1-argument sequence sign to its corresponding finder.
-    for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
-            find_cause_sequence_args_1)
+    for hint_sign in HINT_SIGNS_MAPPING:
+        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_mapping
 
     # Map each union-specific sign to its corresponding finder.
-    for pep_sign_type_union in HINT_SIGNS_UNION:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = find_cause_union
+    for hint_sign in HINT_SIGNS_UNION:
+        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_union
 
     # Map each sign validated by a unique finder to that finder *AFTER* all
     # other mappings. These sign-specific finders are intended to replace all
