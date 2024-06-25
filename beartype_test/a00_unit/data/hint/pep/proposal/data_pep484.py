@@ -267,6 +267,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignMatch,
         HintSignMutableMapping,
         HintSignMutableSequence,
+        HintSignMutableSet,
         HintSignNewType,
         HintSignNone,
         HintSignOptional,
@@ -279,6 +280,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignType,
         HintSignTypeVar,
         HintSignUnion,
+        HintSignValuesView,
     )
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_11,
@@ -303,8 +305,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Mapping as MappingABC,
         MutableMapping as MutableMappingABC,
         MutableSequence as MutableSequenceABC,
+        MutableSet as MutableSetABC,
         Sequence as SequenceABC,
         Set as SetABC,
+        ValuesView as ValuesViewABC,
     )
     from typing import (
         AbstractSet,
@@ -332,6 +336,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Type,
         Optional,
         Union,
+        ValuesView,
     )
 
     # ..................{ LOCALS                             }..................
@@ -2006,7 +2011,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             piths_meta=(
                 # Keys view of items all of the same type.
                 HintPithSatisfiedMetadata({
-                    'Breathed from the west,': 'has caught the expanded sail,',
+                    b'Breathed from the west,': 'has caught the expanded sail,',
+                    b'But on his heart': 'its solitude returned,',
                 }.keys()),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
@@ -2045,11 +2051,258 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        # ................{ REITERABLE ~ valuesview              }................
+        # Unsubscripted "ValuesView" attribute.
+        HintPepMetadata(
+            hint=ValuesView,
+            pep_sign=HintSignValuesView,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=ValuesViewABC,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty values view.
+                HintPithSatisfiedMetadata({}.values()),
+                # Values view of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'Where the embowering trees recede,': b'and leave',
+                    b'A little space of green expanse,': 'the cove',
+                }.values()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Is closed by meeting banks, whose yellow flowers'),
+                # Dictionary of arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'For ever gaze on': b'their own drooping eyes,',}),
+            ),
+        ),
+
+        # Values view of ignorable items.
+        HintPepMetadata(
+            hint=ValuesView[object],
+            pep_sign=HintSignValuesView,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=ValuesViewABC,
+            piths_meta=(
+                # Values view of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    b'Reflected in the crystal calm.': 'The wave',}.values()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "Of the boat's motion marred their pensive task,"),
+            ),
+        ),
+
+        # Values view of unignorable items.
+        HintPepMetadata(
+            hint=ValuesView[str],
+            pep_sign=HintSignValuesView,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=ValuesViewABC,
+            piths_meta=(
+                # Values view of strings.
+                HintPithSatisfiedMetadata({
+                    b'Which nought but vagrant bird,': 'or wanton wind,',
+                }.values()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Or falling spear-grass, or their own decay'),
+                # Values view of byte strings. Since only the first items of
+                # values views are type-checked, a values view of one item
+                # suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={
+                        "Had e'er disturbed before.": b'The Poet longed',
+                    }.values(),
+                    # Match that the exception message raised for this values
+                    # view...
+                    exception_str_match_regexes=(
+                        # Declares the fully-qualified type of this values view.
+                        r'\bbuiltins\.dict_values\b',
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\bindex 0 item\b',
+                        # Preserves this item as is.
+                        r'\bThe Poet longed',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic values view.
+        HintPepMetadata(
+            hint=ValuesView[T],
+            pep_sign=HintSignValuesView,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=ValuesViewABC,
+            is_typevars=True,
+            piths_meta=(
+                # Values view of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    'To deck with their bright hues': b'his withered hair,',
+                    'And he forbore.': b'Not the strong impulse hid',
+                }.values()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'In those flushed cheeks, bent eyes, and shadowy frame'),
+            ),
+        ),
+
+        # List of nested values views of unignorable items.
+        #
+        # Note that values views are unhashable and thus *CANNOT* be nested in
+        # parent containers requiring hashability (e.g., as dictionary values).
+        HintPepMetadata(
+            hint=List[ValuesView[str]],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            piths_meta=(
+                # List of values views of strings.
+                HintPithSatisfiedMetadata([
+                    {b'Had yet performed its ministry:': 'it hung',}.values(),
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Upon his life, as lightning in a cloud'),
+                # List of values views of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[{
+                        'Gleams, hovering ere it vanish,': b'ere the floods',
+                    }.values(),],
+                    # Match that the exception message raised for this values
+                    # view declares all items on the path to the item violating
+                    # this hint.
+                    exception_str_match_regexes=(
+                        r'\bbuiltins\.dict_values\b',
+                        r'\bindex 0 item\b',
+                        r'\bthe floods\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ REITERABLE ~ mutableset           }................
+        # Unsubscripted "MutableSet" attribute.
+        HintPepMetadata(
+            hint=MutableSet,
+            pep_sign=HintSignMutableSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MutableSetABC,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Set of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'Of night close over it.', b'The noonday sun', 20}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Now shone upon the forest, one vast mass'),
+                # Tuple of arbitrary items.
+                HintPithUnsatisfiedMetadata((
+                    'Of mingling shade,', b'whose brown magnificence', 75.03,)),
+            ),
+        ),
+
+        # Mutable set of ignorable items.
+        HintPepMetadata(
+            hint=MutableSet[object],
+            pep_sign=HintSignMutableSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MutableSetABC,
+            piths_meta=(
+                # Set of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'A narrow vale embosoms.', b'There, huge caves',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Scooped in the dark base of their aëry rocks'),
+            ),
+        ),
+
+        # Mutable set of unignorable items.
+        HintPepMetadata(
+            hint=MutableSet[str],
+            pep_sign=HintSignMutableSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MutableSetABC,
+            piths_meta=(
+                # Set of strings.
+                HintPithSatisfiedMetadata({
+                    'Mocking its moans,', 'respond and roar for ever.',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'The meeting boughs and implicated leaves'),
+                # Set of byte strings. Since only the first items of sets are
+                # type-checked, a set of one item suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={b"Wove twilight o'er the Poet's path, as led"},
+                    # Match that the exception message raised for this set...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves this item as is.
+                        r"\bWove twilight o'er the Poet's path, as led\b",
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic mutable set.
+        HintPepMetadata(
+            hint=MutableSet[T],
+            pep_sign=HintSignMutableSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MutableSetABC,
+            is_typevars=True,
+            piths_meta=(
+                # Set of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    'By love, or dream,', 'or god,', 'or mightier Death,',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "He sought in Nature's dearest haunt, some bank"),
+            ),
+        ),
+
+        # List of nested mutable sets of unignorable items.
+        #
+        # Note that mutable sets are unhashable and thus *CANNOT* be nested in
+        # parent containers requiring hashability (e.g., as dictionary values).
+        HintPepMetadata(
+            hint=List[MutableSet[str]],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            piths_meta=(
+                # List of mutable sets of strings.
+                HintPithSatisfiedMetadata([
+                    {'And dark the shades accumulate.', 'The oak,',},]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Expanding its immense and knotty arms,'),
+                # List of mutable sets of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[{b'Embraces the light beech.', b'The pyramids',},],
+                    # Match that the exception message raised for this mutable
+                    # set declares all items on the path to the item violating
+                    # this hint.
+                    exception_str_match_regexes=(
+                        r'\b[Ll]ist index 0 item\b',
+                        r'\b[Ss]et index 0 item\b',
+                        r'\bEmbraces the light beech\.',
+                    ),
+                ),
+            ),
+        ),
+
+
         #FIXME: Pick up tomorrow from here, please. Notably, we still need to
         #explicitly test:
-        # * `typing.MutableSet[...]`.
         # * `typing.Set[...]`.
-        # * `typing.ValuesView[...]`.
         #FIXME: Also test PEP 585-specific variants of these type hints! *sigh*
 
         # ................{ SEQUENCE ~ list                    }................

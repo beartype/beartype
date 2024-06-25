@@ -18,6 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    from beartype._util.module.utilmodget import die_unless_module_attr_name
 
 # ....................{ IMPORTS                            }....................
+from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
@@ -202,7 +203,11 @@ def die_unless_hint_nonpep(
     # Raise a generic exception.
     raise exception_cls(
         f'{exception_prefix}type hint {repr(hint)} either '
-        f'PEP-noncompliant or currently unsupported by @beartype.'
+        f'PEP-noncompliant or PEP-compliant but currently '
+        f'unsupported by @beartype. '
+        f'You suddenly feel encouraged to submit a feature request '
+        f'for this hint to our friendly issue tracker at:\n'
+        f'\t{URL_ISSUES}'
     )
 
 # ....................{ VALIDATORS ~ kind                  }....................
