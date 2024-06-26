@@ -1377,16 +1377,6 @@ def make_check_expr(
                 # Else, this hint is *NOT* a union.
                 #
                 # ..........{ CONTAINERS                           }............
-                #FIXME: This logic is an almost one-for-one copy of the
-                #"hint_curr_sign in HINT_SIGNS_SEQUENCE_ARGS_1" block above.
-                #Unify as follows:
-                #* In the "beartype._check.error" subpackage, similarly
-                #  generalize the existing find_cause_reiterable_args_1() and
-                #  find_cause_sequence_args_1() functions to internally leverage
-                #  a common private utility function implementing *ALL* common
-                #  logic shared between those two public functions -- which
-                #  should be most of it, honestly.
-
                 # If this hint is either:
                 # * A single-argument container like list[int] or set[str].
                 # * A similar hint semantically resembling a single-argument

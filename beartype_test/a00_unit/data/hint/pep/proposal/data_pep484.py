@@ -274,6 +274,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignOrderedDict,
         HintSignPattern,
         HintSignSequence,
+        HintSignSet,
         HintSignSized,
         HintSignTuple,
         HintSignTupleFixed,
@@ -2299,11 +2300,122 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        # ................{ REITERABLE ~ set                  }................
+        # Unsubscripted "Set" attribute.
+        HintPepMetadata(
+            hint=Set,
+            pep_sign=HintSignSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=set,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Set of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'Of the tall cedar overarching,', b'frame', 9}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Most solemn domes within, and far below,'),
+                # Tuple of arbitrary items.
+                HintPithUnsatisfiedMetadata((
+                    'Like clouds suspended in', b'an emerald sky,', 201.5)),
+            ),
+        ),
 
-        #FIXME: Pick up tomorrow from here, please. Notably, we still need to
-        #explicitly test:
-        # * `typing.Set[...]`.
-        #FIXME: Also test PEP 585-specific variants of these type hints! *sigh*
+        # Mutable set of ignorable items.
+        HintPepMetadata(
+            hint=Set[object],
+            pep_sign=HintSignSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=set,
+            piths_meta=(
+                # Set of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'The ash and the acacia', b'floating hang',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Tremulous and pale. Like restless serpents, clothed'),
+            ),
+        ),
+
+        # Mutable set of unignorable items.
+        HintPepMetadata(
+            hint=Set[str],
+            pep_sign=HintSignSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=set,
+            piths_meta=(
+                # Set of strings.
+                HintPithSatisfiedMetadata({
+                    'In rainbow and in fire,', 'the parasites,',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Starred with ten thousand blossoms, flow around'),
+                # Set of byte strings. Since only the first items of sets are
+                # type-checked, a set of one item suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={b"The grey trunks, and, as gamesome infants' eyes,"},
+                    # Match that the exception message raised for this set...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves this item as is.
+                        r"\bThe grey trunks, and, as gamesome infants' eyes,",
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic set.
+        HintPepMetadata(
+            hint=Set[T],
+            pep_sign=HintSignSet,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=set,
+            is_typevars=True,
+            piths_meta=(
+                # Set of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    'With gentle meanings,', 'and most innocent wiles,',}),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Fold their beams round the hearts of those that love,'),
+            ),
+        ),
+
+        # List of nested sets of unignorable items.
+        #
+        # Note that sets are unhashable and thus *CANNOT* be nested in
+        # parent containers requiring hashability (e.g., as dictionary values).
+        HintPepMetadata(
+            hint=List[Set[str]],
+            pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=list,
+            piths_meta=(
+                # List of sets of strings.
+                HintPithSatisfiedMetadata([{
+                    'These twine their tendrils with', 'the wedded boughs',},]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Uniting their close union; the woven leaves'),
+                # List of sets of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[{b'Make net-work of the dark blue light of day,',},],
+                    # Match that the exception message raised for this mutable
+                    # set declares all items on the path to the item violating
+                    # this hint.
+                    exception_str_match_regexes=(
+                        r'\b[Ll]ist index 0 item\b',
+                        r'\b[Ss]et index 0 item\b',
+                        r'\bMake net-work of the dark blue light of day,',
+                    ),
+                ),
+            ),
+        ),
 
         # ................{ SEQUENCE ~ list                    }................
         # Unsubscripted "List" attribute.

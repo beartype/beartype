@@ -128,7 +128,7 @@ class HintSignLogicABC(object, metaclass=ABCMeta):
         self.code_format = code_format
         self.is_var_random_int_needed = is_var_random_int_needed
 
-# ....................{ SUBCLASSES                         }....................
+
 class HintSignLogicContainerArgs1(HintSignLogicABC):
     '''
     **Single-argument container hint sign logic** (i.e., dataclass encapsulating
@@ -270,7 +270,7 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
 
         pass
 
-
+# ....................{ SUBCLASSES ~ container             }....................
 class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):
     '''
     **Single-argument reiterable hint sign logic** (i.e., dataclass
