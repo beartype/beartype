@@ -30,7 +30,7 @@ from beartype._conf.confenum import (
     BeartypeViolationVerbosity,
 )
 from beartype._conf.confoverrides import (
-    BEARTYPE_HINT_OVERRIDES_PEP484_TOWER,
+    beartype_hint_overrides_pep484_tower,
     BeartypeHintOverrides,
 )
 from beartype._data.hint.datahinttyping import DictStrToAny
@@ -277,6 +277,13 @@ def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
     # ..................{ DEFAULT ~ hint_overrides           }..................
     # If enabling the PEP 484-compliant implicit numeric tower...
     if conf_kwargs['is_pep484_tower']:
+        # PEP 484-compliant implicit tower type hint overrides (i.e.,
+        # "BeartypeHintOverrides" instance lossily convering integers to
+        # floating-point numbers *AND* both integers and floating-point numbers
+        # to complex numbers).
+        BEARTYPE_HINT_OVERRIDES_PEP484_TOWER = (
+            beartype_hint_overrides_pep484_tower())
+
         # Hint overrides if passed by the caller *OR* "None" otherwise.
         hint_overrides = conf_kwargs['hint_overrides']
 

@@ -49,7 +49,7 @@ def test_conf_overrides() -> None:
         # Valid recursive union hint override, intentionally listed *BEFORE* an
         # invalid recursive non-union hint override. Doing so exercises that
         # @beartype supports the former but *NOT* the latter.
-        hint_overrides_bad[complex] = complex | float | int,
+        hint_overrides_bad[complex] = complex | float | int
 
     # Invalid recursive non-union hint override.
     hint_overrides_bad[List[str]] = Tuple[List[str], ...],

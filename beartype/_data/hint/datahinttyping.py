@@ -45,6 +45,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
 from pathlib import Path
@@ -559,15 +560,34 @@ instances definitely encapsulating pathnames).
 
 # ....................{ PEP 484                            }....................
 # Type hints required to fully comply with PEP 484.
+#
+# Note that:
+# * If the active Python interpreter targets Python >= 3.10, type unions are
+#   intentionally defined to preferably be PEP 604-compliant (e.g., "float |
+#   int").
+# * Else, type unions fallback to be PEP 484-compliant (e.g., "Union[float,
+#   int]").
+#
+# Why? Because obsolete PEP 484-compliant type unions fail to support various
+# edge cases, including recursive "beartype.HintOverrides" globally defined by
+# the "beartype._conf.confoverrides" submodule.
 
-Pep484TowerComplex = Union[complex, float, int]
+Pep484TowerComplex = (
+    complex | float | int  # type: ignore[operator]
+    if IS_PYTHON_AT_LEAST_3_10 else
+    Union[complex, float, int]
+)
 '''
 :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
 complex numbers, floating-point numbers, and integers).
 '''
 
 
-Pep484TowerFloat = Union[float, int]
+Pep484TowerFloat = (
+    float | int  # type: ignore[operator]
+    if IS_PYTHON_AT_LEAST_3_10 else
+    Union[float, int]
+)
 '''
 :pep:`484`-compliant type hint matching the **implicit floating-point tower**
 (i.e., both floating-point numbers and integers).

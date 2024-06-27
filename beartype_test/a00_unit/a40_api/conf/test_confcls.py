@@ -40,7 +40,7 @@ def test_conf_dataclass() -> None:
     from beartype.typing import Union
     from beartype._conf.confoverrides import (
         BEARTYPE_HINT_OVERRIDES_EMPTY,
-        BEARTYPE_HINT_OVERRIDES_PEP484_TOWER,
+        beartype_hint_overrides_pep484_tower,
     )
     from beartype._util.utilobject import get_object_type_basename
     from pytest import raises
@@ -82,8 +82,7 @@ def test_conf_dataclass() -> None:
 
     # Non-empty hint overrides mapping one or more arbitrary source type hints
     # to corresponding arbitrary target type hints.
-    BEAR_HINT_OVERRIDES_NONEMPTY = BeartypeHintOverrides(
-        {bool: Union[bool, FakeBool]})
+    BEAR_HINT_OVERRIDES_NONEMPTY = BeartypeHintOverrides({bool: FakeBool})
 
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
@@ -192,7 +191,7 @@ def test_conf_dataclass() -> None:
         BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
-        BEAR_HINT_OVERRIDES_NONEMPTY | BEARTYPE_HINT_OVERRIDES_PEP484_TOWER)
+        BEAR_HINT_OVERRIDES_NONEMPTY | beartype_hint_overrides_pep484_tower())
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True

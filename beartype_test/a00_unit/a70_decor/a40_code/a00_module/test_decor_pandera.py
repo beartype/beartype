@@ -19,7 +19,12 @@ annotations *not* compliant with annotation-centric PEPs).
 from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
+#FIXME: Drop the "pyarrow" requirement when feasible, please. For unknown
+#reasons, pandera >= 0.20.0 now (probably accidentally) requires "pyarrow" as a
+#mandatory dependency under certain contexts. See also this upstream issue:
+#    https://github.com/unionai-oss/pandera/issues/1715
 @skip_unless_package('pandera')
+@skip_unless_package('pyarrow')
 def test_decor_pandera() -> None:
     '''
     Test that the :func:`beartype.beartype` decorator conditionally ignores

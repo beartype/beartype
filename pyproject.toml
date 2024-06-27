@@ -339,6 +339,9 @@ test-tox = [
     #     https://github.com/numpy/numpy/issues/15947
     "numpy; sys_platform != 'darwin' and platform_python_implementation != 'PyPy'",
 
+    #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
+    #because Apache Arrow is super-intense. Since nothing in @beartype requires
+    #"pyarrow", let's tamp down on all this bare-knuckle intensity for now.
     # Required by optional pandera-specific integration tests. Dismantled, this
     # is:
     # * "pyarrow", a technically optional runtime dependency of pandera that
@@ -348,7 +351,7 @@ test-tox = [
     #   "pyarrow"-specific dtypes resembling:
     #       TypeError: pyarrow must be installed to use pyarrow dtypes.
     "pandera",
-    "pyarrow",
+    # "pyarrow",
 
     # ....................{ SCIENCE ~ data : ml            }....................
     # Machine learning-centric optional test-time dependencies. These

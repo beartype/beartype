@@ -210,7 +210,7 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
-          python3 -m pip --quiet install --upgrade pip setuptools wheel
+          python3 -m pip --quiet install --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
         run: |
           python3 -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}

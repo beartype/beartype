@@ -16,7 +16,10 @@ from beartype._data.hint.datahinttyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
+from beartype._util.utilobject import get_object_type_basename
 from re import (
     escape as re_escape,
     search as re_search,
@@ -39,10 +42,72 @@ class BeartypeHintOverrides(FrozenDict):
 
         # For each source and target hint override in this dictionary...
         for hint_override_src, hint_override_trg in self.items():
+            # If...
+            if (
+                # The active Python interpreter targets Python <= 3.9 failing to
+                # support PEP 604-compliant type unions *AND*...
+                IS_PYTHON_AT_MOST_3_9 and
+                # This is a standard override contained in the overrides
+                # dictionary created and returned by the
+                # beartype_hint_overrides_pep484_tower(), then silently accept
+                # this override and continue to the next. Why? Because this
+                # override is an obsolete PEP 484-compliant type union (e.g.,
+                # "typing.Union[float, int]") rather than a PEP 604-compliant
+                # type union (e.g., "float | int"); sadly, the simple
+                # regex-based heuristic performed below *ONLY* accepts recursion
+                # in the latter rather than the former. Look. Just go with it.
+                (
+                    (
+                        hint_override_src is float and
+                        hint_override_trg is Pep484TowerFloat
+                    ) or
+                    (
+                        hint_override_src is complex and
+                        hint_override_trg is Pep484TowerComplex
+                    )
+                )
+            ):
+                break
+
+            # Avoid circular import dependencies.
+            #
+            # Note that this importation is necessarily nested inside this "for"
+            # loop to defer this importation until the last possible moment.
+            # Performing this importation earlier (e.g., at the top of this
+            # method body) would induce a circular import dependency. *sigh*
+            from beartype._util.hint.pep.utilpepget import (
+                get_hint_pep_sign_or_none)
+
+            # The machine-readable representation of this source override,
+            # defined as either...
+            hint_override_src_repr = (
+                # If this hint is identified by *NO* sign and is thus a simple
+                # class (rather than a PEP-compliant hint), the unqualified
+                # basename of this class.
+                #
+                # Note that the machine-readable representation of simple
+                # classes is formatted as:
+                #     '<class "{package_name}...{class_basename}>'
+                #
+                # ...which, of course, is a substring that *NEVER* appears in
+                # the machine-readable representations of *OTHER* type hints.
+                # Only the unqualified basenames of simple classes appear in
+                # the machine-readable representations of *OTHER* type hints:
+                # e.g.,
+                #     >>> repr(int | str)
+                #     int | str
+                get_object_type_basename(hint_override_src)
+                if get_hint_pep_sign_or_none(hint_override_src) is None else
+                # Else, this hint is identified by a sign and is thus
+                # PEP-compliant hint. In this case, the machine-readable
+                # representation of this hint.
+                repr(hint_override_src)
+            )
+
             # The machine-readable representation of this source override,
             # escaped to protect all regex-specific syntax in this
             # representation from being erroneously parsed as that syntax.
-            HINT_OVERRIDE_SRC_REPR = re_escape(repr(hint_override_src))
+            HINT_OVERRIDE_SRC_REPR = re_escape(hint_override_src_repr)
 
             # Regular expression matching subscription-style recursion in this
             # hint override (e.g., 'str: list[str]').
@@ -79,7 +144,7 @@ class BeartypeHintOverrides(FrozenDict):
                 # closing "]" delimiter followed by that delimiter.
                 r'[^]]*\]'
             )
-            # print(f'HINT_OVERRIDE_RECURSION_REGEX: {HINT_OVERRIDE_RECURSION_REGEX}')
+            print(f'HINT_OVERRIDE_RECURSION_REGEX: {HINT_OVERRIDE_RECURSION_REGEX}')
 
             # Match object if this hint override contains one or more instances
             # of subscription-style recursion *OR* "None" otherwise.
@@ -105,23 +170,33 @@ BEARTYPE_HINT_OVERRIDES_EMPTY = BeartypeHintOverrides()
 instance overriding *no* type hints).
 '''
 
+# ....................{ GETTERS                            }....................
+@callable_cached
+def beartype_hint_overrides_pep484_tower() -> BeartypeHintOverrides:
+    '''
+    :pep:`484`-compliant **implicit tower type hint overrides** (i.e.,
+    :class:`.BeartypeHintOverrides` instance lossily convering integers to
+    floating-point numbers *and* both integers and floating-point numbers to
+    complex numbers).
 
-BEARTYPE_HINT_OVERRIDES_PEP484_TOWER = BeartypeHintOverrides({
-    float: Pep484TowerFloat,
-    complex: Pep484TowerComplex,
-})
-'''
-:pep:`484`-compliant **implicit tower type hint overrides** (i.e.,
-:class:`.BeartypeHintOverrides` instance lossily convering integers to
-floating-point numbers *and* both integers and floating-point numbers to complex
-numbers).
+    Specifically, these overrides instruct :mod:`beartype` to automatically
+    expand:
 
-Specifically, these overrides instruct :mod:`beartype` to automatically expand:
+    * All :class:`float` type hints to ``float | int``, thus implicitly
+      accepting both integers and floating-point numbers for objects annotated
+      as only accepting floating-point numbers.
+    * All :class:`complex` type hints to ``complex | float | int``, thus
+      implicitly accepting integers, floating-point, and complex numbers for
+      objects annotated as only accepting complex numbers.
 
-* All :class:`float` type hints to ``float | int``, thus implicitly accepting
-  both integers and floating-point numbers for objects annotated as only
-  accepting floating-point numbers.
-* All :class:`complex` type hints to ``complex | float | int``, thus implicitly
-  accepting integers, floating-point, and complex numbers for objects annotated
-  as only accepting complex numbers.
-'''
+    This getter is memoized for efficiency. Note that this getter is
+    intentionally defined as a memoized function rather than a global variable
+    of this submodule. Why? Because the latter approach induces a circular
+    import dependency. (I sigh.)
+    '''
+
+    # Beartype on the job, Sir!
+    return BeartypeHintOverrides({
+        float: Pep484TowerFloat,
+        complex: Pep484TowerComplex,
+    })
