@@ -339,8 +339,16 @@ test-tox = [
     #     https://github.com/numpy/numpy/issues/15947
     "numpy; sys_platform != 'darwin' and platform_python_implementation != 'PyPy'",
 
-    # Required by optional Pandera-specific integration tests.
+    # Required by optional pandera-specific integration tests. Dismantled, this
+    # is:
+    # * "pyarrow", a technically optional runtime dependency of pandera that
+    #   appears to now be effectively mandatory under modern versions of
+    #   pandera. If "pyarrow" is *NOT* installed, pandera raises exceptions from
+    #   the @beartype test suite despite tests neither referencing nor requiring
+    #   "pyarrow"-specific dtypes resembling:
+    #       TypeError: pyarrow must be installed to use pyarrow dtypes.
     "pandera",
+    "pyarrow",
 
     # ....................{ SCIENCE ~ data : ml            }....................
     # Machine learning-centric optional test-time dependencies. These
