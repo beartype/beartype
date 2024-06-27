@@ -224,12 +224,20 @@ jobs:
       # package exist, which induces mypy to emit false positives, which induces
       # this entire job and thus run to fail. In short, mypy.
 
-      # Type-check this package with "pyright". See also:
-      #     https://github.com/jakebailey/pyright-action
-      - name: 'Type-checking package with "pyright"...'
-        uses: 'jakebailey/pyright-action@v2'
-        with:
-          python-version: "${{ matrix.python-version }}"
+      #FIXME: Revisit @jakebailey's otherwise stellar GitHub Action
+      #"jakebailey/pyright-action" once this Action actually starts working
+      #again. This Action worked *GREAT* for literally years, until spurious
+      #timeouts started cropping up under Windows resembling:
+      #    Running: c:\\runners\\2.317.0\\externals\\node20\\bin\\node.exe
+      #    C:\\hostedtoolcache\\windows\\pyright\\1.1.369\\x64\\package\\index.js
+      #    --pythonversion 3.11 --outputjson
+      #    Error: The operation was canceled.
+      # # Type-check this package with "pyright". See also:
+      # #     https://github.com/jakebailey/pyright-action
+      # - name: 'Type-checking package with "pyright"...'
+      #   uses: 'jakebailey/pyright-action@v2'
+      #   with:
+      #     python-version: "${{ matrix.python-version }}"
 
       #FIXME: Revisit @jpetrucciani's otherwise stellar GitHub Action
       #"jpetrucciani/mypy-check" once the issue tracker there settles a bit.
