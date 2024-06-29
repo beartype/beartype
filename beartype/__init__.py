@@ -61,83 +61,6 @@ For :pep:`8` compliance, this specifier has the canonical name
 ``VERSION_PARTS``).
 '''
 
-# ....................{ DUNDERS                            }....................
-def __getattr__(attr_name: str) -> object:
-    '''
-    Dynamically retrieve a deprecated attribute with the passed unqualified name
-    from this submodule and emit a non-fatal deprecation warning on each such
-    retrieval if this submodule defines this attribute *or* raise an exception
-    otherwise.
-
-    The Python interpreter implicitly calls this :pep:`562`-compliant module
-    dunder function under Python >= 3.7 *after* failing to directly retrieve an
-    explicit attribute with this name from this submodule. Since this dunder
-    function is only called in the event of an error, neither space nor time
-    efficiency are a concern here.
-
-    Parameters
-    ----------
-    attr_name : str
-        Unqualified name of the deprecated attribute to be retrieved.
-
-    Returns
-    -------
-    object
-        Value of this deprecated attribute.
-
-    Warns
-    -----
-    DeprecationWarning
-        If this attribute is deprecated.
-
-    Raises
-    ------
-    AttributeError
-        If this attribute is unrecognized and thus erroneous.
-    '''
-
-    # Isolate imports to avoid polluting the module namespace.
-    from beartype._util.module.utilmoddeprecate import deprecate_module_attr
-
-    # Package scope (i.e., dictionary mapping from the names to values of all
-    # non-deprecated attributes defined by this package).
-    attr_nondeprecated_name_to_value = globals()
-
-    # If this deprecated attribute is the deprecated "beartype.abby" submodule,
-    # forcibly import the non-deprecated "beartype.door" submodule aliased to
-    # "beartype.abby" into this package scope. For efficiency, this package does
-    # *NOT* unconditionally import and expose the "beartype.door" submodule
-    # above. That submodule does *NOT* exist in the globals() dictionary
-    # defaulted to above and *MUST* now be forcibly injected there.
-    if attr_name == 'abby':
-        from beartype import door
-        attr_nondeprecated_name_to_value = {'door': door}
-        attr_nondeprecated_name_to_value.update(globals())
-    #FIXME: To support attribute-based deferred importation ala "lazy loading"
-    #of heavyweight subpackages like "beartype.door" and "beartype.vale", it
-    #looks like we'll need to manually add support here for that: e.g.,
-    #    elif attr_name in {'cave', 'claw', 'door', 'vale',}:
-    #        #FIXME: Dynamically import this attribute here... somehow. Certainly, if
-    #        #such functionality does *NOT* exist, add it to the existing
-    #        #"utilmodimport" submodule: e.g.,
-    #        attr_value = import_module_attr(f'beartype.{attr_name}')
-    #        attr_nondeprecated_name_to_value = {attr_name: attr_value}
-    #FIXME: Revise docstring accordingly, please.
-    #FIXME: Exhaustively test this, please. Because we'll never manage to keep
-    #this in sync, we *ABSOLUTELY* should author a unit test that:
-    #* Decides the set of all public subpackages of "beartype".
-    #* Validates that each subpackage in this set is accessible as a
-    #  "beartype.{subpackage_name}" attribute.
-
-    # Else, this deprecated attribute is any other attribute.
-
-    # Return the value of this deprecated attribute and emit a warning.
-    return deprecate_module_attr(
-        attr_deprecated_name=attr_name,
-        attr_deprecated_name_to_nondeprecated_name={'abby': 'door',},
-        attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
-    )
-
 # ....................{ PRIVATE ~ callables                }....................
 def _init() -> None:
     '''
@@ -280,3 +203,79 @@ example, :mod:`mypy` emits an error resembling:
     implicit reexport disabled.
 '''
 
+# ....................{ DUNDERS                            }....................
+def __getattr__(attr_name: str) -> object:
+    '''
+    Dynamically retrieve a deprecated attribute with the passed unqualified name
+    from this submodule and emit a non-fatal deprecation warning on each such
+    retrieval if this submodule defines this attribute *or* raise an exception
+    otherwise.
+
+    The Python interpreter implicitly calls this :pep:`562`-compliant module
+    dunder function under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from this submodule. Since this dunder
+    function is only called in the event of an error, neither space nor time
+    efficiency are a concern here.
+
+    Parameters
+    ----------
+    attr_name : str
+        Unqualified name of the deprecated attribute to be retrieved.
+
+    Returns
+    -------
+    object
+        Value of this deprecated attribute.
+
+    Warns
+    -----
+    DeprecationWarning
+        If this attribute is deprecated.
+
+    Raises
+    ------
+    AttributeError
+        If this attribute is unrecognized and thus erroneous.
+    '''
+
+    # Isolate imports to avoid polluting the module namespace.
+    from beartype._util.module.utilmoddeprecate import deprecate_module_attr
+
+    # Package scope (i.e., dictionary mapping from the names to values of all
+    # non-deprecated attributes defined by this package).
+    attr_nondeprecated_name_to_value = globals()
+
+    # If this deprecated attribute is the deprecated "beartype.abby" submodule,
+    # forcibly import the non-deprecated "beartype.door" submodule aliased to
+    # "beartype.abby" into this package scope. For efficiency, this package does
+    # *NOT* unconditionally import and expose the "beartype.door" submodule
+    # above. That submodule does *NOT* exist in the globals() dictionary
+    # defaulted to above and *MUST* now be forcibly injected there.
+    if attr_name == 'abby':
+        from beartype import door
+        attr_nondeprecated_name_to_value = {'door': door}
+        attr_nondeprecated_name_to_value.update(globals())
+    #FIXME: To support attribute-based deferred importation ala "lazy loading"
+    #of heavyweight subpackages like "beartype.door" and "beartype.vale", it
+    #looks like we'll need to manually add support here for that: e.g.,
+    #    elif attr_name in {'cave', 'claw', 'door', 'vale',}:
+    #        #FIXME: Dynamically import this attribute here... somehow. Certainly, if
+    #        #such functionality does *NOT* exist, add it to the existing
+    #        #"utilmodimport" submodule: e.g.,
+    #        attr_value = import_module_attr(f'beartype.{attr_name}')
+    #        attr_nondeprecated_name_to_value = {attr_name: attr_value}
+    #FIXME: Revise docstring accordingly, please.
+    #FIXME: Exhaustively test this, please. Because we'll never manage to keep
+    #this in sync, we *ABSOLUTELY* should author a unit test that:
+    #* Decides the set of all public subpackages of "beartype".
+    #* Validates that each subpackage in this set is accessible as a
+    #  "beartype.{subpackage_name}" attribute.
+
+    # Else, this deprecated attribute is any other attribute.
+
+    # Return the value of this deprecated attribute and emit a warning.
+    return deprecate_module_attr(
+        attr_deprecated_name=attr_name,
+        attr_deprecated_name_to_nondeprecated_name={'abby': 'door',},
+        attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
+    )

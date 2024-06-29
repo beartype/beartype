@@ -144,7 +144,7 @@ class BeartypeHintOverrides(FrozenDict):
                 # closing "]" delimiter followed by that delimiter.
                 r'[^]]*\]'
             )
-            print(f'HINT_OVERRIDE_RECURSION_REGEX: {HINT_OVERRIDE_RECURSION_REGEX}')
+            # print(f'HINT_OVERRIDE_RECURSION_REGEX: {HINT_OVERRIDE_RECURSION_REGEX}')
 
             # Match object if this hint override contains one or more instances
             # of subscription-style recursion *OR* "None" otherwise.

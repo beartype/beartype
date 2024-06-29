@@ -17,28 +17,6 @@ the active Python interpreter. An exception is raised if this version is
 insufficient.
 '''
 
-#FIXME: [DRY] This submodule currently violates DRY by duplicating metadata
-#already present in our top-level "pyproject.toml" file. Deduplicate this
-#metadata by refactoring this submodule to instead:
-#* Leverage the standard "importlib.metadata" submodule to dynamically retrieve
-#  a proper subset of *SOME* of the metadata published by "pyproject.toml".
-#  Conveniently, note that "importlib.metadata" has been available since Python
-#  3.8. *FIST PUMP*
-#
-#Note that a wide variety of metadata exists: e.g.,
-#    >>> list(metadata('beartype'))
-#    ['Metadata-Version', 'Name', 'Version', 'Summary', 'Home-page', 'Author',
-#    'Author-email', 'Maintainer', 'Maintainer-email', 'License', 'Project-URL',
-#    'Project-URL', 'Project-URL', 'Keywords', 'Platform', 'Classifier',
-#    'Classifier', 'Classifier', 'Classifier', 'Classifier', 'Classifier',
-#    'Classifier', 'Classifier', 'Classifier', 'Classifier', 'Classifier',
-#    'Classifier', 'Requires-Python', 'Provides-Extra', 'Requires-Dist',
-#    'Requires-Dist']
-#
-#  Notably, the current version is trivially retrieved as:
-#      from importlib.metadata import version as _get_package_version
-#      VERSION = _get_package_version('beartype')
-
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
@@ -52,7 +30,7 @@ from beartype._util.text.utiltextversion import (
     convert_str_version_to_tuple as _convert_str_version_to_tuple)
 from importlib.metadata import metadata as _get_package_metadata
 from typing import (
-    TYPE_CHECKING,
+    TYPE_CHECKING,  # <-- *MUST* be import as "TYPE_CHECKING" or mypy ignores it
     Optional as _Optional,
 )
 
@@ -159,7 +137,7 @@ metadata).
 '''
 
 # ....................{ METADATA ~ version                 }....................
-VERSION = '0.19.0'
+VERSION = '0.19.0rc0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
