@@ -966,50 +966,61 @@ that enumeration's type and should be directly referenced as such: e.g.,
 '''
 
 # ....................{ TYPES ~ hint : pep : 585           }....................
-# Define this type as either...
-HintGenericSubscriptedType: type = (
-    # If the active Python interpreter targets at least Python >= 3.9 and thus
-    # supports PEP 585, this type;
-    type(list[str])  # type: ignore[misc]
-    if IS_PYTHON_AT_LEAST_3_9 else
-    # Else, a placeholder type.
-    UnavailableType
-)
-'''
-C-based type of all subscripted generics if the active Python interpreter
-targets Python >= 3.9 *or* :class:`.UnavailableType` otherwise.
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+# Notably, mypy inexplicably refuses to accept this by emitting "errors"
+# resembling the following wherever this type is accessed:
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+if TYPE_CHECKING:
+    class HintGenericSubscriptedType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    # Define this type as either...
+    HintGenericSubscriptedType: type = (
+        # If the active Python interpreter targets at least Python >= 3.9 and thus
+        # supports PEP 585, this type;
+        type(list[str])  # type: ignore[misc]
+        if IS_PYTHON_AT_LEAST_3_9 else
+        # Else, a placeholder type.
+        UnavailableType
+    )
+    '''
+    C-based type of all subscripted generics if the active Python interpreter
+    targets Python >= 3.9 *or* :class:`.UnavailableType` otherwise.
 
-This type is a version-agnostic generalization of the standard
-:class:`types.GenericAlias` type available only under Python >= 3.9. Subscripted
-generics include:
+    This type is a version-agnostic generalization of the standard
+    :class:`types.GenericAlias` type available only under Python >= 3.9. Subscripted
+    generics include:
 
-* :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
-  instantiated by subscripting either a concrete builtin container class like
-  :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
-  the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-  or :class:`collections.abc.Sequence`).
-* :pep:`484`-compliant **subscripted generics** (i.e., user-defined classes
-  subclassing one or more :pep:`484`-compliant type hints subsequently
-  subscripted by one or more PEP-compliant type hints).
-* :pep:`585`-compliant **subscripted generics** (i.e., user-defined classes
-  subclassing one or more :pep:`585`-compliant type hints subsequently
-  subscripted by one or more PEP-compliant type hints).
+    * :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
+      instantiated by subscripting either a concrete builtin container class like
+      :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
+      the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
+      or :class:`collections.abc.Sequence`).
+    * :pep:`484`-compliant **subscripted generics** (i.e., user-defined classes
+      subclassing one or more :pep:`484`-compliant type hints subsequently
+      subscripted by one or more PEP-compliant type hints).
+    * :pep:`585`-compliant **subscripted generics** (i.e., user-defined classes
+      subclassing one or more :pep:`585`-compliant type hints subsequently
+      subscripted by one or more PEP-compliant type hints).
 
-Caveats
-----------
-**This low-level type ambiguously matches semantically unrelated PEP-compliant
-type hints,** rendering this type all but useless for most practical purposes.
-To distinguish between the various semantic types of hints ambiguously matched
-by this type, higher-level PEP-specific functions *must* be called instead.
-These include:
+    Caveats
+    -------
+    **This low-level type ambiguously matches semantically unrelated PEP-compliant
+    type hints,** rendering this type all but useless for most practical purposes.
+    To distinguish between the various semantic types of hints ambiguously matched
+    by this type, higher-level PEP-specific functions *must* be called instead.
+    These include:
 
-* :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`,
-  detecting :pep:`484`-compliant generic type hints.
-* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin_subscripted`,
-  detecting :pep:`585`-compliant builtin type hints.
-* :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`,
-  detecting :pep:`585`-compliant generic type hints.
-'''
+    * :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`,
+      detecting :pep:`484`-compliant generic type hints.
+    * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin_subscripted`,
+      detecting :pep:`585`-compliant builtin type hints.
+    * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`,
+      detecting :pep:`585`-compliant generic type hints.
+    '''
 
 # ....................{ TYPES ~ hint : pep : 604           }....................
 # If this submodule is currently being statically type-checked by a pure static
@@ -1055,11 +1066,8 @@ objects permissible as the items of new unions), including:
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable
-#         "beartype._cave._cavefast.HintPep695Type" is not valid as a type
-#         [valid-type]
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See
-#         https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
     class HintPep695Type(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a

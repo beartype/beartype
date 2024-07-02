@@ -36,7 +36,7 @@ on:
     # Sequence of glob expressions matched against "refs/tags" pushed to the
     # branches above.
     tags:
-      - 'v*'   # Match "v"-prefixed tags (e.g., "v6.9.6").
+      - 'v**'   # Match "v"-prefixed tags (e.g., "v6.9.6").
 
 # ....................{ MAIN                               }....................
 jobs:

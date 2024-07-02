@@ -16,12 +16,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._doorcheck import (
+from beartype.door._cls.doormeta import _TypeHintMeta
+from beartype.door._doortest import die_unless_typehint
+from beartype.door._func.doorcheck import (
     die_if_unbearable,
     is_bearable,
 )
-from beartype.door._cls.doormeta import _TypeHintMeta
-from beartype.door._doortest import die_unless_typehint
 from beartype.typing import (
     Any,
     FrozenSet,

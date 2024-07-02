@@ -36,11 +36,6 @@ standardized by the :mod:`typing` module.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.door._cls.doorsuper import (
     TypeHint as TypeHint)
-from beartype.door._doorcheck import (
-    die_if_unbearable as die_if_unbearable,
-    is_bearable as is_bearable,
-    is_subhint as is_subhint,
-)
 from beartype.door._cls.pep.doorpep484604 import (
     UnionTypeHint as UnionTypeHint)
 from beartype.door._cls.pep.doorpep586 import (
@@ -58,4 +53,12 @@ from beartype.door._cls.pep.pep484585.doorpep484585callable import (
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,
+)
+from beartype.door._func.doorcheck import (
+    die_if_unbearable as die_if_unbearable,
+    is_bearable as is_bearable,
+    is_subhint as is_subhint,
+)
+from beartype.door._func.doorinfer import (
+    infer_hint as infer_hint,
 )
