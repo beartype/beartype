@@ -12,6 +12,7 @@ hints best describing arbitrary objects).
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Deque,
+    Dict,
     FrozenSet,
     KeysView,
     List,
@@ -20,6 +21,7 @@ from beartype.typing import (
     Type,
     ValuesView,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
 from beartype._util.utilobject import get_object_type_name
@@ -71,47 +73,60 @@ class BeartypeHintInferrence(Enum):
 #Doing so requires iterative isinstance()-based detection against a laundry list
 #of such protocols. More sighing. *sigh*
 #FIXME: Generalize to support user-defined subclasses of builtin container types
-#(e.g., "list" subclasses). I sigh.
+#(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
+#where those types are *NOT* subscriptable. I sigh.
+@callable_cached
 def infer_hint(
+    # Mandatory parameters.
     obj: object,
+
+    # Hidden parameters. *GULP*
     __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
 ) -> object:
+    '''
+    This function is memoized for efficiency.
+    '''
 
-    hint: object = type(obj)
-
+    # ....................{ RECURSION                      }....................
     if id(obj) in __beartype_obj_ids_seen__:
-        hint = BeartypeHintInferrence.RECURSIVE
+        return BeartypeHintInferrence.RECURSIVE
+
+    # ....................{ PEP [484|585] ~ type           }....................
     elif isinstance(obj, type):
-        hint = Type[obj]
-    else:
-        obj_classname = get_object_type_name(obj)
-        hint_factory_args_1 = _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
-            obj_classname)
+        return Type[obj]
 
-        if hint_factory_args_1 is not None:
-            hints_child = set()
-            __beartype_obj_ids_seen__ |= {id(obj)}
+    # ....................{ PEP [484|585] ~ container      }....................
+    obj_classname = get_object_type_name(obj)
+    hint_factory_args_1 = _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
+        obj_classname)
 
-            for item in obj:  # type: ignore[attr-defined]
-                hint_child = infer_hint(
-                    obj=item,
-                    __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-                )
-                hints_child.add(hint_child)
+    if hint_factory_args_1 is not None:
+        hints_child = set()
+        __beartype_obj_ids_seen__ |= {id(obj)}
 
-            hints_child_union = make_hint_pep484_union(tuple(hints_child))
-
-            hint = (
-                hint_factory_args_1[hints_child_union, ...]  # type: ignore[index]
-                if hint_factory_args_1 is Tuple else
-                hint_factory_args_1[hints_child_union]  # type: ignore[index]
+        for item in obj:  # type: ignore[attr-defined]
+            hint_child = infer_hint(
+                obj=item,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
             )
+            hints_child.add(hint_child)
 
+        hints_child_union = make_hint_pep484_union(tuple(hints_child))
+
+        hint = (
+            hint_factory_args_1[hints_child_union, ...]  # type: ignore[index]
+            if hint_factory_args_1 is Tuple else
+            hint_factory_args_1[hints_child_union]  # type: ignore[index]
+        )
+
+        return hint
+
+    # ....................{ FALLBACK                       }....................
+    hint = type(obj)
     return hint
 
 # ....................{ PRIVATE ~ globals                  }....................
 #FIXME: Shift into the "beartype._data.hint.pep" subpackage somewhere, please.
-from beartype.typing import Dict
 _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
     'builtins.dict_keys': KeysView,
     'builtins.dict_values': ValuesView,
@@ -120,4 +135,12 @@ _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
     'builtins.set': Set,
     'builtins.tuple': Tuple,
     'collections.deque': Deque,
+}
+
+
+#FIXME: Also add:
+#* "ChainMap".
+#* "Counter".
+_MAPPING_CLASSNAME_TO_HINT_FACTORY_ARGS_2: Dict[str, object] = {
+    'builtins.dict': Dict,
 }

@@ -32,7 +32,7 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
     performs those imports at pytest test collection time.
 
     Returns
-    --------
+    -------
     Iterable[Tuple[object, object, bool]]
         Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
         where:
@@ -117,14 +117,15 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_EQUALITY_CASES)
 
-# ....................{ FIXTURES ~ subhint                 }....................
+# ....................{ FIXTURES ~ infer                   }....................
+#FIXME: Actually leverage this in a unit test, please. *sigh*
 @fixture(scope='session')
-def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
+def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     '''
-    Session-scoped fixture returning an iterable of **hint subhint cases**
-    (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint
-    relations between two PEP-compliant type hints), efficiently cached across
-    all tests requiring this fixture.
+    Session-scoped fixture returning an iterable of **type hint inference
+    cases** (i.e., 2-tuples ``(obj, hint)`` describing the type hint matching an
+    arbitrary object), efficiently cached across all tests requiring this
+    fixture.
 
     This iterable is intentionally defined by the return of this fixture rather
     than as a global constant of this submodule. Why? Because the former safely
@@ -133,17 +134,94 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     performs those imports at pytest test collection time.
 
     Returns
-    --------
+    -------
+    Iterable[Tuple[object, object]]
+        Iterable of one or more 2-tuples ``(obj, hint)``, where:
+
+        * ``obj`` is an arbitrary object to be passed as the first parameter to
+          the :func:`beartype.door.infer_hint` function.
+        * ``hint`` is the type hint returned by that function when passed that
+          object.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype.typing import (
+        Type,
+    )
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+    )
+    # from collections.abc import (
+    #     Collection as CollectionABC,
+    # )
+
+    # ..................{ LISTS ~ cases                      }..................
+    # List of all type hint inference cases (i.e., 2-tuples "(obj, hint)"
+    # describing the type hint matching an arbitrary object) to be returned by
+    # this fixture.
+    INFER_HINT_CASES = [
+        # ..................{ NON-PEP                        }..................
+        # An instance of a PEP-noncompliant class (i.e., a class *NOT* covered
+        # by an existing PEP standard) is annotated as that class.
+        (Class(), Class),
+
+        # A PEP-noncompliant class is annotated as the "type" superclass
+        # subscripted by that class.
+        (Class, Type[Class]),
+
+        # ..................{ PEP [484|585] ~ container      }..................
+        # A list of items all of the same class is annotated as the PEP 484- and
+        # 585-compliant "list" type subscripted by that class.
+        (['expose', 'extreme', 'explosions!',], list[str]),
+
+        #FIXME: Pick up here tomorrow, please.
+        # # A list of items all of differing classes is annotated as the PEP 484- and
+        # # 585-compliant "list" type subscripted by that class.
+        # (['expose', 'extreme', 'explosions!',], list[str]),
+
+        # # A 2-tuple of items of differing classes (one of which is a nested list
+        # # of is annotated as the PEP 484-
+        # # and 585-compliant "tuple" type subscripted in a fixed-length manner
+        # # by type hints matching those classes.
+        # ((b'heh', [0xBEEEEEEEF, 'ohnoyoudont',], (
+        #     (b'heh', [0xBEEEEEEEF, 'ohnoyoudont',]).
+        #     .
+        # )),
+    ]
+
+    # Return this mutable list coerced into an immutable tuple for safety.
+    return tuple(INFER_HINT_CASES)
+
+# ....................{ FIXTURES ~ subhint                 }....................
+#FIXME: Rename to door_cases_is_subhint() for orthogonality.
+@fixture(scope='session')
+def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
+    '''
+    Session-scoped fixture returning an iterable of **type subhint cases**
+    (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint
+    relations between two type hints), efficiently cached across all tests
+    requiring this fixture.
+
+    This iterable is intentionally defined by the return of this fixture rather
+    than as a global constant of this submodule. Why? Because the former safely
+    defers all heavyweight imports required to define this iterable to the call
+    of the first unit test requiring this fixture, whereas the latter unsafely
+    performs those imports at pytest test collection time.
+
+    Returns
+    -------
     Iterable[Tuple[object, object, bool]]
         Iterable of one or more 3-tuples ``(subhint, superhint, is_subhint)``,
         where:
 
-        * ``subhint`` is the PEP-compliant type hint to be passed as the first
-          parameter to the :func:`beartype.door.is_subhint` tester.
-        * ``superhint`` is the PEP-compliant type hint to be passed as the
-          second parameter to the :func:`beartype.door.is_subhint` tester.
-        * ``is_subhint`` is ``True`` only if that subhint is actually a subhint
-          of that superhint according to that tester.
+        * ``subhint`` is the type hint to be passed as the first parameter to
+          the :func:`beartype.door.is_subhint` tester.
+        * ``superhint`` is the type hint to be passed as the second parameter to
+          the :func:`beartype.door.is_subhint` tester.
+        * ``is_subhint`` is :data:`True` only if that subhint is actually a
+          subhint of that superhint according to that tester.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -152,9 +230,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     import typing
     from beartype._data.hint.datahinttyping import S, T
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_9,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from collections.abc import (
         Collection as CollectionABC,
         Sequence as SequenceABC,
@@ -542,9 +618,10 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         HINT_SUBHINT_CASES.append((subhint, superhint, True))
 
     # ..................{ HINTS ~ version                    }..................
-    # If the active Python interpreter targets Python >= 3.9 and thus
-    # supports PEP 585 and 593...
+    # If the active Python interpreter targets Python >= 3.9 and thus supports
+    # both PEP 585 and 593...
     if IS_PYTHON_AT_LEAST_3_9:
+        # Defer version-specific imports.
         from beartype.typing import Annotated
 
         # Append cases exercising version-specific relations.

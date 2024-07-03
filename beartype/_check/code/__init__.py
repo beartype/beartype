@@ -4,6 +4,39 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP] Deeply type-check "collections.abc.ItemsView" and
+#"typing.ItemsView". We're fairly certain that this can be trivially achieved
+#with a reduction resembling:
+#    from beartype.typing import Annotated  # <-- not quite right. import this
+#                                           # <-- dynamically for implicit
+#                                           # <-- "typing_extensions" support
+#    from beartype.typing import (
+#        Collection,
+#        Tuple,
+#    )
+#    from beartype.vale import IsInstance
+#    from collections.abc import (
+#        ItemsView as ItemsViewABC,
+#    )
+#
+#    def reduce_hint_pep484585_itemsview(
+#        hint: object, exception_prefix: str, *args, **kwargs) -> object:
+#        hint_key, hint_value = get_hint_pep484585_args(
+#            hint=hint, args_len=2, exception_prefix=exception_prefix)
+#
+#        # If "Annotated" is unavailable, silently reduce to just type-checking
+#        # that this is an instance of "ItemsViewABC". We shrug. *shrug*
+#        return Annotated[
+#            Collection[Tuple[hint_key, hint_value]],
+#            IsInstance[ItemsViewABC]
+#        ]
+#
+#In other words, an "ItemsView" is *REALLY* just:
+#* A collection of 2-tuples that is also...
+#* An instance of the "collections.abc.ItemsView" ABC.
+#
+#That's it. Nifty, huh? *Flex it!*
+
 #FIXME: [PEP] Type-check "collections.abc.Collection" and "typing.Collection" in
 #a more thoughtful manner. Currently, we only type-check collections as if they
 #were reiterables (i.e., by only type-checking the first items of those
