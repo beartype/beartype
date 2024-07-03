@@ -31,6 +31,11 @@ from enum import (
 
 # ....................{ ENUMERATIONS                       }....................
 #FIXME: Docstring us up, please.
+#FIXME: Actually, this is non-ideal. Instead, we *probably* want to revert back
+#to the class-based approach so that we can emit human-readable repr() strings
+#resembling:
+#    "Object recursion detected; short-circuiting for safety. Container {safe_repr(obj)} index {item_index}
+#    item {safe_repr(item)} self-referentially refers to same container."
 @die_unless_enum_member_values_unique
 class BeartypeHintInferrence(Enum):
     '''
@@ -46,13 +51,27 @@ class BeartypeHintInferrence(Enum):
 
 # ....................{ INFERRERS                          }....................
 #FIXME: Unit test us up, please.
+#FIXME: Memoize us up, please.
 #FIXME: Docstring us up, please.
 #FIXME: Internally comment us up, please.
-#FIXME: Add support for at least dictionaries, please. That's pretty much
-#mandatory. This is pretty much useless without at least that. *sigh*
+#FIXME: Add support for at least:
+#* Dictionaries.
+#* Literals.
+#
+#That's pretty much mandatory. Pretty much useless without at least that. *sigh*
+#FIXME: Conditionally annotate tuples less than a certain fixed length (e.g., 10
+#items) as fixed-length rather than variable-length tuple type hints. Yeah!
+#FIXME: Conditionally represent unions as PEP 604-compliant "|"-delimited type
+#unions for both conciseness and teachability. To do so, simply use the EAFP
+#principle; efficiency is largely irrelevant here. Moreover, PEP 604 support
+#widely varies across CPython versions -- with newer versions supporting more
+#possible types for inclusion in PEP 604-compliant type unions. Don't even
+#bother checking the current CPython version. Just EAFP all the way. Yeah!
 #FIXME: Consider also adding support for standard "collections.abc" protocols.
 #Doing so requires iterative isinstance()-based detection against a laundry list
 #of such protocols. More sighing. *sigh*
+#FIXME: Generalize to support user-defined subclasses of builtin container types
+#(e.g., "list" subclasses). I sigh.
 def infer_hint(
     obj: object,
     __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
