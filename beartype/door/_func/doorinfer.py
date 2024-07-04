@@ -4,10 +4,15 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) procedural
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
 type hint inferrers** (i.e., high-level functions dynamically inferring the type
 hints best describing arbitrary objects).
 '''
+
+# ....................{ TODO                               }....................
+#FIXME: Consider defining a memoized "BeartypeInferHintConf" dataclass modelled
+#after the memoized "BeartypeConf" dataclass, enabling callers to efficiently
+#configure type hint inference.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
@@ -51,10 +56,16 @@ class BeartypeHintInferrence(Enum):
 
     RECURSIVE = next_enum_member_value()
 
-# ....................{ INFERRERS                          }....................
+class BeartypeInferHintRecursion(object):
+    '''
+
+    '''
+
+    def __repr__(self) -> str:
+        return 'HintUnknown'
+
+# ....................{ INFERERS                           }....................
 #FIXME: Unit test us up, please.
-#FIXME: Memoize us up, please.
-#FIXME: Docstring us up, please.
 #FIXME: Internally comment us up, please.
 #FIXME: Add support for at least:
 #* Dictionaries.
@@ -84,31 +95,152 @@ def infer_hint(
     __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
 ) -> object:
     '''
-    This function is memoized for efficiency.
+    Type hint annotating the passed object.
+
+    This function dynamically infers (i.e., computes, decides, deduces) a type
+    hint sufficient for annotating (i.e., describing, matching, validating) the
+    passed object.
+
+    This function is memoized for efficiency. Type hint inference thus exhibits:
+
+    * Amortized :math:`O(1)` constant time complexity for even non-trivially
+      complex pure-Python data structures, amortized across all calls to this
+      function passed the same structures.
+    * Worst-case :math:`O(n)` linear time complexity for the first call to this
+      function passed a non-trivially complex pure-Python data structure, where
+      :math:`n` is the number of objects transitively reachable from that
+      structure.
+
+    Caveats
+    -------
+    This function accepts **arbitrarily large pure-Python data structures.** To
+    do so, this function necessarily introspects all objects reachable from
+    those structures and thus exhibits worst-case :math:`O(n)` linear time
+    complexity for the first call to this function passed such a structure.
+    Unlike the remainder of :mod:`beartype`, this function does *not* guarantee
+    non-amortized constant-time :math:`O(1)` behaviour by randomly sampling
+    items from arbitrarily large pure-Python data structures. While feasible,
+    doing so would be largely pointless. Why? Because a random sampling of items
+    fails to yield completely accurate type hints. By definition, type hints are
+    expected to be completely accurate. Inaccurate type hints are useless type
+    hints, for all intents and purposes.
+
+    This function accepts **recursive containers** (i.e., pure-Python containers
+    containing one or more items whose values self-referentially refer to the
+    same containers). When passed a recursive container, this function guards
+    against infinite recursion that would otherwise be induced by that container
+    by instead returning a placeholder instance of the
+    :class:`.BeartypeInferHintRecursion` class describing this recursion: e.g.,
+
+    .. code-block:: python
+
+       # Define a trivial recursive list.
+       >>> recursive_list = ['this is fine', b'this is fine too, but...',]
+       >>> recursive_list.append(recursive_list)
+
+       # Infer the type hint annotating this list.
+       >>> from beartype.door import infer_hint
+       >>> infer_hint(recursive_list)
+       ##FIXME: INSERT SANE REPR HERE, PLEASE. *sigh*
+
+    Parameters
+    ----------
+    obj : object
+        Arbitrary object to infer a type hint from.
+
+    Returns
+    -------
+    object
+        Type hint inferred from the passed object.
+    '''
+
+    # Defer to the memoized implementation of this function.
+    #
+    # Note that this function itself is intentionally *NOT* memoized. Why?
+    # Keyword parameters. Efficiency is the entire point of memoization. But
+    # keyword parameters are *MUCH* less efficient than positional parameters.
+    # Ergo, the @callable_cached prohibits keyword parameters. However, keyword
+    # parameters are also *MUCH* more usable, readable, and debuggable than
+    # positional parameters. Ergo, this function *MUST* accept keyword
+    # parameters. To resolve this dichotomy:
+    # * This high-level public unmemoized function accepts keyword parameters
+    #   and then passes those parameters on to...
+    # * The lower-level private memoized _infer_hint_cached() function, which
+    #   prohibits keyword parameters.
+    return _infer_hint_cached(obj)
+
+# ....................{ PRIVATE ~ inferers                 }....................
+@callable_cached
+def _infer_hint_cached(
+    # Mandatory parameters.
+    obj: object,
+
+    # Hidden parameters. *GULP*
+    __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
+) -> object:
+    '''
+    Type hint annotating the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Arbitrary object to infer a type hint from.
+    __beartype_obj_ids_seen__ : FrozenSet[int]
+        **Recursion guard** (i.e., frozen set of the integers uniquely
+        identifying all previously visited containers passed as the ``obj``
+        parameter to some recursive parent call of this same function on the
+        current call stack). If the object identifier (ID) of passed object
+        already resides in this recursion guard, then that object has already
+        been visited by a prior call to this function in the same call stack
+        and is thus a recursive container; in that case, this function
+        short-circuits infinite recursion by returning a placeholder instance of
+        the :class:`.BeartypeInferHintRecursion` class describing this issue.
+
+    Returns
+    -------
+    object
+        Type hint inferred from the passed object.
+
+    See Also
+    --------
+    :func:`.infer_hint`
+        Further details.
     '''
 
     # ....................{ RECURSION                      }....................
+    # If the integer uniquely identifying this object already resides in this
+    # recursion guard, this object has already been visited by a prior call to
+    # this function in the same call stack and is thus a recursive container.
+    # In this case, short-circuit infinite recursion by creating and returning a
+    # placeholder instance of a dataclass describing this situation.
     if id(obj) in __beartype_obj_ids_seen__:
         return BeartypeHintInferrence.RECURSIVE
+    # Else, this object has yet to be visited.
 
     # ....................{ PEP [484|585] ~ type           }....................
+    # If this object is a type, this type is trivially satisfied by a PEP 484-
+    # or 585-compliant subclass type hint subscripted by this type.
     elif isinstance(obj, type):
         return Type[obj]
+    # Else, this object is *NOT* a type.
 
     # ....................{ PEP [484|585] ~ container      }....................
+    # Fully-qualified (i.e., absolute) name of the type of this object.
     obj_classname = get_object_type_name(obj)
-    hint_factory_args_1 = _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
+
+    # Single-argument collection type hint factory that generates type hints
+    # satisfying this object if any *OR* "None" otherwise (i.e., if no such
+    # factory satisfies this object).
+    hint_factory_args_1 = _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
         obj_classname)
 
+    # If a single-argument collection type hint factory satisfies this object...
     if hint_factory_args_1 is not None:
         hints_child = set()
         __beartype_obj_ids_seen__ |= {id(obj)}
 
         for item in obj:  # type: ignore[attr-defined]
-            hint_child = infer_hint(
-                obj=item,
-                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-            )
+            hint_child = _infer_hint_cached(item, __beartype_obj_ids_seen__)
             hints_child.add(hint_child)
 
         hints_child_union = make_hint_pep484_union(tuple(hints_child))
@@ -120,14 +252,20 @@ def infer_hint(
         )
 
         return hint
+    # Else, no such factory satisfies this object.
 
     # ....................{ FALLBACK                       }....................
+    # Type of this object.
     hint = type(obj)
+
+    # Return this type as a last-ditch fallback. By definition, *ANY* object is
+    # trivially satisfied by a type hint that is the type of that object (e.g.,
+    # the integer "42" is trivially satisfied by the builtin type "int").
     return hint
 
 # ....................{ PRIVATE ~ globals                  }....................
 #FIXME: Shift into the "beartype._data.hint.pep" subpackage somewhere, please.
-_CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
+_COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
     'builtins.dict_keys': KeysView,
     'builtins.dict_values': ValuesView,
     'builtins.frozenset': FrozenSet,
@@ -136,6 +274,12 @@ _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
     'builtins.tuple': Tuple,
     'collections.deque': Deque,
 }
+'''
+Dictionary mapping from the fully-qualified names of **single-argument
+collection type hint factories** (i.e., standard Python types subscriptable by
+only a single child type hint and satisfying the
+:class:`collections.abc.Collection` protocol) to those factories.
+'''
 
 
 #FIXME: Also add:
@@ -144,3 +288,9 @@ _CONTAINER_CLASSNAME_TO_HINT_FACTORY_ARGS_1: Dict[str, object] = {
 _MAPPING_CLASSNAME_TO_HINT_FACTORY_ARGS_2: Dict[str, object] = {
     'builtins.dict': Dict,
 }
+'''
+Dictionary mapping from the fully-qualified names of **dual-argument mapping
+type hint factories** (i.e., standard Python types subscriptable by both key and
+value child type hints and satisfying the :class:`collections.abc.Mapping`
+protocol) to those factories.
+'''

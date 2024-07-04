@@ -148,6 +148,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # Defer fixture-specific imports.
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype.typing import (
+        List,
         Type,
     )
     from beartype_test.a00_unit.data.data_type import (
@@ -167,6 +168,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # by an existing PEP standard) is annotated as that class.
         (Class(), Class),
 
+        # ..................{ PEP [484|585]                  }..................
         # A PEP-noncompliant class is annotated as the "type" superclass
         # subscripted by that class.
         (Class, Type[Class]),
@@ -174,7 +176,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # ..................{ PEP [484|585] ~ container      }..................
         # A list of items all of the same class is annotated as the PEP 484- and
         # 585-compliant "list" type subscripted by that class.
-        (['expose', 'extreme', 'explosions!',], list[str]),
+        (['expose', 'extreme', 'explosions!',], List[str]),
 
         #FIXME: Pick up here tomorrow, please.
         # # A list of items all of differing classes is annotated as the PEP 484- and
@@ -197,7 +199,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
 # ....................{ FIXTURES ~ subhint                 }....................
 #FIXME: Rename to door_cases_is_subhint() for orthogonality.
 @fixture(scope='session')
-def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
+def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     '''
     Session-scoped fixture returning an iterable of **type subhint cases**
     (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint

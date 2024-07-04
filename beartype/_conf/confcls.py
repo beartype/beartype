@@ -65,7 +65,7 @@ from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
-# ....................{ CLASSES                            }....................
+# ....................{ DATACLASSES                        }....................
 class BeartypeConf(object):
     '''
     **Beartype configuration** (i.e., self-caching dataclass encapsulating all

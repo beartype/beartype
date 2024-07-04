@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) procedural
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
 type-checkers** (i.e., high-level functions type-checking arbitrary objects
 against type hints at *any* time during the lifecycle of the active Python
 process).

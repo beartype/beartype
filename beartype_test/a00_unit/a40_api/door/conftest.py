@@ -15,5 +15,6 @@ child submodules of the test subpackage containing this :mod:`pytest` plugin).
 # by submodules of this subpackage.
 from beartype_test.a00_unit.a40_api.door._doorfixture import (
     door_cases_equality,
-    door_cases_subhint,
+    door_cases_infer_hint,
+    door_cases_is_subhint,
 )

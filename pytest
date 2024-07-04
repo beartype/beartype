@@ -32,9 +32,9 @@ set -e
 # PYTHON_ARGS=( command python3.8 -X dev )
 # PYTHON_ARGS=( command python3.9 -X dev )
 # PYTHON_ARGS=( command python3.10 -X dev )
-PYTHON_ARGS=( command python3.11 -X dev )
+# PYTHON_ARGS=( command python3.11 -X dev )
 # PYTHON_ARGS=( command python3.12 -X dev )
-# PYTHON_ARGS=( command python3.13 -X dev )
+PYTHON_ARGS=( command python3.13 -X dev )
 # PYTHON_ARGS=( command pypy3.7 -X dev )
 
 # Array of all shell words to be passed to "python3" below.
