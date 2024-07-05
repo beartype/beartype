@@ -168,13 +168,17 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # by an existing PEP standard) is annotated as that class.
         (Class(), Class),
 
+        # ..................{ PEP 484                        }..................
+        # The "None" singleton is annotated as itself under PEP 484.
+        (None, None),
+
         # ..................{ PEP [484|585]                  }..................
-        # A PEP-noncompliant class is annotated as the "type" superclass
+        # A class is annotated as the PEP 484- or 585-compliant "type" supertype
         # subscripted by that class.
         (Class, Type[Class]),
 
         # ..................{ PEP [484|585] ~ container      }..................
-        # A list of items all of the same class is annotated as the PEP 484- and
+        # A list of items all of the same class is annotated as the PEP 484- or
         # 585-compliant "list" type subscripted by that class.
         (['expose', 'extreme', 'explosions!',], List[str]),
 

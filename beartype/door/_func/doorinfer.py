@@ -217,6 +217,14 @@ def _infer_hint_cached(
         return BeartypeHintInferrence.RECURSIVE
     # Else, this object has yet to be visited.
 
+    # ....................{ PEP 484                        }....................
+    # If this object is the "None" singleton, this object is trivially satisfied
+    # by itself under PEP 484. Interestingly, "None" is the *ONLY* object that
+    # is its own type hint.
+    elif obj is None:
+        return obj
+    # Else, this object is *NOT* the "None" singleton.
+
     # ....................{ PEP [484|585] ~ type           }....................
     # If this object is a type, this type is trivially satisfied by a PEP 484-
     # or 585-compliant subclass type hint subscripted by this type.
@@ -234,15 +242,28 @@ def _infer_hint_cached(
     hint_factory_args_1 = _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
         obj_classname)
 
-    # If a single-argument collection type hint factory satisfies this object...
+    # If a single-argument collection type hint factory satisfies this object,
+    # this object is a collection of zero or more items. In this case...
     if hint_factory_args_1 is not None:
-        hints_child = set()
+        # Add the integer uniquely identifying this collection to this set to
+        # note that this collection has now been visited by this recursion.
         __beartype_obj_ids_seen__ |= {id(obj)}
 
+        # Set of all child type hints to conjoin into a union.
+        hints_child = set()
+
+        # For each item in this collection...
         for item in obj:  # type: ignore[attr-defined]
+            # Child type hint satisfying this item.
             hint_child = _infer_hint_cached(item, __beartype_obj_ids_seen__)
+
+            # Add this child type hint to this set.
             hints_child.add(hint_child)
 
+        #FIXME: Refactor as follows, please:
+        #* Define a new make_hint_pep484604_union() factory.
+        #* Call that factory here instead.
+        # PEP 484- or 604-compliant union of these child type hints.
         hints_child_union = make_hint_pep484_union(tuple(hints_child))
 
         hint = (

@@ -19,15 +19,74 @@ from beartype.roar import (
     BeartypeDoorHintViolation,
 )
 from beartype.typing import (
+    Callable,
     List,
     Union,
 )
+from functools import wraps
 from pytest import raises
 
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
 
-# ....................{ CLASSES                            }....................
+# ....................{ REFERENCES                         }....................
+# Callables annotated by type hints referencing classes that have yet to be
+# defined at callable definition time and are thus converted into
+# beartype-specific forward references by the @beartype decorator.
+#
+# Note that:
+# * This convoluted decorator logic exercises this non-trivial issue and is
+#   thus convoluted intentionally. Attempting to simplify this logic would
+#   erroneously hide this non-trivial issue:
+#     https://github.com/beartype/beartype/issues/404
+
+def coerce_func_return_to_subclass_instance(func) -> (
+    'Callable[..., StrSubclass]'):
+    '''
+    Decorator coercing the object returned by the passed callable into an
+    instance of the :class:`.StrSubclass` class that has yet to be defined at
+    the time this decorator is defined.
+    '''
+
+    @wraps(func)
+    def coerce_func_return_to_subclass_instance_method(
+        self: 'StrSubclass', *args, **kwargs) -> 'StrSubclass':
+        '''
+        Method coercing the object returned by the passed callable into an
+        instance of the :class:`.StrSubclass` class that has yet to be defined
+        at the time this decorator is defined.
+        '''
+
+        # Coerce the value returned by that callable into an instance of the
+        # type to which this method is bound.
+        return type(self)(func(self, *args, **kwargs))
+
+    # Return this method.
+    return coerce_func_return_to_subclass_instance_method
+
+
+class StrSubclass(str):
+    '''
+    Arbitrary string subclass.
+    '''
+
+    capitalize = coerce_func_return_to_subclass_instance(str.capitalize)
+    '''
+    :class:`str.capitalize` method coerced to return an instance of this
+    :class:`.StrSubclass` subclass (rather than the :class:`str` superclass).
+    '''
+
+
+# Assert that the StrSubclass.capitalize() method behaves as expected.
+assert StrSubclass(
+    "and the night's noontide clearness, mutable").capitalize() == (
+    "And the night's noontide clearness, mutable")
+
+# ....................{ CLASSES ~ default                  }....................
+# Classes whose type-checking implicitly accepts the default beartype
+# configuration assumed by the remainder of this subpackage.
+
+# ....................{ CLASSES ~ non-default              }....................
 # Classes whose type-checking explicitly rejects the default beartype
 # configuration assumed by the remainder of this subpackage (i.e., due to being
 # decorated by the @beartype decorator explicitly configured by a non-default

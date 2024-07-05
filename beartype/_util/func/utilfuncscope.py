@@ -398,8 +398,9 @@ def get_func_locals(
     # stack frame if that callable is pure-Python *OR* "None".
     func_frame_codeobj: Optional[CodeType] = None
 
-    # Fully-qualified name of that callable's module.
-    func_frame_module_name = ''
+    # Fully-qualified name of the module defining that callable if any *OR*
+    # "None" (i.e., if that callable is defined outside a module).
+    func_frame_module_name: Optional[str] = ''
 
     # Unqualified name of that callable.
     func_frame_name = ''
@@ -422,12 +423,12 @@ def get_func_locals(
     #         return bruh
     for func_frame in iter_frames(
         # 0-based index of the first non-ignored frame following the last
-        # ignored frame, ignoring an additional frame embodying the current
-        # call to this getter.
+        # ignored frame, ignoring an additional frame embodying the current call
+        # to this getter.
         func_stack_frames_ignore=func_stack_frames_ignore + 1,
     ):
-        # Code object underlying this frame's scope if that scope is
-        # pure-Python *OR* "None" otherwise.
+        # Code object underlying this frame's scope if that scope is pure-Python
+        # *OR* "None" otherwise.
         func_frame_codeobj = get_func_codeobj_or_none(func_frame)
 
         # If this code object does *NOT* exist, this scope is C-based. In this
@@ -436,20 +437,27 @@ def get_func_locals(
             continue
         # Else, this code object exists, implying this scope to be pure-Python.
 
-        # Fully-qualified name of that scope's module.
-        func_frame_module_name = func_frame.f_globals['__name__']
+        # Fully-qualified name of the module defining this scope if any *OR*
+        # "None" otherwise (i.e., if this scope is defined outside a module).
+        func_frame_module_name = func_frame.f_globals.get('__name__')
 
-        # Unqualified name of that scope.
+        # If this scope is defined outside a module, silently ignore this scope
+        # and proceed to the next frame.
+        if func_frame_module_name is None:
+            continue
+        # Else, this scope exists.
+
+        # Unqualified name of this scope.
         func_frame_name = func_frame_codeobj.co_name
         # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
-        # If that scope is the placeholder string assigned by the active Python
+        # If this scope is the placeholder string assigned by the active Python
         # interpreter to all scopes encapsulating the top-most lexical scope of
         # a module in the current call stack, this search has just crossed a
         # module boundary and is thus no longer searching within the module
         # declaring this nested callable and has thus failed to find the
         # lexical scope of the parent declaring this nested callable. Why?
-        # Because that scope *MUST* necessarily be in the same module as that
+        # Because this scope *MUST* necessarily be in the same module as that
         # of this nested callable. In this case, raise an exception.
         if func_frame_name == FUNC_CODEOBJ_NAME_MODULE:
             raise _BeartypeUtilCallableScopeNotFoundException(
