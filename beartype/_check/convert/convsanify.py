@@ -135,6 +135,8 @@ def sanify_hint_root_func(
         exception_prefix=exception_prefix,
     )
 
+    #FIXME: Pretty odd stuff. Ideally, this should just be refactored into a
+    #standard reducer called by the existing reduce_hint() function below.
     # If this hint annotates the return, then (in order):
     # * If this hint is contextually invalid for this callable (e.g., generator
     #   whose return is not annotated as "Generator[...]"), raise an exception.
@@ -182,6 +184,7 @@ def sanify_hint_root_func(
         hint=hint,
         conf=decor_meta.conf,
         cls_stack=decor_meta.cls_stack,
+        func=decor_meta.func_wrappee,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )

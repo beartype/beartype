@@ -86,6 +86,8 @@ class BeartypeInferHintRecursion(object):
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
 #where those types are *NOT* subscriptable. I sigh.
+#FIXME: Undo memoization. Sadly, that fails for the obvious reason: most objects
+#are mutable and thus unhashable and thus unmemoizable. It is what it is.
 @callable_cached
 def infer_hint(
     # Mandatory parameters.

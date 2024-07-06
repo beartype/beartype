@@ -66,6 +66,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNumpyArray,
     HintSignOrderedDict,
     HintSignPanderaAny,
+    HintSignParamSpecArgs,
+    HintSignParamSpecKwargs,
     HintSignPattern,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
@@ -109,6 +111,10 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
+from beartype._util.hint.pep.proposal.utilpep612 import (
+    reduce_hint_pep612_args,
+    reduce_hint_pep612_kwargs,
+)
 from beartype._util.hint.pep.proposal.utilpep613 import reduce_hint_pep613
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
 from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
@@ -127,6 +133,7 @@ def reduce_hint(
 
     # Optional parameters.
     cls_stack: TypeStack = None,
+    func: Optional[Callable] = None,
     pith_name: Optional[str] = None,
     exception_prefix: str = '',
 ) -> object:
@@ -159,6 +166,14 @@ def reduce_hint(
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
+    func : Optional[Callable], optional
+        Either:
+
+        * If this hint annotates a parameter or return of some callable, that
+          callable.
+        * Else, :data:`None`.
+
         Defaults to :data:`None`.
     pith_name : Optional[str], optional
         Either:
@@ -204,6 +219,7 @@ def reduce_hint(
             conf=conf,
             pith_name=pith_name,
             cls_stack=cls_stack,
+            func=func,
             exception_prefix=exception_prefix,
         )
 
@@ -231,6 +247,7 @@ def _reduce_hint_uncached(
     hint: Any,
     conf: BeartypeConf,
     cls_stack: TypeStack,
+    func: Optional[Callable],
     pith_name: Optional[str],
     exception_prefix: str,
 ) -> object:
@@ -257,6 +274,12 @@ def _reduce_hint_uncached(
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
         :data:`None`). See also the :func:`.beartype_object` decorator.
+    func : Optional[Callable]
+        Either:
+
+        * If this hint annotates a parameter or return of some callable, that
+          callable.
+        * Else, :data:`None`.
     pith_name : Optional[str]
         Either:
 
@@ -290,9 +313,10 @@ def _reduce_hint_uncached(
     if hint_reducer is not None:  # type: ignore[call-arg]
         # print(f'Reducing hint {repr(hint)} to...')
         hint = hint_reducer(
-            hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
+            hint=hint,  # pyright: ignore
             conf=conf,
             cls_stack=cls_stack,
+            func=func,
             pith_name=pith_name,
             exception_prefix=exception_prefix,
         )
@@ -627,6 +651,22 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignTupleFixed: reduce_hint_pep484_deprecated,
     HintSignType: reduce_hint_pep484_deprecated,
     HintSignValuesView: reduce_hint_pep484_deprecated,
+
+    # ..................{ PEP 612                            }..................
+    #FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and
+    #"**kwargs: P.kwargs" would be runtime-checkable. However, it's unclear
+    #whether these hints even *CAN* be runtime type-checked in theory -- let
+    #alone practice. For the moment, shallowly ignoring them is the best that
+    #@beartype can do. Let's readdress this if and when @beartype begins deeply
+    #type-checking type variables (i.e., "typing.TypeVar" objects), which share
+    #a vague similarity with PEP 612-compliant "typing.ParamSpec" objects.
+
+    # Reduce PEP 612-compliant type hints that are instances of the low-level
+    # C-based "typing.ParamSpecArgs" or "typing.ParamSpecKwargs" types when
+    # annotating variadic positional or keyword arguments with syntax resembling
+    # "*args: P.args" or "**kwargs: P.kwargs" to an arbitrary ignorable hint.
+    HintSignParamSpecArgs:   reduce_hint_pep612_args,
+    HintSignParamSpecKwargs: reduce_hint_pep612_kwargs,
 
     # ..................{ PEP 613                            }..................
     # Reduce PEP 613-compliant "typing.TypeAlias" type hints to an arbitrary

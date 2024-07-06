@@ -53,20 +53,22 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
-HintSignAnnotated    = _HintSign(name='Annotated')
-HintSignAny          = _HintSign(name='Any')
-HintSignCallable     = _HintSign(name='Callable')
-HintSignClassVar     = _HintSign(name='ClassVar')
-HintSignConcatenate  = _HintSign(name='Concatenate')
-HintSignFinal        = _HintSign(name='Final')
-HintSignForwardRef   = _HintSign(name='ForwardRef')
-HintSignGeneric      = _HintSign(name='Generic')
-HintSignLiteral      = _HintSign(name='Literal')
-HintSignOptional     = _HintSign(name='Optional')
-HintSignParamSpec    = _HintSign(name='ParamSpec')
-HintSignProtocol     = _HintSign(name='Protocol')
+HintSignAnnotated       = _HintSign(name='Annotated')
+HintSignAny             = _HintSign(name='Any')
+HintSignCallable        = _HintSign(name='Callable')
+HintSignClassVar        = _HintSign(name='ClassVar')
+HintSignConcatenate     = _HintSign(name='Concatenate')
+HintSignFinal           = _HintSign(name='Final')
+HintSignForwardRef      = _HintSign(name='ForwardRef')
+HintSignGeneric         = _HintSign(name='Generic')
+HintSignLiteral         = _HintSign(name='Literal')
+HintSignOptional        = _HintSign(name='Optional')
+HintSignParamSpec       = _HintSign(name='ParamSpec')
+HintSignParamSpecArgs   = _HintSign(name='ParamSpecArgs')
+HintSignParamSpecKwargs = _HintSign(name='ParamSpecKwargs')
+HintSignProtocol        = _HintSign(name='Protocol')
 
-HintSignTuple        = _HintSign(name='Tuple')
+HintSignTuple           = _HintSign(name='Tuple')
 '''
 Sign uniquely identifying **variable-length tuple type hints,** including:
 

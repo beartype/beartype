@@ -71,6 +71,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignOrderedDict,
     HintSignPanderaAny,
     HintSignParamSpec,
+    HintSignParamSpecArgs,
+    HintSignParamSpecKwargs,
     # HintSignParamSpecArgs,
     HintSignPep557DataclassInitVar,
     # HintSignTypeAlias,
@@ -281,16 +283,16 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     'builtins.str': HintSignForwardRef,
 
     # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints as
-    # instances of that class. Regardless of the current Python version,
-    # "typing_extensions.NewType" type hints remain implemented in manner of
-    # Python < 3.10 -- which is to say, as closures of that function. Ergo, we
-    # intentionally omit "typing_extensions.NewType" here. See also:
+    # instances of that pure-Python class. Regardless of the current Python
+    # version, "typing_extensions.NewType" type hints remain implemented in the
+    # manner of Python < 3.10 -- which is to say, as closures of that function.
+    # Ergo, we intentionally omit "typing_extensions.NewType" here. See also:
     #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
     'typing.NewType': HintSignNewType,
 
     # ..................{ PEP 557                            }..................
-    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
-    # hints as instances of that class.
+    # PEP 557-compliant "dataclasses.InitVar" type hints are merely instances of
+    # that class.
     'dataclasses.InitVar': HintSignPep557DataclassInitVar,
 
     # ..................{ PEP 604                            }..................
@@ -301,16 +303,6 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # expose equivalent dunder attributes (e.g., "__args__", "__parameters__"),
     # enabling subsequent code generation to conflate the two without issue.
     'types.UnionType': HintSignUnion,
-
-    # ..................{ PEP 612                            }..................
-    # Python >= 3.10 implements PEP 612-compliant "typing.ParamSpec" type hints
-    # as instances of that class.
-    'typing.ParamSpec': HintSignParamSpec,
-
-    # ..................{ PEP 695                            }..................
-    # Python >= 3.12 implements PEP 695-compliant "type" aliases as instances of
-    # the low-level C-based "typing.TypeAliasType" type.
-    'typing.TypeAliasType': HintSignPep695TypeAlias,
 }
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
@@ -446,7 +438,7 @@ def _init() -> None:
     # typing modules used to instantiate PEP-compliant type hints to their
     # corresponding signs.
     _HINT_TYPE_BASENAMES_TO_SIGN = {
-        # ................{ PEP 484                            }................
+        # ....................{ PEP 484                    }....................
         # All PEP 484-compliant forward references are necessarily instances of
         # the same class.
         'ForwardRef' : HintSignForwardRef,
@@ -460,6 +452,24 @@ def _init() -> None:
         # explicitly equivalent under PEP 484 to the "Generic[Any]"
         # subscription and thus slightly conveys meaningful semantics.
         # 'Generic': HintSignGeneric,
+
+        # ....................{ PEP 612                    }....................
+        # PEP 612-compliant "typing.ParamSpec" type hints as merely instances of
+        # that low-level C-based type.
+        'ParamSpec': HintSignParamSpec,
+
+        # PEP 612-compliant "*args: P.args" type hints as merely instances of
+        # the low-level C-based "typing.ParamSpecArgs" type.
+        'ParamSpecArgs': HintSignParamSpecArgs,
+
+        # PEP 612-compliant "**kwargs: P.kwargs" type hints as merely instances
+        # of the low-level C-based "typing.ParamSpecKwargs" type.
+        'ParamSpecKwargs': HintSignParamSpecKwargs,
+
+        # ....................{ PEP 695                    }....................
+        # PEP 695-compliant "type" aliases are merely instances of the low-level
+        # C-based "typing.TypeAliasType" type.
+        'TypeAliasType': HintSignPep695TypeAlias,
     }
 
     # ..................{ HINTS ~ deprecated                 }..................
