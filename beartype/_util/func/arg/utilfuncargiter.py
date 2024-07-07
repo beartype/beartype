@@ -212,7 +212,7 @@ def iter_func_args(
     func_codeobj: CodeType, optional
         Code object underlying that callable unwrapped. Defaults to
         :data:`None`, in which case this iterator internally defers to the
-        comparatively slower :func:`get_func_codeobj` function.
+        comparatively slower :func:`.get_func_codeobj` function.
     is_omit_boundmethod_arg_first : bool, optional
         :data:`True` only if this generator implicitly omits the first mandatory
         flexible parameter accepted by that callable if that callable is a
@@ -297,7 +297,7 @@ def iter_func_args(
     from beartype._util.func.utilfunctest import is_func_boundmethod
     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
-    # ..................{ LOCALS ~ noop                      }..................
+    # ..................{ PARAMETERS                         }..................
     # If unwrapping that callable, do so *BEFORE* obtaining the code object of
     # that callable for safety (to avoid desynchronization between the two).
     if is_unwrap:
@@ -311,6 +311,15 @@ def iter_func_args(
         func_codeobj = get_func_codeobj(func=func, exception_cls=exception_cls)
     # In any case, that code object is now defined.
 
+    # ..................{ LOCALS                             }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with:
+    # * The get_func_arg_names() getter.
+    # * The is_func_arg_variadic_positional() tester.
+    # * The is_func_arg_variadic_keyword() tester.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    #FIXME: Refactor to call the get_func_args_lens() getter, please.
     # Bit field of OR-ed binary flags describing this callable.
     func_codeobj_flags = func_codeobj.co_flags
 
@@ -323,10 +332,6 @@ def iter_func_args(
     # that callable.
     args_len_kwonly = func_codeobj.co_kwonlyargcount
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_func_arg_variadic_positional() and
-    # is_func_arg_variadic_keyword() testers.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # True only if that callable accepts variadic positional or keyword
     # parameters. For efficiency, these tests are inlined from the
     # is_func_arg_variadic_positional() and is_func_arg_variadic_keyword()
@@ -364,7 +369,7 @@ def iter_func_args(
     #
     # Lastly, note the "func_codeobj.co_names" attribute is incorrectly
     # documented in the "inspect" module as the "tuple of names of local
-    # variables." That's a lie. That attribute is instead a mostly useless
+    # variables." That's a lie. Instead, that attribute is a mostly useless
     # tuple of the names of both globals and object attributes accessed in the
     # body of that callable. *shrug*
     args_name = func_codeobj.co_varnames

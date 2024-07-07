@@ -13,7 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Optional
+from beartype.typing import (
+    FrozenSet,
+    Optional,
+    Tuple,
+)
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
@@ -27,8 +31,41 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
     get_func_codeobj,
 )
+from inspect import (
+    CO_VARARGS,
+    CO_VARKEYWORDS,
+)
 
-# ....................{ GETTERS ~ arg                      }....................
+# ....................{ HINTS                              }....................
+CallableArgsLens = Tuple[int, int, int, int]
+'''
+PEP-compliant type hint matching **callable parameter length metadata** returned
+by the :func:`.get_func_args_lens` getter, defined as the 4-tuple
+``(args_len_posonly_or_flex, args_len_kwonly, args_len_var_pos,
+args_len_var_kw)`` such that:
+
+* ``args_len_posonly_or_flex`` is the total number of all **non-keyword-only
+  parameters** (i.e., both optional and mandatory positional-only, positional,
+  and keyword parameters) accepted by the callable passed to that getter.
+* ``args_len_kwonly`` is the total number of all **keyword-only parameters**
+  (i.e., both optional and mandatory keyword-only parameters) accepted by the
+  callable passed to that getter.
+* ``args_len_var_pos`` is either:
+
+  * If the callable passed to that getter accepts a variadic positional
+    parameter, ``1``.
+  * Else, ``0``.
+
+* ``args_len_var_kw`` is either:
+
+  * If the callable passed to that getter accepts a variadic keyword parameter,
+    ``1``.
+  * Else, ``0``.
+'''
+
+# ....................{ GETTERS ~ name                     }....................
+#FIXME: Rewrite in terms of get_func_arg_names(), please.
+#FIXME: Rename to get_func_arg_name_first_or_none(), please.
 #FIXME: Unit test us up, please.
 def get_func_arg_first_name_or_none(*args, **kwargs) -> Optional[str]:
     '''
@@ -67,7 +104,64 @@ def get_func_arg_first_name_or_none(*args, **kwargs) -> Optional[str]:
     # Return "None".
     return None
 
-# ....................{ GETTERS ~ args                     }....................
+
+#FIXME: Unit test us up, please.
+#FIXME: Revise docstring, please.
+# def get_func_arg_names(
+#     # Mandatory parameters.
+#     func: Codeobjable,
+#
+#     # Optional parameters.
+#     is_unwrap: bool = True,
+#     exception_cls: TypeException = _BeartypeUtilCallableException,
+#     exception_prefix: str = '',
+# ) -> FrozenSet[str]:
+#     '''
+#     Frozen set of the names of all parameters accepted by the passed pure-Python
+#     callable.
+#
+#     Parameters
+#     ----------
+#     func : Codeobjable
+#         Pure-Python callable, frame, or code object to be inspected.
+#     is_unwrap: bool, optional
+#         :data:`True` only if this getter implicitly calls the
+#         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+#         Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
+#         further commentary.
+#     exception_cls : type, optional
+#         Type of exception to be raised in the event of a fatal error. Defaults
+#         to :class:`._BeartypeUtilCallableException`.
+#     exception_prefix : str, optional
+#         Human-readable label prefixing the message of any exception raised in
+#         the event of a fatal error. Defaults to the empty string.
+#
+#     Returns
+#     -------
+#
+#     Raises
+#     ------
+#     exception_cls
+#          If the passed callable is *not* pure-Python.
+#     '''
+#
+#     # Code object underlying the passed pure-Python callable unwrapped if any
+#     # *OR* "None" otherwise (i.e., that callable has *NO* code object).
+#     func_codeobj = get_func_codeobj_or_none(func=func, is_unwrap=is_unwrap)
+#
+#     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#     # CAUTION: Synchronize with the iter_func_args() iterator.
+#     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#     # A trivial algorithm for deciding the number of arguments can be
+#     # found at the head of the iter_func_args() iterator.
+#     #FIXME: Define a new get_func_args_len() function implementing this,
+#     #defined in terms of the existing get_func_args_lens() function.
+#     args_len = ...
+#
+#     # One-liners for great glory.
+#     return func.__code__.co_varnames[:args_len] # <-- BOOM
+
+# ....................{ GETTERS ~ len                      }....................
 def get_func_args_flexible_len(
     # Mandatory parameters.
     func: Codeobjable,
@@ -133,22 +227,22 @@ def get_func_args_flexible_len(
     func_codeobj = get_func_codeobj_or_none(func=func, is_unwrap=is_unwrap)
 
     # If that callable has a code object, return the number of flexible
-    # parameters accepted by this callable exposed by this code object.
+    # parameters accepted by the callable exposed by this code object.
     if func_codeobj:
         return func_codeobj.co_argcount
     # Else, that callable has *NO* code object.
-
+    #
     # If that callable is *NOT* actually callable, raise an exception.
-    if not callable(func):
+    elif not callable(func):
         raise exception_cls(f'{exception_prefix}{repr(func)} uncallable.')
     # Else, that callable is callable.
-
+    #
     # If unwrapping that callable *AND* that callable is a partial (i.e.,
     # "functools.partial" object wrapping a lower-level callable), return the
     # total number of flexible parameters accepted by the pure-Python wrappee
     # callable wrapped by this partial minus the number of flexible parameters
     # passed by this partial to this wrappee.
-    if is_unwrap and is_func_functools_partial(func):
+    elif is_unwrap and is_func_functools_partial(func):
         return get_func_functools_partial_args_flexible_len(
             func=func,
             is_unwrap=is_unwrap,
@@ -189,6 +283,8 @@ def get_func_args_flexible_len(
     )
 
 
+#FIXME: Refactor in terms of get_func_args_lens(), please.
+#FIXME: Refactor to just accept and forward on variadic "*args, **kwargs".
 #FIXME: Unit test us up, please.
 def get_func_args_nonvariadic_len(
     # Mandatory parameters.
@@ -197,6 +293,7 @@ def get_func_args_nonvariadic_len(
     # Optional parameters.
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> int:
     '''
     Number of **non-variadic parameters** (i.e., parameters passable as either
@@ -215,6 +312,9 @@ def get_func_args_nonvariadic_len(
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -232,12 +332,60 @@ def get_func_args_nonvariadic_len(
         func=func,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
     # Return the number of non-variadic parameters accepted by this callable.
     return func_codeobj.co_argcount + func_codeobj.co_kwonlyargcount
 
-# ....................{ PRIVATE ~ getters : args           }....................
+
+#FIXME: Unit test us up, please.
+def get_func_args_lens(*args, **kwargs) -> CallableArgsLens:
+    '''
+    4-tuple ``(args_len_posonly_or_flex, args_len_kwonly, args_len_var_pos,
+    args_len_var_kw)`` of all **callable parameter length metadata** describing
+    the total number of various kinds of parameters accepted by the passed
+    pure-Python callable.
+
+    Parameters
+    ----------
+    All parameters are passed as is to the lower-level
+    :func:`.get_func_codeobj` getter.
+
+    Returns
+    -------
+    CallableArgsLens
+        4-tuple ``(args_len_posonly_or_flex, args_len_kwonly, args_len_var_pos,
+        args_len_var_kw)`` of all **callable parameter length metadata**.
+
+    Raises
+    ------
+    exception_cls
+         If that callable is *not* pure-Python.
+    '''
+
+    # Code object underlying the passed pure-Python callable unwrapped.
+    func_codeobj = get_func_codeobj(*args, **kwargs)
+
+    # Bit field of OR-ed binary flags describing this callable.
+    func_codeobj_flags = func_codeobj.co_flags
+
+    # Return the 4-tuple of...
+    return (
+        # Number of both optional and mandatory non-keyword-only parameters
+        # (i.e., positional-only *AND* flexible (i.e., positional or keyword)
+        # parameters) accepted by that callable.
+        func_codeobj.co_argcount,
+        # Number of both optional and mandatory keyword-only parameters accepted
+        # by that callable.
+        func_codeobj.co_kwonlyargcount,
+        # 1 only if that callable accepts variadic positional or keyword
+        # parameters.
+        func_codeobj_flags & CO_VARARGS,
+        func_codeobj_flags & CO_VARKEYWORDS,
+    )
+
+# ....................{ PRIVATE ~ getters : len            }....................
 def _get_func_boundmethod_args_flexible_len(
     # Mandatory parameters.
     func: MethodBoundInstanceOrClassType,

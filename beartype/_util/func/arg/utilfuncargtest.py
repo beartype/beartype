@@ -298,6 +298,7 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the iter_func_args() iterator.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #FIXME: Refactor to call the get_func_args_lens() getter, please.
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
@@ -332,6 +333,7 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     # CAUTION: Synchronize with the iter_func_args() iterator.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    #FIXME: Refactor to call the get_func_args_lens() getter, please.
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
 
@@ -357,11 +359,11 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
 
     Caveats
     -------
-    **This tester exhibits worst-case time complexity** ``O(n)`` **for** ``n``
-    **the total number of arguments accepted by this callable,** due to
-    unavoidably performing a linear search for an argument with this name is
-    this callable's argument list. This tester should thus be called sparingly
-    and certainly *not* repeatedly for the same callable.
+    **This tester exhibits worst-case time complexity** :math:`O(n)` **for**
+    :math:`O(n)` **the total number of arguments accepted by this callable,**
+    due to unavoidably performing a linear search for an argument with this name
+    is this callable's argument list. This tester should thus be called
+    sparingly and certainly *not* repeatedly for the same callable.
 
     Parameters
     ----------
@@ -380,7 +382,7 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     _BeartypeUtilCallableException
          If the passed callable is *not* pure-Python.
     '''
-    assert isinstance(arg_name, str), f'{arg_name} not string.'
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Return true only if...
     return any(
