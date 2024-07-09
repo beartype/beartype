@@ -63,7 +63,6 @@ def func_args_3_flex_mandatory_optional_varkw(
 
     return "Ghastly, and scarr'd, and riven.—Is this the scene"
 
-
 # ....................{ CALLABLES ~ pep 3102               }....................
 # Keyword-only keywords require PEP 3102 compliance, which has thankfully been
 # available since Python >= 3.0.
@@ -149,3 +148,5 @@ func_args_2_flex_mandatory_wrapped = decorator_isomorphic(
     func_args_2_flex_mandatory)
 func_args_3_flex_mandatory_optional_varkw_wrapped = decorator_isomorphic(
     func_args_3_flex_mandatory_optional_varkw)
+func_args_5_flex_mandatory_varpos_kwonly_varkw_wrapped = decorator_isomorphic(
+    func_args_5_flex_mandatory_varpos_kwonly_varkw)

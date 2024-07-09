@@ -50,7 +50,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         is_func_sync_generator,
     )
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_first_name_or_none)
+        get_func_arg_name_first_or_none)
 
     #FIXME: Globalize magic strings for efficiency, please.
 
@@ -99,7 +99,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
 
         # Name of the first parameter accepted by that callable if any *OR*
         # "None" otherwise (i.e., if that callable is argumentless).
-        arg_first_name = get_func_arg_first_name_or_none(
+        arg_first_name = get_func_arg_name_first_or_none(
             func=obj,
             # If that callable is a C-based bound method descriptor
             # encapsulating a pure-Python instance or class method, instruct
@@ -193,7 +193,7 @@ def label_callable(
         f'{repr(is_context)} not tri-state boolean.')
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargget import (
+    from beartype._util.func.arg.utilfuncarglen import (
         get_func_args_flexible_len)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda

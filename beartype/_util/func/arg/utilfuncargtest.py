@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable parameter tester utilities** (i.e., callables
-introspectively validating and testing parameters accepted by arbitrary
+Project-wide **callable parameter tester utilities** (i.e., low-level functions
+validating and testing various kinds of parameters accepted by arbitrary
 callables).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -17,16 +17,19 @@ from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_NAME,
     iter_func_args,
 )
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.arg.utilfuncarglen import (
+    ARGS_LENS_INDEX_VAR_POS,
+    ARGS_LENS_INDEX_VAR_KW,
+    get_func_args_flexible_len,
+    get_func_args_len,
+    get_func_args_lens,
+    get_func_args_nonvariadic_len,
+)
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
 from collections.abc import Callable
-from inspect import (
-    CO_VARARGS,
-    CO_VARKEYWORDS,
-)
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_func_args_len_flexible_equal(
@@ -84,10 +87,6 @@ def die_unless_func_args_len_flexible_equal(
           Number of flexible parameters.
     '''
     assert isinstance(func_args_len_flexible, int)
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargget import (
-        get_func_args_flexible_len)
 
     # Number of flexible parameters accepted by this callable.
     func_args_len_flexible_actual = get_func_args_flexible_len(
@@ -168,7 +167,9 @@ def is_func_argless(
     func: Codeobjable,
 
     # Optional parameters.
+    is_unwrap: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable is **argumentless**
@@ -178,9 +179,19 @@ def is_func_argless(
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`False` to avoid confusion with decorator wrappers,
+        which almost always accept variadic arguments despite the callable they
+        wrap *not* accepting such arguments. See also
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
     exception_cls : type, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
-        :class:`._BeartypeUtilCallableException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -193,21 +204,17 @@ def is_func_argless(
          If the passed callable is *not* pure-Python.
     '''
 
-    # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(
-        func=func, is_unwrap=False, exception_cls=exception_cls)
-
-    # Return true only if this callable accepts neither...
-    return not (
-        # One or more non-variadic arguments *NOR*...
-        is_func_arg_nonvariadic(func_codeobj) or
-        # One or more variadic arguments.
-        is_func_arg_variadic(func_codeobj)
+    # Return true only if the passed callable accepts *NO* parameters.
+    return not get_func_args_len(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
 # ....................{ TESTERS ~ kind : non-variadic      }....................
 #FIXME: Unit test us up, please.
-def is_func_arg_nonvariadic(func: Codeobjable) -> bool:
+def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts any
     **non-variadic parameters** (i.e., one or more positional, positional-only,
@@ -215,8 +222,8 @@ def is_func_arg_nonvariadic(func: Codeobjable) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
-        Pure-Python callable, frame, or code object to be inspected.
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
     -------
@@ -225,19 +232,23 @@ def is_func_arg_nonvariadic(func: Codeobjable) -> bool:
 
     Raises
     ------
-    _BeartypeUtilCallableException
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargget import (
-        get_func_args_nonvariadic_len)
-
     # Return true only if this callable accepts any non-variadic parameters.
-    return bool(get_func_args_nonvariadic_len(func))
+    return bool(get_func_args_nonvariadic_len(*args, **kwargs))
 
 # ....................{ TESTERS ~ kind : variadic          }....................
-def is_func_arg_variadic(func: Codeobjable) -> bool:
+def is_func_arg_variadic(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    is_unwrap: bool = False,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts any **variadic
     parameters** (i.e., either a variadic positional argument (e.g.,
@@ -245,8 +256,21 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`False` to avoid confusion with decorator wrappers,
+        which almost always accept variadic arguments despite the callable they
+        wrap *not* accepting such arguments. See also
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -258,30 +282,55 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
 
     Raises
     ------
-    _BeartypeUtilCallableException
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 
-    # Return true only if this callable declares either...
-    #
-    # We can't believe it's this simple, either. But it is.
-    return (
-        # Variadic positional arguments *OR*...
-        is_func_arg_variadic_positional(func) or
-        # Variadic keyword arguments.
-        is_func_arg_variadic_keyword(func)
+    # Number of various kinds of parameters accepted by that callable.
+    func_args_lens = get_func_args_lens(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Return true only if this callable accepts any variadic argument.
+    return bool(
+        func_args_lens[ARGS_LENS_INDEX_VAR_POS] +
+        func_args_lens[ARGS_LENS_INDEX_VAR_KW]
     )
 
 
-def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
+def is_func_arg_variadic_positional(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    is_unwrap: bool = False,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts a variadic
     positional argument (e.g., ``*args``).
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`False` to avoid confusion with decorator wrappers,
+        which almost always accept variadic arguments despite the callable they
+        wrap *not* accepting such arguments. See also
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -291,23 +340,31 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
 
     Raises
     ------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the iter_func_args() iterator.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #FIXME: Refactor to call the get_func_args_lens() getter, please.
+    # Number of various kinds of parameters accepted by that callable.
+    func_args_lens = get_func_args_lens(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
-    # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
-
-    # Return true only if this callable declares variadic positional arguments.
-    return func_codeobj.co_flags & CO_VARARGS != 0
+    # Return true only if this callable accepts a variadic positional argument.
+    return func_args_lens[ARGS_LENS_INDEX_VAR_POS]  # type: ignore[return-value]
 
 
-def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
+def is_func_arg_variadic_keyword(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    is_unwrap: bool = False,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts a variadic
     keyword argument (e.g., ``**kwargs``).
@@ -316,6 +373,19 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`False` to avoid confusion with decorator wrappers,
+        which almost always accept variadic arguments despite the callable they
+        wrap *not* accepting such arguments. See also
+        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -325,20 +395,20 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
 
     Raises
     ------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the iter_func_args() iterator.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Number of various kinds of parameters accepted by that callable.
+    func_args_lens = get_func_args_lens(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
-    #FIXME: Refactor to call the get_func_args_lens() getter, please.
-    # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
-
-    # Return true only if this callable declares variadic keyword arguments.
-    return func_codeobj.co_flags & CO_VARKEYWORDS != 0
+    # Return true only if this callable accepts a variadic keyword argument.
+    return func_args_lens[ARGS_LENS_INDEX_VAR_KW]  # type: ignore[return-value]
 
 # ....................{ TESTERS ~ name                     }....................
 #FIXME: *THIS TESTER IS HORRIFYINGLY SLOW*, thanks to a naive implementation

@@ -19,19 +19,15 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.hint.datahinttyping import (
-    # Codeobjable,
     TypeException,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
 from collections.abc import Callable
 from enum import (
     Enum,
     auto as next_enum_member_value,
     unique as die_unless_enum_member_values_unique,
-)
-from inspect import (
-    CO_VARARGS,
-    CO_VARKEYWORDS,
 )
 from itertools import count
 from types import CodeType
@@ -160,6 +156,7 @@ def iter_func_args(
     is_omit_boundmethod_arg_first: bool = True,
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 # Note this generator is intentionally annotated as returning a high-level
 # "Iterable[...]" rather than a low-level "Generator[..., ..., ...]", as the
 # syntax governing the latter is overly verbose and largely unhelpful.
@@ -276,6 +273,9 @@ def iter_func_args(
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Yields
     ------
@@ -297,7 +297,7 @@ def iter_func_args(
     from beartype._util.func.utilfunctest import is_func_boundmethod
     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
-    # ..................{ PARAMETERS                         }..................
+    # ..................{ LOCALS ~ core                      }..................
     # If unwrapping that callable, do so *BEFORE* obtaining the code object of
     # that callable for safety (to avoid desynchronization between the two).
     if is_unwrap:
@@ -306,39 +306,25 @@ def iter_func_args(
     # caller. We should probably assert that, but doing so requires an
     # expensive call to hasattr(). What you gonna do?
 
-    # If passed *NO* code object, query that callable for its code object.
-    if func_codeobj is None:
-        func_codeobj = get_func_codeobj(func=func, exception_cls=exception_cls)
-    # In any case, that code object is now defined.
-
-    # ..................{ LOCALS                             }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with:
-    # * The get_func_arg_names() getter.
-    # * The is_func_arg_variadic_positional() tester.
-    # * The is_func_arg_variadic_keyword() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    #FIXME: Refactor to call the get_func_args_lens() getter, please.
-    # Bit field of OR-ed binary flags describing this callable.
-    func_codeobj_flags = func_codeobj.co_flags
-
-    # Number of both optional and mandatory non-keyword-only parameters (i.e.,
-    # positional-only *AND* flexible (i.e., positional or keyword) parameters)
-    # accepted by that callable.
-    args_len_posonly_or_flex = func_codeobj.co_argcount
-
-    # Number of both optional and mandatory keyword-only parameters accepted by
-    # that callable.
-    args_len_kwonly = func_codeobj.co_kwonlyargcount
-
-    # True only if that callable accepts variadic positional or keyword
-    # parameters. For efficiency, these tests are inlined from the
-    # is_func_arg_variadic_positional() and is_func_arg_variadic_keyword()
-    # testers. Yes, this optimization has been profiled to yield joy.
-    is_arg_var_pos = bool(func_codeobj_flags & CO_VARARGS)
-    is_arg_var_kw  = bool(func_codeobj_flags & CO_VARKEYWORDS)
-    # print(f'func.__name__ = {func.__name__}\nis_arg_var_pos = {is_arg_var_pos}\nis_arg_var_kw = {is_arg_var_kw}')
+    # Number of various kinds of parameters accepted by that callable.
+    (
+        # Number of both optional and mandatory non-keyword-only parameters
+        # (i.e., positional-only *AND* flexible (i.e., positional or keyword)
+        # parameters) accepted by that callable.
+        args_len_posonly_or_flex,
+        # Number of both optional and mandatory keyword-only parameters accepted
+        # by that callable.
+        args_len_kwonly,
+        # 1 only if that callable accepts variadic positional or keyword
+        # parameters and 0 otherwise.
+        is_arg_var_pos,
+        is_arg_var_kw,
+    ) = get_func_args_lens(
+        func=func,
+        is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # If that callable accepts *NO* parameters, silently reduce to the empty
     # generator (i.e., noop) for both space and time efficiency. Just. Do. It.
@@ -357,7 +343,16 @@ def iter_func_args(
         return
     # Else, that callable accepts one or more parameters.
 
-    # ..................{ LOCALS ~ names                     }..................
+    # If passed *NO* code object, query that callable for its code object.
+    if func_codeobj is None:
+        func_codeobj = get_func_codeobj(
+            func=func,
+            is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+    # In any case, that code object is now defined.
+
     # Tuple of the names of all variables localized to that callable.
     #
     # Note that this tuple contains the names of both:
@@ -457,7 +452,7 @@ def iter_func_args(
     # Number of mandatory flexible parameters accepted by that callable.
     args_len_flex_mandatory = args_len_flex - args_len_flex_optional
 
-    # ..................{ INTROSPECTION                      }..................
+    # ..................{ ITERATE ~ positional-only          }..................
     # 0-based index of the first parameter of the currently iterated kind
     # accepted by that callable in the "args_name" tuple.
     args_index_kind_first = 0
@@ -501,6 +496,7 @@ def iter_func_args(
         args_index_kind_first = args_index_kind_last_after
     # Else, that callable accepts *NO* optional positional-only parameters.
 
+    # ..................{ ITERATE ~ flexible                 }..................
     # If that callable accepts at least one mandatory flexible parameter...
     if args_len_flex_mandatory:
         # 0-based index of the parameter following the last mandatory flexible
@@ -593,6 +589,7 @@ def iter_func_args(
         args_index_kind_first = args_index_kind_last_after
     # Else, that callable accepts *NO* optional flexible parameters.
 
+    # ..................{ ITERATE ~ variadic positional      }..................
     # 0-based index of the parameter following the last keyword-only
     # parameter in the "args_name" tuple. This index is required by multiple
     # branches below (rather than merely one branch) and thus unconditionally
@@ -621,6 +618,7 @@ def iter_func_args(
         )
     # Else, that callable accepts *NO* variadic positional parameter.
 
+    # ..................{ ITERATE ~ keyword-only             }..................
     # If that callable accepts at least one keyword-only parameter...
     if args_len_kwonly:
         # dict.get() method repeatedly called below and thus localized for
@@ -643,6 +641,7 @@ def iter_func_args(
             )
     # Else, that callable accepts *NO* keyword-only parameters.
 
+    # ..................{ ITERATE ~ variadic keyword         }..................
     # If that callable accepts a variadic keyword parameter...
     if is_arg_var_kw:
         # 0-based index of the variadic keyword parameter accepted by that

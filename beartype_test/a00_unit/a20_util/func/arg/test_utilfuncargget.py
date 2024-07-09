@@ -16,11 +16,11 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ arg                        }....................
-def test_get_func_arg_first_name_or_none() -> None:
+# ....................{ TESTS ~ name                       }....................
+def test_get_func_arg_name_first_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_first_name_or_none`
+    :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_name_first_or_none`
     getter.
     '''
 
@@ -28,7 +28,7 @@ def test_get_func_arg_first_name_or_none() -> None:
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_first_name_or_none)
+        get_func_arg_name_first_or_none)
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_0_wrapped,
         func_args_1_varpos_wrapped,
@@ -38,13 +38,13 @@ def test_get_func_arg_first_name_or_none() -> None:
 
     # ....................{ PASS                           }....................
     # Assert this getter returns "None" for argumentless callables.
-    assert get_func_arg_first_name_or_none(func_args_0_wrapped) is None
+    assert get_func_arg_name_first_or_none(func_args_0_wrapped) is None
 
     # Assert this getter returns the expected names of the first parameters
     # accepted by argumentative callables.
-    assert get_func_arg_first_name_or_none(func_args_1_varpos_wrapped) == (
+    assert get_func_arg_name_first_or_none(func_args_1_varpos_wrapped) == (
         'and_in_her_his_one_delight')
-    assert get_func_arg_first_name_or_none(
+    assert get_func_arg_name_first_or_none(
         func_args_3_flex_mandatory_optional_varkw_wrapped) == (
         'and_the_wolf_tracks_her_there')
 
@@ -52,85 +52,70 @@ def test_get_func_arg_first_name_or_none() -> None:
     # Assert this getter raises the expected exception when passed a C-based
     # callable.
     with raises(_BeartypeUtilCallableException):
-        get_func_arg_first_name_or_none(iter)
+        get_func_arg_name_first_or_none(iter)
 
-# ....................{ TESTS ~ args                       }....................
-def test_get_func_args_len_flexible() -> None:
+
+def test_get_func_arg_names() -> None:
     '''
     Test the
-    :func:`beartype._util.func.arg.utilfuncargget.get_func_args_flexible_len`
+    :func:`beartype._util.func.arg.utilfuncargget.get_func_arg_names`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.arg.utilfuncargget import (
-        get_func_args_flexible_len)
-    from beartype_test.a00_unit.data.data_type import (
-        ClassCallable,
-        function_partial,
-        function_partial_bad,
-    )
+    from beartype._util.func.arg.utilfuncargget import get_func_arg_names
     from beartype_test.a00_unit.data.func.data_func import (
-        func_args_0,
-        func_args_1_flex_mandatory,
-        func_args_1_varpos,
-        func_args_2_flex_mandatory,
         func_args_0_wrapped,
-        func_args_1_flex_mandatory_wrapped,
         func_args_1_varpos_wrapped,
-        func_args_2_flex_mandatory_wrapped,
+        func_args_3_flex_mandatory_optional_varkw_wrapped,
+        func_args_5_flex_mandatory_varpos_kwonly_varkw_wrapped,
     )
+    from beartype_test.a00_unit.data.func.data_pep570 import (
+        func_args_10_all_except_flex_mandatory)
     from pytest import raises
 
-    # ....................{ LOCALS                         }....................
-    # Callable object whose class defines the __call__() dunder method.
-    callable_object = ClassCallable()
-
     # ....................{ PASS                           }....................
-    # Assert this getter returns the expected lengths of unwrapped callables.
-    assert get_func_args_flexible_len(func_args_0) == 0
-    assert get_func_args_flexible_len(func_args_1_varpos) == 0
-    assert get_func_args_flexible_len(func_args_1_flex_mandatory) == 1
-    assert get_func_args_flexible_len(func_args_2_flex_mandatory) == 2
+    # Assert this getter when passed an argumentless callable returns the empty
+    # list.
+    assert get_func_arg_names(func_args_0_wrapped) == ()
 
-    # Assert this getter returns the expected lengths of wrapped callables.
-    assert get_func_args_flexible_len(func_args_0_wrapped) == 0
-    assert get_func_args_flexible_len(func_args_1_varpos_wrapped) == 0
-    assert get_func_args_flexible_len(func_args_1_flex_mandatory_wrapped) == 1
-    assert get_func_args_flexible_len(func_args_2_flex_mandatory_wrapped) == 2
+    # Assert this getter when passed argumentative callables returns the
+    # expected lists of the names of the parameters accepted by these callables.
+    assert get_func_arg_names(func_args_1_varpos_wrapped) == (
+        'and_in_her_his_one_delight',)
+    assert get_func_arg_names(
+        func_args_3_flex_mandatory_optional_varkw_wrapped) == (
+        'and_the_wolf_tracks_her_there',
+        'how_hideously',
+        'rude_bare_and_high',
+    )
+    assert get_func_arg_names(
+        func_args_5_flex_mandatory_varpos_kwonly_varkw_wrapped) == (
+        'we_are_selfish_men',
+        'oh_raise_us_up',
+        'return_to_us_again',
+        'and_give_us',
+        'manners_virtue_freedom_power',
+    )
 
-    # Assert this getter returns the expected length of a partial callable.
-    assert get_func_args_flexible_len(function_partial) == 0
-
-    # Assert this getter returns the expected length of a callable object.
-    assert get_func_args_flexible_len(callable_object) == 0
-
-    # Assert this getter returns 0 when passed a wrapped callable and an option
-    # disabling callable unwrapping.
-    assert get_func_args_flexible_len(
-        func_args_0_wrapped, is_unwrap=False) == 0
-    assert get_func_args_flexible_len(
-        func_args_1_varpos_wrapped, is_unwrap=False) == 0
-    assert get_func_args_flexible_len(
-        func_args_1_flex_mandatory_wrapped, is_unwrap=False) == 0
-    assert get_func_args_flexible_len(
-        func_args_2_flex_mandatory_wrapped, is_unwrap=False) == 0
+    assert get_func_arg_names(
+        func_args_10_all_except_flex_mandatory) == (
+        'in_solitude_i_wander',
+        'through_the_vast_enchanted_forest',
+        'the_surrounding_skies',
+        'torn_apart_by',
+        'rain_is_pouring_down',
+        'the_darkened_oaks_are_my_only_shelter',
+        'red_leaves_are_blown_by',
+        'an_ebony_raven_now_catches',
+        'in_the_rain_my_tears_are_forever_lost',
+        'sitting_in_calmness',
+    )
 
     # ....................{ FAIL                           }....................
-    # Assert this getter raises the expected exception when passed an uncallable
-    # object.
-    with raises(_BeartypeUtilCallableException):
-        get_func_args_flexible_len('Following his eager soul, the wanderer')
-
     # Assert this getter raises the expected exception when passed a C-based
     # callable.
     with raises(_BeartypeUtilCallableException):
-        get_func_args_flexible_len(iter)
-
-    # Assert this getter raises the expected exception when passed an invalid
-    # partial callable passing more parameters than the underlying function
-    # actually accepts.
-    with raises(_BeartypeUtilCallableException):
-        get_func_args_flexible_len(function_partial_bad)
+        get_func_arg_names(iter)

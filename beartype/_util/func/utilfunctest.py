@@ -23,7 +23,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 # from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.func.arg.utilfuncargget import (
+from beartype._util.func.arg.utilfuncarglen import (
     get_func_args_nonvariadic_len)
 from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_variadic_positional,

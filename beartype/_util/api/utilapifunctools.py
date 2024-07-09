@@ -167,7 +167,7 @@ def get_func_functools_partial_args_flexible_len(
         f'{repr(func)} not "function.partial"-wrapped callable.')
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargget import (
+    from beartype._util.func.arg.utilfuncarglen import (
         get_func_args_flexible_len)
 
     # Pure-Python wrappee callable wrapped by that partial.
