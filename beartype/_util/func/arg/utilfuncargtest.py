@@ -14,7 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.arg.utilfuncargiter import (
+    ARG_META_INDEX_KIND,
     ARG_META_INDEX_NAME,
+    ArgKind,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncarglen import (
@@ -29,7 +31,6 @@ from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
-from collections.abc import Callable
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_func_args_len_flexible_equal(
@@ -240,15 +241,7 @@ def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
     return bool(get_func_args_nonvariadic_len(*args, **kwargs))
 
 # ....................{ TESTERS ~ kind : variadic          }....................
-def is_func_arg_variadic(
-    # Mandatory parameters.
-    func: Codeobjable,
-
-    # Optional parameters.
-    is_unwrap: bool = False,
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-    exception_prefix: str = '',
-) -> bool:
+def is_func_arg_variadic(*args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts any **variadic
     parameters** (i.e., either a variadic positional argument (e.g.,
@@ -256,21 +249,8 @@ def is_func_arg_variadic(
 
     Parameters
     ----------
-    func : Codeobjable
-        Pure-Python callable, frame, or code object to be inspected.
-    is_unwrap: bool, optional
-        :data:`True` only if this getter implicitly calls the
-        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`False` to avoid confusion with decorator wrappers,
-        which almost always accept variadic arguments despite the callable they
-        wrap *not* accepting such arguments. See also
-        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the message of any exception raised in
-        the event of a fatal error. Defaults to the empty string.
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
     -------
@@ -287,12 +267,7 @@ def is_func_arg_variadic(
     '''
 
     # Number of various kinds of parameters accepted by that callable.
-    func_args_lens = get_func_args_lens(
-        func=func,
-        is_unwrap=is_unwrap,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    func_args_lens = get_func_args_lens(*args, **kwargs)
 
     # Return true only if this callable accepts any variadic argument.
     return bool(
@@ -301,36 +276,15 @@ def is_func_arg_variadic(
     )
 
 
-def is_func_arg_variadic_positional(
-    # Mandatory parameters.
-    func: Codeobjable,
-
-    # Optional parameters.
-    is_unwrap: bool = False,
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-    exception_prefix: str = '',
-) -> bool:
+def is_func_arg_variadic_positional(*args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts a variadic
     positional argument (e.g., ``*args``).
 
     Parameters
     ----------
-    func : Codeobjable
-        Pure-Python callable, frame, or code object to be inspected.
-    is_unwrap: bool, optional
-        :data:`True` only if this getter implicitly calls the
-        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`False` to avoid confusion with decorator wrappers,
-        which almost always accept variadic arguments despite the callable they
-        wrap *not* accepting such arguments. See also
-        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the message of any exception raised in
-        the event of a fatal error. Defaults to the empty string.
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
     -------
@@ -345,47 +299,21 @@ def is_func_arg_variadic_positional(
     '''
 
     # Number of various kinds of parameters accepted by that callable.
-    func_args_lens = get_func_args_lens(
-        func=func,
-        is_unwrap=is_unwrap,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    func_args_lens = get_func_args_lens(*args, **kwargs)
 
     # Return true only if this callable accepts a variadic positional argument.
     return func_args_lens[ARGS_LENS_INDEX_VAR_POS]  # type: ignore[return-value]
 
 
-def is_func_arg_variadic_keyword(
-    # Mandatory parameters.
-    func: Codeobjable,
-
-    # Optional parameters.
-    is_unwrap: bool = False,
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-    exception_prefix: str = '',
-) -> bool:
+def is_func_arg_variadic_keyword(*args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts a variadic
     keyword argument (e.g., ``**kwargs``).
 
     Parameters
     ----------
-    func : Codeobjable
-        Pure-Python callable, frame, or code object to be inspected.
-    is_unwrap: bool, optional
-        :data:`True` only if this getter implicitly calls the
-        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`False` to avoid confusion with decorator wrappers,
-        which almost always accept variadic arguments despite the callable they
-        wrap *not* accepting such arguments. See also
-        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj`.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the message of any exception raised in
-        the event of a fatal error. Defaults to the empty string.
+    All parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
     -------
@@ -400,47 +328,24 @@ def is_func_arg_variadic_keyword(
     '''
 
     # Number of various kinds of parameters accepted by that callable.
-    func_args_lens = get_func_args_lens(
-        func=func,
-        is_unwrap=is_unwrap,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    func_args_lens = get_func_args_lens(*args, **kwargs)
 
     # Return true only if this callable accepts a variadic keyword argument.
     return func_args_lens[ARGS_LENS_INDEX_VAR_KW]  # type: ignore[return-value]
 
 # ....................{ TESTERS ~ name                     }....................
-#FIXME: *THIS TESTER IS HORRIFYINGLY SLOW*, thanks to a naive implementation
-#deferring to the slow iter_func_args() iterator. A substantially faster
-#get_func_arg_names() getter should be implemented instead and this tester
-#refactored to call that getter. How? Simple:
-#    def get_func_arg_names(func: Callable) -> Tuple[str]:
-#        # A trivial algorithm for deciding the number of arguments can be
-#        # found at the head of the iter_func_args() iterator.
-#        args_len = ...
-#
-#        # One-liners for great glory.
-#        return func.__code__.co_varnames[:args_len] # <-- BOOM
-def is_func_arg_name(func: Callable, arg_name: str) -> bool:
+def is_func_arg_name(arg_name: str, *args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts an argument
     with the passed name.
 
-    Caveats
-    -------
-    **This tester exhibits worst-case time complexity** :math:`O(n)` **for**
-    :math:`O(n)` **the total number of arguments accepted by this callable,**
-    due to unavoidably performing a linear search for an argument with this name
-    is this callable's argument list. This tester should thus be called
-    sparingly and certainly *not* repeatedly for the same callable.
-
     Parameters
     ----------
-    func : Callable
-        Pure-Python callable to be inspected.
     arg_name : str
         Name of the argument to be searched for.
+
+    All remaining parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
     -------
@@ -449,15 +354,164 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
 
     Raises
     ------
-    _BeartypeUtilCallableException
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
     assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
-    # Return true only if...
-    return any(
-        # This is the passed name...
-        arg_meta[ARG_META_INDEX_NAME] == arg_name
-        # For the name of any parameter accepted by this callable.
-        for arg_meta in iter_func_args(func)
-    )
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import get_func_arg_names
+
+    # Tuple of the names of all parameters accepted by the passed callable.
+    arg_names = get_func_arg_names(*args, **kwargs)
+
+    # Return true only if the passed name is in this tuple.
+    #
+    # Technically, this search has linear-time complexity "O(n)" for "n" the
+    # number of parameters accepted by that callable. Pragmatically, "n" is
+    # typically quite small; ergo, the real-world constants associated with this
+    # complexity are also quite small. Although this search *COULD* be trivially
+    # reduced to constant-time complexity "O(1)" by coercing this tuple into a
+    # set, doing so would also substantially increase the real-world constants
+    # associated with that complexity. In the absence of compelling profilings,
+    # we currently prefer to abide by Keep It Simple Stupid (KISS). Tuple wins!
+    return arg_name in arg_names
+
+
+def is_func_arg_name_variadic_positional(
+    arg_name: str, *args, **kwargs) -> bool:
+    '''
+    :data:`True` only if the passed pure-Python callable accepts a variadic
+    positional parameter with the passed name.
+
+    Caveats
+    -------
+    **This tester exhibits worst-case linear-time complexity** :math:`O(n)`
+    **for** :math:`O(n)` **the total number of parameters accepted by that
+    callable** due to unavoidably performing a linear search for a variadic
+    positional parameter with this name is this callable's parameter list. This
+    tester should thus be called sparingly.
+
+    Parameters
+    ----------
+    arg_name : str
+        Name of the argument to be searched for.
+
+    All remaining parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if that callable accepts a variadic positional
+        argument with this name.
+
+    Raises
+    ------
+    exception_cls
+         If the passed callable is *not* pure-Python.
+    '''
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+
+    # If it is *NOT* the case that...
+    if not (
+        # The passed callable accepts a variadic positional parameter *AND*...
+        is_func_arg_variadic_positional(*args, **kwargs) and
+        # The passed callable accepts a parameter with the passed name...
+        is_func_arg_name(*args, arg_name=arg_name, **kwargs)  # type: ignore[misc]
+    ):
+        # Then that callable does *NOT* accept a variadic positional parameter
+        # with the passed name. In this case, immediately return false.
+        return False
+    # Else, that callable both accept a variadic positional parameters *AND* a
+    # parameter with the passed name. In this case, further testing is required.
+
+    #FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1)
+    #lookup. Although extremely non-trivial, doing so *SHOULD* be feasible based
+    #on the current internal implementation of the iter_func_args() generator
+    #comprehension. Basically, we'll need to:
+    #* Augment get_func_args_lens() to additionally cache and return *ALL* of
+    #  the remaining "sub-lengths" internally computed by iter_func_args().
+    #  *ALL*. And there are quite a few, indeed.
+    #* Call get_func_args_lens() here.
+    #* Get the name of the variadic positional parameter by simply indexing:
+    #      func_args_len = get_func_args_len(*args, **kwargs)
+    #      func_codeobj.co_varnames[func_args_len + hur_der_hur_something]
+    #  ...where "hur_der_hur_something" is the index of the variadic positional
+    #  parameter in the "co_varnames" list, computed by adding all requisite
+    #  "sub-lengths" together. We shrug.
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_meta in iter_func_args(*args, **kwargs):
+        # If the name of this parameter is the passed name...
+        if arg_meta[ARG_META_INDEX_NAME] == arg_name:
+            # Return true only if this is a variadic positional parameter.
+            return arg_meta[ARG_META_INDEX_KIND] is ArgKind.VAR_POSITIONAL
+        # Else, the name of this parameter is *NOT* the passed name. In this
+        # case, silently continue to the next parameter.
+    # Else, that callable accepts *NO* variadic positional parameter.
+
+    # Return false as a last-ditch fallback.
+    return False
+
+
+def is_func_arg_name_variadic_keyword(
+    arg_name: str, *args, **kwargs) -> bool:
+    '''
+    :data:`True` only if the passed pure-Python callable accepts a variadic
+    keyword parameter with the passed name.
+
+    Caveats
+    -------
+    **This tester exhibits worst-case linear-time complexity** :math:`O(n)`
+    **for** :math:`O(n)` **the total number of parameters accepted by that
+    callable** due to unavoidably performing a linear search for a variadic
+    keyword parameter with this name is this callable's parameter list. This
+    tester should thus be called sparingly.
+
+    Parameters
+    ----------
+    arg_name : str
+        Name of the argument to be searched for.
+
+    All remaining parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if that callable accepts a variadic keyword parameter
+        with this name.
+
+    Raises
+    ------
+    exception_cls
+         If the passed callable is *not* pure-Python.
+    '''
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+
+    # If it is *NOT* the case that...
+    if not (
+        # The passed callable accepts a variadic keyword parameter *AND*...
+        is_func_arg_variadic_keyword(*args, **kwargs) and
+        # The passed callable accepts a parameter with the passed name...
+        is_func_arg_name(*args, arg_name=arg_name, **kwargs)  # type: ignore[misc]
+    ):
+        # Then that callable does *NOT* accept a variadic keyword parameter
+        # with the passed name. In this case, immediately return false.
+        return False
+    # Else, that callable both accept a variadic keyword parameters *AND* a
+    # parameter with the passed name. In this case, further testing is required.
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_meta in iter_func_args(*args, **kwargs):
+        # If the name of this parameter is the passed name...
+        if arg_meta[ARG_META_INDEX_NAME] == arg_name:
+            # Return true only if this is a variadic keyword parameter.
+            return arg_meta[ARG_META_INDEX_KIND] is ArgKind.VAR_KEYWORD
+        # Else, the name of this parameter is *NOT* the passed name. In this
+        # case, silently continue to the next parameter.
+    # Else, that callable accepts *NO* variadic keyword parameter.
+
+    # Return false as a last-ditch fallback.
+    return False

@@ -1109,7 +1109,7 @@ This type matches:
   builtin Unicode strings are usable.
 
 Caveats
-----------
+-------
 This type does *not* match **encoded byte strings** (i.e., sequences of
 physical encoded bytes, including the builtin :class:`bytestring` type), which
 require foreknowledge of the encoding previously used to encode those bytes.
@@ -1309,7 +1309,7 @@ Tuple of all **function types** (i.e., types whose instances are either
 built-in or user-defined functions).
 
 Caveats
-----------
+-------
 **This tuple may yield false positives when used to validate types.** Since
 Python fails to distinguish between C-based functions and methods, this tuple
 is the set of all function types as well as the ambiguous type of all C-based
@@ -1399,7 +1399,7 @@ Unbound decorator objects (e.g., non-callable instances of the builtin
 classes) are *not* callable and thus intentionally excluded.
 
 Caveats
-----------
+-------
 **This tuple may yield false positives when used to validate types.** Since
 Python fails to distinguish between C-based functions and methods, this tuple
 is the set of all pure-Python bound and unbound method types as well as the

@@ -14,7 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import Tuple
-from beartype._cave._cavefast import MethodBoundInstanceOrClassType
+from beartype._cave._cavefast import (
+    FunctionType,
+    MethodBoundInstanceOrClassType,
+)
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
@@ -149,18 +152,41 @@ def get_func_args_len(*args, **kwargs) -> int:
     )
 
 
+#FIXME: [SPEED] Attempt to restore caching. See internal commentary. *sigh*
 #FIXME: Unit test us up, please.
-def get_func_args_lens(*args, **kwargs) -> CallableArgsLens:
+def get_func_args_lens(
+    # Mandatory parameters.
+    func: Codeobjable,
+
+    # Optional parameters.
+    is_unwrap: bool = True,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> CallableArgsLens:
     '''
     4-tuple ``(args_len_posonly_or_flex, args_len_kwonly, args_len_var_pos,
     args_len_var_kw)`` of all **callable parameter length metadata** describing
     the total number of various kinds of parameters accepted by the passed
     pure-Python callable.
 
+    This getter is memoized (i.e., cached) via a :mod:`beartype`-specific
+    ``__beartype_args_lens`` instance variable on that callable for efficiency.
+
     Parameters
     ----------
-    All parameters are passed as is to the lower-level
-    :func:`.get_func_codeobj` getter.
+    func : Codeobjable
+        Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
+        further commentary.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -175,14 +201,39 @@ def get_func_args_lens(*args, **kwargs) -> CallableArgsLens:
          If that callable is *not* pure-Python.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+
+    # If unwrapping that callable, do so *BEFORE* obtaining the code object of
+    # that callable for safety (to avoid desynchronization between the two).
+    if is_unwrap:
+        func = unwrap_func_all_isomorphic(func)  # type: ignore[arg-type]
+    # Else, that callable is assumed to have already been unwrapped by the
+    # caller. We should probably assert that, but doing so requires an
+    # expensive call to hasattr(). What you gonna do?
+
+    # Beartype-specific callable parameter length metadata previously computed
+    # for this callable if any *OR* "None" otherwise.
+    func_args_lens = getattr(func, '__beartype_args_lens', None)
+
+    # If this metadata has been previously computed, return this metadata.
+    if func_args_lens:
+        return func_args_lens
+    # Else, this metadata has *NOT* been previously computed.
+
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(*args, **kwargs)
+    func_codeobj = get_func_codeobj(
+        func=func,
+        is_unwrap=False,  # <-- "func" was already unwrapped above. I sigh.
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # Bit field of OR-ed binary flags describing this callable.
     func_codeobj_flags = func_codeobj.co_flags
 
-    # Return the 4-tuple of...
-    return (
+    # Callable parameter length metadata, defined as the 4-tuple of...
+    func_args_lens = (
         # Number of both optional and mandatory non-keyword-only parameters
         # (i.e., positional-only *AND* flexible (i.e., positional or keyword)
         # parameters) accepted by that callable.
@@ -212,6 +263,24 @@ def get_func_args_lens(*args, **kwargs) -> CallableArgsLens:
         bool(func_codeobj_flags & CO_VARARGS),
         bool(func_codeobj_flags & CO_VARKEYWORDS),
     )
+
+    #FIXME: Unsafe, fascinatingly. Uncommenting this induces test failure.
+    # If that callable is actually pure-Python, cache this metadata onto that
+    # callable as this beartype-specific instance variable.
+    #
+    # Note that doing so is unsafe if that callable is *NOT* pure-Python (e.g.,
+    # is a C-based code object, call stack frame, or other low-level non-Python
+    # "CodeObjable"). Why? Because only pure-Python callables can be
+    # monkey-patched. Other "CodeObjable" objects hate monkey-patching: e.g.,
+    #     AttributeError: 'code' object has no attribute '__beartype_args_lens'
+    #     and no __dict__ for setting new attributes
+    if isinstance(func, FunctionType):
+        func.__beartype_args_lens = func_args_lens  # type: ignore[attr-defined]
+    # Else, that callable is *NOT* pure-Python. In this case, avoid attempting
+    # to cache this metadata anywhere.
+
+    # Return this metadata.
+    return func_args_lens
 
 # ....................{ GETTERS ~ kind                     }....................
 def get_func_args_flexible_len(
@@ -287,7 +356,7 @@ def get_func_args_flexible_len(
 
         # Number of all non-keyword-only parameters (i.e., both optional and
         # mandatory positional-only, positional, and keyword parameters)
-        # accepted by the callable passed to that getter.
+        # accepted by that callable.
         return func_args_lens[ARGS_LENS_INDEX_POSONLY_OR_FLEX]
     # Else, that callable has *NO* code object.
     #

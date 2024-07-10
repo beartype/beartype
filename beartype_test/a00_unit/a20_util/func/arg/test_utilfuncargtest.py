@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,19 +10,20 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.func.arg.utilfuncargtest` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester : kind             }....................
+# ....................{ TESTS ~ kind                       }....................
 def test_is_func_argless() -> None:
     '''
     Test the
     :func:`beartype._util.func.arg.utilfuncargtest.is_func_argless` tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_argless
     from beartype_test.a00_unit.data.func.data_func import (
@@ -32,6 +33,7 @@ def test_is_func_argless() -> None:
         func_args_1_kwonly_mandatory,
     )
 
+    # ....................{ ASSERTS                        }....................
     # Assert this tester accepts an argumentless callable.
     assert is_func_argless(func_args_0) is True
 
@@ -48,9 +50,11 @@ def test_is_func_arg_variadic() -> None:
     tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic
 
+    # ....................{ CALLABLES                      }....................
     #FIXME: Generalize these callables into the
     #"beartype_test.a00_unit.data.func.data_func" submodule, please.
 
@@ -72,6 +76,7 @@ def test_is_func_arg_variadic() -> None:
             for kwarg_tuple_item in kwarg_tuple
         )
 
+    # ....................{ ASSERTS                        }....................
     # Assert this tester accepts callables accepting variadic arguments.
     assert is_func_arg_variadic(of_childhood) is True
     assert is_func_arg_variadic(the_passions) is True
@@ -79,35 +84,138 @@ def test_is_func_arg_variadic() -> None:
     # Assert this tester rejects callables accepting *NO* variadic arguments.
     assert is_func_arg_variadic(by_day_or_starlight) is False
 
-# ....................{ TESTS ~ tester : name             }....................
+# ....................{ TESTS ~ name                       }....................
 def test_is_func_arg_name() -> None:
     '''
     Test the
     :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name` tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_arg_name
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_5_flex_mandatory_varpos_kwonly_varkw)
 
-    # Assert this tester accepts all argument names accepted by this callable.
+    # ....................{ ASSERTS                        }....................
+    # Assert this tester accepts all argument names accepted by the passed
+    # callable.
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'we_are_selfish_men') is True
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='we_are_selfish_men',
+    ) is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'oh_raise_us_up') is True
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='oh_raise_us_up',
+    ) is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'return_to_us_again') is True
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='return_to_us_again',
+    ) is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw, 'and_give_us') is True
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='and_give_us',
+    ) is True
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw,
-        'manners_virtue_freedom_power',
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='manners_virtue_freedom_power',
     ) is True
 
     # Assert this tester rejects all local variable names declared in the body
-    # of this callable.
+    # of the passed callable.
     assert is_func_arg_name(
-        func_args_5_flex_mandatory_varpos_kwonly_varkw,
-        'thy_soul_was_like_a_star',
+        func=func_args_5_flex_mandatory_varpos_kwonly_varkw,
+        arg_name='thy_soul_was_like_a_star',
     ) is False
+
+
+def test_is_func_arg_name_is_func_arg_name_variadic_positional() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name_variadic_positional`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.arg.utilfuncargtest import (
+        is_func_arg_name_variadic_positional)
+    from beartype_test.a00_unit.data.func.data_func import (
+        func_args_3_flex_mandatory_optional_varkw_wrapped)
+    from beartype_test.a00_unit.data.func.data_pep570 import (
+        func_args_10_all_except_flex_mandatory)
+
+    # ....................{ ASSERTS                        }....................
+    # Assert that this tester rejects a callable accepting a parameter with the
+    # passed name that is *NOT* a variadic positional parameter.
+    assert is_func_arg_name_variadic_positional(
+        func=func_args_3_flex_mandatory_optional_varkw_wrapped,
+        arg_name='rude_bare_and_high',
+    ) is False
+
+    # Assert that this tester rejects a callable accepting a variadic positional
+    # parameter with a different name than that of the passed name.
+    assert is_func_arg_name_variadic_positional(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='rain_is_pouring_down',
+    ) is False
+
+    # Assert that this tester rejects a callable accepting a variadic positional
+    # parameter but accepting *NO* parameter with the passed name.
+    assert is_func_arg_name_variadic_positional(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='before_spreading_his_black_wings',
+    ) is False
+
+    # Assert that this tester accepts a callable accepting a variadic positional
+    # parameter with the passed name.
+    assert is_func_arg_name_variadic_positional(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='in_the_rain_my_tears_are_forever_lost',
+    ) is True
+
+
+def test_is_func_arg_name_is_func_arg_name_variadic_keyword() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name_variadic_keyword`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.arg.utilfuncargtest import (
+        is_func_arg_name_variadic_keyword)
+    from beartype_test.a00_unit.data.func.data_func import (
+        func_args_1_varpos_wrapped)
+    from beartype_test.a00_unit.data.func.data_pep570 import (
+        func_args_10_all_except_flex_mandatory)
+
+    # ....................{ ASSERTS                        }....................
+    # Assert that this tester rejects a callable accepting a parameter with the
+    # passed name that is *NOT* a variadic keyword parameter.
+    assert is_func_arg_name_variadic_keyword(
+        func=func_args_1_varpos_wrapped,
+        arg_name='and_in_her_his_one_delight',
+    ) is False
+
+    # Assert that this tester rejects a callable accepting a variadic keyword
+    # parameter with a different name than that of the passed name.
+    assert is_func_arg_name_variadic_keyword(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='rain_is_pouring_down',
+    ) is False
+
+    # Assert that this tester rejects a callable accepting a variadic keyword
+    # parameter but accepting *NO* parameter with the passed name.
+    assert is_func_arg_name_variadic_keyword(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='before_spreading_his_black_wings',
+    ) is False
+
+    # Assert that this tester accepts a callable accepting a variadic keyword
+    # parameter with the passed name.
+    assert is_func_arg_name_variadic_keyword(
+        func=func_args_10_all_except_flex_mandatory,
+        arg_name='sitting_in_calmness',
+    ) is True
