@@ -65,7 +65,7 @@ def test_iter_func_args() -> None:
         (ArgKind.POSITIONAL_OR_KEYWORD, 'had_one_fair_daughter', ArgMandatory,),
     )
     assert tuple(iter_func_args(func_args_1_varpos)) == (
-        (ArgKind.VAR_POSITIONAL, 'and_in_her_his_one_delight', ArgMandatory,),
+        (ArgKind.VARIADIC_POSITIONAL, 'and_in_her_his_one_delight', ArgMandatory,),
     )
     assert tuple(iter_func_args(func_args_1_kwonly_mandatory)) == (
         (ArgKind.KEYWORD_ONLY, 'when_can_I_take_you_from_this_place', ArgMandatory,),
@@ -81,14 +81,14 @@ def test_iter_func_args() -> None:
     assert tuple(iter_func_args(func_args_3_flex_mandatory_optional_varkw)) == (
         (ArgKind.POSITIONAL_OR_KEYWORD, 'and_the_wolf_tracks_her_there', ArgMandatory,),
         (ArgKind.POSITIONAL_OR_KEYWORD, 'how_hideously', "Its shapes are heap'd around!",),
-        (ArgKind.VAR_KEYWORD, 'rude_bare_and_high', ArgMandatory,),
+        (ArgKind.VARIADIC_KEYWORD, 'rude_bare_and_high', ArgMandatory,),
     )
     assert tuple(iter_func_args(func_args_5_flex_mandatory_varpos_kwonly_varkw)) == (
         (ArgKind.POSITIONAL_OR_KEYWORD, 'we_are_selfish_men', ArgMandatory,),
         (ArgKind.POSITIONAL_OR_KEYWORD, 'oh_raise_us_up', ArgMandatory,),
-        (ArgKind.VAR_POSITIONAL, 'and_give_us', ArgMandatory,),
+        (ArgKind.VARIADIC_POSITIONAL, 'and_give_us', ArgMandatory,),
         (ArgKind.KEYWORD_ONLY, 'return_to_us_again', 'Of inward happiness.',),
-        (ArgKind.VAR_KEYWORD, 'manners_virtue_freedom_power', ArgMandatory,),
+        (ArgKind.VARIADIC_KEYWORD, 'manners_virtue_freedom_power', ArgMandatory,),
     )
 
     # Assert this iterator returns the expected generator for argumentative
@@ -99,9 +99,9 @@ def test_iter_func_args() -> None:
         object_of_methods.meth_args_6_flex_mandatory_varpos_kwonly_varkw)) == (
         (ArgKind.POSITIONAL_OR_KEYWORD, 'calm_and_rejoicing', ArgMandatory,),
         (ArgKind.POSITIONAL_OR_KEYWORD, 'in_the_fearful_war', ArgMandatory,),
-        (ArgKind.VAR_POSITIONAL, 'of_wave_ruining_on_wave', ArgMandatory,),
+        (ArgKind.VARIADIC_POSITIONAL, 'of_wave_ruining_on_wave', ArgMandatory,),
         (ArgKind.KEYWORD_ONLY, 'and_blast_on_blast', 'Descending,',),
-        (ArgKind.VAR_KEYWORD, 'and_black_flood', ArgMandatory,),
+        (ArgKind.VARIADIC_KEYWORD, 'and_black_flood', ArgMandatory,),
     )
 
     # ....................{ PASS ~ positional-only         }....................
@@ -118,11 +118,11 @@ def test_iter_func_args() -> None:
         (ArgKind.POSITIONAL_ONLY, 'the_surrounding_skies', 'are one',),
         (ArgKind.POSITIONAL_OR_KEYWORD, 'torn_apart_by', 'the phenomenon of lightning',),
         (ArgKind.POSITIONAL_OR_KEYWORD, 'rain_is_pouring_down', 'my now shivering shoulders',),
-        (ArgKind.VAR_POSITIONAL, 'in_the_rain_my_tears_are_forever_lost', ArgMandatory,),
+        (ArgKind.VARIADIC_POSITIONAL, 'in_the_rain_my_tears_are_forever_lost', ArgMandatory,),
         (ArgKind.KEYWORD_ONLY, 'the_darkened_oaks_are_my_only_shelter', ArgMandatory,),
         (ArgKind.KEYWORD_ONLY, 'red_leaves_are_blown_by', 'the wind',),
         (ArgKind.KEYWORD_ONLY, 'an_ebony_raven_now_catches', 'my eye.',),
-        (ArgKind.VAR_KEYWORD, 'sitting_in_calmness', ArgMandatory,),
+        (ArgKind.VARIADIC_KEYWORD, 'sitting_in_calmness', ArgMandatory,),
     )
 
     # ....................{ FAIL                           }....................

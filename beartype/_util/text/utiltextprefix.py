@@ -63,8 +63,8 @@ def prefix_beartypeable(
         f'{label_callable(func=obj, is_color=is_color)} '  # type: ignore[arg-type]
     )
 
-
-def prefix_beartypeable_pith(
+# ....................{ PREFIXERS : callable : name        }....................
+def prefix_callable_pith(
     # Mandatory parameters.
     func: Callable,
     pith_name: str,
@@ -85,7 +85,7 @@ def prefix_beartypeable_pith(
         Decorated callable to be labelled.
     pith_name : str
         Name of the parameter or return value of this callable to be labelled.
-    is_color : BoolTristate
+    is_color : BoolTristate, optional
         Tri-state colouring boolean governing ANSI usage. See the
         :attr:`beartype.BeartypeConf.is_color` attribute for further details.
         Defaults to :data:`False`.
@@ -108,7 +108,7 @@ def prefix_beartypeable_pith(
             func=func, arg_name=pith_name, is_color=is_color)
     )
 
-# ....................{ PREFIXERS : callable : name        }....................
+
 def prefix_callable_arg_name(
     # Mandatory parameters.
     func: Callable,

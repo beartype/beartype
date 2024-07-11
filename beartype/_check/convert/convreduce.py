@@ -23,6 +23,7 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -133,7 +134,7 @@ def reduce_hint(
 
     # Optional parameters.
     cls_stack: TypeStack = None,
-    func: Optional[Callable] = None,
+    decor_meta: Optional[BeartypeDecorMeta] = None,
     pith_name: Optional[str] = None,
     exception_prefix: str = '',
 ) -> object:
@@ -167,11 +168,11 @@ def reduce_hint(
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    func : Optional[Callable], optional
+    decor_meta : Optional[BeartypeDecorMeta], optional
         Either:
 
-        * If this hint annotates a parameter or return of some callable, that
-          callable.
+        * If this hint annotates a parameter or return of some callable, the
+          :mod:`beartype`-specific decorator metadata describing that callable.
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
@@ -185,8 +186,8 @@ def reduce_hint(
 
         Defaults to :data:`None`.
     exception_prefix : str, optional
-        Substring prefixing exception messages raised by this function. Defaults
-        to the empty string.
+        Human-readable substring prefixing exception messages raised by this
+        reducer. Defaults to the empty string.
 
     Returns
     -------
@@ -219,7 +220,7 @@ def reduce_hint(
             conf=conf,
             pith_name=pith_name,
             cls_stack=cls_stack,
-            func=func,
+            decor_meta=decor_meta,
             exception_prefix=exception_prefix,
         )
 
@@ -233,7 +234,7 @@ def reduce_hint(
         if hint is hint_prev:
             break
         # Else, the current and previously reduced instances of this hint
-        # differ, implying this hint to still be reducible. In this case,
+        # differ -- implying this hint to still be reducible. In this case,
         # continue reducing.
 
         # Previously reduced instance of this hint.
@@ -247,7 +248,7 @@ def _reduce_hint_uncached(
     hint: Any,
     conf: BeartypeConf,
     cls_stack: TypeStack,
-    func: Optional[Callable],
+    decor_meta: Optional[BeartypeDecorMeta],
     pith_name: Optional[str],
     exception_prefix: str,
 ) -> object:
@@ -272,13 +273,14 @@ def _reduce_hint_uncached(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     cls_stack : TypeStack
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). See also the :func:`.beartype_object` decorator.
-    func : Optional[Callable]
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+    decor_meta : Optional[BeartypeDecorMeta]
         Either:
 
-        * If this hint annotates a parameter or return of some callable, that
-          callable.
+        * If this hint annotates a parameter or return of some callable, the
+          :mod:`beartype`-specific decorator metadata describing that callable.
         * Else, :data:`None`.
     pith_name : Optional[str]
         Either:
@@ -288,7 +290,8 @@ def _reduce_hint_uncached(
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
     exception_prefix : str
-        Substring prefixing exception messages raised by this function.
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
 
     Returns
     -------
@@ -302,6 +305,7 @@ def _reduce_hint_uncached(
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise (e.g., if this hint is merely an isinstanceable class).
     hint_sign = get_hint_pep_sign_or_none(hint)
+    # print(f'_reduce_hint_uncached() hint_sign: {hint_sign}')
 
     # Callable reducing this hint if a callable reducing hints of this sign was
     # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
@@ -316,7 +320,7 @@ def _reduce_hint_uncached(
             hint=hint,  # pyright: ignore
             conf=conf,
             cls_stack=cls_stack,
-            func=func,
+            decor_meta=decor_meta,
             pith_name=pith_name,
             exception_prefix=exception_prefix,
         )

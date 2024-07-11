@@ -437,7 +437,7 @@ def _init() -> None:
     # Dictionary mapping from the unqualified names of all classes defined by
     # typing modules used to instantiate PEP-compliant type hints to their
     # corresponding signs.
-    _HINT_TYPE_BASENAMES_TO_SIGN = {
+    _HINT_TYPE_BASENAME_TO_SIGN = {
         # ....................{ PEP 484                    }....................
         # All PEP 484-compliant forward references are necessarily instances of
         # the same class.
@@ -670,7 +670,7 @@ def _init() -> None:
                 f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign
 
         # For the unqualified classname identifying each sign to that sign...
-        for typing_attr_name, hint_sign in _HINT_TYPE_BASENAMES_TO_SIGN.items():
+        for typing_attr_name, hint_sign in _HINT_TYPE_BASENAME_TO_SIGN.items():
             # Map from that classname in this module to this sign.
             # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_name}" -> {repr(hint_sign)}...')
             HINT_TYPE_NAME_TO_SIGN[

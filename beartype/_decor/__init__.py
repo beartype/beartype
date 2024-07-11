@@ -210,7 +210,7 @@
 #
 #* Type-check variadic keyword arguments. Currently, only variadic positional
 #  arguments are type-checked. When doing so, remove the
-#  "Parameter.VAR_KEYWORD" type from the "_PARAM_KIND_IGNORABLE" set.
+#  "Parameter.VARIADIC_KEYWORD" type from the "_PARAM_KIND_IGNORABLE" set.
 #* Type-check positional-only arguments under Python >= 3.8. Note that, since
 #  C-based callables have *ALWAYS* supported positional-only arguments, the
 #  "Parameter.POSITIONAL_ONLY" type is defined for *ALL* Python versions

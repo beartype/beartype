@@ -21,8 +21,162 @@ from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
+from beartype._util.func.arg.utilfuncargiter import (
+    ARG_META_INDEX_KIND,
+    ArgKind,
+    ArgMeta,
+    iter_func_args,
+)
 from beartype._util.func.arg.utilfuncarglen import get_func_args_len
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
+
+# ....................{ GETTERS ~ meta                     }....................
+#FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
+#Although extremely non-trivial, doing so *SHOULD* be feasible based on the
+#current internal implementation of the iter_func_args() generator
+#comprehension. Basically, we'll need to:
+#* Augment get_func_args_lens() to additionally cache and return *ALL* of
+#  the remaining "sub-lengths" internally computed by iter_func_args().
+#  *ALL*. And there are quite a few, indeed.
+#* Call get_func_args_lens() here.
+#* Get the name of the variadic positional parameter by simply indexing:
+#      func_args_len = get_func_args_len(*args, **kwargs)
+#      func_codeobj.co_varnames[func_args_len + hur_der_hur_something]
+#  ...where "hur_der_hur_something" is the index of the variadic positional
+#  parameter in the "co_varnames" list, computed by adding all requisite
+#  "sub-lengths" together. We shrug.
+#FIXME: Unit test us up, please.
+def get_func_arg_meta_variadic_positional_or_none(
+    *args, **kwargs) -> Optional[ArgMeta]:
+    '''
+    Callable parameter metadata describing the variadic positional parameter
+    accepted by the passed pure-Python callable if that callable accepts a
+    variadic positional parameter *or* :data:`None` otherwise (i.e., if that
+    callable accepts no variadic positional parameter).
+
+    Caveats
+    -------
+    **This getter exhibits worst-case linear-time complexity** :math:`O(n)`
+    **for** :math:`O(n)` **the total number of parameters accepted by that
+    callable** due to unavoidably performing a linear search for a variadic
+    positional parameter with this name is this callable's parameter list. This
+    getter should thus be called sparingly.
+
+    Parameters
+    ----------
+    All remaining parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+
+    Returns
+    -------
+    Optional[ArgMeta]
+        Either:
+
+        * If that callable accepts a variadic positional parameter, callable
+          parameter metadata describing that parameter.
+        * Else, :data:`None`.
+
+    Raises
+    ------
+    exception_cls
+         If the passed callable is *not* pure-Python.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargtest import (
+        is_func_arg_variadic_positional)
+
+    # If the passed callable accepts *NO* variadic positional parameter,
+    # silently reduce to a noop.
+    if not is_func_arg_variadic_positional(*args, **kwargs):
+        return None
+    # Else, that callable accepts a variadic positional parameter.
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_meta in iter_func_args(*args, **kwargs):
+        # If this is a variadic positional parameter, return this metadata.
+        if arg_meta[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_POSITIONAL:
+            return arg_meta
+        # Else, this is *NOT* a variadic positional parameter. In this case,
+        # silently continue to the next parameter.
+    # Else, that callable accepts *NO* variadic positional parameter. But, by
+    # the above validation, that callable accepts a variadic positional
+    # parameter! We are now off the deep end.
+
+    # Raise an exception as a last-ditch fallback.
+    #
+    # Note that this should *NEVER* occur. Naturally, this just occurred.
+    raise _BeartypeUtilCallableException(  # pragma: no cover
+        f'Callable inexplicably accepts no variadic positional parameter '
+        f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+    )
+
+
+#FIXME: Unit test us up, please.
+def get_func_arg_meta_variadic_keyword_or_none(
+    *args, **kwargs) -> Optional[ArgMeta]:
+    '''
+    Callable parameter metadata describing the variadic keyword parameter
+    accepted by the passed pure-Python callable if that callable accepts a
+    variadic keyword parameter *or* :data:`None` otherwise (i.e., if that
+    callable accepts no variadic keyword parameter).
+
+    Caveats
+    -------
+    **This getter exhibits worst-case linear-time complexity** :math:`O(n)`
+    **for** :math:`O(n)` **the total number of parameters accepted by that
+    callable** due to unavoidably performing a linear search for a variadic
+    keyword parameter with this name is this callable's parameter list. This
+    getter should thus be called sparingly.
+
+    Parameters
+    ----------
+    All remaining parameters are passed as is to the lower-level
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+
+    Returns
+    -------
+    Optional[ArgMeta]
+        Either:
+
+        * If that callable accepts a variadic keyword parameter, callable
+          parameter metadata describing that parameter.
+        * Else, :data:`None`.
+
+    Raises
+    ------
+    exception_cls
+         If the passed callable is *not* pure-Python.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargtest import (
+        is_func_arg_variadic_keyword)
+
+    # If the passed callable accepts *NO* variadic keyword parameter,
+    # silently reduce to a noop.
+    if not is_func_arg_variadic_keyword(*args, **kwargs):
+        return None
+    # Else, that callable accepts a variadic keyword parameter.
+
+    # For metadata describing each parameter accepted by that callable...
+    for arg_meta in iter_func_args(*args, **kwargs):
+        # If this is a variadic keyword parameter, return this metadata.
+        if arg_meta[ARG_META_INDEX_KIND] is ArgKind.VARIADIC_KEYWORD:
+            return arg_meta
+        # Else, this is *NOT* a variadic keyword parameter. In this case,
+        # silently continue to the next parameter.
+    # Else, that callable accepts *NO* variadic keyword parameter. But, by
+    # the above validation, that callable accepts a variadic keyword
+    # parameter! We are now off the deep end.
+
+    # Raise an exception as a last-ditch fallback.
+    #
+    # Note that this should *NEVER* occur. Naturally, this just occurred.
+    raise _BeartypeUtilCallableException(  # pragma: no cover
+        f'Callable inexplicably accepts no variadic keyword parameter '
+        f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+    )
 
 # ....................{ GETTERS ~ name                     }....................
 def get_func_arg_name_first_or_none(*args, **kwargs) -> Optional[str]:

@@ -14,10 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.arg.utilfuncargiter import (
-    ARG_META_INDEX_KIND,
     ARG_META_INDEX_NAME,
-    ArgKind,
-    iter_func_args,
 )
 from beartype._util.func.arg.utilfuncarglen import (
     ARGS_LENS_INDEX_VAR_POS,
@@ -411,48 +408,30 @@ def is_func_arg_name_variadic_positional(
     exception_cls
          If the passed callable is *not* pure-Python.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
-    # If it is *NOT* the case that...
-    if not (
-        # The passed callable accepts a variadic positional parameter *AND*...
-        is_func_arg_variadic_positional(*args, **kwargs) and
-        # The passed callable accepts a parameter with the passed name...
-        is_func_arg_name(*args, arg_name=arg_name, **kwargs)  # type: ignore[misc]
-    ):
-        # Then that callable does *NOT* accept a variadic positional parameter
-        # with the passed name. In this case, immediately return false.
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_arg_meta_variadic_positional_or_none)
+
+    # If the passed callable accepts *NO* parameter with the passed name,
+    # immediately return false.
+    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs): # type: ignore[misc]
         return False
-    # Else, that callable both accept a variadic positional parameters *AND* a
-    # parameter with the passed name. In this case, further testing is required.
+    # Else, that callable accepts a parameter with the passed name. In this
+    # case, further testing is warranted.
 
-    #FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1)
-    #lookup. Although extremely non-trivial, doing so *SHOULD* be feasible based
-    #on the current internal implementation of the iter_func_args() generator
-    #comprehension. Basically, we'll need to:
-    #* Augment get_func_args_lens() to additionally cache and return *ALL* of
-    #  the remaining "sub-lengths" internally computed by iter_func_args().
-    #  *ALL*. And there are quite a few, indeed.
-    #* Call get_func_args_lens() here.
-    #* Get the name of the variadic positional parameter by simply indexing:
-    #      func_args_len = get_func_args_len(*args, **kwargs)
-    #      func_codeobj.co_varnames[func_args_len + hur_der_hur_something]
-    #  ...where "hur_der_hur_something" is the index of the variadic positional
-    #  parameter in the "co_varnames" list, computed by adding all requisite
-    #  "sub-lengths" together. We shrug.
+    # Metadata describing the variadic positional parameter accepted by that
+    # callable if that callable accepts a variadic positional parameter *OR*
+    # "None" otherwise (i.e., if that callable accepts *NO* such parameter).
+    arg_meta = get_func_arg_meta_variadic_positional_or_none(*args, **kwargs)
 
-    # For metadata describing each parameter accepted by that callable...
-    for arg_meta in iter_func_args(*args, **kwargs):
-        # If the name of this parameter is the passed name...
-        if arg_meta[ARG_META_INDEX_NAME] == arg_name:
-            # Return true only if this is a variadic positional parameter.
-            return arg_meta[ARG_META_INDEX_KIND] is ArgKind.VAR_POSITIONAL
-        # Else, the name of this parameter is *NOT* the passed name. In this
-        # case, silently continue to the next parameter.
-    # Else, that callable accepts *NO* variadic positional parameter.
-
-    # Return false as a last-ditch fallback.
-    return False
+    # Return true only if...
+    return (
+        # That callable accepts a variadic positional parameter *AND*...
+        arg_meta is not None and
+        # The name of this parameter is the passed name.
+        arg_meta[ARG_META_INDEX_NAME] == arg_name
+    )
 
 
 def is_func_arg_name_variadic_keyword(
@@ -488,30 +467,27 @@ def is_func_arg_name_variadic_keyword(
     exception_cls
          If the passed callable is *not* pure-Python.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
-    # If it is *NOT* the case that...
-    if not (
-        # The passed callable accepts a variadic keyword parameter *AND*...
-        is_func_arg_variadic_keyword(*args, **kwargs) and
-        # The passed callable accepts a parameter with the passed name...
-        is_func_arg_name(*args, arg_name=arg_name, **kwargs)  # type: ignore[misc]
-    ):
-        # Then that callable does *NOT* accept a variadic keyword parameter
-        # with the passed name. In this case, immediately return false.
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_arg_meta_variadic_keyword_or_none)
+
+    # If the passed callable accepts *NO* parameter with the passed name,
+    # immediately return false.
+    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs): # type: ignore[misc]
         return False
-    # Else, that callable both accept a variadic keyword parameters *AND* a
-    # parameter with the passed name. In this case, further testing is required.
+    # Else, that callable accepts a parameter with the passed name. In this
+    # case, further testing is warranted.
 
-    # For metadata describing each parameter accepted by that callable...
-    for arg_meta in iter_func_args(*args, **kwargs):
-        # If the name of this parameter is the passed name...
-        if arg_meta[ARG_META_INDEX_NAME] == arg_name:
-            # Return true only if this is a variadic keyword parameter.
-            return arg_meta[ARG_META_INDEX_KIND] is ArgKind.VAR_KEYWORD
-        # Else, the name of this parameter is *NOT* the passed name. In this
-        # case, silently continue to the next parameter.
-    # Else, that callable accepts *NO* variadic keyword parameter.
+    # Metadata describing the variadic keyword parameter accepted by that
+    # callable if that callable accepts a variadic keyword parameter *OR* "None"
+    # otherwise (i.e., if that callable accepts *NO* such parameter).
+    arg_meta = get_func_arg_meta_variadic_keyword_or_none(*args, **kwargs)
 
-    # Return false as a last-ditch fallback.
-    return False
+    # Return true only if...
+    return (
+        # That callable accepts a variadic keyword parameter *AND*...
+        arg_meta is not None and
+        # The name of this parameter is the passed name.
+        arg_meta[ARG_META_INDEX_NAME] == arg_name
+    )

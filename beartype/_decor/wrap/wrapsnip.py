@@ -114,7 +114,7 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:''',
 
     # Snippet iteratively localizing all variadic positional parameters.
-    ArgKind.VAR_POSITIONAL: f'''
+    ArgKind.VARIADIC_POSITIONAL: f'''
     # For all passed variadic positional parameters...
     for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
 
@@ -122,7 +122,7 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     #paradigm, sadly. This will have to wait for us to fundamentally revise
     #our signature generation algorithm.
     # # Snippet iteratively localizing all variadic keyword parameters.
-    # ArgKind.VAR_KEYWORD: f'''
+    # ArgKind.VARIADIC_KEYWORD: f'''
     # # For all passed variadic keyword parameters...
     # for {VAR_NAME_PITH_ROOT} in kwargs[{{arg_index!r}}:]:''',
 }

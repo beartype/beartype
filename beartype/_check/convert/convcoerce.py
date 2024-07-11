@@ -74,8 +74,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: object,
-    pith_name: Optional[str],
     decor_meta: BeartypeDecorMeta,
+    pith_name: str,
     exception_prefix: str,
 ) -> object:
     '''
@@ -104,15 +104,14 @@ def coerce_func_hint_root(
     ----------
     hint : object
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    pith_name : Optional[str]
+    decor_meta : BeartypeDecorMeta
+        Decorated callable directly annotated by this hint.
+    pith_name : str
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
-        * Else, :data:`None`.
-    decor_meta : BeartypeDecorMeta
-        Decorated callable annotated by this hint.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -126,10 +125,10 @@ def coerce_func_hint_root(
           type hint coerced from this hint.
         * Else, this hint as is unmodified.
     '''
-    assert isinstance(pith_name, NoneTypeOr[str]), (
-        f'{repr(pith_name)} neither string nor "None".')
-    assert decor_meta.__class__ is BeartypeDecorMeta, (
-        f'{repr(decor_meta)} not @beartype call.')
+    assert isinstance(pith_name, str), (
+        f'{repr(pith_name)} not string.')
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not @beartype metadata.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................

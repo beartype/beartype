@@ -586,6 +586,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Sign identifying this hint if this hint is identifiable by its classname
     # *OR* "None" otherwise.
     hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
+    # print(f'hint_type: {hint_type}')
+    # print(f'hint_sign [by type]: {hint_sign}')
 
     # If this hint is identifiable by its classname, return this sign.
     if hint_sign:

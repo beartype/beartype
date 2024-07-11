@@ -37,8 +37,8 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
-    pith_name: str,
     decor_meta: BeartypeDecorMeta,
+    pith_name: str,
 
     # Optional parameters.
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
@@ -83,18 +83,13 @@ def sanify_hint_root_func(
     ----------
     hint : object
         Possibly PEP-noncompliant root type hint to be sanified.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
+    decor_meta : BeartypeDecorMeta
+        Decorated callable directly annotated by this hint.
     pith_name : str
         Either:
 
         * If this hint annotates a parameter, the name of that parameter.
         * If this hint annotates the return, ``"return"``.
-    decor_meta : BeartypeDecorMeta
-        Decorated callable directly annotated by this hint.
     exception_prefix : str, optional
         Human-readable label prefixing exception messages raised by this
         function. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
@@ -135,8 +130,6 @@ def sanify_hint_root_func(
         exception_prefix=exception_prefix,
     )
 
-    #FIXME: Pretty odd stuff. Ideally, this should just be refactored into a
-    #standard reducer called by the existing reduce_hint() function below.
     # If this hint annotates the return, then (in order):
     # * If this hint is contextually invalid for this callable (e.g., generator
     #   whose return is not annotated as "Generator[...]"), raise an exception.
@@ -184,7 +177,7 @@ def sanify_hint_root_func(
         hint=hint,
         conf=decor_meta.conf,
         cls_stack=decor_meta.cls_stack,
-        func=decor_meta.func_wrappee,
+        decor_meta=decor_meta,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )

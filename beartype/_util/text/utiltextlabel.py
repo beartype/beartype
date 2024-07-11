@@ -161,11 +161,11 @@ def label_callable(
     ----------
     func : Callable
         Callable to be labelled.
-    is_color : BoolTristate
+    is_color : BoolTristate, optional
         Tri-state colouring boolean governing ANSI usage. See the
         :attr:`beartype.BeartypeConf.is_color` attribute for further details.
         Defaults to :data:`False`.
-    is_context : BoolTristate
+    is_context : BoolTristate, optional
         Either:
 
         * :data:`True`, in which case this label is suffixed by additional
@@ -370,7 +370,7 @@ def label_type(
     ----------
     cls : type
         Class to be labelled.
-    is_color : BoolTristate
+    is_color : BoolTristate, optional
         Tri-state colouring boolean governing ANSI usage. See the
         :attr:`beartype.BeartypeConf.is_color` attribute for further details.
         Defaults to :data:`False`.

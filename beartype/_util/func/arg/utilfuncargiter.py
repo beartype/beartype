@@ -56,7 +56,7 @@ class ArgKind(Enum):
     POSITIONAL_OR_KEYWORD : EnumMemberType
         Kind of all **flexible parameters** (i.e., parameters permitted to be
         passed either positionally or by keyword).
-    VAR_POSITIONAL : EnumMemberType
+    VARIADIC_POSITIONAL : EnumMemberType
         Kind of all **variadic positional parameters** (i.e., tuple of zero or
         more positional parameters *not* explicitly named by preceding
         positional-only or flexible parameters, syntactically preceded by the
@@ -65,7 +65,7 @@ class ArgKind(Enum):
         Kind of all **keyword-only parameters** (i.e., parameters required to
         be passed by keyword, syntactically preceded in the signatures of
         their callables by the :pep:`3102`-compliant ``*,`` pseudo-parameter).
-    VAR_KEYWORD : EnumMemberType
+    VARIADIC_KEYWORD : EnumMemberType
         Kind of all **variadic keyword parameters** (i.e., tuple of zero or
         more keyword parameters *not* explicitly named by preceding
         keyword-only or flexible parameters, syntactically preceded by the
@@ -74,9 +74,9 @@ class ArgKind(Enum):
 
     POSITIONAL_ONLY = next_enum_member_value()
     POSITIONAL_OR_KEYWORD = next_enum_member_value()
-    VAR_POSITIONAL = next_enum_member_value()
+    VARIADIC_POSITIONAL = next_enum_member_value()
     KEYWORD_ONLY = next_enum_member_value()
-    VAR_KEYWORD = next_enum_member_value()
+    VARIADIC_KEYWORD = next_enum_member_value()
 
 # ....................{ SINGLETONS                         }....................
 ArgMandatory = object()
@@ -90,9 +90,10 @@ passed to their callables).
 # ....................{ HINTS                              }....................
 ArgMeta = Tuple[ArgKind, str, object]
 '''
-PEP-compliant type hint matching each 3-tuple ``(arg_kind, arg_name,
-default_value_or_mandatory)`` iteratively yielded by the :func:`.iter_func_args`
-generator for each parameter accepted by the passed pure-Python callable, where:
+PEP-compliant type hint matching each **callable parameter metadata**
+iteratively yielded by the :func:`.iter_func_args` generator for each parameter
+accepted by the passed pure-Python callable, defined as a 3-tuple ``(arg_kind,
+arg_name, default_value_or_mandatory)`` , where:
 
 * ``arg_kind`` is this parameter's **kind** (i.e., ".ArgKind" enumeration member
   conveying the syntactic class of this parameter, constraining how the callable
@@ -184,7 +185,7 @@ def iter_func_args(
       :attr:`ArgKind.POSITIONAL_OR_KEYWORD` and whose default value is *not*
       :data:`ArgMandatory`).
     * **Variadic positional parameters** (i.e., parameter metadata whose kind
-      is :attr:`ArgKind.VAR_POSITIONAL` and whose default value is
+      is :attr:`ArgKind.VARIADIC_POSITIONAL` and whose default value is
       :data:`ArgMandatory`).
     * **Mandatory and optional keyword-only parameters** (i.e., parameter
       metadata whose kind is :attr:`ArgKind.KEYWORD_ONLY`). Unlike all other
@@ -192,7 +193,7 @@ def iter_func_args(
       ergo, Python explicitly permits mandatory and optional keyword-only
       parameters to be heterogeneously intermingled rather than clustered.
     * **Variadic keyword parameters** (i.e., parameter metadata whose kind
-      is :attr:`ArgKind.VAR_KEYWORD` and whose default value is
+      is :attr:`ArgKind.VARIADIC_KEYWORD` and whose default value is
       :data:`ArgMandatory`).
 
     Caveats
@@ -612,7 +613,7 @@ def iter_func_args(
     #   despite syntactic constraints on their lexical position.
     if is_arg_var_pos:
         yield (
-            ArgKind.VAR_POSITIONAL,
+            ArgKind.VARIADIC_POSITIONAL,
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )
@@ -657,7 +658,7 @@ def iter_func_args(
 
         # Yield a tuple describing this parameter.
         yield (
-            ArgKind.VAR_KEYWORD,
+            ArgKind.VARIADIC_KEYWORD,
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )

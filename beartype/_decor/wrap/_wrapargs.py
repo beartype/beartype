@@ -370,7 +370,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
 # ....................{ PRIVATE ~ constants                }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
 _ARG_KINDS_IGNORABLE = frozenset((
-    ArgKind.VAR_KEYWORD,
+    ArgKind.VARIADIC_KEYWORD,
 ))
 '''
 Frozen set of all :attr:`ArgKind` enumeration members to be ignored

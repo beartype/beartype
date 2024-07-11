@@ -18,6 +18,7 @@ Caveats
 Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
+
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
