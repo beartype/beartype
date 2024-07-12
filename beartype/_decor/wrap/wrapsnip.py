@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import (
-    ARG_NAME_CHECK_META,
+    ARG_NAME_ARGS_NAME_KEYWORDABLE,
     ARG_NAME_FUNC,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
@@ -113,18 +113,23 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     # If this parameter was passed...
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:''',
 
+    #FIXME: [SPEED] Are "while" loops actually faster than "for" loops in
+    #Python? Probably. We suspect that "while" loops internally raise *NO*
+    #"StopException" whereas "for" loops do. Profile us up, please.
+
     # Snippet iteratively localizing all variadic positional parameters.
     ArgKind.VARIADIC_POSITIONAL: f'''
-    # For all passed variadic positional parameters...
+    # For all excess positional parameters in the passed "*args" parameter...
     for {VAR_NAME_PITH_ROOT} in args[{{arg_index!r}}:]:''',
 
-    #FIXME: Probably impossible to implement under the standard decorator
-    #paradigm, sadly. This will have to wait for us to fundamentally revise
-    #our signature generation algorithm.
-    # # Snippet iteratively localizing all variadic keyword parameters.
-    # ArgKind.VARIADIC_KEYWORD: f'''
-    # # For all passed variadic keyword parameters...
-    # for {VAR_NAME_PITH_ROOT} in kwargs[{{arg_index!r}}:]:''',
+    # Snippet iteratively localizing all variadic keyword parameters.
+    ArgKind.VARIADIC_KEYWORD: f'''
+    # For all excess keyword parameters in the passed "**kwargs" parameter,
+    # decided by subtracting the subset of all keywordable parameters
+    # explicitly accepted by this callable from the set of all parameters passed
+    # by keyword to this callable...
+    for {VAR_NAME_PITH_ROOT} in (
+        (kwargs[kwarg_name] for kwarg_name in kwargs.keys() - {ARG_NAME_ARGS_NAME_KEYWORDABLE})):''',
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the

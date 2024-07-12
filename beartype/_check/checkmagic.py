@@ -30,6 +30,16 @@ tester functions created by the
 # To avoid colliding with the names of arbitrary caller-defined parameters, the
 # beartype-specific hidden parameter names *MUST* be prefixed by "__beartype_".
 
+ARG_NAME_ARGS_NAME_KEYWORDABLE = f'{NAME_PREFIX}args_name_keywordable'
+'''
+Name of the **private keywordable parameter name set** (i.e.,
+:mod:`beartype`-specific hidden parameter whose default value is the frozen set
+of the names of all parameters that either may *or* must be passed by keyword,
+required to type-check a :func:`beartype.beartype`-decorated callable accepting
+an annotated variadic keyword parameter like ``**kwargs: int``).
+'''
+
+
 ARG_NAME_CHECK_META = f'{NAME_PREFIX}check_meta'
 '''
 Name of the **private beartype type-checking call metadata** (i.e.,
@@ -61,6 +71,9 @@ type-checker injected for :pep:`526`-compliant annotated variable assignments by
 '''
 
 
+#FIXME: *REDUNDANT.* The same metadata is now directly accessible via the
+#existing "{ARG_NAME_CHECK_META}.func" field available to *ALL* type-checking
+#wrapper functions. Obsolete this redundant hidden parameter, please. *sigh*
 ARG_NAME_FUNC = f'{NAME_PREFIX}func'
 '''
 Name of the **private decorated callable parameter** (i.e.,

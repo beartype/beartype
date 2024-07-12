@@ -23,6 +23,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
+from beartype._util.utilobject import Iota
 from collections.abc import Callable
 from enum import (
     Enum,
@@ -79,12 +80,12 @@ class ArgKind(Enum):
     VARIADIC_KEYWORD = next_enum_member_value()
 
 # ....................{ SINGLETONS                         }....................
-ArgMandatory = object()
+ArgMandatory = Iota()
 '''
 Arbitrary sentinel singleton assigned by the :func:`.iter_func_args` generator
-to the :data:`.ARG_META_INDEX_DEFAULT` fields of all :class:`.ArgMeta` instances
-describing **mandatory parameters** (i.e., parameters that *must* be explicitly
-passed to their callables).
+to the tuple item with index :data:`.ARG_META_INDEX_DEFAULT` of all
+:class:`.ArgMeta` instances, describing **mandatory parameters** (i.e.,
+parameters that *must* be explicitly passed to their callables).
 '''
 
 # ....................{ HINTS                              }....................
@@ -92,19 +93,46 @@ ArgMeta = Tuple[ArgKind, str, object]
 '''
 PEP-compliant type hint matching each **callable parameter metadata**
 iteratively yielded by the :func:`.iter_func_args` generator for each parameter
-accepted by the passed pure-Python callable, defined as a 3-tuple ``(arg_kind,
-arg_name, default_value_or_mandatory)`` , where:
+accepted by the pure-Python callable passed to that generator, defined as the
+4-tuple ``(arg_kind, arg_name, arg_default_or_mandatory, arg_hint_or_unhinted)``
+where:
 
 * ``arg_kind`` is this parameter's **kind** (i.e., ".ArgKind" enumeration member
   conveying the syntactic class of this parameter, constraining how the callable
   declaring this parameter requires this parameter to be passed).
-* ``name`` is this parameter's **name** (i.e., syntactically valid Python
+* ``arg_name`` is this parameter's **name** (i.e., syntactically valid Python
   identifier uniquely identifying this parameter in its parameter list).
-* ``default_value_or_mandatory`` is either:
+* ``arg_default_or_mandatory`` is either:
 
-    * If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
-    * Else, this parameter is optional and thus defaults to a default value when
-      unpassed. In this case, this is that default value.
+  * If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
+  * Else, this parameter is optional and thus defaults to a default value when
+    unpassed. In this case, this is that default value.
+
+Caveats
+-------
+**This metadata intentionally omits the type hint annotating this parameter.**
+Why? Because deciding *which* type hint annotates this parameter (if any) is
+non-trivial in common edge cases. Notably, if the pure-Python callable passed to
+that generator differs from the callable to be unwrapped with respect to type
+hints, then that generator *cannot* reliably decide which type hint annotates
+this parameter without refactoring both that generator and all other callables
+transitively calling that generator to also accept and forward on a new
+``type_hint_wrapper`` parameter providing the callable to be unwrapped with
+respect to type hints. Although feasible, doing so would only invite even
+further API confusion with little to no tangible benefit. Edge cases in which
+this arises include:
+
+* When ``type_hint_wrapper`` is a **pseudo-callable** (i.e., otherwise
+  uncallable object whose type renders that object callable by defining the
+  ``__call__()`` dunder method) *and* ``func`` is that ``__call__()`` dunder
+  method. If that pseudo-callable wraps a lower-level callable, then that
+  pseudo-callable (rather than ``__call__()`` dunder method) defines the
+  ``__wrapped__`` instance variable providing that callable.
+
+The caller is thus responsible for mapping parameters to type hints. Thankfully,
+the existing
+:attr:`beartype._check.meta.checkdecor.BeartypeDecorMeta.func_arg_name_to_hint`
+dictionary makes this trivial for most use cases.
 '''
 
 # ....................{ CONSTANTS ~ index                  }....................
@@ -116,7 +144,7 @@ __arg_meta_index_counter = count(start=0, step=1)
 ARG_META_INDEX_KIND = next(__arg_meta_index_counter)
 '''
 0-based index into each 4-tuple iteratively yielded by the generator returned by
-the :func:`.iter_func_args` generator function of the currently iterated
+the :func:`.iter_func_args` generator function providing the currently iterated
 parameter's **kind** (i.e., :class:`ArgKind` enumeration member conveying this
 parameter's syntactic class, constraining how the callable declaring this
 parameter requires this parameter to be passed).
@@ -126,7 +154,7 @@ parameter requires this parameter to be passed).
 ARG_META_INDEX_NAME = next(__arg_meta_index_counter)
 '''
 0-based index into each 4-tuple iteratively yielded by the generator returned by
-the :func:`.iter_func_args` generator function of the currently iterated
+the :func:`.iter_func_args` generator function providing the currently iterated
 parameter's **name** (i.e., syntactically valid Python identifier uniquely
 identifying this parameter in its parameter list).
 '''
@@ -135,8 +163,8 @@ identifying this parameter in its parameter list).
 ARG_META_INDEX_DEFAULT = next(__arg_meta_index_counter)
 '''
 0-based index into each 4-tuple iteratively yielded by the generator returned by
-the :func:`.iter_func_args` generator function of the currently iterated
-parameter's **default value** specified as either:
+the :func:`.iter_func_args` generator function providing the currently iterated
+parameter's **default value**, defined as either:
 
 * If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
 * Else, this parameter is optional and thus defaults to a default value when

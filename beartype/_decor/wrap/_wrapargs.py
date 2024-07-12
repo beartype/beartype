@@ -24,12 +24,18 @@ from beartype.roar import (
     BeartypeDecorParamNameException,
 )
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
+from beartype.typing import (
+    Optional,
+    Set,
+)
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     EXCEPTION_PREFIX_DEFAULT,
@@ -46,6 +52,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgMandatory,
     iter_func_args,
 )
+from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -106,14 +113,56 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         return ''
     # Else, one or more callable parameters are annotated.
 
-    # Python code snippet to be returned.
+    # Python code snippet to be returned, defaulting to the empty string
+    # implying this callable's parameters to all either be unannotated *OR*
+    # annotated only by safely ignorable type hints.
     func_wrapper_code = ''
+
+    # Lexical scope (i.e., dictionary mapping from the relative unqualified name
+    # to value of each locally or globally scoped attribute accessible to a
+    # callable or class), initialized to "None" for safety.
+    func_scope: LexicalScope = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ parameter                 }..................
     #FIXME: Remove this *AFTER* optimizing signature generation, please.
-    # True only if this callable possibly accepts one or more positional
+    # True only if that callable possibly accepts one or more positional
     # parameters.
     is_args_positional = False
+
+    #FIXME: ******UNIT TEST US UP, PLEASE.******* Do so exhaustively until
+    #exhausted. This is super-critical. Yo!
+    #FIXME: Remove the "args_name_keywordable" local variable and associated
+    #"ARG_NAME_ARGS_NAME_KEYWORDABLE" global variable *AFTER* refactoring
+    #@beartype to generate callable-specific wrapper signatures.
+    # Either...
+    args_name_keywordable: Optional[Set[str]] = (
+        # If the decorated callable accepts an annotated variadic keyword
+        # parameter (e.g., "**kwargs: int"), the set of the names of all
+        # keywordable parameters (i.e., parameters that may be passed by
+        # keyword), defined as the union of the:
+        # * Set of the names of all flexible parameters (i.e., parameters that
+        #   may be passed either positionally or by keyword).
+        # * Set of the names of all keyword-only parameters.
+        #
+        # This set is required in the body of the type-checking function
+        # wrapping the decorated callable to differentiate between:
+        # * Keyword parameters explicitly accepted by the decorated callable,
+        #   which are trivially type-checked by existing logic.
+        # * Keyword parameters *NOT* explicitly accepted by the decorated
+        #   callable and thus implicitly accepted only as excess keyword
+        #   parameters added by CPython itself to the annotated variadic keyword
+        #   parameter (e.g., "**kwargs: int") accepted by the decorated
+        #   callable. Excess keyword parameters *CANNOT* be trivially
+        #   type-checked by existing logic, due to the non-triviality of
+        #   deciding whether a keyword parameter even is "excess" or not.
+        set()
+        if is_func_arg_variadic_keyword(
+            # See the call to the iter_func_args() generator function below for
+            # further commentary on these parameters.
+            func=decor_meta.func_wrappee_wrappee, is_unwrap=False) else
+        # Else, "None".
+        None
+    )
 
     # ..................{ LOCALS ~ hint                      }..................
     # Type hint annotating the current parameter if any *OR* "_PARAM_HINT_EMPTY"
@@ -149,7 +198,6 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         # useless for our purposes.
         func=decor_meta.func_wrappee_wrappee,
         func_codeobj=decor_meta.func_wrappee_wrappee_codeobj,
-
         # Avoid inefficiently attempting to re-unwrap this wrappee. The
         # previously called BeartypeDecorMeta.reinit() method has already
         # guaranteed this wrappee to be isomorphically unwrapped.
@@ -163,8 +211,20 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         (
             arg_kind,
             arg_name,
-            arg_default,
+            _,  # arg_default,
         ) = arg_meta
+
+        # If...
+        if (
+            # The set of the names of all keywordable parameters must be decided
+            # to type-check the decorated callable *AND*...
+            args_name_keywordable is not None and
+            # This parameter is keywordable...
+            arg_kind in _ARG_KINDS_KEYWORD
+        ):
+            # Add the name of this parameter to that set.
+            args_name_keywordable.add(arg_name)
+        # Else, this parameter *CANNOT* be passed by keyword.
 
         # Type hint annotating this parameter if any *OR* the sentinel
         # placeholder otherwise (i.e., if this parameter is unannotated).
@@ -189,11 +249,6 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 if arg_name.startswith('__bear'):
                     raise BeartypeDecorParamNameException(
                         f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
-                # If either the type of this parameter is silently ignorable,
-                # continue to the next parameter.
-                elif arg_kind in _ARG_KINDS_IGNORABLE:
-                    continue
-                # Else, this parameter is non-ignorable.
 
                 # Sanitize this hint into a possibly different type hint more
                 # readily consumable by @beartype's code generator *BEFORE*
@@ -290,8 +345,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 )
                 # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
 
-                # Code snippet type-checking *ANY* parameter with *ANY*
-                # arbitrary name.
+                # Code snippet type-checking any parameter with arbitrary name.
                 (
                     code_arg_check_pith,
                     func_scope,
@@ -357,34 +411,32 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 ),
             )
 
-    # If this callable accepts one or more positional type-checked parameters,
+    # If that callable accepts an annotated variadic keyword parameter, expose
+    # the set of the names of all keywordable parameters to this wrapper
+    # function needed to type-check that annotated variadic keyword parameter.
+    if args_name_keywordable is not None:
+        decor_meta.func_wrapper_scope[ARG_NAME_ARGS_NAME_KEYWORDABLE] = (
+            args_name_keywordable)
+    # Else, that callable accepts *NO* annotated variadic parameter.
+
+    # If that callable accepts one or more annotated positional parameters,
     # prefix this code by a snippet localizing the number of these parameters.
     if is_args_positional:
         func_wrapper_code = f'{CODE_INIT_ARGS_LEN}{func_wrapper_code}'
-    # Else, this callable accepts *NO* positional type-checked parameters. In
-    # this case, preserve this code as is.
+    # Else, that callable accepts *NO* annotated positional parameters.
 
     # Return this code.
     return func_wrapper_code
 
 # ....................{ PRIVATE ~ constants                }....................
-#FIXME: Remove this set *AFTER* handling these kinds of parameters.
-_ARG_KINDS_IGNORABLE = frozenset((
-    ArgKind.VARIADIC_KEYWORD,
+_ARG_KINDS_KEYWORD = frozenset((
+    ArgKind.KEYWORD_ONLY,
+    ArgKind.POSITIONAL_OR_KEYWORD,
 ))
 '''
-Frozen set of all :attr:`ArgKind` enumeration members to be ignored
-during annotation-based type checking in the :func:`beartype.beartype`
-decorator.
-
-This includes:
-
-* Constants specific to variadic keyword parameters (e.g., ``**kwargs``), which
-  are currently unsupported by :func:`beartype`.
-* Constants specific to positional-only parameters, which apply only to
-  non-pure-Python callables (e.g., defined by C extensions). The
-  :func:`beartype` decorator applies *only* to pure-Python callables, which
-  provide no syntactic means for specifying positional-only parameters.
+Frozen set of all **keyword parameter kinds** (i.e., :attr:`ArgKind` enumeration
+members signifying that a callable parameter either may *or* must be passed by
+keyword).
 '''
 
 

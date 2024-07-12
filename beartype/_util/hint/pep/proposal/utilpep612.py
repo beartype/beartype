@@ -394,7 +394,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Type hint subscripting the other variadic parameter if any *OR* the
     # sentinel placeholder otherwise.
-    other_arg_hint = decor_meta.func_arg_name_to_hint.get(
+    other_arg_hint = decor_meta.func_arg_name_to_hint_get(
         other_arg_name, SENTINEL)
 
     # If the other variadic parameter is unannotated, raise an exception.

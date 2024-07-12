@@ -83,29 +83,27 @@ def test_decor_pep612() -> None:
         @beartype
         def their_noonday_watch(*and_sail_among_the_shades: P.args) -> None:
             pass
+    with raises(BeartypeDecorHintPep612Exception):
+        @beartype
+        def like_vaporous_shapes_half_seen(**beyond_a_well: P.kwargs) -> None:
+            pass
 
-    #FIXME: Uncomment after supporting keyword argument type hints. *sigh*
-    # with raises(BeartypeDecorHintPep612Exception):
-    #     @beartype
-    #     def like_vaporous_shapes_half_seen(**beyond_a_well: P.kwargs) -> None:
-    #         pass
-    #
-    # # Assert that @beartype raises the expected exception when decorating
-    # # callables accepting both variadic positional and keyword parameters such
-    # # that only one rather than both are annotated.
-    # with raises(BeartypeDecorHintPep612Exception):
-    #     @beartype
-    #     def dark(*gleaming, **and_of_most_translucent_wave: P.kwargs) -> None:
-    #         pass
-    #
-    # # Assert that @beartype raises the expected exception when decorating
-    # # callables accepting both variadic positional and keyword parameters such
-    # # that only one rather than both are annotated by PEP 612-compliant
-    # # parameter specification keyword and positional parameter type hints.
-    # with raises(BeartypeDecorHintPep612Exception):
-    #     @beartype
-    #     def images_all(*the_woven_boughs: int, **above: P.kwargs) -> None:
-    #         pass
+    # Assert that @beartype raises the expected exception when decorating
+    # callables accepting both variadic positional and keyword parameters such
+    # that only one rather than both are annotated.
+    with raises(BeartypeDecorHintPep612Exception):
+        @beartype
+        def dark(*gleaming, **and_of_most_translucent_wave: P.kwargs) -> None:
+            pass
+
+    # Assert that @beartype raises the expected exception when decorating
+    # callables accepting both variadic positional and keyword parameters such
+    # that only one rather than both are annotated by PEP 612-compliant
+    # parameter specification keyword and positional parameter type hints.
+    with raises(BeartypeDecorHintPep612Exception):
+        @beartype
+        def images_all(*the_woven_boughs: int, **above: P.kwargs) -> None:
+            pass
 
     # Assert that @beartype raises the expected exception when decorating
     # callables accepting both variadic positional and keyword parameters
