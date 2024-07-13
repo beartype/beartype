@@ -16,6 +16,7 @@ hints best describing arbitrary objects).
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    ChainMap,
     Deque,
     Dict,
     FrozenSet,
@@ -86,9 +87,6 @@ class BeartypeInferHintRecursion(object):
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
 #where those types are *NOT* subscriptable. I sigh.
-#FIXME: Undo memoization. Sadly, that fails for the obvious reason: most objects
-#are mutable and thus unhashable and thus unmemoizable. It is what it is.
-@callable_cached
 def infer_hint(
     # Mandatory parameters.
     obj: object,
@@ -103,31 +101,10 @@ def infer_hint(
     hint sufficient for annotating (i.e., describing, matching, validating) the
     passed object.
 
-    This function is memoized for efficiency. Type hint inference thus exhibits:
-
-    * Amortized :math:`O(1)` constant time complexity for even non-trivially
-      complex pure-Python data structures, amortized across all calls to this
-      function passed the same structures.
-    * Worst-case :math:`O(n)` linear time complexity for the first call to this
-      function passed a non-trivially complex pure-Python data structure, where
-      :math:`n` is the number of objects transitively reachable from that
-      structure.
-
     Caveats
     -------
-    This function accepts **arbitrarily large pure-Python data structures.** To
-    do so, this function necessarily introspects all objects reachable from
-    those structures and thus exhibits worst-case :math:`O(n)` linear time
-    complexity for the first call to this function passed such a structure.
-    Unlike the remainder of :mod:`beartype`, this function does *not* guarantee
-    non-amortized constant-time :math:`O(1)` behaviour by randomly sampling
-    items from arbitrarily large pure-Python data structures. While feasible,
-    doing so would be largely pointless. Why? Because a random sampling of items
-    fails to yield completely accurate type hints. By definition, type hints are
-    expected to be completely accurate. Inaccurate type hints are useless type
-    hints, for all intents and purposes.
-
-    This function accepts **recursive containers** (i.e., pure-Python containers
+    **This function explicitly guards against infinite recursion.** Notably,
+    this function accepts **recursive containers** (i.e., pure-Python containers
     containing one or more items whose values self-referentially refer to the
     same containers). When passed a recursive container, this function guards
     against infinite recursion that would otherwise be induced by that container
@@ -145,43 +122,28 @@ def infer_hint(
        >>> infer_hint(recursive_list)
        ##FIXME: INSERT SANE REPR HERE, PLEASE. *sigh*
 
-    Parameters
-    ----------
-    obj : object
-        Arbitrary object to infer a type hint from.
+    **This function exhibits best-, average-, and worst-case** :math:`O(n)`
+    **linear-time complexity** for :math:`n` the number of nested items
+    transitively contained in the passed object if this object is a container.
+    This differs from most of the public :mod:`beartype` API, which exhibits at
+    worst worst-case amortized :math:`O(1)` constant-time complexity. Although
+    this function could certainly be generalized to support that sort of
+    constant-time complexity, doing so would be largely pointless. Type hint
+    inference only has real-world value insofar as it accurately infers hints.
+    Inference operating in :math:`O(1)` time would necessarily be inaccurate and
+    thus of *no* real-world value. Inference operating in :math:`O(n)` time, on
+    the other hand, accurately infers hints for even arbitrarily large
+    pure-Python containers by introspecting all objects transitively reachable
+    from those containers.
 
-    Returns
-    -------
-    object
-        Type hint inferred from the passed object.
-    '''
-
-    # Defer to the memoized implementation of this function.
-    #
-    # Note that this function itself is intentionally *NOT* memoized. Why?
-    # Keyword parameters. Efficiency is the entire point of memoization. But
-    # keyword parameters are *MUCH* less efficient than positional parameters.
-    # Ergo, the @callable_cached prohibits keyword parameters. However, keyword
-    # parameters are also *MUCH* more usable, readable, and debuggable than
-    # positional parameters. Ergo, this function *MUST* accept keyword
-    # parameters. To resolve this dichotomy:
-    # * This high-level public unmemoized function accepts keyword parameters
-    #   and then passes those parameters on to...
-    # * The lower-level private memoized _infer_hint_cached() function, which
-    #   prohibits keyword parameters.
-    return _infer_hint_cached(obj)
-
-# ....................{ PRIVATE ~ inferers                 }....................
-@callable_cached
-def _infer_hint_cached(
-    # Mandatory parameters.
-    obj: object,
-
-    # Hidden parameters. *GULP*
-    __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
-) -> object:
-    '''
-    Type hint annotating the passed object.
+    **This function cannot be reasonably memoized** (e.g., via the
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator).
+    Technically, this function *could* be memoized... *sorta.* Pragmatically,
+    this function *cannot* be memoized. Most arbitrary objects are mutable and
+    thus unhashable and thus unmemoizable. While feasible, memoizing this
+    function for the small subset of arbitrary objects that are immutable would
+    dramatically increase the space complexity of this function. In short,
+    memoizing arbitrary objects is effectively infeasible.
 
     Parameters
     ----------
@@ -202,11 +164,6 @@ def _infer_hint_cached(
     -------
     object
         Type hint inferred from the passed object.
-
-    See Also
-    --------
-    :func:`.infer_hint`
-        Further details.
     '''
 
     # ....................{ RECURSION                      }....................
@@ -257,7 +214,10 @@ def _infer_hint_cached(
         # For each item in this collection...
         for item in obj:  # type: ignore[attr-defined]
             # Child type hint satisfying this item.
-            hint_child = _infer_hint_cached(item, __beartype_obj_ids_seen__)
+            hint_child = infer_hint(
+                obj=item,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
 
             # Add this child type hint to this set.
             hints_child.add(hint_child)
@@ -306,10 +266,11 @@ only a single child type hint and satisfying the
 
 
 #FIXME: Also add:
-#* "ChainMap".
-#* "Counter".
+#* "Counter". Trivial, but annoying due to "Counter" being subscriptable *ONLY*
+#  be keys rather than both keys and values. *sigh*
 _MAPPING_CLASSNAME_TO_HINT_FACTORY_ARGS_2: Dict[str, object] = {
     'builtins.dict': Dict,
+    'collections.ChainMap': ChainMap,
 }
 '''
 Dictionary mapping from the fully-qualified names of **dual-argument mapping

@@ -100,6 +100,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
+    HintSignCounter,
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
@@ -1591,11 +1592,67 @@ def make_check_expr(
                     )
 
                     # 2-tuple of the possibly ignorable insane child key and
-                    # value hints subscripting this mapping hint.
-                    hint_childs = get_hint_pep484585_args(  # type: ignore[assignment]
-                        hint=hint_curr,
-                        args_len=2,
-                        exception_prefix=EXCEPTION_PREFIX,
+                    # value hints subscripting this mapping hint, defined as
+                    # either...
+                    hint_childs = (
+                        #FIXME: Note that a similar effect can also be achieved
+                        #through a reduction from type hints the form
+                        #"{collections,typing}.Counter[{hint_child}]" to:
+                        #    typing.Annotated[
+                        #        collections.abc.MutableMapping[{hint_child}, int],
+                        #        beartype.vale.IsInstance[collections.Counter]
+                        #    ]
+                        #However, the current approach is even *MORE* trivial
+                        #than that reduction. So, we currently prefer this.
+                        # If this hint describes a "collections.Counter"
+                        # dictionary subclass:
+                        # * The "typing.Counter[...]" type hint factory is
+                        #   subscriptable by only a single key child type hint
+                        #   and assumes the value child type hint typically
+                        #   subscripting dictionary type hint factories to be
+                        #   the standard "int" type (e.g., "typing.Counter[str]"
+                        #   effectively expands to "typing.Counter[str, int]").
+                        # * The "collections.Counter[...]" type hint factory is
+                        #   technically subscriptable by an arbitrary number of
+                        #   child type hints but pragmatically subscriptable by
+                        #   only a single key child type hint. Why? Static
+                        #   type-checkers, which enforce that constraint.
+                        #
+                        # Despite these type-checking assumptions and
+                        # constraints, the "collections.Counter" type is itself
+                        # unconstrained. As of Python 3.13, the
+                        # collections.Counter.__init__() initializer accepts
+                        # arbitrary values that are *NOT* integers: e.g.,
+                        #     >>> from collections import Counter
+                        #     >>> c = Counter({'red': 'no, blue!', 'blue': 4.2})
+                        #     >>> print(c)
+                        #     Counter({'red': 'no, blue!', 'blue': 4.2})  # lol
+                        #
+                        # That permissiveness arguably constitutes a bug in both
+                        # CPython itself *AND* user code attempting such
+                        # shenanigans. Static type-checkers believe this to be
+                        # the case, anyway -- and that's good enough for us.
+                        # @beartype thus explicitly catches these bugs by
+                        # defaulting the undeclared value child type hint for
+                        # counter type hints to be the "int" type.
+                        (
+                            get_hint_pep484585_args(  # type: ignore[assignment]
+                                hint=hint_curr,
+                                args_len=1,
+                                exception_prefix=EXCEPTION_PREFIX,
+                            ),
+                            int,
+                        )
+                        if hint_curr_sign is HintSignCounter else
+                        # Else, this hint does *NOT* describe a
+                        # "collections.Counter" dictionary subclass. In this
+                        # case, introspect the child key and value type hints
+                        # subscripting this parent hint in the standard way.
+                        get_hint_pep484585_args(  # type: ignore[assignment]
+                            hint=hint_curr,
+                            args_len=2,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        )
                     )
 
                     #FIXME: Consider also contextually considering child key

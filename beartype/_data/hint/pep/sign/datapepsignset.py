@@ -203,24 +203,20 @@ This set necessarily excludes:
 '''
 
 
-#FIXME: Consider also adding the following views here:
-#    HintSignItemsView,
-#    HintSignMappingView,
-#
-#That said, we're *NOT* quite sure how these views are actually structured. One
-#or both might present data as 2-tuples of "(key, value)" pairs rather than the
-#standard "dict" API, in which case we definitely should *NOT* add these views
-#here. Instead, we'll need to unroll distinct type-checking logic for these
-#views. Of course, nobody's actually requested this yet. In fact, nobody even
-#appears to know or care about the existence of these data structures. They're
-#probably the least popular and least well-known data structures in the Python
-#pantheon. In other words, they're the ultimate high-hanging fruit. Do this only
-#if somebody complains *OR* we're outrageously bored. So.... never.
-#FIXME: Also add the "HintSignChainMap" sign here. Unlike the views listed
-#above, the "collections.ChainMap" data structure almost certainly presents a
-#similar API to that of "dict" and can thus be type-checked similarly. (Maybe.)
+#FIXME: Consider also adding the "HintSignItemsView" here. That said, we're
+#*NOT* quite sure how this view is actually structured. This view might present
+#data as 2-tuples of "(key, value)" pairs rather than the standard "dict" API,
+#in which case we definitely should *NOT* add this view here. Instead, we'll
+#need to unroll distinct type-checking logic for this view. Of course,
+#nobody's actually requested this yet. In fact, nobody even appears to know or
+#care about the existence of this view. It's probably the least popular and
+#least well-known data structures in the Python pantheon. In other words,
+#they're the ultimate high-hanging fruit. Do this only if somebody complains
+#*OR* we're outrageously bored. So.... never.
 HINT_SIGNS_MAPPING: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
+    # HintSignChainMap,
+    HintSignCounter,
     HintSignDefaultDict,
     HintSignDict,
     HintSignMapping,

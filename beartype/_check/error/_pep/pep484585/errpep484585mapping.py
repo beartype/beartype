@@ -18,6 +18,9 @@ from beartype.typing import (
     Iterable,
     Tuple,
 )
+from beartype._data.hint.pep.sign.datapepsignmap import (
+    HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCounter
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
@@ -47,12 +50,16 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     assert cause.hint_sign in HINT_SIGNS_MAPPING, (
         f'{repr(cause.hint)} not mapping hint.')
 
-    # Assert this mapping was subscripted by exactly two arguments. Note that
-    # prior logic should have already guaranteed this on our behalf.
-    assert len(cause.hint_childs) == 2, (
-        f'2-argument mapping hint {repr(cause.hint)} subscripted by '
-        f'{len(cause.hint_childs)} != 2.')
-    # print(f'Validating mapping {repr(cause.pith)}...')
+    # Number of child type hints expected to be subscripting this hint.
+    hints_child_len_expected = (
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE[cause.hint_sign])
+
+    # Assert this hint was subscripted by the expected number of child type
+    # hints. Note that prior logic should have already guaranteed this.
+    assert len(cause.hint_childs) in hints_child_len_expected, (
+        f'Mapping type hint {repr(cause.hint)} number of child type hints '
+        f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
+    )
 
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "dict" for the hint
@@ -72,9 +79,21 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         return cause
     # Else, this mapping is non-empty.
 
-    # Child key and value hints subscripting this parent mapping hint.
+    # Child key hint subscripting this parent mapping hint.
     hint_key = cause.hint_childs[0]
-    hint_value = cause.hint_childs[1]
+
+    # Child value hint subscripting this parent mapping hint, defined as
+    # either...
+    hint_value = (
+        # If this hint describes a "collections.Counter" dictionary subclass,
+        # the standard "int" type. See related logic in the
+        # beartype._check.code.codemake.make_check_expr() factory for details.
+        int
+        # Else, this hint does *NOT* describes a "collections.Counter"
+        # dictionary subclass. In this case, this child value hint as is.
+        if cause.hint_sign is HintSignCounter else
+        cause.hint_childs[1]
+    )
 
     # True only if these hints are unignorable.
     hint_key_unignorable = hint_key is not None

@@ -55,12 +55,19 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 
 # ....................{ PRIVATE ~ globals                  }....................
-# Note that the builtin "range" class initializer "range.__init__(start, stop)"
-# is effectively instantiated as [start, stop) -- that is to say, such that:
-# * The initial "start" integer is *INCLUSIVE* (i.e., the instantiated range
-#   includes this integer).
-# * The final "stop" integer is *EXCLUSIVE* (i.e., the instantiated range
-#   excludes this integer).
+# Note that the builtin "range" class:
+# * Initializer "range.__init__(start, stop)" is effectively instantiated as
+#   [start, stop) -- that is to say, such that:
+#   * The initial "start" integer is *INCLUSIVE* (i.e., the instantiated range
+#     includes this integer).
+#   * The final "stop" integer is *EXCLUSIVE* (i.e., the instantiated range
+#     excludes this integer).
+# * Publicizes these integers as the instance variables "start" and "stop" such
+#   that these invariants are guaranteed:
+#       >>> range(min, max).start == min
+#       True
+#       >>> range(min, max).stop == max
+#       True
 
 _ARGS_LEN_0 = range(0, 1)  # == [0, 1) == [0, 0]
 '''

@@ -254,6 +254,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignCallable,
         HintSignCollection,
         HintSignContextManager,
+        HintSignCounter,
         HintSignDefaultDict,
         HintSignDeque,
         HintSignDict,
@@ -295,6 +296,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPithUnsatisfiedMetadata,
     )
     from collections import (
+        Counter as CounterType,
         OrderedDict as OrderedDictType,
         defaultdict,
         deque,
@@ -317,6 +319,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         AnyStr,
         Callable,
         Collection,
+        Counter,
         DefaultDict,
         Deque,
         Dict,
@@ -1258,6 +1261,64 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     # does *NOT* declare the value of this key.
                     exception_str_not_match_regexes=(
                         r"\bvalue str 'Thou hast a home,' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ counter                  }................
+        # Unsubscripted "Counter" attribute.
+        HintPepMetadata(
+            hint=Counter,
+            pep_sign=HintSignCounter,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=CounterType,
+            piths_meta=(
+                # Counter containing arbitrary keys.
+                HintPithSatisfiedMetadata(CounterType({
+                    'Or gorgeous insect floating motionless,': 43,
+                    b'Unconscious of the day, ere yet his wings': 85,
+                })),
+            ),
+        ),
+
+        # Counter of unignorable keys.
+        HintPepMetadata(
+            hint=Counter[str],
+            pep_sign=HintSignCounter,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=CounterType,
+            piths_meta=(
+                # Counter mapping strings to integers.
+                HintPithSatisfiedMetadata(CounterType({
+                    'Have spread their glories to the gaze of noon.': 30,
+                    'Hither the Poet came. His eyes beheld': 96,
+                })),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Their own wan light through the reflected lines'),
+                # Counter mapping strings to floating-point numbers.
+                HintPithUnsatisfiedMetadata(CounterType({
+                    'Of that still fountain; as the human heart,': 5.8,
+                    'Gazing in dreams over the gloomy grave,': 7.1,
+                })),
+                # Counter mapping byte strings to strings. Since only the first
+                # key-value pair of counters are type-checked, a counter of one
+                # key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=CounterType({
+                        b'Of his thin hair,': 'distinct in the dark depth'}),
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey bytes b'Of his thin hair,' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'distinct in the dark depth' ",
                     ),
                 ),
             ),
