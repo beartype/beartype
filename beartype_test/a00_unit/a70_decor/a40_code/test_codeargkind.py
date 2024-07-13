@@ -221,7 +221,7 @@ def test_decor_arg_kind_flex_varkw() -> None:
 # ....................{ TESTS ~ keyword                    }....................
 def test_decor_arg_kind_kw_unknown_fail() -> None:
     '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator on
     wrapper functions passed unrecognized keyword parameters.
     '''
 
@@ -229,9 +229,12 @@ def test_decor_arg_kind_kw_unknown_fail() -> None:
     from beartype import beartype
     from pytest import raises
 
-    # Decorated callable to be exercised.
     @beartype
     def tau(kroot: str, vespid: str) -> str:
+        '''
+        Decorated callable to be exercised.
+        '''
+
         return kroot + vespid
 
     # Assert that calling this callable with an unrecognized keyword parameter
@@ -245,6 +248,87 @@ def test_decor_arg_kind_kw_unknown_fail() -> None:
     # currently stable across Python versions and thus robustly testable.
     assert str(exception.value).endswith(
         "tau() got an unexpected keyword argument 'nicassar'")
+
+# ....................{ TESTS ~ variadic                   }....................
+def test_decor_arg_kind_variadic() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on a callable exercising edge
+    cases with respect to variadic positional and keyword parameters.
+
+    Specifically, that callable:
+
+    * Explicitly accepts multiple annotated flexible and keyword-only
+      parameters.
+    * Implicitly accepts an arbitrary number of excess positional parameters via
+      an annotated variadic keyword parameter.
+    * Implicitly accepts an arbitrary number of excess keyword parameters via an
+      annotated variadic keyword parameter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ CALLABLES                      }....................
+    @beartype
+    def images(
+        # Annotated flexible parameter.
+        all_the_woven_boughs: int,
+        # Annotated flexible parameter.
+        above: bytes,
+        *,
+        # Annotated keyword-only parameter.
+        and_each_depending_leaf: float,
+        # Annotated variadic keyword parameter.
+        **and_every_speck: str
+    ) -> int:
+        '''
+        Arbitrary callable decorated by :func:`beartype.beartype`, exercising
+        edge cases with respect to variadic positional and keyword parameters.
+        '''
+
+        return (
+            all_the_woven_boughs +
+            len(above) +
+            int(and_each_depending_leaf) +
+            len(and_every_speck)
+        )
+
+    # ....................{ PASS                           }....................
+    # Assert that this callable returns the expected integer when passed a
+    # joyous medley of both explicitly and implicitly accepted parameters whose
+    # values all satisfy their type hints.
+    assert images(
+        # Pass at least one explicit flexible parameter positionally.
+        len('Of azure sky, darting between their chasms;'),
+        # Pass at least one explicit flexible parameter by keyword.
+        above=b'Images all the woven boughs above,',
+        # Pass at least one explicit keyword-only parameter.
+        and_each_depending_leaf=4.17,
+        # Pass at least two implicit excess keyword parameters.
+        of_azure_sky='darting between their chasms;',
+        nor_aught_else='in the liquid mirror laves',
+    ) == 83
+
+    # ....................{ FAIL                           }....................
+    # Assert that this callable raises the expected exception when passed a
+    # hateful chorus of both explicitly and implicitly accepted parameters, at
+    # least one of whose values violates its type hint.
+    with raises(BeartypeCallHintParamViolation):
+        images(
+            # Pass at least one explicit flexible parameter positionally.
+            len('And each depending leaf, and every speck'),
+            # Pass at least one explicit flexible parameter by keyword.
+            above=b'Its portraiture, but some inconstant star',
+            # Pass at least one explicit keyword-only parameter.
+            and_each_depending_leaf=92.303,
+            # Pass at least two implicit excess keyword parameters, only the
+            # last of which violates its type hint.
+            between_one_foliaged_lattice='twinkling fair',
+            or_painted_bird=b'sleeping beneath the moon',
+        )
 
 # ....................{ TESTS ~ keyword-only               }....................
 # Keyword-only keywords require PEP 3102 compliance, which has thankfully been
@@ -264,7 +348,6 @@ def test_decor_arg_kind_kwonly_mixed() -> None:
     from beartype.typing import Union
     from beartype_test._util.pytroar import raises_uncached
 
-    # Decorated callable to be exercised.
     @beartype
     def my_own_special_plan(
         *,
@@ -272,6 +355,10 @@ def test_decor_arg_kind_kwonly_mixed() -> None:
             'and yet I did not wonder'),
         if_this_creature: Union[set, str],
     ) -> Union[tuple, str]:
+        '''
+        Decorated callable to be exercised.
+        '''
+
         return i_listened_to_these_words + '\n' + if_this_creature
 
     # Assert this function returns the expected value.
