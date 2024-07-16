@@ -103,6 +103,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     reduce_hint_pep484_newtype)
 from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
     reduce_hint_pep484_typevar)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585container import (
+    reduce_hint_pep484585_itemsview)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     reduce_hint_pep484585_type)
 from beartype._util.hint.pep.proposal.utilpep557 import (
@@ -477,6 +479,10 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignTypeVar: reduce_hint_pep484_typevar,
 
     # ..................{ PEP (484|585)                      }..................
+    # If this hint is a PEP 484- or 585-compliant items view type hint, reduce
+    # this hint to a more trivially consumable PEP 593-compliant type hint.
+    HintSignItemsView: reduce_hint_pep484585_itemsview,
+
     # If this hint is a PEP 484- or 585-compliant subclass type hint subscripted
     # by an ignorable child type hint (e.g., "object", "typing.Any"), silently
     # ignore this argument by reducing this hint to the "type" superclass.

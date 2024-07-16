@@ -379,7 +379,7 @@ def _init() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer Python version-specific imports.
+    # Defer function-specific imports.
     from beartype._util.api.utilapityping import import_typing_attr_or_none
     from beartype.typing import (
         AnyStr,
@@ -575,11 +575,11 @@ def _init() -> None:
     # respect to C-based file handles, these APIs are therefore identical.
     # Ergo, the "typing.BinaryIO" subprotocol is mostly useless at runtime.
     #
-    # Note, however, that file handles are necessarily *ALWAYS* opened in
-    # either text or binary mode. This strict dichotomy implies that any file
-    # handle (i.e., object matching the "typing.IO" protocol) *NOT* opened in
-    # text mode (i.e., not matching the "typing.TextIO" protocol) must
-    # necessarily be opened in binary mode instead.
+    # Note, however, that file handles are necessarily *ALWAYS* opened in either
+    # text or binary mode. This strict dichotomy implies that any file handle
+    # (i.e., object matching the "typing.IO" protocol) *NOT* opened in text mode
+    # (i.e., not matching the "typing.TextIO" protocol) must necessarily be
+    # opened in binary mode instead.
     _Pep544BinaryIO = _Pep544IO
 
     #FIXME: Safely replace this with "from typing import Annotated" after
@@ -589,7 +589,7 @@ def _init() -> None:
     # one or more do *OR* "None" otherwise (i.e., if none do).
     typing_annotated = import_typing_attr_or_none('Annotated')
 
-    # If this factory is importable.
+    # If this factory is importable...
     if typing_annotated is not None:
         # Defer heavyweight imports.
         from beartype.vale import IsInstance

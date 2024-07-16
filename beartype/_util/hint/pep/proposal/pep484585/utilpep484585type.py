@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **dual type hint utilities**
-(i.e., callables generically applicable to both :pep:`484`- and
-:pep:`585`-compliant type hints).
+Project-wide :pep:`484`- and :pep:`585`-compliant **subclass type hint
+utilities** (i.e., callables generically applicable to both :pep:`484`- and
+:pep:`585`-compliant subclass type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,6 +22,15 @@ from typing import (
 #FIXME: *PRETTY SURE THIS IS ABSOLUTE TRASH.* Seriously. Unsure what we on about
 #when we originally authored this, but *NONE* of this parses as sane at all.
 #Let's quietly unwind this, please. *facepalm*
+#FIXME: *OH, HO, HO.* This might be essential after all. We note elsewhere:
+#     "Note that:
+#      * This reduction could be performed elsewhere, but remains here as doing
+#        so here dramatically simplifies matters elsewhere.
+#      * This reduction *CANNOT* be performed by the is_hint_ignorable() tester,
+#        as subclass type hints subscripted by ignorable child type hints are
+#        *NOT* ignorable; they're reducible to the "type" superclass."
+#
+#Clearly, we should have documented that here as well. Examine closer, please.
 def reduce_hint_pep484585_type(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
@@ -33,8 +42,7 @@ def reduce_hint_pep484585_type(
     child type hint).
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------

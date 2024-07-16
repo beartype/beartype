@@ -26,6 +26,9 @@ from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ HINTS                              }....................
+#FIXME: Uhh... What? Extreme overkill, thy name is this type hint. Don't bother
+#with an expanded type hint accessible only to other runtime type-checkers.
+#*WHAT* other runtime type-checkers, you know? *sigh*
 # If an external static type checker (e.g., "mypy") is currently subjecting
 # "beartype" to static analysis, reduce this hint to a simplistic facsimile of
 # its full form tolerated by static type checkers.
@@ -46,11 +49,13 @@ else:
         # If the active Python interpreter targets Python >= 3.10, a union
         # additionally matching the PEP 612-compliant "ParamSpec" type.
         (
-            # For hints of the form "Callable[typing.ParamSpec[...], {return_hint}]".
+            # For hints of the form "Callable[typing.ParamSpec[...],
+            # {return_hint}]".
             typing.ParamSpec
             if IS_PYTHON_AT_LEAST_3_10 else
             # Else, the active Python interpreter targets Python < 3.10. In this
-            # case, a meaninglessly redundant type listed above reducing to a noop.
+            # case, a meaninglessly redundant type listed above reducing to a
+            # noop.
             tuple
         )
     ]
@@ -79,15 +84,15 @@ def _die_unless_hint_pep484585_callable(
     hint : object
         Object to be validated.
     exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
+        Type of exception to be raised in the event of fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is either:
 
         * PEP-compliant but *not* uniquely identifiable by a sign.

@@ -252,6 +252,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignAny,
         HintSignByteString,
         HintSignCallable,
+        HintSignChainMap,
         HintSignCollection,
         HintSignContextManager,
         HintSignCounter,
@@ -296,6 +297,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPithUnsatisfiedMetadata,
     )
     from collections import (
+        ChainMap as ChainMapType,
         Counter as CounterType,
         OrderedDict as OrderedDictType,
         defaultdict,
@@ -318,6 +320,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Any,
         AnyStr,
         Callable,
+        ChainMap,
         Collection,
         Counter,
         DefaultDict,
@@ -1216,51 +1219,69 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ MAPPING ~ defaultdict              }................
-        # Unsubscripted "DefaultDict" attribute.
+        # ................{ MAPPING ~ chainmap                 }................
+        # Unsubscripted "ChainMap" attribute.
         HintPepMetadata(
-            hint=DefaultDict,
-            pep_sign=HintSignDefaultDict,
+            hint=ChainMap,
+            pep_sign=HintSignChainMap,
             warning_type=PEP585_DEPRECATION_WARNING,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
-            isinstanceable_type=defaultdict,
+            isinstanceable_type=ChainMapType,
             piths_meta=(
-                # Default dictionary containing arbitrary key-value pairs.
-                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # Chain map containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata(ChainMapType(
+                    {'Sees its own treacherous likeness there.': 'He heard',},
+                    {'The motion of the leaves,': 'the grass that sprung',},
+                )),
                 # Set containing arbitrary items.
                 HintPithUnsatisfiedMetadata({
-                    'It rose as he approached, and with strong wings',
-                    'Scaling the upward sky, bent its bright course',
+                    'Of the sweet brook that from the secret springs',
+                    'Of that dark fountain rose. A Spirit seemed',
                 }),
             ),
         ),
 
-        # Default dictionary of unignorable key-value pairs.
+        # Chain map of unignorable key-value pairs.
         HintPepMetadata(
-            hint=DefaultDict[int, str],
-            pep_sign=HintSignDefaultDict,
+            hint=ChainMap[bytes, str],
+            pep_sign=HintSignChainMap,
             warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=defaultdict,
+            isinstanceable_type=ChainMapType,
             piths_meta=(
-                # Default dictionary mapping integers to strings.
-                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # Chain map mapping byte strings to strings.
+                HintPithSatisfiedMetadata(ChainMapType(
+                    {b'Of grace, or majesty,': 'or mystery;—',},
+                    {b'But, undulating woods,': 'and silent well,',},
+                )),
                 # String constant.
-                HintPithUnsatisfiedMetadata('High over the immeasurable main.'),
-                # Ordered dictionary mapping strings to strings. Since only the
-                # first key-value pair of dictionaries are type-checked, a
-                # dictionary of one key-value pair suffices.
                 HintPithUnsatisfiedMetadata(
-                    pith=default_dict_str_to_str,
+                    'And leaping rivulet, and evening gloom'),
+                # Chain map mapping strings to strings. Note that:
+                # * Only the first key-value pair of dictionaries are
+                #   type-checked. Each dictionary passed to the instantiation of
+                #   a chain map need contain only one key-value pair.
+                # * Contrary to intuition, chain maps iterate in reverse order
+                #   from the *LAST* to the *FIRST* mappings with which those
+                #   chain maps were instantiated.
+                # * Altogether, the prior two bullet points that @beartype
+                #   type-checks only the first key-value pair of the last
+                #   mapping with which a chain map was instantiated.
+                HintPithUnsatisfiedMetadata(
+                    pith=ChainMapType(
+                        {'Now deepening the dark shades,': (
+                            'for speech assuming,'),},
+                        {'Held commune with him,': 'as if he and it',},
+                    ),
                     # Match that the exception message raised for this object
                     # declares the key violating this hint.
                     exception_str_match_regexes=(
-                        r"\bkey str 'His eyes pursued its flight\.' ",
+                        r"\bkey str 'Held commune with him,' ",
                     ),
                     # Match that the exception message raised for this object
                     # does *NOT* declare the value of this key.
                     exception_str_not_match_regexes=(
-                        r"\bvalue str 'Thou hast a home,' ",
+                        r"\bvalue str 'for speech assuming,' ",
                     ),
                 ),
             ),
@@ -1281,6 +1302,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     'Or gorgeous insect floating motionless,': 43,
                     b'Unconscious of the day, ere yet his wings': 85,
                 })),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'Startled and glanced and trembled even to feel',
+                    'An unaccustomed presence, and the sound',
+                }),
             ),
         ),
 
@@ -1319,6 +1345,56 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     # does *NOT* declare the value of this key.
                     exception_str_not_match_regexes=(
                         r"\bvalue str 'distinct in the dark depth' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ defaultdict              }................
+        # Unsubscripted "DefaultDict" attribute.
+        HintPepMetadata(
+            hint=DefaultDict,
+            pep_sign=HintSignDefaultDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=defaultdict,
+            piths_meta=(
+                # Default dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'It rose as he approached, and with strong wings',
+                    'Scaling the upward sky, bent its bright course',
+                }),
+            ),
+        ),
+
+        # Default dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=DefaultDict[int, str],
+            pep_sign=HintSignDefaultDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=defaultdict,
+            piths_meta=(
+                # Default dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # String constant.
+                HintPithUnsatisfiedMetadata('High over the immeasurable main.'),
+                # Default dictionary mapping strings to strings. Since only the
+                # first key-value pair of dictionaries are type-checked, a
+                # default dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=default_dict_str_to_str,
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'His eyes pursued its flight\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'Thou hast a home,' ",
                     ),
                 ),
             ),

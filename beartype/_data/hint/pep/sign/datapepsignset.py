@@ -213,9 +213,11 @@ This set necessarily excludes:
 #least well-known data structures in the Python pantheon. In other words,
 #they're the ultimate high-hanging fruit. Do this only if somebody complains
 #*OR* we're outrageously bored. So.... never.
+#FIXME: *LOL.* We already solved "HintSignItemsView". See the
+#"beartype._check.code.__init__" submodule. *facepalm*
 HINT_SIGNS_MAPPING: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
-    # HintSignChainMap,
+    HintSignChainMap,
     HintSignCounter,
     HintSignDefaultDict,
     HintSignDict,
