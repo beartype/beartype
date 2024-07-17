@@ -311,8 +311,7 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
     # Machine-readable representation of this hint.
     hint_repr = get_hint_repr(hint)
 
-    # Return true only if this representation embeds the representation of
-    # either:
+    # Return true only if this representation embeds the representation of:
     # * A PEP 673-compliant self type hint (i.e., "typing.Self").
     #
     # Note:
@@ -333,9 +332,9 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
     #   to match "Self" type hints stringified by PEP 563. Grrr!
     # * That the "in" operator is known to be the fastest means of performing
     #   substring matching in Python. Indeed:
-    #   * "in" is faster than the str.find() method *SUBSTANTIALLY* faster than
-    #     the re.match() function, which is an entire of magnitude slower than
-    #     "in".
+    #   * "in" is faster than the str.find() method, which is *SUBSTANTIALLY*
+    #     faster than the re.match() function, which is an entire of magnitude
+    #     slower than "in".
     #   * re.match() only begins to catch up to "in" when concurrently testing
     #     for more than 10 or so substrings (e.g., r'(0|1|2|3|4|5|6|7|8|9)').
     #

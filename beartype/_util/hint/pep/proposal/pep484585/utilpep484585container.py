@@ -17,8 +17,6 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._util.api.utilapityping import import_typing_attr_or_none
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args)
 from collections.abc import (
     ItemsView as ItemsViewABC,
 )
@@ -51,38 +49,49 @@ def reduce_hint_pep484585_itemsview(
         More suitable type hint better supported by :mod:`beartype`.
     '''
 
-    #FIXME: Safely replace this with "from typing import Annotated" after
-    #dropping Python 3.8 support.
-    # "typing.Annotated" type hint factory safely imported from whichever of the
-    # "typing" or "typing_extensions" modules declares this attribute if one or
-    # more do *OR* "None" otherwise (i.e., if none do).
-    typing_annotated = import_typing_attr_or_none('Annotated')
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+        get_hint_pep484585_args)
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
 
-    # If this factory is importable...
-    if typing_annotated is not None:
-        # Defer heavyweight imports.
-        from beartype.vale import IsInstance
+    # Reduced hint to be returned, defaulting to the abstract base class (ABC)
+    # of *ALL* items views.
+    hint_reduced = ItemsViewABC
 
-        # Child key and value type hints subscripting this parent type hint.
-        hint_key, hint_value = get_hint_pep484585_args(  # type: ignore[misc]
-            hint=hint, args_len=2, exception_prefix=exception_prefix)
+    # If this hint is subscripted by one or more child type hints...
+    if is_hint_pep_subscripted(hint):
+        #FIXME: Safely replace this with "from typing import Annotated" after
+        #dropping Python 3.8 support.
+        # "typing.Annotated" type hint factory safely imported from whichever of the
+        # "typing" or "typing_extensions" modules declares this attribute if one or
+        # more do *OR* "None" otherwise (i.e., if none do).
+        typing_annotated = import_typing_attr_or_none('Annotated')
 
-        # PEP 593-compliant annotated type annotating...
-        hint = typing_annotated[
-            # A collection of 2-tuples "(key, value)" -- which, interestingly,
-            # is literally what an items view is.
-            #
-            # Look. @beartype doesn't make the insane rules. It just enforces
-            # them. We pretend this makes the world a better place.
-            Collection[Tuple[hint_key, hint_value]],  # type: ignore[valid-type]
-            # Constrain this collection to be an instance of the expected
-            # "collections.abc.ItemsView" abstract base class (ABC).
-            IsInstance[ItemsViewABC],
-        ]
-    # Else, this factory is unimportable. In this case, silently reduce to just
-    # type-checking that an items view is an instance of this ABC. We shrug.
-    else:
-        hint = ItemsViewABC
+        # If this factory is importable...
+        if typing_annotated is not None:
+            # Defer heavyweight imports.
+            from beartype.vale import IsInstance
+
+            # Child key and value type hints subscripting this parent type hint.
+            hint_key, hint_value = get_hint_pep484585_args(  # type: ignore[misc]
+                hint=hint, args_len=2, exception_prefix=exception_prefix)
+
+            # Reduce this hint to a PEP 593-compliant hint annotating...
+            hint_reduced = typing_annotated[
+                # A collection of 2-tuples "(key, value)" -- which, interestingly,
+                # is literally what an items view is.
+                #
+                # Look. @beartype doesn't make the insane rules. It just enforces
+                # them. We pretend this makes the world a better place.
+                Collection[Tuple[hint_key, hint_value]],  # type: ignore[valid-type]
+                # Constrain this collection to be an instance of the expected
+                # "collections.abc.ItemsView" abstract base class (ABC).
+                IsInstance[ItemsViewABC],
+            ]
+        # Else, this factory is unimportable. In this case, reduce to
+        # type-checking that an items view is an instance of this ABC.
+    # Else, this hint is subscripted by *NO* child type hints. In this case,
+    # reduce to type-checking that an items view is an instance of this ABC.
 
     # Return this reduced hint.
-    return hint
+    return hint_reduced

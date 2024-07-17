@@ -412,8 +412,8 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     the contents of this hint).
 
     This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    This tester is only safely callable by the memoized parent
     :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
 
     Parameters
@@ -460,6 +460,35 @@ def is_hint_pep_ignorable(hint: object) -> bool:
         # this hint to be unignorable. Return false.
         False
     )
+
+
+#FIXME: Unit test us up, please.
+def is_hint_pep_subscripted(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed PEP-compliant type hint is **subscripted**
+    (i.e., indexed by one or more child type hints).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    the implementation trivially reduces to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        PEP-compliant type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this PEP-compliant type hint is subscripted.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # Return true only if the tuple of all child type hints subscripting this
+    # hint contains one or more child type hints.
+    return bool(get_hint_pep_args(hint))
 
 
 @callable_cached
@@ -628,7 +657,7 @@ def is_hint_pep_type_typing(hint: object) -> bool:
     return hint_type.__module__ in TYPING_MODULE_NAMES
 
 # ....................{ PRIVATE ~ dicts                    }....................
-# Note that this type hints would ideally be defined with the mypy-specific
+# Note that these type hints would ideally be defined with the mypy-specific
 # "callback protocol" pseudostandard, documented here:
 #     https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
 #

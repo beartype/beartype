@@ -15,7 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
 
 # ....................{ TESTS                              }....................
 # Fine-grained tests are intentionally performed *BEFORE* coarse-grained tests,
@@ -106,17 +105,48 @@ def test_is_hint_pep(hints_pep_meta, hints_nonpep_meta) -> None:
     # "typing" module as normal types indistinguishable from non-"typing" types
     # and thus effectively non-PEP-compliant for all practical intents.
     for hint_nonpep_meta in hints_nonpep_meta:
-        # if is_hint_pep(hint_nonpep_meta.hint) is True:
-        #     from beartype._util.hint.pep.utilpepget import (
-        #         get_hint_pep_sign_or_none)
-        #     hint = hint_nonpep_meta.hint
-        #     print(f'hint {hint} sign: {get_hint_pep_sign_or_none(hint)}')
-
         assert is_hint_pep(hint_nonpep_meta.hint) is False
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert is_hint_pep(not_hint_pep) is False
+
+
+def test_is_hint_pep_subscripted(hints_pep_meta, hints_nonpep_meta) -> None:
+    '''
+    Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_subscripted`
+    tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    hints_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata]
+        Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+
+    # Assert this tester:
+    # * Accepts all subscripted PEP-compliant type hints.
+    # * Rejects all unsubscripted PEP-compliant type hints.
+    for hint_pep_meta in hints_pep_meta:
+        assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
+            hint_pep_meta.is_args)
+
+    # Assert this tester rejects PEP-noncompliant type hints implemented by the
+    # "typing" module as normal types indistinguishable from non-"typing" types
+    # and thus effectively non-PEP-compliant for all practical intents.
+    for hint_nonpep_meta in hints_nonpep_meta:
+        assert is_hint_pep_subscripted(hint_nonpep_meta.hint) is False
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep_subscripted(not_hint_pep) is False
 
 
 #FIXME: Implement us up, please.
@@ -217,6 +247,7 @@ def test_die_if_hint_pep_unsupported(hints_pep_meta) -> None:
         die_if_hint_pep_unsupported)
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
+    from pytest import raises
 
     # Assert this validator...
     for hint_pep_meta in hints_pep_meta:

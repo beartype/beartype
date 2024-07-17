@@ -71,8 +71,9 @@ from beartype._data.hint.datahinttyping import TupleTypes
 if IS_PYTHON_AT_LEAST_3_9:
     def get_hint_pep_args(hint: object) -> tuple:
 
-        # Return the value of the "__args__" dunder attribute if this hint
-        # defines this attribute *OR* "None" otherwise.
+        # Tuple of the zero or more child type hints subscripting this hint if
+        # this hint defines of the "__args__" dunder attribute *OR* "None"
+        # otherwise (i.e., if this hint fails to define this attribute).
         hint_args = getattr(hint, '__args__', None)
 
         # If this hint does *NOT* define this attribute, return the empty tuple.
@@ -80,9 +81,10 @@ if IS_PYTHON_AT_LEAST_3_9:
             return ()
         # Else, this hint defines this attribute.
         #
-        # If this hint appears to be unsubscripted, then this hint *WAS*
-        # actually subscripted by the empty tuple (e.g., "tuple[()]",
-        # "typing.Tuple[()]"). Why? Because:
+        # If this hint is subscripted by zero child type hints, this hint only
+        # superficially appears to be unsubscripted but was actually subscripted
+        # by the empty tuple (e.g., "tuple[()]", "typing.Tuple[()]"). Why?
+        # Because:
         # * Python 3.11 made the unfortunate decision of ambiguously conflating
         #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type
         #   hints subscripted by the empty tuple, preventing downstream
@@ -108,11 +110,11 @@ if IS_PYTHON_AT_LEAST_3_9:
 else:
     def get_hint_pep_args(hint: object) -> tuple:
 
-        # Under python < 3.9, unparametrized generics have the attribute
+        # Under Python < 3.9, unparametrized generics have the attribute
         # "_special" set to True despite the actual "__args__" typically being a
         # "TypeVar" instance. Because we want to differentiate between
-        # unparametrized and parametrized generics, we check whether the hint is
-        # "_special" and if so, return the empty tuple instead of that
+        # unparametrized and parametrized generics, we check whether this hint
+        # is "_special" and if so, return the empty tuple instead of that
         # "TypeVar" instance.
         if getattr(hint, '_special', False):
             return ()
@@ -124,9 +126,11 @@ else:
 
 # Document this function regardless of implementation details above.
 get_hint_pep_args.__doc__ = '''
-    Tuple of all **typing arguments** (i.e., subscripted objects of the passed
-    PEP-compliant type hint listed by the caller at hint declaration time)
-    if any *or* the empty tuple otherwise.
+    Tuple of the zero or more **child type hints** subscripting (indexing) the
+    passed PEP-compliant type hint if this hint was subscripted *or* the empty
+    tuple otherwise (i.e., if this hint is unsubscripted and is thus either an
+    unsubscriptable type hint *or* a subscriptable type hint factory that is
+    unsubscripted).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces

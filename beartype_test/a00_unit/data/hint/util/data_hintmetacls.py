@@ -366,6 +366,7 @@ class HintPepMetadata(HintNonpepMetadata):
 
         # Defer test-specific imports.
         from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+        from beartype._util.hint.utilhintget import get_hint_repr
         from beartype.door import TypeHint
 
         # Validate passed non-variadic parameters.
@@ -379,7 +380,7 @@ class HintPepMetadata(HintNonpepMetadata):
         super().__init__(**kwargs)
 
         # Machine-readable representation of this hint.
-        hint_repr = repr(self.hint)
+        hint_repr = get_hint_repr(self.hint)
 
         # Conditionally default all unpassed parameters.
         if is_args is None:
