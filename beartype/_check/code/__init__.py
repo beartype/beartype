@@ -94,6 +94,8 @@
 #* The object "TypeHint(hint_curr)" should be passed as a new hidden
 #  @beartype-specific "ARG_NAME_TYPEHINT_CALLABLE" parameter to that code,
 #  effectively memoizing the instantiation of that object across repeated calls.
+#  Oh... wait. There could be multiple such parameters required per
+#  @beartype-generated wrapper function. Oh, well. Whatevahs!
 #* Likewise, the object "TypeHint(infer_hint(pith_curr_assign_expr))" can (and
 #  probably should) be monkey-patched onto a new private @beartype-specific
 #  "__beartype_typehint" instance variable of the object "pith_curr_assign_expr"
@@ -107,6 +109,174 @@
 #  * Callables consume a fixed amount of hardly any space. By compare to, say,
 #    an arbitrarily sized pure-Python list or "Big Integer"-style integer, the
 #    space consumed by callables is negligible and constant.
+#
+#  The way to that, in turn, is probably to either:
+#  * Generalize the TypeHint.__new__() initializer to *ACCEPT CALLABLES* and
+#    then infer the type hint from the passed callable by calling infer_hint().
+#    This has the disadvantage, however, of us then needing to implement
+#    monkey-patching in the TypeHint.__new__() initializer for callables --
+#    which doesn't quite seem right, honestly. That's a bit too low-level and
+#    specific to this exact use case to warrant generalizing.
+#  * Define a new private beartype.door._cls.doorcache.make_typehint_callable()
+#    factory function intended to be called *ONLY* from our code generator. This
+#    factory then does the requisite monkey-patching. Sounds good to me! Then
+#    just expose that factory as a new "ARG_NAME_MAKE_TYPEHINT_CALLABLE" hidden
+#    parameter. This is the way:
+#        from beartype.door._cls.doorcache import make_typehint_callable
+#        func_scope[ARG_NAME_MAKE_TYPEHINT_CALLABLE] = make_typehint_callable
+#
+#Combining the above two efficiency concerns then reduces the above code snippet
+#to simply:
+#    {ARG_NAME_MAKE_TYPEHINT_CALLABLE}(pith_curr_assign_expr).is_subhint(
+#        {var_name_typehint_callable})
+#
+# Lastly, simply replace "{var_name_typehint_callable}" with the name of an
+# object dynamically added by calling:
+#      var_name_typehint_callable = add_func_scope_attr(TypeHint(hint_curr))
+#
+#Interestingly, note that neither "TypeHint" nor infer_hint() are required now
+#in the body of wrapper functions. Celebrate.
+#FIXME: *ALMOST THERE.* The last remaining issue is unannotated parameters and
+#returns of the passed "pith_curr_var_name" callable. Those are problems,
+#because the default implementation of the infer_hint() function will probably
+#just default their type hints to "object": e.g.,
+#    >>> @beartype
+#    ... def super_dumb_func(muh_number) -> str:
+#    ...     return str(muh_number)
+#    >>> infer_hint(super_dumb_func)
+#    collections.abc.Callable[[object], str]  # <-- curse you, infer_hint()!
+#
+#That falls down for the exact same reason non-pure-Python callables fall down.
+#"TypeHint(object) <= TypeHint(literally_anything_else) is False" for all
+#possible objects "literally_anything_else", right?
+#
+#Then the solution is similar to the solution for non-pure-Python callables:
+#except, in this case, we really do need to define a new full-blown private
+#"_AlwaysSubhintTypeHint" subclass resembling:
+#      class _AlwaysSubhintTypeHint(TypeHint):  # <-- *THIS IS THE DIFFERENCE*
+#          def is_subhint(obj: object) -> bool:
+#              return True  # <-- lolbro
+#
+#*WAIT.* We don't need that, actually. We just need to augment our private
+#_infer_hint_callable() function to accept an optional
+#"hint_defaults: object = None" parameter. When:
+#* "hint_defaults" is non-"None", _infer_hint_callable() defaults the child hint
+#  for each unannotated parameter or return to the corresponding child hints
+#  subscripting that passed "hint_defaults" parameter -- which is, of course,
+#  the original "Callable[...]" type hint. Hulk smash!
+#* "hint_defaults" is non-"None", _infer_hint_callable() defaults the child hint
+#  for each unannotated parameter or return to the "object" superclass. Simple.
+#
+#Aaaaaaaand... *THAT'S IT.* Finally. Took forever, but we're basically there.
+#FIXME: Of course, we're *NOT* done. Two concerns remain: non-pure-Python
+#callables and @functools.wraps-style wrapper functions.
+#
+#Let's dissect non-pure-Python callables first. If we simply defer to the above
+#one-liner, then non-pure-Python callables would be blindly passed to the
+#infer_hint() function, which then infer their type hints as simply
+#"collections.abc.Callable" or another similar type. If the above "dumb_func"
+#were such a non-pure-Python callable, then:
+#    >>> TypeHint(infer_hint(dumb_func))
+#    collections.abc.Callable
+#    >>> collections.abc.Callable <= TypeHint(
+#    ...     collections.abc.Callable[[int], str])
+#    False
+#
+#In other words, that expression is *GUARANTEED* to always invoke a
+#type-checking failure. But that's a false positive! Some non-pure-Python
+#callables might very well satisfy the signature "Callable[[int], str]". To
+#avoid false positives, we thus need to generalize the above code snippet to
+#*JUST UNCONDITIONALLY ACCEPT ALL NON-PURE-PYTHON CALLABLES*. The solution?
+#
+#...you're not gonna believe this one. We just thought of something truly
+#diabolical. Since we're deferring the type hint inference to a new
+#make_typehint_callable() factory, we can do whatever we like in that factory.
+#Notably, we can:
+#* Define a new *SUPER-JANKY* private "_UnpythonicCallableTypeHint" class that
+#  defines a single is_subhint() method that *ALWAYS* unconditionally returns
+#  "True". That's all that class does. In particular, that class is *NOT*
+#  actually a "TypeHint" subclass. In fact, it's a singleton for efficiency.
+#  This class *ONLY* exists to make this edge case work: e.g.,
+#      class _UnpythonicCallableTypeHint(object):
+#          def is_subhint(obj: object) -> bool:
+#              return True  # <-- lolbro
+#      UNPYTHONIC_CALLABLE_TYPE_HINT = _UnpythonicCallableTypeHint()
+#
+#  Ridiculous, but clever. That's how @beartype was built, folks.
+#* In the make_typehint_callable() factory, detect when a non-pure-Python
+#  callable is passed and just return the "UNPYTHONIC_CALLABLE_TYPE_HINT"
+#  singleton in that case. Hah! Suck it, un-Pythonic callables of the world:
+#  e.g.,
+#      from beartype.door._func.doorinfer import _infer_hint_callable
+#      from beartype._cave._cavefast import FunctionType
+#      from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+#      from collections.abc import Callable
+#
+#      def make_typehint_callable(
+#          func: Callable, hint: object) -> TypeHint:
+#          # If this is a pure-Python callable...
+#          if instance(func, FunctionType):
+#              # Existing "CallableTypeHint" object previously inferred for this
+#              # callable by a prior call to this factory.
+#              func_typehint = getattr(func, '__beartype_typehint', None)
+#
+#              # If *NO* such object has been previously inferred...
+#              if func_typehint is None:
+#                  # Unwrap all isomorphic decorators wrapping this callable.
+#                  func = unwrap_func_all_isomorphic(func)
+#
+#                  #FIXME: For efficiency, just directly call our specific
+#                  #private _infer_hint_callable() function here, please.
+#                  func_hint = _infer_hint_callable(
+#                      func=func, hint_defaults=hint)
+#                  func_typehint = TypeHint(func_hint)
+#                  func.__beartype_typehint = func_typehint
+#          # Else, this is *NOT* a pure-Python callable. In this case, just
+#          # assume this callable satisfies all possible callable type hints to
+#          # avoid false negatives.
+#          else:
+#              func_typehint = UNPYTHONIC_CALLABLE_TYPE_HINT
+#
+#          return func_typehint
+#
+#Lastly, just call the callable() builtin to omit non-callable objects. This
+#leaves us with the final code snippet:
+#    CODE_PEP484585_CALLABLE = '''(
+#    {{indent_curr}}    # True only if this pith is callable *AND*...
+#    {{indent_curr}}    callable({{pith_curr_assign_expr}}) and
+#    {{indent_curr}}    # True only if this pith is either:
+#    {{indent_curr}}    # * A non-pure-Python callable, in which case we simply assume this
+#    {{indent_curr}}    #   callable satisfies this callable type hint to avoid false negatives.
+#    {{indent_curr}}    # * A pure-Python callable, in which case we validate that the type
+#    {{indent_curr}}    #   hints annotating the signature of this callable satisfy this
+#    {{indent_curr}}    #   callable type hint.
+#    {{indent_curr}}    {ARG_NAME_MAKE_TYPEHINT_CALLABLE}(
+#    {{indent_curr}}        {{pith_curr_var_name}}, {{var_name_typehint_callable}}).is_subhint(
+#    {{indent_curr}}        {{var_name_typehint_callable}})
+#    )'''
+#FIXME: Oh -- and note that we can and should optimize that even further with
+#extreme memoization. All of this madness is expensive to call and compute, so
+#let's minimize the pain for the caller with memoization resembling:
+#    CODE_PEP484585_CALLABLE = '''(
+#    {{indent_curr}}    # True only if this pith is callable *AND*...
+#    {{indent_curr}}    callable({{pith_curr_assign_expr}}) and
+#    {{indent_curr}}    # True only if this pith is either:
+#    {{indent_curr}}    # * A non-pure-Python callable, in which case we simply assume this
+#    {{indent_curr}}    #   callable satisfies this callable type hint to avoid false negatives.
+#    {{indent_curr}}    # * A pure-Python callable, in which case we validate that the type
+#    {{indent_curr}}    #   hints annotating the signature of this callable satisfy this
+#    {{indent_curr}}    #   callable type hint.
+#    {{indent_curr}}    {ARG_NAME_IS_SUBHINT_CALLABLE}(
+#    {{indent_curr}}        {{pith_curr_var_name}}, {{var_name_typehint_callable}}
+#    )'''
+#
+#...where "{ARG_NAME_IS_SUBHINT_CALLABLE}" is a new private
+#beartype.door._doorfunc.doorinfer.is_inferred_subhint_callable() tester
+#resembling:
+#     @callable_cached  <-- *THIS IS CRITICAL*
+#     def is_inferred_subhint_callable(callable: Callable, hint: object) -> bool
+#         callable_typehint = make_callable_typehint(callable, hint)
+#         return callable_typehint.is_subhint(hint)
 #FIXME: Note, however, that the above implies a mandatory prerequisite for
 #deeply type-checking callables: namely, that the TypeHint.is_subhint() method
 #fully support both PEP 612-compliant "typing.ParamSpec" and

@@ -2199,8 +2199,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     # this hint.
                     exception_str_match_regexes=(
                         r'\bbuiltins\.dict_items\b',
-                        r'\bindex 0 item\b',
-                        r'\bThou imagest my life\.',
+                        r'\blist index 0 item\b',
+                        r'\bindex 0 item tuple\b',
+                        r'\bindex 0 item bytes\b',
+                        r"b'Thou imagest my life\.'",
                     ),
                 ),
             ),

@@ -56,6 +56,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignDeque,
         HintSignDict,
         HintSignGeneric,
+        HintSignItemsView,
         HintSignKeysView,
         HintSignList,
         HintSignMapping,
@@ -98,6 +99,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Callable,
         Collection,
         Container,
+        ItemsView,
         Iterable,
         KeysView,
         Mapping,
@@ -1299,6 +1301,120 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                         r'\bcollections\.deque\b',
                         r'\bindex 0 item\b',
                         r"\bEre yet\b",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ REITERABLE ~ itemsview             }................
+        # Items view of ignorable key-value pairs.
+        HintPepMetadata(
+            hint=ItemsView[object, Any],
+            pep_sign=HintSignItemsView,
+            isinstanceable_type=ItemsView,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Items view of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    b'That shone within his soul,': 'he went, pursuing',
+                    'Wanton and wild,': b'through many a green ravine',
+                }.items()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'The windings of the dell.—The rivulet'),
+            ),
+        ),
+
+        # Items view of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=ItemsView[str, bytes],
+            pep_sign=HintSignItemsView,
+            isinstanceable_type=ItemsView,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Items view of a dictionary mapping strings to byte strings.
+                HintPithSatisfiedMetadata({
+                    'Beneath the forest flowed.': b'Sometimes it fell',
+                }.items()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Among the moss, with hollow harmony'),
+                # Items view of a dictionary mapping byte strings to strings.
+                # Since only the first items of items views are type-checked, an
+                # items view of a dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={
+                        b'Dark and profound.': 'Now on the polished stones',
+                    }.items(),
+                    # Match that the exception message raised for this items
+                    # view...
+                    exception_str_match_regexes=(
+                        # Declares the fully-qualified type of this items view.
+                        r'\bbuiltins\.dict_items\b',
+                        # Declares the index of the key of the first key-value
+                        # pair of this items view violating this hint.
+                        r'\bindex 0 item\b',
+                        r'\btuple index 0 item bytes\b',
+                        # Preserves this key as is.
+                        r"\bb'Dark and profound\.'",
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic items view.
+        HintPepMetadata(
+            hint=ItemsView[S, T],
+            pep_sign=HintSignItemsView,
+            isinstanceable_type=ItemsView,
+            is_pep585_builtin_subscripted=True,
+            is_typevars=True,
+            piths_meta=(
+                # Items view of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    b'It danced;': 'like childhood laughing as it went:',
+                    b'Then,': 'through the plain in tranquil wanderings crept,',
+                }.items()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Reflecting every herb and drooping bud'),
+            ),
+        ),
+
+        # List of nested items views of unignorable items.
+        #
+        # Note that items views are unhashable and thus *CANNOT* be nested in
+        # parent containers requiring hashability (e.g., as dictionary items).
+        HintPepMetadata(
+            hint=list[ItemsView[str, bytes]],
+            pep_sign=HintSignList,
+            isinstanceable_type=list,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # List of items views of dictionaries mapping strings to byte
+                # strings.
+                HintPithSatisfiedMetadata([
+                    {'That overhung its quietness.—': b'"O stream!',}.items(),
+                    {'Whose source is': b'inaccessibly profound,',}.items(),
+                ]),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Whither do thy mysterious waters tend?'),
+                # List of items views of dictionaries mapping byte strings to
+                # strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[{
+                        b'Thou imagest my life.': 'Thy darksome stillness,',
+                    }.items(),],
+                    # Match that the exception message raised for this items
+                    # view declares all items on the path to the item violating
+                    # this hint.
+                    exception_str_match_regexes=(
+                        r'\bbuiltins\.dict_items\b',
+                        r'\blist index 0 item\b',
+                        r'\bindex 0 item tuple\b',
+                        r'\bindex 0 item bytes\b',
+                        r"b'Thou imagest my life\.'",
                     ),
                 ),
             ),

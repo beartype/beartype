@@ -78,9 +78,9 @@ Python expression.
 # those snippets to efficiently obtain this pith via this efficient variable
 # rather than via this inefficient full Python expression.
 #
-# This snippet is a tautology that is guaranteed to evaluate to :data:`True` whose
-# side effect is this assignment expression. Note that there exist numerous less
-# efficient alternatives, including:
+# This snippet is a tautology that is guaranteed to evaluate to :data:`True`,
+# with the intentional side effect of this assignment expression. Note that
+# there exist numerous less efficient alternatives, including:
 #
 # * ``({pith_curr_assign_expr}).__class__``, which is also guaranteed to evaluate
 #   to :data:`True` but which implicitly triggers the ``__getattr__()`` dunder

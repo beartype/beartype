@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
-from beartype.typing import (
-    Any,
-    Optional,
-)
+from beartype.typing import Optional
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahinttyping import TypeException
 from collections.abc import Callable

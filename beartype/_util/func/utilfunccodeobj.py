@@ -197,72 +197,58 @@ def get_func_codeobj_or_none(
     :func:`.get_func_codeobj`
         Further details.
     '''
-    assert is_unwrap.__class__ is bool, f'{is_unwrap} not boolean.'
+    assert isinstance(is_unwrap, bool), f'{is_unwrap} not boolean.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncwrap import unwrap_func_all
+    from beartype._util.func.utilfunctest import is_func_boundmethod
+    from beartype._util.func.utilfuncwrap import (
+        unwrap_func_all,
+        unwrap_func_boundmethod_once,
+    )
 
-    # Note that:
-    # * For efficiency, tests are intentionally ordered in decreasing likelihood
-    #   of a successful match.
-    # * An equivalent algorithm could also technically be written as a chain of
-    #   "getattr(func, '__code__', None)" calls, but that doing so would both be
-    #   less efficient *AND* render this getter less robust. Why? Because the
-    #   getattr() builtin internally calls the __getattr__() and
-    #   __getattribute__() dunder methods (either of which could raise
-    #   arbitrary exceptions) and is thus considerably less safe.
-    #
+    # For efficiency, tests are intentionally ordered in decreasing likelihood
+    # of a successful match. An equivalent algorithm could also technically be
+    # written as a chain of "getattr(func, '__code__', None)" calls, but doing
+    # so would both be less efficient *AND* render this getter less robust. Why?
+    # Because the getattr() builtin internally calls the __getattr__() and
+    # __getattribute__() dunder methods (either of which could raise arbitrary
+    # exceptions) and is thus considerably less safe.
+
     # If this object is already a code object, return this object as is.
     if isinstance(func, CodeType):
         return func
     # Else, this object is *NOT* already a code object.
     #
+    # If this callable is a bound method, reduce this callable to the unbound
+    # function underlying this bound method.
+    elif is_func_boundmethod(func):
+        func = unwrap_func_boundmethod_once(func)
+    # Else, this callable is *NOT* a pure-Python bound method.
+
+    # Code object to be returned, defaulting to "None".
+    func_codeobj = None
+
     # If this object is a pure-Python function...
     #
-    # Note that this test intentionally leverages the standard
-    # "types.FunctionType" class rather than our equivalent
-    # "beartype.cave.FunctionType" class to avoid circular import issues.
-    elif isinstance(func, FunctionType):
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize this with the same test below (for methods).
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Note that:
+    # * This test is intentionally a new "if" conditional rather than an
+    #   extension of the prior "elif" conditional. Doing so trivially unwraps
+    #   the pure-Python function encapsulated by a bound method descriptor.
+    # * This test intentionally leverages the standard "types.FunctionType"
+    #   class rather than our equivalent "beartype.cave.FunctionType" class to
+    #   avoid circular import issues.
+    if isinstance(func, FunctionType):
         # Return the code object of either:
         # * If unwrapping this function, the lowest-level wrappee wrapped by
         #   this function.
         # * Else, this function as is.
-        return (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+        func_codeobj = (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
     # Else, this object is *NOT* a pure-Python function.
-    #
-    # If this callable is a bound method, return this method's code object.
-    #
-    # Note this test intentionally tests the standard "types.MethodType" class
-    # rather than our equivalent "beartype.cave.MethodBoundInstanceOrClassType"
-    # class to avoid circular import issues.
-    elif isinstance(func, MethodType):
-        # Unbound function underlying this bound method.
-        func = func.__func__
-
-        #FIXME: Can "MethodType" objects actually bind lower-level C-based
-        #rather than pure-Python functions? We kinda doubt it -- but maybe they
-        #can. If they can't, then this test is superfluous and should be
-        #removed with all haste.
-
-        # If this unbound function is pure-Python...
-        if isinstance(func, FunctionType):
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAUTION: Synchronize this with the same test above.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # Return the code object of either:
-            # * If unwrapping this function, the lowest-level wrappee wrapped
-            #   by this function.
-            # * Else, this function as is.
-            return (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
-    # Else, this callable is *NOT* a pure-Python bound method.
     #
     # If this object is a pure-Python generator, return this generator's code
     # object.
     elif isinstance(func, GeneratorType):
-        return func.gi_code
+        func_codeobj = func.gi_code
     # Else, this object is *NOT* a pure-Python generator.
     #
     # If this object is a call stack frame, return this frame's code object.
@@ -274,12 +260,12 @@ def get_func_codeobj_or_none(
         #C-based callable accepting a pure-Python callable as a callback
         #parameter and calling that callback. Are there even C-based callables
         #like that in the wild?
-        return func.f_code
+        func_codeobj = func.f_code
     # Else, this object is *NOT* a call stack frame. Since none of the above
-    # tests matched, this object *MUST* be a C-based callable.
+    # tests matched, this object *MUST* be a C-based callable. Return "None"!
 
-    # Fallback to returning "None".
-    return None
+    # Return this code object.
+    return func_codeobj
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
