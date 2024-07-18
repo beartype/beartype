@@ -40,11 +40,13 @@ from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_typevar_ignorable,
-    is_hint_pep484585_generic_ignorable,
-    is_hint_pep484604_union_ignorable,
 )
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     is_hint_pep484_newtype_ignorable)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    is_hint_pep484585_generic_ignorable)
+from beartype._util.hint.pep.proposal.utilpep484604 import (
+    is_hint_pep484604_union_ignorable)
 from beartype._util.hint.pep.proposal.utilpep544 import is_hint_pep544_ignorable
 from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593_ignorable
 from beartype._util.hint.pep.proposal.utilpep695 import is_hint_pep695_ignorable

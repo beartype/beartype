@@ -721,7 +721,7 @@ def is_object_issubclassable(
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_or_types
-    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+    from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
 
     # If this object is neither...
     if not (
@@ -941,7 +941,7 @@ def _die_if_object_uncheckable(
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import die_unless_type_or_types
-    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+    from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
     # If this object is *NOT* a PEP 604-compliant new union...

@@ -4,13 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`604`-compliant type hint utilities.
+Project-wide :pep:`484`- and :pep:`604`-compliant **union type hint utilities**.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintPep604Exception
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+from beartype._util.utilobject import SENTINEL
+from functools import reduce
+from operator import __or__ as or_operator
 
 # ....................{ VERSIONS                           }....................
 # If the active Python interpreter targets Python >= 3.10 and thus supports PEP
@@ -18,10 +23,9 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 if IS_PYTHON_AT_LEAST_3_10:
     # ....................{ IMPORTS                        }....................
     # Defer version-specific imports.
-    from beartype.roar import BeartypeDecorHintPep604Exception
     from beartype._cave._cavefast import (
         HintPep604Type,
-        HintPep604Types,
+        HintPep604ItemTypes,
     )
 
     # ....................{ RAISERS                        }....................
@@ -33,7 +37,7 @@ if IS_PYTHON_AT_LEAST_3_10:
 
         # If this hint is invalid as an item of a PEP 604-compliant new union,
         # silently reduce to a noop.
-        if not isinstance(hint, HintPep604Types):
+        if not isinstance(hint, HintPep604ItemTypes):
             return
         # Else, this hint is valid as an item of a PEP 604-compliant new union.
 
@@ -205,3 +209,158 @@ is_hint_pep604.__doc__ = (
     bool
         :data:`True` only if this object is a :pep:`604`-compliant union.
     ''')
+
+# ....................{ TESTERS                            }....................
+def is_hint_pep484604_union_ignorable(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`484`- or :pep:`604`-compliant union is
+    ignorable.
+
+    This tester ignores all union factories subscripted by one or more ignorable
+    child type hints, including:
+
+    * The :pep:`484`-compliant :obj:`typing.Optional` (e.g.,
+      ``typing.Optional[object]``).
+    * The :pep:`484`-compliant :obj:`typing.Union` (e.g.,
+      ``typing.Union[typing.Any, bool]``).
+    * All :pep:`604`-compliant new-style unions (e.g., ``bool | object``).
+
+    Why? Because unions are by definition only as narrow as their widest child
+    hint. However, shallowly ignorable type hints are ignorable precisely
+    because they are the widest possible hints (e.g., :class:`object`,
+    :attr:`typing.Any`), which are so wide as to constrain nothing and convey no
+    meaningful semantics. A union of one or more shallowly ignorable child hints
+    is thus the widest possible union, which is so wide as to constrain nothing
+    and convey no meaningful semantics. Since there exist a countably infinite
+    number of possible :data:`Union` subscriptions by one or more ignorable type
+    hints, these subscriptions *cannot* be explicitly listed in the
+    :data:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
+    frozenset. Instead, these subscriptions are dynamically detected by this
+    tester at runtime and thus referred to as **deeply ignorable type hints.**
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
+    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.utilhinttest import is_hint_ignorable
+
+    # Return true only if one or more child hints of this union are recursively
+    # ignorable. See the function docstring.
+    for hint_child in get_hint_pep_args(hint):
+        if is_hint_ignorable(hint_child):
+            return True
+
+    # Return false as a fallback.
+    return False
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def make_hint_pep484604_union(hints: tuple) -> object:
+    '''
+    :pep:`604`- or :pep:`484`-compliant union type hint synthesized from the
+    passed tuple of two or more PEP-compliant type hints if this tuple contains
+    two or more items, the one PEP-compliant type hint in this tuple if this
+    tuple contains only one item, *or* raise an exception otherwise (i.e., if
+    this tuple is empty).
+
+    This factory preferentially creates and returns (in descending order of
+    preference):
+
+    * If *all* of the items in the passed tuple are valid items of a
+      :pep:`604`-compliant **new-style union** (``|``-delimited union of two or
+      more types under Python >= 3.10), that union of these items.
+    * Else, a :pep:`484`-compliant **old-style union** (i.e.,
+      :obj:`typing.Union` subscription) of these items.
+
+    This factory is memoized for efficiency. Technically, the
+    :attr:`typing.Union` type hint factory already caches its subscripted
+    arguments. Pragmatically, that caching is slow and thus worth optimizing
+    with trivial optimization on our end. Moreover, this factory is called by
+    the performance-sensitive
+    :func:`beartype._check.convert.convcoerce.coerce_hint_any` coercer in an
+    early-time code path of the :func:`beartype.beartype` decorator. Optimizing
+    this factory thus optimizes :func:`beartype.beartype` itself. Even more
+    importantly, :pep:`604`-compliant new-style unions are *not* self-caching:
+
+    .. code-block:: pycon
+
+       >>> int | bool is int | bool
+       False  # <-- *BIG YIKES*
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    -------
+    object
+        Either:
+
+        * If this tuple contains two or more items, the union type hint
+          synthesized from these items.
+        * If this tuple contains only one item, this item as is.
+
+    Raises
+    ------
+    BeartypeDecorHintPep604Exception
+        If this tuple is empty.
+    '''
+    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+
+    # If this tuple is empty, raise an exception.
+    if not hints:
+        raise BeartypeDecorHintPep604Exception('"hints" tuple empty.')
+    # Else, this tuple contains one or more child type hints.
+    #
+    # If this tuple contains only one child type hint, return this hint as is.
+    elif len(hints) == 1:
+        return hints[0]
+    # Else, this tuple contains two or more child type hints.
+
+    # Union of these child type hints to be returned.
+    hint_union: object = SENTINEL
+
+    # If the active Python interpreter targets Python >= 3.10 and thus supports
+    # PEP 604...
+    if IS_PYTHON_AT_LEAST_3_10:
+        # Attempt to dynamically fabricate a PEP 604-compliant new-style union
+        # of these items if these items are all PEP 604-compliant.
+        try:
+            hint_union = reduce(or_operator, hints)
+        # If *ANY* exception whatsoever is raised, one or more of these items
+        # are PEP 604-noncompliant. In this case, silently ignore this exception
+        # in favour of falling back to a PEP 484-compliant old-style union
+        # below. We don't make breaky. We only fix breaky, people.
+        except Exception:
+            pass
+    # Else, the active Python interpreter targets Python < 3.10 and thus fails
+    # to support PEP 604.
+
+    # If a PEP 604-compliant new-style union was *NOT* fabricated above...
+    if hint_union is SENTINEL:
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+            make_hint_pep484_union)
+
+        # Fallback to a PEP 484-compliant old-style union.
+        hint_union = make_hint_pep484_union(hints)
+    # Else, a PEP 604-compliant new-style union was fabricated above.
+
+    # Return this union.
+    return hint_union

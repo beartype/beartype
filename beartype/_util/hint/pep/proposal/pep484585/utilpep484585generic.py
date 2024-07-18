@@ -36,6 +36,10 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 )
 from collections.abc import Iterable
 
+# Intentionally import PEP 484-compliant "typing" type hint factories rather
+# than possibly PEP 585-compliant "beartype.typing" type hint factories.
+from typing import Generic
+
 # ....................{ TESTERS                            }....................
 @callable_cached
 def is_hint_pep484585_generic(hint: object) -> bool:
@@ -65,7 +69,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     class usually produces a generic non-class that *must* nonetheless be
     transparently treated as a generic class: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from typing import Generic, TypeVar
        >>> S = TypeVar('S')
@@ -101,6 +105,69 @@ def is_hint_pep484585_generic(hint: object) -> bool:
         # generic and is thus tested last.
         is_hint_pep585_generic(hint)
     )
+
+
+#FIXME: Shift into a more appropriate submodule, please.
+def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`484`- or :pep:`585`-compliant generic
+    is ignorable.
+
+    Specifically, this tester ignores *all* parametrizations of the
+    :class:`typing.Generic` abstract base class (ABC) by one or more type
+    variables. As the name implies, this ABC is generic and thus fails to impose
+    any meaningful constraints. Since a type variable in and of itself also
+    fails to impose any meaningful constraints, these parametrizations are
+    safely ignorable in all possible contexts: e.g.,
+
+    .. code-block:: python
+
+       from typing import Generic, TypeVar
+       T = TypeVar('T')
+       def noop(param_hint_ignorable: Generic[T]) -> T: pass
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
+    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+    # print(f'Testing generic hint {repr(hint)} deep ignorability...')
+
+    # If this generic is the "typing.Generic" superclass directly parametrized
+    # by one or more type variables (e.g., "typing.Generic[T]"), return true.
+    #
+    # Note that we intentionally avoid calling the
+    # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
+    # been intentionally designed to exclude PEP-compliant type hints
+    # originating from "typing" type origins for stability reasons.
+    if get_hint_pep_origin_or_none(hint) is Generic:
+        # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
+        return True
+    # Else, this generic is *NOT* the "typing.Generic" superclass directly
+    # parametrized by one or more type variables and thus *NOT* an ignorable
+    # non-protocol.
+    #
+    # Note that this condition being false is *NOT* sufficient to declare this
+    # hint to be unignorable. Notably, the origin type originating both
+    # ignorable and unignorable protocols is "Protocol" rather than "Generic".
+    # Ergo, this generic could still be an ignorable protocol.
+    # print(f'Testing generic hint {repr(hint)} deep ignorability... False')
+
+    #FIXME: Probably insufficient. *shrug*
+    return False
 
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(

@@ -1050,7 +1050,7 @@ else:
     '''
 
 
-HintPep604Types: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
+HintPep604ItemTypes: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
 '''
 Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
 objects permissible as the items of new unions), including:

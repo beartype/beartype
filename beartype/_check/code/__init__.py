@@ -277,6 +277,66 @@
 #     def is_inferred_subhint_callable(callable: Callable, hint: object) -> bool
 #         callable_typehint = make_callable_typehint(callable, hint)
 #         return callable_typehint.is_subhint(hint)
+#
+#Note that this is a great use case for memoization. We expect
+#is_inferred_subhint_callable() to basically *ALWAYS* return "True". If it
+#doesn't, that's typically a type-checking violation followed by an app halt.
+#FIXME: Of course, given the above, we can now elide away
+#make_callable_typehint() entirely and simply reduce
+#is_inferred_subhint_callable() to:
+#     from beartype.door._func.doorinfer import _infer_hint_callable
+#     from beartype._cave._cavefast import FunctionType
+#     from beartype._util.cache.utilcachecall import callable_cached
+#     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+#     from collections.abc import Callable
+#
+#     #FIXME: *WAIT.* We absolutely *DO* need to memoize this -- but definitely
+#     #*NOT* like this. This approach invites garbage leaks and worse. Instead,
+#     #manually memoize this result as a new monkey-patched
+#     #"__beartype_is_bearable" instance variable on this callable. Note that
+#     #doing so will be non-trivial, due to the need to memoize exceptions and
+#     #warnings as well. So... maybe hold off on this outer memoization for now?
+#     @callable_cached  <-- *THIS IS CRITICAL*
+#     def is_bearable_callable(
+#         callable: Callable, hint: object) -> bool:
+#         # If this is *NOT* a pure-Python callable, assume this callable
+#         # satisfies all possible callable type hints to avoid false negatives.
+#         if not instance(func, FunctionType):
+#             return True  # <-- lol, but what can you do
+#         # Else, this is a pure-Python callable.
+#
+#         #FIXME: Actually, it's even *MORE* efficient to memoize the
+#         #func_typehint.is_subhint() bound method associated with this
+#         #"CallableTypeHint" object. Doing so eliminates a dot lookup when
+#         #calling that method below. *shrug*
+#         # Existing "CallableTypeHint" object previously inferred for this
+#         # callable by a prior call to this factory.
+#         #
+#         # Note that this constitutes a second layer of nested memoization.
+#         # Ordinarily, this would be excessive. This is *NOT* an ordinary
+#         # decoration context, however; this is a frequently called
+#         # type-checking context in which callers expect O(1) behaviour.
+#         # Unfortunately, inferring the type hint from an arbitrary callable
+#         # exhibits O(n) time complexity for "n" the number of parameters
+#         # accepted by that callable -- hardly an O(1) operation despite our
+#         # expectation of "n" being negligibly small on average. Memoizing this
+#         # type hint inference minimizes this cost to amortized O(1) time
+#         # complexity across the current process -- a dramatic improvement.
+#         func_typehint = getattr(func, '__beartype_typehint', None)
+#
+#         # If *NO* such object has been previously inferred...
+#         if func_typehint is None:
+#             # Unwrap all isomorphic decorators wrapping this callable.
+#             func = unwrap_func_all_isomorphic(func)
+#
+#             func_hint = _infer_hint_callable(func=func, hint_defaults=hint)
+#             func_typehint = TypeHint(func_hint)
+#             func.__beartype_typehint = func_typehint
+#         # Else, such object has been previously inferred...
+#
+#         return func_typehint.is_subhint(hint)
+#
+#Shockingly trivial, huh? Yeah. We know. \o/
 #FIXME: Note, however, that the above implies a mandatory prerequisite for
 #deeply type-checking callables: namely, that the TypeHint.is_subhint() method
 #fully support both PEP 612-compliant "typing.ParamSpec" and

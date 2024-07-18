@@ -226,7 +226,7 @@ def is_hint_uncached(hint: object) -> bool:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin_subscripted)
-    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+    from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Avoid detecting the kind of this hint by calling any of the

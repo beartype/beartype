@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import Union
 from beartype._util.cache.utilcachecall import callable_cached
 
@@ -50,10 +51,15 @@ def make_hint_pep484_union(hints: tuple) -> object:
 
     Raises
     ------
-    TypeError
+    BeartypeDecorHintPep484Exception
         If this tuple is empty.
     '''
     assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+
+    # If this tuple is empty, raise an exception.
+    if not hints:
+        raise BeartypeDecorHintPep484Exception('"hints" tuple empty.')
+    # Else, this tuple contains one or more child type hints.
 
     # These are the one-liners of our lives.
     return Union.__getitem__(hints)  # pyright: ignore

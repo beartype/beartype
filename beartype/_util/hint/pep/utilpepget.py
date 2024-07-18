@@ -56,7 +56,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_generic,
 )
 from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.utilpep604 import (
+from beartype._util.hint.pep.proposal.utilpep484604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.py.utilpyversion import (
     # IS_PYTHON_AT_LEAST_3_10,
