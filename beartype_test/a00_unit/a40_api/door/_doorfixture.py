@@ -148,15 +148,23 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # Defer fixture-specific imports.
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype.typing import (
+        Deque,
+        FrozenSet,
+        KeysView,
         List,
+        Set,
+        Tuple,
         Type,
+        Union,
+        ValuesView,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
     )
-    # from collections.abc import (
-    #     Collection as CollectionABC,
-    # )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from collections import (
+        deque,
+    )
 
     # ..................{ LISTS ~ cases                      }..................
     # List of all type hint inference cases (i.e., 2-tuples "(obj, hint)"
@@ -177,16 +185,64 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # subscripted by that class.
         (Class, Type[Class]),
 
-        # ..................{ PEP [484|585] ~ container      }..................
+        # ..................{ PEP [484|585] ~ deque          }..................
+        # A deque of items all of the same class is annotated as the PEP 484- or
+        # 585-compliant "deque" type subscripted by that class.
+        (
+            deque(('On the green moss his tremulous step,', 'that caught',)),
+            Deque[str],
+        ),
+
+        # ..................{ PEP [484|585] ~ frozenset      }..................
+        # A frozen set of items all of the same class is annotated as the PEP
+        # 484- or 585-compliant "frozenset" type subscripted by that class.
+        (
+            frozenset({"I' the passing wind!", 'Beside the grassy shore',}),
+            FrozenSet[str],
+        ),
+
+        # ..................{ PEP [484|585] ~ keysview       }..................
+        # A keys view of keys all of the same class is annotated as the PEP 484-
+        # or 585-compliant "KeysView" type subscripted by that class.
+        ({
+            b'What oozy cavern': 'or what wandering cloud expose',
+            b'Contains thy waters,': 'as the universe',
+        }.keys(), KeysView[bytes]),
+
+        # ..................{ PEP [484|585] ~ list           }..................
         # A list of items all of the same class is annotated as the PEP 484- or
         # 585-compliant "list" type subscripted by that class.
         (['expose', 'extreme', 'explosions!',], List[str]),
 
-        #FIXME: Pick up here tomorrow, please.
-        # # A list of items all of differing classes is annotated as the PEP 484- and
-        # # 585-compliant "list" type subscripted by that class.
-        # (['expose', 'extreme', 'explosions!',], list[str]),
+        # A list of items all of differing classes is annotated as the PEP 484-
+        # and 585-compliant "list" type subscripted by a PEP 604- or
+        # 484-compliant union type hint of those classes -- including...
+        ([
+            # A string.
+            'Thy dazzling waves, thy loud and hollow gulfs,',
+            # A byte string.
+            b'Thy searchless fountain, and invisible course',
+            # An integer.
+            len('Have each their type in me: and the wide sky,'),
+            # A list of strings.
+            ['And measureless ocean', 'may declare', 'as soon',],
+        ], List[
+            # If the active Python interpreter targets Python >= 3.10 and thus
+            # supports PEP 604-compliant new-style unions, this kind of union;
+            str | bytes | int | List[str]
+            if IS_PYTHON_AT_LEAST_3_10 else
+            # Else, the active Python interpreter targets Python < 3.10 and thus
+            # fails to support PEP 604-compliant new-style unions. In this case,
+            # fallback to a PEP 484-compliant old-style union.
+            Union[str, bytes, int, List[str]]
+        ]),
 
+        # ..................{ PEP [484|585] ~ set            }..................
+        # A set of items all of the same class is annotated as the PEP 484- or
+        # 585-compliant "set" type subscripted by that class.
+        ({'Of the small stream he went;', 'he did impress',}, Set[str]),
+
+        # ..................{ PEP [484|585] ~ tuple          }..................
         # # A 2-tuple of items of differing classes (one of which is a nested list
         # # of is annotated as the PEP 484-
         # # and 585-compliant "tuple" type subscripted in a fixed-length manner
@@ -195,6 +251,14 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         #     (b'heh', [0xBEEEEEEEF, 'ohnoyoudont',]).
         #     .
         # )),
+
+        # ..................{ PEP [484|585] ~ valuesview     }..................
+        # A values view of values all of the same class is annotated as the PEP
+        # 484- or 585-compliant "ValuesView" type subscripted by that class.
+        ({
+            'Tell where these living thoughts reside,': b'when stretched',
+            'Upon thy flowers': b'my bloodless limbs shall waste',
+        }.values(), ValuesView[bytes]),
     ]
 
     # Return this mutable list coerced into an immutable tuple for safety.

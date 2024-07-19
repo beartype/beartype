@@ -77,9 +77,8 @@ def test_make_hint_pep484604_union() -> None:
         Union[int, List[str], None]
     )
 
-    # If the active Python interpreter targets Python >= 3.10 and thus
-    # supports both PEP 593 (i.e., "typing.Annotated[...]" type hints) *AND*
-    # 604...
+    # If the active Python interpreter targets Python >= 3.10 and thus supports
+    # both PEP 593 (i.e., "typing.Annotated[...]" type hints) *AND* 604...
     if IS_PYTHON_AT_LEAST_3_10:
         # Defer version-specific imports.
         from beartype.typing import Annotated
@@ -92,7 +91,7 @@ def test_make_hint_pep484604_union() -> None:
             (bool, List[int], None, Annotated[bytes, None])) == Union[
              bool, List[int], None, Annotated[bytes, None]]
     # Else, the active Python interpreter targets Python < 3.10 and thus fails
-    # to support at least PEP 604. In this case, don't even bother. Exit! Exit!
+    # to support at least PEP 604. In this case, don't even bother. Run away!
 
     # ....................{ FAIL                           }....................
     # Assert that this factory raises the expected exception when passed the

@@ -28,8 +28,8 @@ from beartype.typing import (
     ValuesView,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
-    make_hint_pep484_union)
+from beartype._util.hint.pep.proposal.utilpep484604 import (
+    make_hint_pep484604_union)
 from beartype._util.utilobject import get_object_type_name
 from enum import (
     Enum,
@@ -83,10 +83,50 @@ class BeartypeInferHintRecursion(object):
 #bother checking the current CPython version. Just EAFP all the way. Yeah!
 #FIXME: Consider also adding support for standard "collections.abc" protocols.
 #Doing so requires iterative isinstance()-based detection against a laundry list
-#of such protocols. More sighing. *sigh*
+#of such protocols. Note that such iteration should be performed in descending
+#order from most to least specifically useful: e.g.,
+#1. "collections.abc.Sequence", which guarantees random access to *ALL*
+#   container items and is thus clearly the most specifically useful protocol to
+#   detect first.
+#2. "collections.abc.Collection", which guarantees safely efficient access of at
+#   least the first container item and is thus the next most specifically useful
+#   protocol to detect.
+#3. "collections.abc.Container", which is largely useless but better than
+#   nothing... probably. You get the incremental picture.
+#
+#Perform such detection *ONLY* if the class of the passed object is *NOT* a
+#subscriptable generic. If the class of the passed object is a subscriptable
+#generic, then such detection should clearly *NOT* be performed.
+#
+#The goal, ultimately, is to infer a subscriptable type hint factory. If the
+#class of the passed object is *NOT* a subscriptable generic, then a suitable
+#subscriptable type hint factory *MUST* be discovered through iteration.
+#
+#*WAIT.* That's certainly true, mostly -- but is iteration even required? Recall
+#that dict.keys() view objects support efficient intersection with an arbitrary
+#set of strings. Given that, the most efficient approach is actually *NOT* to
+#test against protocols but rather to (in order):
+#* First, decide the set of the names of all methods in the entire MRO for the
+#  class of the passed object. This can probably be efficiently done with an
+#  iterative reduction of, for each class in the MRO of the passed object:
+#  * If this class is slotted, "cls.__slots__".
+#  * Else, "cls.__dict__.keys()".
+#  Note that the "object" superclass conveys *NO* meaningful semantics here and
+#  thus both can and should be safely ignored. If I recall correctly,
+#  "obj.__mro__[:-1]" adequately slices away the "object" superclass.
+#* Next, start at the "top" of the "collections.abc" protocol hierarchy by
+#  iteratively detecting whether the name of standard dunder method is in this
+#  set. There exist multiple discrete "chains" of dunder methods. For example,
+#  the "__contains__" dunder method is at the root of the "Container" chain.
+#  This implies an iterative algorithm resembling:
+#  * If "__contains__" is in this set, then this object is at least a
+#    "Container". Continue testing whether...
+#  * If "__iter__" and "__len__" are also in this set, then this object is at
+#    least a "Collection". Continue testing downward in a similar manner.
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
-#where those types are *NOT* subscriptable. I sigh.
+#where those types are *NOT* subscriptable. Maybe ignore Python 3.8, honestly?
+
 def infer_hint(
     # Mandatory parameters.
     obj: object,
@@ -196,13 +236,14 @@ def infer_hint(
     obj_classname = get_object_type_name(obj)
 
     # Single-argument collection type hint factory that generates type hints
-    # satisfying this object if any *OR* "None" otherwise (i.e., if no such
-    # factory satisfies this object).
+    # validating this object if any *OR* "None" otherwise (i.e., if no such
+    # factory validates this object).
     hint_factory_args_1 = _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
         obj_classname)
 
-    # If a single-argument collection type hint factory satisfies this object,
-    # this object is a collection of zero or more items. In this case...
+    # If this object is validated by a single-argument collection type hint
+    # factory, this object is a collection of zero or more items. In this
+    # case...
     if hint_factory_args_1 is not None:
         # Add the integer uniquely identifying this collection to this set to
         # note that this collection has now been visited by this recursion.
@@ -213,7 +254,7 @@ def infer_hint(
 
         # For each item in this collection...
         for item in obj:  # type: ignore[attr-defined]
-            # Child type hint satisfying this item.
+            # Child type hint validating this item.
             hint_child = infer_hint(
                 obj=item,
                 __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
@@ -222,20 +263,21 @@ def infer_hint(
             # Add this child type hint to this set.
             hints_child.add(hint_child)
 
-        #FIXME: Refactor as follows, please:
-        #* Define a new make_hint_pep484604_union() factory.
-        #* Call that factory here instead.
-        # PEP 484- or 604-compliant union of these child type hints.
-        hints_child_union = make_hint_pep484_union(tuple(hints_child))
+        # PEP 604- or 484-compliant union of these child type hints.
+        hints_child_union = make_hint_pep484604_union(tuple(hints_child))
 
+        # Parent type hint recursively validating this collection (including
+        # *ALL* items transitively reachable from this collection), defined by
+        # subscripting this factory by this union.
         hint = (
             hint_factory_args_1[hints_child_union, ...]  # type: ignore[index]
             if hint_factory_args_1 is Tuple else
             hint_factory_args_1[hints_child_union]  # type: ignore[index]
         )
 
+        # Return this hint.
         return hint
-    # Else, no such factory satisfies this object.
+    # Else, this object is *NOT* validated by such a factory.
 
     # ....................{ FALLBACK                       }....................
     # Type of this object.
