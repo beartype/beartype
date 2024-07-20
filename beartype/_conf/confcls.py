@@ -194,9 +194,6 @@ class BeartypeConf(object):
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize this slots list with the implementations of:
     # * The __new__() dunder method.
-    # * The __eq__() dunder method.
-    # * The __hash__() dunder method.
-    # * The __repr__() dunder method.
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.

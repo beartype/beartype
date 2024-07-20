@@ -27,7 +27,6 @@ from beartype.typing import (
     Type,
     ValuesView,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.utilpep484604 import (
     make_hint_pep484604_union)
 from beartype._util.utilobject import get_object_type_name
@@ -57,6 +56,7 @@ class BeartypeHintInferrence(Enum):
 
     RECURSIVE = next_enum_member_value()
 
+
 class BeartypeInferHintRecursion(object):
     '''
 
@@ -81,48 +81,6 @@ class BeartypeInferHintRecursion(object):
 #widely varies across CPython versions -- with newer versions supporting more
 #possible types for inclusion in PEP 604-compliant type unions. Don't even
 #bother checking the current CPython version. Just EAFP all the way. Yeah!
-#FIXME: Consider also adding support for standard "collections.abc" protocols.
-#Doing so requires iterative isinstance()-based detection against a laundry list
-#of such protocols. Note that such iteration should be performed in descending
-#order from most to least specifically useful: e.g.,
-#1. "collections.abc.Sequence", which guarantees random access to *ALL*
-#   container items and is thus clearly the most specifically useful protocol to
-#   detect first.
-#2. "collections.abc.Collection", which guarantees safely efficient access of at
-#   least the first container item and is thus the next most specifically useful
-#   protocol to detect.
-#3. "collections.abc.Container", which is largely useless but better than
-#   nothing... probably. You get the incremental picture.
-#
-#Perform such detection *ONLY* if the class of the passed object is *NOT* a
-#subscriptable generic. If the class of the passed object is a subscriptable
-#generic, then such detection should clearly *NOT* be performed.
-#
-#The goal, ultimately, is to infer a subscriptable type hint factory. If the
-#class of the passed object is *NOT* a subscriptable generic, then a suitable
-#subscriptable type hint factory *MUST* be discovered through iteration.
-#
-#*WAIT.* That's certainly true, mostly -- but is iteration even required? Recall
-#that dict.keys() view objects support efficient intersection with an arbitrary
-#set of strings. Given that, the most efficient approach is actually *NOT* to
-#test against protocols but rather to (in order):
-#* First, decide the set of the names of all methods in the entire MRO for the
-#  class of the passed object. This can probably be efficiently done with an
-#  iterative reduction of, for each class in the MRO of the passed object:
-#  * If this class is slotted, "cls.__slots__".
-#  * Else, "cls.__dict__.keys()".
-#  Note that the "object" superclass conveys *NO* meaningful semantics here and
-#  thus both can and should be safely ignored. If I recall correctly,
-#  "obj.__mro__[:-1]" adequately slices away the "object" superclass.
-#* Next, start at the "top" of the "collections.abc" protocol hierarchy by
-#  iteratively detecting whether the name of standard dunder method is in this
-#  set. There exist multiple discrete "chains" of dunder methods. For example,
-#  the "__contains__" dunder method is at the root of the "Container" chain.
-#  This implies an iterative algorithm resembling:
-#  * If "__contains__" is in this set, then this object is at least a
-#    "Container". Continue testing whether...
-#  * If "__iter__" and "__len__" are also in this set, then this object is at
-#    least a "Collection". Continue testing downward in a similar manner.
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
 #where those types are *NOT* subscriptable. Maybe ignore Python 3.8, honestly?
