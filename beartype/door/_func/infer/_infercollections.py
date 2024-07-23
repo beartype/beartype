@@ -69,6 +69,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.kind.datakinddict import DICT_EMPTY
 
 # ....................{ INFERERS                           }....................
 def infer_hint_collections(
@@ -143,7 +144,11 @@ def infer_hint_collections(
     '''
 
     # ....................{ RECURSION                      }....................
-    pass
+    # Type of the passed object.
+    obj_type = obj.__class__
+
+    #FIXME: Implement us up, please. *sigh*
+    return None
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[
@@ -166,8 +171,8 @@ PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
     :func:`.infer_hint_collections` function defines *all* of these methods,
     then this FSM performs a similar transition as in the prior case.
 
-* Values describe the **nodes** (i.e., :class:`._FiniteStateMachineNode` instances)
-  of this FSM to follow these transitions to.
+* Values describe the **nodes** (i.e., :class:`._FiniteStateMachineNode`
+  instances) of this FSM to follow these transitions to.
 '''
 
 # ....................{ PRIVATE ~ classes                  }....................
@@ -188,13 +193,23 @@ class _FiniteStateMachineNode(object):
           transitions to actual nodes containing meaningful content.
         * Else, the type hint factory validating the passed object (e.g.,
           :class:`collections.abc.Container` if that object is a container).
-    node_transitions : Optional[_FiniteStateMachine]
+    node_transition_method_names : FrozenSet[str]
+        Frozen set of the names of all **transition methods** (i.e., one or more
+        methods required to be defined by the passed object for this FSM to
+        transition from this node to another node). This frozen set is a
+        non-negligible optimization enabling this FSM to exhibit non-amortized
+        best-case constant :math:`O(1)` time complexity. Why? Because, in the
+        best case, the :func:`.infer_hint_collections` function is passed an
+        object whose type defines *no* methods in this frozen set and thus
+        immediately reduces to a noop.
+    node_transitions : _FiniteStateMachine
         Either:
 
-        * If this is a **stop node** of this FSM, :data:`None`.
-        * Else, the proper subset of the full FSM mapping the transitions
-          directed out of this node to the neighbouring nodes those transitions
-          transition to.
+        * If this is a **stop node** of this FSM, the empty dictionary.
+        * Else, this is a **transitionary node** of this FSM. In this case, this
+          instance variable provides the **transition FSM** (i.e., proper subset
+          of the full FSM, mapping the transitions directed out of this node to
+          the neighbouring nodes those transitions transition to) of this node.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -212,6 +227,7 @@ class _FiniteStateMachineNode(object):
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'hint_factory',
+        'node_transition_method_names',
         'node_transitions',
     )
 
@@ -219,7 +235,8 @@ class _FiniteStateMachineNode(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         hint_factory: object
-        node_transitions: Optional[_FiniteStateMachine]
+        node_transition_method_names: FrozenSet[str]
+        node_transitions: _FiniteStateMachine
 
     # ..................{ INITIALIZERS                       }..................
     #FIXME: Docstring us up, please.
@@ -228,7 +245,7 @@ class _FiniteStateMachineNode(object):
 
         # Optional parameters.
         hint_factory: object = None,
-        node_transitions: Optional[_FiniteStateMachine] = None,
+        node_transitions: _FiniteStateMachine = DICT_EMPTY,
     ) -> None:
         '''
 
@@ -247,21 +264,57 @@ class _FiniteStateMachineNode(object):
         finite_state_machine: _FiniteStateMachine
             Either:
 
-            * If this is a **stop node** of this FSM, :data:`None`.
+            * If this is a **stop node** of this FSM, the empty dictionary.
             * Else, the proper subset of the full FSM mapping the transitions
               directed out of this node to the neighbouring nodes those
               transitions transition to.
 
-            Defaults to :data:`None`.
+            Defaults to the empty dictionary.
         '''
-        assert isinstance(node_transitions, NoneTypeOr[dict]), (
-            f'{repr(node_transitions)} neither dictionary nor "None".')
+        assert isinstance(node_transitions, dict), (
+            f'{repr(node_transitions)} not dictionary.')
 
         # Classify all passed parameters.
         self.hint_factory = hint_factory
         self.node_transitions = node_transitions
 
+        # Frozen set of the names of all transition methods, initialized to the
+        # empty set.
+        node_transition_method_names = set()
+
+        # For the string or frozen set of all transition methods *AND* FSM nodes
+        # to which those methods transition...
+        for node_transition_key, node_transition_value in (
+            node_transitions.items()):
+            # Validate the types of this key-value pair.
+            assert isinstance(
+                node_transition_key, _NODE_TRANSITION_KEY_TYPES), (
+                f'{repr(node_transition_key)} neither string nor frozen set.')
+            assert isinstance(node_transition_value, _FiniteStateMachineNode), (
+                f'{repr(node_transition_value)} not "_FiniteStateMachineNode".')
+
+            # If this transition method name(s) is a string, add this name to
+            # this set.
+            if isinstance(node_transition_key, str):
+                node_transition_method_names.add(node_transition_key)
+            # Else, this transition method name(s) is a frozen set of strings.
+            # In this case, update this set with this names.
+            else:
+                node_transition_method_names.update(node_transition_key)
+
+        # Classify this set as a frozen set for safety.
+        self.node_transition_method_names = frozenset(
+            node_transition_method_names)
+
 # ....................{ PRIVATE ~ globals                  }....................
+_NODE_TRANSITION_KEY_TYPES = (str, frozenset)
+'''
+**Transition methods type tuple** (i.e., tuple of the types of all keys of the
+``node_transitions`` parameter accepted by the
+:meth:`_FiniteStateMachineNode.__init__` method).
+'''
+
+
 #FIXME: Expensive to compute. Isolate to a @callable_cache-decorated
 #get_machine_start_node() getter to defer this computation until required.
 _MACHINE_START_NODE = _FiniteStateMachineNode(

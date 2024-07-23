@@ -189,7 +189,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
                 # only obfuscates the truth. Thankfully, the low-level
                 # "importlib"-specific spec object publishes the fully-qualified
                 # name of this actual user-defined module. I sleep now. *zzzzzz*
-                return super().__getitem__(__main__.__spec__.name)
+                return super().__getitem__(__main__.__spec__.name)  # type: ignore[union-attr]
 
             # Raise a high-level human-readable exception instead.
             raise BeartypeClawImportConfException(

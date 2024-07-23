@@ -232,7 +232,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
         # runtime during module importation.
         node_conf = Subscript(
             value=node_module_name_to_conf,
-            slice=node_module_name_index,  # pyright: ignore
+            slice=node_module_name_index,  # type: ignore[arg-type]
             ctx=NODE_CONTEXT_LOAD,
         )
 

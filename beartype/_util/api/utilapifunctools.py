@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :mod:`functools` utilities (i.e., low-level callables handling the
-standard :mod:`functools` module).
+Project-wide :mod:`functools` utilities (i.e., low-level callables handling
+functionality defined by the standard :mod:`functools` module).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

@@ -84,6 +84,8 @@ class BeartypeInferHintRecursion(object):
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
 #where those types are *NOT* subscriptable. Maybe ignore Python 3.8, honestly?
+#FIXME: Special-case instances of all other builtin types (e.g., integers,
+#strings) to immediately return those types for efficiency.
 
 def infer_hint(
     # Mandatory parameters.

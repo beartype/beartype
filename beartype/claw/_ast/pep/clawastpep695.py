@@ -259,7 +259,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
             # Assign the key of the returned dictionary whose name is given by
             # the "BeartypeForwardRefABC.__name_beartype__" class variable of
             # this proxy, stored in the scratch variable.
-            slice=node_forwardref_name_load,  # pyright: ignore
+            slice=node_forwardref_name_load,  # type: ignore[arg-type]
             ctx=NODE_CONTEXT_STORE,
         )
 
