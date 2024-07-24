@@ -208,12 +208,12 @@ def beartype_type(
             is_attr_beartypeable and
             # It is *NOT* the case that...
             #
-            # Note that this condition intentionally excludes class variables
-            # whose values are types from consideration, thus preventing
-            # @beartype from erroneously decorating those types. Why? Because
-            # the caller did *NOT* explicitly instruct us to decorate those
-            # types. Moreover, attempting to do so can ignite infinite recursion
-            # in common edge cases and is thus fundamentally dangerous.
+            # Note that this condition intentionally ignores class variables
+            # whose values are types, thus preventing @beartype from erroneously
+            # decorating those types. Why? Because the caller did *NOT*
+            # explicitly instruct us to decorate those types. Moreover,
+            # attempting to do so could ignite infinite recursion in common edge
+            # cases and is thus fundamentally dangerous.
             #
             # Consider this sample user-defined class:
             #     class ParentClass(object):
@@ -251,11 +251,11 @@ def beartype_type(
             # In both the best and worst cases above, class variables whose
             # values are types *CANNOT* be safely decorated by @beartype.
             not (
-                # This attribute is a class *AND*...
+                # The value of this attribute is also a class *AND*...
                 isinstance(attr_value, type) and
-                # This class was declared elsewhere and merely defined here as a
+                # That class was declared elsewhere and merely defined here as a
                 # class attribute of the currently decorated class whose value
-                # is this class (rather than as a nested class of the currently
+                # is that class (rather than as a nested class of the currently
                 # decorated class)...
                 not attr_value.__qualname__.startswith(cls.__qualname__)
             )

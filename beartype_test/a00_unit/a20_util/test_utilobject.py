@@ -132,6 +132,22 @@ def test_get_object_attrs_name_to_value_explicit() -> None:
     assert 'as_one' not in yet_not_like_him
     assert 'from_the_couch' not in yet_not_like_him
 
+    # List of the names of all attributes bound to this object.
+    of_fever_dir = dir(of_fever)
+
+    # Remove an arbitrary method name from this list.
+    of_fever_dir.remove('some_joyous_madness')
+
+    # Assert this getter returns the expected dictionary when passed this
+    # instance with this list.
+    yet_not_like_him = get_object_methods_name_to_value_explicit(
+        obj=of_fever, obj_dir=of_fever_dir)
+    assert yet_not_like_him['from_his_burning_limbs'] is (
+        StrongShuddering.from_his_burning_limbs)
+    assert 'as_one' not in yet_not_like_him
+    assert 'from_the_couch' not in yet_not_like_him
+    assert 'some_joyous_madness' not in yet_not_like_him
+
 # ....................{ TESTS ~ getter : name              }....................
 def test_get_object_basename_scoped() -> None:
     '''

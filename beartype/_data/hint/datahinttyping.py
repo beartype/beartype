@@ -403,6 +403,22 @@ zero or more 2-tuples of the form ``(item_index, item)``, where:
 * ``item`` is the currently enumerated item.
 '''
 
+# ....................{ OBJECT                             }....................
+GetObjectAttrsDir = Optional[List[str]]
+'''
+PEP-compliant type hint matching the ``obj_dir`` parameter accepted by all
+**object attribute getters** (e.g.,
+:func:`beartype._util.utilobject.get_object_attrs_name_to_value_explicit`).
+'''
+
+
+GetObjectAttrsPredicate = Optional[Callable[[str, object], bool]]
+'''
+PEP-compliant type hint matching the ``predicate`` parameter accepted by all
+**object attribute getters** (e.g.,
+:func:`beartype._util.utilobject.get_object_attrs_name_to_value_explicit`).
+'''
+
 # ....................{ PATH                               }....................
 CommandWords = IterableStrs
 '''

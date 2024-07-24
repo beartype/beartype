@@ -64,26 +64,56 @@ from beartype.typing import (
     MutableSequence,
     Sequence,
     Set,
-    Tuple,
+    # Tuple,
     Optional,
     Union,
 )
-from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.utilobject import get_object_methods_name_to_value_explicit
 
 # ....................{ INFERERS                           }....................
-def infer_hint_collections(
+#FIXME: Unit test us up, please.
+@callable_cached
+def infer_hint_type_collections_abc(
     # Mandatory parameters.
-    obj: object,
+    cls: type,
 
     # Hidden parameters. *GULP*
     __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
-) -> object:
+) -> Optional[object]:
     '''
-    Type hint annotating the passed object with respect to the standard hierachy
-    of abstract base classes (ABCs) published by the :mod:`collections.abc`
-    subpackage.
+    Narrowest **collections ABC** (i.e., abstract base class published by the
+    :mod:`collections.abc` subpackage) validating the passed class if at least
+    one collections ABC validates this class *or* :data:`None` otherwise (i.e.,
+    if *no* collections ABC validates this class).
 
+    This function returns the "narrowest" collections ABC, defined such that:
+
+    * The passed class is a **virtual subclass** of (i.e., defines all methods
+      required by) this ABC.
+    * This ABC is **maximally narrow.** Formally:
+
+      * The passed class is a virtual subclass of *no* other collections ABCs
+        that are themselves virtual subclasses of this ABC.
+      * Equivalently, this ABC is **larger** (i.e., defines more abstract
+        methods) than all other collections ABCs that the passed class is a
+        virtual subclass of.
+
+    This function does *not* return a type hint annotating the passed class.
+    This function merely returns a subscriptable type hint factory suitable for
+    the caller to subscript with a child type hint, which then produces the
+    desired type hint annotating the passed class. Why this indirection? In a
+    word: efficiency. If this function recursively inferred and returned a type
+    hint, this function would then need to guard against infinite recursion by
+    accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
+    parent :func:`beartype.door._func.infer.infermain.infer_hint` function;
+    doing so would prevent memoization, substantially reducing efficiency.
+
+    This function is memoized for efficiency.
+
+    Design
+    ------
     This function efficiently infers the narrowest :mod:`collections.abc` ABC
     applicable to the passed object by introspecting the set of all **dunder
     methods** (i.e., methods whose names are both prefixed and suffixed by the
@@ -108,18 +138,21 @@ def infer_hint_collections(
     -------
     This function exhibits:
 
-    * Best-case constant-time complexity :math:`O(1)`, which occurs when the
-      passed object satisfies *no* :mod:`collections.abc` ABC.
-    * Average-case linear-time complexity :math:`O(k)` where ``k`` is the number
-      of :mod:`collections.abc` ABCs subclassing the
+    * **Best-case constant time complexity** :math:`O(n)` where ``n`` is the
+      number of attributes bound to the passed class, which occurs when the
+      passed class satisfies *no* :mod:`collections.abc` ABC.
+    * **Average-case linear time complexity** :math:`O(n + k)` where ``n`` is the
+      number of attributes bound to the passed class and ``k`` is the number of
+      :mod:`collections.abc` ABCs subclassing the
       :class:`collections.abc.Container` superclass, which occurs when the
-      passed object is a common **container** (i.e., satisfies at least the root
-      :class:`collections.abc.Container` ABC).
-    * Worst-case quadratic-time complexity :math:`O(jk)` where ``j`` is the
-      number of :mod:`collections.abc` ABC superclasses (i.e., ABCs at the root
-      of a hierarchy of ABCs) and ``k`` is the largest number of
+      passed class is that of a **standard container** (i.e., satisfies at least
+      the root :class:`collections.abc.Container` ABC).
+    * **Worst-case quadratic time complexity** :math:`O(n + jk)` where ``n`` is
+      the number of attributes bound to the passed class, ``j`` is the number of
+      :mod:`collections.abc` ABC superclasses (i.e., ABCs at the root of a
+      hierarchy of ABCs), and ``k`` is the largest number of
       :mod:`collections.abc` ABCs subclassing such a superclass, which occurs
-      when the passed object satisfies only an uncommon :mod:`collections.abc`
+      when the passed class satisfies only an uncommon :mod:`collections.abc`
       ABC superclass.
 
     Parameters
@@ -127,28 +160,109 @@ def infer_hint_collections(
     obj : object
         Arbitrary object to infer a type hint from.
     __beartype_obj_ids_seen__ : FrozenSet[int]
-        **Recursion guard** (i.e., frozen set of the integers uniquely
-        identifying all previously visited containers passed as the ``obj``
-        parameter to some recursive parent call of this same function on the
-        current call stack). If the object identifier (ID) of passed object
-        already resides in this recursion guard, then that object has already
-        been visited by a prior call to this function in the same call stack
-        and is thus a recursive container; in that case, this function
-        short-circuits infinite recursion by returning a placeholder instance of
-        the :class:`.BeartypeInferHintRecursion` class describing this issue.
+        Recursion guard. See also the parameter of the same name accepted by the
+        :func:`beartype.door._func.infer.infermain.infer_hint` function.
 
     Returns
     -------
-    object
-        Type hint inferred from the passed object.
+    Optional[object]
+        Either:
+
+        * If at least one :mod:`collections.abc` ABC validates this class, the
+          narrowest such ABC.
+        * Else, :data:`None`.
     '''
+    assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    # ....................{ RECURSION                      }....................
-    # Type of the passed object.
-    obj_type = obj.__class__
+    # ....................{ PREAMBLE                       }....................
+    # List of the names of all attributes bound to this class.
+    cls_attr_names = dir(cls)
 
-    #FIXME: Implement us up, please. *sigh*
-    return None
+    # If the intersection of the set of the names of all attributes bound to
+    # this class with the set of the names of all requisite methods (i.e.,
+    # methods required to transition from the start node to a transitional node)
+    # is the empty set, then this class fails to define *ANY* methods required
+    # by a "collections.abc" ABC. In this case, silently reduce to a noop.
+    if not (set(cls_attr_names) & _START_NODE_TRANSITION_METHOD_NAMES):
+        return None
+    # Else, this intersection is non-empty. In this case, this class defines at
+    # least one attribute whose name is that of a method required by a
+    # "collections.abc" ABC.
+    #
+    # Note that this does *NOT* necessarily imply that this class defines at
+    # least one such method. Clearly, an instance variable of the same name is
+    # *NOT* a method: e.g.,
+    #     # This class does *NOT* satisfy the "collections.abc.Sized" protocol
+    #     # despite defining the "__sized__" attribute, as that attribute is
+    #     # *NOT* a method.
+    #     class FakeSized(object):
+    #         __sized__: int
+    #
+    # Further detection is warranted to disambiguate this edge case.
+
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the names of all methods of the passed class to
+    # those methods.
+    cls_methods_name_to_method = get_object_methods_name_to_value_explicit(
+        obj=cls, obj_dir=cls_attr_names)
+
+    # Set of the names of all methods bound to this class.
+    cls_method_names = cls_methods_name_to_method.keys()
+
+    # Finite state machine (FSM) node currently visited by the search below.
+    node_curr = _START_NODE
+
+    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
+    hint_factory: Optional[object] = None
+
+    # ....................{ SEARCH                         }....................
+    # While some FSM node is still being visited by this search...
+    while True:
+        # If the intersection of the set of the names of all methods bound to
+        # this class with the set of the names of any methods required by one or
+        # more "collections.abc" ABCs reachable from the current FSM node is
+        # empty, no further FSM transitions can be made. In this case, the
+        # current "collections.abc" ABC validating this class is the narrowest
+        # such ABC. Halt searching and return this ABC.
+        if not (cls_method_names & node_curr.node_transition_method_names):
+            break
+        # Else, this intersetion is non-empty. In this case, at least one FSM
+        # transition can be made. In this case, the current "collections.abc"
+        # ABC validating this class is *NOT* the narrowest such ABC. Continue
+        # searching for the narrowest such ABC.
+
+        # For the string or frozen set of all transition methods *AND* FSM nodes
+        # to which those methods transition...
+        for cls_method_names_test, node_next in (
+            node_curr.node_transitions.items()):
+            # If this transition method name(s) is a string...
+            if isinstance(cls_method_names_test, str):
+                # If this class defines a method with this name, this class
+                # satisfies this target "collections.abc" ABC. In this case...
+                if cls_method_names_test in cls_method_names:
+                    # Set the current FSM node to this node.
+                    node_curr = node_next
+
+                    # Halt this inner iteration.
+                    break
+            # Else, this transition method name(s) is a frozen set of strings.
+            # In this case...
+            else:
+                # If this class defines *ALL* methods in this set, this class
+                # satisfies this target "collections.abc" ABC. In this case...
+                if cls_method_names_test & cls_method_names:
+                    # Set the current FSM node to this node.
+                    node_curr = node_next
+
+                    # Halt this inner iteration.
+                    break
+
+        # Currently narrowest "collections.abc" ABC validating this class.
+        hint_factory = node_curr.hint_factory
+
+    # Return the narrowest "collections.abc" ABC validating this class if any
+    # *OR* "None".
+    return hint_factory
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[
@@ -162,13 +276,13 @@ PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
   transition is permitted to be either:
 
   * The name of a single **dunder method** (e.g., ``"__contains__"``). If the
-    object passed to the :func:`.infer_hint_collections` function defines this
+    object passed to the :func:`.infer_hint_type_collections_abc` function defines this
     method, then this FSM transitions to the **node** (i.e.,
     :class:`._FiniteStateMachineNode` instance) given by the value associated with
     this key in this dictionary.
   * A frozen set containing the names of two or more **dunder methods** (e.g.,
     ``frozenset({"__iter__", "__len__"})``). If the object passed to the
-    :func:`.infer_hint_collections` function defines *all* of these methods,
+    :func:`.infer_hint_type_collections_abc` function defines *all* of these methods,
     then this FSM performs a similar transition as in the prior case.
 
 * Values describe the **nodes** (i.e., :class:`._FiniteStateMachineNode`
@@ -180,8 +294,8 @@ class _FiniteStateMachineNode(object):
     '''
     :mod:`collections.abc` **finite state machine (FSM) node** (i.e., node of a
     FSM whose transitions infer the narrowest :mod:`collections.abc` ABC
-    applicable to the object passed to the :func:`.infer_hint_collections`
-    function).
+    applicable to the class passed to the
+    :func:`.infer_hint_type_collections_abc` function).
 
     Parameters
     ----------
@@ -199,9 +313,9 @@ class _FiniteStateMachineNode(object):
         transition from this node to another node). This frozen set is a
         non-negligible optimization enabling this FSM to exhibit non-amortized
         best-case constant :math:`O(1)` time complexity. Why? Because, in the
-        best case, the :func:`.infer_hint_collections` function is passed an
-        object whose type defines *no* methods in this frozen set and thus
-        immediately reduces to a noop.
+        best case, the :func:`.infer_hint_type_collections_abc` function is
+        passed an object whose type defines *no* methods in this frozen set and
+        thus immediately reduces to a noop.
     node_transitions : _FiniteStateMachine
         Either:
 
@@ -317,7 +431,7 @@ _NODE_TRANSITION_KEY_TYPES = (str, frozenset)
 
 #FIXME: Expensive to compute. Isolate to a @callable_cache-decorated
 #get_machine_start_node() getter to defer this computation until required.
-_MACHINE_START_NODE = _FiniteStateMachineNode(
+_START_NODE = _FiniteStateMachineNode(
     node_transitions={
         # ....................{ CONTAINER                  }....................
         # "collections.abc.Container" FSM, intentionally defined first to
@@ -370,4 +484,17 @@ See Also
 --------
 :data:`._FiniteStateMachine`
     Further details.
+'''
+
+
+_START_NODE_TRANSITION_METHOD_NAMES = _START_NODE.node_transition_method_names
+'''
+Frozen set of the names of all **requisite methods** (i.e., methods required to
+transition from the start node to a transitional node).
+
+If the class passed to the :func:`.infer_hint_type_collections_abc` function
+does *not* define at least one method in this set, then that class satisfies
+*no* :mod:`collections.abc` ABC. This set enables that function to exhibit
+best-case constant time complexity :math:`O(n)`, where ``n`` is the number of
+attributes bound to that class.
 '''

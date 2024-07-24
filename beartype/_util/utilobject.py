@@ -15,6 +15,7 @@ from beartype.roar._roarexc import _BeartypeUtilObjectNameException
 from beartype.typing import (
     Any,
     Callable,
+    List,
     Optional,
 )
 from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
@@ -121,6 +122,7 @@ def get_object_attrs_name_to_value_explicit(
     obj: object,
 
     # Optional parameters.
+    obj_dir: Optional[List[str]] = None,
     predicate: Optional[Callable[[str, object], bool]] = None
 ) -> DictStrToAny:
     '''
@@ -164,6 +166,24 @@ def get_object_attrs_name_to_value_explicit(
     ----------
     obj : object
         Object to be introspected.
+    obj_dir : Optional[List[str]]
+        Either:
+
+        * List of the names of all relevant attributes bound to this object.
+          Callers may explicitly pass this list to either:
+
+          * Consider only the proper subset of object attributes satisfying some
+            external predicate. Doing so avoids the need to pass a ``predicate``
+            callback, which can be surprisingly expensive in time to repeatedly
+            call for each attribute.
+          * Optimize away repeated calls to the :func:`dir` builtin, which are
+            surprisingly expensive in both time and space.
+
+        * :data:`None`, in which case this getter defaults this list to the
+          names of *all* attributes bound to this object by calling the
+          :func:`dir` builtin on this object.
+
+        Defaults to :data:`None`.
     predicate: Optional[Callable[[str, object], bool]]
         Either:
 
@@ -191,6 +211,8 @@ def get_object_attrs_name_to_value_explicit(
         bound to the passed object whose name and/or value matches the passed
         predicate (in ascending lexicographic order of attribute name).
     '''
+    assert obj_dir is None or isinstance(obj_dir, list), (
+        f'{repr(obj_dir)} neither list of strings nor "None".')
     assert predicate is None or callable(predicate), (
         f'{repr(predicate)} neither callable nor "None".')
 
@@ -198,6 +220,12 @@ def get_object_attrs_name_to_value_explicit(
     # satisfying the passed predicate to the corresponding explicit value of
     # that attribute.
     attrs_name_to_value_explicit = None  # type: ignore[assignment]
+
+    # If the caller passed *NO* list of attribute names, default this to the
+    # list of *ALL* attribute names bound to this object.
+    if obj_dir is None:
+        obj_dir = dir(obj)
+    # Else, the caller passed a list of attribute names.
 
     # If the caller passed a predicate...
     if predicate:
@@ -221,7 +249,7 @@ def get_object_attrs_name_to_value_explicit(
         # For the same reason, the unsafe vars() builtin cannot be called
         # either. Since that builtin fails for builtin containers (e.g., "dict",
         # "list"), this is not altogether a bad thing.
-        for attr_name in dir(obj):
+        for attr_name in obj_dir:
             # Value of this attribute guaranteed to be statically rather than
             # dynamically retrieved. The getattr() builtin performs the latter,
             # dynamically calling this attribute's getter if this attribute is
@@ -244,14 +272,20 @@ def get_object_attrs_name_to_value_explicit(
         # Trivially define this dictionary via a dictionary comprehension.
         attrs_name_to_value_explicit = {
             attr_name: getattr_static(obj, attr_name)
-            for attr_name in dir(obj)
+            for attr_name in obj_dir
         }
 
     # Return this dictionary.
     return attrs_name_to_value_explicit
 
 
-def get_object_methods_name_to_value_explicit(obj: object) -> DictStrToAny:
+def get_object_methods_name_to_value_explicit(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    obj_dir: Optional[List[str]] = None,
+) -> DictStrToAny:
     '''
     Dictionary mapping from the name to **explicit value** (i.e., value
     retrieved *without* implicitly calling the :func:`property`-decorated method
@@ -262,6 +296,8 @@ def get_object_methods_name_to_value_explicit(obj: object) -> DictStrToAny:
     ----------
     obj : object
         Object to be introspected.
+    obj_dir : Optional[List[str]]
+        See also the :func:`.get_object_attrs_name_to_value_explicit` getter.
 
     Caveats
     -------
@@ -271,22 +307,24 @@ def get_object_methods_name_to_value_explicit(obj: object) -> DictStrToAny:
     :func:`.getattr_static` getter underlying this getter only supports the
     former approach. It is what it is.
 
-    **This getter intentionally omits attributes implicitly inherited as slot
-    wrappers from the root** :class:`object` **superclass.** The default
-    implementations of slot wrappers have little to no intrinsic value in any
-    meaningful context and thus only serve to obfuscate *actual* methods of
-    general-purpose interest to most callers.
-
     Returns
     -------
     DictStrToAny
         Dictionary mapping from the name to explicit value of each methods bound
         to the passed object.
+
+    Methods
+    -------
+    :func:`.get_object_attrs_name_to_value_explicit`
+        Further details.
     '''
 
     # This is why we predicate, folks.
     return get_object_attrs_name_to_value_explicit(
-        obj=obj, predicate=_is_object_attr_callable)
+        obj=obj,
+        obj_dir=obj_dir,
+        predicate=_is_object_attr_callable,
+    )
 
 
 def _is_object_attr_callable(attr_name: str, attr_value: object) -> bool:
