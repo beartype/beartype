@@ -18,6 +18,7 @@ from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
 from beartype._util.utilobject import get_object_basename_scoped_or_none
 from collections.abc import Callable
+from pprint import saferepr
 
 # ....................{ REPRESENTERS                       }....................
 def represent_object(
@@ -104,18 +105,9 @@ def represent_object(
     #fists on our issue tracker, let's pretend this isn't a compelling concern.
     #See also:
     #   https://github.com/celery/celery/blob/master/celery/utils/saferepr.py
-    #FIXME: Actually, a trivial way to do this without going full-Celery would
-    #be to just leverage the EAFP principle: e.g.,
-    #    try:
-    #        obj_repr = repr(obj)
-    #    except RecursionError:
-    #        from pprint import saferepr
-    #        obj_repr = saferepr(obj)
-    #
-    #Clearly, that will still be slightly less efficient than the
-    #Celery-oriented approach -- but also considerably easier. *sigh*
 
-    # String describing this object. Note that:
+    # For efficiency, initially attempt to *NON-RECURSIVELY* introspect the
+    # machine-readable string describing this object. Note that:
     # * This representation quote-protects all newlines in this representation.
     #   Ergo, "\n" *MUST* be matched as r"\n" instead below.
     # * For debuggability, the verbose (albeit less readable) output of repr()
@@ -126,11 +118,14 @@ def represent_object(
     #   pprint.saferepr() is extremely unoptimized and thus susceptible to
     #   extreme performance regressions when passed a worst-case object (e.g.,
     #   deeply nested container).
-    obj_repr = repr(obj)
-
-    #FIXME: Uncomment to exhibit a performance regression.
-    # from pprint import saferepr
-    # obj_repr = saferepr(obj)
+    try:
+        obj_repr = repr(obj)
+    # If doing so fails with a recursion error, the passed object is recursive.
+    # In this case, fallback to recursively introspecting the machine-readable
+    # string describing this object. Note that doing so is *EXTREMELY*
+    # inefficient and thus performed only as a last-ditch desperate fallback.
+    except RecursionError:
+        obj_repr = saferepr(obj)
 
     # If this representation is empty, return empty double-quotes. Although
     # most objects (including outlier singletons like "None" and the empty

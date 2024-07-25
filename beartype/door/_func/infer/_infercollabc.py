@@ -6,53 +6,9 @@
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
 collections abstract base class (ABC) type hint inferrers** (i.e., high-level
-functions dynamically inferring the type hints best describing arbitrary
-objects satisfying one or more standard :mod:`collections.abc` protocols).
+functions dynamically inferring standard :mod:`collections.abc` protocols that
+best describe arbitrary classes satisfying those protocols).
 '''
-
-# ....................{ TODO                               }....................
-#FIXME: Consider also adding support for standard "collections.abc" protocols.
-#Doing so requires iterative isinstance()-based detection against a laundry list
-#of such protocols. Note that such iteration should be performed in descending
-#order from most to least specifically useful: e.g.,
-#1. "collections.abc.Sequence", which guarantees random access to *ALL*
-#   container items and is thus clearly the most specifically useful protocol to
-#   detect first.
-#2. "collections.abc.Collection", which guarantees safely efficient access of at
-#   least the first container item and is thus the next most specifically useful
-#   protocol to detect.
-#3. "collections.abc.Container", which is largely useless but better than
-#   nothing... probably. You get the incremental picture.
-#
-#Perform such detection *ONLY* if the class of the passed object is *NOT* a
-#subscriptable generic. If the class of the passed object is a subscriptable
-#generic, then such detection should clearly *NOT* be performed.
-#
-#The goal, ultimately, is to infer a subscriptable type hint factory. If the
-#class of the passed object is *NOT* a subscriptable generic, then a suitable
-#subscriptable type hint factory *MUST* be discovered through iteration.
-#
-#*WAIT.* That's certainly true, mostly -- but is iteration even required? Recall
-#that dict.keys() view objects support efficient intersection with an arbitrary
-#set of strings. Given that, the most efficient approach is actually *NOT* to
-#test against protocols but rather to (in order):
-#* First, decide the set of the names of all methods in the entire MRO for the
-#  class of the passed object. This can probably be efficiently done with an
-#  iterative reduction of, for each class in the MRO of the passed object:
-#  * If this class is slotted, "cls.__slots__".
-#  * Else, "cls.__dict__.keys()".
-#  Note that the "object" superclass conveys *NO* meaningful semantics here and
-#  thus both can and should be safely ignored. If I recall correctly,
-#  "obj.__mro__[:-1]" adequately slices away the "object" superclass.
-#* Next, start at the "top" of the "collections.abc" protocol hierarchy by
-#  iteratively detecting whether the name of standard dunder method is in this
-#  set. There exist multiple discrete "chains" of dunder methods. For example,
-#  the "__contains__" dunder method is at the root of the "Container" chain.
-#  This implies an iterative algorithm resembling:
-#  * If "__contains__" is in this set, then this object is at least a
-#    "Container". Continue testing whether...
-#  * If "__iter__" and "__len__" are also in this set, then this object is at
-#    least a "Collection". Continue testing downward in a similar manner.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
@@ -75,37 +31,31 @@ from beartype._util.utilobject import get_object_methods_name_to_value_explicit
 # ....................{ INFERERS                           }....................
 #FIXME: Unit test us up, please.
 @callable_cached
-def infer_hint_type_collections_abc(
-    # Mandatory parameters.
-    cls: type,
-
-    # Hidden parameters. *GULP*
-    __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
-) -> Optional[object]:
+def infer_hint_type_collections_abc(cls: type) -> Optional[object]:
     '''
-    Narrowest **collections ABC** (i.e., abstract base class published by the
-    :mod:`collections.abc` subpackage) validating the passed class if at least
-    one collections ABC validates this class *or* :data:`None` otherwise (i.e.,
-    if *no* collections ABC validates this class).
+    Narrowest **collections protocol** (i.e., abstract base class published by
+    the :mod:`collections.abc` subpackage) validating the passed class if at
+    least one collections protocol validates this class *or* :data:`None`
+    otherwise (i.e., if *no* collections protocol validates this class).
 
-    This function returns the "narrowest" collections ABC, defined such that:
+    This function returns the narrowest collections protocol, defined such that:
 
     * The passed class is a **virtual subclass** of (i.e., defines all methods
-      required by) this ABC.
-    * This ABC is **maximally narrow.** Formally:
+      required by) this protocol.
+    * This protocol is **maximally narrow.** Formally:
 
-      * The passed class is a virtual subclass of *no* other collections ABCs
-        that are themselves virtual subclasses of this ABC.
-      * Equivalently, this ABC is **larger** (i.e., defines more abstract
-        methods) than all other collections ABCs that the passed class is a
-        virtual subclass of.
+      * The passed class is a virtual subclass of *no* other collections
+        protocols that are themselves virtual subclasses of this protocol.
+      * Equivalently, this protocol is **larger** (i.e., defines more abstract
+        methods) than all other collections protocols that the passed class is
+        also a virtual subclass of.
 
     This function does *not* return a type hint annotating the passed class.
     This function merely returns a subscriptable type hint factory suitable for
     the caller to subscript with a child type hint, which then produces the
     desired type hint annotating the passed class. Why this indirection? In a
-    word: efficiency. If this function recursively inferred and returned a type
-    hint, this function would then need to guard against infinite recursion by
+    word: efficiency. If this function recursively inferred and returned a full
+    type hint, this function would need to guard against infinite recursion by
     accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
     parent :func:`beartype.door._func.infer.infermain.infer_hint` function;
     doing so would prevent memoization, substantially reducing efficiency.
@@ -158,18 +108,15 @@ def infer_hint_type_collections_abc(
     Parameters
     ----------
     obj : object
-        Arbitrary object to infer a type hint from.
-    __beartype_obj_ids_seen__ : FrozenSet[int]
-        Recursion guard. See also the parameter of the same name accepted by the
-        :func:`beartype.door._func.infer.infermain.infer_hint` function.
+        Class to be introspected.
 
     Returns
     -------
     Optional[object]
         Either:
 
-        * If at least one :mod:`collections.abc` ABC validates this class, the
-          narrowest such ABC.
+        * If at least one :mod:`collections.abc` protocol validates this class,
+          the narrowest such protocol.
         * Else, :data:`None`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'

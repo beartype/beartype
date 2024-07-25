@@ -16,6 +16,7 @@ from beartype.typing import (
     Callable,
     Coroutine,
     Generator,
+    Iterable,
     Iterator,
 )
 from beartype._util.func.utilfuncmake import make_func
@@ -29,203 +30,6 @@ from functools import (
     wraps,
 )
 from sys import exc_info
-
-# ....................{ CLASSES                            }....................
-class ClassCallable(object):
-    '''
-    **Callable class** (i.e., pure-Python class defining the :meth:`__call__`
-    dunder method implicitly called by Python when instances of this class are
-    called using the standard calling convention).
-    '''
-
-    def __call__(self, *args, **kwargs) -> int:
-        '''
-        Dunder method implicitly called when this object is called.
-        '''
-
-        return len(args) + len(kwargs)
-
-# ....................{ CLASSES ~ enum                     }....................
-class MasterlessDecreeVenomlessWhich(Enum):
-    '''
-    Arbitrary enumeration whose members are accessed elsewhere as integers,
-    typically when subscripting the :pep:`586`-compliant :attr:`typing.Literal`
-    type hint factory.
-    '''
-
-    NOMENCLATURE_WEATHER_VANES_OF = 0
-    NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
-
-# ....................{ CLASSES ~ hierarchy : 1            }....................
-# Arbitrary class hierarchy.
-
-class Class(object):
-    '''
-    Arbitrary pure-Python class defining arbitrary methods.
-    '''
-
-    # ....................{ NESTED                         }....................
-    class NestedClass(object):
-        '''
-        Arbitrary pure-Python **nested class** whose definition is nested inside
-        the definition of another class.
-        '''
-
-        pass
-
-    # ....................{ METHODS                        }....................
-    def instance_method(self):
-        '''
-        Arbitrary pure-Python instance method.
-        '''
-
-        pass
-
-
-    @property
-    def instance_property(self):
-        '''
-        Arbitrary pure-Python instance property.
-        '''
-
-        pass
-
-
-    @classmethod
-    def class_method(cls):
-        '''
-        Arbitrary pure-Python class method.
-        '''
-
-        pass
-
-
-    @staticmethod
-    def static_method():
-        '''
-        Arbitrary pure-Python static method.
-        '''
-
-        pass
-
-
-class Subclass(Class):
-    '''
-    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
-    '''
-
-    pass
-
-
-class SubclassSubclass(Subclass):
-    '''
-    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
-    arbitrary pure-Python superclass.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ hierarchy : 2            }....................
-# Yet another arbitrary class hierarchy.
-
-class OtherClass(object):
-    '''
-    Arbitrary pure-Python class defining an arbitrary method.
-    '''
-
-    def instance_method(self):
-        '''
-        Arbitrary pure-Python instance method.
-        '''
-
-        pass
-
-
-class OtherSubclass(OtherClass):
-    '''
-    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
-    '''
-
-    pass
-
-
-class OtherSubclassSubclass(OtherSubclass):
-    '''
-    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
-    arbitrary pure-Python superclass.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ isinstance               }....................
-class NonIsinstanceableMetaclass(type):
-    '''
-    Metaclass overriding the ``__instancecheck__()`` dunder method to
-    unconditionally raise an exception, preventing classes with this metaclass
-    from being passed as the second parameter to the :func:`isinstance`
-    builtin.
-    '''
-
-    def __instancecheck__(self, obj: object) -> bool:
-        raise TypeError(
-            f'{self} not passable as second parameter to isinstance().')
-
-
-class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
-    '''
-    Class whose metaclass overrides the ``__instancecheck__()`` dunder method
-    to unconditionally raise an exception, preventing this class from being
-    passed as the second parameter to the :func:`isinstance` builtin.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ issubclass               }....................
-class NonIssubclassableMetaclass(type):
-    '''
-    Metaclass overriding the ``__subclasscheck__()`` dunder method to
-    unconditionally raise an exception, preventing classes with this metaclass
-    from being passed as the second parameter to the :func:`issubclass`
-    builtin.
-    '''
-
-    def __subclasscheck__(self, obj: object) -> bool:
-        raise TypeError(
-            f'{self} not passable as second parameter to issubclass().')
-
-
-class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
-    '''
-    Class whose metaclass overrides the ``__subclasscheck__()`` dunder method
-    to unconditionally raise an exception, preventing this class from being
-    passed as the second parameter to the :func:`issubclass` builtin.
-    '''
-
-    pass
-
-# ....................{ CLASSES ~ with : module name       }....................
-class ClassModuleNameFake(object):
-    '''
-    Arbitrary pure-Python class with a **non-existent module name** (i.e., whose
-    ``__module__`` dunder attribute refers to a file that is guaranteed to *not*
-    exist on the local filesystem).
-    '''
-
-    pass
-
-
-class ClassModuleNameNone(object):
-    '''
-    Arbitrary pure-Python class with a **missing module name** (i.e., whose
-    ``__module__`` dunder attribute is :data:`None`).
-    '''
-
-    pass
-
-
-# Monkey-patch the above classes with "bad" module names.
-ClassModuleNameFake.__module__ = 'If_I.were.a_dead_leaf.thou_mightest.bear'
-ClassModuleNameNone.__module__ = None
 
 # ....................{ CALLABLES ~ async : factory        }....................
 # Note that we intentionally avoid declaring a factory function for deprecated
@@ -670,6 +474,233 @@ def function_module_name_none() -> None:
 # Monkey-patch the above callables with "bad" module names.
 function_module_name_fake.__module__ = 'He_had.a_mask.like_Castlereagh'
 function_module_name_none.__module__ = None
+
+# ....................{ CLASSES ~ abc                      }....................
+class ClassMutableSequence(object):
+    '''
+    Class manually satisfying the standard
+    :class:`collections.abc.MutableSequence` protocol *without* simply
+    subclassing a builtin mutable sequence type (e.g., :class:`list`).
+    '''
+
+    def __init__(self, items: list) -> None: self._items = items
+    def __contains__(self, item: object) -> bool: return item in self._items
+    def __delitem__(self, index: int) -> None: del self._items[index]
+    def __getitem__(self, index: int) -> object: return self._items[index]
+    def __setitem__(self, index: int, item: object) -> None:
+        self._items[index] = item
+    def __iadd__(self, item: object) -> object: self._items += item
+    def __iter__(self) -> Iterator: return iter(self._items)
+    def __len__(self) -> int: return len(self._items)
+    def __reversed__(self) -> Iterator: return reversed(self._items)
+    def append(self, item: object) -> None: self._items.append(item)
+    def clear(self) -> None: self._items.clear()
+    def extend(self, items: Iterable) -> None: self._items.extend(items)
+    def index(self, *args, **kwargs) -> int:
+        return self._items.index(*args, **kwargs)
+    def insert(self, index: int, item: object) -> None:
+        self._items.insert(index, item)
+    def pop(self, *args, **kwargs) -> object:
+        return self._items.pop(*args, **kwargs)
+    def remove(self, item: object) -> None: self._items.remove(item)
+    def reverse(self) -> None: self._items.reverse()
+
+# ....................{ CLASSES ~ enum                     }....................
+class MasterlessDecreeVenomlessWhich(Enum):
+    '''
+    Arbitrary enumeration whose members are accessed elsewhere as integers,
+    typically when subscripting the :pep:`586`-compliant :attr:`typing.Literal`
+    type hint factory.
+    '''
+
+    NOMENCLATURE_WEATHER_VANES_OF = 0
+    NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
+
+# ....................{ CLASSES ~ dunder : call            }....................
+class ClassCallable(object):
+    '''
+    **Callable class** (i.e., pure-Python class defining the :meth:`__call__`
+    dunder method implicitly called by Python when instances of this class are
+    called using the standard calling convention).
+    '''
+
+    def __call__(self, *args, **kwargs) -> int:
+        '''
+        Dunder method implicitly called when this object is called.
+        '''
+
+        return len(args) + len(kwargs)
+
+# ....................{ CLASSES ~ dunder : instancecheck   }....................
+class NonIsinstanceableMetaclass(type):
+    '''
+    Metaclass overriding the ``__instancecheck__()`` dunder method to
+    unconditionally raise an exception, preventing classes with this metaclass
+    from being passed as the second parameter to the :func:`isinstance`
+    builtin.
+    '''
+
+    def __instancecheck__(self, obj: object) -> bool:
+        raise TypeError(
+            f'{self} not passable as second parameter to isinstance().')
+
+
+class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
+    '''
+    Class whose metaclass overrides the ``__instancecheck__()`` dunder method
+    to unconditionally raise an exception, preventing this class from being
+    passed as the second parameter to the :func:`isinstance` builtin.
+    '''
+
+    pass
+
+# ....................{ CLASSES ~ dunder : subclasscheck   }....................
+class NonIssubclassableMetaclass(type):
+    '''
+    Metaclass overriding the ``__subclasscheck__()`` dunder method to
+    unconditionally raise an exception, preventing classes with this metaclass
+    from being passed as the second parameter to the :func:`issubclass`
+    builtin.
+    '''
+
+    def __subclasscheck__(self, obj: object) -> bool:
+        raise TypeError(
+            f'{self} not passable as second parameter to issubclass().')
+
+
+class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
+    '''
+    Class whose metaclass overrides the ``__subclasscheck__()`` dunder method
+    to unconditionally raise an exception, preventing this class from being
+    passed as the second parameter to the :func:`issubclass` builtin.
+    '''
+
+    pass
+
+# ....................{ CLASSES ~ dunder : module          }....................
+class ClassModuleNameFake(object):
+    '''
+    Arbitrary pure-Python class with a **non-existent module name** (i.e., whose
+    ``__module__`` dunder attribute refers to a file that is guaranteed to *not*
+    exist on the local filesystem).
+    '''
+
+    pass
+
+
+class ClassModuleNameNone(object):
+    '''
+    Arbitrary pure-Python class with a **missing module name** (i.e., whose
+    ``__module__`` dunder attribute is :data:`None`).
+    '''
+
+    pass
+
+
+# Monkey-patch the above classes with "bad" module names.
+ClassModuleNameFake.__module__ = 'If_I.were.a_dead_leaf.thou_mightest.bear'
+ClassModuleNameNone.__module__ = None
+
+# ....................{ CLASSES ~ hierarchy : 1            }....................
+# Arbitrary class hierarchy.
+
+class Class(object):
+    '''
+    Arbitrary pure-Python class defining arbitrary methods.
+    '''
+
+    # ....................{ NESTED                         }....................
+    class NestedClass(object):
+        '''
+        Arbitrary pure-Python **nested class** whose definition is nested inside
+        the definition of another class.
+        '''
+
+        pass
+
+    # ....................{ METHODS                        }....................
+    def instance_method(self):
+        '''
+        Arbitrary pure-Python instance method.
+        '''
+
+        pass
+
+
+    @property
+    def instance_property(self):
+        '''
+        Arbitrary pure-Python instance property.
+        '''
+
+        pass
+
+
+    @classmethod
+    def class_method(cls):
+        '''
+        Arbitrary pure-Python class method.
+        '''
+
+        pass
+
+
+    @staticmethod
+    def static_method():
+        '''
+        Arbitrary pure-Python static method.
+        '''
+
+        pass
+
+
+class Subclass(Class):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
+    '''
+
+    pass
+
+
+class SubclassSubclass(Subclass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
+    arbitrary pure-Python superclass.
+    '''
+
+    pass
+
+# ....................{ CLASSES ~ hierarchy : 2            }....................
+# Yet another arbitrary class hierarchy.
+
+class OtherClass(object):
+    '''
+    Arbitrary pure-Python class defining an arbitrary method.
+    '''
+
+    def instance_method(self):
+        '''
+        Arbitrary pure-Python instance method.
+        '''
+
+        pass
+
+
+class OtherSubclass(OtherClass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
+    '''
+
+    pass
+
+
+class OtherSubclassSubclass(OtherSubclass):
+    '''
+    Arbitrary pure-Python subclass of an arbitrary pure-Python subclass of an
+    arbitrary pure-Python superclass.
+    '''
+
+    pass
 
 # ....................{ CONSTANTS                          }....................
 CALLABLE_CODE_OBJECT = function.__code__

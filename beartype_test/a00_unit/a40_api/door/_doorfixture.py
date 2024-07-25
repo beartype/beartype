@@ -152,6 +152,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         FrozenSet,
         KeysView,
         List,
+        MutableSequence,
         Set,
         Tuple,
         Type,
@@ -160,6 +161,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
+        ClassMutableSequence,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from collections import (
@@ -172,9 +174,26 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # this fixture.
     INFER_HINT_CASES = [
         # ..................{ NON-PEP                        }..................
+        # A builtin scalar is annotated as the builtin type of that scalar.
+        ('Of his frail exultation shall be spent', str),
+
         # An instance of a PEP-noncompliant class (i.e., a class *NOT* covered
-        # by an existing PEP standard) is annotated as that class.
+        # by an existing PEP standard) satisfying no broader type hint is
+        # annotated simply as that class.
         (Class(), Class),
+
+        # ..................{ NON-PEP : collections.abc      }..................
+        # An instance of a PEP-noncompliant class (i.e., a class *NOT* covered
+        # by an existing PEP standard) satisfying a standard "collections.abc"
+        # protocol is annotated as the narrowest such protocol. Moreover, for
+        # each instance that is a container (i.e., satisfies the standard
+        # "collections.abc.Container" protocol), that annotation is subscripted
+        # by a child type hint annotating the items of that container.
+        (
+            ClassMutableSequence((
+                'Forgetful of the grave', 'where', 'when the flame')),
+            MutableSequence[str],
+        ),
 
         # ..................{ PEP 484                        }..................
         # The "None" singleton is annotated as itself under PEP 484.

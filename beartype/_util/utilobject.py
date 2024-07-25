@@ -307,6 +307,10 @@ def get_object_methods_name_to_value_explicit(
     :func:`.getattr_static` getter underlying this getter only supports the
     former approach. It is what it is.
 
+    **This getter intentionally omits uncallable methods.** This includes most
+    C-based method descriptors, most of which are uncallable depending on the
+    version of the active Python interpreter.
+
     Returns
     -------
     DictStrToAny

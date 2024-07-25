@@ -251,6 +251,28 @@ class BeartypeForwardRefMeta(type):
         to be invalid and thus uncached. In short, manual memoization allows
         beartype to avoid desynchronization between memoized and actual types.
 
+        This class property is officially in the public :mod:`beartype` API and
+        guaranteed to be available across *all* current and future
+        :mod:`beartype` releases.
+
+        Caveats
+        -------
+        Downstream callers consuming callable type hints modified by a
+        previously applied :mod:`beartype.beartype` decorator may occasionally
+        encounter **forward reference proxies** (i.e., instances of this
+        metaclass). Forward reference proxies are *not* intended to be usable as
+        perfect substitutes for the underlying classes they proxy. Instead,
+        downstream callers are recommended to manually resolve these proxies to
+        the underlying classes they proxy by accessing this property. Consider
+        this trivial one-liner that does so for a type hint ``type_hint``:
+
+        .. code-block:: python
+
+           # If this type hint is actually a @beartype-specific forward
+           # reference proxy that only refers to the desired type hint,
+           # dereference that proxy to obtain that type hint.
+           type_hint = getattr(type_hint, '__type_beartype__', None) or type_hint
+
         Raises
         ------
         BeartypeCallHintForwardRefException
