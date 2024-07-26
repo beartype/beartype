@@ -26,6 +26,7 @@ from beartype.typing import (
     Callable,
     Dict,
     ForwardRef,
+    FrozenSet,
     Iterable,
     Iterator,
     List,
@@ -372,6 +373,18 @@ func_wrapper_scope, hint_refs_type_basename)``, where:
   of :pep:`484`-compliant relative forward references visitable from this hint
   (e.g., ``('MuhClass', 'YoClass')`` given the hint ``Union['MuhClass',
   List['YoClass']]``).
+'''
+
+# ....................{ FROZENSET                          }....................
+FrozenSetInts = FrozenSet[int]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more integers.
+'''
+
+
+FrozenSetStrs = FrozenSet[str]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more strings.
 '''
 
 # ....................{ ITERABLE                           }....................

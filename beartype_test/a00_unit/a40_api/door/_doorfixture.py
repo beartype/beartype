@@ -148,12 +148,16 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # Defer fixture-specific imports.
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype.typing import (
+        Collection,
+        Container,
         Deque,
         FrozenSet,
         KeysView,
         List,
         MutableSequence,
+        Sequence,
         Set,
+        Sized,
         Tuple,
         Type,
         Union,
@@ -161,7 +165,11 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
+        ClassCollection,
+        ClassContainer,
         ClassMutableSequence,
+        ClassSequence,
+        ClassSized,
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from collections import (
@@ -169,6 +177,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     )
 
     # ..................{ LISTS ~ cases                      }..................
+    #FIXME: Also test recursion protection somewhere, please.
+
     # List of all type hint inference cases (i.e., 2-tuples "(obj, hint)"
     # describing the type hint matching an arbitrary object) to be returned by
     # this fixture.
@@ -189,10 +199,33 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # each instance that is a container (i.e., satisfies the standard
         # "collections.abc.Container" protocol), that annotation is subscripted
         # by a child type hint annotating the items of that container.
+
+        # "collections.abc.MutableSequence" protocol hierarchy.
         (
-            ClassMutableSequence((
-                'Forgetful of the grave', 'where', 'when the flame')),
+            ClassContainer([
+                b'Beneath the shade of trees', b'beside the flow']),
+            Container,
+        ),
+        (
+            ClassCollection([
+                'Of the wild babbling rivulet;', 'and now']),
+            Collection[str],
+        ),
+        (
+            ClassSequence([
+                b'He must descend.', b'With rapid steps he went']),
+            Sequence[bytes],
+        ),
+        (
+            ClassMutableSequence([
+                'Forgetful of the grave', 'where', 'when the flame']),
             MutableSequence[str],
+        ),
+
+        # "collections.abc.Sized" protocol.
+        (
+            ClassSized("The forest's solemn canopies were changed"),
+            Sized,
         ),
 
         # ..................{ PEP 484                        }..................

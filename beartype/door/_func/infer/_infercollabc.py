@@ -13,18 +13,15 @@ best describe arbitrary classes satisfying those protocols).
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
-    Collection,
-    Container,
     Dict,
-    FrozenSet,
-    MutableSequence,
-    Sequence,
-    Set,
-    # Tuple,
     Optional,
+    Set,
     Union,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._data.hint.datahinttyping import (
+    FrozenSetStrs,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobject import get_object_methods_name_to_value_explicit
 
@@ -159,19 +156,34 @@ def infer_hint_type_collections_abc(cls: type) -> Optional[object]:
     # Finite state machine (FSM) node currently visited by the search below.
     node_curr = _START_NODE
 
-    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
-    hint_factory: Optional[object] = None
+    # Finite state machine (FSM) node to be visited next by the search below if
+    # any *OR* "None" if this is the last iteration of this search.
+    node_next: Optional[_FiniteStateMachineNode] = None
 
     # ....................{ SEARCH                         }....................
+    # print(f'Inferring {repr(cls)} "collections.abc" protocol...')
+
     # While some FSM node is still being visited by this search...
     while True:
+        # print(f'Visiting FSM node {repr(node_curr.hint_factory)}...')
+
+        #FIXME: *HEH.* Totally busted, sadly. Why? Because the root "object"
+        #superclass defines an absurd number of dunder methods (e.g.,
+        #__hash__(), __eq__()), which then guarantees this intersection to
+        #almost always be non-empty -- especially when testing containers.
+        #
+        #Please resolve this by improving the
+        #get_object_methods_name_to_value_explicit() getter defined above to
+        #omit all "object" slot wrappers, which we already did and just need to
+        #restore. Thankfully, this is only an optimization. Still, I sigh.
+
         # If the intersection of the set of the names of all methods bound to
         # this class with the set of the names of any methods required by one or
         # more "collections.abc" ABCs reachable from the current FSM node is
         # empty, no further FSM transitions can be made. In this case, the
         # current "collections.abc" ABC validating this class is the narrowest
         # such ABC. Halt searching and return this ABC.
-        if not (cls_method_names & node_curr.node_transition_method_names):
+        if not (cls_method_names & node_curr.nodes_next_method_names):
             break
         # Else, this intersetion is non-empty. In this case, at least one FSM
         # transition can be made. In this case, the current "collections.abc"
@@ -180,40 +192,64 @@ def infer_hint_type_collections_abc(cls: type) -> Optional[object]:
 
         # For the string or frozen set of all transition methods *AND* FSM nodes
         # to which those methods transition...
-        for cls_method_names_test, node_next in (
-            node_curr.node_transitions.items()):
+        for node_next_method_names, node_next_possible in (
+            node_curr.nodes_next.items()):
+            # print(f'Considering transitioning to FSM node {repr(node_next_possible.hint_factory)}...')
+
             # If this transition method name(s) is a string...
-            if isinstance(cls_method_names_test, str):
+            if node_next_method_names.__class__ is str:
                 # If this class defines a method with this name, this class
                 # satisfies this target "collections.abc" ABC. In this case...
-                if cls_method_names_test in cls_method_names:
-                    # Set the current FSM node to this node.
-                    node_curr = node_next
+                if node_next_method_names in cls_method_names:
+                    # Set the next FSM node to this node.
+                    node_next = node_next_possible
+                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
 
                     # Halt this inner iteration.
                     break
             # Else, this transition method name(s) is a frozen set of strings.
             # In this case...
             else:
-                # If this class defines *ALL* methods in this set, this class
+                # print(f'Set intersection: {node_next_method_names & cls_method_names}...')
+                # print(f'Expected set: {node_next_method_names}...')
+
+                # If the intersection of the set of the names of all methods
+                # bound to this class with this frozen set of the names of all
+                # methods required by this protocol is exactly this frozen set,
+                # then this class defines *ALL* methods in this set and thus
                 # satisfies this target "collections.abc" ABC. In this case...
-                if cls_method_names_test & cls_method_names:
-                    # Set the current FSM node to this node.
-                    node_curr = node_next
+                if (
+                    len(node_next_method_names & cls_method_names) ==
+                    len(node_next_method_names)
+                ):
+                    # Set the next FSM node to this node.
+                    node_next = node_next_possible
+                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
 
                     # Halt this inner iteration.
                     break
 
-        # Currently narrowest "collections.abc" ABC validating this class.
-        hint_factory = node_curr.hint_factory
+        # If transitioning to *NO* next FSM node, halt iteration.
+        if not node_next:
+            break
+        # Else, a next FSM node is being transitioned to.
 
-    # Return the narrowest "collections.abc" ABC validating this class if any
-    # *OR* "None".
+        # Transition from the current to the next FSM node.
+        node_curr = node_next
+
+        # Nullify the next FSM node for safety.
+        node_next = None
+
+    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
+    hint_factory = node_curr.hint_factory
+    # hint_factory = node_curr.hint_factory if node_curr else None
+
+    # Return this object.
     return hint_factory
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[
-    Union[str, FrozenSet[str]], '_FiniteStateMachineNode']
+    Union[str, FrozenSetStrs], '_FiniteStateMachineNode']
 '''
 PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
 (FSM)** as a dictionary whose:
@@ -254,7 +290,7 @@ class _FiniteStateMachineNode(object):
           transitions to actual nodes containing meaningful content.
         * Else, the type hint factory validating the passed object (e.g.,
           :class:`collections.abc.Container` if that object is a container).
-    node_transition_method_names : FrozenSet[str]
+    nodes_next_method_names : FrozenSet[str]
         Frozen set of the names of all **transition methods** (i.e., one or more
         methods required to be defined by the passed object for this FSM to
         transition from this node to another node). This frozen set is a
@@ -263,14 +299,14 @@ class _FiniteStateMachineNode(object):
         best case, the :func:`.infer_hint_type_collections_abc` function is
         passed an object whose type defines *no* methods in this frozen set and
         thus immediately reduces to a noop.
-    node_transitions : _FiniteStateMachine
+    nodes_next : _FiniteStateMachine
         Either:
 
         * If this is a **stop node** of this FSM, the empty dictionary.
         * Else, this is a **transitionary node** of this FSM. In this case, this
-          instance variable provides the **transition FSM** (i.e., proper subset
-          of the full FSM, mapping the transitions directed out of this node to
-          the neighbouring nodes those transitions transition to) of this node.
+          is the **transitionary FSM** (i.e., proper subset of the full FSM,
+          mapping the transitions directed out of this node to the neighbouring
+          nodes those transitions transition to) of this node.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -288,25 +324,24 @@ class _FiniteStateMachineNode(object):
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'hint_factory',
-        'node_transition_method_names',
-        'node_transitions',
+        'nodes_next_method_names',
+        'nodes_next',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         hint_factory: object
-        node_transition_method_names: FrozenSet[str]
-        node_transitions: _FiniteStateMachine
+        nodes_next_method_names: FrozenSetStrs
+        nodes_next: _FiniteStateMachine
 
     # ..................{ INITIALIZERS                       }..................
-    #FIXME: Docstring us up, please.
     def __init__(
         self,
 
         # Optional parameters.
         hint_factory: object = None,
-        node_transitions: _FiniteStateMachine = DICT_EMPTY,
+        nodes_next: _FiniteStateMachine = DICT_EMPTY,
     ) -> None:
         '''
 
@@ -332,77 +367,174 @@ class _FiniteStateMachineNode(object):
 
             Defaults to the empty dictionary.
         '''
-        assert isinstance(node_transitions, dict), (
-            f'{repr(node_transitions)} not dictionary.')
+        assert isinstance(nodes_next, dict), (
+            f'{repr(nodes_next)} not dictionary.')
 
         # Classify all passed parameters.
         self.hint_factory = hint_factory
-        self.node_transitions = node_transitions
+        self.nodes_next = nodes_next
 
         # Frozen set of the names of all transition methods, initialized to the
         # empty set.
-        node_transition_method_names = set()
+        nodes_next_method_names: Set[str] = set()
 
         # For the string or frozen set of all transition methods *AND* FSM nodes
         # to which those methods transition...
-        for node_transition_key, node_transition_value in (
-            node_transitions.items()):
+        for node_next_method_names, node_next in nodes_next.items():
             # Validate the types of this key-value pair.
             assert isinstance(
-                node_transition_key, _NODE_TRANSITION_KEY_TYPES), (
-                f'{repr(node_transition_key)} neither string nor frozen set.')
-            assert isinstance(node_transition_value, _FiniteStateMachineNode), (
-                f'{repr(node_transition_value)} not "_FiniteStateMachineNode".')
+                node_next_method_names, _NODE_TRANSITION_KEY_TYPES), (
+                f'{repr(node_next_method_names)} neither string nor frozen set.')
+            assert isinstance(node_next, _FiniteStateMachineNode), (
+                f'{repr(node_next)} not "_FiniteStateMachineNode".')
 
             # If this transition method name(s) is a string, add this name to
             # this set.
-            if isinstance(node_transition_key, str):
-                node_transition_method_names.add(node_transition_key)
+            if node_next_method_names.__class__ is str:
+                nodes_next_method_names.add(node_next_method_names)  # type: ignore[arg-type]
             # Else, this transition method name(s) is a frozen set of strings.
             # In this case, update this set with this names.
             else:
-                node_transition_method_names.update(node_transition_key)
+                nodes_next_method_names.update(node_next_method_names)
 
         # Classify this set as a frozen set for safety.
-        self.node_transition_method_names = frozenset(
-            node_transition_method_names)
+        self.nodes_next_method_names = frozenset(nodes_next_method_names)
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this finite state machine (FSM) node.
+        '''
+
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    hint_factory={repr(self.hint_factory)},',
+            f'    nodes_next_method_names={repr(self.nodes_next_method_names)},',
+            f'    nodes_next={repr(self.nodes_next)},',
+            f')',
+        ))
 
 # ....................{ PRIVATE ~ globals                  }....................
 _NODE_TRANSITION_KEY_TYPES = (str, frozenset)
 '''
 **Transition methods type tuple** (i.e., tuple of the types of all keys of the
-``node_transitions`` parameter accepted by the
+``nodes_next`` parameter accepted by the
 :meth:`_FiniteStateMachineNode.__init__` method).
 '''
 
 
-#FIXME: Expensive to compute. Isolate to a @callable_cache-decorated
-#get_machine_start_node() getter to defer this computation until required.
-_START_NODE = _FiniteStateMachineNode(
-    node_transitions={
+# Initialized below by the _init() function.
+_START_NODE: _FiniteStateMachineNode = None  # type: ignore[assignment]
+'''
+:mod:`collections.abc` **finite state machine (FSM)**.
+
+See Also
+--------
+:data:`._FiniteStateMachine`
+    Further details.
+'''
+
+
+# Initialized below by the _init() function.
+_START_NODE_TRANSITION_METHOD_NAMES: FrozenSetStrs = None  # type: ignore[assignment]
+'''
+Frozen set of the names of all **requisite start methods** (i.e., methods
+required to transition from the start node to a transitional node).
+
+If the class passed to the :func:`.infer_hint_type_collections_abc` function
+does *not* define at least one method in this set, then that class satisfies
+*no* :mod:`collections.abc` ABC. This set enables that function to exhibit
+best-case constant time complexity :math:`O(n)`, where ``n`` is the number of
+attributes bound to that class.
+'''
+
+# ....................{ PRIVATE ~ initializers             }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer function-specific imports.
+    from beartype.typing import (
+        AsyncGenerator,
+        AsyncIterable,
+        AsyncIterator,
+        Awaitable,
+        Collection,
+        Container,
+        Coroutine,
+        Generator,
+        Iterable,
+        Iterator,
+        Mapping,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
+        Reversible,
+        Sequence,
+        Sized,
+    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping the transitions directed out of the start node of this
+    # finite state machine (FSM) to the neighbouring nodes of those transitions.
+    # Note that:
+    # * A "collections.abc.ByteString" FSM is intentionally *NOT* defined. Why?
+    #   Because the "collections.abc.ByteString" protocol has been deprecated as
+    #   of Python >= 3.12 and scheduled for removal under Python 3.14.
+    # * A "collections.abc.Callable" FSM is intentionally *NOT* defined. Why?
+    #   Because the sibling "_infercallable" submodule already deeply infers
+    #   callable type hints for arbitrary objects satisfying the
+    #   "collections.abc.Callable" protocol in a *MUCH* more intelligent manner.
+    # * A "collections.abc.Hashable" FSM is intentionally *NOT* defined. Why?
+    #   Because the root "object" superclass defines the __hash__() method to
+    #   return the integer uniquely identifying the current object. Almost all
+    #   classes thus trivially satisfy the "collections.abc.Hashable" protocol.
+    #   The only exception are mutable classes redefining the "__hash__"
+    #   attribute as class variables set to "None". Since the majority of
+    #   classes still trivially satisfy the "collections.abc.Hashable" protocol,
+    #   attempting to infer hashability (i.e., compliance with this protocol)
+    #   would uselessly infer the type hint factory for almost all classes as
+    #   the universally broad and unsubscriptable "collections.abc.Hashable" ABC
+    #   rather than as those specifically narrow classes themselves. Since
+    #   everyone prefers and expects specifically narrow type hints rather than
+    #   universally broad and unsubscriptable type hints, we ignore hashability.
+    # * Dictionary-based views FSMs are intentionally *NOT* defined. Why?
+    #   Because:
+    #   * The "collections.abc.MappingView" protocol is indistinguishable from
+    #     the "collections.abc.Sized" protocol.
+    #   * The "collections.abc.ItemsView" protocol are indistinguishable from
+    #     the "collections.abc.Collection" protocol.
+    #   * The "collections.abc.KeysView" and "ValuesView" protocols are
+    #     indistinguishable from the "collections.abc.Set" protocol.
+    _START_NODE_NODES_NEXT: _FiniteStateMachine = {
         # ....................{ CONTAINER                  }....................
         # "collections.abc.Container" FSM, intentionally defined first to
-        # prioritize this narrowest ABC over less narrow alternatives.
+        # prioritize this most useful ABC over relatively useless alternatives.
         '__contains__': _FiniteStateMachineNode(
             hint_factory=Container,
-            node_transitions={
+            nodes_next={
                 # ....................{ COLLECTION         }....................
                 # "collections.abc.Collection" FSM.
-                frozenset({'__iter__', '__len__'}): _FiniteStateMachineNode(
+                frozenset(('__iter__', '__len__')): _FiniteStateMachineNode(
                     hint_factory=Collection,
-                    node_transitions={
+                    nodes_next={
                         # ....................{ SEQUENCE   }....................
-                        # "collections.abc.Sequence" FSM.
-                        frozenset({
+                        # "collections.abc.Sequence" FSM, intentionally defined
+                        # first to prioritize this most useful ABC over
+                        # relatively useless alternatives.
+                        frozenset((
                             '__getitem__',
                             '__reversed__',
                             'count',
                             'index',
-                        }): _FiniteStateMachineNode(
+                        )): _FiniteStateMachineNode(
                             hint_factory=Sequence,
-                            node_transitions={
+                            nodes_next={
                                 # "collections.abc.MutableSequence" FSM.
-                                frozenset({
+                                frozenset((
                                     '__delitem__',
                                     '__iadd__',
                                     '__setitem__',
@@ -413,35 +545,173 @@ _START_NODE = _FiniteStateMachineNode(
                                     'pop',
                                     'remove',
                                     'reverse',
-                                }): _FiniteStateMachineNode(
-                                    hint_factory=MutableSequence,
-                                ),
+                                )): _FiniteStateMachineNode(
+                                    hint_factory=MutableSequence),
+                            },
+                        ),
+                        # ....................{ MAPPING    }....................
+                        # "collections.abc.Mapping" FSM, intentionally defined
+                        # nearly first to prioritize this more useful ABC over
+                        # relatively useless alternatives.
+                        frozenset((
+                            '__eq__',
+                            '__ne__',
+                            '__getitem__',
+                            'get',
+                            'items',
+                            'keys',
+                            'values',
+                        )): _FiniteStateMachineNode(
+                            hint_factory=Mapping,
+                            nodes_next={
+                                # "collections.abc.MutableMapping" FSM.
+                                frozenset((
+                                    '__delitem__',
+                                    '__setitem__',
+                                    'clear',
+                                    'pop',
+                                    'popitem',
+                                    'setdefault',
+                                    'update',
+                                )): _FiniteStateMachineNode(
+                                    hint_factory=MutableMapping),
+                            },
+                        ),
+                        # ....................{ SET        }....................
+                        # "collections.abc.Set" FSM, intentionally defined
+                        # midway to prioritize this more useful ABC over
+                        # relatively useless alternatives.
+                        frozenset((
+                            '__and__',
+                            '__eq__',
+                            '__ge__',
+                            '__gt__',
+                            '__le__',
+                            '__lt__',
+                            '__ne__',
+                            '__or__',
+                            '__sub__',
+                            '__xor__',
+                            'isdisjoint',
+                        )): _FiniteStateMachineNode(
+                            hint_factory=Set,
+                            nodes_next={
+                                # "collections.abc.MutableSet" FSM.
+                                frozenset((
+                                    '__iand__',
+                                    '__ior__',
+                                    '__isub__',
+                                    '__ixor__',
+                                    'clear',
+                                    'pop',
+                                    'remove',
+                                )): _FiniteStateMachineNode(
+                                    hint_factory=MutableSet),
                             },
                         ),
                     },
                 ),
             },
         ),
-    },
-)
-'''
-:mod:`collections.abc` **fine state machine (FSM)**.
+        # ....................{ ITERABLE                   }....................
+        # "collections.abc.Iterable" FSM, intentionally defined nearly first to
+        # prioritize this more useful ABC over relatively useless alternatives.
+        '__iter__': _FiniteStateMachineNode(
+            hint_factory=Iterable,
+            nodes_next={
+                # "collections.abc.Iterator" FSM, intentionally defined first to
+                # prioritize this more useful ABC over relatively useless
+                # alternatives.
+                '__next__': _FiniteStateMachineNode(
+                    hint_factory=Iterator,
+                    nodes_next={
+                        # "collections.abc.Generator" FSM.
+                        frozenset((
+                            'close',
+                            'send',
+                            'throw',
+                        )): _FiniteStateMachineNode(
+                            hint_factory=Generator,
+                            nodes_next={
+                            },
+                        ),
+                    },
+                ),
+                # ....................{ REVERSIBLE         }....................
+                # "collections.abc.Reversible" FSM, intentionally defined nearly
+                # last to deprioritize this relatively useless ABC over more
+                # useful alternatives.
+                '__reversed__': _FiniteStateMachineNode(
+                    hint_factory=Reversible),
+            },
+        ),
+        # ....................{ AWAITABLE                  }....................
+        # "collections.abc.Awaitable" FSM, intentionally defined midway to
+        # prioritize this more useful ABC over relatively useless alternatives.
+        '__await__': _FiniteStateMachineNode(
+            hint_factory=Awaitable,
+            nodes_next={
+                # "collections.abc.Coroutine" FSM.
+                frozenset((
+                    'close',
+                    'send',
+                    'throw',
+                )): _FiniteStateMachineNode(hint_factory=Coroutine),
+            },
+        ),
+        # ....................{ ASYNCITERABLE              }....................
+        # "collections.abc.AsyncIterable" FSM, intentionally defined nearly last
+        # to prioritize this less useful ABC over relatively useless
+        # alternatives.
+        '__aiter__': _FiniteStateMachineNode(
+            hint_factory=AsyncIterable,
+            nodes_next={
+                # "collections.abc.AsyncIterator" FSM.
+                '__anext__': _FiniteStateMachineNode(
+                    hint_factory=AsyncIterator,
+                    nodes_next={
+                        # "collections.abc.AsyncGenerator" FSM.
+                        frozenset((
+                            'aclose',
+                            'asend',
+                            'athrow',
+                        )): _FiniteStateMachineNode(
+                            hint_factory=AsyncGenerator),
+                    },
+                ),
+            },
+        ),
+        # ....................{ SIZED                      }....................
+        # "collections.abc.Sized" FSM, intentionally defined last to
+        # deprioritize this almost entirely useless ABC over more useful
+        # alternatives. Since *ALMOST* all classes satisfying this ABC also
+        # satisfy the "collections.abc.Collection" ABC, this ABC is (in and of
+        # itself) both largely useless and exceedingly uncommon.
+        '__len__': _FiniteStateMachineNode(hint_factory=Sized),
+    }
 
-See Also
---------
-:data:`._FiniteStateMachine`
-    Further details.
-'''
+    # If the active Python interpreter targets Python >= 3.12...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from collections.abc import Buffer  # type: ignore[attr-defined]
+
+        # Add the "collections.abc.Buffer" FSM.
+        _START_NODE_NODES_NEXT['__buffer__'] = _FiniteStateMachineNode(
+            hint_factory=Buffer)
+    # Else, the active Python interpreter targets Python < 3.12.
+
+    # ....................{ GLOBALS                        }....................
+    # Allow these global variables to be redefined.
+    global \
+        _START_NODE, \
+        _START_NODE_TRANSITION_METHOD_NAMES
+
+    # "collections.abc" finite state machine (FSM).
+    _START_NODE = _FiniteStateMachineNode(nodes_next=_START_NODE_NODES_NEXT)
+
+    # Frozen set of the names of all requisite start methods.
+    _START_NODE_TRANSITION_METHOD_NAMES = _START_NODE.nodes_next_method_names
 
 
-_START_NODE_TRANSITION_METHOD_NAMES = _START_NODE.node_transition_method_names
-'''
-Frozen set of the names of all **requisite methods** (i.e., methods required to
-transition from the start node to a transitional node).
-
-If the class passed to the :func:`.infer_hint_type_collections_abc` function
-does *not* define at least one method in this set, then that class satisfies
-*no* :mod:`collections.abc` ABC. This set enables that function to exhibit
-best-case constant time complexity :math:`O(n)`, where ``n`` is the number of
-attributes bound to that class.
-'''
+# Initialize this submodule.
+_init()

@@ -15,7 +15,7 @@ hints best describing arbitrary objects).
 #configure type hint inference.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer._infercontainer import infer_hint_container
+from beartype.door._func.infer._inferiterable import infer_hint_iterable
 from beartype.roar import BeartypeDoorInferHintRecursionWarning
 from beartype.typing import (
     ChainMap,
@@ -29,9 +29,15 @@ from beartype.typing import (
     Type,
     ValuesView,
 )
-from beartype._data.hint.datahinttyping import DictStrToAny
+from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
+    FrozenSetInts,
+)
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.utilobject import get_object_type_name
+from collections.abc import (
+    Iterable as IterableABC,
+)
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion(object):
@@ -54,7 +60,7 @@ def infer_hint(
     obj: object,
 
     # Hidden parameters. *GULP*
-    __beartype_obj_ids_seen__: FrozenSet[int] = frozenset(),
+    __beartype_obj_ids_seen__: FrozenSetInts = frozenset(),
 ) -> object:
     '''
     Type hint annotating the passed object.
@@ -214,8 +220,8 @@ def infer_hint(
         # *ALL* items transitively reachable from this collection), defined by
         # subscripting this factory by the union of the child type hints
         # validating all items recursively reachable from this collection.
-        hint = infer_hint_container(
-            container=obj,  # type: ignore[arg-type]
+        hint = infer_hint_iterable(
+            iterable=obj,  # type: ignore[arg-type]
             hint_factory=hint_factory_args_1,
             __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
         )
@@ -239,18 +245,26 @@ def infer_hint(
 
     # If at least one "collections.abc" protocol validates this type...
     if obj_type_collections_abc:
-        #FIXME: *INCORRECT.* Not all "collections.abc" protocols describe
-        #containers, obviously. We sigh. We sigh so hard!
-        # Parent type hint recursively validating this container (including
-        # *ALL* items transitively reachable from this container), defined by
-        # subscripting this "collections.abc" protocol by the union of the child
-        # type hints validating all items recursively reachable from this
-        # container.
-        hint = infer_hint_container(
-            container=obj,  # type: ignore[arg-type]
-            hint_factory=obj_type_collections_abc,
-            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-        )
+        # If this object is iterable...
+        if isinstance(obj, IterableABC):
+            # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
+            # Parent type hint recursively validating this iterable (including
+            # *ALL* items transitively reachable from this iterable), defined
+            # by subscripting this "collections.abc" protocol by the union of
+            # the child type hints validating all items recursively reachable
+            # from this iterable.
+            hint = infer_hint_iterable(
+                iterable=obj,  # type: ignore[arg-type]
+                hint_factory=obj_type_collections_abc,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+        # Else, this protocol is *NOT* a container protocol. In this case, we
+        # have *NO* safe means of inferring the child type hints subscripting
+        # this protocol. In this case, fallback to returning this unsubscripted
+        # container protocol as is.
+        else:
+            # print(f'Ignoring non-iterable {repr(obj_type_collections_abc)} subscription...')
+            hint = obj_type_collections_abc
 
         # Return this hint.
         return hint

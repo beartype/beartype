@@ -140,7 +140,7 @@ class BeartypeValidator(object):
             type hint for further details.
 
         Raises
-        ----------
+        ------
         beartype.roar.BeartypeValeSubscriptionException
             If either:
 
@@ -309,7 +309,7 @@ class BeartypeValidator(object):
         This function is memoized for efficiency.
 
         Warns
-        ----------
+        -----
         BeartypeValeLambdaWarning
             If this validator is implemented as a pure-Python lambda function
             whose definition is *not* parsable from the script or module
@@ -366,10 +366,11 @@ class BeartypeValidator(object):
             delimiting the human-readable representation of the tri-state
             boolean and validator representation in the returned substring).
         is_shortcircuited : bool, optional
-            ``True`` only if this validator has been **short-circuited** (i.e.,
-            *not* required to be tested against) by a previously tested sibling
-            validator, in which case this method will silently catch and reduce
-            exceptions raised by the :meth:`is_valid` method to ``False``.
+            :data:`True` only if this validator has been **short-circuited**
+            (i.e., *not* required to be tested against) by a previously tested
+            sibling validator, in which case this method will silently catch and
+            reduce exceptions raised by the :meth:`is_valid` method to
+            :data:`False`.
 
             Short-circuiting typically arises from binary validators (e.g.,
             :class:`beartype.vale._core._valecore.BeartypeValidatorConjunction`)
@@ -417,10 +418,10 @@ class BeartypeValidator(object):
                    IsArrayMatrix = Is[lambda arr: arr.shape[0] == arr.shape[1]]
                IndexError: tuple index out of range
 
-            Defaults to ``False``.
+            Defaults to :data:`False`.
 
         Returns
-        ----------
+        -------
         str
             Substring diagnosing this object against this validator.
         '''

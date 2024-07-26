@@ -21,6 +21,9 @@ from beartype.typing import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from collections import defaultdict
+from collections.abc import (
+    Sized as SizedABC,
+)
 from contextlib import contextmanager
 from enum import Enum
 from functools import (
@@ -476,28 +479,67 @@ function_module_name_fake.__module__ = 'He_had.a_mask.like_Castlereagh'
 function_module_name_none.__module__ = None
 
 # ....................{ CLASSES ~ abc                      }....................
-class ClassMutableSequence(object):
+class ClassSized(object):
     '''
-    Class manually satisfying the standard
-    :class:`collections.abc.MutableSequence` protocol *without* simply
-    subclassing a builtin mutable sequence type (e.g., :class:`list`).
+    Class manually satisfying *only* the standard :class:`collections.abc.Sized`
+    protocol *without* simply subclassing a builtin immutable sized type (e.g.,
+    :class:`str`).
+    '''
+
+    def __init__(self, sized: SizedABC) -> None: self._sized = sized
+    def __len__(self) -> int: return len(self._sized)
+
+# ....................{ CLASSES ~ abc : sequence           }....................
+class ClassContainer(object):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.Container` protocol *without* simply subclassing a
+    builtin immutable container type (e.g., :class:`str`).
     '''
 
     def __init__(self, items: list) -> None: self._items = items
     def __contains__(self, item: object) -> bool: return item in self._items
-    def __delitem__(self, index: int) -> None: del self._items[index]
+
+
+class ClassCollection(ClassContainer):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.Collection` protocol *without* simply subclassing a
+    builtin immutable container type (e.g., :class:`bytes`).
+    '''
+
+    def __iter__(self) -> Iterator: return iter(self._items)
+    def __len__(self) -> int: return len(self._items)
+
+
+class ClassSequence(ClassCollection):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.Sequence` protocol *without* simply subclassing a
+    builtin immutable sequence type (e.g., :class:`tuple`).
+    '''
+
     def __getitem__(self, index: int) -> object: return self._items[index]
+    def __reversed__(self) -> Iterator: return reversed(self._items)
+    def count(self, item: object) -> int: return self._items.count(item)
+    def index(self, *args, **kwargs) -> int:
+        return self._items.index(*args, **kwargs)
+
+
+class ClassMutableSequence(ClassSequence):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.MutableSequence` protocol *without* simply
+    subclassing a builtin mutable sequence type (e.g., :class:`list`).
+    '''
+
+    def __delitem__(self, index: int) -> None: del self._items[index]
     def __setitem__(self, index: int, item: object) -> None:
         self._items[index] = item
     def __iadd__(self, item: object) -> object: self._items += item
-    def __iter__(self) -> Iterator: return iter(self._items)
-    def __len__(self) -> int: return len(self._items)
-    def __reversed__(self) -> Iterator: return reversed(self._items)
     def append(self, item: object) -> None: self._items.append(item)
     def clear(self) -> None: self._items.clear()
     def extend(self, items: Iterable) -> None: self._items.extend(items)
-    def index(self, *args, **kwargs) -> int:
-        return self._items.index(*args, **kwargs)
     def insert(self, index: int, item: object) -> None:
         self._items.insert(index, item)
     def pop(self, *args, **kwargs) -> object:

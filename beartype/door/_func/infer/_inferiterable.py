@@ -15,10 +15,11 @@ from beartype.typing import (
     FrozenSet,
     Tuple,
 )
+from beartype._data.hint.datahinttyping import FrozenSetInts
 from beartype._util.hint.pep.proposal.utilpep484604 import (
     make_hint_pep484604_union)
 from collections.abc import (
-    Container as ContainerABC,
+    Iterable as IterableABC,
 )
 
 # ....................{ INFERERS                           }....................
@@ -27,25 +28,24 @@ from collections.abc import (
 #FIXME: Generalize to support user-defined subclasses of builtin container types
 #(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
 #where those types are *NOT* subscriptable. Maybe ignore Python 3.8, honestly?
-#FIXME: Reduce DRY by globalizing the "FrozenSet[int]" type hint, please.
-def infer_hint_container(
-    container: ContainerABC,
+def infer_hint_iterable(
+    iterable: IterableABC,
     hint_factory: object,
-    __beartype_obj_ids_seen__: FrozenSet[int],
+    __beartype_obj_ids_seen__: FrozenSetInts,
 ) -> object:
     '''
-    Type hint recursively validating the passed container (including *all* items
-    transitively reachable from this container), defined by subscripting the
+    Type hint recursively validating the passed iterable (including *all* items
+    transitively reachable from this iterable), defined by subscripting the
     passed type hint factory by the union of the child type hints validating
     these items.
 
     Parameters
     ----------
-    container : Container
-        Pure-Python container to infer a type hint from.
+    iterable : Iterable
+        Pure-Python iterable to infer a type hint from.
     hint_factory : object
-        Subscriptable type hint factory validating this container (e.g., the
-        :class:`list` builtin if this container is a list).
+        Subscriptable type hint factory validating this iterable (e.g., the
+        :class:`list` builtin if this iterable is a list).
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard.** See also the parameter of the same name accepted by
         the :func:`beartype.door._func.infer.infermain.infer_hint` function.
@@ -53,17 +53,17 @@ def infer_hint_container(
     Returns
     -------
     object
-        Type hint inferred from the passed container.
+        Type hint inferred from the passed iterable.
 
     Warns
     -----
     BeartypeDoorInferHintRecursionWarning
-        On detecting that the passed container is **recursive** (i.e.,
+        On detecting that the passed iterable is **recursive** (i.e.,
         containing one or more items that self-referentially refer to this same
-        container).
+        iterable).
     '''
-    assert isinstance(container, ContainerABC), (
-        f'{repr(container)} not container.')
+    assert isinstance(iterable, IterableABC), (
+        f'{repr(iterable)} not iterable.')
     assert isinstance(__beartype_obj_ids_seen__, frozenset), (
         f'{repr(__beartype_obj_ids_seen__)} not frozen set.')
 
@@ -77,10 +77,10 @@ def infer_hint_container(
 
     # Add the integer uniquely identifying this collection to this set, thus
     # recording that this collection has now been visited by this recursion.
-    __beartype_obj_ids_seen__ |= {id(container)}
+    __beartype_obj_ids_seen__ |= {id(iterable)}
 
     # For each item in this collection...
-    for item in container:  # type: ignore[attr-defined]
+    for item in iterable:  # type: ignore[attr-defined]
         # Child type hint validating this item.
         hint_child = infer_hint(
             obj=item, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)

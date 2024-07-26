@@ -146,7 +146,7 @@ class PackagesTrie(
         *args, **kwargs
     ) -> None:
         '''
-        Initialize this package name (sub)cache.
+        Initialize this package configuration trie.
 
         Parameters
         ----------
@@ -175,6 +175,9 @@ class PackagesTrie(
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this package configuration trie.
+        '''
 
         return '\n'.join((
             f'{self.__class__.__name__}(',
