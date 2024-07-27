@@ -59,6 +59,6 @@ from beartype.door._func.doorcheck import (
     is_bearable as is_bearable,
     is_subhint as is_subhint,
 )
-from beartype.door._func.infer.infermain import (
+from beartype.door._func.infer.inferhint import (
     infer_hint as infer_hint,
 )

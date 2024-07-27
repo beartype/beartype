@@ -16,11 +16,11 @@ hints best describing arbitrary objects).
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._func.infer._inferiterable import infer_hint_iterable
+from beartype.door._func.infer.collection.infercollectionsabc import (
+    infer_hint_collections_abc)
 from beartype.roar import BeartypeDoorInferHintRecursionWarning
 from beartype.typing import (
-    ChainMap,
     Deque,
-    Dict,
     FrozenSet,
     KeysView,
     List,
@@ -29,15 +29,13 @@ from beartype.typing import (
     Type,
     ValuesView,
 )
+from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     FrozenSetInts,
 )
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.utilobject import get_object_type_name
-from collections.abc import (
-    Iterable as IterableABC,
-)
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion(object):
@@ -53,6 +51,12 @@ class BeartypeInferHintContainerRecursion(object):
 # ....................{ INFERERS                           }....................
 #FIXME: Add support for dictionaries. That's pretty much mandatory. Pretty much
 #useless without at least that. *sigh*
+#FIXME: Add support for generics (e.g., instances of "Generic[T]" subclasses).
+#This should *MOSTLY* be trivial. Since generics are already basically useful
+#type hints, generics should just be returned unmodified. The only exception is
+#iterable parametrized generics (e.g., instances of "Generic[T]" subclasses);
+#iterable parametrized generics should be subscripted by a child type hint
+#describing the items contained by those iterables.
 #FIXME: Special-case instances of all other builtin types (e.g., integers,
 #strings) to immediately return those types for efficiency.
 def infer_hint(
@@ -191,13 +195,59 @@ def infer_hint(
     # recursive "collections.abc.Sequence[str]" type hint, which they otherwise
     # would be. Since strings are infinitely recursively immutable sequences of
     # immutable sequences, this detection avoids *INSANE* infinite recursion.
-    if obj_type in _BUILTIN_SCALAR_TYPES:
+    if obj_type in TYPES_BUILTIN_SCALAR:
         return obj_type
     # Else, this object is *NOT* a builtin scalar.
 
     # ....................{ PEP [484|585] ~ container      }....................
     #FIXME: [SPEED] Danger: string interpolation! This is probably shockingly
     #inefficient. Contemplate alternatives. Like, literally *ANYTHING* else.
+    #FIXME: *HMM.* The following should do it, actually:
+    #    #FIXME: Define this local here.
+    #    # Set of both the class of this object *AND* all superclasses of that
+    #    # class (excluding the irrelevant root "object" superclass).
+    #    obj_types = set(obj.__mro__[:-1])
+    #
+    #    #FIXME: Define this global below.
+    #    # Note that key-value pairs are intentionally defined in decreasing
+    #    # order of real-world commonality to reduce searching time costs.
+    #    _TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1: DictTypeToAny = {
+    #        tuple: Tuple,
+    #        list: List,
+    #        frozenset: FrozenSet,
+    #        set: Set,
+    #        deque: Deque,
+    #        KeysViewABC: KeysView,
+    #        ValuesViewABC: ValuesView,
+    #    }
+    #
+    #    #FIXME: Define this global below.
+    #    _TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2: DictTypeToAny = {
+    #        dict: Dict,
+    #        ChainMapABC: ChainMap,
+    #    }
+    #
+    #    #FIXME: Define this global below.
+    #    _TYPE_TO_HINT_FACTORY_ITERABLE: DictTypeToAny = merge_mappings_two(
+    #        _TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1,
+    #        _TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2,
+    #    )
+    #
+    #So far, so trivial. Given that, we then perform a similar strategy to the
+    #infer_hint_type_collections_abc() function; notably, we:
+    #* Intersect "obj_types" with "_TYPE_TO_HINT_FACTORY_ITERABLE.keys()".
+    #* If the resulting set is non-empty, then this object is an instance of one
+    #  or more builtin iterable types. In this case:
+    #  * Intersect "obj_types" first with
+    #    "_TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1.keys()" and then with
+    #    "_TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2.keys()". For the first resulting
+    #    non-empty intersection:
+    #    * Explicitly iterate over those dictionary keys until finding the
+    #      *FIRST* builtin type that this object is an instance of.
+    #    * When this type is discovered, call infer_hint_iterable() and
+    #      immediately halt iteration.
+    #FIXME: Shift this into the new "infercollectionbultin" submodule, please.
+
     # Fully-qualified (i.e., absolute) name of the type of this object.
     obj_classname = get_object_type_name(obj)
 
@@ -231,44 +281,16 @@ def infer_hint(
     # Else, this object is *NOT* validated by such a factory.
 
     # ....................{ NON-PEP ~ collections.abc      }....................
-    # Defer heavyweight imports. Notably:
-    # * The "_infercollabc" submodule defines a deeply nested data structure
-    #   literally implementing a full-blown *FRIGGIN' FINITE STATE MACHINE.* So,
-    #   you just know that's heavy. It's heaviness is unmeasurable.
-    from beartype.door._func.infer._infercollabc import (
-        infer_hint_type_collections_abc)
+    # Narrowest "collections.abc" protocol type hint validating this object if
+    # at least one such protocol validates this object *OR* "None" otherwise
+    # (i.e., if no such protocol validates this object).
+    hint = infer_hint_collections_abc(
+        obj=obj, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
 
-    # Narrowest "collections.abc" protocol validating this type if at least one
-    # such protocol validates this type *OR* "None" otherwise (i.e., if *NO*
-    # such protocol validates this type).
-    obj_type_collections_abc = infer_hint_type_collections_abc(obj_type)
-
-    # If at least one "collections.abc" protocol validates this type...
-    if obj_type_collections_abc:
-        # If this object is iterable...
-        if isinstance(obj, IterableABC):
-            # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
-            # Parent type hint recursively validating this iterable (including
-            # *ALL* items transitively reachable from this iterable), defined
-            # by subscripting this "collections.abc" protocol by the union of
-            # the child type hints validating all items recursively reachable
-            # from this iterable.
-            hint = infer_hint_iterable(
-                iterable=obj,  # type: ignore[arg-type]
-                hint_factory=obj_type_collections_abc,
-                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-            )
-        # Else, this protocol is *NOT* a container protocol. In this case, we
-        # have *NO* safe means of inferring the child type hints subscripting
-        # this protocol. In this case, fallback to returning this unsubscripted
-        # container protocol as is.
-        else:
-            # print(f'Ignoring non-iterable {repr(obj_type_collections_abc)} subscription...')
-            hint = obj_type_collections_abc
-
-        # Return this hint.
+    # If at least one such hint validates this object, return this hint.
+    if hint:
         return hint
-    # Else, *NO* "collections.abc" protocol validates this type.
+    # Else, *NO* such hint validates this object.
 
     # ....................{ FALLBACK                       }....................
     # Return this type as a last-ditch fallback. By definition, *ANY* object is
@@ -277,6 +299,7 @@ def infer_hint(
     return obj_type
 
 # ....................{ PRIVATE ~ mappings                 }....................
+#FIXME: Obsolete in favour of "_TYPE_TO_HINT_FACTORY_ITERABLE", please.
 _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1: DictStrToAny = {
     'builtins.dict_keys': KeysView,
     'builtins.dict_values': ValuesView,
@@ -286,40 +309,3 @@ _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1: DictStrToAny = {
     'builtins.tuple': Tuple,
     'collections.deque': Deque,
 }
-'''
-Dictionary mapping from the fully-qualified names of **single-argument
-collection type hint factories** (i.e., standard Python types subscriptable by
-only a single child type hint and satisfying the
-:class:`collections.abc.Collection` protocol) to those factories.
-'''
-
-
-#FIXME: Also add:
-#* "Counter". Trivial, but annoying due to "Counter" being subscriptable *ONLY*
-#  by keys rather than both keys and values. *sigh*
-#* "ItemsView". Actually, "ItemsView" support will probably have to be
-#  implemented manually. "ItemsViews" are really just iterables over 2-tuples.
-_MAPPING_CLASSNAME_TO_HINT_FACTORY_ARGS_2: DictStrToAny = {
-    'builtins.dict': Dict,
-    'collections.ChainMap': ChainMap,
-}
-'''
-Dictionary mapping from the fully-qualified names of **dual-argument mapping
-type hint factories** (i.e., standard Python types subscriptable by both key and
-value child type hints and satisfying the :class:`collections.abc.Mapping`
-protocol) to those factories.
-'''
-
-# ....................{ PRIVATE ~ sets                     }....................
-#FIXME: Shift into the "beartype._data.cls" subpackage somewhere, please.
-_BUILTIN_SCALAR_TYPES: FrozenSet[type] = frozenset((
-    bytes,
-    complex,
-    float,
-    int,
-    str,
-))
-'''
-Frozen set of all **builtin scalar types** (i.e., standard C-based types whose
-instances are scalar values).
-'''

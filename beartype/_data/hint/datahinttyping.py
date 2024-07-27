@@ -330,6 +330,12 @@ PEP-compliant type hint matching a mapping whose keys are *all* strings.
 '''
 
 
+DictTypeToAny = Dict[type, Any]
+'''
+PEP-compliant type hint matching a mapping whose keys are *all* types.
+'''
+
+
 HintAnnotations = DictStrToAny
 '''
 PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
@@ -385,6 +391,12 @@ PEP-compliant type hint matching *any* frozen set of zero or more integers.
 FrozenSetStrs = FrozenSet[str]
 '''
 PEP-compliant type hint matching *any* frozen set of zero or more strings.
+'''
+
+
+FrozenSetTypes = FrozenSet[type]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more types.
 '''
 
 # ....................{ ITERABLE                           }....................

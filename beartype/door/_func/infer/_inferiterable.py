@@ -39,16 +39,20 @@ def infer_hint_iterable(
     passed type hint factory by the union of the child type hints validating
     these items.
 
+    This function *cannot* be memoized, due to necessarily accepting the
+    ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
+    :func:`beartype.door.infer_hint` function.
+
     Parameters
     ----------
-    iterable : Iterable
-        Pure-Python iterable to infer a type hint from.
+    iterable : IterableABC
+        Iterable to infer a type hint from.
     hint_factory : object
         Subscriptable type hint factory validating this iterable (e.g., the
         :class:`list` builtin if this iterable is a list).
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard.** See also the parameter of the same name accepted by
-        the :func:`beartype.door._func.infer.infermain.infer_hint` function.
+        the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
 
     Returns
     -------
@@ -69,7 +73,7 @@ def infer_hint_iterable(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype.door._func.infer.infermain import infer_hint
+    from beartype.door._func.infer.inferhint import infer_hint
 
     # ....................{ RECURSION                      }....................
     # Set of all child type hints to conjoin into a union.

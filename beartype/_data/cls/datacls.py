@@ -23,6 +23,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorBuiltinTypes,
     NoneType,
 )
+from beartype._data.hint.datahinttyping import FrozenSetTypes
 from collections.abc import (
     Set as SetABC,
 )
@@ -94,7 +95,7 @@ exceptions raised when a **namespace** (e.g., global or local scope, class or
 object dictionary) fails to define a given attribute or name).
 '''
 
-# ....................{ TYPES ~ module                     }....................
+# ....................{ TYPES ~ builtin                    }....................
 # Defined below by the _init() function.
 TYPE_BUILTIN_NAME_TO_TYPE: Dict[str, type] = None  # type: ignore[assignment]
 '''
@@ -105,11 +106,24 @@ requiring *no* explicit importation) to that type.
 
 
 # Defined below by the _init() function.
-TYPES_BUILTIN: FrozenSet[type] = None  # type: ignore[assignment]
+TYPES_BUILTIN: FrozenSetTypes = None  # type: ignore[assignment]
 '''
 Frozen set of all **builtin types** (i.e., globally accessible C-based types
 implicitly accessible from all scopes and thus requiring *no* explicit
 importation).
+'''
+
+
+TYPES_BUILTIN_SCALAR: FrozenSetTypes = frozenset((
+    bytes,
+    complex,
+    float,
+    int,
+    str,
+))
+'''
+Frozen set of all **builtin scalar types** (i.e., globally accessible C-based
+types whose instances are scalar values).
 '''
 
 # ....................{ PEP ~ (484|585)                    }....................

@@ -6,11 +6,12 @@
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
 collections abstract base class (ABC) type hint inferrers** (i.e., high-level
-functions dynamically inferring standard :mod:`collections.abc` protocols that
-best describe arbitrary classes satisfying those protocols).
+functions dynamically inferring subscripted type hints that best describe
+instances of standard :mod:`collections.abc` protocols).
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.door._func.infer._inferiterable import infer_hint_iterable
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
@@ -20,232 +21,90 @@ from beartype.typing import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.hint.datahinttyping import (
+    FrozenSetInts,
     FrozenSetStrs,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobject import get_object_methods_name_to_value_explicit
+from beartype._util.utilobjectattr import (
+    get_object_methods_name_to_value_explicit)
+from collections.abc import (
+    Iterable as IterableABC,
+)
 
 # ....................{ INFERERS                           }....................
-#FIXME: Unit test us up, please.
-@callable_cached
-def infer_hint_type_collections_abc(cls: type) -> Optional[object]:
+def infer_hint_collections_abc(
+    obj: object, __beartype_obj_ids_seen__: FrozenSetInts) -> Optional[object]:
     '''
-    Narrowest **collections protocol** (i.e., abstract base class published by
-    the :mod:`collections.abc` subpackage) validating the passed class if at
-    least one collections protocol validates this class *or* :data:`None`
-    otherwise (i.e., if *no* collections protocol validates this class).
+    **Collections protocol type hint** (i.e., possibly subscripted abstract base
+    class (ABC) published by the :mod:`collections.abc` subpackage) recursively
+    validating the passed object (including *all* items transitively reachable
+    from this object) if this object satisfies at least one such protocol *or*
+    :data:`None` otherwise (i.e., if this object satisfies *no* such protocol).
 
-    This function returns the narrowest collections protocol, defined such that:
-
-    * The passed class is a **virtual subclass** of (i.e., defines all methods
-      required by) this protocol.
-    * This protocol is **maximally narrow.** Formally:
-
-      * The passed class is a virtual subclass of *no* other collections
-        protocols that are themselves virtual subclasses of this protocol.
-      * Equivalently, this protocol is **larger** (i.e., defines more abstract
-        methods) than all other collections protocols that the passed class is
-        also a virtual subclass of.
-
-    This function does *not* return a type hint annotating the passed class.
-    This function merely returns a subscriptable type hint factory suitable for
-    the caller to subscript with a child type hint, which then produces the
-    desired type hint annotating the passed class. Why this indirection? In a
-    word: efficiency. If this function recursively inferred and returned a full
-    type hint, this function would need to guard against infinite recursion by
-    accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
-    parent :func:`beartype.door._func.infer.infermain.infer_hint` function;
-    doing so would prevent memoization, substantially reducing efficiency.
-
-    This function is memoized for efficiency.
-
-    Design
-    ------
-    This function efficiently infers the narrowest :mod:`collections.abc` ABC
-    applicable to the passed object by introspecting the set of all **dunder
-    methods** (i.e., methods whose names are both prefixed and suffixed by the
-    double-underscore substring ``"__"``). To do so, this function internally
-    performs a graph theoretic traversal over a finite state machine (FSM)
-    whose nodes are the set of all :mod:`collections.abc` ABCs and transitions
-    between those nodes the dunder method names required by those ABCs. For
-    example, given a passed object defining only the standard
-    ``__contains__()``, ``__iter__()``, and ``__len__()`` dunder methods, this
-    function (in order):
-
-    #. Transitions from the start node of this FSM along the ``__contains__()``
-       edge of this FSM to the corresponding :class:`collections.abc.Container`
-       node.
-    #. Transitions from that node along the grouped ``{__iter__(), __len__()}``
-       edge of this FSM to the corresponding :class:`collections.abc.Collection`
-       node.
-    #. Halts there, thus inferring the type hint factory validating the passed
-       object to be the :class:`collections.abc.Collection` ABC.
-
-    Caveats
-    -------
-    This function exhibits:
-
-    * **Best-case constant time complexity** :math:`O(n)` where ``n`` is the
-      number of attributes bound to the passed class, which occurs when the
-      passed class satisfies *no* :mod:`collections.abc` ABC.
-    * **Average-case linear time complexity** :math:`O(n + k)` where ``n`` is the
-      number of attributes bound to the passed class and ``k`` is the number of
-      :mod:`collections.abc` ABCs subclassing the
-      :class:`collections.abc.Container` superclass, which occurs when the
-      passed class is that of a **standard container** (i.e., satisfies at least
-      the root :class:`collections.abc.Container` ABC).
-    * **Worst-case quadratic time complexity** :math:`O(n + jk)` where ``n`` is
-      the number of attributes bound to the passed class, ``j`` is the number of
-      :mod:`collections.abc` ABC superclasses (i.e., ABCs at the root of a
-      hierarchy of ABCs), and ``k`` is the largest number of
-      :mod:`collections.abc` ABCs subclassing such a superclass, which occurs
-      when the passed class satisfies only an uncommon :mod:`collections.abc`
-      ABC superclass.
+    This function *cannot* be memoized, due to necessarily accepting the
+    ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
+    :func:`beartype.door.infer_hint` function.
 
     Parameters
     ----------
     obj : object
-        Class to be introspected.
+        Object to infer a type hint from.
+    __beartype_obj_ids_seen__ : FrozenSet[int]
+        **Recursion guard.** See also the parameter of the same name accepted by
+        the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
 
     Returns
     -------
     Optional[object]
         Either:
 
-        * If at least one :mod:`collections.abc` protocol validates this class,
-          the narrowest such protocol.
+        * If this object satisfies at least one :class:`collections.abc`
+          protocol:
+            * If this object is a **collection** (i.e., this ABC is a
+              :class:`collections.abc.Collection` subclass), this ABC
+              subscripted by the union of the child type hints validating *all*
+              items of this collection.
+            * Else, this ABC unsubscripted (i.e., as is) otherwise.
         * Else, :data:`None`.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
 
-    # ....................{ PREAMBLE                       }....................
-    # List of the names of all attributes bound to this class.
-    cls_attr_names = dir(cls)
+    # Type of this object.
+    obj_type = obj.__class__
 
-    # If the intersection of the set of the names of all attributes bound to
-    # this class with the set of the names of all requisite methods (i.e.,
-    # methods required to transition from the start node to a transitional node)
-    # is the empty set, then this class fails to define *ANY* methods required
-    # by a "collections.abc" ABC. In this case, silently reduce to a noop.
-    if not (set(cls_attr_names) & _START_NODE_TRANSITION_METHOD_NAMES):
-        return None
-    # Else, this intersection is non-empty. In this case, this class defines at
-    # least one attribute whose name is that of a method required by a
-    # "collections.abc" ABC.
-    #
-    # Note that this does *NOT* necessarily imply that this class defines at
-    # least one such method. Clearly, an instance variable of the same name is
-    # *NOT* a method: e.g.,
-    #     # This class does *NOT* satisfy the "collections.abc.Sized" protocol
-    #     # despite defining the "__sized__" attribute, as that attribute is
-    #     # *NOT* a method.
-    #     class FakeSized(object):
-    #         __sized__: int
-    #
-    # Further detection is warranted to disambiguate this edge case.
+    # Narrowest "collections.abc" protocol validating this type if at least one
+    # such protocol validates this type *OR* "None" otherwise (i.e., if *NO*
+    # such protocol validates this type).
+    hint_factory_collections_abc = _infer_hint_factory_collections_abc(obj_type)
 
-    # ....................{ LOCALS                         }....................
-    # Dictionary mapping from the names of all methods of the passed class to
-    # those methods.
-    cls_methods_name_to_method = get_object_methods_name_to_value_explicit(
-        obj=cls, obj_dir=cls_attr_names)
+    # If at least one "collections.abc" protocol validates this type...
+    if hint_factory_collections_abc:
+        # If this object is iterable...
+        if isinstance(obj, IterableABC):
+            # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
+            # Parent type hint recursively validating this iterable (including
+            # *ALL* items transitively reachable from this iterable), defined
+            # by subscripting this "collections.abc" protocol by the union of
+            # the child type hints validating all items recursively reachable
+            # from this iterable.
+            hint = infer_hint_iterable(
+                iterable=obj,  # type: ignore[arg-type]
+                hint_factory=hint_factory_collections_abc,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+        # Else, this protocol is *NOT* a container protocol. In this case, we
+        # have *NO* safe means of inferring the child type hints subscripting
+        # this protocol. In this case, fallback to returning this unsubscripted
+        # container protocol as is.
+        else:
+            # print(f'Ignoring non-iterable {repr(obj_type_collections_abc)} subscription...')
+            hint = hint_factory_collections_abc
 
-    # Set of the names of all methods bound to this class.
-    cls_method_names = cls_methods_name_to_method.keys()
+        # Return this hint.
+        return hint
+    # Else, *NO* "collections.abc" protocol validates this type.
 
-    # Finite state machine (FSM) node currently visited by the search below.
-    node_curr = _START_NODE
-
-    # Finite state machine (FSM) node to be visited next by the search below if
-    # any *OR* "None" if this is the last iteration of this search.
-    node_next: Optional[_FiniteStateMachineNode] = None
-
-    # ....................{ SEARCH                         }....................
-    # print(f'Inferring {repr(cls)} "collections.abc" protocol...')
-
-    # While some FSM node is still being visited by this search...
-    while True:
-        # print(f'Visiting FSM node {repr(node_curr.hint_factory)}...')
-
-        #FIXME: *HEH.* Totally busted, sadly. Why? Because the root "object"
-        #superclass defines an absurd number of dunder methods (e.g.,
-        #__hash__(), __eq__()), which then guarantees this intersection to
-        #almost always be non-empty -- especially when testing containers.
-        #
-        #Please resolve this by improving the
-        #get_object_methods_name_to_value_explicit() getter defined above to
-        #omit all "object" slot wrappers, which we already did and just need to
-        #restore. Thankfully, this is only an optimization. Still, I sigh.
-
-        # If the intersection of the set of the names of all methods bound to
-        # this class with the set of the names of any methods required by one or
-        # more "collections.abc" ABCs reachable from the current FSM node is
-        # empty, no further FSM transitions can be made. In this case, the
-        # current "collections.abc" ABC validating this class is the narrowest
-        # such ABC. Halt searching and return this ABC.
-        if not (cls_method_names & node_curr.nodes_next_method_names):
-            break
-        # Else, this intersetion is non-empty. In this case, at least one FSM
-        # transition can be made. In this case, the current "collections.abc"
-        # ABC validating this class is *NOT* the narrowest such ABC. Continue
-        # searching for the narrowest such ABC.
-
-        # For the string or frozen set of all transition methods *AND* FSM nodes
-        # to which those methods transition...
-        for node_next_method_names, node_next_possible in (
-            node_curr.nodes_next.items()):
-            # print(f'Considering transitioning to FSM node {repr(node_next_possible.hint_factory)}...')
-
-            # If this transition method name(s) is a string...
-            if node_next_method_names.__class__ is str:
-                # If this class defines a method with this name, this class
-                # satisfies this target "collections.abc" ABC. In this case...
-                if node_next_method_names in cls_method_names:
-                    # Set the next FSM node to this node.
-                    node_next = node_next_possible
-                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
-
-                    # Halt this inner iteration.
-                    break
-            # Else, this transition method name(s) is a frozen set of strings.
-            # In this case...
-            else:
-                # print(f'Set intersection: {node_next_method_names & cls_method_names}...')
-                # print(f'Expected set: {node_next_method_names}...')
-
-                # If the intersection of the set of the names of all methods
-                # bound to this class with this frozen set of the names of all
-                # methods required by this protocol is exactly this frozen set,
-                # then this class defines *ALL* methods in this set and thus
-                # satisfies this target "collections.abc" ABC. In this case...
-                if (
-                    len(node_next_method_names & cls_method_names) ==
-                    len(node_next_method_names)
-                ):
-                    # Set the next FSM node to this node.
-                    node_next = node_next_possible
-                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
-
-                    # Halt this inner iteration.
-                    break
-
-        # If transitioning to *NO* next FSM node, halt iteration.
-        if not node_next:
-            break
-        # Else, a next FSM node is being transitioned to.
-
-        # Transition from the current to the next FSM node.
-        node_curr = node_next
-
-        # Nullify the next FSM node for safety.
-        node_next = None
-
-    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
-    hint_factory = node_curr.hint_factory
-    # hint_factory = node_curr.hint_factory if node_curr else None
-
-    # Return this object.
-    return hint_factory
+    # Fallback to returning "None".
+    return None
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[
@@ -270,6 +129,14 @@ PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
 
 * Values describe the **nodes** (i.e., :class:`._FiniteStateMachineNode`
   instances) of this FSM to follow these transitions to.
+'''
+
+# ....................{ PRIVATE ~ constants                }....................
+_NODE_TRANSITION_KEY_TYPES = (str, frozenset)
+'''
+**Transition methods type tuple** (i.e., tuple of the types of all keys of the
+``nodes_next`` parameter accepted by the
+:meth:`_FiniteStateMachineNode.__init__` method).
 '''
 
 # ....................{ PRIVATE ~ classes                  }....................
@@ -414,44 +281,25 @@ class _FiniteStateMachineNode(object):
             f')',
         ))
 
-# ....................{ PRIVATE ~ globals                  }....................
-_NODE_TRANSITION_KEY_TYPES = (str, frozenset)
-'''
-**Transition methods type tuple** (i.e., tuple of the types of all keys of the
-``nodes_next`` parameter accepted by the
-:meth:`_FiniteStateMachineNode.__init__` method).
-'''
-
-
-# Initialized below by the _init() function.
-_START_NODE: _FiniteStateMachineNode = None  # type: ignore[assignment]
-'''
-:mod:`collections.abc` **finite state machine (FSM)**.
-
-See Also
---------
-:data:`._FiniteStateMachine`
-    Further details.
-'''
-
-
-# Initialized below by the _init() function.
-_START_NODE_TRANSITION_METHOD_NAMES: FrozenSetStrs = None  # type: ignore[assignment]
-'''
-Frozen set of the names of all **requisite start methods** (i.e., methods
-required to transition from the start node to a transitional node).
-
-If the class passed to the :func:`.infer_hint_type_collections_abc` function
-does *not* define at least one method in this set, then that class satisfies
-*no* :mod:`collections.abc` ABC. This set enables that function to exhibit
-best-case constant time complexity :math:`O(n)`, where ``n`` is the number of
-attributes bound to that class.
-'''
-
-# ....................{ PRIVATE ~ initializers             }....................
-def _init() -> None:
+# ....................{ PRIVATE ~ getters                  }....................
+@callable_cached
+def get_finite_state_machine() -> _FiniteStateMachineNode:
     '''
-    Initialize this submodule.
+    :mod:`collections.abc` **finite state machine (FSM)**.
+
+    This getter is memoized for efficiency. Indeed, the pure-Python data
+    structure created and returned by this getter is intentionally isolated to
+    the body of this getter rather than defined as a global variable due to the
+    cost of creating this data structure. The former approach defers that
+    to the first call to the :func:`.infer_hint_factory_collections_abc`
+    function, whereas the latter approach would impose that cost on the first
+    importation of *anything* from the popular :mod:`beartype.door` subpackage.
+    Needless to say, the former approach is preferable.
+
+    See Also
+    --------
+    :data:`._FiniteStateMachine`
+        Further details.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -700,18 +548,233 @@ def _init() -> None:
             hint_factory=Buffer)
     # Else, the active Python interpreter targets Python < 3.12.
 
-    # ....................{ GLOBALS                        }....................
-    # Allow these global variables to be redefined.
-    global \
-        _START_NODE, \
-        _START_NODE_TRANSITION_METHOD_NAMES
+    # "collections.abc" finite state machine (FSM).
+    START_NODE = _FiniteStateMachineNode(nodes_next=_START_NODE_NODES_NEXT)
+
+    # Return this FSM.
+    return START_NODE
+
+# ....................{ PRIVATE ~ inferers                 }....................
+#FIXME: Fully unit test us up, please.
+@callable_cached
+def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
+    '''
+    Narrowest **collections protocol** (i.e., abstract base class published by
+    the :mod:`collections.abc` subpackage) validating the passed class if at
+    least one collections protocol validates this class *or* :data:`None`
+    otherwise (i.e., if *no* collections protocol validates this class).
+
+    This function returns the narrowest collections protocol, defined such that:
+
+    * The passed class is a **virtual subclass** of (i.e., defines all methods
+      required by) this protocol.
+    * This protocol is **maximally narrow.** Formally:
+
+      * The passed class is a virtual subclass of *no* other collections
+        protocols that are themselves virtual subclasses of this protocol.
+      * Equivalently, this protocol is **larger** (i.e., defines more abstract
+        methods) than all other collections protocols that the passed class is
+        also a virtual subclass of.
+
+    This function does *not* return a type hint annotating the passed class.
+    This function merely returns a subscriptable type hint factory suitable for
+    the caller to subscript with a child type hint, which then produces the
+    desired type hint annotating the passed class. Why this indirection? In a
+    word: efficiency. If this function recursively inferred and returned a full
+    type hint, this function would need to guard against infinite recursion by
+    accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
+    parent :func:`beartype.door._func.infer.inferhint.infer_hint` function;
+    doing so would prevent memoization, substantially reducing efficiency.
+
+    This function is memoized for efficiency.
+
+    Design
+    ------
+    This function efficiently infers the narrowest :mod:`collections.abc` ABC
+    applicable to the passed object by introspecting the set of all **dunder
+    methods** (i.e., methods whose names are both prefixed and suffixed by the
+    double-underscore substring ``"__"``). To do so, this function internally
+    performs a graph theoretic traversal over a finite state machine (FSM)
+    whose nodes are the set of all :mod:`collections.abc` ABCs and transitions
+    between those nodes the dunder method names required by those ABCs. For
+    example, given a passed object defining only the standard
+    ``__contains__()``, ``__iter__()``, and ``__len__()`` dunder methods, this
+    function (in order):
+
+    #. Transitions from the start node of this FSM along the ``__contains__()``
+       edge of this FSM to the corresponding :class:`collections.abc.Container`
+       node.
+    #. Transitions from that node along the grouped ``{__iter__(), __len__()}``
+       edge of this FSM to the corresponding :class:`collections.abc.Collection`
+       node.
+    #. Halts there, thus inferring the type hint factory validating the passed
+       object to be the :class:`collections.abc.Collection` ABC.
+
+    Caveats
+    -------
+    This function exhibits:
+
+    * **Best-case constant time complexity** :math:`O(n)` where ``n`` is the
+      number of attributes bound to the passed class, which occurs when the
+      passed class satisfies *no* :mod:`collections.abc` ABC.
+    * **Average-case linear time complexity** :math:`O(n + k)` where ``n`` is the
+      number of attributes bound to the passed class and ``k`` is the number of
+      :mod:`collections.abc` ABCs subclassing the
+      :class:`collections.abc.Container` superclass, which occurs when the
+      passed class is that of a **standard container** (i.e., satisfies at least
+      the root :class:`collections.abc.Container` ABC).
+    * **Worst-case quadratic time complexity** :math:`O(n + jk)` where ``n`` is
+      the number of attributes bound to the passed class, ``j`` is the number of
+      :mod:`collections.abc` ABC superclasses (i.e., ABCs at the root of a
+      hierarchy of ABCs), and ``k`` is the largest number of
+      :mod:`collections.abc` ABCs subclassing such a superclass, which occurs
+      when the passed class satisfies only an uncommon :mod:`collections.abc`
+      ABC superclass.
+
+    Parameters
+    ----------
+    obj : object
+        Class to be introspected.
+
+    Returns
+    -------
+    Optional[object]
+        Either:
+
+        * If at least one :mod:`collections.abc` protocol validates this class,
+          the narrowest such protocol.
+        * Else, :data:`None`.
+    '''
+    assert isinstance(cls, type), f'{repr(cls)} not type.'
+
+    # ....................{ PREAMBLE                       }....................
+    # List of the names of all attributes bound to this class.
+    cls_attr_names = dir(cls)
 
     # "collections.abc" finite state machine (FSM).
-    _START_NODE = _FiniteStateMachineNode(nodes_next=_START_NODE_NODES_NEXT)
+    _START_NODE = get_finite_state_machine()
 
-    # Frozen set of the names of all requisite start methods.
-    _START_NODE_TRANSITION_METHOD_NAMES = _START_NODE.nodes_next_method_names
+    # If the intersection of the set of the names of all attributes bound to
+    # this class with the set of the names of all requisite methods (i.e.,
+    # methods required to transition from the start node to a transitional node)
+    # is the empty set, then this class fails to define *ANY* methods required
+    # by a "collections.abc" ABC. In this case, silently reduce to a noop.
+    if not (set(cls_attr_names) & _START_NODE.nodes_next_method_names):
+        return None
+    # Else, this intersection is non-empty. In this case, this class defines at
+    # least one attribute whose name is that of a method required by a
+    # "collections.abc" ABC.
+    #
+    # Note that this does *NOT* necessarily imply that this class defines at
+    # least one such method. Clearly, an instance variable of the same name is
+    # *NOT* a method: e.g.,
+    #     # This class does *NOT* satisfy the "collections.abc.Sized" protocol
+    #     # despite defining the "__sized__" attribute, as that attribute is
+    #     # *NOT* a method.
+    #     class FakeSized(object):
+    #         __sized__: int
+    #
+    # Further detection is warranted to disambiguate this edge case.
 
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the names of all methods of the passed class to
+    # those methods.
+    cls_methods_name_to_method = get_object_methods_name_to_value_explicit(
+        obj=cls, obj_dir=cls_attr_names)
 
-# Initialize this submodule.
-_init()
+    # Set of the names of all methods bound to this class.
+    cls_method_names = cls_methods_name_to_method.keys()
+
+    # Finite state machine (FSM) node currently visited by the search below.
+    node_curr = _START_NODE
+
+    # Finite state machine (FSM) node to be visited next by the search below if
+    # any *OR* "None" if this is the last iteration of this search.
+    node_next: Optional[_FiniteStateMachineNode] = None
+
+    # ....................{ SEARCH                         }....................
+    # print(f'Inferring {repr(cls)} "collections.abc" protocol...')
+
+    # While some FSM node is still being visited by this search...
+    while True:
+        # print(f'Visiting FSM node {repr(node_curr.hint_factory)}...')
+
+        #FIXME: *HEH.* Totally busted, sadly. Why? Because the root "object"
+        #superclass defines an absurd number of dunder methods (e.g.,
+        #__hash__(), __eq__()), which then guarantees this intersection to
+        #almost always be non-empty -- especially when testing containers.
+        #
+        #Please resolve this by improving the
+        #get_object_methods_name_to_value_explicit() getter defined above to
+        #omit all "object" slot wrappers, which we already did and just need to
+        #restore. Thankfully, this is only an optimization. Still, I sigh.
+
+        # If the intersection of the set of the names of all methods bound to
+        # this class with the set of the names of any methods required by one or
+        # more "collections.abc" ABCs reachable from the current FSM node is
+        # empty, no further FSM transitions can be made. In this case, the
+        # current "collections.abc" ABC validating this class is the narrowest
+        # such ABC. Halt searching and return this ABC.
+        if not (cls_method_names & node_curr.nodes_next_method_names):
+            break
+        # Else, this intersetion is non-empty. In this case, at least one FSM
+        # transition can be made. In this case, the current "collections.abc"
+        # ABC validating this class is *NOT* the narrowest such ABC. Continue
+        # searching for the narrowest such ABC.
+
+        # For the string or frozen set of all transition methods *AND* FSM nodes
+        # to which those methods transition...
+        for node_next_method_names, node_next_possible in (
+            node_curr.nodes_next.items()):
+            # print(f'Considering transitioning to FSM node {repr(node_next_possible.hint_factory)}...')
+
+            # If this transition method name(s) is a string...
+            if node_next_method_names.__class__ is str:
+                # If this class defines a method with this name, this class
+                # satisfies this target "collections.abc" ABC. In this case...
+                if node_next_method_names in cls_method_names:
+                    # Set the next FSM node to this node.
+                    node_next = node_next_possible
+                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
+
+                    # Halt this inner iteration.
+                    break
+            # Else, this transition method name(s) is a frozen set of strings.
+            # In this case...
+            else:
+                # print(f'Set intersection: {node_next_method_names & cls_method_names}...')
+                # print(f'Expected set: {node_next_method_names}...')
+
+                # If the intersection of the set of the names of all methods
+                # bound to this class with this frozen set of the names of all
+                # methods required by this protocol is exactly this frozen set,
+                # then this class defines *ALL* methods in this set and thus
+                # satisfies this target "collections.abc" ABC. In this case...
+                if (
+                    len(node_next_method_names & cls_method_names) ==
+                    len(node_next_method_names)
+                ):
+                    # Set the next FSM node to this node.
+                    node_next = node_next_possible
+                    # print(f'Transitioning to FSM node {repr(node_next.hint_factory)}...')
+
+                    # Halt this inner iteration.
+                    break
+
+        # If transitioning to *NO* next FSM node, halt iteration.
+        if not node_next:
+            break
+        # Else, a next FSM node is being transitioned to.
+
+        # Transition from the current to the next FSM node.
+        node_curr = node_next
+
+        # Nullify the next FSM node for safety.
+        node_next = None
+
+    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
+    hint_factory = node_curr.hint_factory
+    # hint_factory = node_curr.hint_factory if node_curr else None
+
+    # Return this object.
+    return hint_factory
