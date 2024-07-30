@@ -12,7 +12,6 @@ containing one or more items).
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    FrozenSet,
     Tuple,
 )
 from beartype._data.hint.datahinttyping import FrozenSetInts
@@ -25,9 +24,6 @@ from collections.abc import (
 # ....................{ INFERERS                           }....................
 #FIXME: Conditionally annotate tuples less than a certain fixed length (e.g., 10
 #items) as fixed-length rather than variable-length tuple type hints. Yeah!
-#FIXME: Generalize to support user-defined subclasses of builtin container types
-#(e.g., "list" subclasses). Note that doing so is complicated by Python 3.8,
-#where those types are *NOT* subscriptable. Maybe ignore Python 3.8, honestly?
 def infer_hint_iterable(
     iterable: IterableABC,
     hint_factory: object,

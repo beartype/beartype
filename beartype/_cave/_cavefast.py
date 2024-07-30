@@ -607,7 +607,36 @@ else:
     strings).
     '''
 
-# ....................{ TYPES ~ data                       }....................
+# ....................{ TYPES ~ kind : concrete            }....................
+# Temporary dictionary to be deleted below.
+_dict: dict = {}
+
+
+DictItemsViewType: type = type(_dict.items())
+'''
+Type of all **dictionary items views** (i.e., objects created and returned by
+the :meth:`dict.items` method).
+'''
+
+
+DictKeysViewType: type = type(_dict.keys())
+'''
+Type of all **dictionary keys views** (i.e., objects created and returned by the
+:meth:`dict.keys` method).
+'''
+
+
+DictValuesViewType: type = type(_dict.values())
+'''
+Type of all **dictionary values views** (i.e., objects created and returned by
+the :meth:`dict.values` method).
+'''
+
+
+# Delete the dictionary defined above for negligible space gains.
+del _dict
+
+# ....................{ TYPES ~ kind : abc                 }....................
 ContainerType = _Container
 '''
 Type of all **containers** (i.e., concrete instances of the abstract
@@ -763,7 +792,7 @@ See Also
     Further details on structural subtyping.
 '''
 
-# ....................{ TYPES ~ data : mapping             }....................
+# ....................{ TYPES ~ kind : abc : mapping       }....................
 HashableType = _Hashable
 '''
 Type of all **hashable objects** (i.e., both concrete and structural instances

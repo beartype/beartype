@@ -11,7 +11,6 @@ instances of standard :mod:`collections.abc` protocols).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer._inferiterable import infer_hint_iterable
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
@@ -45,6 +44,27 @@ def infer_hint_collections_abc(
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
     :func:`beartype.door.infer_hint` function.
 
+    Caveats
+    -------
+    This function exhibits:
+
+    * **Best-case linear time complexity** :math:`O(n)` where :math:`n` is the
+      number of attributes bound to the type of the passed object, which occurs
+      when that class satisfies *no* :mod:`collections.abc` ABC.
+    * **Average-case linear time complexity** :math:`O(n + k)` where :math:`n`
+      is the number of attributes bound to the type of the passed object and
+      :math:`k` is the number of :mod:`collections.abc` ABCs subclassing the
+      :class:`collections.abc.Container` superclass, which occurs when that
+      class is that of a **standard container** (i.e., satisfies at least the
+      root :class:`collections.abc.Container` ABC).
+    * **Worst-case quadratic time complexity** :math:`O(n + jk)` where :math:`n`
+      is the number of attributes bound to the type of the passed object,
+      :math:`j` is the number of :mod:`collections.abc` ABC superclasses (i.e.,
+      ABCs at the root of a hierarchy of ABCs), and :math:`k` is the largest
+      number of :mod:`collections.abc` ABCs subclassing such a superclass, which
+      occurs when that class satisfies only an uncommon :mod:`collections.abc`
+      ABC superclass.
+
     Parameters
     ----------
     obj : object
@@ -71,24 +91,30 @@ def infer_hint_collections_abc(
     # Type of this object.
     obj_type = obj.__class__
 
+    # Hint to be returned, defaulting to "None" as a fallback.
+    hint: object = None
+
     # Narrowest "collections.abc" protocol validating this type if at least one
-    # such protocol validates this type *OR* "None" otherwise (i.e., if *NO*
-    # such protocol validates this type).
-    hint_factory_collections_abc = _infer_hint_factory_collections_abc(obj_type)
+    # such protocol validates this type *OR* "None" otherwise.
+    hint_factory = _infer_hint_factory_collections_abc(obj_type)
 
     # If at least one "collections.abc" protocol validates this type...
-    if hint_factory_collections_abc:
+    if hint_factory:
         # If this object is iterable...
         if isinstance(obj, IterableABC):
+            # Avoid circular import dependencies.
+            from beartype.door._func.infer._inferiterable import (
+                infer_hint_iterable)
+
             # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
-            # Parent type hint recursively validating this iterable (including
-            # *ALL* items transitively reachable from this iterable), defined
-            # by subscripting this "collections.abc" protocol by the union of
-            # the child type hints validating all items recursively reachable
-            # from this iterable.
+            # Hint recursively validating this iterable (including *ALL* items
+            # transitively reachable from this iterable), defined by
+            # subscripting this "collections.abc" protocol by the union of the
+            # child type hints validating all items recursively reachable from
+            # this iterable.
             hint = infer_hint_iterable(
                 iterable=obj,  # type: ignore[arg-type]
-                hint_factory=hint_factory_collections_abc,
+                hint_factory=hint_factory,
                 __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
             )
         # Else, this protocol is *NOT* a container protocol. In this case, we
@@ -97,14 +123,12 @@ def infer_hint_collections_abc(
         # container protocol as is.
         else:
             # print(f'Ignoring non-iterable {repr(obj_type_collections_abc)} subscription...')
-            hint = hint_factory_collections_abc
+            hint = hint_factory
+    # Else, *NO* "collections.abc" protocol validates this type. In this
+    # case, fallback to returning "None".
 
-        # Return this hint.
-        return hint
-    # Else, *NO* "collections.abc" protocol validates this type.
-
-    # Fallback to returning "None".
-    return None
+    # Return this hint.
+    return hint
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[
@@ -555,7 +579,6 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
     return START_NODE
 
 # ....................{ PRIVATE ~ inferers                 }....................
-#FIXME: Fully unit test us up, please.
 @callable_cached
 def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     '''
@@ -610,30 +633,9 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     #. Halts there, thus inferring the type hint factory validating the passed
        object to be the :class:`collections.abc.Collection` ABC.
 
-    Caveats
-    -------
-    This function exhibits:
-
-    * **Best-case constant time complexity** :math:`O(n)` where ``n`` is the
-      number of attributes bound to the passed class, which occurs when the
-      passed class satisfies *no* :mod:`collections.abc` ABC.
-    * **Average-case linear time complexity** :math:`O(n + k)` where ``n`` is the
-      number of attributes bound to the passed class and ``k`` is the number of
-      :mod:`collections.abc` ABCs subclassing the
-      :class:`collections.abc.Container` superclass, which occurs when the
-      passed class is that of a **standard container** (i.e., satisfies at least
-      the root :class:`collections.abc.Container` ABC).
-    * **Worst-case quadratic time complexity** :math:`O(n + jk)` where ``n`` is
-      the number of attributes bound to the passed class, ``j`` is the number of
-      :mod:`collections.abc` ABC superclasses (i.e., ABCs at the root of a
-      hierarchy of ABCs), and ``k`` is the largest number of
-      :mod:`collections.abc` ABCs subclassing such a superclass, which occurs
-      when the passed class satisfies only an uncommon :mod:`collections.abc`
-      ABC superclass.
-
     Parameters
     ----------
-    obj : object
+    cls : type
         Class to be introspected.
 
     Returns
@@ -699,16 +701,6 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     while True:
         # print(f'Visiting FSM node {repr(node_curr.hint_factory)}...')
 
-        #FIXME: *HEH.* Totally busted, sadly. Why? Because the root "object"
-        #superclass defines an absurd number of dunder methods (e.g.,
-        #__hash__(), __eq__()), which then guarantees this intersection to
-        #almost always be non-empty -- especially when testing containers.
-        #
-        #Please resolve this by improving the
-        #get_object_methods_name_to_value_explicit() getter defined above to
-        #omit all "object" slot wrappers, which we already did and just need to
-        #restore. Thankfully, this is only an optimization. Still, I sigh.
-
         # If the intersection of the set of the names of all methods bound to
         # this class with the set of the names of any methods required by one or
         # more "collections.abc" ABCs reachable from the current FSM node is
@@ -772,9 +764,6 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
         # Nullify the next FSM node for safety.
         node_next = None
 
-    # Narrowest "collections.abc" ABC validating this class if any *OR* "None".
-    hint_factory = node_curr.hint_factory
-    # hint_factory = node_curr.hint_factory if node_curr else None
-
-    # Return this object.
-    return hint_factory
+    # Return the narrowest "collections.abc" ABC validating this class if any
+    # *OR* "None".
+    return node_curr.hint_factory

@@ -15,27 +15,21 @@ hints best describing arbitrary objects).
 #configure type hint inference.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer._inferiterable import infer_hint_iterable
+from beartype.door._func.infer.collection.infercollectionbuiltin import (
+    infer_hint_collection_builtin)
 from beartype.door._func.infer.collection.infercollectionsabc import (
     infer_hint_collections_abc)
 from beartype.roar import BeartypeDoorInferHintRecursionWarning
 from beartype.typing import (
-    Deque,
-    FrozenSet,
-    KeysView,
-    List,
-    Set,
+    Callable,
     Tuple,
     Type,
-    ValuesView,
 )
 from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR
 from beartype._data.hint.datahinttyping import (
-    DictStrToAny,
     FrozenSetInts,
 )
 from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.utilobject import get_object_type_name
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion(object):
@@ -57,8 +51,6 @@ class BeartypeInferHintContainerRecursion(object):
 #iterable parametrized generics (e.g., instances of "Generic[T]" subclasses);
 #iterable parametrized generics should be subscripted by a child type hint
 #describing the items contained by those iterables.
-#FIXME: Special-case instances of all other builtin types (e.g., integers,
-#strings) to immediately return those types for efficiency.
 def infer_hint(
     # Mandatory parameters.
     obj: object,
@@ -199,98 +191,23 @@ def infer_hint(
         return obj_type
     # Else, this object is *NOT* a builtin scalar.
 
-    # ....................{ PEP [484|585] ~ container      }....................
-    #FIXME: [SPEED] Danger: string interpolation! This is probably shockingly
-    #inefficient. Contemplate alternatives. Like, literally *ANYTHING* else.
-    #FIXME: *HMM.* The following should do it, actually:
-    #    #FIXME: Define this local here.
-    #    # Set of both the class of this object *AND* all superclasses of that
-    #    # class (excluding the irrelevant root "object" superclass).
-    #    obj_types = set(obj.__mro__[:-1])
-    #
-    #    #FIXME: Define this global below.
-    #    # Note that key-value pairs are intentionally defined in decreasing
-    #    # order of real-world commonality to reduce searching time costs.
-    #    _TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1: DictTypeToAny = {
-    #        tuple: Tuple,
-    #        list: List,
-    #        frozenset: FrozenSet,
-    #        set: Set,
-    #        deque: Deque,
-    #        KeysViewABC: KeysView,
-    #        ValuesViewABC: ValuesView,
-    #    }
-    #
-    #    #FIXME: Define this global below.
-    #    _TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2: DictTypeToAny = {
-    #        dict: Dict,
-    #        ChainMapABC: ChainMap,
-    #    }
-    #
-    #    #FIXME: Define this global below.
-    #    _TYPE_TO_HINT_FACTORY_ITERABLE: DictTypeToAny = merge_mappings_two(
-    #        _TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1,
-    #        _TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2,
-    #    )
-    #
-    #So far, so trivial. Given that, we then perform a similar strategy to the
-    #infer_hint_type_collections_abc() function; notably, we:
-    #* Intersect "obj_types" with "_TYPE_TO_HINT_FACTORY_ITERABLE.keys()".
-    #* If the resulting set is non-empty, then this object is an instance of one
-    #  or more builtin iterable types. In this case:
-    #  * Intersect "obj_types" first with
-    #    "_TYPE_TO_HINT_FACTORY_COLLECTION_ARGS_1.keys()" and then with
-    #    "_TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2.keys()". For the first resulting
-    #    non-empty intersection:
-    #    * Explicitly iterate over those dictionary keys until finding the
-    #      *FIRST* builtin type that this object is an instance of.
-    #    * When this type is discovered, call infer_hint_iterable() and
-    #      immediately halt iteration.
-    #FIXME: Shift this into the new "infercollectionbultin" submodule, please.
+    # ....................{ INFER                          }....................
+    # For each type hint inferer...
+    for hint_inferer in _HINT_INFERERS:
+        # print(f'Inferring {repr(obj)} hint via inferer {repr(hint_inferer)}...')
 
-    # Fully-qualified (i.e., absolute) name of the type of this object.
-    obj_classname = get_object_type_name(obj)
+        # Hint inferred by this inferer as validating this object if this
+        # inferer inferred such a hint *OR* "None" otherwise (i.e., if this
+        # inferer failed to infer a hint for this object).
+        hint = hint_inferer(  # type: ignore[call-arg]
+            obj=obj, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
 
-    #FIXME: [SPEED] Negligible optimization here:
-    #* Define a new global:
-    #      _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1_get = (
-    #          _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get)
-    #* Call that global here.
-    # Single-argument collection type hint factory that generates type hints
-    # validating this object if this object is such a collection *OR* "None"
-    # otherwise (i.e., if this object is *NOT* such a collection).
-    hint_factory_args_1 = _COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1.get(
-        obj_classname)
-
-    # If this object is validated by a single-argument collection type hint
-    # factory, this object is a collection of zero or more items. In this
-    # case...
-    if hint_factory_args_1 is not None:
-        # Parent type hint recursively validating this collection (including
-        # *ALL* items transitively reachable from this collection), defined by
-        # subscripting this factory by the union of the child type hints
-        # validating all items recursively reachable from this collection.
-        hint = infer_hint_iterable(
-            iterable=obj,  # type: ignore[arg-type]
-            hint_factory=hint_factory_args_1,
-            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-        )
-
-        # Return this hint.
-        return hint
-    # Else, this object is *NOT* validated by such a factory.
-
-    # ....................{ NON-PEP ~ collections.abc      }....................
-    # Narrowest "collections.abc" protocol type hint validating this object if
-    # at least one such protocol validates this object *OR* "None" otherwise
-    # (i.e., if no such protocol validates this object).
-    hint = infer_hint_collections_abc(
-        obj=obj, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
-
-    # If at least one such hint validates this object, return this hint.
-    if hint:
-        return hint
-    # Else, *NO* such hint validates this object.
+        # If this inferer inferred a hint for this object, return this hint.
+        if hint is not None:
+            return hint
+        # Else, this inferer inferred *NO* hint for this object. In this case,
+        # silently continue to the next hint inferer and hope for better joy.
+    # Else, *NO* inferer inferred a hint for this object. We tried, people.
 
     # ....................{ FALLBACK                       }....................
     # Return this type as a last-ditch fallback. By definition, *ANY* object is
@@ -298,14 +215,38 @@ def infer_hint(
     # the integer "42" is trivially satisfied by the builtin type "int").
     return obj_type
 
-# ....................{ PRIVATE ~ mappings                 }....................
-#FIXME: Obsolete in favour of "_TYPE_TO_HINT_FACTORY_ITERABLE", please.
-_COLLECTION_CLASSNAME_TO_HINT_FACTORY_ARGS_1: DictStrToAny = {
-    'builtins.dict_keys': KeysView,
-    'builtins.dict_values': ValuesView,
-    'builtins.frozenset': FrozenSet,
-    'builtins.list': List,
-    'builtins.set': Set,
-    'builtins.tuple': Tuple,
-    'collections.deque': Deque,
-}
+# ....................{ PRIVATE ~ constants                }....................
+_HINT_INFERERS: Tuple[Callable, ...] = (
+    # Builtin collections should typically (but *NOT* always, interestingly) be
+    # annotated as builtin collection type hints. For example:
+    # * Lists satisfy the "collections.abc.MutableSequence" protocol, but are
+    #   better annotated as fine-grained "list[...]" type hints rather than as
+    #   coarse-grained "collections.abc.MutableSequence[...]" type hints.
+    #
+    # Exceptions include:
+    # * Dictionary keys views (e.g., "{'ugh': 42}.keys()"), which are actually
+    #   set instances but still better annotated as fine-grained
+    #   "collections.abc.KeysView[...]" type hints rather than as coarse-grained
+    #   "set[...]" type hints.
+    infer_hint_collection_builtin,
+
+    # User-defined collections satisfying standard "collections.abc" protocols
+    # should often (but *NOT* always, interestingly) be annotated as
+    # "collections.abc" type hints.
+    infer_hint_collections_abc,
+)
+'''
+Tuple of all **type hint inferers** (i.e., lower-level functions inferring the
+type hint for the passed object according to some function-specific heuristic).
+
+Each item of this set is a function accepting an arbitrary object ``obj`` and
+the recursion guard ``__beartype_obj_ids_seen__`` and returning either the type
+hint inferred validating that object *or* :data:`None` if that function failed
+to infer such a type hint. Specifically, each function has a signature
+resembling:
+
+.. code-block:: python
+
+   def infer_hint_{heuristic}(
+       obj: object, __beartype_obj_ids_seen__: FrozenSetInts) -> Optional[object]:
+'''

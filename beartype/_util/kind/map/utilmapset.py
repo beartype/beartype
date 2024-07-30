@@ -129,17 +129,22 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
 
     # Merge these mappings. Since no unsafe collisions exist, the order in
     # which these mappings are merged is irrelevant.
-    return (
-        # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports "PEP 584 -- Add Union Operators To dict", merge these
-        # mappings with the faster and terser dict union operator.
-        mapping_a | mapping_b  # type: ignore[operator]
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, merge these mappings by creating and returning a new mapping of
-        # the same type as that of the first mapping initialized from a slower
-        # and more verbose dict unpacking operation.
-        type(mapping_a)(mapping_a, **mapping_b)  # type: ignore[call-arg]
+    #
+    # If the active Python interpreter targets Python >= 3.9 and thus
+    # supports "PEP 584 -- Add Union Operators To dict", merge these
+    # mappings with the faster and terser dict union operator.
+    if IS_PYTHON_AT_LEAST_3_9:
+        return mapping_a | mapping_b  # type: ignore[operator]
+    # Else, merge these mappings by creating and returning a new mapping of
+    # the same type as that of the first mapping initialized from a slower
+    # and more verbose dict unpacking operation.
+    mapping_merged = (
+        mapping_a.copy()
+        if isinstance(mapping_a, dict) else
+        type(mapping_a)(mapping_a)  # type: ignore[call-arg]
     )
+    mapping_merged.update(mapping_b)  # type: ignore[attr-defined]
+    return mapping_merged
 
 
 def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
