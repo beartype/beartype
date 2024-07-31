@@ -203,18 +203,6 @@ This set necessarily excludes:
 '''
 
 
-#FIXME: Consider also adding the "HintSignItemsView" here. That said, we're
-#*NOT* quite sure how this view is actually structured. This view might present
-#data as 2-tuples of "(key, value)" pairs rather than the standard "dict" API,
-#in which case we definitely should *NOT* add this view here. Instead, we'll
-#need to unroll distinct type-checking logic for this view. Of course,
-#nobody's actually requested this yet. In fact, nobody even appears to know or
-#care about the existence of this view. It's probably the least popular and
-#least well-known data structures in the Python pantheon. In other words,
-#they're the ultimate high-hanging fruit. Do this only if somebody complains
-#*OR* we're outrageously bored. So.... never.
-#FIXME: *LOL.* We already solved "HintSignItemsView". See the
-#"beartype._check.code.__init__" submodule. *facepalm*
 HINT_SIGNS_MAPPING: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignChainMap,

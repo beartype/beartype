@@ -27,7 +27,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.utilobjectattr import (
     get_object_methods_name_to_value_explicit)
 from collections.abc import (
-    Iterable as IterableABC,
+    Collection as CollectionABC,
 )
 
 # ....................{ INFERERS                           }....................
@@ -100,11 +100,11 @@ def infer_hint_collections_abc(
 
     # If at least one "collections.abc" protocol validates this type...
     if hint_factory:
-        # If this object is iterable...
-        if isinstance(obj, IterableABC):
+        # If this object is a collection...
+        if isinstance(obj, CollectionABC):
             # Avoid circular import dependencies.
-            from beartype.door._func.infer._inferiterable import (
-                infer_hint_iterable)
+            from beartype.door._func.infer.collection.infercollectionitems import (
+                infer_hint_collection_items)
 
             # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
             # Hint recursively validating this iterable (including *ALL* items
@@ -112,8 +112,8 @@ def infer_hint_collections_abc(
             # subscripting this "collections.abc" protocol by the union of the
             # child type hints validating all items recursively reachable from
             # this iterable.
-            hint = infer_hint_iterable(
-                iterable=obj,  # type: ignore[arg-type]
+            hint = infer_hint_collection_items(
+                obj=obj,  # type: ignore[arg-type]
                 hint_factory=hint_factory,
                 __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
             )

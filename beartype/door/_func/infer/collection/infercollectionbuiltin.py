@@ -14,6 +14,7 @@ C-based container types).
 from beartype.typing import (
     Dict,
     ChainMap,
+    Counter,
     Deque,
     FrozenSet,
     KeysView,
@@ -32,9 +33,10 @@ from beartype._data.hint.datahinttyping import (
     FrozenSetInts,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.kind.map.utilmapset import merge_mappings_two
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections import (
     ChainMap as ChainMapType,
+    Counter as CounterType,
     deque,
 )
 
@@ -51,24 +53,9 @@ def infer_hint_collection_builtin(
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function.
-
-    Caveats
-    -------
-    This function exhibits:
-
-    * **Average-case constant time complexity** :math:`O(1)`, which occurs when
-      either:
-
-      * The passed object is *not* a builtin collection.
-      * The passed object is a builtin collection *and* the type of the passed
-        object is a builtin collection type (e.g., :class:`list`).
-
-    * **Worst-case linear time complexity** :math:`O(n)` where :math:`n` is the
-      number of builtin collection types (e.g., :class:`list`, :class:`tuple`),
-      which occurs when the passed object is a builtin collection *and* the type
-      of the passed object actually subclasses a builtin collection type (e.g.,
-      ``class MuhList(list): ...``).
+    :func:`beartype.door.infer_hint` function. Thankfully, this function
+    exhibits worst-case constant time complexity :math:`O(1)`; memoization is
+    largely a moot point to begin with.
 
     Parameters
     ----------
@@ -94,27 +81,32 @@ def infer_hint_collection_builtin(
 
     # Type of this object.
     obj_type = obj.__class__
-    print(f'Inferring possibly builtin collection type {repr(obj_type)}...')
+    # print(f'Inferring possibly builtin collection type {repr(obj_type)}...')
 
-    # Builtin collection superclass of this type if this type is a subclass of a
-    # builtin collection type *OR* "None" otherwise.
-    hint_factory = _infer_hint_factory_collection_builtin(obj_type)
+    (
+        # Type hint factory creating type hints validating this type if this
+        # type is a subclass of a builtin collection type *OR* "None" otherwise.
+        hint_factory,
+        # This builtin collection type *OR* "None" otherwise.
+        hint_sign_origin,
+    ) = _infer_hint_factory_collection_builtin(obj_type)
 
     # If this type is a subclass of a builtin collection type...
     if hint_factory:
         # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
 
         # Avoid circular import dependencies.
-        from beartype.door._func.infer._inferiterable import (
-            infer_hint_iterable)
+        from beartype.door._func.infer.collection.infercollectionitems import (
+            infer_hint_collection_items)
 
         # Hint recursively validating this collection (including *ALL* items
         # transitively reachable from this collection), defined by subscripting
         # this collection type by the union of the child type hints validating
         # all items recursively reachable from this collection.
-        hint = infer_hint_iterable(
-            iterable=obj,  # type: ignore[arg-type]
+        hint = infer_hint_collection_items(
+            obj=obj,  # type: ignore[arg-type]
             hint_factory=hint_factory,
+            hint_sign_origin=hint_sign_origin,
             __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
         )
     # Else, this type is *NOT* a subclass of a builtin collection type. In this
@@ -125,7 +117,7 @@ def infer_hint_collection_builtin(
 
 # ....................{ PRIVATE ~ inferers                 }....................
 @callable_cached
-def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
+def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
     '''
     **Builtin collection superclass** (i.e., unsubscripted C-based type whose
     instances contain one or more reiterable items) of the passed class if this
@@ -151,11 +143,15 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
 
     Returns
     -------
-    Optional[object]
-        Either:
+    Tuple[object, object]
+        2-tuple ``(hint_factory, hint_sign_origin)``, where:
 
-        * If this class subclasses a builtin collection type, that type.
-        * Else, :data:`None`.
+        * If this class subclasses a builtin collection type:
+
+          * ``hint_factory`` is the type hint factory validating that type.
+          * ``hint_sign_origin`` is that type.
+
+        * Else, ``hint_factory`` and ``hint_sign_origin`` are both :data:`None`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
@@ -167,7 +163,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     # If this class is a builtin collection type, return this hint factory.
     if hint_factory:
         # print(f'Inferred builtin collection {repr(cls)} factory {repr(hint_factory)}...')
-        return hint_factory
+        return hint_factory, hint_factory
     # Else, this class is *NOT* a builtin collection type. However, this class
     # could still be a proper subclass of a builtin collection type: e.g.,
     #     class MuhList(list): ...
@@ -185,49 +181,67 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     # matched below. Although that superclass *COULD* be trivially sliced off
     # (e.g., with an assignment resembling "classes = set(cls.__mro__[:-1])"),
     # doing so only uselessly consumes more time than it saves. So it goes.
-    classes = set(cls.__mro__)
+    types = set(cls.__mro__)
 
-    # If the intersection of the set of all superclasses of this class with the
-    # set of all builtin collection types is the empty set, then this class does
-    # *NOT* subclass a builtin collection type. In this case, silently reduce to
-    # a noop.
-    if not (classes & _COLLECTION_BUILTIN_TYPES):
-        return None
+    # Intersection of the set of all superclasses of this class with the set of
+    # all builtin collection types.
+    types_collection_builtin = types & _COLLECTION_BUILTIN_TYPES
+
+    # If this intersection is empty, this class does *NOT* subclass a builtin
+    # collection type. In this case, silently reduce to a noop.
+    if not types_collection_builtin:
+        return None, None
     # Else, this intersection is non-empty. In this case, this class subclasses
-    # a builtin collection type. Deciding which type that is, however, requires
-    # a linear search through the set of all builtin collection types. So it is.
+    # one or more builtin collection types.
 
-    # ....................{ SEARCH                         }....................
-    # For each builtin collection type (e.g., "list") and the corresponding hint
-    # factory describing that type (e.g., "typing.List")...
-    for superclass, hint_factory in (
-        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_ITEMS):
-        # If this superclass is in this set of all superclasses of this
-        # class, then this class subclasses this superclass. In this case,
-        # halt searching and return this superclass.
-        if superclass in classes:
-            break
-        # Else, this superclass is *NOT* in this set of all superclasses of
-        # this class. In this case, this class does *NOT* subclass this
-        # superclass. In this case, continue searching.
+    # First builtin collection type subclassed by this class, which should
+    # ideally be the only such type. In theory, *ALL* user-defined classes
+    # subclassing a builtin collection type subclass only one such type.
+    # Attempting to subclass multiple builtin collection types raises a
+    # non-human-readable exception resembling:
+    #     >>> class Ugh(list, dict): pass
+    #     TypeError: multiple bases have instance lay-out conflict
+    #
+    # Although we could raise a readable exception here on detecting a class
+    # subclassing multiple builtin collection types, it is probably best to
+    # avoid raising exceptions *AT ALL* during type hint inference. Instead,
+    # type hint inference should permissively accept all possible objects --
+    # including pathological classes that defy norms and expectations.
+    hint_sign_origin = next(iter(types_collection_builtin))
 
-    # Assert that the above search found this superclass. Note that this should
-    # *ALWAYS* be true. Nonetheless, chaos is guaranteed. Thus we assert.
-    assert hint_factory, (
-        f'Builtin collection subclass {repr(cls)} '
-        f'type hint factory not found.'
+    # Hint factory validating this type, defined as either...
+    hint_factory = (
+        # If the active Python interpreter targets Python >= 3.9 and thus
+        # supports PEP 585, this class as is. Since *ALL* builtin containers
+        # types are PEP 585-compliant subscriptable type hint factories under
+        # Python >= 3.9 (e.g., "list[str]") and since this class subclasses a
+        # builtin container type, this subclass is necessarily also implicitly a
+        # PEP 585-compliant subscriptable type hint factory.
+        cls
+        if IS_PYTHON_AT_LEAST_3_9 else
+        # Else, the active Python interpreter targets Python < 3.9 and thus
+        # fails to support PEP 585. In this case, the hint factory validating
+        # this builtin container type (e.g., "typing.List").
+        #
+        # Note that this key is guaranteed to exist, by the above logic and the
+        # derivation of the "_COLLECTION_BUILTIN_TYPES" set from the keys of the
+        # "_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY" dictionary.
+        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY[hint_sign_origin]
     )
 
-    # Return this hint factory.
-    return hint_factory
+    # Return this hint factory and type.
+    return hint_factory, hint_sign_origin
 
 # ....................{ PRIVATE ~ mappings                 }....................
-#FIXME: Probably overkill. This and the following dictionary should probably
-#just be manually defined within "_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY".
+#FIXME: Also add:
+#* "ItemsView". Actually, "ItemsView" support will probably have to be
+#  implemented manually. "ItemsViews" are really just iterables over 2-tuples.
 
 # Note that key-value pairs are intentionally defined in decreasing order of
 # real-world commonality to reduce time costs in the average case.
-_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_ARGS_1: DictTypeToAny = {
+_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY: DictTypeToAny = {
+    # Single-argument builtin reiterable types (i.e., C-based collections whose
+    # hint factories are subscriptable by only a single child type hint).
     tuple: Tuple,
     list: List,
     frozenset: FrozenSet,
@@ -235,41 +249,13 @@ _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_ARGS_1: DictTypeToAny = {
     deque: Deque,
     DictKeysViewType: KeysView,
     DictValuesViewType: ValuesView,
-}
-'''
-Dictionary mapping from each **single-argument builtin collection type** (i.e.,
-C-based type satisfying the :class:`collections.abc.Collection` protocol whose
-corresponding type hint factory is subscriptable by only a single child type
-hint) to that factory.
-'''
 
-
-#FIXME: Also add:
-#* "Counter". Trivial, but annoying due to "Counter" being subscriptable *ONLY*
-#  by keys rather than both keys and values. *sigh*
-#* "ItemsView". Actually, "ItemsView" support will probably have to be
-#  implemented manually. "ItemsViews" are really just iterables over 2-tuples.
-
-# Note that key-value pairs are intentionally defined in decreasing order of
-# real-world commonality to reduce time costs in the average case.
-_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2: DictTypeToAny = {
+    # Dual-argument builtin mapping types (i.e., C-based collections whose hint
+    # factories are subscriptable by a pair of child key and value type hints).
     dict: Dict,
     ChainMapType: ChainMap,
+    CounterType: Counter,
 }
-'''
-Dictionary mapping from each **dual-argument builtin mapping type** (i.e.,
-C-based type satisfying the :class:`collections.abc.Mapping` protocol whose
-corresponding type hint factory is subscriptable by both a key and value child
-type hint) to that factory.
-'''
-
-# ....................{ PRIVATE ~ mappings : merge         }....................
-_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY: DictTypeToAny = (
-    merge_mappings_two(  # type: ignore[assignment]
-        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_ARGS_1,
-        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY_MAPPING_ARGS_2,
-    )
-)
 '''
 Dictionary mapping from each **builtin collection type** (i.e., C-based type
 satisfying the :class:`collections.abc.Collection` protocol described by a

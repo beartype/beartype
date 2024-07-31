@@ -150,6 +150,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     from beartype.typing import (
         Collection,
         Container,
+        Counter,
         Deque,
         FrozenSet,
         KeysView,
@@ -173,6 +174,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from collections import (
+        Counter as CounterType,
         deque,
     )
 
@@ -237,6 +239,15 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # subscripted by that class.
         (Class, Type[Class]),
 
+        # ..................{ PEP [484|585] ~ counter        }..................
+        # A counter of items all of the same class is annotated as the PEP 484-
+        # or 585-compliant "Counter" type subscripted by that class.
+        (
+            CounterType({
+                'For the uniform and': 27, 'lightsome evening sky.': 89,}),
+            Counter[str],
+        ),
+
         # ..................{ PEP [484|585] ~ deque          }..................
         # A deque of items all of the same class is annotated as the PEP 484- or
         # 585-compliant "deque" type subscripted by that class.
@@ -262,6 +273,10 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         }.keys(), KeysView[bytes]),
 
         # ..................{ PEP [484|585] ~ list           }..................
+        # An empty list is annotated as the unsubscripted PEP 484- or
+        # 585-compliant "list" type hint factory.
+        ([], List),
+
         # A list of items all of the same class is annotated as the PEP 484- or
         # 585-compliant "list" type subscripted by that class.
         (['expose', 'extreme', 'explosions!',], List[str]),
