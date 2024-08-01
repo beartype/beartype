@@ -83,13 +83,9 @@ def infer_hint_collection_builtin(
     obj_type = obj.__class__
     # print(f'Inferring possibly builtin collection type {repr(obj_type)}...')
 
-    (
-        # Type hint factory creating type hints validating this type if this
-        # type is a subclass of a builtin collection type *OR* "None" otherwise.
-        hint_factory,
-        # This builtin collection type *OR* "None" otherwise.
-        hint_sign_origin,
-    ) = _infer_hint_factory_collection_builtin(obj_type)
+    # Type hint factory creating type hints validating this type if this
+    # type is a subclass of a builtin collection type *OR* "None" otherwise.
+    hint_factory = _infer_hint_factory_collection_builtin(obj_type)
 
     # If this type is a subclass of a builtin collection type...
     if hint_factory:
@@ -106,7 +102,6 @@ def infer_hint_collection_builtin(
         hint = infer_hint_collection_items(
             obj=obj,  # type: ignore[arg-type]
             hint_factory=hint_factory,
-            hint_sign_origin=hint_sign_origin,
             __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
         )
     # Else, this type is *NOT* a subclass of a builtin collection type. In this
@@ -117,7 +112,7 @@ def infer_hint_collection_builtin(
 
 # ....................{ PRIVATE ~ inferers                 }....................
 @callable_cached
-def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
+def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     '''
     **Builtin collection superclass** (i.e., unsubscripted C-based type whose
     instances contain one or more reiterable items) of the passed class if this
@@ -143,15 +138,12 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
 
     Returns
     -------
-    Tuple[object, object]
-        2-tuple ``(hint_factory, hint_sign_origin)``, where:
+    Optional[object]
+        Either:
 
-        * If this class subclasses a builtin collection type:
-
-          * ``hint_factory`` is the type hint factory validating that type.
-          * ``hint_sign_origin`` is that type.
-
-        * Else, ``hint_factory`` and ``hint_sign_origin`` are both :data:`None`.
+        * If this class subclasses a builtin collection type, the type hint
+          factory validating that type.
+        * Else, :data:`None`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
 
@@ -163,7 +155,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
     # If this class is a builtin collection type, return this hint factory.
     if hint_factory:
         # print(f'Inferred builtin collection {repr(cls)} factory {repr(hint_factory)}...')
-        return hint_factory, hint_factory
+        return hint_factory
     # Else, this class is *NOT* a builtin collection type. However, this class
     # could still be a proper subclass of a builtin collection type: e.g.,
     #     class MuhList(list): ...
@@ -190,7 +182,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
     # If this intersection is empty, this class does *NOT* subclass a builtin
     # collection type. In this case, silently reduce to a noop.
     if not types_collection_builtin:
-        return None, None
+        return None
     # Else, this intersection is non-empty. In this case, this class subclasses
     # one or more builtin collection types.
 
@@ -207,7 +199,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
     # avoid raising exceptions *AT ALL* during type hint inference. Instead,
     # type hint inference should permissively accept all possible objects --
     # including pathological classes that defy norms and expectations.
-    hint_sign_origin = next(iter(types_collection_builtin))
+    type_collection_builtin = next(iter(types_collection_builtin))
 
     # Hint factory validating this type, defined as either...
     hint_factory = (
@@ -226,11 +218,11 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
         # Note that this key is guaranteed to exist, by the above logic and the
         # derivation of the "_COLLECTION_BUILTIN_TYPES" set from the keys of the
         # "_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY" dictionary.
-        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY[hint_sign_origin]
+        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY[type_collection_builtin]
     )
 
     # Return this hint factory and type.
-    return hint_factory, hint_sign_origin
+    return hint_factory
 
 # ....................{ PRIVATE ~ mappings                 }....................
 #FIXME: Also add:
@@ -238,7 +230,10 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Tuple[object, object]:
 #  implemented manually. "ItemsViews" are really just iterables over 2-tuples.
 
 # Note that key-value pairs are intentionally defined in decreasing order of
-# real-world commonality to reduce time costs in the average case.
+# real-world commonality to reduce time costs in the average case for downstream
+# functions leveraging this dictionary (e.g., the
+# beartype.door._func.infer.collection.infercollectionbuiltin.infer_hint_collection_builtin()
+# function).
 _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY: DictTypeToAny = {
     # Single-argument builtin reiterable types (i.e., C-based collections whose
     # hint factories are subscriptable by only a single child type hint).

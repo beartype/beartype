@@ -93,14 +93,14 @@ def die_if_hint_nonpep(
 
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} '
-            f'is PEP-noncompliant (e.g., neither ' +
+            f'is PEP-noncompliant (e.g., either ' +
             (
                 (
-                    'isinstanceable class, forward reference, nor tuple of '
-                    'isinstanceable classes and/or forward references).'
+                    'isinstanceable type, forward reference, or tuple of '
+                    'isinstanceable types and/or forward references).'
                 )
                 if is_forwardref_valid else
-                'isinstanceable class nor tuple of isinstanceable classes).'
+                'isinstanceable type or tuple of isinstanceable types).'
             )
         )
     # Else, this object is *NOT* a PEP-noncompliant type hint.

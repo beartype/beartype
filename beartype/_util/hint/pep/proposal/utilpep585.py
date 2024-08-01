@@ -353,6 +353,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
+#FIXME: Heavily refactor according to the discussion in "convreduce", please.
 def reduce_hint_pep585_builtin_subscripted_unknown(
     hint: object, *args, **kwargs) -> type:
     '''

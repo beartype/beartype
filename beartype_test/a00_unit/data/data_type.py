@@ -547,6 +547,22 @@ class ClassMutableSequence(ClassSequence):
     def remove(self, item: object) -> None: self._items.remove(item)
     def reverse(self) -> None: self._items.reverse()
 
+# ....................{ CLASSES ~ builtin                  }....................
+class ClassDict(dict):
+    '''
+    Class subclassing the builtin C-based :class:`dict` type.
+    '''
+
+    pass
+
+
+class ClassList(list):
+    '''
+    Class subclassing the builtin C-based :class:`list` type.
+    '''
+
+    pass
+
 # ....................{ CLASSES ~ enum                     }....................
 class MasterlessDecreeVenomlessWhich(Enum):
     '''

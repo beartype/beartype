@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Dict,
     ForwardRef,
-    FrozenSet,
 )
 from beartype._cave._cavefast import (
     ClassType,
@@ -23,14 +22,17 @@ from beartype._cave._cavefast import (
     MethodDecoratorBuiltinTypes,
     NoneType,
 )
-from beartype._data.hint.datahinttyping import FrozenSetTypes
+from beartype._data.hint.datahinttyping import (
+    FrozenSetTypes,
+    TupleTypes,
+)
 from collections.abc import (
     Set as SetABC,
 )
 from pathlib import Path
 
 # ....................{ TYPES ~ abc                        }....................
-TYPES_CONTEXTMANAGER_FAKE = (Path,)
+TYPES_CONTEXTMANAGER_FAKE: TupleTypes = (Path,)
 '''
 Tuple of all **fake context manager types** (i.e., types that erroneously
 masquerade as being context managers by defining fake ``__enter__()`` dunder
@@ -43,9 +45,10 @@ This set includes:
 '''
 
 
-TYPES_SET_OR_TUPLE = (SetABC, tuple)
+TYPES_SET_OR_TUPLE: TupleTypes = (tuple, SetABC,)
 '''
-2-tuple containing the superclasses of all frozen sets and tuples.
+Tuple of all **set and tuple types** (i.e., superclasses of all sets and
+tuples).
 
 Note that the :class:`Set` abstract base class (ABC) rather than the concrete
 :class:`set` subclass is intentionally listed here, as the concrete
@@ -65,34 +68,19 @@ Note that the :class:`Set` abstract base class (ABC) rather than the concrete
 # listed in descending order of real-world prevalence for negligible efficiency
 # gains when performing isinstance()-based tests against this tuple. These
 # include the types of *ALL*...
-TYPES_BEARTYPEABLE = (
+TYPES_BEARTYPEABLE: TupleTypes = (
     # Pure-Python unbound functions and methods.
     FunctionType,
     # Pure-Python classes.
     ClassType,
+) + (
     # C-based builtin method descriptors wrapping pure-Python unbound methods,
     # including class methods, static methods, and property methods.
-    MethodDecoratorBuiltinTypes,
+    MethodDecoratorBuiltinTypes
 )
 '''
 Tuple of all **beartypeable types** (i.e., types of all objects that may be
 decorated by the :func:`beartype.beartype` decorator).
-'''
-
-# ....................{ TYPES ~ exception                  }....................
-TYPES_EXCEPTION_NAMESPACE = (
-    # Standard exception raised when attempting to access a currently undefined
-    # attribute of a defined object via "." syntax (e.g., an undefined attribute
-    # "obj.attr" of a defined object "obj").
-    AttributeError,
-    # Standard exception raised when attempting to access an object defined in
-    # neither the current local or global scopes.
-    NameError,
-)
-'''
-Tuple of all **standard scope exception types** (i.e., types of all standard
-exceptions raised when a **namespace** (e.g., global or local scope, class or
-object dictionary) fails to define a given attribute or name).
 '''
 
 # ....................{ TYPES ~ builtin                    }....................
@@ -124,6 +112,22 @@ TYPES_BUILTIN_SCALAR: FrozenSetTypes = frozenset((
 '''
 Frozen set of all **builtin scalar types** (i.e., globally accessible C-based
 types whose instances are scalar values).
+'''
+
+# ....................{ TYPES ~ exception                  }....................
+TYPES_EXCEPTION_NAMESPACE = (
+    # Standard exception raised when attempting to access a currently undefined
+    # attribute of a defined object via "." syntax (e.g., an undefined attribute
+    # "obj.attr" of a defined object "obj").
+    AttributeError,
+    # Standard exception raised when attempting to access an object defined in
+    # neither the current local or global scopes.
+    NameError,
+)
+'''
+Tuple of all **standard scope exception types** (i.e., types of all standard
+exceptions raised when a **namespace** (e.g., global or local scope, class or
+object dictionary) fails to define a given attribute or name).
 '''
 
 # ....................{ PEP ~ (484|585)                    }....................

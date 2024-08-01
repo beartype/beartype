@@ -152,6 +152,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         Container,
         Counter,
         Deque,
+        Dict,
         FrozenSet,
         KeysView,
         List,
@@ -168,11 +169,16 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         Class,
         ClassCollection,
         ClassContainer,
+        ClassDict,
+        ClassList,
         ClassMutableSequence,
         ClassSequence,
         ClassSized,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_10,
+        IS_PYTHON_AT_LEAST_3_9,
+    )
     from collections import (
         Counter as CounterType,
         deque,
@@ -194,7 +200,16 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # annotated simply as that class.
         (Class(), Class),
 
-        # ..................{ NON-PEP : collections.abc      }..................
+        # ..................{ PEP 484                        }..................
+        # The "None" singleton is annotated as itself under PEP 484.
+        (None, None),
+
+        # ..................{ PEP [484|585]                  }..................
+        # A class is annotated as the PEP 484- or 585-compliant "type" supertype
+        # subscripted by that class.
+        (Class, Type[Class]),
+
+        # ..................{ PEP [484|585] ~ abc            }..................
         # An instance of a PEP-noncompliant class (i.e., a class *NOT* covered
         # by an existing PEP standard) satisfying a standard "collections.abc"
         # protocol is annotated as the narrowest such protocol. Moreover, for
@@ -230,15 +245,6 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             Sized,
         ),
 
-        # ..................{ PEP 484                        }..................
-        # The "None" singleton is annotated as itself under PEP 484.
-        (None, None),
-
-        # ..................{ PEP [484|585]                  }..................
-        # A class is annotated as the PEP 484- or 585-compliant "type" supertype
-        # subscripted by that class.
-        (Class, Type[Class]),
-
         # ..................{ PEP [484|585] ~ counter        }..................
         # A counter of items all of the same class is annotated as the PEP 484-
         # or 585-compliant "Counter" type subscripted by that class.
@@ -254,6 +260,14 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         (
             deque(('On the green moss his tremulous step,', 'that caught',)),
             Deque[str],
+        ),
+
+        # ..................{ PEP [484|585] ~ dict           }..................
+        # A deque of items all of the same class is annotated as the PEP 484- or
+        # 585-compliant "deque" type subscripted by that class.
+        (
+            {b'Grey rocks': 'did peep from', b'the spare moss,': 'and stemmed'},
+            Dict[bytes, str],
         ),
 
         # ..................{ PEP [484|585] ~ frozenset      }..................
@@ -326,6 +340,30 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             'Tell where these living thoughts reside,': b'when stretched',
             'Upon thy flowers': b'my bloodless limbs shall waste',
         }.values(), ValuesView[bytes]),
+
+        # ..................{ PEP 585 ~ builtin              }..................
+        # An instance of a user-defined class subclassing a PEP 585-compliant
+        # builtin collection type (e.g., "dict", "list") is annotated as that
+        # user-defined class subscripted by a child type hint annotating the
+        # items of that collection.
+
+        # A user-defined list of items all of the same class is annotated as the
+        # PEP 585-compliant "list" type subscripted by that class.
+        (
+            ClassList((
+                b'The struggling brook:', b'tall spires of windlestrae',)),
+            (
+                # If the active Python interpreter targets Python >= 3.9 and
+                # thus supports PEP 585, this user-defined list subscripted by
+                # this child type hint.
+                ClassList[bytes]
+                if IS_PYTHON_AT_LEAST_3_9 else
+                # Else, the active Python interpreter targets Python < 3.9 and
+                # thus fails to support PEP 585. In this case, the standard
+                # "typing.List" factory subscripted by this child type hint.
+                List[bytes]
+            ),
+        ),
     ]
 
     # Return this mutable list coerced into an immutable tuple for safety.
