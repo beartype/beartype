@@ -271,7 +271,7 @@ class BeartypeForwardRefMeta(type):
            # If this type hint is actually a @beartype-specific forward
            # reference proxy that only refers to the desired type hint,
            # dereference that proxy to obtain that type hint.
-           type_hint = getattr(type_hint, '__type_beartype__', None) or type_hint
+           type_hint = getattr(type_hint, '__type_beartype__', type_hint)
 
         Raises
         ------

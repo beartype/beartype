@@ -156,6 +156,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         FrozenSet,
         KeysView,
         List,
+        Mapping,
+        MutableMapping,
         MutableSequence,
         Sequence,
         Set,
@@ -171,6 +173,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ClassContainer,
         ClassDict,
         ClassList,
+        ClassMapping,
+        ClassMutableMapping,
         ClassMutableSequence,
         ClassSequence,
         ClassSized,
@@ -216,6 +220,22 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # each instance that is a container (i.e., satisfies the standard
         # "collections.abc.Container" protocol), that annotation is subscripted
         # by a child type hint annotating the items of that container.
+
+        # "collections.abc.MutableMapping" protocol hierarchy.
+        (
+            ClassMapping({
+                'Branchless and blasted,': b'clenched with grasping roots',
+                'The unwilling soil.': b'A gradual change was here,',
+            }),
+            Mapping[str, bytes],
+        ),
+        (
+            ClassMutableMapping({
+                b'Yet ghastly.': 'For, as fast years flow away,',
+                b'The smooth brow gathers,': 'and the hair grows thin',
+            }),
+            MutableMapping[bytes, str],
+        ),
 
         # "collections.abc.MutableSequence" protocol hierarchy.
         (
@@ -346,6 +366,28 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # builtin collection type (e.g., "dict", "list") is annotated as that
         # user-defined class subscripted by a child type hint annotating the
         # items of that collection.
+
+        # A user-defined dictionary of keys all of the same class and values all
+        # of a different class is annotated as the PEP 585-compliant "dict" type
+        # sequentially subscripted by those classes.
+        (
+            ClassDict({
+                b'Threw their thin shadows': 'down the rugged slope',
+                b'And nought but': 'gnarlèd roots of ancient pines',
+            }),
+            (
+                # If the active Python interpreter targets Python >= 3.9 and
+                # thus supports PEP 585, this user-defined dictionary
+                # subscripted by these child key and value type hints.
+                ClassDict[bytes, str]
+                if IS_PYTHON_AT_LEAST_3_9 else
+                # Else, the active Python interpreter targets Python < 3.9 and
+                # thus fails to support PEP 585. In this case, the standard
+                # "typing.Dict" factory subscripted by these child key and value
+                # type hints.
+                Dict[bytes, str]
+            ),
+        ),
 
         # A user-defined list of items all of the same class is annotated as the
         # PEP 585-compliant "list" type subscripted by that class.

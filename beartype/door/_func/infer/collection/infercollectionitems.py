@@ -28,9 +28,13 @@ from collections.abc import (
 #FIXME: Conditionally annotate tuples less than a certain fixed length (e.g., 10
 #items) as fixed-length rather than variable-length tuple type hints. Yeah!
 def infer_hint_collection_items(
+    # Mandatory parameters.
     obj: CollectionABC,
     hint_factory: object,
     __beartype_obj_ids_seen__: FrozenSetInts,
+
+    # Optional parameters.
+    origin_type: Optional[type] = None,
 ) -> object:
     '''
     Type hint recursively validating the passed collection (including *all*
@@ -53,6 +57,23 @@ def infer_hint_collection_items(
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard.** See also the parameter of the same name accepted by
         the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
+    origin_type : Optional[type]
+        Either:
+
+        * If the caller requires support for so-called "virtual subclasses" in
+          which the passed ``obj`` collection is an instance of a user-defined
+          class that does *not* explicitly subclass a :mod:`collections.abc`
+          abstract base class (ABC) but does nonetheless implicitly satisfy the
+          protocol implied by such an ABC, the ABC implicitly satisfied by this
+          collection. Ideally, all :mod:`collections.abc` collections would
+          support virtual subclassing by defining the ``__subclasshook__()`
+          dunder method. Indeed, most do -- but some (e.g.,
+          :class:`collections.abc.Mapping`) do *not*. This parameter enables
+          callers to overcome this probably unintentional oversight in CPython.
+        * Else, :data:`None`. In this case, this parameter actually defaults to
+          the type of the passed ``obj`` collection.
+
+        Defaults to :data:`None`.
 
     Returns
     -------
@@ -79,6 +100,13 @@ def infer_hint_collection_items(
     if not obj:
         return hint_factory
     # Else, this collection is non-empty.
+    #
+    # If no origin type was passed, default this to the type of this collection.
+    elif origin_type is None:
+        origin_type = obj.__class__
+    # Else, an origin type was passed. Preserve this type as is.
+    assert isinstance(origin_type, type), (
+        f'{repr(origin_type)} not type.')
 
     # ....................{ LOCALS                         }....................
     # Add the integer uniquely identifying this collection to this set, thus
@@ -89,14 +117,30 @@ def infer_hint_collection_items(
     # type hint recursively validating this collection, defined as either...
     hint_inferer = (
         # If this collection is a mapping, the mapping-specific inferer;
+        #
+        # Ideally, detecting whether a collection is a mapping would be
+        # trivially feasible with a standard one-liner resembling:
+        #     if isinstance(obj, collections.abc.Mapping) else
+        #
+        # Unfortunately, the "collections.abc.Mapping" ABC is *BROKEN.* Unlike
+        # most other "collections.abc" superclasses, "Mapping" fails to define
+        # the __subclasshook__() dunder method and thus fails to support the
+        # so-called "virtual subclasses" that most "collections.abc"
+        # superclasses support. See also this relevant StackOverflow answer:
+        #     https://stackoverflow.com/a/64666157/2809027
+        #
+        # Our only recourse is to require that callers requiring support for
+        # "virtual subclasses" pass a distinct "hint_origin_type" class that
+        # can then be tested as a "collections.abc.Mapping" subclass.
         _infer_hint_mapping_items
-        if isinstance(obj, MappingABC) else
+        if issubclass(origin_type, MappingABC) else
         # Else, this collection is *NOT* a mapping. In this case, the
         # general-purpose inferer applicable to *ALL* single-argument
         # reiterables (e.g., collections whose type hint factories are
         # subscriptable by only a single child type hint).
         _infer_hint_reiterable_items
     )
+    # print(f'Inferring {repr(obj)} child hints with {repr(hint_inferer)}...')
 
     # Type hint recursively validating this collection.
     hint = hint_inferer(
@@ -126,7 +170,12 @@ def _infer_hint_mapping_items(
     :func:`.infer_hint_collection_items`
         Further details.
     '''
-    assert isinstance(obj, MappingABC), f'{repr(obj)} not mapping.'
+    # Note that we intentionally do *NOT* test whether this object also
+    # satisfies the more fine-grained "collections.abc.Mapping" protocol. Why?
+    # Because that protocol fails to support so-called "virtual subclasses" as
+    # of Python 3.13 and is thus fundamentally broken. See also the parent
+    # infer_hint_collection_items() function "origin_type" parameter. *sigh*
+    assert isinstance(obj, CollectionABC), f'{repr(obj)} not collection.'
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
@@ -168,7 +217,7 @@ def _infer_hint_mapping_items(
         # subscripting this factory by both this key and value union.
         hint_factory[hints_key_union, hints_value_union]  # type: ignore[index]
     )
-    print(f'Inferred {repr(obj)} hint as {repr(hint)}...')
+    # print(f'Inferred {repr(obj)} hint as {repr(hint)}...')
 
     # Return this hint.
     return hint

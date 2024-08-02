@@ -18,10 +18,15 @@ from beartype.typing import (
     Generator,
     Iterable,
     Iterator,
+    Tuple,
 )
 from beartype._util.func.utilfuncmake import make_func
 from collections import defaultdict
 from collections.abc import (
+    Hashable as HashableABC,
+    ItemsView as ItemsViewABC,
+    KeysView as KeysViewABC,
+    ValuesView as ValuesViewABC,
     Sized as SizedABC,
 )
 from contextlib import contextmanager
@@ -488,6 +493,50 @@ class ClassSized(object):
 
     def __init__(self, sized: SizedABC) -> None: self._sized = sized
     def __len__(self) -> int: return len(self._sized)
+
+# ....................{ CLASSES ~ abc : mapping            }....................
+class ClassMapping(object):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.Mapping` protocol *without* simply subclassing a
+    builtin mutable dictionary type (e.g., :class:`dict`).
+    '''
+
+    __abc_tpflags__ = 1 << 6 # Py_TPFLAGS_MAPPING
+    def __init__(self, items: dict) -> None: self._items = items
+    def __contains__(self, item: object) -> bool: return item in self._items
+    def __iter__(self) -> Iterator: return iter(self._items)
+    def __len__(self) -> int: return len(self._items)
+    def __eq__(self, other: 'ClassMapping') -> bool:
+        return self._items == other._items
+    def __ne__(self, other: 'ClassMapping') -> bool:
+        return self._items != other._items
+    def __getitem__(self, key: HashableABC) -> object: return self._items[key]
+    def get(self, *args, **kwargs) -> object:
+        return self._items.get(*args, **kwargs)
+    def items(self) -> ItemsViewABC: return self._items.items()
+    def keys(self) -> KeysViewABC: return self._items.keys()
+    def values(self) -> ValuesViewABC: return self._items.values()
+
+
+class ClassMutableMapping(ClassMapping):
+    '''
+    Class manually satisfying *only* the standard
+    :class:`collections.abc.MutableMapping` protocol *without* simply
+    subclassing a builtin mutable dictionary type (e.g., :class:`dict`).
+    '''
+
+    def __delitem__(self, key: HashableABC) -> None: del self._items[key]
+    def __setitem__(self, key: HashableABC, value: object) -> None:
+        self._items[key] = value
+    def clear(self) -> None: self._items.clear()
+    def pop(self, *args, **kwargs) -> object:
+        return self._items.pop(*args, **kwargs)
+    def popitem(self) -> Tuple[object, object]: return self._items.popitem()
+    def setdefault(self, *args, **kwargs) -> object:
+        return self._items.setdefault(*args, **kwargs)
+    def update(self, *args, **kwargs) -> object:
+        return self._items.update(*args, **kwargs)
 
 # ....................{ CLASSES ~ abc : sequence           }....................
 class ClassContainer(object):
