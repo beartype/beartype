@@ -339,10 +339,16 @@
 #Shockingly trivial, huh? Yeah. We know. \o/
 #FIXME: Note, however, that the above implies a mandatory prerequisite for
 #deeply type-checking callables: namely, that the TypeHint.is_subhint() method
-#fully support both PEP 612-compliant "typing.ParamSpec" and
-#"typing.Concatenate" type hints. Currently, we suspect that neither are
-#supported. That's a hard dependency, as failing to support both *WILL* cause
-#deep type-checking of otherwise valid callables to spuriously fail.
+#fully support:
+#* PEP 612-compliant "typing.ParamSpec" and "typing.Concatenate" type hints.
+#* PEP 646-compliant "typing.TupleTypeVar" type hints, as "Callable[...]" now
+#  supports "TupleTypeVar" unpacking in parameter lists (e.g., as
+#  "Callable[[*Ts], None]"). See also:
+#      https://peps.python.org/pep-0646/#type-variable-tuples-with-callable
+#
+#Currently, we suspect that *NONE* of these things are supported. That's a hard
+#dependency, as failing to support both *WILL* cause deep type-checking of
+#otherwise valid callables to spuriously fail.
 
 #FIXME: [PEP] Type-check "collections.abc.Collection" and "typing.Collection" in
 #a more thoughtful manner. Currently, we only type-check collections as if they

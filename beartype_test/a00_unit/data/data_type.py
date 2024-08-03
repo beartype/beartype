@@ -596,6 +596,17 @@ class ClassMutableSequence(ClassSequence):
     def remove(self, item: object) -> None: self._items.remove(item)
     def reverse(self) -> None: self._items.reverse()
 
+
+
+class ClassMappingSequence(ClassMapping, ClassSequence):
+    '''
+    Class manually satisfying both the standard :class:`collections.abc.Mapping`
+    *and* :class:`collections.abc.Sequence` protocols *without* simply
+    subclassing a builtin mapping or sequence type (e.g., :class:`list`).
+    '''
+
+    pass
+
 # ....................{ CLASSES ~ builtin                  }....................
 class ClassDict(dict):
     '''

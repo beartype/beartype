@@ -5,9 +5,9 @@
 
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-collection items type hint inferrers** (i.e., high-level functions dynamically
-inferring subscripted type hints that best describe pure-Python containers
-containing one or more items).
+collection items type hint inferrers** (i.e., lower-level functions dynamically
+inferring subscripted type hints describing pure-Python containers containing
+one or more items).
 '''
 
 # ....................{ IMPORTS                            }....................

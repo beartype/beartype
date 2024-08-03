@@ -15,6 +15,7 @@ hints best describing arbitrary objects).
 #configure type hint inference.
 
 # ....................{ IMPORTS                            }....................
+from beartype.door._func.infer._infercallable import infer_hint_callable
 from beartype.door._func.infer.collection.infercollectionbuiltin import (
     infer_hint_collection_builtin)
 from beartype.door._func.infer.collection.infercollectionsabc import (
@@ -167,12 +168,18 @@ def infer_hint(
         return obj
     # Else, this object is *NOT* the "None" singleton.
 
-    # ....................{ PEP [484|585] ~ type           }....................
+    # ....................{ PEP [484|585]                  }....................
     # If this object is a type, this type is trivially satisfied by a PEP 484-
     # or 585-compliant subclass type hint subscripted by this type.
     elif isinstance(obj, type):
         return Type[obj]
     # Else, this object is *NOT* a type.
+    #
+    # If this object is callable, defer to this lower-level function inferring a
+    # "typing.Callable[...]" type hint from this callable.
+    elif callable(obj):
+        return infer_hint_callable(obj)
+    # Else, this object is uncallable.
 
     # ....................{ NON-PEP ~ scalar               }....................
     # Type of this object.
@@ -192,7 +199,7 @@ def infer_hint(
     # Else, this object is *NOT* a builtin scalar.
 
     # ....................{ INFER                          }....................
-    # For each type hint inferer...
+    # For each lower-level hint inferer...
     for hint_inferer in _HINT_INFERERS:
         # print(f'Inferring {repr(obj)} hint via inferer {repr(hint_inferer)}...')
 

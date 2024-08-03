@@ -167,6 +167,11 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         Union,
         ValuesView,
     )
+    from beartype.vale import IsInstance
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_10,
+        IS_PYTHON_AT_LEAST_3_9,
+    )
     from beartype_test.a00_unit.data.data_type import (
         Class,
         ClassCollection,
@@ -174,19 +179,24 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ClassDict,
         ClassList,
         ClassMapping,
+        ClassMappingSequence,
         ClassMutableMapping,
         ClassMutableSequence,
         ClassSequence,
         ClassSized,
     )
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_10,
-        IS_PYTHON_AT_LEAST_3_9,
-    )
+    from beartype_test._util.module.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from collections import (
         Counter as CounterType,
         deque,
     )
+
+    # ..................{ LOCALS                             }..................
+    # PEP 593-compliant "Annotated" type hint factory imported from either the
+    # standard "typing" or third-party "typing_extensions" modules if importable
+    # from at least one of those modules *OR* "None" otherwise.
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # ..................{ LISTS ~ cases                      }..................
     #FIXME: Also test recursion protection somewhere, please.
@@ -227,42 +237,108 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 'Branchless and blasted,': b'clenched with grasping roots',
                 'The unwilling soil.': b'A gradual change was here,',
             }),
-            Mapping[str, bytes],
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Mapping[str, bytes], IsInstance[ClassMapping]]
+                if Annotated is not None else
+                Mapping[str, bytes]
+            ),
         ),
         (
             ClassMutableMapping({
                 b'Yet ghastly.': 'For, as fast years flow away,',
                 b'The smooth brow gathers,': 'and the hair grows thin',
             }),
-            MutableMapping[bytes, str],
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[
+                    MutableMapping[bytes, str], IsInstance[ClassMutableMapping]]
+                if Annotated is not None else
+                MutableMapping[bytes, str]
+            ),
         ),
 
         # "collections.abc.MutableSequence" protocol hierarchy.
         (
             ClassContainer([
                 b'Beneath the shade of trees', b'beside the flow']),
-            Container,
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Container, IsInstance[ClassContainer]]
+                if Annotated is not None else
+                Container
+            ),
         ),
         (
             ClassCollection([
                 'Of the wild babbling rivulet;', 'and now']),
-            Collection[str],
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Collection[str], IsInstance[ClassCollection]]
+                if Annotated is not None else
+                Collection[str]
+            ),
         ),
         (
             ClassSequence([
                 b'He must descend.', b'With rapid steps he went']),
-            Sequence[bytes],
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Sequence[bytes], IsInstance[ClassSequence]]
+                if Annotated is not None else
+                Sequence[bytes]
+            ),
         ),
         (
             ClassMutableSequence([
                 'Forgetful of the grave', 'where', 'when the flame']),
-            MutableSequence[str],
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[
+                    MutableSequence[str], IsInstance[ClassMutableSequence]]
+                if Annotated is not None else
+                MutableSequence[str]
+            ),
+        ),
+        # Object satisfying both the "collections.abc.Mapping" *AND*
+        # "collections.abc.Sequence" protocols, exercising various edge cases
+        # with respect to protocol overlap and ambiguity.
+        (
+            ClassMappingSequence([
+                b'And white,', b'and where irradiate dewy eyes',]),
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Sequence[bytes], IsInstance[ClassMappingSequence]]
+                if Annotated is not None else
+                Sequence[bytes]
+            ),
         ),
 
         # "collections.abc.Sized" protocol.
         (
             ClassSized("The forest's solemn canopies were changed"),
-            Sized,
+            (
+                # If "typing(|_extensions).Annotated" is importable, the
+                # narrowest "collections.abc" protocol matching this object
+                # annotated to require an instance of this object's type.
+                Annotated[Sized, IsInstance[ClassSized]]
+                if Annotated is not None else
+                Sized
+            ),
         ),
 
         # ..................{ PEP [484|585] ~ counter        }..................

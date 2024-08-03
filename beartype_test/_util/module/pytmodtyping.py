@@ -62,7 +62,6 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     # Defer test-specific imports.
     from beartype._util.api.utilapityping import import_typing_attr_or_none
     from beartype._util.module.utilmodimport import import_module_attr_or_none
-    from beartype._util.utilobject import SENTINEL
     from beartype_test._util.module.pytmodtest import (
         is_package_typing_extensions)
     # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')

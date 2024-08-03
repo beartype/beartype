@@ -5,8 +5,8 @@
 
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-builtin collections type hint inferrers** (i.e., high-level functions
-dynamically subscripted type hints that best describe instances of builtin
+builtin collections type hint inferrers** (i.e., lower-level functions
+dynamically inferring subscripted type hints describing instances of builtin
 C-based container types).
 '''
 

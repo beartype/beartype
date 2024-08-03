@@ -5,9 +5,9 @@
 
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-collections abstract base class (ABC) type hint inferrers** (i.e., high-level
-functions dynamically inferring subscripted type hints that best describe
-instances of standard :mod:`collections.abc` protocols).
+collections abstract base class (ABC) type hint inferrers** (i.e., lower-level
+functions dynamically inferring subscripted type hints describing instances of
+standard :mod:`collections.abc` protocols).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -22,6 +22,7 @@ from beartype._data.hint.datahinttyping import (
     FrozenSetInts,
     FrozenSetStrs,
 )
+from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -142,6 +143,41 @@ def infer_hint_collections_abc(
         else:
             # print(f'Ignoring non-iterable {repr(obj_type_collections_abc)} subscription...')
             hint = hint_factory
+
+        #FIXME: In fact, we can and should do even better. Notably:
+        #* If the set of all *PUBLIC* attributes (i.e., attributes whose names
+        #  are *NOT* prefixed by a single "_" character) bound to the class of
+        #  the passed object is exactly identical to the set of all attributes
+        #  required by this "collections.abc" protocol "origin_type", then this
+        #  protocol actually does perfectly encapsulate this class. In this
+        #  case, we should simply return this "hint" as is rather than a
+        #  full-blown PEP 593-compliant "Annotated[...]" parent type hint
+        #  encapsulating this "hint" as a child type hint.
+
+        # PEP 593-compliant "Annotated" type hint factory imported from either
+        # the standard "typing" or third-party "typing_extensions" modules if
+        # importable from at least one of those modules *OR* "None" otherwise.
+        Annotated = import_typing_attr_or_none('Annotated')
+
+        # If "typing(|_extensions).Annotated" is importable...
+        if Annotated is not None:
+            # Defer heavyweight imports.
+            from beartype.vale import IsInstance
+
+            # Generalize this possibly subscripted "collections.abc" protocol
+            # into a PEP 593-compliant "Annotated[...]" hint annotating this
+            # protocol to additionally require that arbitrary objects satisfying
+            # this hint also be instances of the same type as the passed object.
+            #
+            # Doing so avoids false positives, as the original "hint" (i.e.,
+            # possibly subscripted "collections.abc" protocol) widely matches
+            # *ANY* object of *ANY* type that simply satisfies that protocol.
+            # However, the type of the passed object (probably) encapsulates
+            # other attributes and behaviours *NOT* described by this protocol.
+            # In and of itself, this protocol fails to fully validate other
+            # objects of the same type.
+            hint = Annotated[hint, IsInstance[obj_type]]
+        # Else, "typing(|_extensions).Annotated" is unimportable.
     # Else, *NO* "collections.abc" protocol validates this type. In this
     # case, fallback to returning "None".
 

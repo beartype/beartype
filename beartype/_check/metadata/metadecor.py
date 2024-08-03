@@ -676,14 +676,14 @@ class BeartypeDecorMeta(object):
         # "__annotations__" dunder dictionary from the probably_lies()
         # function onto the pseudo-callable "cheating_object" object.
         #
-        # In this case, the caller would have call this method as:
+        # In this case, the caller would have called this method as:
         #     decor_meta.reinit(
         #         func=cheating_object.__call__, wrapper=cheating_object)
         #
-        # Note that the callable to be type-checked "func" is only a thin
-        # isomorphic wrapper deferring to the callable to be unwrapped
-        # "wrapper". Even if "func" were annotated with type hints, those
-        # type hints would be useless for all intents and purposes.
+        # Note that "func" (i.e., the callable to be type-checked) is only a
+        # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
+        # be unwrapped). Even if "func" were annotated with type hints, those
+        # type hints would be useless for most intents and purposes.
         self.func_arg_name_to_hint = get_func_annotations(wrapper)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_arg_name_to_hint}...')
 
