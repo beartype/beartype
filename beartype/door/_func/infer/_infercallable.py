@@ -12,27 +12,136 @@ hints describing callable objects).
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Callable,
+    Optional,
 )
-# from beartype._cave._cavefast import ()
+from beartype._cave._cavefast import (
+    HintPep612ParamSpecArgType,
+    HintPep612ParamSpecType,
+)
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-# from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignParamSpecArgs,
+    HintSignParamSpecKwargs,
+)
+from beartype._util.api.utilapityping import (
+    import_typing_attr,
+    import_typing_attr_or_none,
+)
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.func.arg.utilfuncargiter import (
+    ArgKind,
+    ArgMandatory,
+    iter_func_args,
+)
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-# from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobject import SENTINEL
+from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.proposal.utilpep612 import (
+    get_hint_pep612_paramspec)
 from collections.abc import (
     Callable as CallableABC,
 )
 
 # ....................{ INFERERS                           }....................
+#FIXME: Unit test us up, please.
+#FIXME: Revise docstring up, please.
 @callable_cached
 def infer_hint_callable(func: CallableABC) -> object:
     '''
     **Callable type hint** (i.e., :class:`collections.abc.Callable` protocol
     possibly subscripted by two or more child type hints describing the
     parameters and return) validating the passed callable.
+
+    Specifically, this function (in order):
+
+    #. If the passed callable is non-pure-Python *and*:
+
+       * If the passed callable wraps a lower-level pure-Python callable (e.g.,
+         via the standard :func:`functools.wraps` decorator), then the passed
+         callable is iteratively unwrapped until obtaining the lowest-level
+         pure-Python callable that is *not* such a wrapper.
+       * Else, the unsubscripted :class:`collections.abc.Callable` protocol is
+         returned as is.
+
+    #. If that callable is unannotated, the unsubscripted
+       :class:`collections.abc.Callable` protocol is returned as is.
+    #. Else, that callable is annotated by one or more parameter and/or return
+       child type hints. If that callable accepts *no* parameters, that callable
+       *must* have been annotated by only a return child type hint. In this
+       case, the :pep:`585`-compliant type hint ``collections.abc.Callable[...,
+       {hint_return}]`` is returned.
+    #. Else, that callable accepts one or more parameters. If those parameters
+       are all unannotated, the :pep:`585`-compliant type hint
+       ``collections.abc.Callable[..., {hint_return}]`` is again returned.
+    #. Else, one or more of those parameters are annotated. If that callable
+       accepts only mandatory positional-only and/or flexible parameters, the
+       :pep:`585`-compliant type hint
+       ``collections.abc.Callable[[{hint_param_1}, ???, {hint_param_N}],
+       {hint_return}]`` is returned.
+    #. Else, that callable accepts one or more of the following:
+
+       * An optional positional-only parameter.
+       * An optional flexible parameter.
+       * A variadic positional parameter.
+       * A keyword-only parameter.
+       * A variadic keyword parameter.
+
+       Several distinct cases now arise:
+
+       * If that callable accepts a variadic positional parameter annotated by
+         the :pep:`612`-compliant ``P.args`` parameter child type hint *and* a
+         corresponding variadic keyword parameter annotated by the
+         :pep:`612`-compliant ``P.kwargs`` parameter child type hint for some
+         :pep:`612`-compliant **parameter specification** (i.e.,
+         :obj:`typing.ParamSpec` object) ``P`` *and*:
+
+         * No other parameters, the :pep:`612`-compliant type hint
+           ``collections.abc.Callable[P, {hint_return}]`` is returned.
+         * Only one or more mandatory positional-only and/or flexible
+           parameters, the :pep:`612`-compliant type hint
+           ``collections.abc.Callable[typing.Concatenate[{hint_param_1}, ???,
+           {hint_param_N}, P]], {hint_return}]`` is returned.
+         * Else, that callable accepts one or more parameters that *cannot* be
+           annotated under any existing PEP standard. In this case, these
+           unsupported parameters *must* be ignored by replacing the trailing
+           ``P`` subscripting the prior ``typing.Concatenate[???]`` child type
+           hint with an **ellipses** (i.e., ``...`` singleton). Although
+           undocumented, at least mypy_ and possibly other static type-checkers
+           (e.g., pyright_) have extended :pep:`612` for unknown reasons to
+           permit this replacement. Interestingly, this undocumented behaviour
+           does *not* support both a parameter specification and an ellipses;
+           this behaviour only supports either a parameter specification *or* an
+           ellipses. While the ellipses is necessary here, the parameter
+           specification is not and *must* thus be dropped. Let ``N`` be the
+           0-based index of the last mandatory positional-only and/or flexible
+           parameter in the signature of that callable. Then, in this case, the
+           ludicrous :pep:`612`-compliant type hint
+           ``collections.abc.Callable[typing.Concatenate[{hint_param_1}, ???,
+           {hint_param_N}, ...]], {hint_return}]`` is returned.
+
+       * Else, that callable again accepts one or more parameters that *cannot*
+         be annotated under any existing PEP standard. In this case, these
+         unsupported parameters *must* be ignored by abusing the
+         :pep:`612`-compliant :obj:`typing.Concatenate` type hint factory.
+         Although the child parameter list of :pep:`585`-compliant
+         ``collections.abc.Callable[[{hint_params}], {hint_return}]`` type hints
+         does *not* support an ellipses, the child parameter list of
+         :pep:`612`-compliant
+         ``collections.abc.Callable[typing.Concatenate[{hint_params}],
+         {hint_return}]`` type hints does. In theory, :pep:`612` should *not*
+         apply here, as that callable accepts *no* :pep:`612`-compliant
+         parameter specification. In practice, :pep:`612` can be abused to
+         support otherwise unsupportable parameters. Again, let ``N`` be the
+         0-based index of the last mandatory positional-only and/or flexible
+         parameter in the signature of that callable. Then, in this case, the
+         ludicrous :pep:`612`-compliant type hint
+         ``collections.abc.Callable[typing.Concatenate[{hint_param_1}, ???,
+         {hint_param_N}, ...]], {hint_return}]`` is returned.
+
+    Although admittedly imperfect, this inference strategy nonetheless supports
+    a *much* broader set of callable signatures with *much* narrower type hints
+    than existing PEP standards would superficially appear to support.
 
     This function is memoized for efficiency.
 
@@ -45,6 +154,11 @@ def infer_hint_callable(func: CallableABC) -> object:
     -------
     object
         Callable type hint validating this callable.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/77467213/2809027
+        StackOverflow answer inspiring this implementation.
     '''
 
     # ....................{ LOCALS                         }....................
@@ -100,7 +214,11 @@ def infer_hint_callable(func: CallableABC) -> object:
         # dict.get() method bound to this dictionary, localized for efficiency.
         pith_name_to_hint_get = pith_name_to_hint.get
 
-        # Hint annotating the return of that callable, defined as either:
+        # List of all child hints annotating the parameters of that callable if
+        # that callable accepts such parameters *OR* the empty list otherwise.
+        hint_params: object = []
+
+        # Child hint annotating the return of that callable, defined as either:
         # * If this return is annotated, the hint annotating this return.
         # * Else, by process of elimination, one or more parameters of this
         #   callable are annotated instead. Logic below synthesizes the parent
@@ -113,53 +231,234 @@ def infer_hint_callable(func: CallableABC) -> object:
         #   This being the case, we default to the ignorable "object" supertype.
         hint_return = pith_name_to_hint_get(ARG_NAME_RETURN, object)
 
-        # True only if *ALL* parameters of that callable are unannotated.
-        is_params_ignorable = False
+        # True only if one or more parameters of that callable *cannot* be
+        # annotated as parameter child type hints of a parent
+        # "Callable[[...], Any]" type hint.
+        #
+        # See the docstring for detailed discussion of which kinds of parameters
+        # can and cannot be annotated as parameter child type hints.
+        is_param_unhintable = False
 
-        #FIXME: Add support for "ParamSpec" under Python >= 3.10. *sigh*
-        #FIXME: Heh. Clever. It turns out that "Concatenate" under Python >=
-        #3.10 can be used to ignorably annotate all of the parameters *AFTER*
-        #the last mandatory positional-only or flexible parameter accepted by a
-        #callable: e.g.,
-        #    from beartype.typing import Concatenate
-        #    Callable[Concatenate[int, str, ...], bool]
-        #
-        #This brilliant (albeit insane) idea derives from this little-upvoted
-        #StackOverflow answer at:
-        #    https://stackoverflow.com/a/77467213/2809027
-        #
-        #That matches *ALL* callables accepting at least two leading mandatory
-        #positional-only or flexible parameters annotated as "int" and "str"
-        #respectively. All remaining parameters are ignored, which is awful but
-        #still mildly better than nothing: e.g.,
-        #    # This function is matched by the above "Callable[...]" type hint,
-        #    # despite accepting otherwise "bad" kinds of parameters *NOT*
-        #    # explicitly supported by the "Callable[...]" type system.
-        #    def good_func(
-        #        /,
-        #        good_arg1: int,
-        #        good_arg2: str,
-        #        bad_arg3: bytes = b'This bytes!',
-        #        *bad_varargs: float,
-        #        bad_kwarg: complex,
-        #        bad_varkwargs: int,
-        #    ) -> bool: ...
-        #
-        #Indeed, you can probably even combine "Concatenate" with "ParamSpec" to
-        #describe callables accepting "*args", "**kwargs", and one or more
-        #mandatory positional-only or flexible parameters.
-        #
-        #It's *NOT* quite a complete callable typing system, of course. *ALL* of
-        #the following must continue to be ignored with the "..." ellipses:
-        #* Any optional positional-only or flexible parameters.
-        #* Any keyword-only parameters.
-        #* A single variadic positional or keyword parameter paired with no
-        #  corresponding variadic keyword or positional partner.
-        #
-        #The first such "bad" parameter effectively delimits what we can support
-        #by requiring an "..." ellipses. All subsequent parameters are then
-        #silently ignored. It is what it is. Blame Guido.
+        # True only if that callable accepts one or more parameters.
+        is_params = False
 
+        # True only if *ALL* parameters of that callable are unannotated,
+        # defaulting to true for simplicity.
+        is_params_ignorable = True
+
+        # PEP 612-compliant parameter specification variadic positional
+        # parameter instance variable (e.g., "*args: P.args") if that callable
+        # accepts a variadic positional parameter annotated by such a variable
+        # *OR* "None" otherwise.
+        pep612_paramspec_args: Optional[HintPep612ParamSpecArgType] = None
+
+        # PEP 612-compliant parameter specification that is the parent of both
+        # variadic positional and keyword parameter instance variables
+        # annotating the variadic positional and keyword parameters accepted by
+        # that callable (e.g., the "P" in "*args: P.args, **kwargs: P.kwargs")
+        # if that callable accepts such parameters *OR* "None" otherwise.
+        pep612_paramspec: Optional[HintPep612ParamSpecType] = None
+
+        # For the kind, name, and default value of of each parameter accepted by
+        # that callable (in declaration order)...
+        for arg_kind, arg_name, arg_default in iter_func_args(
+            # Possibly lowest-level wrappee underlying the passed possibly
+            # higher-level wrapper. The latter typically fails to convey the
+            # same callable metadata conveyed by the former -- including the
+            # names and kinds of parameters accepted by the possibly unwrapped
+            # callable. This renders the latter mostly useless for our purposes.
+            func=func,
+            # Avoid inefficiently attempting to re-unwrap this wrappee.
+            is_unwrap=False,
+        ):
+            # Child hint annotating this parameter if any *OR* the root "object"
+            # superclass otherwise.
+            hint_param = pith_name_to_hint_get(arg_name, object)
+
+            # Note that that callable accepts one or more parameters.
+            is_params = True
+
+            # True only if *ALL* parameters of that callable are unannotated,
+            # extended for the current parameter.
+            is_params_ignorable = (
+                is_params_ignorable and hint_param is object)
+
+            # If this is a keyword-only parameter, this parameter is unsupported
+            # by any existing PEP standard. Record this and halt iteration.
+            if arg_kind is ArgKind.KEYWORD_ONLY:
+                is_param_unhintable = True
+                break
+            # Else, this is *NOT* a keyword-only parameter.
+            #
+            # If this is a variadic positional parameter...
+            elif arg_kind is ArgKind.VARIADIC_POSITIONAL:
+                # If this parameter is annotated...
+                if hint_param is not object:
+                    # Sign uniquely identifying this hint if this hint is
+                    # PEP-compliant *OR* "None" (i.e., if this hint is a
+                    # PEP-noncompliant type).
+                    hint_param_sign = get_hint_pep_sign_or_none(hint_param)
+
+                    # If this variadic positional parameter is annotated by a
+                    # PEP 612-compliant parameter specification variadic
+                    # positional parameter instance variable (e.g., resembling
+                    # "*args: P.args"), record this and continue to the next
+                    # parameter.
+                    if hint_param_sign is HintSignParamSpecArgs:
+                        pep612_paramspec_args = hint_param  # pyright: ignore
+                        continue
+                    # Else, this variadic positional parameter is annotated by a
+                    # type hint unsupported by any existing PEP standard.
+                # Else, this parameter is unannotated.
+
+                # Else, this variadic positional parameter is either unannotated
+                # *OR* annotated by a type hint unsupported by any existing PEP
+                # standard. In either case, record this and halt iteration.
+                is_param_unhintable = True
+                break
+            # Else, this is *NOT* a variadic positional parameter.
+            #
+            # If this is a variadic keyword parameter...
+            elif arg_kind is ArgKind.VARIADIC_KEYWORD:
+                # If this parameter is annotated...
+                if hint_param is not object:
+                    # Sign uniquely identifying this hint if this hint is
+                    # PEP-compliant *OR* "None" (i.e., if this hint is a
+                    # PEP-noncompliant type).
+                    hint_param_sign = get_hint_pep_sign_or_none(hint_param)
+
+                    # If this variadic keyword parameter is annotated by a
+                    # PEP 612-compliant parameter specification variadic
+                    # keyword parameter instance variable (e.g., resembling
+                    # "**kwargs: P.kwargs")..., record this and continue to the
+                    # next parameter.
+                    if hint_param_sign is HintSignParamSpecKwargs:
+                        # If that callable also accepts a variadic positional
+                        # parameter annotated by a corresponding PEP
+                        # 612-compliant parameter specification variadic
+                        # positional parameter instance variable...
+                        if pep612_paramspec_args:
+                            # PEP 612-compliant parent parameter specifications
+                            # containing this pair of instance variables.
+                            pep612_paramspec_args_paramspec = (
+                                get_hint_pep612_paramspec(
+                                    pep612_paramspec_args))
+                            pep612_paramspec_kwargs_paramspec = (
+                                get_hint_pep612_paramspec(hint_param))  # pyright: ignore
+
+                            # If this pair of instance variables derive from the
+                            # same PEP 612-compliant parent parameter
+                            # specification, record this and halt iteration. By
+                            # definition, *NO* parameters follow this parameter;
+                            # the variadic keyword parameter is *ALWAYS* the
+                            # last possible parameter in any parameter list.
+                            if (
+                                pep612_paramspec_args_paramspec is
+                                pep612_paramspec_kwargs_paramspec
+                            ):
+                                pep612_paramspec = (
+                                    pep612_paramspec_args_paramspec)
+                                break
+                            # Else, this pair of instance variables derive from
+                            # different PEP 612-compliant parent parameter
+                            # specifications. This is horrible. Who would do
+                            # something horrible like this? Somebody horrible.
+                        # Else, that callable fails to accept such a variadic
+                        # positional parameter.
+                    # Else, this variadic keyword parameter is annotated by a
+                    # type hint unsupported by any existing PEP standard.
+                # Else, this parameter is unannotated.
+
+                # Else, this variadic keyword parameter is either unannotated
+                # *OR* annotated by a type hint unsupported by any existing PEP
+                # standard. In either case, record this and halt iteration.
+                is_param_unhintable = True
+                break
+            # Else, this is *NOT* a variadic keyword parameter. By process of
+            # elimination, this *MUST* be either a positional-only or flexible
+            # parameter.
+            #
+            # If this is an optional positional-only or flexible parameter, this
+            # parameter is unsupported by any existing PEP standard. Record this
+            # and halt iteration.
+            elif arg_default is not ArgMandatory:
+                is_param_unhintable = True
+                break
+            # Else, this is a mandatory positional-only or flexible parameter.
+            # In this case, append the child hint annotating this parameter to
+            # the list of all child parameter hints.
+            else:
+                hint_params.append(hint_param)  # type: ignore[attr-defined]
+
+        # If that callable accepts one or more parameters, preserve the list of
+        # all child parameter hints as the empty list.
+        if not is_params:
+            pass
+        # Else, that callable accepts one or more parameters.
+        #
+        # If that callable accepts one or more unsupported parameters...
+        elif is_param_unhintable:
+            # PEP 612-compliant "typing(|_extensions).Concatenate" hint factory
+            # if importable *OR* "None" otherwise.
+            Concatenate = import_typing_attr_or_none('Concatenate')
+
+            # If this hint factory is importable...
+            if Concatenate is not None:
+                #FIXME: Invalid syntax both here and below under Python < 3.11.
+                #I can't be bothered to resolve this at the moment. So tired!
+                # Generalize the list of all child parameter hints to the PEP
+                # 612-compliant "Concatenate[...]"  hint factory subscripted by
+                # all child hints annotating all mandatory positional-only and
+                # flexible parameters accepted by that callable suffixed by the
+                # ellipses ignoring all remaining unsupported parameters.
+                #
+                # See the docstring for detailed discussion of this behaviour.
+                hint_params = Concatenate[*hint_params, ...]  # type: ignore[misc]
+            # Else, this hint factory is unimportable. In this case, we sadly
+            # have *NO* recourse but to silently ignore *ALL* parameters.
+            else:
+                hint_params = ...
+        # Else, that callable accepts *NO* unsupported parameters.
+        #
+        # If *ALL* parameters of that callable are unannotated, ignore these
+        # parameters by setting the list of all child parameter hints to the
+        # ellipses.
+        elif is_params_ignorable:
+            hint_params = ...
+        # Else, one or more parameters of that callable are annotated.
+        #
+        # If that callable accepts a PEP 612-compliant parameter
+        # specification...
+        elif pep612_paramspec is not None:
+            # If that callable accepts *NO* mandatory positional-only and
+            # flexible parameters...
+            if hint_params:
+                # PEP 612-compliant "typing(|_extensions).Concatenate" hint
+                # factory if importable *OR* raise an exception otherwise.
+                #
+                # Note that this should *NEVER* occur. Why? Because the
+                # "Concatenate" and "ParamSpec" attributes are *ALWAYS* paired.
+                # If one is available, the other *MUST* be available as well.
+                Concatenate = import_typing_attr('Concatenate')
+
+                # Generalize the list of all child parameter hints to the PEP
+                # 612-compliant "Concatenate[...]"  hint factory subscripted by
+                # all child hints annotating all mandatory positional-only and
+                # flexible parameters accepted by that callable suffixed by the
+                # this parameter specification.
+                hint_params = Concatenate[*hint_params, pep612_paramspec]  # type: ignore[misc]
+            # Else, that callable accepts *NO* mandatory positional-only or
+            # flexible parameters. In this case, set the list of all child
+            # parameter hints to this parameter specification as is.
+            else:
+                hint_params = pep612_paramspec
+        # Else, that callable accepts *NO* PEP 612-compliant parameter
+        # specification. In this case, that callable accepts *ONLY* one or more
+        # mandatory positional-only and/or flexible parameters. In this case,
+        # preserve this list of all child parameter hints as is.
+
+        # Callable hint to be returned.
+        hint = Callable[hint_params, hint_return]  # pyright: ignore
     # Else, *NO* parameters or returns of this callable are annotated.
 
     # Return this hint.

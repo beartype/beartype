@@ -1079,7 +1079,8 @@ else:
     '''
 
 
-HintPep604ItemTypes: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
+HintPep604ItemTypes: _TupleTyping[type, ...] = (
+    type, HintGenericSubscriptedType)
 '''
 Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
 objects permissible as the items of new unions), including:
@@ -1088,6 +1089,77 @@ objects permissible as the items of new unions), including:
   union ``list | None``).
 * The C-based type of all subscripted generics (e.g., the type of the first item
   in the new union ``list[dict[str, int]] | None``).
+'''
+
+# ....................{ TYPES ~ hint : pep : 612           }....................
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that these types are not
+# types.
+if TYPE_CHECKING:
+    class HintPep612ParamSpecType(object): pass
+    class HintPep612ParamSpecArgType(object): pass
+    class HintPep612ParamSpecKwargType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker.
+#
+# If the active Python interpreter targets at least Python >= 3.10 and thus
+# supports PEP 612, define these types properly. *sigh*
+elif IS_PYTHON_AT_LEAST_3_10:
+    HintPep612ParamSpecType = _typing.ParamSpec
+    '''
+    C-based type of all :pep:`612`-compliant **parameter specifications** (i.e.,
+    low-level C-based :obj:`typing.ParamSpec` objects) if the active Python
+    interpreter targets Python >= 3.10 *or* :class:`.UnavailableType` otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`typing.ParamSpec` type available only under Python >= 3.10.
+    '''
+
+
+    HintPep612ParamSpecArgType = _typing.ParamSpecArgs
+    '''
+    C-based type of all :pep:`612`-compliant **parameter specification variadic
+    positional parameter instance variables** (i.e., low-level C-based
+    :obj:`typing.ParamSpecArgs` objects annotating variadic positional
+    parameters with syntax resembling ``*args: P.args`` for ``P`` a low-level
+    C-based :obj:`typing.ParamSpec` parent object) if the active Python
+    interpreter targets Python >= 3.10 *or* :class:`.UnavailableType` otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`typing.ParamSpecArgs` type available only under Python >= 3.10.
+    '''
+
+
+    HintPep612ParamSpecKwargType = _typing.ParamSpecKwargs
+    '''
+    C-based type of all :pep:`612`-compliant **parameter specification variadic
+    keyword parameter instance variables** (i.e., low-level C-based
+    :obj:`typing.ParamSpecArgs` objects annotating variadic keyword
+    parameters with syntax resembling ``**kwargs: P.kwargs`` for ``P`` a
+    low-level C-based :obj:`typing.ParamSpec` parent object) if the active
+    Python interpreter targets Python >= 3.10 *or* :class:`.UnavailableType`
+    otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`typing.ParamSpecKwargs` type available only under Python >= 3.10.
+    '''
+# Else, the active Python interpreter targets Python < 3.10 and thus fails to
+# support PEP 612. In this case, define these types as placeholders. *sigh*
+else:
+    HintPep612ParamSpecType = \
+    HintPep612ParamSpecArgType = \
+    HintPep612ParamSpecKwargType = \
+        UnavailableType
+
+
+HintPep612ParamSpecVarTypes: _TupleTyping[type, ...] = (
+    HintPep612ParamSpecArgType, HintPep612ParamSpecKwargType,)
+'''
+Tuple of all :pep:`612`-compliant **parameter specification variadic parameter
+instance variables** (i.e., low-level C-based :obj:`typing.ParamSpecArgs`
+objects annotating variadic parameters with syntax resembling
+``*args: P.args`` and ``**kwargs: P.kwargs`` for ``P`` a low-level C-based
+:obj:`typing.ParamSpec` parent object).
 '''
 
 # ....................{ TYPES ~ hint : pep : 695           }....................

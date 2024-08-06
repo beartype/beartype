@@ -20,6 +20,13 @@ from beartype.roar import BeartypeDecorHintPep612Exception
 from beartype.typing import (
     Callable,
     Optional,
+    Union,
+)
+from beartype._cave._cavefast import (
+    HintPep612ParamSpecType,
+    HintPep612ParamSpecArgType,
+    HintPep612ParamSpecKwargType,
+    HintPep612ParamSpecVarTypes,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -38,6 +45,40 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_name_variadic_positional,
 )
 from beartype._util.utilobject import SENTINEL
+
+# ....................{ GETTERS                            }....................
+def get_hint_pep612_paramspec(
+    paramspec_var: Union[
+        HintPep612ParamSpecArgType,
+        HintPep612ParamSpecKwargType,
+    ]) -> HintPep612ParamSpecType:
+    '''
+    :pep:`612`-compliant **parameter specification** (i.e., low-level C-based
+    :obj:`typing.ParamSpec` object) containing the passed **parameter
+    specification variadic parameter instance variable** (i.e., low-level
+    C-based :obj:`typing.ParamSpecArgs` object annotating a variadic parameter
+    with syntax resembling ``*args: P.args`` and ``**kwargs: P.kwargs`` for
+    ``P`` a low-level C-based :obj:`typing.ParamSpec` parent object) as a child
+    instance variable.
+
+    Parameters
+    ----------
+    paramspec_var : HintPep612ParamSpecVarTypes
+        Parameter specification variadic parameter instance variable to be
+        inspected.
+
+    Returns
+    ----------
+    typing.ParamSpec
+        Parameter specification containing this variable.
+    '''
+    assert isinstance(paramspec_var, HintPep612ParamSpecVarTypes), (
+        f'{repr(paramspec_var)} not '
+        f'PEP 612-compliant parameter specification variable.'
+    )
+
+    # One-liners are fine. One-liners never cross the line! ¯\_(ツ)_/¯
+    return paramspec_var.__origin__  # type: ignore[union-attr]
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
@@ -92,7 +133,7 @@ def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
         pith_name_label=_VAR_POS_PITH_NAME_LABEL,
         pith_name_syntax=_VAR_POS_PITH_NAME_SYNTAX,
         pith_name_tester=_VAR_POS_PITH_NAME_TESTER,
-        other_hint=hint.__origin__.kwargs,  # type: ignore[attr-defined]
+        other_hint=get_hint_pep612_paramspec(hint).kwargs,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecKwargs,
         other_pith_name_getter=get_func_arg_meta_variadic_keyword_or_none,
         other_pith_name_label=_VAR_KW_PITH_NAME_LABEL,
@@ -117,7 +158,7 @@ def reduce_hint_pep612_kwargs(hint: object, **kwargs) -> object:
     :func:`.reduce_hint_pep612_args`
         Further details.
     '''
-    print('!!HERE!!')
+    # print('!!HERE!!')
 
     # Defer to this lower-level general-purpose reducer.
     return _reduce_hint_pep612_args_or_kwargs(
@@ -125,7 +166,7 @@ def reduce_hint_pep612_kwargs(hint: object, **kwargs) -> object:
         pith_name_label=_VAR_KW_PITH_NAME_LABEL,
         pith_name_syntax=_VAR_KW_PITH_NAME_SYNTAX,
         pith_name_tester=_VAR_KW_PITH_NAME_TESTER,
-        other_hint=hint.__origin__.args,  # type: ignore[attr-defined]
+        other_hint=get_hint_pep612_paramspec(hint).args,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecArgs,
         other_pith_name_getter=get_func_arg_meta_variadic_positional_or_none,
         other_pith_name_label=_VAR_POS_PITH_NAME_LABEL,
@@ -460,7 +501,7 @@ def _get_pep612_exception_message_suffix(
     func_name = (
         func.__name__
         if func is not None else
-        'big_chad_energy'  # <-- lol... ok. so it's not actually that funny.
+        'big_chad_energy'  # <-- lol... ok. so, it's not actually that funny.
     )
 
     # Return the expected human-readable substring.

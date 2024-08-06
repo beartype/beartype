@@ -188,7 +188,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # arg_default: object = None
 
     # For the 0-based index of each parameter accepted by that callable and the
-    # "ParameterMeta" object describing this parameter (in declaration order)...
+    # "ArgMeta" 3-tuple describing this parameter (in declaration order)...
     for arg_index, arg_meta in enumerate(iter_func_args(
         # Possibly lowest-level wrappee underlying the possibly higher-level
         # wrapper currently being decorated by the @beartype decorator. The

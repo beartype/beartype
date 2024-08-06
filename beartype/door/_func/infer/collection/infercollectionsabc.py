@@ -10,6 +10,51 @@ functions dynamically inferring subscripted type hints describing instances of
 standard :mod:`collections.abc` protocols).
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *NON-IDEAL.* This is mostly great. "collections.abc.Mapping" support is
+#the exception, sadly; that's demonstrably *NOT* great. Why? Because the
+#infer_hint_collections_abc() function currently lies. How so? By erroneously
+#inferring that user-defined classes virtually satisfying the
+#"collections.abc.Mapping" protocol *WITHOUT* physically subclassing either that
+#protocol or the builtin "dict" type, which is registered with
+#"collections.abc.Mapping" and thus a hardcoded "virtual subclass" of
+#"collections.abc.Mapping" actually do satisfy "collections.abc.Mapping": e.g.,
+#    >>> from beartype.door import infer_hint
+#    >>> from beartype_test.a00_unit.data.data_type import ClassMapping
+#    >>> from collections.abc import Mapping
+#
+#    >>> map = ClassMapping({
+#    ...     'Branchless and blasted,': b'clenched with grasping roots',
+#    ...     'The unwilling soil.': b'A gradual change was here,',
+#    ... })
+#
+#    >>> isinstance(map, Mapping)
+#    False
+#    >>> infer_hint(map)
+#    Annotated[Mapping[str, bytes], IsInstance[ClassMapping]]
+#
+#That's totally wrong.
+#
+#On the one hand, the "collections.abc.Mapping" protocol erroneously asserts
+#that "ClassMapping" instances do *NOT* satisfy that protocol. Why? Because,
+#unlike *MOST* protocols, that protocol fails to define the __subclasshook__()
+#dunder method required to support "virtual subclasses. "ClassMapping" instances
+#do actually satisfy that protocol, of course, but we can't reasonably
+#monkey-patch that awareness into the standard "collections.abc.Mapping" class
+#without breaking everybody's downstream code.
+#
+#On the other other hand, our infer_hint() function infers that "ClassMapping"
+#instances do actually satisfy that protocol. They don't, though, due to the
+#aforementioned failure of that protocol to define the __subclasshook__()
+#dunder method required to support "virtual subclasses."
+#
+#The solution? The genius-tier @JWCS solved this:
+#* Improve our custom "beartype.typing.Mapping" ABC into a
+#  "collections.abc.Mapping" subclass that additionally defines
+#  __subclasshook__() in the standard way to support virtual subclasses.
+#
+#That's it. That's the entire solution. Ridiculous, huh? Genius is genius.
+
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
