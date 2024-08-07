@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`695` **type hint utility unit tests.**
+Project-wide :pep:`695` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.utilpep695` submodule.

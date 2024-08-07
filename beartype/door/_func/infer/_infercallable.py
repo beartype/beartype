@@ -38,7 +38,10 @@ from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.proposal.utilpep612 import (
-    get_hint_pep612_paramspec)
+    get_hint_pep612_paramspec,
+    make_hint_pep612_concatenate_list_or_none,
+)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from collections.abc import (
     Callable as CallableABC,
 )
@@ -106,13 +109,13 @@ def infer_hint_callable(func: CallableABC) -> object:
            annotated under any existing PEP standard. In this case, these
            unsupported parameters *must* be ignored by replacing the trailing
            ``P`` subscripting the prior ``typing.Concatenate[???]`` child type
-           hint with an **ellipses** (i.e., ``...`` singleton). Although
+           hint with an **ellipsis** (i.e., ``...`` singleton). Although
            undocumented, at least mypy_ and possibly other static type-checkers
            (e.g., pyright_) have extended :pep:`612` for unknown reasons to
            permit this replacement. Interestingly, this undocumented behaviour
-           does *not* support both a parameter specification and an ellipses;
+           does *not* support both a parameter specification and an ellipsis;
            this behaviour only supports either a parameter specification *or* an
-           ellipses. While the ellipses is necessary here, the parameter
+           ellipsis. While the ellipsis is necessary here, the parameter
            specification is not and *must* thus be dropped. Let ``N`` be the
            0-based index of the last mandatory positional-only and/or flexible
            parameter in the signature of that callable. Then, in this case, the
@@ -126,7 +129,7 @@ def infer_hint_callable(func: CallableABC) -> object:
          :pep:`612`-compliant :obj:`typing.Concatenate` type hint factory.
          Although the child parameter list of :pep:`585`-compliant
          ``collections.abc.Callable[[{hint_params}], {hint_return}]`` type hints
-         does *not* support an ellipses, the child parameter list of
+         does *not* support an ellipsis, the child parameter list of
          :pep:`612`-compliant
          ``collections.abc.Callable[typing.Concatenate[{hint_params}],
          {hint_return}]`` type hints does. In theory, :pep:`612` should *not*
@@ -398,31 +401,42 @@ def infer_hint_callable(func: CallableABC) -> object:
         #
         # If that callable accepts one or more unsupported parameters...
         elif is_param_unhintable:
+            # If the active Python interpreter targets Python >= 3.11, then the
             # PEP 612-compliant "typing(|_extensions).Concatenate" hint factory
-            # if importable *OR* "None" otherwise.
-            Concatenate = import_typing_attr_or_none('Concatenate')
-
-            # If this hint factory is importable...
-            if Concatenate is not None:
-                #FIXME: Invalid syntax both here and below under Python < 3.11.
-                #I can't be bothered to resolve this at the moment. So tired!
-                # Generalize the list of all child parameter hints to the PEP
-                # 612-compliant "Concatenate[...]"  hint factory subscripted by
-                # all child hints annotating all mandatory positional-only and
-                # flexible parameters accepted by that callable suffixed by the
-                # ellipses ignoring all remaining unsupported parameters.
+            # is subscriptable by a trailing ellipsis. In this case...
+            if IS_PYTHON_AT_LEAST_3_11:
+                # Generalize the list of all child parameter hints to this
+                # factory subscripted by all child hints annotating all
+                # mandatory positional-only and flexible parameters accepted by
+                # that callable suffixed by the ellipsis ignoring all remaining
+                # unsupported parameters.
                 #
                 # See the docstring for detailed discussion of this behaviour.
-                hint_params = Concatenate[*hint_params, ...]  # type: ignore[misc]
-            # Else, this hint factory is unimportable. In this case, we sadly
-            # have *NO* recourse but to silently ignore *ALL* parameters.
+                hint_params = make_hint_pep612_concatenate_list_or_none(
+                    hint_params, ...)  # type: ignore[arg-type]
+
+                # If this factory is unimportable, we sadly have *NO* recourse
+                # but to silently ignore *ALL* parameters.
+                if hint_params is None:
+                    hint_params = ...
+                # Else, this factory is importable. In this case, preserve this
+                # hint as is.
+            # Else, the active Python interpreter targets Python < 3.11. In this
+            # case, the PEP 612-compliant "typing(|_extensions).Concatenate"
+            # hint factory is *NOT* subscriptable by a trailing ellipsis.
+            # Attempting to do so raises:
+            #     TypeError: The last parameter to Concatenate should be a
+            #     ParamSpec variable.
+            #
+            # In this case, we sadly have *NO* recourse but to silently ignore
+            # *ALL* parameters.
             else:
                 hint_params = ...
         # Else, that callable accepts *NO* unsupported parameters.
         #
         # If *ALL* parameters of that callable are unannotated, ignore these
         # parameters by setting the list of all child parameter hints to the
-        # ellipses.
+        # ellipsis.
         elif is_params_ignorable:
             hint_params = ...
         # Else, one or more parameters of that callable are annotated.
@@ -433,20 +447,20 @@ def infer_hint_callable(func: CallableABC) -> object:
             # If that callable accepts *NO* mandatory positional-only and
             # flexible parameters...
             if hint_params:
-                # PEP 612-compliant "typing(|_extensions).Concatenate" hint
-                # factory if importable *OR* raise an exception otherwise.
-                #
-                # Note that this should *NEVER* occur. Why? Because the
-                # "Concatenate" and "ParamSpec" attributes are *ALWAYS* paired.
-                # If one is available, the other *MUST* be available as well.
-                Concatenate = import_typing_attr('Concatenate')
-
                 # Generalize the list of all child parameter hints to the PEP
                 # 612-compliant "Concatenate[...]"  hint factory subscripted by
                 # all child hints annotating all mandatory positional-only and
                 # flexible parameters accepted by that callable suffixed by the
                 # this parameter specification.
-                hint_params = Concatenate[*hint_params, pep612_paramspec]  # type: ignore[misc]
+                hint_params = make_hint_pep612_concatenate_list_or_none(
+                    hint_params, pep612_paramspec)  # type: ignore[arg-type]
+
+                # If this factory is unimportable, we sadly have *NO* recourse
+                # but to silently ignore *ALL* parameters.
+                if hint_params is None:
+                    hint_params = ...
+                # Else, this factory is importable. In this case, preserve this
+                # hint as is.
             # Else, that callable accepts *NO* mandatory positional-only or
             # flexible parameters. In this case, set the list of all child
             # parameter hints to this parameter specification as is.
@@ -458,7 +472,7 @@ def infer_hint_callable(func: CallableABC) -> object:
         # preserve this list of all child parameter hints as is.
 
         # Callable hint to be returned.
-        hint = Callable[hint_params, hint_return]  # pyright: ignore
+        hint = Callable[hint_params, hint_return]  # type: ignore[assignment]
     # Else, *NO* parameters or returns of this callable are annotated.
 
     # Return this hint.

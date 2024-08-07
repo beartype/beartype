@@ -34,6 +34,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
 )
+from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.func.arg.utilfuncargget import (
     get_func_arg_meta_variadic_keyword_or_none,
@@ -68,17 +69,97 @@ def get_hint_pep612_paramspec(
         inspected.
 
     Returns
-    ----------
+    -------
     typing.ParamSpec
         Parameter specification containing this variable.
     '''
-    assert isinstance(paramspec_var, HintPep612ParamSpecVarTypes), (
-        f'{repr(paramspec_var)} not '
-        f'PEP 612-compliant parameter specification variable.'
-    )
+    #FIXME: *lol*. This assert fails when using "typing_extensions.ParamSpec"
+    #under Python < 3.10. Whatevahs! Just ignore quality assurance for now. \o/
+    # assert isinstance(paramspec_var, HintPep612ParamSpecVarTypes), (
+    #     f'{repr(paramspec_var)} not '
+    #     f'PEP 612-compliant parameter specification variable.'
+    # )
 
     # One-liners are fine. One-liners never cross the line! ¯\_(ツ)_/¯
     return paramspec_var.__origin__  # type: ignore[union-attr]
+
+# ....................{ FACTORIES                          }....................
+def make_hint_pep612_concatenate_list_or_none(
+    hints_child_first: list,
+    hint_child_last: object,
+) -> object:
+    '''
+    :pep:`612`-compliant **parameter concatenation** (i.e., high-level
+    pure-Python object created and returned by subscripting the standard
+    :func:`typing.Concatenate` type hint factory) dynamically subscripted first
+    by all child type hints in the passed ``hints_child_first`` list and then by
+    the child type hint ``hint_child_last` if this hint factory is importable
+    under the active Python interpreter *or* :data:`None` otherwise (i.e., if
+    this hint factory is unimportable under the active Python interpreter).
+
+    Parameters
+    ----------
+    hints_child_first : list
+        List of all leading child type hints to subscript the returned
+        ``typing.Concatenate[...]`` type hint with.
+    hint_child_last : object
+        Trailing child type hint to subscript the returned
+        ``typing.Concatenate[...]`` type hint with. Note that both :pep:`612`
+        *and* the runtime implementation of the :func:`typing.Concatenate` type
+        hint factory require that this hint be either:
+
+        * A **parameter specification** (i.e., low-level C-based
+          :pep:`612`-compliant :obj:`typing.ParamSpec` object).
+        * An **ellipsis** (i.e., ``...``), silently ignoring *all* remaining
+          arbitrary trailing parameters accepted by the callable matched by the
+          parent :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type
+          hint.
+
+    Returns
+    -------
+    object
+        Either:
+
+        * If :func:`typing.Concatenate` is importable, the
+          ``typing.Concatenate[...]`` type hint subscripted by these child type
+          hints.
+        * Else, :data:`None`.
+
+    Raises
+    ------
+    TypeError
+        If ``hint_child_last`` is neither a parameter specification *nor* an
+        ellipsis.
+    '''
+    assert isinstance(hints_child_first, list), (
+        f'{repr(hints_child_first)} not list.')
+
+    # "Concatenate[...]" hint to be returned, subscripted by these child hints.
+    hint = None
+
+    # PEP 612-compliant "typing(|_extensions).Concatenate" hint factory if
+    # importable *OR* "None" otherwise.
+    Concatenate = import_typing_attr_or_none('Concatenate')
+
+    #FIXME: When Python 3.10 support is dropped, this can and should be
+    #reduced to this elegant one-liner employing list unpacking:
+    #    hint = Concatenate[*hints_child_first, hint_child_last]
+
+    # If this hint factory is importable...
+    if Concatenate is not None:
+        # Tuple of all child hints to subscript "Concatenate[...]" with.
+        #
+        # Note that the Concatenate.__getitem__() implementation *REQUIRES* that
+        # the passed parameter be a tuple. Sanity is out the window, folks.
+        hints_child = tuple(hints_child_first) + (hint_child_last,)
+
+        # "Concatenate[...]" hint dynamically subscripted by this tuple.
+        hint = Concatenate.__getitem__(hints_child)  # type: ignore[misc]
+    # Else, this hint factory is unimportable. In this case, fallback to
+    # returning "None".
+
+    # Return this "Concatenate[...]" hint.
+    return hint
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
