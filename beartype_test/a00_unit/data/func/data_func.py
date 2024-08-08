@@ -107,6 +107,52 @@ def func_args_5_flex_mandatory_varpos_kwonly_varkw(
     thy_soul_was_like_a_star = 'and dwelt apart:'
     return thy_soul_was_like_a_star
 
+# ....................{ CALLABLES ~ hints                  }....................
+# Callables defined to exercise various possible edge case with respect to
+# parameter and return type hints.
+
+def func_unhinted(
+    bright_flowers_departed,
+    and_the_beautiful_shade,
+    *of_the_green_groves,
+    with_all_their_odorous_winds='And musical motions.',
+    **calm_he_still_pursued,
+):
+    '''
+    Arbitrary unannotated callable accepting a variety of parameters -- none of
+    which are annotated by a type hint.
+    '''
+
+    return 'Of the green groves, with all their odorous winds'
+
+
+def func_args_unhinted_return_hinted(
+    the_stream,
+    that_with_a_larger_volume,
+    *now_bright_flowers_departed,
+    rolled_through='the labyrinthine dell',
+    **and_there,
+) -> str:
+    '''
+    Arbitrary callable annotated by a return type hint accepting a variety of
+    parameters -- none of which are annotated by a type hint.
+    '''
+
+    return 'The stream, that with a larger volume now'
+
+
+def func_args_flex_mandatory_optional_hinted_return_unhinted(
+    fretted_a_path: int,
+    through_its_descending_curves: bytes,
+    with_its_wintry_speed: str = 'On every side now rose',
+):
+    '''
+    Arbitrary callable annotated by *no* return type hint accepting at least one
+    annotated mandatory and at least one annotated optional flexible parameter.
+    '''
+
+    return 'Fretted a path through its descending curves'
+
 # ....................{ CALLABLES ~ pep 3102 : classes     }....................
 class ClassOfMethods(object):
     '''

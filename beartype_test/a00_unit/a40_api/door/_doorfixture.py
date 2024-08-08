@@ -146,8 +146,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype.typing import (
+        Callable,
         Collection,
         Container,
         Counter,
@@ -169,6 +169,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     )
     from beartype.vale import IsInstance
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,
     )
@@ -185,6 +186,11 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ClassSequence,
         ClassSized,
     )
+    from beartype_test.a00_unit.data.func.data_func import (
+        func_unhinted,
+        func_args_flex_mandatory_optional_hinted_return_unhinted,
+        func_args_unhinted_return_hinted,
+    )
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from collections import (
@@ -197,6 +203,13 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # standard "typing" or third-party "typing_extensions" modules if importable
     # from at least one of those modules *OR* "None" otherwise.
     Annotated = import_typing_attr_or_none_safe('Annotated')
+
+    # PEP 612-compliant "Concatenate" type hint factory and "ParamSpec" class
+    # imported from either the standard "typing" or third-party
+    # "typing_extensions" modules if importable from at least one of those
+    # modules *OR* "None" otherwise.
+    Concatenate = import_typing_attr_or_none_safe('Concatenate')
+    ParamSpec = import_typing_attr_or_none_safe('ParamSpec')
 
     # ..................{ LISTS ~ cases                      }..................
     #FIXME: Also test recursion protection somewhere, please.
@@ -339,6 +352,47 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 if Annotated is not None else
                 Sized
             ),
+        ),
+
+        # ..................{ PEP [484|585] ~ callable       }..................
+        #FIXME: Additionally test:
+        #* A pure-Python function isomorphically wrapping another function.
+        #* A pure-Python function non-isomorphically wrapping another function.
+
+        # A C-based callable is annotated as the unsubscripted PEP 484- or
+        # 585-compliant "Callable" type.
+        (
+            iter,
+            Callable,
+        ),
+
+        # An unannotated pure-Python callable is annotated as the unsubscripted
+        # PEP 484- or 585-compliant "Callable" type.
+        (
+            func_unhinted,
+            Callable,
+        ),
+
+        # A pure-Python callable annotated by *NO* return type hint and one or
+        # more mandatory and optional flexible parameter type hints is annotated
+        # as either...
+        (
+            func_args_flex_mandatory_optional_hinted_return_unhinted,
+            (
+                # If the active Python interpreter targets Python >= 3.11 and
+                # thus supports PEP 612, the PEP 484- or 585-compliant
+                # "Callable" type subscripted by:
+                # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                #   hint factory subscripted by these mandatory parameter type
+                #   hints followed by a trailing
+                # * The ignorable "object" superclass, matching the return.
+                Callable[Concatenate[int, bytes, ...], object]
+                if IS_PYTHON_AT_LEAST_3_11 else
+                # Else, the active Python interpreter targets Python < 3.11 and
+                # thus fails to support PEP 612. In this case, the unsubscripted
+                # PEP 484- or 585-compliant "Callable" type.
+                Callable
+            )
         ),
 
         # ..................{ PEP [484|585] ~ counter        }..................

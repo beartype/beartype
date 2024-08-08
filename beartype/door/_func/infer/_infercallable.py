@@ -198,7 +198,7 @@ def infer_hint_callable(func: CallableABC) -> object:
 
     # Hint to be returned, defaulting to the unsubscripted
     # "collections.abc.Callable" protocol.
-    hint = Callable
+    hint: object = Callable
 
     # Dictionary mapping from the name of each annotated parameter accepted
     # by this unwrapped callable to the type hint annotating that parameter.
@@ -399,6 +399,13 @@ def infer_hint_callable(func: CallableABC) -> object:
             pass
         # Else, that callable accepts one or more parameters.
         #
+        # If *ALL* parameters of that callable are unannotated, ignore these
+        # parameters by setting the list of all child parameter hints to the
+        # ellipsis.
+        elif is_params_ignorable:
+            hint_params = ...
+        # Else, one or more parameters of that callable are annotated.
+        #
         # If that callable accepts one or more unsupported parameters...
         elif is_param_unhintable:
             # If the active Python interpreter targets Python >= 3.11, then the
@@ -434,13 +441,6 @@ def infer_hint_callable(func: CallableABC) -> object:
                 hint_params = ...
         # Else, that callable accepts *NO* unsupported parameters.
         #
-        # If *ALL* parameters of that callable are unannotated, ignore these
-        # parameters by setting the list of all child parameter hints to the
-        # ellipsis.
-        elif is_params_ignorable:
-            hint_params = ...
-        # Else, one or more parameters of that callable are annotated.
-        #
         # If that callable accepts a PEP 612-compliant parameter
         # specification...
         elif pep612_paramspec is not None:
@@ -471,8 +471,21 @@ def infer_hint_callable(func: CallableABC) -> object:
         # mandatory positional-only and/or flexible parameters. In this case,
         # preserve this list of all child parameter hints as is.
 
-        # Callable hint to be returned.
-        hint = Callable[hint_params, hint_return]  # type: ignore[assignment]
+        # Callable hint to be returned, defined as either...
+        hint = (
+            # The unsubscripted "collections.abc.Callable" protocol if...
+            Callable
+            if (
+                # The list of all child parameter hints is the ellipsis
+                # (signifying all parameters to be ignorable) *AND*...
+                hint_params is ... and
+                # The child return hint is the ignorable "object" superclass.
+                hint_return is object
+            ) else
+            # Else, the "collections.abc.Callable" type hint factory subscripted
+            # by these unignorable child parameter and return type hints.
+            Callable[hint_params, hint_return]  # pyright: ignore
+        )
     # Else, *NO* parameters or returns of this callable are annotated.
 
     # Return this hint.
