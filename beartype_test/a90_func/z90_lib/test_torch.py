@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PyTorch integration tests.**
+Project-wide **PyTorch** integration tests.
 
 This submodule functionally tests the :mod:`beartype` package against the
 third-party PyTorch package.

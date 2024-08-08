@@ -281,8 +281,6 @@
    https://cython.org
 .. _Nuitka:
    https://nuitka.net
-.. _Numba:
-   https://numba.pydata.org
 .. _PyPy:
    https://www.pypy.org
 .. _Pyodide:
@@ -357,6 +355,13 @@
    https://jax.readthedocs.io/en/latest/_autosummary/jax.jit.html#jax.jit
 .. _jax.numpy:
    https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
+
+.. # ------------------( LINKS ~ py : package : numba        )------------------
+.. _Numba:
+.. _numba:
+   https://numba.pydata.org
+.. _numba.njit:
+   https://numba.readthedocs.io/en/stable/user/jit.html
 
 .. # ------------------( LINKS ~ py : package : numpy        )------------------
 .. _NumPy:

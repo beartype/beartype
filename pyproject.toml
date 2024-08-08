@@ -311,6 +311,9 @@ test-tox = [
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 
+    # Required by optional numba-specific integration tests.
+    "numba",
+
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
