@@ -13,7 +13,7 @@ positionally, syntactically followed in the signatures of their callables by
 the :pep:`570`-compliant ``/,`` pseudo-parameter).
 
 Caveats
-----------
+-------
 **This submodule requires the active Python interpreter to target Python >=
 3.8.** If this is *not* the case, importing this submodule raises an
 :class:`SyntaxError` exception. In particular, this submodule *must* not be

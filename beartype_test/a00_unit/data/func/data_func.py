@@ -141,6 +141,15 @@ def func_args_unhinted_return_hinted(
     return 'The stream, that with a larger volume now'
 
 
+def func_argless_return_hinted() -> str:
+    '''
+    Arbitrary callable annotated by a return type hint accepting *no*
+    parameters.
+    '''
+
+    return 'In the light of evening, and its precipice'
+
+
 def func_args_flex_mandatory_optional_hinted_return_unhinted(
     fretted_a_path: int,
     through_its_descending_curves: bytes,
@@ -152,6 +161,47 @@ def func_args_flex_mandatory_optional_hinted_return_unhinted(
     '''
 
     return 'Fretted a path through its descending curves'
+
+
+def func_args_flex_mandatory_varpos_hinted_return_hinted(
+    rocks_which: bool,
+    in_unimaginable_forms: float,
+    *lifted_their_black: complex,
+) -> str:
+    '''
+    Arbitrary callable annotated by a return type hint accepting at least one
+    annotated mandatory parameter and an annotated variadic positional
+    parameter.
+    '''
+
+    return 'Lifted their black and barren pinnacles'
+
+
+def func_args_flex_mandatory_varkw_hinted_return_hinted(
+    obscuring_the_ravine: str,
+    disclosed_above: int,
+    **mid_toppling_stones: bool,
+) -> bytes:
+    '''
+    Arbitrary callable annotated by a return type hint accepting at least one
+    annotated mandatory parameter and an annotated variadic keyword parameter.
+    '''
+
+    return b'Mid toppling stones, black gulfs and yawning caves,'
+
+
+def func_args_flex_mandatory_kwonly_mandatory_hinted_return_hinted(
+    whose_windings_gave: float,
+    ten_thousand_various_tongues: int,
+    *,
+    black_gulfs_and_yawning_caves: str,
+) -> bytes:
+    '''
+    Arbitrary callable annotated by a return type hint accepting at least one
+    annotated mandatory parameter and an annotated keyword-only parameter.
+    '''
+
+    return b'Whose windings gave ten thousand various tongues'
 
 # ....................{ CALLABLES ~ pep 3102 : classes     }....................
 class ClassOfMethods(object):

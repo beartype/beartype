@@ -68,7 +68,7 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
 
     # If a reasonably recent version of the third-party "typing_extensions"
     # package is importable under the active Python interpreter, defer to this
-    # higher-level importer possibly returning an attribute from that package;
+    # higher-level importer possibly returning an attribute from that package.
     if is_package_typing_extensions():
         return import_typing_attr_or_none(typing_attr_basename)
     # Else, either "typing_extensions" is unimportable or only an obsolete

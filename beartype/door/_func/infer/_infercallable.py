@@ -393,8 +393,8 @@ def infer_hint_callable(func: CallableABC) -> object:
             else:
                 hint_params.append(hint_param)  # type: ignore[attr-defined]
 
-        # If that callable accepts one or more parameters, preserve the list of
-        # all child parameter hints as the empty list.
+        # If that callable accepts *NO* parameters, preserve the list of all
+        # child parameter hints as the empty list.
         if not is_params:
             pass
         # Else, that callable accepts one or more parameters.
@@ -444,7 +444,7 @@ def infer_hint_callable(func: CallableABC) -> object:
         # If that callable accepts a PEP 612-compliant parameter
         # specification...
         elif pep612_paramspec is not None:
-            # If that callable accepts *NO* mandatory positional-only and
+            # If that callable accepts one or more mandatory positional-only or
             # flexible parameters...
             if hint_params:
                 # Generalize the list of all child parameter hints to the PEP
