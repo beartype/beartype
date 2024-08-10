@@ -12,13 +12,6 @@
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
 #
-# --------------------( CAVEATS                            )--------------------
-# *THE HIGHER-LEVEL "tox" SCRIPT SHOULD TYPICALLY BE RUN INSTEAD.* This
-# lower-level script only exercises this project against the single Python
-# interpreter associated with the "pytest" command and is thus suitable *ONLY*
-# as a rapid sanity check. Meanwhile, the higher-level "tox" command exercises
-# this project against all installed Python interpreters and is thus suitable
-# as a full-blown correctness check (e.g., before submitting pull requests).
 
 # ....................{ PREAMBLE                           }....................
 # Enable strictness for sanity.
