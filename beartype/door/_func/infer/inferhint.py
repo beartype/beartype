@@ -15,7 +15,10 @@ hints best describing arbitrary objects).
 #configure type hint inference.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer._infercallable import infer_hint_callable
+from beartype.door._func.infer.kind.infercallable import (
+    infer_hint_callable)
+from beartype.door._func.infer.kind.inferthirdparty import (
+    infer_hint_thirdparty)
 from beartype.door._func.infer.collection.infercollectionbuiltin import (
     infer_hint_collection_builtin)
 from beartype.door._func.infer.collection.infercollectionsabc import (
@@ -235,11 +238,25 @@ _HINT_INFERERS: Tuple[Callable, ...] = (
     #   set instances but still better annotated as fine-grained
     #   "collections.abc.KeysView[...]" type hints rather than as coarse-grained
     #   "set[...]" type hints.
+    #
+    # This inferer is intentionally listed first to force this prioritization.
     infer_hint_collection_builtin,
+
+    # Non-standard popular third-party objects (e.g., NumPy arrays, PyTorch
+    # tensors) should often (but *NOT* always, interestingly) be annotated as
+    # PEP 593-compliant "typing(|_extensions).Annotated[...]" type hints
+    # inferring both the types *AND* well-known metadata associated with those
+    # types (e.g., dimensionality, dtypes, shapes).
+    #
+    # This inferer is intentionally listed next to force this prioritization.
+    infer_hint_thirdparty,
 
     # User-defined collections satisfying standard "collections.abc" protocols
     # should often (but *NOT* always, interestingly) be annotated as
     # "collections.abc" type hints.
+    #
+    # This inferer is intentionally listed last to deprioritize this form of
+    # coarse-grained inference in favour of more fine-grained inferers.
     infer_hint_collections_abc,
 )
 '''

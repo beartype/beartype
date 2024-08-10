@@ -53,9 +53,8 @@ def infer_hint_collection_builtin(
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function. Thankfully, this function
-    exhibits worst-case constant time complexity :math:`O(1)`; memoization is
-    largely a moot point to begin with.
+    :func:`beartype.door.infer_hint` function. Moreover, this function exhibits
+    worst-case constant time complexity :math:`O(1)`; memoization is irrelevant.
 
     Parameters
     ----------

@@ -23,10 +23,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
 )
-from beartype._util.api.utilapityping import (
-    import_typing_attr,
-    import_typing_attr_or_none,
-)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
@@ -392,6 +388,21 @@ def infer_hint_callable(func: CallableABC) -> object:
             # the list of all child parameter hints.
             else:
                 hint_params.append(hint_param)  # type: ignore[attr-defined]
+
+        # If...
+        if (
+            # That callable accepts a variadic positional parameter annotated by
+            # a PEP 612-compliant parameter specification variadic positional
+            # parameter instance variable (e.g., resembling "*args: P.args")
+            # *AND*...
+            pep612_paramspec_args is not None and
+            # That callable accepts *NO* corresponding variadic keyword
+            # parameter...
+            pep612_paramspec is None
+        ):
+            # Record this variadic positional parameter to be unsupported by any
+            # existing PEP standard.
+            is_param_unhintable = True
 
         # If that callable accepts *NO* parameters, preserve the list of all
         # child parameter hints as the empty list.

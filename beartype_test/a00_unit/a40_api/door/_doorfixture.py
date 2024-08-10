@@ -431,7 +431,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # Else, the active Python interpreter targets Python < 3.11 and
                 # thus fails to support PEP 612. In this case, the PEP 484- or
                 # 585-compliant "Callable" type subscripted by an ellipsis and
-                # this return type hint.
+                # that return type hint.
                 Callable[..., str]
             )
         ),
@@ -453,7 +453,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # Else, the active Python interpreter targets Python < 3.11 and
                 # thus fails to support PEP 612. In this case, the PEP 484- or
                 # 585-compliant "Callable" type subscripted by an ellipsis and
-                # this return type hint.
+                # that return type hint.
                 Callable[..., bytes]
             )
         ),
@@ -475,7 +475,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # Else, the active Python interpreter targets Python < 3.11 and
                 # thus fails to support PEP 612. In this case, the PEP 484- or
                 # 585-compliant "Callable" type subscripted by an ellipsis and
-                # this return type hint.
+                # that return type hint.
                 Callable[..., bytes]
             )
         ),
@@ -630,6 +630,11 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         # Defer attribute-specific imports.
         from beartype_test.a00_unit.data.func.data_pep612 import (
             P,
+            func_args_flex_mandatory_kwonly_optional_paramspec_return_hinted,
+            func_args_flex_mandatory_paramspec_distinct_return_hinted,
+            func_args_flex_mandatory_paramspec_return_hinted,
+            func_args_flex_mandatory_paramspec_varkwonly_return_hinted,
+            func_args_flex_mandatory_paramspec_varposonly_return_hinted,
             func_args_paramspec_return_hinted,
         )
 
@@ -637,14 +642,132 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         INFER_HINT_CASES.extend((
             # ..................{ PEP 612                    }..................
             # A pure-Python callable annotated by a return type hint accepting
-            # accepting variadic positional and keyword parameters annotated as
-            # the corresponding instance variables of a PEP 612-compliant
-            # parameter specification is annotated as the PEP 484- or
-            # 585-compliant "Callable" type subscripted by that parameter
-            # specification followed by that return type hint.
+            # variadic positional and keyword parameters annotated as the
+            # corresponding instance variables of a PEP 612-compliant parameter
+            # specification is annotated as the PEP 484- or 585-compliant
+            # "Callable" type subscripted by that parameter specification
+            # followed by that return type hint.
             (
                 func_args_paramspec_return_hinted,
                 Callable[P, bytes],
+            ),
+
+            # A pure-Python callable annotated by a return type hint accepting
+            # one or more mandatory flexible parameter type hints *AND* variadic
+            # positional and keyword parameters annotated as the corresponding
+            # instance variables of a PEP 612-compliant parameter specification
+            # is annotated as the PEP 484- or 585-compliant "Callable" type
+            # subscripted by:
+            # * The PEP 612-compliant "typing(|_extensions).Concatenate" hint
+            #   factory subscripted by these mandatory parameter type hints
+            #   followed by that parameter specification.
+            # * That return type hint.
+            (
+                func_args_flex_mandatory_paramspec_return_hinted,
+                Callable[Concatenate[int, bool, P], str],
+            ),
+
+            # A pure-Python callable annotated by a return type hint accepting
+            # one or more mandatory flexible parameter type hints and a variadic
+            # positional parameter annotated as the corresponding instance
+            # variables of a PEP 612-compliant parameter specification with *NO*
+            # variadic keyword parameter is annotated as either...
+            (
+                func_args_flex_mandatory_paramspec_varposonly_return_hinted,
+                (
+                    # If the active Python interpreter targets Python >= 3.11
+                    # and thus supports PEP 612, the PEP 484- or 585-compliant
+                    # "Callable" type subscripted by:
+                    # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                    #   hint factory subscripted by these mandatory parameter
+                    #   type hints followed by an ellipsis.
+                    # * That return type hint.
+                    Callable[Concatenate[int, float, ...], bytes]
+                    if IS_PYTHON_AT_LEAST_3_11 else
+                    # Else, the active Python interpreter targets Python < 3.11
+                    # and thus fails to support PEP 612. In this case, the PEP
+                    # 484- or 585-compliant "Callable" type subscripted by an
+                    # ellipsis and that return type hint.
+                    Callable[..., bytes]
+                ),
+            ),
+
+            # A pure-Python callable annotated by a return type hint accepting
+            # one or more mandatory flexible parameter type hints and a variadic
+            # keyword parameter annotated as the corresponding instance
+            # variables of a PEP 612-compliant parameter specification with *NO*
+            # variadic positional parameter is annotated as either...
+            (
+                func_args_flex_mandatory_paramspec_varkwonly_return_hinted,
+                (
+                    # If the active Python interpreter targets Python >= 3.11
+                    # and thus supports PEP 612, the PEP 484- or 585-compliant
+                    # "Callable" type subscripted by:
+                    # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                    #   hint factory subscripted by these mandatory parameter
+                    #   type hints followed by an ellipsis.
+                    # * That return type hint.
+                    Callable[Concatenate[bool, bytes, ...], str]
+                    if IS_PYTHON_AT_LEAST_3_11 else
+                    # Else, the active Python interpreter targets Python < 3.11
+                    # and thus fails to support PEP 612. In this case, the PEP
+                    # 484- or 585-compliant "Callable" type subscripted by an
+                    # ellipsis and that return type hint.
+                    Callable[..., str]
+                ),
+            ),
+
+            # A pure-Python callable annotated by a return type hint accepting
+            # one or more mandatory flexible parameter type hints, a variadic
+            # positional parameter annotated as the corresponding instance
+            # variables of a PEP 612-compliant parameter specification, and a
+            # variadic keyword parameter annotated as the corresponding instance
+            # variables of a different parameter specification is annotated as
+            # either...
+            (
+                func_args_flex_mandatory_paramspec_distinct_return_hinted,
+                (
+                    # If the active Python interpreter targets Python >= 3.11
+                    # and thus supports PEP 612, the PEP 484- or 585-compliant
+                    # "Callable" type subscripted by:
+                    # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                    #   hint factory subscripted by these mandatory parameter
+                    #   type hints followed by an ellipsis.
+                    # * That return type hint.
+                    Callable[Concatenate[float, int, ...], bytes]
+                    if IS_PYTHON_AT_LEAST_3_11 else
+                    # Else, the active Python interpreter targets Python < 3.11
+                    # and thus fails to support PEP 612. In this case, the PEP
+                    # 484- or 585-compliant "Callable" type subscripted by an
+                    # ellipsis and that return type hint.
+                    Callable[..., bytes]
+                ),
+            ),
+
+            # A pure-Python callable annotated by a return type hint accepting
+            # one or more mandatory flexible parameter type hints, an optional
+            # flexible parameter type hint, *AND* variadic positional and
+            # keyword parameters annotated as the corresponding instance
+            # variables of a PEP 612-compliant parameter specification is
+            # annotated as either...
+            (
+                func_args_flex_mandatory_kwonly_optional_paramspec_return_hinted,
+                (
+                    # If the active Python interpreter targets Python >= 3.11
+                    # and thus supports PEP 612, the PEP 484- or 585-compliant
+                    # "Callable" type subscripted by:
+                    # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                    #   hint factory subscripted by these mandatory parameter
+                    #   type hints followed by an ellipsis.
+                    # * That return type hint.
+                    Callable[Concatenate[float, complex, ...], bytes]
+                    if IS_PYTHON_AT_LEAST_3_11 else
+                    # Else, the active Python interpreter targets Python < 3.11
+                    # and thus fails to support PEP 612. In this case, the PEP
+                    # 484- or 585-compliant "Callable" type subscripted by an
+                    # ellipsis and that return type hint.
+                    Callable[..., bytes]
+                ),
             ),
         ))
 

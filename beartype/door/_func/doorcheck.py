@@ -10,6 +10,18 @@ against type hints at *any* time during the lifecycle of the active Python
 process).
 '''
 
+#FIXME: Consider adding the following new tester:
+#    def is_similar(obj: object, schema: object) -> bool:
+#        return is_bearable(obj, infer_hint(schema))
+#
+#This test implements a new **typing structural similarity** metric answering
+#the question: "Do these two objects have a similar structure?" This is a softer
+#metric than object equality, which is a softer metric than object identity.
+#Nonetheless, this metric is *INCREDIBLY* useful for certain use cases: e.g.,
+#data validation, where one predefined exemplar archetypal object defined by the
+#developer serves as a templating "schema" used to validate other arbitrary
+#objects defined and passed in by users.
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: This submodule intentionally does *not* import the
