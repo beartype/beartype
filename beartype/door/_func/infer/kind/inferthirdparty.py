@@ -115,8 +115,8 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     '''
 
     # Defer package-specific imports.
-    from numpy import ndarray
-    from numpy.typing import NDArray
+    from numpy import ndarray  # pyright: ignore
+    from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     # Validate sanity.
     assert isinstance(obj, ndarray), f'{repr(obj)} not NumPy array.'
@@ -145,7 +145,7 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
         # Generalize this hint to additionally validate the dimensionality
         # (i.e., number of dimensions equivalent to the length of the
         # "obj.shape" property) to be that of this array.
-        hint = Annotated[hint, IsAttr['ndim', IsEqual[obj.ndim]]]
+        hint = Annotated[hint, IsAttr['ndim', IsEqual[obj.ndim]]]  # type: ignore[name-defined]
     # Else, "typing(|_extensions).Annotated" is unimportable. In this case...
 
     # Return this hint.

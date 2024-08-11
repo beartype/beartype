@@ -69,13 +69,13 @@ def reduce_hint_numpy_ndarray(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         This PEP-noncompliant typed NumPy array reduced to a PEP-compliant type
         hint supported by :mod:`beartype`.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintNonpepNumpyException
         If either:
 
@@ -110,7 +110,7 @@ def reduce_hint_numpy_ndarray(
     # instantiated by the user by first importing the "numpy.typing.NDArray"
     # attribute passed to this getter.
     from beartype.vale import IsAttr, IsEqual, IsSubclass
-    from numpy import dtype, ndarray  # pyright: ignore[reportMissingImports]
+    from numpy import dtype, ndarray  # pyright: ignore
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
