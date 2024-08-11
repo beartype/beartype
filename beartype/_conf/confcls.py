@@ -38,6 +38,7 @@ from beartype.roar._roarwarn import (
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
+    Iterable,
     Optional,
 )
 from beartype._conf.confenum import (
@@ -207,6 +208,7 @@ class BeartypeConf(object):
         '_claw_decoration_position_funcs',
         '_claw_decoration_position_types',
         '_claw_is_pep526',
+        '_claw_skip_package_names',
         '_conf_args',
         '_conf_kwargs',
         '_hash',
@@ -234,6 +236,7 @@ class BeartypeConf(object):
         _claw_decoration_position_funcs: BeartypeDecorationPosition
         _claw_decoration_position_types: BeartypeDecorationPosition
         _claw_is_pep526: bool
+        _claw_skip_package_names: Iterable[str]
         _conf_args: tuple
         _conf_kwargs: DictStrToAny
         _hash: int
@@ -277,6 +280,7 @@ class BeartypeConf(object):
         claw_decoration_position_types: BeartypeDecorationPosition = (
             BeartypeDecorationPosition.LAST),
         claw_is_pep526: bool = True,
+        claw_skip_package_names: Iterable[str] = (),
         hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
@@ -716,6 +720,7 @@ class BeartypeConf(object):
                 claw_decoration_position_funcs,
                 claw_decoration_position_types,
                 claw_is_pep526,
+                claw_skip_package_names,
                 hint_overrides,
                 is_color,
                 is_debug,
@@ -746,6 +751,7 @@ class BeartypeConf(object):
                 claw_decoration_position_funcs=claw_decoration_position_funcs,
                 claw_decoration_position_types=claw_decoration_position_types,
                 claw_is_pep526=claw_is_pep526,
+                claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
                 is_color=is_color,
                 is_debug=is_debug,
@@ -819,6 +825,7 @@ class BeartypeConf(object):
             self._claw_decoration_position_types = conf_kwargs[  # pyright: ignore
                 'claw_decoration_position_types']
             self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
+            self._claw_skip_package_names = conf_kwargs['claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
@@ -1085,6 +1092,31 @@ class BeartypeConf(object):
         '''
 
         return self._claw_is_pep526
+
+
+    @property
+    def claw_skip_package_names(self) -> Iterable[str]:
+        '''
+        :data:`Iterable[str]` listing package names that are to be skipped
+        during type checking when importing modules under import hooks
+        published by the :mod:`beartype.claw` subpackage.
+
+        This is useful for excluding specific packages from type enforcement,
+        thus optimizing performance or avoiding conflicts with certain
+        packages that may not be compatible with the import hooks.
+
+        This docstring was lovingly hallucinated by ChatGPT, please suggest
+        improvements.
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._claw_skip_package_names
+
+
 
     # ..................{ PROPERTIES ~ options : violation   }..................
     @property

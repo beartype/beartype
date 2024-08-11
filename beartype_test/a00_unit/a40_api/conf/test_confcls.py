@@ -64,6 +64,7 @@ def test_conf_dataclass() -> None:
         'claw_decoration_position_funcs',
         'claw_decoration_position_types',
         'claw_is_pep526',
+        'claw_skip_package_names',
         'hint_overrides',
         'is_color',
         'is_debug',
@@ -90,6 +91,7 @@ def test_conf_dataclass() -> None:
         claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
         claw_decoration_position_types=BeartypeDecorationPosition.FIRST,
         claw_is_pep526=False,
+        claw_skip_package_names = ('a','b','c'),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
         is_color=True,
         is_debug=True,
@@ -130,6 +132,7 @@ def test_conf_dataclass() -> None:
             claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
             claw_decoration_position_types=BeartypeDecorationPosition.LAST,
             claw_is_pep526=False,
+            claw_skip_package_names = ('a','b','c'),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             is_debug=True,
             is_color=True,
@@ -155,6 +158,7 @@ def test_conf_dataclass() -> None:
             is_debug=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
+            claw_skip_package_names = ('a','b','c'),
             claw_decoration_position_types=BeartypeDecorationPosition.LAST,
             claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
         )
@@ -167,6 +171,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
         BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
+    assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
     assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
     assert BEAR_CONF_DEFAULT.is_color is None
     assert BEAR_CONF_DEFAULT.is_debug is False
@@ -190,6 +195,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
         BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
+    assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
         BEAR_HINT_OVERRIDES_NONEMPTY | beartype_hint_overrides_pep484_tower())
     assert BEAR_CONF_NONDEFAULT.is_color is True
@@ -291,6 +297,8 @@ def test_conf_dataclass() -> None:
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
     with raises(BeartypeConfParamException):
+        BeartypeConf(claw_skip_package_names=(12345))
+    with raises(BeartypeConfParamException):
         BeartypeConf(hint_overrides=(
             'Wildered, and wan, and panting, she returned.'))
     with raises(BeartypeConfParamException):
@@ -358,6 +366,8 @@ def test_conf_dataclass() -> None:
             BeartypeDecorationPosition.FIRST)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.claw_skip_package_names = ('q','w','e')
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.hint_overrides = {}
     with raises(AttributeError):

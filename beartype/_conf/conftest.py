@@ -35,6 +35,7 @@ from beartype._conf.confoverrides import (
 )
 from beartype._data.hint.datahinttyping import DictStrToAny
 from beartype._util.cls.utilclstest import is_type_subclass
+from collections.abc import Iterable as IterableABC
 
 # ....................{ RAISERS                            }....................
 def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
@@ -185,6 +186,23 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
+    #
+    # If "claw_skip_package_names" is *NOT* an iterable of strings, raise an
+    # exception.
+    elif not (
+        isinstance(conf_kwargs['claw_skip_package_names'], IterableABC) and
+        all(
+            isinstance(claw_skip_package_name, str)
+            for claw_skip_package_name in conf_kwargs[
+                'claw_skip_package_names']
+        )
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "claw_skip_package_names" '
+            f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
+            f'iterable of strings.'
+        )
+    # Else, "claw_skip_package_names" is an iterable of strings.
 
     # For the name of each keyword parameter whose value is expected to be an
     # exception subclass...
