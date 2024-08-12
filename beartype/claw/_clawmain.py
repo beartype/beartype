@@ -21,8 +21,8 @@ this private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeClawHookUnpackagedException
-from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
-from beartype.claw._pkg.clawpkghook import hook_packages
+from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
+from beartype.claw._package.clawpkghook import hook_packages
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType
 from beartype._conf.confcls import (

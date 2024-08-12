@@ -26,29 +26,12 @@
 #    Internally, this function should call make_type() to do so.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeCaveNoneTypeOrKeyException,
-    BeartypeCaveNoneTypeOrMutabilityException,
-)
+from beartype.roar import BeartypeCaveNoneTypeOrKeyException
 from beartype.typing import (
     Any,
     Tuple,
     Union,
 )
-from beartype._util.hint.nonpep.utilnonpeptest import die_unless_hint_nonpep
-
-# ....................{ CONSTANTS                          }....................
-_NoneType: type = type(None)
-'''
-Type of the :data:`None` singleton, duplicated from the :mod:`beartype.cave`
-submodule to prevent cyclic import dependencies.
-'''
-
-
-_NoneTypes: Tuple[type, ...] = (_NoneType,)
-'''
-Tuple of only the type of the :data:`None` singleton.
-'''
 
 # ....................{ HINTS                              }....................
 _TypeTuple = Tuple[Union[type, str], ...]
@@ -116,13 +99,15 @@ class _NoneTypeOrType(dict):
               only strings and types.
         '''
 
-        # If this missing key is *NOT* a PEP-noncompliant type hint, raise an
-        # exception.
-        die_unless_hint_nonpep(
-            hint=hint,
-            exception_prefix='"NoneTypeOr" key',
-            exception_cls=BeartypeCaveNoneTypeOrKeyException,
-        )
+        #FIXME: Doesn't work quite right, sadly. Notably, user-defined generics
+        #(e.g., "class MuhList(List[str]): ...") are rejected as PEP-compliant.
+        # # If this missing key is *NOT* a PEP-noncompliant type hint, raise an
+        # # exception.
+        # die_unless_hint_nonpep(
+        #     hint=hint,
+        #     exception_prefix='"NoneTypeOr" key',
+        #     exception_cls=BeartypeCaveNoneTypeOrKeyException,
+        # )
 
         # Tuple of types to be cached and returned by this call.
         hint_or_none: _TypeTuple = None  # type: ignore[assignment]
@@ -137,10 +122,26 @@ class _NoneTypeOrType(dict):
             # new tuple of types concatenating this type with "NoneType".
             else:
                 hint_or_none = (hint, _NoneType)
-        # Else if this key is a non-empty tuple...
+        # Else if this key is a tuple...
         elif isinstance(hint, tuple):
+            # If this tuple is empty, raise an exception.
+            if not hint:
+                raise BeartypeCaveNoneTypeOrKeyException(
+                    f'"NoneTypeOr" key {repr(hint)} tuple empty.'
+                )
+            # Else, this tuple is non-empty.
+            #
+            # If this tuple contains one or more items that are *NOT* types,
+            # raise an exception.
+            elif not all(isinstance(cls, type) for cls in hint):
+                raise BeartypeCaveNoneTypeOrKeyException(
+                    f'"NoneTypeOr" key {repr(hint)} tuple invalid '
+                    f'(i.e., tuple contains one or more non-class items).'
+                )
+            # Else, this tuple contains only types.
+            #
             # If "NoneType" is already in this tuple, reuse this tuple as is.
-            if _NoneType in hint:
+            elif _NoneType in hint:
                 hint_or_none = hint
             # Else, "NoneType" is *NOT* already in this tuple. In this case,
             # instantiate a new tuple of types concatenating this tuple with
@@ -152,7 +153,9 @@ class _NoneTypeOrType(dict):
         # Nonetheless, raise a human-readable exception for sanity.
         else:
             raise BeartypeCaveNoneTypeOrKeyException(
-                f'"NoneTypeOr" key {repr(hint)} unsupported.')
+                f'"NoneTypeOr" key {repr(hint)} unsupported '
+                f'(i.e., neither "None" nor tuple).'
+            )
 
         # Cache this tuple under this key.
         self[hint] = hint_or_none
@@ -229,4 +232,17 @@ Examples
    >>> def to_autumn(season_of_mists: Optional[str] = None) -> str
    ...     return season_of_mists if season_of_mists is not None else (
    ...         'Or sinking as the light wind lives or dies;')
+'''
+
+# ....................{ PRIVATE ~ types                    }....................
+_NoneType: type = type(None)
+'''
+Type of the :data:`None` singleton, duplicated from the :mod:`beartype.cave`
+submodule to prevent cyclic import dependencies.
+'''
+
+
+_NoneTypes: Tuple[type, ...] = (_NoneType,)
+'''
+Tuple of only the type of the :data:`None` singleton.
 '''

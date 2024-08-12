@@ -40,7 +40,7 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.claw._pkg.clawpkgcontext import packages_trie_cleared
+    from beartype.claw._package.clawpkgcontext import packages_trie_cleared
     from beartype._util.module.utilmodget import get_module_dir
     from beartype._util.path.utilpathremove import (
         remove_package_bytecode_files)

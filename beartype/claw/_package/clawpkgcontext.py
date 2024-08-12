@@ -18,7 +18,7 @@ from beartype.claw._clawstate import (
     claw_lock,
     claw_state,
 )
-from beartype.claw._pkg.clawpkgtrie import (
+from beartype.claw._package.clawpkgtrie import (
     die_if_packages_trie,
     remove_beartype_pathhook_unless_packages_trie,
 )
@@ -96,11 +96,11 @@ def beartyping(
         with claw_lock:
             # Store the prior global beartype configuration if any.
             packages_trie_conf_if_hooked_old = (
-                claw_state.packages_trie.conf_if_hooked)
+                claw_state.packages_trie_whitelist.conf_if_hooked)
 
             # Prevent the beartype_all() function from raising an exception on
             # conflicting registrations of beartype configurations.
-            claw_state.packages_trie.conf_if_hooked = None
+            claw_state.packages_trie_whitelist.conf_if_hooked = None
 
         # Globalize the passed beartype configuration.
         beartype_all(conf=conf)
@@ -116,9 +116,9 @@ def beartyping(
             # beartyping(...):" block has *NOT* itself called the beartype_all()
             # function with a conflicting beartype configuration. In this
             # case...
-            if claw_state.packages_trie.conf_if_hooked == conf:
+            if claw_state.packages_trie_whitelist.conf_if_hooked == conf:
                 # Restore the prior global beartype configuration if any.
-                claw_state.packages_trie.conf_if_hooked = (
+                claw_state.packages_trie_whitelist.conf_if_hooked = (
                     packages_trie_conf_if_hooked_old)
 
                 # Possibly remove our beartype import path hook added by the
@@ -135,7 +135,7 @@ def beartyping(
 def packages_trie_cleared() -> Iterator[None]:
     '''
     Test-specific context manager reverting (i.e., clearing, resetting) the
-    :data:`beartype.claw._pkg.clawpkgtrie.packages_trie` global back to its
+    :data:`beartype.claw._package.clawpkgtrie.packages_trie_whitelist` global back to its
     initial state *after* running the body of the caller-defined ``with
     beartyping(...):`` block.
 

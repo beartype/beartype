@@ -12,13 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
-from beartype.claw._pkg.clawpkgtrie import (
+from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
+from beartype.claw._package.clawpkgtrie import (
     PackagesTrie,
     iter_packages_trie,
     remove_beartype_pathhook_unless_packages_trie,
 )
-from beartype.claw._pkg._clawpkgmake import (
+from beartype.claw._package._clawpkgmake import (
     make_conf_hookable,
     make_package_names_from_args,
 )
@@ -139,13 +139,13 @@ def hook_packages(
             # Beartype configuration currently associated with *ALL* packages by
             # a prior call to this function if any *OR* "None" (i.e., if this
             # function has yet to be called under this Python interpreter).
-            conf_curr = claw_state.packages_trie.conf_if_hooked
+            conf_curr = claw_state.packages_trie_whitelist.conf_if_hooked
 
             # If the higher-level beartype_all() function (calling this
             # lower-level adder) has yet to be called under this interpreter,
             # associate this configuration with *ALL* packages.
             if conf_curr is None:
-                claw_state.packages_trie.conf_if_hooked = conf
+                claw_state.packages_trie_whitelist.conf_if_hooked = conf
             # Else, beartype_all() was already called under this interpreter.
             #
             # If the caller passed a different configuration to that prior call
@@ -176,7 +176,7 @@ def hook_packages(
                 # Current subtrie of the global package trie describing the
                 # currently iterated basename of this package, initialized to
                 # the global trie configuring all top-level packages.
-                subpackages_trie = claw_state.packages_trie
+                subpackages_trie = claw_state.packages_trie_whitelist
 
                 # For each unqualified basename comprising the directed path from
                 # the root parent package of that package to that package...
@@ -308,7 +308,7 @@ def unhook_packages(
         if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:
             # Unhook the beartype configuration previously associated with *ALL*
             # packages by a prior call to the beartype_all() function.
-            claw_state.packages_trie.conf_if_hooked = None
+            claw_state.packages_trie_whitelist.conf_if_hooked = None
         # Else, the caller requested coverage over a subset of packages. In this
         # case...
         else:

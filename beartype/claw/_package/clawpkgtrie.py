@@ -17,20 +17,31 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
+    TYPE_CHECKING,
     Dict,
     Iterable,
-    # Iterator,
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
-# from pprint import pformat
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
+PackageBasenameToTrie = Dict[str, Optional['PackagesTrie']]
+'''
+PEP-compliant type hint matching a dictionary mapping from the unqualified
+basename of each subpackage of a package to be runtime type-checked on the first
+importation of that subpackage to a **package trie** (i.e,. instance of the
+:class:`.PackagesTrie` class) describing the sub-subpackages of that subpackage.
+'''
+
+# ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
-class PackagesTrie(
-    #FIXME: Use "beartype.typing.Self" here instead once we backport that.
-    Dict[str, Optional['PackagesTrie']]):
+#FIXME: [SAFETY] Consider overriding the __setitem__() dunder method to ensure:
+#* The passed key is a non-empty string.
+#* The passed value is either "None" or another "PackagesTrie" object.
+#
+#See the __init__() dunder method for similar validation logic, please.
+class PackagesTrie(PackageBasenameToTrie):
     '''
     **(Sub)package configuration (sub)trie** (i.e., recursively nested
     dictionary mapping from the unqualified basename of each subpackage of the
@@ -40,7 +51,7 @@ class PackagesTrie(
 
     This (sub)cache is suitable for caching as the values of:
 
-    * The :data:`.packages_trie` global dictionary.
+    * The :data:`.packages_trie_whitelist` global dictionary.
     * Each (sub)value mapped to by that global dictionary.
 
     Motivation
@@ -93,16 +104,18 @@ class PackagesTrie(
     the ``package_a.subpackage_b.subpackage_c`` and
     ``package_a.subpackage_b.subpackage_d`` submodules:
 
-        >>> packages_trie = PackagesTrie({
-        ...     'package_a': PackagesTrie({
-        ...         'subpackage_b': PackagesTrie({
-        ...             'subpackage_c': None,
-        ...             'subpackage_d': None,
-        ...         }),
-        ...         'subpackage_k': None,
-        ...     }),
-        ...     'package_z': None,
-        ... })
+    .. code-block:: pycon
+
+       >>> packages_trie_whitelist = PackagesTrie(subpackage_basename_to_trie={
+       ...     'package_a': PackagesTrie({
+       ...         'subpackage_b': PackagesTrie(subpackage_basename_to_trie={
+       ...             'subpackage_c': None,
+       ...             'subpackage_d': None,
+       ...         }),
+       ...         'subpackage_k': None,
+       ...     }),
+       ...     'package_z': None,
+       ... })
 
     Attributes
     ----------
@@ -117,7 +130,7 @@ class PackagesTrie(
     package_basename : Optional[str]
         Either:
 
-        * If this (sub)trie is the global trie :data:`.packages_trie`,
+        * If this (sub)trie is the global trie :data:`.packages_trie_whitelist`,
           :data:`None`.
         * Else, the unqualified basename of the (sub)package configured by this
           (sub)trie.
@@ -135,43 +148,94 @@ class PackagesTrie(
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'package_basename',
         'conf_if_hooked',
+        'package_basename',
     )
+
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        conf_if_hooked: Optional[BeartypeConf]
+        package_basename: Optional[str]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
-        package_basename : Optional[str],
-        *args, **kwargs
+
+        # Optional parameters.
+        package_basename: Optional[str] = None,
+        subpackage_basename_to_trie: Optional[PackageBasenameToTrie] = None,
     ) -> None:
         '''
-        Initialize this package configuration trie.
+        Initialize this package trie.
 
         Parameters
         ----------
-        basename : Optional[str]
+        package_basename : Optional[str]
             Either:
 
-            * If this (sub)trie is the global trie :data:`.packages_trie`,
-              :data:`None`.
+            * If this is the root of a packages trie (e.g., the
+              :data:`beartype.claw._clawstate.claw_state.packages_trie_whitelist`
+              global variable), :data:`None`.
             * Else, the unqualified basename of the (sub)package configured by
               this (sub)trie.
 
-        All remaining passed parameters are passed as is to the superclass
-        :meth:`dict.__init__` method.
+            Defaults to :data:`None`.
+        subpackage_basename_to_trie: Optional[PackageBasenameToTrie]
+            Either:
+
+            * If this package trie is initially empty, :data:`None`.
+            * Else, a dictionary mapping from the unqualified basename of each
+              initial subpackage of this package to another **package trie**
+              (i.e,. instance of the :class:`.PackagesTrie` class) describing
+              the sub-subpackages of that subpackage. In this case, this
+              packages trie is initialized with the key-value pairs of this
+              dictionary.
+
+            Defaults to :data:`None`.
         '''
         assert isinstance(package_basename, NoneTypeOr[str]), (
             f'{repr(package_basename)} neither string nor "None".')
 
-        # Initialize our superclass with all passed parameters.
-        super().__init__(*args, **kwargs)
+        # Initialize our superclass to the empty dictionary.
+        super().__init__()
 
         # Classify all remaining passed parameters.
         self.package_basename = package_basename
 
         # Nullify all subclass-specific parameters for safety.
         self.conf_if_hooked: Optional[BeartypeConf] = None
+
+        # If the caller explicitly passed an initial dictionary to initialize
+        # this dictionary subclass with...
+        if subpackage_basename_to_trie is not None:
+            # If this initial dictionary is *NOT* a dictionary such that...
+            if not (
+                isinstance(subpackage_basename_to_trie, dict) and
+                all(
+                    (
+                        # All keys of this dictionary are strings *AND*...
+                        isinstance(subpackage_basename, str) and
+                        # All values of this dictionary are either "None" or
+                        # nested subpackages tries.
+                        isinstance(
+                            subsubpackages_trie, NoneTypeOr[PackagesTrie])
+                    )
+                    for subpackage_basename, subsubpackages_trie in (
+                        subpackage_basename_to_trie.items())
+                )
+            ):
+                # Raise us up the exception bomb.
+                raise BeartypeClawHookException(
+                    f'{repr(subpackage_basename_to_trie)} neither "None" nor '
+                    f'dictionary mapping keys to packages tries.'
+                )
+            # Else, this initial dictionary is valid.
+
+            # Update this dictionary subclass from this initial dictionary.
+            self.update(subpackage_basename_to_trie)
+        # Else, the caller explicitly passed *NO* initial dictionary. In this
+        # case, preserve this dictionary subclass as the empty dictionary.
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -191,13 +255,13 @@ class PackagesTrie(
 def die_if_packages_trie() -> None:
     '''
     Raise an exception if one or more packages have been registered by a prior
-    call to the :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
+    call to the :func:`beartype.claw._package.clawpkghook.hook_packages` function.
 
     Raises
     ------
     BeartypeClawHookException
         If one or more packages have been registered by a prior call to the
-        :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
+        :func:`beartype.claw._package.clawpkghook.hook_packages` function.
     '''
 
     # If one or more packages have been registered...
@@ -205,14 +269,14 @@ def die_if_packages_trie() -> None:
         # Avoid circular import dependencies.
         from beartype.claw._clawstate import claw_state
 
-        # If a global configuration has been added by a prior call to the public
-        # beartype.claw.beartype_all() function, raise an exception.
-        if claw_state.packages_trie.conf_if_hooked is not None:
+        # If a global configuration was already added by a prior call to the
+        # public beartype.claw.beartype_all() function, raise an exception.
+        if claw_state.packages_trie_whitelist.conf_if_hooked is not None:
             raise BeartypeClawHookException(
                 f'Prior call to package-agnostic import hook '
                 f'beartype.claw.beartype_all() already registered all packages '
                 f'for type-checking under global beartype configuration '
-                f'{repr(claw_state.packages_trie.conf_if_hooked)}.'
+                f'{repr(claw_state.packages_trie_whitelist.conf_if_hooked)}.'
             )
         # Else, or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions. In this case,
@@ -222,7 +286,7 @@ def die_if_packages_trie() -> None:
                 f'Prior call to package-specific import hook '
                 f'beartype.claw.beartype_*() already registered some packages '
                 f'for type-checking under beartype configurations:\n\t'
-                f'{repr(claw_state.packages_trie)}'
+                f'{repr(claw_state.packages_trie_whitelist)}'
             )
 
 # ....................{ TESTERS                            }....................
@@ -230,7 +294,7 @@ def die_if_packages_trie() -> None:
 def is_packages_trie() -> bool:
     '''
     :data:`True` only if one or more packages have been registered by a prior
-    call to the :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
+    call to the :func:`beartype.claw._package.clawpkghook.hook_packages` function.
 
     Returns
     -------
@@ -245,10 +309,10 @@ def is_packages_trie() -> bool:
     return (
         # A global configuration has been added by a prior call to the public
         # beartype.claw.beartype_all() function *OR*...
-        claw_state.packages_trie.conf_if_hooked is not None or
+        claw_state.packages_trie_whitelist.conf_if_hooked is not None or
         # One or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions.
-        bool(claw_state.packages_trie)
+        bool(claw_state.packages_trie_whitelist)
     )
 
 # ....................{ GETTERS                            }....................
@@ -285,7 +349,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
     # applicable to *ALL* packages if an external caller previously called the
     # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
     # if that function has yet to be called).
-    subpackage_conf = claw_state.packages_trie.conf_if_hooked
+    subpackage_conf = claw_state.packages_trie_whitelist.conf_if_hooked
 
     # For each subpackages trie describing each parent package transitively
     # containing this package (as well as that of that package itself)...
@@ -313,7 +377,7 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     (i.e., :class:`PackagesTrie` instance) describing each transitive parent
     package of the package with the passed name if that package *or* a parent
     package of that package was registered by a prior call to the
-    :func:`beartype.claw._pkg.clawpkghook..hook_packages` function *or* the
+    :func:`beartype.claw._package.clawpkghook..hook_packages` function *or* the
     empty iterable otherwise otherwise (i.e., if neither that package *nor* a
     parent package of that package was registered by such a call).
 
@@ -326,7 +390,7 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
        itself.
 
     This generator intentionally avoids yielding the global trie
-    :data:`.packages_trie`, which is already accessible via that global.
+    :data:`.packages_trie_whitelist`, which is already accessible via that global.
 
     Parameters
     ----------
@@ -358,7 +422,7 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     with claw_lock:
         # Current subtrie of the global trie describing the currently iterated
         # basename of this package, initialized to this global trie itself.
-        subpackages_trie: Optional[PackagesTrie] = claw_state.packages_trie
+        subpackages_trie: Optional[PackagesTrie] = claw_state.packages_trie_whitelist
 
         # For each unqualified basename of each parent package transitively
         # containing this package (as well as that of that package itself)...

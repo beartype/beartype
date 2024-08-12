@@ -853,16 +853,17 @@ class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
     pass
 
 
-class BeartypeCaveNoneTypeOrMutabilityException(
-    BeartypeCaveNoneTypeOrException):
-    '''
-    **Beartype cave** ``None`` **tuple factory mutability exception.**
-
-    Instances of this exception are raised when attempting to explicitly set a
-    key on the :func:`beartype.cave.NoneTypeOr` dictionary.
-    '''
-
-    pass
+#FIXME: Unsure what this is about. We no longer raise this anywhere. *sigh*
+# class BeartypeCaveNoneTypeOrMutabilityException(
+#     BeartypeCaveNoneTypeOrException):
+#     '''
+#     **Beartype cave** ``None`` **tuple factory mutability exception.**
+#
+#     Instances of this exception are raised when attempting to explicitly set a
+#     key on the :func:`beartype.cave.NoneTypeOr` dictionary.
+#     '''
+#
+#     pass
 
 # ....................{ API ~ claw                         }....................
 class BeartypeClawException(BeartypeException):

@@ -25,7 +25,7 @@ from pprint import pformat
 # "beartype.claw._importlib._clawimpload" submodule.
 from importlib.util import cache_from_source as cache_from_source_original
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
 class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
     '''
     Non-thread-safe **hooked module beartype configuration cache** (i.e.,
@@ -52,7 +52,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
     ----------
     This cache provides an efficient ``O(1)`` alternative to the comparatively
     less efficient
-    :func:`beartype.claw._pkg.clawpkgtrie.get_package_conf_or_none` function,
+    :func:`beartype.claw._package.clawpkgtrie.get_package_conf_or_none` function,
     which exhibits worst-case runtime complexity of ``O(k)`` for ``k`` the
     maximum depth of our global package trie. Doing so enables the
     :mod:`beartype.claw._ast.clawastmain` submodule implementing our abstract
@@ -62,7 +62,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
     quite non-trivial.
 
     Caveats
-    ----------
+    -------
     **This cache is non-thread-safe.** The caller is responsible for
     guaranteeing thread-safety on writes to this cache. However, Note that reads
     of this cache are implicitly thread-safe. The :meth:`BeartypeConf.__new__`
@@ -85,12 +85,12 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
             configuration to be returned.
 
         Returns
-        ----------
+        -------
         beartype.BeartypeConf
             Beartype configuration associated with this module.
 
         Raises
-        ----------
+        ------
         BeartypeClawImportConfException
             If no beartype configuration with this module has been previously
             instantiated.

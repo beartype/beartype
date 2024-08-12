@@ -33,6 +33,6 @@ from beartype.claw._clawmain import (
     beartype_packages as beartype_packages,
     beartype_this_package as beartype_this_package,
 )
-from beartype.claw._pkg.clawpkgcontext import (
+from beartype.claw._package.clawpkgcontext import (
     beartyping as beartyping,
 )

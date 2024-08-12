@@ -45,7 +45,7 @@ from beartype.roar._roarexc import (
     BeartypeCaveException as BeartypeCaveException,
     BeartypeCaveNoneTypeOrException as BeartypeCaveNoneTypeOrException,
     BeartypeCaveNoneTypeOrKeyException as BeartypeCaveNoneTypeOrKeyException,
-    BeartypeCaveNoneTypeOrMutabilityException as BeartypeCaveNoneTypeOrMutabilityException,
+    # BeartypeCaveNoneTypeOrMutabilityException as BeartypeCaveNoneTypeOrMutabilityException,
     BeartypeClawException as BeartypeClawException,
     BeartypeClawHookException as BeartypeClawHookException,
     BeartypeClawHookUnpackagedException as BeartypeClawHookUnpackagedException,

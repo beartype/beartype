@@ -197,7 +197,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._pkg.clawpkghook` submodule (e.g., by a call to the
+        :mod:`beartype.claw._package.clawpkghook` submodule (e.g., by a call to the
         :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been
@@ -313,12 +313,14 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Avoid circular import dependencies.
         from beartype.claw._clawstate import claw_state
-        from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
+        from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
 
         # Beartype configuration with which to type-check that module if that
         # module is hooked *OR* "None" otherwise (i.e., if that module is
         # unhooked), defined as either...
         conf = (
+            #FIXME: *EXCISE*. The same logic is now redundantly performed by the
+            #BeartypeClawState._reinit_safe() method.
             # If that module is either the top-level "beartype" package *OR* a
             # subpackage or submodule of that package, "None". This effectively
             # silently ignores this dangerous attempt to recursively type-check

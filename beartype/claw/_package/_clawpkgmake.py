@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
+from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
 from beartype.roar import (
     BeartypeClawDecorWarning,
     BeartypeClawHookException,
