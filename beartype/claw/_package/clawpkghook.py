@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._package.clawpkgtrie import (
-    PackagesTrie,
+    PackagesTrieWhitelist,
     iter_packages_trie,
     remove_beartype_pathhook_unless_packages_trie,
 )
@@ -191,7 +191,7 @@ def hook_packages(
                     # register a new subtrie describing that parent package.
                     #
                     # Note that this test could be obviated away by refactoring our
-                    # "PackagesTrie" subclass from the "collections.defaultdict"
+                    # "PackagesTrieWhitelist" subclass from the "collections.defaultdict"
                     # superclass rather than the standard "dict" class. Since doing
                     # so would obscure erroneous attempts to access non-existing
                     # keys, however, this test is preferable to inviting even *MORE*
@@ -200,7 +200,7 @@ def hook_packages(
                     if subpackages_subtrie is None:
                         subpackages_subtrie = \
                             subpackages_trie[package_basename] = \
-                            PackagesTrie(package_basename=package_basename)
+                            PackagesTrieWhitelist(package_basename=package_basename)
                     # Else, that parent package was already registered by a prior
                     # call to this function.
 

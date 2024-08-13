@@ -21,31 +21,209 @@ from beartype.typing import (
     Dict,
     Iterable,
     Optional,
+    Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
 
 # ....................{ SUBCLASSES                         }....................
-PackageBasenameToTrie = Dict[str, Optional['PackagesTrie']]
+PackageBasenameToTrieBlacklist = Dict[str, 'PackagesTrieBlacklist']
+'''
+PEP-compliant type hint matching a dictionary mapping from the unqualified
+basename of each subpackage of a package to *not* be runtime type-checked on the
+first importation of that subpackage to either:
+
+* If that subpackage has *not* itself been blacklisted but merely contains one
+  or more sub-subpackages that have been blacklisted, a **package trie
+  blacklist** (i.e., :class:`.PackagesTrieBlacklist` object) describing those
+  sub-subpackages.
+* Else, that subpackage has itself been blacklisted. In this case, the
+  :data:`.PackagesTrieBlacklisted` singleton. Although *any* singleton (e.g.,
+  :data:`None`, :data:`True`) would suffice here,
+  :data:`.PackagesTrieBlacklisted` is the simplest and most readable.
+'''
+
+
+PackageBasenameToTrieWhitelist = Dict[str, Optional['PackagesTrieWhitelist']]
 '''
 PEP-compliant type hint matching a dictionary mapping from the unqualified
 basename of each subpackage of a package to be runtime type-checked on the first
-importation of that subpackage to a **package trie** (i.e,. instance of the
-:class:`.PackagesTrie` class) describing the sub-subpackages of that subpackage.
+importation of that subpackage to either:
+
+* If that subpackage contains one or more sub-subpackages that have been hooked,
+  a **package trie whitelist** (i.e., :class:`.PackagesTrieWhitelist` object)
+  describing those sub-subpackages.
+* Else, that subpackage contains *no* sub-subpackages that have been hooked. In
+  this case, :data:`None`.
 '''
 
-# ....................{ SUBCLASSES                         }....................
+# ....................{ SUBCLASSES ~ blacklist             }....................
 #FIXME: Unit test us up, please.
 #FIXME: [SAFETY] Consider overriding the __setitem__() dunder method to ensure:
 #* The passed key is a non-empty string.
-#* The passed value is either "None" or another "PackagesTrie" object.
+#* The passed value is either "None" or another "PackagesTrieWhitelist" object.
 #
 #See the __init__() dunder method for similar validation logic, please.
-class PackagesTrie(PackageBasenameToTrie):
+
+class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
     '''
-    **(Sub)package configuration (sub)trie** (i.e., recursively nested
-    dictionary mapping from the unqualified basename of each subpackage of the
-    current package to be runtime type-checked on the first importation of that
+    **(Sub)package (sub)trie blacklist** (i.e., recursively nested dictionary
+    mapping from the unqualified basename of each subpackage of the current
+    package to be *prevented* from being runtime type-checked on the first
+    importation of that subpackage to another instance of this class similarly
+    describing the sub-subpackages of that subpackage).
+
+    This (sub)cache is suitable for caching as the values of:
+
+    * The :data:`.packages_trie_blacklist` global dictionary.
+    * Each (sub)value mapped to by that global dictionary.
+
+    Caveats
+    -------
+    **This dictionary is only safely accessible in a thread-safe manner from
+    within a** ``with claw_lock:`` **context manager.** Equivalently, this
+    dictionary is *not* safely accessible outside that manager.
+
+    Attributes
+    ----------
+    package_basename : Optional[str]
+        Either:
+
+        * If this (sub)trie is the global trie :data:`.packages_trie_blacklist`,
+          :data:`None`.
+        * Else, the unqualified basename of the (sub)package described by this
+          (sub)trie.
+
+    See Also
+    --------
+    :class:`.PackagesTrieWhitelist`
+        Further details.
+    '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Subclasses declaring uniquely subclass-specific instance
+    # variables *MUST* additionally slot those variables. Subclasses violating
+    # this constraint will be usable but unslotted, which defeats our purposes.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # cache dunder methods. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        'package_basename',
+    )
+
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        package_basename: Optional[str]
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(
+        self,
+
+        # Optional parameters.
+        package_basename: Optional[str] = None,
+        subpackage_basename_to_trie: (
+            Optional[PackageBasenameToTrieBlacklist]) = None,
+    ) -> None:
+        '''
+        Initialize this packages trie blacklist.
+
+        Parameters
+        ----------
+        package_basename : Optional[str]
+            Either:
+
+            * If this is the root of a packages trie blacklist (i.e., the
+              :data:`beartype.claw._clawstate.claw_state.packages_trie_blacklist`
+              global variable), :data:`None`.
+            * Else, the unqualified basename of the (sub)package configured by
+              this (sub)trie.
+
+            Defaults to :data:`None`.
+        subpackage_basename_to_trie: Optional[PackageBasenameToTrieBlacklist]
+            Either:
+
+            * If this package trie is initially empty, :data:`None`.
+            * Else, a dictionary mapping from the unqualified basename of each
+              initial subpackage of this package to another **packages trie
+              blacklist** (i.e,. :class:`.PackagesTrieBlacklist` class)
+              describing the sub-subpackages of that subpackage. In this case,
+              this packages trie blacklist is initialized from the key-value
+              pairs of this dictionary.
+
+            Defaults to :data:`None`.
+        '''
+        assert isinstance(package_basename, NoneTypeOr[str]), (
+            f'{repr(package_basename)} neither string nor "None".')
+
+        # Initialize our superclass to the empty dictionary.
+        super().__init__()
+
+        # Classify all remaining passed parameters.
+        self.package_basename = package_basename
+
+        # If the caller explicitly passed an initial dictionary to initialize
+        # this dictionary subclass with...
+        if subpackage_basename_to_trie is not None:
+            # If this initial dictionary is *NOT* a dictionary such that...
+            if not (
+                isinstance(subpackage_basename_to_trie, dict) and
+                all(
+                    (
+                        # All keys of this dictionary are strings *AND*...
+                        isinstance(subpackage_basename, str) and
+                        # All values of this dictionary are either "None" or
+                        # nested subpackages tries.
+                        isinstance(
+                            subsubpackages_trie, PackagesTrieBlacklist)
+                    )
+                    for subpackage_basename, subsubpackages_trie in (
+                        subpackage_basename_to_trie.items())
+                )
+            ):
+                # Raise us up the exception bomb.
+                raise BeartypeClawHookException(
+                    f'{repr(subpackage_basename_to_trie)} neither "None" nor '
+                    f'dictionary mapping keys to packages trie blacklists.'
+                )
+            # Else, this initial dictionary is valid.
+
+            # Update this dictionary subclass from this initial dictionary.
+            self.update(subpackage_basename_to_trie)
+        # Else, the caller explicitly passed *NO* initial dictionary. In this
+        # case, preserve this dictionary subclass as the empty dictionary.
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this package configuration trie.
+        '''
+
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    package_basename={repr(self.package_basename)},',
+            f'    dict={super().__repr__()},',
+            f')',
+        ))
+
+
+PackagesTrieBlacklisted = PackagesTrieBlacklist()
+'''
+**Blacklisted (sub)package (sub)trie** (i.e., :class:`.PackagesTrieBlacklist`
+singleton arbitrarily signifying the current leaf node of a packages trie
+blacklist to blacklist the corresponding (sub)package).
+'''
+
+# ....................{ SUBCLASSES ~ whitelist             }....................
+class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
+    '''
+    **(Sub)package (sub)trie whitelist** (i.e., recursively nested dictionary
+    mapping from the unqualified basename of each subpackage of the current
+    package to be runtime type-checked on the first importation of that
     subpackage to another instance of this class similarly describing the
     sub-subpackages of that subpackage).
 
@@ -60,9 +238,9 @@ class PackagesTrie(PackageBasenameToTrie):
     rather than a trivial non-nested flat dictionary. Why? Efficiency. Consider
     this flattened set of package names:
 
-        .. code-block:: python
+    .. code-block:: python
 
-           package_names = {'a.b', 'a.c', 'd'}
+       package_names = {'a.b', 'a.c', 'd'}
 
     Deciding whether an arbitrary package name is in this set requires
     worst-case ``O(n)`` iteration across the set of ``n`` package names.
@@ -72,9 +250,9 @@ class PackagesTrie(PackageBasenameToTrie):
     dictionaries of the same format *or* the :data:`None` singleton (terminating
     the current package name):
 
-        .. code-block:: python
+    .. code-block:: python
 
-           package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
+       package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
 
     Deciding whether an arbitrary package name is in this dictionary only
     requires worst-case ``O(h)`` iteration across the height ``h`` of this
@@ -96,26 +274,6 @@ class PackagesTrie(PackageBasenameToTrie):
     **This dictionary is only safely accessible in a thread-safe manner from
     within a** ``with claw_lock:`` **context manager.** Equivalently, this
     dictionary is *not* safely accessible outside that manager.
-
-    Examples
-    --------
-    An example instance of this dictionary hooked on submodules of the root
-    ``package_z`` package, the child ``package_a.subpackage_k`` submodule, and
-    the ``package_a.subpackage_b.subpackage_c`` and
-    ``package_a.subpackage_b.subpackage_d`` submodules:
-
-    .. code-block:: pycon
-
-       >>> packages_trie_whitelist = PackagesTrie(subpackage_basename_to_trie={
-       ...     'package_a': PackagesTrie({
-       ...         'subpackage_b': PackagesTrie(subpackage_basename_to_trie={
-       ...             'subpackage_c': None,
-       ...             'subpackage_d': None,
-       ...         }),
-       ...         'subpackage_k': None,
-       ...     }),
-       ...     'package_z': None,
-       ... })
 
     Attributes
     ----------
@@ -164,33 +322,20 @@ class PackagesTrie(PackageBasenameToTrie):
 
         # Optional parameters.
         package_basename: Optional[str] = None,
-        subpackage_basename_to_trie: Optional[PackageBasenameToTrie] = None,
     ) -> None:
         '''
-        Initialize this package trie.
+        Initialize this packages trie whitelist.
 
         Parameters
         ----------
         package_basename : Optional[str]
             Either:
 
-            * If this is the root of a packages trie (e.g., the
+            * If this is the root of a packages trie whitelist (i.e., the
               :data:`beartype.claw._clawstate.claw_state.packages_trie_whitelist`
               global variable), :data:`None`.
             * Else, the unqualified basename of the (sub)package configured by
               this (sub)trie.
-
-            Defaults to :data:`None`.
-        subpackage_basename_to_trie: Optional[PackageBasenameToTrie]
-            Either:
-
-            * If this package trie is initially empty, :data:`None`.
-            * Else, a dictionary mapping from the unqualified basename of each
-              initial subpackage of this package to another **package trie**
-              (i.e,. instance of the :class:`.PackagesTrie` class) describing
-              the sub-subpackages of that subpackage. In this case, this
-              packages trie is initialized with the key-value pairs of this
-              dictionary.
 
             Defaults to :data:`None`.
         '''
@@ -205,37 +350,6 @@ class PackagesTrie(PackageBasenameToTrie):
 
         # Nullify all subclass-specific parameters for safety.
         self.conf_if_hooked: Optional[BeartypeConf] = None
-
-        # If the caller explicitly passed an initial dictionary to initialize
-        # this dictionary subclass with...
-        if subpackage_basename_to_trie is not None:
-            # If this initial dictionary is *NOT* a dictionary such that...
-            if not (
-                isinstance(subpackage_basename_to_trie, dict) and
-                all(
-                    (
-                        # All keys of this dictionary are strings *AND*...
-                        isinstance(subpackage_basename, str) and
-                        # All values of this dictionary are either "None" or
-                        # nested subpackages tries.
-                        isinstance(
-                            subsubpackages_trie, NoneTypeOr[PackagesTrie])
-                    )
-                    for subpackage_basename, subsubpackages_trie in (
-                        subpackage_basename_to_trie.items())
-                )
-            ):
-                # Raise us up the exception bomb.
-                raise BeartypeClawHookException(
-                    f'{repr(subpackage_basename_to_trie)} neither "None" nor '
-                    f'dictionary mapping keys to packages tries.'
-                )
-            # Else, this initial dictionary is valid.
-
-            # Update this dictionary subclass from this initial dictionary.
-            self.update(subpackage_basename_to_trie)
-        # Else, the caller explicitly passed *NO* initial dictionary. In this
-        # case, preserve this dictionary subclass as the empty dictionary.
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -371,26 +485,27 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
-def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
+def iter_packages_trie(package_name: str) -> Iterable[PackagesTrieWhitelist]:
     '''
-    Generator iteratively yielding one **(sub)package configuration (sub)trie**
-    (i.e., :class:`PackagesTrie` instance) describing each transitive parent
-    package of the package with the passed name if that package *or* a parent
-    package of that package was registered by a prior call to the
-    :func:`beartype.claw._package.clawpkghook..hook_packages` function *or* the
-    empty iterable otherwise otherwise (i.e., if neither that package *nor* a
-    parent package of that package was registered by such a call).
+    Generator iteratively yielding one **(sub)package (sub)trie whitelist**
+    (i.e., :class:`PackagesTrieWhitelist` instance) describing each transitive parent
+    package of the package with the passed name if this package *or* a parent
+    package of this package was hooked by a prior call to the
+    :func:`beartype.claw._package.clawpkghook.hook_packages` function *or* the
+    empty iterable otherwise otherwise (i.e., if neither this package *nor* a
+    parent package of this package was hooked by such a call).
 
     Specifically, this generator yields (in order):
 
-    #. The subtrie of that trie configuring the root package of the passed
+    #. The subtrie of this trie configuring the root package of the passed
        (sub)package.
     #. And so on, until eventually yielding...
-    #. The subsubtrie of that subtrie configuring the passed (sub)package
+    #. The subsubtrie of this subtrie configuring the passed (sub)package
        itself.
 
     This generator intentionally avoids yielding the global trie
-    :data:`.packages_trie_whitelist`, which is already accessible via that global.
+    :data:`beartype.claw._clawstate.packages_trie_whitelist`, which is already
+    accessible via that global.
 
     Parameters
     ----------
@@ -399,12 +514,13 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
 
     Yields
     ------
-    PackagesTrie
+    PackagesTrieWhitelist
         (Sub)package configuration (sub)trie describing the currently iterated
         transitive parent package of the package with this name.
     '''
     assert isinstance(package_name, str), f'{repr(package_name)} not string.'
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import (
         claw_lock,
@@ -420,26 +536,91 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
 
     # With a submodule-specific thread-safe reentrant lock...
     with claw_lock:
-        # Current subtrie of the global trie describing the currently iterated
-        # basename of this package, initialized to this global trie itself.
-        subpackages_trie: Optional[PackagesTrie] = claw_state.packages_trie_whitelist
+        # ....................{ PHASE 1 ~ blacklist        }....................
+        # In this first phase, decide whether this package has been either:
+        # * Explicitly blacklisted by being directly listed in a previously
+        #   configured "BeartypeConf.claw_skip_package_names" iterable.
+        # * Implicitly blacklisted by being the subpackage of a parent package
+        #   directly listed in such an iterable.
+        #
+        # If either of these is the case, this generator function *IMMEDIATELY*
+        # reduces to a noop without yielding *ANYTHING.* For that reason, these
+        # two phases *CANNOT* be efficiently interleaved with one another.
+        # Before the second phase yields *ANYTHING*, the first phase decides
+        # whether the second phase should even be performed at all.
+
+        # Current subtrie of the global trie blacklist describing the currently
+        # iterated basename of each parent package of this package to be
+        # blacklisted (i.e., ignored), initialized to this global trie.
+        subpackages_trie_blacklist: Optional[PackagesTrieBlacklist] = (
+            claw_state.packages_trie_blacklist)
 
         # For each unqualified basename of each parent package transitively
-        # containing this package (as well as that of that package itself)...
+        # containing this package (as well as that of this package itself)...
         for package_basename in package_basenames:
-            # Current subtrie of that trie describing that parent package if
-            # that parent package was registered by a prior call to the
-            # hook_packages() function *OR* "None" otherwise (i.e., if that
-            # parent package has yet to be registered).
-            subpackages_trie = subpackages_trie.get(package_basename)  # type: ignore[union-attr]
+            # Current subtrie of this trie blacklist describing this parent
+            # package if this parent package contains one or more subpackages
+            # that have been blacklisted by a prior configuration of the
+            # "BeartypeConf.claw_skip_package_names" list *OR* "None" otherwise
+            # (i.e., if this parent package has yet to be blacklisted).
+            subpackages_trie_blacklist = subpackages_trie_blacklist.get(  # type: ignore[union-attr]
+                package_basename)
 
-            # If that parent package has yet to be registered, halt iteration.
-            if subpackages_trie is None:
+            # If *NO* subpackages of this parent package have been blacklisted,
+            # halt iteration.
+            if subpackages_trie_blacklist is None:
                 break
-            # Else, that parent package was previously registered.
+            # Else, one or more subpackages of this parent package have been
+            # blacklisted.
+            #
+            # If this parent package contains *NO* subpackages, this is a leaf
+            # (i.e., terminal) subtrie. In this case, the subpackage of this
+            # parent package that has been blacklisted is this parent package
+            # itself. Reduce to a noop *WITHOUT* yielding anything.
+            #
+            # You are now thinking: "B-b-but how can a package be a subpackage
+            # of itself?" Simple. In the same set theoretic sense that all
+            # classes are subclasses of themselves and all sets are subsets of
+            # themselves, all packages are subpackages of themselves. \o/
+            elif subpackages_trie_blacklist is PackagesTrieBlacklisted:
+                return
+            # Else, this parent package contains one or more subpackages. In
+            # this case, continue iterating until exhausting all subtries *OR*
+            # visiting a leaf subtrie.
+        # Else, neither this package *NOR* a parent package of this package has
+        # been blacklisted. In this case, this package *COULD* still have been
+        # whitelisted. Proceed to the next phase, Dr. Demento!
 
-            # Yield the current subtrie describing that parent package.
-            yield subpackages_trie
+        # ....................{ PHASE 2 ~ whitelist        }....................
+        # In this second phase, decide whether this package has been either:
+        # * Explicitly whitelisted by being directly passed to a public
+        #   "beartype.claw" import hook (e.g., beartype_package()).
+        # * Implicitly blacklisted by being the subpackage of a parent package
+        #   directly passed to such an import hook.
+
+        # Current subtrie of the global trie whitelist describing the currently
+        # iterated basename of each parent package of this package to be
+        # whitelisted (i.e., hooked), initialized to this global trie.
+        subpackages_trie_whitelist: Optional[PackagesTrieWhitelist] = (  # type: ignore[union-attr]
+            claw_state.packages_trie_whitelist)
+
+        # For each unqualified basename of each parent package transitively
+        # containing this package (as well as that of this package itself)...
+        for package_basename in package_basenames:
+            # Current subtrie of this trie whitelist describing this parent
+            # package if this parent package was hooked by a prior call to
+            # the hook_packages() function *OR* "None" otherwise (i.e., if this
+            # parent package has yet to be hooked).
+            subpackages_trie_whitelist = subpackages_trie_whitelist.get(  # type: ignore[union-attr]
+                package_basename)
+
+            # If this parent package has yet to be hooked, halt iteration.
+            if subpackages_trie_whitelist is None:
+                break
+            # Else, this parent package was previously hooked.
+
+            # Yield this subtrie whitelist describing this parent package.
+            yield subpackages_trie_whitelist
 
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.

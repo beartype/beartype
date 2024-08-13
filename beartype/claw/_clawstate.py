@@ -14,7 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._importlib.clawimpcache import ModuleNameToBeartypeConf
-from beartype.claw._package.clawpkgtrie import PackagesTrie
+from beartype.claw._package.clawpkgtrie import (
+    PackagesTrieBlacklist,
+    PackagesTrieBlacklisted,
+    PackagesTrieWhitelist,
+)
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
@@ -53,19 +57,19 @@ class BeartypeClawState(object):
         imported submodule of each package previously registered in our global
         package trie to the beartype configuration configuring type-checking by
         the :func:`beartype.beartype` decorator of that submodule).
-    packages_trie_blacklist : PackagesTrie
+    packages_trie_blacklist : PackagesTrieWhitelist
         **Package trie blacklist** (i.e., non-thread-safe recursively nested
         dictionary implementing a prefix tree such that each key-value pair maps
         from the unqualified basename of each subpackage to *not* be implicitly
         type-checked on the first importation of that subpackage to another
-        instance of the :class:`.PackagesTrie` class similarly describing the
+        instance of the :class:`.PackagesTrieWhitelist` class similarly describing the
         sub-subpackages of that subpackage).
-    packages_trie_whitelist : PackagesTrie
+    packages_trie_whitelist : PackagesTrieWhitelist
         **Package trie whitelist** (i.e., non-thread-safe recursively nested
         dictionary implementing a prefix tree such that each key-value pair maps
         from the unqualified basename of each subpackage to be implicitly
         type-checked on the first importation of that subpackage to another
-        instance of the :class:`.PackagesTrie` class similarly describing the
+        instance of the :class:`.PackagesTrieWhitelist` class similarly describing the
         sub-subpackages of that subpackage).
     '''
 
@@ -92,8 +96,8 @@ class BeartypeClawState(object):
     if TYPE_CHECKING:
         beartype_pathhook: Optional[ImportPathHook]
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
-        packages_trie_blacklist: PackagesTrie
-        packages_trie_whitelist: PackagesTrie
+        packages_trie_blacklist: PackagesTrieBlacklist
+        packages_trie_whitelist: PackagesTrieWhitelist
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(self) -> None:
@@ -119,7 +123,7 @@ class BeartypeClawState(object):
 
         # One one-liner to reinitialize them all.
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
-        self.packages_trie_whitelist = PackagesTrie()
+        self.packages_trie_whitelist = PackagesTrieWhitelist()
 
         # Default the packages trie blacklist to the fully-qualified names of:
         # * The root "beartype" package. Doing so effectively silently ignores
@@ -127,8 +131,8 @@ class BeartypeClawState(object):
         #   by the @beartype.beartype decorator. See the
         #   beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
         #   method docstring for further commentary.
-        self.packages_trie_blacklist = PackagesTrie(
-            subpackage_basename_to_trie={'beartype': None})
+        self.packages_trie_blacklist = PackagesTrieBlacklist(
+            subpackage_basename_to_trie={'beartype': PackagesTrieBlacklisted})
 
 
     def reinit(self) -> None:
@@ -162,6 +166,7 @@ class BeartypeClawState(object):
             f'{self.__class__.__name__}(\n',
             f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
+            f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',
             f'    packages_trie_whitelist={repr(self.packages_trie_whitelist)},\n',
             f')',
         ))
