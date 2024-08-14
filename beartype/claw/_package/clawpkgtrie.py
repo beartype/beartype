@@ -21,7 +21,6 @@ from beartype.typing import (
     Dict,
     Iterable,
     Optional,
-    Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
@@ -34,9 +33,9 @@ basename of each subpackage of a package to *not* be runtime type-checked on the
 first importation of that subpackage to either:
 
 * If that subpackage has *not* itself been blacklisted but merely contains one
-  or more sub-subpackages that have been blacklisted, a **package trie
-  blacklist** (i.e., :class:`.PackagesTrieBlacklist` object) describing those
-  sub-subpackages.
+  or more sub-subpackages that have been blacklisted, a **subpackage trie
+  blacklist** (i.e., :class:`.PackagesTrieBlacklist` object recursively
+  describing those sub-subpackages).
 * Else, that subpackage has itself been blacklisted. In this case, the
   :data:`.PackagesTrieBlacklisted` singleton. Although *any* singleton (e.g.,
   :data:`None`, :data:`True`) would suffice here,
@@ -44,17 +43,13 @@ first importation of that subpackage to either:
 '''
 
 
-PackageBasenameToTrieWhitelist = Dict[str, Optional['PackagesTrieWhitelist']]
+PackageBasenameToTrieWhitelist = Dict[str, 'PackagesTrieWhitelist']
 '''
 PEP-compliant type hint matching a dictionary mapping from the unqualified
 basename of each subpackage of a package to be runtime type-checked on the first
-importation of that subpackage to either:
-
-* If that subpackage contains one or more sub-subpackages that have been hooked,
-  a **package trie whitelist** (i.e., :class:`.PackagesTrieWhitelist` object)
-  describing those sub-subpackages.
-* Else, that subpackage contains *no* sub-subpackages that have been hooked. In
-  this case, :data:`None`.
+importation of that subpackage to the **subpackage trie whitelist** (i.e.,
+:class:`.PackagesTrieWhitelist` object recursively describing the
+sub-subpackages of that subpackage).
 '''
 
 # ....................{ SUBCLASSES ~ blacklist             }....................
@@ -243,10 +238,10 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
        package_names = {'a.b', 'a.c', 'd'}
 
     Deciding whether an arbitrary package name is in this set requires
-    worst-case ``O(n)`` iteration across the set of ``n`` package names.
+    worst-case :math:`O(n)` iteration across the set of :math:`n` package names.
 
-    Consider instead this nested dictionary whose keys are package names split
-    on ``"."`` delimiters and whose values are either recursively nested
+    Consider instead this nested trie whose keys are package names split on
+    ``"."`` delimiters and whose values are either recursively nested
     dictionaries of the same format *or* the :data:`None` singleton (terminating
     the current package name):
 
@@ -254,18 +249,17 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 
        package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
 
-    Deciding whether an arbitrary package name is in this dictionary only
-    requires worst-case ``O(h)`` iteration across the height ``h`` of this
+    Deciding whether an arbitrary package name is in this trie only requires
+    worst-case :math:`O(h)` iteration across the height :math:`h` of this
     dictionary (equivalent to the largest number of ``"."`` delimiters for any
-    fully-qualified package name encapsulated by this dictionary). ``h <<<< n``,
-    so this dictionary offers *much* faster worst-case lookup than that set.
+    fully-qualified package name encapsulated by this trie). ``h <<<< n``, so
+    this trie offers *much* faster worst-case lookup than that set.
 
     Moreover, in the worst case:
 
     * That set requires one inefficient string prefix test for each item.
-    * This dictionary requires *only* one efficient string equality test for
-      each nested key-value pair while descending towards the target package
-      name.
+    * This trie requires *only* one efficient string equality test for each
+      nested key-value pair while descending towards the target package name.
 
     Let's do this, fam.
 

@@ -16,11 +16,9 @@ from beartype.roar import (
     BeartypeClawDecorWarning,
     BeartypeClawHookException,
 )
-from beartype.typing import (
-    Iterable,
-    Optional,
-)
+from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahinttyping import IterableStrs
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from collections.abc import Iterable as IterableABC
 
@@ -45,19 +43,19 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
       of those hooks.
 
     Returns
-    ----------
+    -------
     Optional[Iterable[str]]
         Iterable of the fully-qualified names of one or more packages to be
         either hooked or unhooked by the parent call.
 
     Raises
-    ----------
+    ------
     BeartypeClawHookException
         If the passed ``conf`` parameter is *not* a beartype configuration
         (i.e., :class:`BeartypeConf` instance).
 
     See Also
-    ----------
+    --------
     :func:`.hook_packages`
         Further details.
     '''
@@ -104,20 +102,27 @@ def make_package_names_from_args(
 
     # Optional keyword-only arguments.
     package_name: Optional[str] = None,
-    package_names: Optional[Iterable[str]] = None,
-) -> Optional[Iterable[str]]:
+    package_names: Optional[IterableStrs] = None,
+) -> Optional[IterableStrs]:
     '''
-    Validate all parameters passed by the caller to the parent
-    :func:`.hook_packages` or :func:`.unhook_packages` function.
+    Validate all parameters passed by the caller to the current call of the
+    parent :func:`beartype.claw._package.clawpkghook.hook_packages` or
+    :func:`beartype.claw._package.clawpkghook.unhook_packages` function.
+
+    Parameters
+    ----------
+    All keyword-only parameters accepted by the current call of the
+    parent :func:`beartype.claw._package.clawpkghook.hook_packages` or
+    :func:`beartype.claw._package.clawpkghook.unhook_packages` function.
 
     Returns
-    ----------
+    -------
     Optional[Iterable[str]]
         Iterable of the fully-qualified names of one or more packages to be
         either hooked or unhooked by the parent call.
 
     Raises
-    ----------
+    ------
     BeartypeClawHookException
         If the passed ``package_names`` parameter is either:
 
@@ -132,11 +137,6 @@ def make_package_names_from_args(
           * The empty string.
           * A non-empty string that is *not* a valid **package name** (i.e.,
             ``"."``-delimited concatenation of valid Python identifiers).
-
-    See Also
-    ----------
-    :func:`.hook_packages`
-        Further details.
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(claw_coverage, BeartypeClawCoverage), (

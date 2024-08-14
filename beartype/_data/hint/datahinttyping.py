@@ -417,7 +417,6 @@ item is a 2-tuple of the form ``(item_index, item)``, where:
 '''
 
 
-
 Enumerator = Iterator[EnumeratorItem]
 '''
 PEP-compliant type hint matching *any* **enumerator** (i.e., arbitrary iterator

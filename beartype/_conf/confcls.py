@@ -38,7 +38,6 @@ from beartype.roar._roarwarn import (
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
-    Iterable,
     Optional,
 )
 from beartype._conf.confenum import (
@@ -59,6 +58,7 @@ from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
     DictStrToAny,
+    IterableStrs,
     TypeException,
     TypeWarning,
 )
@@ -91,8 +91,14 @@ class BeartypeConf(object):
         :data:`True` only if type-checking **annotated variable assignments**
         (i.e., :pep:`526`-compliant assignments to local, global, class, and
         instance variables annotated by type hints) when importing modules
-        under import hooks published by the :mod:`beartype.claw` subpackage. See
-        also the :meth:`__new__` method docstring.
+        under import hooks published by the :mod:`beartype.claw` subpackage.
+    _claw_skip_package_names: Iterable[str], optional
+        Iterable of the absolute names of all packages and modules to be
+        **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather
+        than runtime type-checked by import hooks published by the
+        :mod:`beartype.claw` subpackage -- especially the otherwise fragile
+        :mod:`beartype.claw.beartype_all` import hook, which subjects *all*
+        packages to runtime type-checking by default.
     _conf_args : tuple
         Tuple of the values of *all* possible keyword parameters (in arbitrary
         order) configuring this configuration.
@@ -236,7 +242,7 @@ class BeartypeConf(object):
         _claw_decoration_position_funcs: BeartypeDecorationPosition
         _claw_decoration_position_types: BeartypeDecorationPosition
         _claw_is_pep526: bool
-        _claw_skip_package_names: Iterable[str]
+        _claw_skip_package_names: IterableStrs
         _conf_args: tuple
         _conf_kwargs: DictStrToAny
         _hash: int
@@ -280,7 +286,7 @@ class BeartypeConf(object):
         claw_decoration_position_types: BeartypeDecorationPosition = (
             BeartypeDecorationPosition.LAST),
         claw_is_pep526: bool = True,
-        claw_skip_package_names: Iterable[str] = (),
+        claw_skip_package_names: IterableStrs = (),
         hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
@@ -461,6 +467,28 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under :mod:`beartype.claw` import
             hooks. Defaults to :data:`True`.
+        claw_skip_package_names: Iterable[str], optional
+            Iterable of the absolute names of all packages and modules to be
+            **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather
+            than runtime type-checked by import hooks published by the
+            :mod:`beartype.claw` subpackage -- especially the otherwise fragile
+            :mod:`beartype.claw.beartype_all` import hook, which subjects *all*
+            packages to runtime type-checking by default.
+
+            Import hooks published by the :mod:`beartype.claw` subpackage will
+            avoid applying runtime type-checking to *any* package or module:
+
+            * Whose absolute name is directly listed in this iterable *or*...
+            * Which is a subpackage or submodule transitively residing in *any*
+              package or module whose absolute name is directly listed in this
+              iterable. Listing the name of a package in this iterable thus
+              suffices to skip both that package *and* all transitive
+              subpackages and submodules of that package in entirety. Individual
+              subpackages and submodules need *not* be explicitly listed
+              (e.g., ``claw_skip_package_names=('worst_package_evah',)`` skips
+              the ``worst_package_evah`` package in entirety).
+
+            Defaults to the empty tuple.
         hint_overrides : BeartypeHintOverrides
             **Type hint overrides** (i.e., frozen dictionary mapping from
             arbitrary source to target type hints), enabling callers to lie to
@@ -825,7 +853,8 @@ class BeartypeConf(object):
             self._claw_decoration_position_types = conf_kwargs[  # pyright: ignore
                 'claw_decoration_position_types']
             self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
-            self._claw_skip_package_names = conf_kwargs['claw_skip_package_names']  # pyright: ignore
+            self._claw_skip_package_names = conf_kwargs[
+                'claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
@@ -1095,18 +1124,14 @@ class BeartypeConf(object):
 
 
     @property
-    def claw_skip_package_names(self) -> Iterable[str]:
+    def claw_skip_package_names(self) -> IterableStrs:
         '''
-        :data:`Iterable[str]` listing package names that are to be skipped
-        during type checking when importing modules under import hooks
-        published by the :mod:`beartype.claw` subpackage.
-
-        This is useful for excluding specific packages from type enforcement,
-        thus optimizing performance or avoiding conflicts with certain
-        packages that may not be compatible with the import hooks.
-
-        This docstring was lovingly hallucinated by ChatGPT, please suggest
-        improvements.
+        Iterable of the absolute names of all packages and modules to be
+        **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather than
+        runtime type-checked by import hooks published by the
+        :mod:`beartype.claw` subpackage -- especially the otherwise fragile
+        :mod:`beartype.claw.beartype_all` import hook, which subjects *all*
+        packages to runtime type-checking by default.
 
         See Also
         --------

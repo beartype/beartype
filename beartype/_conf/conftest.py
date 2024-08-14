@@ -115,6 +115,29 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "claw_is_pep526" is a boolean.
     #
+    # If "claw_skip_package_names" is *NOT* an iterable of non-empty strings,
+    # raise an exception. Specifically, if the value of this parameter is not...
+    elif not (
+        # An iterable *AND*...
+        isinstance(conf_kwargs['claw_skip_package_names'], IterableABC) and
+        all(
+            (
+                # This item is a string *AND*...
+                isinstance(claw_skip_package_name, str) and
+                # This string is non-empty...
+                bool(claw_skip_package_name)
+            )
+            # For each item of this iterable.
+            for claw_skip_package_name in conf_kwargs['claw_skip_package_names']
+        )
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "claw_skip_package_names" '
+            f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
+            f'iterable of non-empty strings.'
+        )
+    # Else, "claw_skip_package_names" is an iterable of non-empty strings.
+    #
     # If "hint_overrides" is *NOT* a frozen dict, raise an exception.
     elif not isinstance(conf_kwargs['hint_overrides'], BeartypeHintOverrides):
         raise BeartypeConfParamException(
@@ -186,23 +209,6 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
-    #
-    # If "claw_skip_package_names" is *NOT* an iterable of strings, raise an
-    # exception.
-    elif not (
-        isinstance(conf_kwargs['claw_skip_package_names'], IterableABC) and
-        all(
-            isinstance(claw_skip_package_name, str)
-            for claw_skip_package_name in conf_kwargs[
-                'claw_skip_package_names']
-        )
-    ):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "claw_skip_package_names" '
-            f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
-            f'iterable of strings.'
-        )
-    # Else, "claw_skip_package_names" is an iterable of strings.
 
     # For the name of each keyword parameter whose value is expected to be an
     # exception subclass...
