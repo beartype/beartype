@@ -57,8 +57,8 @@ from beartype._conf.conftest import (
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
+    CollectionStrs,
     DictStrToAny,
-    IterableStrs,
     TypeException,
     TypeWarning,
 )
@@ -92,10 +92,10 @@ class BeartypeConf(object):
         (i.e., :pep:`526`-compliant assignments to local, global, class, and
         instance variables annotated by type hints) when importing modules
         under import hooks published by the :mod:`beartype.claw` subpackage.
-    _claw_skip_package_names: Iterable[str], optional
-        Iterable of the absolute names of all packages and modules to be
-        **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather
-        than runtime type-checked by import hooks published by the
+    _claw_skip_package_names: Collection[str], optional
+        Collection of the absolute names of all packages and modules to be
+        **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather than
+        runtime type-checked by import hooks published by the
         :mod:`beartype.claw` subpackage -- especially the otherwise fragile
         :mod:`beartype.claw.beartype_all` import hook, which subjects *all*
         packages to runtime type-checking by default.
@@ -242,7 +242,7 @@ class BeartypeConf(object):
         _claw_decoration_position_funcs: BeartypeDecorationPosition
         _claw_decoration_position_types: BeartypeDecorationPosition
         _claw_is_pep526: bool
-        _claw_skip_package_names: IterableStrs
+        _claw_skip_package_names: CollectionStrs
         _conf_args: tuple
         _conf_kwargs: DictStrToAny
         _hash: int
@@ -286,9 +286,9 @@ class BeartypeConf(object):
         claw_decoration_position_types: BeartypeDecorationPosition = (
             BeartypeDecorationPosition.LAST),
         claw_is_pep526: bool = True,
-        claw_skip_package_names: IterableStrs = (),
+        claw_skip_package_names: CollectionStrs = (),
         hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
-        is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
+        is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
         is_debug: bool = False,
         is_pep484_tower: bool = False,
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
@@ -467,8 +467,8 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under :mod:`beartype.claw` import
             hooks. Defaults to :data:`True`.
-        claw_skip_package_names: Iterable[str], optional
-            Iterable of the absolute names of all packages and modules to be
+        claw_skip_package_names: Collection[str], optional
+            Collection of the absolute names of all packages and modules to be
             **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather
             than runtime type-checked by import hooks published by the
             :mod:`beartype.claw` subpackage -- especially the otherwise fragile
@@ -1124,9 +1124,9 @@ class BeartypeConf(object):
 
 
     @property
-    def claw_skip_package_names(self) -> IterableStrs:
+    def claw_skip_package_names(self) -> CollectionStrs:
         '''
-        Iterable of the absolute names of all packages and modules to be
+        Collection of the absolute names of all packages and modules to be
         **skipped** (i.e., blacklisted, excluded, ignored, omitted) rather than
         runtime type-checked by import hooks published by the
         :mod:`beartype.claw` subpackage -- especially the otherwise fragile
@@ -1140,8 +1140,6 @@ class BeartypeConf(object):
         '''
 
         return self._claw_skip_package_names
-
-
 
     # ..................{ PROPERTIES ~ options : violation   }..................
     @property

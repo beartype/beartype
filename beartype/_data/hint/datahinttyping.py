@@ -24,6 +24,7 @@ from beartype.typing import (
     AbstractSet,
     Any,
     Callable,
+    Collection,
     Dict,
     ForwardRef,
     FrozenSet,
@@ -302,6 +303,12 @@ CallableStrFormat = Callable[..., str]
 '''
 PEP-compliant type hint matching the signature of the standard
 :meth:`str.format` method.
+'''
+
+# ....................{ COLLECTION                         }....................
+CollectionStrs = Collection[str]
+'''
+PEP-compliant type hint matching *any* collection of zero or more strings.
 '''
 
 # ....................{ DICT                               }....................

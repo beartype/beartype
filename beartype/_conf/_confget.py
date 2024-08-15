@@ -28,7 +28,7 @@ from beartype._util.os.utilosshell import get_shell_var_value_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 
 # ....................{ GETTERS                            }....................
-def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
+def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: ignore
     '''
     Final value of the ``is_color`` tri-state boolean parameter accepted by the
     :meth:`beartype.BeartypeConf.__init__` constructor, derived from the passed

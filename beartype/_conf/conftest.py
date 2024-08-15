@@ -35,7 +35,10 @@ from beartype._conf.confoverrides import (
 )
 from beartype._data.hint.datahinttyping import DictStrToAny
 from beartype._util.cls.utilclstest import is_type_subclass
-from collections.abc import Iterable as IterableABC
+from collections.abc import (
+    Collection as CollectionABC,
+    Iterable as IterableABC,
+)
 
 # ....................{ RAISERS                            }....................
 def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
@@ -118,8 +121,8 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # If "claw_skip_package_names" is *NOT* an iterable of non-empty strings,
     # raise an exception. Specifically, if the value of this parameter is not...
     elif not (
-        # An iterable *AND*...
-        isinstance(conf_kwargs['claw_skip_package_names'], IterableABC) and
+        # A collection *AND*...
+        isinstance(conf_kwargs['claw_skip_package_names'], CollectionABC) and
         all(
             (
                 # This item is a string *AND*...
@@ -134,7 +137,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "claw_skip_package_names" '
             f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
-            f'iterable of non-empty strings.'
+            f'collection of non-empty strings.'
         )
     # Else, "claw_skip_package_names" is an iterable of non-empty strings.
     #
