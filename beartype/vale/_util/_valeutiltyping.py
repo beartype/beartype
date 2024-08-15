@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    Any,
     Callable,
     Union,
 )
@@ -43,7 +44,7 @@ representations are particularly slow to generate include:
 '''
 
 
-BeartypeValidatorTester = Callable[[object], bool]
+BeartypeValidatorTester = Callable[[Any], bool]
 '''
 PEP-compliant type hint matching a **beartype validator tester** (i.e.,
 caller-defined callable accepting a single arbitrary object and returning
@@ -52,4 +53,20 @@ either :data:`True` if that object satisfies an arbitrary constraint *or*
 
 Beartype validator testers are suitable for subscripting functional beartype
 validator factories (e.g., :attr:`beartype.vale.Is`).
+
+Caveats
+-------
+This parent type hint is intentionally subscripted by the child parameter type
+hint :data:`.Any` rather than :class:`object`. Previously, this parent type hint
+was instead subscripted by :class:`object` -- which static type-checkers
+objected to as "incompatible" with various user-defined validator testers: e.g.,
+
+.. code-block:: python
+
+   # Given this function, pyright previously complained that the str.isascii()
+   # method failed to satisfy the "Callable[[object], bool]" type hint:
+   #     "object" is incompatible with "str" reportArgumentType
+   @beartype
+   def foo(ascii: Annotated[str, Is[str.isascii]]) -> str:
+       return ascii
 '''

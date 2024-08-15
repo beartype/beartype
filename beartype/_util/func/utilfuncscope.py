@@ -127,13 +127,13 @@ def get_func_locals(
     as type hints when annotating the methods of that class). When declaring a
     class, Python creates a stack frame for the declaration of that class whose
     local scope is the set of all class-scoped attributes declared in the body
-    of that class (including class variables, class methods, static methods,
-    and instance methods). When passed any method, this getter finds and
-    returns that local scope. When passed the ``MuhClass.muh_method` method
-    declared by the following example, for example, this getter returns the
-    local scope containing the key ``'muh_class_var'`` with value ``int``:
+    of that class -- including class variables, class methods, static methods,
+    and instance methods. When passed any method, this getter finds and returns
+    that local scope. When passed the ``MuhClass.muh_method` method declared by
+    the following example, for example, this getter returns the local scope
+    containing the key ``'muh_class_var'`` with value ``int``:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from typing import ClassVar
        >>> class MuhClass(object):
@@ -157,11 +157,11 @@ def get_func_locals(
 
     **This high-level getter is inefficient and should thus only be called if
     absolutely necessary.** Specifically, deciding the local scope for any
-    callable is an ``O(k)`` operation for ``k`` the distance in call stack
-    frames from the call of the current function to the call of the top-most
-    parent scope transitively declaring the passed callable in its submodule.
-    Ergo, this decision problem should be deferred as long as feasible to
-    minimize space and time consumption.
+    callable exhibits worst-case linear time complexity :math:`O(k)` for the
+    distance :math:`k` in call stack frames from the call of the current
+    function to the call of the top-most parent scope transitively declaring the
+    passed callable in its submodule. Ergo, this decision problem should be
+    deferred as long as feasible to minimize space and time consumption.
 
     Parameters
     ----------
@@ -275,8 +275,8 @@ def get_func_locals(
     # containing that nested callable (including that nested callable itself).
     #
     # Note that:
-    # * The set of all callables embodied by the current runtime call stack is
-    #   a (usually proper) superset of the set of all callables embodied by the
+    # * The set of all callables embodied by the current runtime call stack is a
+    #   (usually proper) superset of the set of all callables embodied by the
     #   lexical scopes encapsulating this nested callable. Ergo:
     #   * Some stack frames have no corresponding lexical scopes (e.g., stack
     #     frames embodying callables defined by different modules).
@@ -441,24 +441,31 @@ def get_func_locals(
         # "None" otherwise (i.e., if this scope is defined outside a module).
         func_frame_module_name = func_frame.f_globals.get('__name__')
 
-        # If this scope is defined outside a module, silently ignore this scope
-        # and proceed to the next frame.
-        if func_frame_module_name is None:
+        # If either...
+        if (
+            # This scope is defined outside a module *OR*...
+            func_frame_module_name is None or
+            # This scope is defined inside the root "beartype" package *OR*...
+            func_frame_module_name == 'beartype' or
+            # This scope is defined inside a "beartype" subpackage...
+            func_frame_module_name.startswith('beartype.')
+        ):
+            # Then silently ignore this scope and proceed to the next frame.
             continue
-        # Else, this scope exists.
+        # Else, this scope is defined inside a module that is *NOT* "beartype".
 
         # Unqualified name of this scope.
         func_frame_name = func_frame_codeobj.co_name
         # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
-        # If this scope is the placeholder string assigned by the active Python
-        # interpreter to all scopes encapsulating the top-most lexical scope of
-        # a module in the current call stack, this search has just crossed a
-        # module boundary and is thus no longer searching within the module
-        # declaring this nested callable and has thus failed to find the
+        # If this scope is the placeholder string assigned by Python to all
+        # scopes encapsulating the top-most lexical scope of a module
+        # declaration in the current call stack, this search has just crossed a
+        # module declaration boundary and is thus no longer searching within the
+        # module declaring this nested callable and has thus failed to find the
         # lexical scope of the parent declaring this nested callable. Why?
-        # Because this scope *MUST* necessarily be in the same module as that
-        # of this nested callable. In this case, raise an exception.
+        # Because this scope *MUST* necessarily be in the same module as that of
+        # this nested callable. In this case, raise an exception.
         if func_frame_name == FUNC_CODEOBJ_NAME_MODULE:
             raise _BeartypeUtilCallableScopeNotFoundException(
                 f'{func_name_qualified}() parent lexical scope '
@@ -518,10 +525,12 @@ def get_func_locals(
             #   callers of this function frequently pass this local scope to
             #   the dict.update() method -- which expects the passed mapping to
             #   also be a "dict" instance: e.g.,
+            #
             #       cls_curr_locals = get_type_locals(
             #           cls=cls_curr, exception_cls=exception_cls)
             #   >   func_locals.update(cls_curr_locals)
             #   E   TypeError: update() argument must be dict or another FrameLocalsProxy
+            #
             #   Why? No idea. Ideally, the dict.update() method would accept
             #   arbitrary mappings -- but it doesn't. Since it doesn't, we have
             #   *NO* recourse but to preserve forward compatibility with future
