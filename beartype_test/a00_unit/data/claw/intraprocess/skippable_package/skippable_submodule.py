@@ -4,14 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **current package beartype import hook unhookable module** (i.e.,
-data module *not* whitelisted by any import hooks published by the
-:mod:`beartype.claw` subpackage and thus expected to be governed by standard
-Python type-checking semantics -- which is to say, *no* type-checking at all).
-
-Note that **unhooking** (i.e., *not* whitelisting) is *not* quite the same thing
-as **skipping** (i.e., blacklisting). Unhooking is simply the absence of
-actively whitelisting; skipping is the action of actively blacklisting.
+Project-wide **current package beartype import hook skippable module** (i.e.,
+data module blacklisted by one or more import hooks published by the
+:mod:`beartype.claw` subpackage and thus expected to *not* be type-checked by
+the :func:`beartype.beartype` decorator).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,9 +15,6 @@ from beartype.typing import (
     List,
     Union,
 )
-
-# from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
-# print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
 
 # ....................{ PEP 526                            }....................
 # Validate that *NO* import hooks installed by the caller apply to this
@@ -31,11 +24,11 @@ from beartype.typing import (
 
 # Assert that a PEP 526-compliant assignment statement assigning an object
 # violating the type hint annotating that statement raises *NO* exception.
-and_winter_robing: str = b'And winter robing with pure snow and crowns'
-assert isinstance(and_winter_robing, bytes)
+in_most_familiar_cadence: str = b'In most familiar cadence, with the howl'
+assert isinstance(in_most_familiar_cadence, bytes)
 
 # ....................{ FUNCTIONS                          }....................
-def of_starry_ice(the_grey_grass_and_bare_boughs: Union[str, complex]) -> (
+def with_the_howl(the_thunder_and_the_hiss: Union[str, complex]) -> (
     Union[complex, List[bytes]]):
     '''
     Arbitrary method neither implicitly *nor* explicitly type-checked by the
@@ -43,10 +36,10 @@ def of_starry_ice(the_grey_grass_and_bare_boughs: Union[str, complex]) -> (
     '''
 
     # This means nothing to us. Nothing!
-    return the_grey_grass_and_bare_boughs
+    return the_thunder_and_the_hiss
 
 # Assert that a function call passed a parameter violating the type hint
 # annotating that parameter raises *NO* exception.
-voluptuous_pantings = of_starry_ice(
-    b"If spring's voluptuous pantings when she breathes")
-assert isinstance(voluptuous_pantings, bytes)
+of_homeless_streams = with_the_howl(
+    b'The thunder and the hiss of homeless streams')
+assert isinstance(of_homeless_streams, bytes)

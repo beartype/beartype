@@ -91,7 +91,7 @@ def test_conf_dataclass() -> None:
         claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
         claw_decoration_position_types=BeartypeDecorationPosition.FIRST,
         claw_is_pep526=False,
-        claw_skip_package_names = ('a','b','c'),
+        claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
         is_color=True,
         is_debug=True,
@@ -132,7 +132,7 @@ def test_conf_dataclass() -> None:
             claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
             claw_decoration_position_types=BeartypeDecorationPosition.LAST,
             claw_is_pep526=False,
-            claw_skip_package_names = ('a','b','c'),
+            claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             is_debug=True,
             is_color=True,
@@ -158,7 +158,7 @@ def test_conf_dataclass() -> None:
             is_debug=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
-            claw_skip_package_names = ('a','b','c'),
+            claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             claw_decoration_position_types=BeartypeDecorationPosition.LAST,
             claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
         )
@@ -195,7 +195,8 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
         BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
-    assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
+    assert BEAR_CONF_NONDEFAULT.claw_skip_package_names == (
+        'Made_contrast_with', 'the_universe',)
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
         BEAR_HINT_OVERRIDES_NONEMPTY | beartype_hint_overrides_pep484_tower())
     assert BEAR_CONF_NONDEFAULT.is_color is True
@@ -297,7 +298,19 @@ def test_conf_dataclass() -> None:
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
     with raises(BeartypeConfParamException):
-        BeartypeConf(claw_skip_package_names=(12345))
+        BeartypeConf(claw_skip_package_names=('A pine,', 'Rock-rooted,'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(claw_skip_package_names=(
+            'stretched_athwart', b'the vacancy'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(claw_skip_package_names=(
+            'Yielding_one.only_response.at.each_pause', ''))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(claw_skip_package_names=(
+            package_name
+            for package_name in (
+                'Its_swinging_boughs', 'to_each_inconstant_blast',)
+        ))
     with raises(BeartypeConfParamException):
         BeartypeConf(hint_overrides=(
             'Wildered, and wan, and panting, she returned.'))

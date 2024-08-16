@@ -222,13 +222,28 @@ def test_claw_intraprocess_beartype_all() -> None:
     )
     from pytest import raises
 
+    # ....................{ LOCALS                         }....................
+    # Beartype configuration to be applied below.
+    conf_all = BeartypeConf(
+        # Exercise that package blacklisting behaves as expected. Specifically,
+        # exercise that...
+        claw_skip_package_names=(
+            # A fully-qualified submodule can be blacklisted from type-checking.
+            'beartype_test.a00_unit.data.claw.intraprocess.skippable_package.skippable_submodule',
+            # The fully-qualified subpackage containing that submodule can also
+            # be blacklisted from type-checking. In this case, the prior
+            # blacklisting of that submodule effectively reduces to a noop.
+            'beartype_test.a00_unit.data.claw.intraprocess.skippable_package',
+        )
+    )
+
     # ....................{ PASS                           }....................
     # Permanently subject *ALL* modules (including both third-party and
     # first-party modules in Python's standard library) to a beartype import
     # hook configured by the default beartype configuration.
-    beartype_all()
+    beartype_all(conf=conf_all)
 
-    # Import *ALL* "beartype.claw"-specific data submodules, exercising that
+    # Import *ALL* "beartype.claw" hookable data submodules, exercising that
     # these submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
         conf,
@@ -236,8 +251,14 @@ def test_claw_intraprocess_beartype_all() -> None:
         pep,
     )
 
+    # Import *ALL* "beartype.claw" skippable data submodules, exercising that
+    # these submodules are ignored by that import hook.
+    from beartype_test.a00_unit.data.claw.intraprocess.skippable_package import (
+        skippable_submodule,
+    )
+
     # Assert that repeating the same import hook as above silently succeeds.
-    beartype_all()
+    beartype_all(conf=conf_all)
 
     # ....................{ FAIL                           }....................
     # Assert that attempting to unsafely import a submodule directly hooked

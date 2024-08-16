@@ -315,10 +315,37 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         from beartype.claw._clawstate import claw_state
         from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
 
-        # Beartype configuration with which to type-check that module if that
-        # module is hooked under its fully-qualified name *OR* "None" otherwise
-        # (i.e., if that module is unhooked).
+        #FIXME: Restore this, please. The more elongated expression given below
+        #should no longer be required. *sigh*
+        # # Beartype configuration with which to type-check that module if that
+        # # module is hooked under its fully-qualified name *OR* "None" otherwise
+        # # (i.e., if that module is unhooked).
         conf = get_package_conf_or_none(fullname)
+
+        #FIXME: Preserved because the above will inevitably break. *sigh*
+        # # Beartype configuration with which to type-check that module if that
+        # # module is hooked *OR* "None" otherwise (i.e., if that module is
+        # # unhooked), defined as either...
+        # conf = (
+        #     #FIXME: *EXCISE*. The same logic is now redundantly performed by the
+        #     #BeartypeClawState._reinit_safe() method.
+        #     # If that module is either the top-level "beartype" package *OR* a
+        #     # subpackage or submodule of that package, "None". This effectively
+        #     # silently ignores this dangerous attempt to recursively type-check
+        #     # the "beartype" package by the @beartype.beartype decorator. See
+        #     # the method docstring for further commentary.
+        #     None
+        #     if (
+        #         fullname == 'beartype' or
+        #         fullname.startswith('beartype.')
+        #     ) else
+        #     # Else, that module is neither our top-level "beartype" package
+        #     # *NOR* a subpackage or submodule of that package. In this case, the
+        #     # beartype configuration with which to type-check that module if
+        #     # that module is hooked under its fully-qualified name *OR*
+        #     # "None" otherwise (i.e., if that module is unhooked).
+        #     get_package_conf_or_none(fullname)
+        # )
         # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._module_conf_beartype)}')
 
         # If that module is unhooked, preserve that module as is by simply

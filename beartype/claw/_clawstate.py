@@ -131,6 +131,9 @@ class BeartypeClawState(object):
         #   by the @beartype.beartype decorator. See the
         #   beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
         #   method docstring for further commentary.
+        # self.packages_trie_blacklist = PackagesTrieBlacklist()
+
+        #FIXME: Restore this in favour of the above, please. *sigh*
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie={'beartype': PackagesTrieBlacklisted})
 

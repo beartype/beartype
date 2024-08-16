@@ -136,6 +136,7 @@ def hook_packages(
     with claw_lock:
         # ....................{ BLACKLIST                  }....................
         # If blacklisting one or more packages from type-checking, do so.
+        # print(f'Blacklisting packages: {repr(conf.claw_skip_package_names)}')
         if conf.claw_skip_package_names:
             _blacklist_packages(conf.claw_skip_package_names)
         # Else, *NO* packages are being blacklisted from type-checking. Fine!
@@ -228,6 +229,7 @@ def _blacklist_packages(package_names: IterableStrs) -> None:
         # currently iterated basename of this package, initialized to
         # the global trie blacklist blacklisting all top-level packages.
         subpackages_trie_blacklist = claw_state.packages_trie_blacklist
+        # print(f'Blacklist: {repr(claw_state.packages_trie_blacklist)}')
 
         # For each unqualified basename comprising the directed path
         # from the root package of this package through all intermediary
@@ -244,6 +246,7 @@ def _blacklist_packages(package_names: IterableStrs) -> None:
             #
             # In either case, a subtrie whitelist describing this parent
             # package is now guaranteed to exist.
+            # print(f'Visiting blacklisting parent subpackage "{package_basename}"...')
 
             # Iterate the current subtrie one subpackage deeper.
             subpackages_trie_blacklist = subpackages_trie_blacklist[
@@ -255,6 +258,7 @@ def _blacklist_packages(package_names: IterableStrs) -> None:
         # guaranteed to describe the direct parent package of the
         # current (sub)package being blacklisted.
         # print(f'Blacklisted package "{package_name}" trie {repr(subpackages_trie_blacklist)}...')
+        # print(f'Blacklisting leaf subpackage "{package_basename_last}"...')
 
         # Blacklist this (sub)package from its direct parent package.
         #

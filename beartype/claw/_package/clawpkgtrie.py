@@ -24,6 +24,10 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahinttyping import CollectionStrs
+from collections.abc import (
+    Collection as CollectionABC,
+)
 
 # ....................{ SUBCLASSES                         }....................
 PackageBasenameToTrieBlacklist = Dict[str, 'PackagesTrieBlacklist']
@@ -195,9 +199,16 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         '''
-        Machine-readable representation of this package configuration trie.
+        Machine-readable representation of this packages trie blacklist.
         '''
 
+        # If this blacklist is actually the blacklisted singleton, return a
+        # truncated representation indicating this.
+        if self is PackagesTrieBlacklisted:
+            return 'PackagesTrieBlacklisted()'
+        # Else, this blacklist is *NOT* the blacklisted singleton.
+
+        # Return a full representation of this blacklist.
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    package_basename={repr(self.package_basename)},',
@@ -348,7 +359,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         '''
-        Machine-readable representation of this package configuration trie.
+        Machine-readable representation of this packages trie whitelist.
         '''
 
         return '\n'.join((
@@ -423,6 +434,99 @@ def is_packages_trie() -> bool:
         bool(claw_state.packages_trie_whitelist)
     )
 
+
+#FIXME: Unit test us up, please.
+def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
+    '''
+    :data:`True` only if the package with the passed name has been
+    **blacklisted** (i.e., prevented from being runtime type-checked on the
+    first importation of that package) by being either:
+
+     * Explicitly blacklisted by being directly listed in a previously
+       configured :attr:`beartype.BeartypeConf.claw_skip_package_names`
+       collection.
+     * Implicitly blacklisted by being the subpackage of a parent package
+       directly listed in such a collection.
+
+    Caveats
+    -------
+    **This function is only safely callable in a thread-safe manner from within
+    a** ``with claw_lock:`` **context manager.** Equivalently, this function is
+    *not* safely callable outside that manager.
+
+    Parameters
+    ----------
+    package_basenames : CollectionStrs
+        Collection of each unqualified basename comprising the fully-qualified
+        name of the package to be inspected, split by the caller from this
+        name on ``"."`` delimiters.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this package has been blacklisted.
+    '''
+    assert isinstance(package_basenames, CollectionABC), (
+        f'{repr(package_basenames)} not collection.')
+
+    # ....................{ IMPORTS                        }....................
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import claw_state
+
+    # ....................{ LOCALS                         }....................
+    # True only if this package has been blacklisted.
+    is_blacklisted = False
+
+    # Current subtrie of the global trie blacklist describing the currently
+    # iterated basename of each parent package of this package to be blacklisted
+    # (i.e., ignored), initialized to this global trie.
+    subpackages_trie_blacklist: Optional[PackagesTrieBlacklist] = (
+        claw_state.packages_trie_blacklist)
+
+    # ....................{ SEARCH                         }....................
+    # For each unqualified basename of each parent package transitively
+    # containing this package (as well as that of this package itself)...
+    for package_basename in package_basenames:
+        # print(f'Visiting blacklisting parent package "{package_basename}"...')
+
+        # Current subtrie of this trie blacklist describing this parent package
+        # if this parent package contains one or more subpackages that have been
+        # blacklisted by a prior configuration of the
+        # "BeartypeConf.claw_skip_package_names" list *OR* "None" otherwise
+        # (i.e., if this parent package has yet to be blacklisted).
+        subpackages_trie_blacklist = subpackages_trie_blacklist.get(  # type: ignore[union-attr]
+            package_basename)
+
+        # If *NO* subpackages of this parent package have been blacklisted,
+        # halt iteration.
+        if subpackages_trie_blacklist is None:
+            break
+        # Else, one or more subpackages of this parent package have been
+        # blacklisted.
+        #
+        # If this parent package contains *NO* subpackages, this is a leaf
+        # (i.e., terminal) subtrie. In this case, the subpackage of this parent
+        # package that has been blacklisted is this parent package itself.
+        # Return true immediately.
+        #
+        # You are now thinking: "B-b-but how can a package be a subpackage of
+        # itself?" Simple. In the same set theoretic sense that all classes are
+        # subclasses of themselves and all sets are subsets of themselves, all
+        # packages are subpackages of themselves. \o/
+        elif subpackages_trie_blacklist is PackagesTrieBlacklisted:
+            # print(f'Skipping blacklisted package "{package_basename}"...')
+            is_blacklisted = True
+            break
+        # Else, this parent package contains one or more subpackages. In this
+        # case, continue iterating until exhausting all subtries *OR* visiting a
+        # leaf subtrie.
+    # Else, neither this package *NOR* a parent package of this package has
+    # been blacklisted. In this case, this package *COULD* still have been
+    # whitelisted. Proceed to the next phase, Dr. Demento!
+
+    # Return this boolean.
+    return is_blacklisted
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
@@ -432,6 +536,8 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
     a prior call to the :func:`.hook_packages` function *or* :data:`None`
     otherwise (i.e., if neither that package *nor* a parent package of that
     package was registered by such a call).
+
+    This getter is thread-safe.
 
     Parameters
     ----------
@@ -449,44 +555,92 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
         * Else, :data:`None`.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype.claw._clawstate import claw_state
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
 
-    # Beartype configuration registered for the currently iterated package,
-    # defaulting to the beartype configuration registered for the global trie
-    # applicable to *ALL* packages if an external caller previously called the
-    # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
-    # if that function has yet to be called).
-    subpackage_conf = claw_state.packages_trie_whitelist.conf_if_hooked
+    # ....................{ LOCALS                         }....................
+    # Beartype configuration to be returned, defaulting to "None".
+    subpackage_conf: Optional[BeartypeConf] = None
 
-    # For each subpackages trie describing each parent package transitively
-    # containing this package (as well as that of that package itself)...
-    for subpackages_trie in iter_packages_trie(package_name):
-        # Beartype configuration registered with either...
-        subpackage_conf = (
-            # That parent package if any *OR*...
-            #
-            # Since that parent package is more granular (i.e., unique) than
-            # any transitive parent package of that parent package, the
-            # former takes precedence over the latter when defined.
-            subpackages_trie.conf_if_hooked or
-            # A transitive parent package of that parent package if any.
-            subpackage_conf
-        )
+    # List of each unqualified basename comprising this name, split from this
+    # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
+    # "str.rsplit('.')" calls produce the exact same lists under all possible
+    # edge cases. We arbitrarily call the former rather than the latter for
+    # simplicity and readability.
+    package_basenames = package_name.split('.')
 
+    # ....................{ SEARCH                         }....................
+    # With a submodule-specific thread-safe reentrant lock...
+    with claw_lock:
+        # ....................{ PHASE 1 ~ blacklist        }....................
+        # In this first phase, decide whether this package has been either:
+        # * Explicitly blacklisted by being directly listed in a previously
+        #   configured "BeartypeConf.claw_skip_package_names" collection.
+        # * Implicitly blacklisted by being the subpackage of a parent package
+        #   directly listed in such a collection.
+        #
+        # If either of these is the case, this getter function *IMMEDIATELY*
+        # reduces to a noop by returning "None". For that reason, these two
+        # phases *CANNOT* be efficiently interleaved with one another. Before
+        # the second phase returns *ANYTHING*, the first phase decides whether
+        # the second phase should even be performed at all.
+        #
+        # If this package has *NOT* been blacklisted...
+        if not is_package_blacklisted(package_basenames):
+            # ....................{ PHASE 2 ~ whitelist    }....................
+            # In this second phase, decide whether this package has been either:
+            # * Explicitly whitelisted by being directly passed to a public
+            #   "beartype.claw" import hook (e.g., beartype_package()).
+            # * Implicitly blacklisted by being the subpackage of a parent
+            #   package directly passed to such an import hook.
+
+            # Beartype configuration registered for the currently iterated
+            # package, defaulting to the beartype configuration registered for
+            # the global trie applicable to *ALL* packages if an external caller
+            # previously called the public beartype.claw.beartype_all() function
+            # *OR* "None" otherwise (i.e., if that function has yet to be
+            # called).
+            subpackage_conf = claw_state.packages_trie_whitelist.conf_if_hooked
+
+            # For each subpackages trie describing each parent package
+            # transitively containing this package (as well as that of that
+            # package itself)...
+            for subpackages_trie in iter_packages_trie(package_basenames):
+                # Beartype configuration registered with either...
+                subpackage_conf = (
+                    # That parent package if any *OR*...
+                    #
+                    # Since that parent package is more granular (i.e., unique)
+                    # than any transitive parent package of that parent package,
+                    # the former takes precedence over the latter when defined.
+                    subpackages_trie.conf_if_hooked or
+                    # A transitive parent package of that parent package if any.
+                    subpackage_conf
+                )
+            # print(f'Discovered package "{package_name}" beartype conf {repr(subpackage_conf)}!')
+        # Else, this package has been blacklisted.
+        # else:
+        #     print(f'Skipping blacklisted package "{package_name}"...')
+
+    # ....................{ RETURN                         }....................
     # Return this beartype configuration if any *OR* "None" otherwise.
     return subpackage_conf
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
-def iter_packages_trie(package_name: str) -> Iterable[PackagesTrieWhitelist]:
+def iter_packages_trie(
+    package_basenames: CollectionStrs) -> Iterable[PackagesTrieWhitelist]:
     '''
-    Generator iteratively yielding one **(sub)package (sub)trie whitelist**
-    (i.e., :class:`PackagesTrieWhitelist` instance) describing each transitive parent
-    package of the package with the passed name if this package *or* a parent
-    package of this package was hooked by a prior call to the
-    :func:`beartype.claw._package.clawpkghook.hook_packages` function *or* the
-    empty iterable otherwise otherwise (i.e., if neither this package *nor* a
+    Thread-safe generator iteratively yielding one **(sub)package (sub)trie
+    whitelist** (i.e., :class:`PackagesTrieWhitelist` instance) describing each
+    transitive parent package of the package with the passed name if this
+    package or a parent package of this package was hooked by a prior call to
+    the :func:`beartype.claw._package.clawpkghook.hook_packages` function *or*
+    the empty iterable otherwise otherwise (i.e., if neither this package nor a
     parent package of this package was hooked by such a call).
 
     Specifically, this generator yields (in order):
@@ -501,10 +655,18 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrieWhitelist]:
     :data:`beartype.claw._clawstate.packages_trie_whitelist`, which is already
     accessible via that global.
 
+    Caveats
+    -------
+    **This function is only safely callable in a thread-safe manner from within
+    a** ``with claw_lock:`` **context manager.** Equivalently, this function is
+    *not* safely callable outside that manager.
+
     Parameters
     ----------
-    package_name : str
-        Fully-qualified name of the package to be inspected.
+    package_basenames : CollectionStrs
+        Collection of each unqualified basename comprising the fully-qualified
+        name of the package to be inspected, split by the caller from this
+        name on ``"."`` delimiters.
 
     Yields
     ------
@@ -512,109 +674,38 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrieWhitelist]:
         (Sub)package configuration (sub)trie describing the currently iterated
         transitive parent package of the package with this name.
     '''
-    assert isinstance(package_name, str), f'{repr(package_name)} not string.'
+    assert isinstance(package_basenames, CollectionABC), (
+        f'{repr(package_basenames)} not collection.')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype.claw._clawstate import (
-        claw_lock,
-        claw_state,
-    )
+    from beartype.claw._clawstate import claw_state
 
-    # List of each unqualified basename comprising this name, split from this
-    # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
-    # "str.rsplit('.')" calls produce the exact same lists under all possible
-    # edge cases. We arbitrarily call the former rather than the latter for
-    # simplicity and readability.
-    package_basenames = package_name.split('.')
+    # ....................{ LOCALS                         }....................
+    # Current subtrie of the global trie whitelist describing the currently
+    # iterated basename of each parent package of this package to be
+    # whitelisted (i.e., hooked), initialized to this global trie.
+    subpackages_trie_whitelist: Optional[PackagesTrieWhitelist] = (  # type: ignore[union-attr]
+        claw_state.packages_trie_whitelist)
 
-    # With a submodule-specific thread-safe reentrant lock...
-    with claw_lock:
-        # ....................{ PHASE 1 ~ blacklist        }....................
-        # In this first phase, decide whether this package has been either:
-        # * Explicitly blacklisted by being directly listed in a previously
-        #   configured "BeartypeConf.claw_skip_package_names" iterable.
-        # * Implicitly blacklisted by being the subpackage of a parent package
-        #   directly listed in such an iterable.
-        #
-        # If either of these is the case, this generator function *IMMEDIATELY*
-        # reduces to a noop without yielding *ANYTHING.* For that reason, these
-        # two phases *CANNOT* be efficiently interleaved with one another.
-        # Before the second phase yields *ANYTHING*, the first phase decides
-        # whether the second phase should even be performed at all.
+    # ....................{ SEARCH                         }....................
+    # For each unqualified basename of each parent package transitively
+    # containing this package (as well as that of this package itself)...
+    for package_basename in package_basenames:
+        # Current subtrie of this trie whitelist describing this parent package
+        # if this parent package was hooked by a prior call to the
+        # hook_packages() function *OR* "None" otherwise (i.e., if this parent
+        # package has yet to be hooked).
+        subpackages_trie_whitelist = subpackages_trie_whitelist.get(  # type: ignore[union-attr]
+            package_basename)
 
-        # Current subtrie of the global trie blacklist describing the currently
-        # iterated basename of each parent package of this package to be
-        # blacklisted (i.e., ignored), initialized to this global trie.
-        subpackages_trie_blacklist: Optional[PackagesTrieBlacklist] = (
-            claw_state.packages_trie_blacklist)
+        # If this parent package has yet to be hooked, halt iteration.
+        if subpackages_trie_whitelist is None:
+            break
+        # Else, this parent package was previously hooked.
 
-        # For each unqualified basename of each parent package transitively
-        # containing this package (as well as that of this package itself)...
-        for package_basename in package_basenames:
-            # Current subtrie of this trie blacklist describing this parent
-            # package if this parent package contains one or more subpackages
-            # that have been blacklisted by a prior configuration of the
-            # "BeartypeConf.claw_skip_package_names" list *OR* "None" otherwise
-            # (i.e., if this parent package has yet to be blacklisted).
-            subpackages_trie_blacklist = subpackages_trie_blacklist.get(  # type: ignore[union-attr]
-                package_basename)
-
-            # If *NO* subpackages of this parent package have been blacklisted,
-            # halt iteration.
-            if subpackages_trie_blacklist is None:
-                break
-            # Else, one or more subpackages of this parent package have been
-            # blacklisted.
-            #
-            # If this parent package contains *NO* subpackages, this is a leaf
-            # (i.e., terminal) subtrie. In this case, the subpackage of this
-            # parent package that has been blacklisted is this parent package
-            # itself. Reduce to a noop *WITHOUT* yielding anything.
-            #
-            # You are now thinking: "B-b-but how can a package be a subpackage
-            # of itself?" Simple. In the same set theoretic sense that all
-            # classes are subclasses of themselves and all sets are subsets of
-            # themselves, all packages are subpackages of themselves. \o/
-            elif subpackages_trie_blacklist is PackagesTrieBlacklisted:
-                return
-            # Else, this parent package contains one or more subpackages. In
-            # this case, continue iterating until exhausting all subtries *OR*
-            # visiting a leaf subtrie.
-        # Else, neither this package *NOR* a parent package of this package has
-        # been blacklisted. In this case, this package *COULD* still have been
-        # whitelisted. Proceed to the next phase, Dr. Demento!
-
-        # ....................{ PHASE 2 ~ whitelist        }....................
-        # In this second phase, decide whether this package has been either:
-        # * Explicitly whitelisted by being directly passed to a public
-        #   "beartype.claw" import hook (e.g., beartype_package()).
-        # * Implicitly blacklisted by being the subpackage of a parent package
-        #   directly passed to such an import hook.
-
-        # Current subtrie of the global trie whitelist describing the currently
-        # iterated basename of each parent package of this package to be
-        # whitelisted (i.e., hooked), initialized to this global trie.
-        subpackages_trie_whitelist: Optional[PackagesTrieWhitelist] = (  # type: ignore[union-attr]
-            claw_state.packages_trie_whitelist)
-
-        # For each unqualified basename of each parent package transitively
-        # containing this package (as well as that of this package itself)...
-        for package_basename in package_basenames:
-            # Current subtrie of this trie whitelist describing this parent
-            # package if this parent package was hooked by a prior call to
-            # the hook_packages() function *OR* "None" otherwise (i.e., if this
-            # parent package has yet to be hooked).
-            subpackages_trie_whitelist = subpackages_trie_whitelist.get(  # type: ignore[union-attr]
-                package_basename)
-
-            # If this parent package has yet to be hooked, halt iteration.
-            if subpackages_trie_whitelist is None:
-                break
-            # Else, this parent package was previously hooked.
-
-            # Yield this subtrie whitelist describing this parent package.
-            yield subpackages_trie_whitelist
+        # Yield this subtrie whitelist describing this parent package.
+        yield subpackages_trie_whitelist
 
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.

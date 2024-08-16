@@ -35,9 +35,9 @@ from beartype._conf.confoverrides import (
 )
 from beartype._data.hint.datahinttyping import DictStrToAny
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.text.utiltextidentifier import is_identifier
 from collections.abc import (
     Collection as CollectionABC,
-    Iterable as IterableABC,
 )
 
 # ....................{ RAISERS                            }....................
@@ -127,8 +127,8 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
             (
                 # This item is a string *AND*...
                 isinstance(claw_skip_package_name, str) and
-                # This string is non-empty...
-                bool(claw_skip_package_name)
+                # This string is a "."-delimited Python identifier...
+                is_identifier(claw_skip_package_name)
             )
             # For each item of this iterable.
             for claw_skip_package_name in conf_kwargs['claw_skip_package_names']

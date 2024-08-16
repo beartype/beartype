@@ -83,7 +83,7 @@ class _TypeHintMeta(ABCMeta):
             :class:`beartype.door.TypeHint` instance.
 
         Raises
-        ----------
+        ------
         BeartypeDoorNonpepException
             If this class does *not* currently support the passed hint.
         BeartypeDecorHintPepSignException
@@ -174,7 +174,7 @@ class _TypeHintMeta(ABCMeta):
             :class:`beartype.door.TypeHint` instance.
 
         Raises
-        ----------
+        ------
         BeartypeDoorNonpepException
             If this class does *not* currently support the passed hint.
         BeartypeDecorHintPepSignException

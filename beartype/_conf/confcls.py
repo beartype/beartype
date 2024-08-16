@@ -24,6 +24,7 @@ callers.
 #* "claw_decoration_position_funcs".
 #* "claw_decoration_position_types".
 #* "claw_is_pep526".
+#* "claw_skip_package_names".
 #* "hint_overrides".
 #* "violation_door_type".
 #* "violation_param_type".

@@ -22,8 +22,9 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
     pure-Python bytecode compiled to platform-dependent temporary files residing
-    in temporary ``__pycache__/`` subdirectories) of the :mod:`beartype.claw`
-    subpackage and all subsubpackages of that subpackage regardless of depth.
+    in temporary ``__pycache__/`` subdirectories) of the test-specific
+    :mod:`beartype_test.a00_unit.data` subpackage and all subsubpackages of that
+    subpackage regardless of depth.
 
     Note that this unit test-scoped fixture is implicitly performed *before*
     each unit test transitively defined in sibling and child submodules of the
