@@ -17,6 +17,8 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    make_hint_pep484585_tuple_fixed_hint)
 from beartype._util.hint.pep.proposal.utilpep484604 import (
     make_hint_pep484604_union)
 from collections.abc import (
@@ -152,6 +154,34 @@ def infer_hint_collection_items(
     # Return this hint.
     return hint
 
+# ....................{ PRIVATE ~ constants                }....................
+_ROOT_TUPLE_FIXED_ITEMS_LEN_MAX = 10
+'''
+Maximum inclusive number of tuple items below which the private
+:func:`._infer_hint_reiterable_items` function infers a **root tuple** (i.e.,
+top-most object originally passed by the caller to the public
+:func:`beartype.door.infer_hint` function) to be validated by a **fixed-length
+tuple type hint** of the form ``tuple[{hint_child1}, ???, {hint_childN}]``.
+
+Specifically, for each root tuple containing:
+
+* Less than or equal to this number of items, this tuple is annotated by a
+  **fixed-length tuple type hint** of the form ``tuple[{hint_child1}, ???,
+  {hint_childN}]``.
+* Greater than this number of items, this tuple is annotated by a **variadic
+  tuple type hint** of the form ``tuple[{hint_childs}, ...]``.
+
+This magic number enables an ad-hoc heuristic for disambiguating between
+fixed-length and variadic tuple type hints. Technically, *any* tuple may be
+ambiguously annotated as either. Pragmatically, fixed-length tuple type hints
+exist almost exclusively to annotate **multiple-return functions** (i.e.,
+functions returning two or more values as a tuple whose items are those values);
+variadic tuple type hints annotate all other tuples, which is most of them.
+Since all multiple-return functions return a root tuple *and* since most
+real-world multiple-return functions of interest return a root tuple containing
+less than or equal to this magic number of items, this heuristic follows.
+'''
+
 # ....................{ PRIVATE ~ inferers                 }....................
 def _infer_hint_mapping_items(
     obj: MappingABC,
@@ -246,8 +276,8 @@ def _infer_hint_reiterable_items(
     from beartype.door._func.infer.inferhint import infer_hint
 
     # ....................{ LOCALS                         }....................
-    # Set of all child type hints to conjoin into a union.
-    hints_child = set()
+    # List of all child type hints validating the items of this collection.
+    hints_child = []
 
     # ....................{ RECURSION                      }....................
     # For each item in this collection...
@@ -256,24 +286,59 @@ def _infer_hint_reiterable_items(
         hint_child = infer_hint(
             obj=item, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
 
-        # Add this child type hint to this set.
-        hints_child.add(hint_child)
+        # Append this child type hint to this list.
+        hints_child.append(hint_child)
 
     # ....................{ SUBSCRIPTION                   }....................
-    # PEP 604- or 484-compliant union of these child type hints.
-    hints_child_union = make_hint_pep484604_union(tuple(hints_child))
+    # If...
+    if (
+        # This collection is a tuple *AND*...
+        hint_factory is Tuple and
+        # The frozen set of the object IDs of all currently inferred parent
+        # collections contains exactly one ID, this is a root tuple (i.e.,
+        # top-most tuple originally passed by the caller to the parent
+        # infer_hint() function). If this is the case *AND*...
+        len(__beartype_obj_ids_seen__) == 1 and
+        # This root tuple contains less than or equal to this ad-hoc maximum
+        # number of tuple items...
+        len(obj) <= _ROOT_TUPLE_FIXED_ITEMS_LEN_MAX
+    ):
+        # Then this root tuple is subjectively small enough to be returned as
+        # the value returned by a multiple-return function (i.e., returning two
+        # or more values as items of this tuple). In this case, validate this
+        # tuple with a fixed-length tuple type hint. See the
+        # "_ROOT_TUPLE_FIXED_ITEMS_LEN_MAX" docstring for further details.
+        hint = make_hint_pep484585_tuple_fixed_hint(tuple(hints_child))
+    # Else, this collection is *NOT* a subjectively small root tuple. In this
+    # case, defer to generic logic.
+    else:
+        # Attempt to temporarily coerce this list of child type hints into a
+        # set to trivially remove *ALL* duplicate hints.
+        try:
+            hints_child = set(hints_child)  # type: ignore[assignment]
+        # If doing so raises *ANY* exception whatsoever, silently ignore this
+        # exception. In all likelihood, this exception connotes a hashability
+        # error due to one or more of these child type hints being unhashable
+        # and thus *NOT* addable to a set. Although non-ideal, this certainly
+        # isn't worth destroying type hint inference over.
+        except Exception:
+            pass
 
-    # Type hint recursively validating this reiterable, defined by...
-    hint = (
-        # If this collection is a tuple, subscripting this tuple hint factory by
-        # the variadic-length variant of this union followed by an ellipses
-        # (signifying this tuple to contain arbitrarily many items);
-        hint_factory[hints_child_union, ...]  # type: ignore[index]
-        if hint_factory is Tuple else
-        # Else, this collection is *NOT* a tuple. In this case, trivially
-        # subscripting this non-tuple hint factory by this union.
-        hint_factory[hints_child_union]  # type: ignore[index]
-    )
+        # PEP 604- or 484-compliant union of these child type hints.
+        hints_child_union = make_hint_pep484604_union(tuple(hints_child))
+
+        # Type hint recursively validating this reiterable, defined by...
+        hint = (
+            # If this collection is a tuple, subscripting this tuple hint
+            # factory by the variadic-length variant of this union followed by
+            # an ellipses (signifying this tuple to contain arbitrarily many
+            # items);
+            hint_factory[hints_child_union, ...]  # type: ignore[index]
+            if hint_factory is Tuple else
+            # Else, this collection is *NOT* a tuple. In this case, trivially
+            # subscripting this non-tuple hint factory by this union.
+            hint_factory[hints_child_union]  # type: ignore[index]
+        )
 
     # Return this hint.
     return hint

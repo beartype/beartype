@@ -223,13 +223,21 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     # this fixture.
     INFER_HINT_CASES = [
         # ..................{ NON-PEP                        }..................
-        # A builtin scalar is annotated as the builtin type of that scalar.
+        # Builtin scalars are annotated as the builtin types of those scalars.
         ('Of his frail exultation shall be spent', str),
+        (b'Mingling its solemn song, whilst the broad river', bytes),
+        (True, bool),
+        (73, int),
+        (94.0251, float),
 
         # An instance of a PEP-noncompliant class (i.e., a class *NOT* covered
         # by an existing PEP standard) satisfying no broader type hint is
         # annotated simply as that class.
         (Class(), Class),
+
+        # ..................{ PEP                            }..................
+        # Any arbitrary type hint is annotated as itself.
+        (Union[int, List[bytes]], Union[int, List[bytes]]),
 
         # ..................{ PEP 484                        }..................
         # The "None" singleton is annotated as itself under PEP 484.
@@ -559,10 +567,44 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ({'Of the small stream he went;', 'he did impress',}, Set[str]),
 
         # ..................{ PEP [484|585] ~ tuple          }..................
-        # # A 2-tuple of items of differing classes (one of which is a nested list
-        # # of is annotated as the PEP 484-
-        # # and 585-compliant "tuple" type subscripted in a fixed-length manner
-        # # by type hints matching those classes.
+        # A subjectively small root tuple (i.e., tuple *NOT* contained in a
+        # larger container and containing a fairly small number of items) is
+        # annotated as the fixed-length PEP 484- and 585-compliant "tuple" type
+        # iteratively subscripted by type hints matching the types of all items.
+        (
+            ('Foaming and hurrying o', b'er its rugged path', 94, 4.3618,),
+            Tuple[str, bytes, int, float],
+        ),
+
+        # A subjectively large root tuple (i.e., tuple *NOT* contained in a
+        # larger container but containing a fairly large number of items) is
+        # annotated as the variadic PEP 484- and 585-compliant "tuple" type
+        # subscripted by a single type hint matching the types of all items.
+        (
+            (
+                'Fell into that immeasurable void,',
+                b'Scattering its waters to the passing winds.',
+                37,
+                9.1725,
+            ) * 4,
+            Tuple[
+                (
+                    # If the active Python interpreter targets Python >= 3.10
+                    # and thus supports PEP 604-compliant new-style unions, this
+                    # kind of union;
+                    str | bytes | int | float
+                    if IS_PYTHON_AT_LEAST_3_10 else
+                    # Else, the active Python interpreter targets Python < 3.10
+                    # and thus fails to support PEP 604-compliant new-style
+                    # unions. In this case, fallback to a PEP 484-compliant
+                    # old-style union.
+                    Union[str, bytes, int, float]
+                ),
+                # Trailing ellipsis, connoting a variadic tuple type hint.
+                ...,
+            ],
+        ),
+
         # ((b'heh', [0xBEEEEEEEF, 'ohnoyoudont',], (
         #     (b'heh', [0xBEEEEEEEF, 'ohnoyoudont',]).
         #     .

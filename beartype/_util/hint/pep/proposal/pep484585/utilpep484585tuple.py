@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import Tuple
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
@@ -21,6 +22,10 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     HINT_PEP585_TUPLE_EMPTY)
+from beartype._util.py.utilpyversion import (
+    # IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_9,
+)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Docstring us up, please.
@@ -157,4 +162,46 @@ def is_hint_pep484585_tuple_empty(hint: object) -> bool:
     return (
         hint == HINT_PEP585_TUPLE_EMPTY or
         hint == HINT_PEP484_TUPLE_EMPTY
+    )
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+def make_hint_pep484585_tuple_fixed_hint(hints: tuple) -> object:
+    '''
+    :pep:`484`- or :pep:`585`-compliant **fixed-length tuple type hint** of the
+    form ``tuple[{hint_child1}, ???, {hint_childN}]`` subscripted by all
+    PEP-compliant child type hints in the passed tuple.
+
+    Parameters
+    ----------
+    hints : tuple
+        Tuple of all child type hints to subscript this tuple type hint with.
+
+    Returns
+    -------
+    object
+        Fixed-length tuple type hint subscripted by these child type hints.
+    '''
+    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+
+    # Return a fixed-length tuple type hint subscripted by these child type
+    # hints, defined as either...
+    return (
+        #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
+        #"SyntaxError" if we even try doing this. *SADNESS*
+        # # If the active Python interpreter targets Python >= 3.11 and thus
+        # # supports list unpacking in arbitrary expressions, prefer an efficient
+        # # expression leveraging a list unpacking;
+        # Tuple[*hints]
+        # if IS_PYTHON_AT_LEAST_3_11 else
+        # Else, the active Python interpreter targets Python <= 3.10.
+        #
+        # If the active Python interpreter targets Python >= 3.9 and thus
+        # supports PEP 585, dynamically subscript the builtin "tuple" type;
+        Tuple.__class_getitem__(hints)  # type: ignore[attr-defined]
+        if IS_PYTHON_AT_LEAST_3_9 else
+        # Else, the active Python interpreter targets Python <= 3.8 and thus
+        # supports fails to PEP 585. In this case, dynamically subscript the
+        # standard "typing.tuple" type.
+        Tuple.__getitem__(hints)  # pyright: ignore
     )

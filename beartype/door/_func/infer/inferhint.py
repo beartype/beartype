@@ -34,6 +34,7 @@ from beartype._data.hint.datahinttyping import (
     FrozenSetInts,
 )
 from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.hint.pep.utilpeptest import is_hint_pep
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion(object):
@@ -49,12 +50,6 @@ class BeartypeInferHintContainerRecursion(object):
 # ....................{ INFERERS                           }....................
 #FIXME: Add support for dictionaries. That's pretty much mandatory. Pretty much
 #useless without at least that. *sigh*
-#FIXME: Add support for generics (e.g., instances of "Generic[T]" subclasses).
-#This should *MOSTLY* be trivial. Since generics are already basically useful
-#type hints, generics should just be returned unmodified. The only exception is
-#iterable parametrized generics (e.g., instances of "Generic[T]" subclasses);
-#iterable parametrized generics should be subscripted by a child type hint
-#describing the items contained by those iterables.
 def infer_hint(
     # Mandatory parameters.
     obj: object,
@@ -163,13 +158,46 @@ def infer_hint(
         return BeartypeInferHintContainerRecursion
     # Else, this object has yet to be visited.
 
-    # ....................{ PEP 484                        }....................
-    # If this object is the "None" singleton, this object is trivially satisfied
-    # by itself under PEP 484. Interestingly, "None" is the *ONLY* object that
-    # is its own type hint.
-    elif obj is None:
+    # ....................{ PEP                            }....................
+    #FIXME: Generalize to support iterable parametrized generics (e.g.,
+    #instances of "Generic[T]" subclasses); iterable parametrized generics
+    #should be subscripted by a child type hint describing the items contained
+    #by those iterables. For example, when this function is passed an instance
+    #of a "List[T]" subclass, this function should return "List[hints_child]"
+    #where "hints_child" is the union of the types of all items of this list.
+    #
+    #Doing so will require explicitly detecting generics here. *sigh*
+
+    # If this object is a PEP-compliant type hint, this object is trivially
+    # satisfied by itself. Interestingly:
+    # * This includes the "None" singleton, which is a PEP 484-compliant type
+    #   hint whose beartype sign is "HintSignNone".
+    #
+    # Note that PEP-compliant type hints are intentionally detected and
+    # short-circuited first *BEFORE* any further inference. Why? Because
+    # subjecting PEP-compliant type hints to any inference typically destroys
+    # those hints. For example:
+    # * Many PEP-compliant type hints are types. Subjecting these hints to
+    #   further inference would incorrectly infer the hints for these hints as
+    #   "Type[obj]" rather than "obj".
+    #
+    # Specifically, if...
+    elif (
+        # This object is a PEP-compliant type hint *AND*...
+        is_hint_pep(obj) and
+        # This object is *NOT* a string. There exists an ambiguity here. Under
+        # PEP 484, any string that is a type hint is a stringified forward
+        # reference to another PEP-compliant hint that typically has yet to be
+        # defined. However, unconditionally inferring *ALL* strings to be PEP
+        # 484-compliant stringified forward references here would coerce
+        # container items that are simple strings into references. Since doing
+        # so would strongly conflict with common sense and sane semantics, this
+        # function preserves strings as simple PEP-noncompliant objects.
+        not isinstance(obj, str)
+    ):
+        # Return this PEP-compliant type hint as is.
         return obj
-    # Else, this object is *NOT* the "None" singleton.
+    # Else, this object is *NOT* a PEP-compliant type hint.
 
     # ....................{ PEP [484|585]                  }....................
     # If this object is a type, this type is trivially satisfied by a PEP 484-

@@ -304,8 +304,8 @@ def make_hint_pep484604_union(hints: tuple) -> object:
 
     Parameters
     ----------
-    hint : object
-        Type hint to be inspected.
+    hints : tuple
+        Tuple of all child type hints to be unioned together.
 
     Returns
     -------
