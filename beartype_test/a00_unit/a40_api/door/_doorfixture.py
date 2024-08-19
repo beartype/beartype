@@ -168,6 +168,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ValuesView,
     )
     from beartype.vale import IsInstance
+    from beartype._util.module.utilmodtest import is_module
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
@@ -812,6 +813,13 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 ),
             ),
         ))
+    # Else, the PEP 612-compliant "ParamSpec" class is unimportable.
+
+    # ..................{ LIBRARIES ~ numpy                  }..................
+    # If NumPy is importable under the active Python interpreter...
+    if is_module('numpy'):
+        pass
+    # Else, NumPy is unimportable.
 
     # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.

@@ -712,27 +712,41 @@ def test_api_cave_lib_numpy() -> None:
     importable *or* reduce to a noop otherwise.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    import numpy
     from beartype import cave
+    from numpy import (
+        asarray,
+        ones,
+    )
+
+    # ....................{ LOCALS                         }....................
+    #FIXME: Generalize into a new globally reusable numpy_arrays()
+    #session-scoped fixture, please.
 
     # NumPy boolean array prepopulated with NumPy boolean false values.
-    array_bool = numpy.ones((6,))
+    array_bool = ones((6,))
 
     # NumPy floating-point array prepopulated with an infamous rational series.
-    array_float = numpy.asarray((1, 3/2, 7/5, 17/12, 41/29, 99/70))
+    array_float = asarray((1, 3/2, 7/5, 17/12, 41/29, 99/70))
 
     # NumPy integer array prepopulated with the GIF header in ASCII code.
-    array_int = numpy.asarray((47, 49, 46, 38, 39, 61))
+    array_int = asarray((47, 49, 46, 38, 39, 61))
 
     # NumPy string array prepopulated with Rudyard Kipling, because Truth™.
-    array_str = numpy.asarray((
+    array_str = asarray((
         'I keep six honest serving-men:',
         '(They taught me all I knew)',
         'Their names are What and Where and When',
         'And How and Why and Who.',
     ))
 
+    # # NumPy arrays of well-known real number series.
+    # E_APPROXIMATIONS = np.array(
+    #     [1+1, 1+1+1/2, 1+1+1/2+1/6, 1+1+1/2+1/6+1/24,])
+    # FACTORIALS = np.array([1, 2, 6, 24, 120, 720, 5040, 40320, 362880,])
+
+    # ....................{ ASSERTS                        }....................
     # Test all container protocols satisfied by NumPy arrays against these
     # specific arrays.
     _assert_types_objects(

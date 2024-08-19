@@ -23,6 +23,7 @@ from beartype._cave._cavefast import (
     NoneType,
 )
 from beartype._data.hint.datahinttyping import (
+    DictStrToType,
     FrozenSetTypes,
     TupleTypes,
 )
@@ -85,7 +86,7 @@ decorated by the :func:`beartype.beartype` decorator).
 
 # ....................{ TYPES ~ builtin                    }....................
 # Defined below by the _init() function.
-TYPE_BUILTIN_NAME_TO_TYPE: Dict[str, type] = None  # type: ignore[assignment]
+TYPE_BUILTIN_NAME_TO_TYPE: DictStrToType = None  # type: ignore[assignment]
 '''
 Dictionary mapping from the name of each **builtin type** (i.e., globally
 accessible C-based type implicitly accessible from all scopes and thus

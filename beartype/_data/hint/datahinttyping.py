@@ -337,6 +337,13 @@ PEP-compliant type hint matching a mapping whose keys are *all* strings.
 '''
 
 
+DictStrToType = Dict[str, type]
+'''
+PEP-compliant type hint matching a mapping whose keys are *all* strings and
+whose values are *all* types.
+'''
+
+
 DictTypeToAny = Dict[type, Any]
 '''
 PEP-compliant type hint matching a mapping whose keys are *all* types.

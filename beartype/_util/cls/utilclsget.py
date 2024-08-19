@@ -12,9 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import (
-    Optional,
-)
+from beartype.typing import Optional
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
@@ -117,7 +115,7 @@ def get_type_locals(
     minimal-length example (MLE) refutes all of the above by demonstrating that
     superclass attributes are *not* local to subclasses:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> class Superclass(object):
        ...     my_int = int
@@ -148,9 +146,9 @@ def get_type_locals(
     ----------
     cls : type
         Class to be inspected.
-    exception_cls : Type[Exception]
-        Type of exception to be raised. Defaults to
-        :exc:`_BeartypeUtilTypeException`.
+    exception_cls : Type[Exception], optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTypeException`.
 
     Returns
     -------

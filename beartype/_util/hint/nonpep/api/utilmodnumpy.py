@@ -22,14 +22,14 @@ from beartype.roar import (
     BeartypeDecorHintNonpepNumpyException,
     BeartypeDecorHintNonpepNumpyWarning,
 )
-from beartype.typing import (
-    Any,
-    FrozenSet,
+from beartype.typing import Any
+from beartype._util.api.utilapinumpy import (
+    get_numpy_dtype_type_abcs,
+    make_numpy_dtype,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.utilobject import is_object_hashable
 
 # ....................{ REDUCERS                           }....................
@@ -63,8 +63,7 @@ def reduce_hint_numpy_ndarray(
     hint : object
         PEP-noncompliant typed NumPy array to be reduced.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable label prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 
@@ -109,8 +108,12 @@ def reduce_hint_numpy_ndarray(
     # almost *ALWAYS* be importable. Why? Because this hint was externally
     # instantiated by the user by first importing the "numpy.typing.NDArray"
     # attribute passed to this getter.
-    from beartype.vale import IsAttr, IsEqual, IsSubclass
-    from numpy import dtype, ndarray  # pyright: ignore
+    from beartype.vale import (
+        IsAttr,
+        IsEqual,
+        IsSubclass,
+    )
+    from numpy import ndarray  # pyright: ignore
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
@@ -149,7 +152,7 @@ def reduce_hint_numpy_ndarray(
 
     # ..................{ CONSTANTS                          }..................
     # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
-    NUMPY_DTYPE_TYPE_ABCS = _get_numpy_dtype_type_abcs()
+    NUMPY_DTYPE_TYPE_ABCS = get_numpy_dtype_type_abcs()
 
     # ..................{ ARGS                               }..................
     # Objects subscripting this hint if any *OR* the empty tuple otherwise.
@@ -243,46 +246,26 @@ def reduce_hint_numpy_ndarray(
         #     dtype is deprecated. The current result is `float64` which is not
         #     strictly correct.
         #
-        # We instead follow mypy's lead presumably defined somewhere in the
-        # incredibly complex innards of NumPy's mypy plugin -- which we
-        # admittedly failed to grep despite ~~wasting~~ "investing" several
-        # hours in doing so. Specifically, mypy treats subscriptions of the
-        # "numpy.typing.NDArray" type hint factory by one of these ABCs (rather
-        # than either a scalar or proper dtype) as a type inheritance (rather
-        # than object equality) relation. Since this is sensible, we do too.
+        # Instead, we follow mypy's lead. Presumably defined somewhere in the
+        # incredibly complex innards of NumPy's mypy plugin (which we admittedly
+        # failed to grep despite ~~wasting~~ "investing" several hours in doing
+        # so), mypy treats subscriptions of the "numpy.typing.NDArray" type hint
+        # factory by one of these ABCs (rather than either a scalar or proper
+        # dtype) as a type inheritance (rather than object equality) relation.
+        # Since this is sensible, we do too.
 
         # Equivalent nested beartype validator reduced from this hint.
         hint_validator = (
             IsAttr['dtype', IsAttr['type', IsSubclass[hint_dtype_like]]])
-    # Else, this dtype-like is either unhashable *OR* not such an ABC.
+    # Else, this dtype-like is either unhashable *OR* not such an ABC. In this
+    # case...
     else:
-        # Attempt to coerce this possibly non-dtype into a proper dtype. Note
-        # that the dtype.__init__() constructor efficiently maps non-dtype
-        # scalar types (e.g., "numpy.float64") to corresponding cached dtypes:
-        #     >>> import numpy
-        #     >>> i4_dtype = numpy.dtype('>i4')
-        #     >>> numpy.dtype(i4_dtype) is numpy.dtype(i4_dtype)
-        #     True
-        #     >>> numpy.dtype(numpy.float64) is numpy.dtype(numpy.float64)
-        #     True
-        #
-        # Ergo, the call to this constructor here is guaranteed to already
-        # effectively be memoized.
-        try:
-            hint_dtype = dtype(hint_dtype_like)
-        # If this object is *NOT* coercible into a dtype, raise an exception.
-        # This is essential. As of NumPy 1.21.0, "numpy.typing.NDArray" fails
-        # to validate its subscripted argument to actually be a dtype: e.g.,
-        #     >>> from numpy.typing import NDArray
-        #     >>> NDArray['wut']
-        #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
-        except Exception as exception:
-            raise BeartypeDecorHintNonpepNumpyException(
-                f'{exception_prefix}typed NumPy array {repr(hint)} '
-                f'data type {repr(hint_dtype_like)} invalid '
-                f'(i.e., neither data type nor coercible into data type).'
-            ) from exception
-        # Else, this object is now a proper dtype.
+        # Proper dtype coerced from this possibly non-dtype.
+        hint_dtype = make_numpy_dtype(
+            dtype=hint_dtype_like,
+            exception_prefix=exception_prefix,
+            exception_cls=BeartypeDecorHintNonpepNumpyException,
+        )
 
         # Equivalent nested beartype validator reduced from this hint.
         hint_validator = IsAttr['dtype', IsEqual[hint_dtype]]
@@ -294,55 +277,3 @@ def reduce_hint_numpy_ndarray(
 
     # Return this validator annotating the NumPy array type.
     return typing_annotated[ndarray, hint_validator]
-
-# ....................{ PRIVATE ~ getter                   }....................
-#FIXME: File an upstream NumPy issue politely requesting they publicize either:
-#* An equivalent container listing these types.
-#* Documentation officially listing these types.
-@callable_cached
-def _get_numpy_dtype_type_abcs() -> FrozenSet[type]:
-    '''
-    Frozen set of all **NumPy scalar data type abstract base classes** (i.e.,
-    superclasses of all concrete NumPy scalar data types (e.g.,
-    :class:`numpy.int64`, :class:`numpy.float32`)).
-
-    This getter is memoized for efficiency. To defer the substantial cost of
-    importing from NumPy, the frozen set memoized by this getter is
-    intentionally deferred to call time rather than globalized as a constant.
-
-    Caveats
-    ----------
-    **NumPy currently provides no official container listing these classes.**
-    Likewise, NumPy documentation provides no official list of these classes.
-    Ergo, this getter. This has the dim advantage of working but the profound
-    disadvantage of inviting inevitable discrepancies between the
-    :mod:`beartype` and :mod:`numpy` codebases. So it goes.
-    '''
-
-    # Defer heavyweight imports.
-    from numpy import (  # pyright: ignore[reportMissingImports]
-        character,
-        complexfloating,
-        flexible,
-        floating,
-        generic,
-        inexact,
-        integer,
-        number,
-        signedinteger,
-        unsignedinteger,
-    )
-
-    # Create, return, and cache a frozen set listing these ABCs.
-    return frozenset((
-        character,
-        complexfloating,
-        flexible,
-        floating,
-        generic,
-        inexact,
-        integer,
-        number,
-        signedinteger,
-        unsignedinteger,
-    ))

@@ -1104,6 +1104,32 @@ class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
 
     pass
 
+# ....................{ API ~ library                      }....................
+class BeartypeLibraryException(BeartypeException):
+    '''
+    Abstract base class of all **beartype library exceptions.**
+
+    Instances of subclasses of this exception are raised from **third-party
+    utilities** (i.e., callables and classes interfacing with third-party
+    packages and modules outside the control of :mod:`beartype`).
+    '''
+
+    pass
+
+
+class BeartypeLibraryNumpyException(BeartypeLibraryException):
+    '''
+    **Beartype NumPy exception.**
+
+    This exception is raised from various functions of the private
+    :class:`beartype._util.api.utilapinumpy` submodule internally called by
+    various public APIs interfacing with the third-party :mod:`numpy` package
+    (e.g., NumPy array type hint inference implemented by the public
+    :func:`beartype.door.infer_hint` function).
+    '''
+
+    pass
+
 # ....................{ API ~ plug                         }....................
 class BeartypePlugException(BeartypeException):
     '''

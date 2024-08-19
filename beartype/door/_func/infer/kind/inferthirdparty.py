@@ -16,6 +16,7 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._util.api.utilapinumpy import reduce_numpy_dtype
 from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 
@@ -114,6 +115,7 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
       be that of the passed NumPy array.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer package-specific imports.
     from numpy import ndarray  # pyright: ignore
     from numpy.typing import NDArray  # type: ignore[attr-defined]
@@ -121,14 +123,17 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     # Validate sanity.
     assert isinstance(obj, ndarray), f'{repr(obj)} not NumPy array.'
 
-    #FIXME: Non-ideal. Ideally, fine-grained dtypes like "numpy.float32" or
-    #whatevahs should be generalized to coarse-grained builtin Python types like
-    #"float" and "int". Everybody wants the latter. Nobody wants the former.
+    # ....................{ DTYPE                          }....................
+    # Coarse-grained NumPy-agnostic builtin type (e.g., "int") reduced from the
+    # fine-grained NumPy-specific data type of the passed NumPy array (e.g.,
+    # "numpy.int64"). Everybody wants the former. Nobody wants the latter.
+    numpy_dtype = reduce_numpy_dtype(obj.dtype)  # type: ignore[name-defined]
 
     # Hint to be returned, defaulting to the "NDArray" type hint factory
-    # subscripted by the dtype of the passed NumPy array.
-    hint: object = NDArray[obj.dtype]  # type: ignore[misc,name-defined]
+    # subscripted by the dtype .
+    hint: object = NDArray[numpy_dtype]  # type: ignore[misc,valid-type]
 
+    # ....................{ SHAPE                          }....................
     # PEP 593-compliant "Annotated" type hint factory imported from either the
     # standard "typing" or third-party "typing_extensions" modules if importable
     # from at least one of those modules *OR* "None" otherwise.
@@ -148,6 +153,7 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
         hint = Annotated[hint, IsAttr['ndim', IsEqual[obj.ndim]]]  # type: ignore[name-defined]
     # Else, "typing(|_extensions).Annotated" is unimportable. In this case...
 
+    # ....................{ RETURN                         }....................
     # Return this hint.
     return hint
 

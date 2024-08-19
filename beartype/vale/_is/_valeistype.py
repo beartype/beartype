@@ -265,7 +265,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
     Examples
     --------
-    .. code-block:: python
+    .. code-block:: pycon
 
        # Import the requisite machinery.
        >>> from beartype import beartype

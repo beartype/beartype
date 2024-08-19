@@ -89,9 +89,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.nonpep.mod.utilmodnumpy import (
+from beartype._util.hint.nonpep.api.utilmodnumpy import (
     reduce_hint_numpy_ndarray)
-from beartype._util.hint.nonpep.mod.utilmodpandera import (
+from beartype._util.hint.nonpep.api.utilmodpandera import (
     reduce_hint_pandera)
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     reduce_hint_pep484_deprecated,
