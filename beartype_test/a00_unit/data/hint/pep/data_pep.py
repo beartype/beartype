@@ -11,67 +11,6 @@ PEP-compliant type hints, exercising known edge cases on behalf of higher-level
 unit test submodules.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: In hindsight, the structure of both this submodule and subsidiary
-#submodules imported below by the _init() method is simply *ABYSMAL.* Instead:
-#* Do everything below first for low-hanging fruit *NOT* widely used throughout
-#  our test suite. This means (in order):
-#  * "HINTS_PEP_IGNORABLE_DEEP".
-#  * "HINTS_PEP_IGNORABLE_SHALLOW".
-#  * "HINTS_IGNORABLE".
-#  * "HINTS_PEP_HASHABLE".
-#  * "NOT_HINTS_NONPEP".
-#  * "HINTS_PEP_META".
-#
-#  In particular, avoid attempting to refactor "HINTS_PEP_META" until *AFTER*
-#  refactoring everything else. Refactoring "HINTS_PEP_META" will prove
-#  extremely time-consuming and thus non-trivial, sadly. *sigh*
-#* Define one new @pytest.fixture-decorated session-scoped function for each
-#  public global variable currently defined below: e.g.,
-#      # Instead of this...
-#      HINTS_PEP_IGNORABLE_SHALLOW = None
-#
-#      # ...do this instead.
-#      from beartype_test.a00_util.data.hint.pep.proposal.data_pep484 import (
-#          hints_pep_ignorable_shallow_pep484,
-#      )
-#      from beartype_test.a00_util.data.hint.pep.proposal._data_pep593 import (
-#          hints_pep_ignorable_shallow_pep593,
-#      )
-#      from collections.abc import Set
-#      from pytest import fixture
-#
-#      @fixture(scope='session')
-#      def hints_pep_ignorable_shallow(
-#          hints_pep_ignorable_shallow_pep484,
-#          hints_pep_ignorable_shallow_pep593,
-#          ...,
-#      ) -> Set:
-#          return (
-#              hints_pep_ignorable_shallow_pep484 |
-#              hints_pep_ignorable_shallow_pep593 |
-#              ...
-#          )
-#* In the "beartype_test.a00_unit.conftest" submodule, import those fixtures to
-#  implicitly expose those fixtures to all unit tests: e.g.,
-#      from beartype_test.a00_util.data.hint.pep.data_pep import (
-#          hints_pep_ignorable_shallow,
-#      )
-## Refactor all unit tests previously explicitly importing
-#  "HINTS_PEP_IGNORABLE_SHALLOW" to instead accept the
-#  "hints_pep_ignorable_shallow" fixture as a function parameter: e.g.,
-#      def test_em_up(hints_pep_ignorable_shallow: Set) -> None: ...
-#
-#The advantages are obvious. Currently, we unconditionally build these globals
-#out in an extremely convoluted process that happens really extremely early at
-#*PYTEST COLLECTION TIME.* That's horrible. The above refactoring instead defers
-#that build-out to *TEST CALL TIME.* Any tests skipped or ignored for the
-#current test session will result in fixtures required by those tests also being
-#skipped and ignored. Ultimately, though, the principal benefit is
-#maintainability; the above approach isolates PEP-specific data containers to
-#their own PEP-specific fixtures, which are then composable into even larger
-#PEP-agnostic fixtures. It just makes sense. Let's do this sometime, everybody.
-
 # ....................{ IMPORTS                            }....................
 from pytest import fixture
 
