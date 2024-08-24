@@ -118,7 +118,6 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
     return tuple(HINT_EQUALITY_CASES)
 
 # ....................{ FIXTURES ~ infer                   }....................
-#FIXME: Actually leverage this in a unit test, please. *sigh*
 @fixture(scope='session')
 def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
     '''
@@ -269,6 +268,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Mapping[str, bytes], IsInstance[ClassMapping]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Mapping[str, bytes]
             ),
         ),
@@ -284,6 +285,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 Annotated[
                     MutableMapping[bytes, str], IsInstance[ClassMutableMapping]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 MutableMapping[bytes, str]
             ),
         ),
@@ -298,6 +301,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Container, IsInstance[ClassContainer]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Container
             ),
         ),
@@ -310,6 +315,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Collection[str], IsInstance[ClassCollection]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Collection[str]
             ),
         ),
@@ -322,6 +329,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Sequence[bytes], IsInstance[ClassSequence]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Sequence[bytes]
             ),
         ),
@@ -335,6 +344,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 Annotated[
                     MutableSequence[str], IsInstance[ClassMutableSequence]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 MutableSequence[str]
             ),
         ),
@@ -350,6 +361,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Sequence[bytes], IsInstance[ClassMappingSequence]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Sequence[bytes]
             ),
         ),
@@ -363,6 +376,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
                 # annotated to require an instance of this object's type.
                 Annotated[Sized, IsInstance[ClassSized]]
                 if Annotated is not None else
+                # Else, "typing(|_extensions).Annotated" is unimportable. In
+                # this case, merely this protocol.
                 Sized
             ),
         ),

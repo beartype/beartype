@@ -98,7 +98,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     '''
 
     # Defer heavyweight imports.
-    from numpy import unsignedinteger
+    from numpy import unsignedinteger  # pyright: ignore
 
     # Dictionary mapping from each sanitized NumPy data type name to the
     # corresponding reduced type.
@@ -234,7 +234,7 @@ def make_numpy_dtype(
         f'{repr(exception_cls)} not exception type.')
 
     # Defer heavyweight imports.
-    from numpy import dtype as numpy_dtype
+    from numpy import dtype as numpy_dtype  # pyright: ignore
 
     # Attempt to coerce this possibly non-dtype into a proper dtype.
     #
