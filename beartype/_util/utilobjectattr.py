@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 # from beartype._cave._cavefast import MethodBoundInstanceDunderCType
-# from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
+from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
 from beartype._data.hint.datahinttyping import DictStrToAny
 from inspect import getattr_static
 
@@ -245,7 +245,7 @@ def _is_object_attr_callable_not_object_slot_wrapper(
     attr_name: str, attr_value: object) -> bool:
     '''
     Predicate suitable for passing as the ``predicate`` parameter to the
-    :func:`get_object_attrs_name_to_value_explicit` getter, returning
+    :func:`.get_object_attrs_name_to_value_explicit` getter, returning
     :data:`True` only if the passed attribute value is both callable and *not*
     an **object slot wrappers** (i.e., low-level C-based callables bound to the
     root :class:`object` superclass providing mostly useless default
@@ -253,33 +253,29 @@ def _is_object_attr_callable_not_object_slot_wrapper(
     '''
     # print(f'OBJECT_SLOT_WRAPPERS: {OBJECT_SLOT_WRAPPERS}')
 
-    # Return true only if...
-    return (
-        # This attribute value is callable *AND*...
-        callable(attr_value) and
+    # If this attribute value is uncallable, return false immediately.
+    if not callable(attr_value):
+        return False
+    # Else, this attribute value is callable.
 
-        #FIXME: *HEH.* So, this is painfully slow. We can actually optimize this
-        #back to the following *MUCH* faster solution:
-        #     attr_value not in OBJECT_SLOT_WRAPPERS
-        #...by manually augmenting "OBJECT_SLOT_WRAPPERS" with the
-        #object.__init_subclass__() and object.__subclass_hook__() methods.
+    # Return true only if this callable is *NOT* an "object" slot wrapper.
+    #
+    # Note that:
+    # * Although all standard callables are hashable, some user-defined
+    #   callables are unhashable. Examples of unhashable callables include:
+    #   * Unhashable pseudo-callables (i.e., unhashable objects whose classes
+    #     define the __call__() dunder methods).
+    # * The beartype._util.utilobject.is_object_hashable() tester is *NOT*
+    #   necessarily safely importable here, due to chicken-and-egg issues. Ergo,
+    #   we manually guard against unhashable callables.
+    try:
+        return attr_value not in OBJECT_SLOT_WRAPPERS
+    # If doing so raises *ANY* exception, this callable is unhashable. However,
+    # *ALL* "object" slot wrappers are hashable. It follows that this callable
+    # is *NOT* an "object" slot wrapper. Despite being unhashable, this callable
+    # *COULD* be of interest to the caller.
+    except Exception:
+        pass
 
-        # This attribute value is *NOT* an "object" slot wrapper.
-        #
-        # Note that this is the slowest possible implementation of this test.
-        # Although considerably faster alternatives exist, those alternatives
-        # *ALL* fail to match all possible "object" callables and are thus
-        # effectively useless for this purpose. Alternatives include:
-        #     # This logic successfully matches *EVERYTHING* except the
-        #     # object.__new__() method. So much rage.
-        #     not (
-        #         isinstance(attr_value, MethodBoundInstanceDunderCType) and
-        #         getattr(attr_value, '__objclass__', None) is object
-        #     )
-        #
-        #     # This logic successfully matches *EVERYTHING* except the
-        #     # object.__init_subclass__() and object.__subclass_hook__()
-        #     # methods. Why? There is no sanity left.
-        #     attr_value not in OBJECT_SLOT_WRAPPERS
-        not attr_value.__qualname__.startswith('object.')  # type: ignore[attr-defined]
-    )
+    # Return true as a fallback.
+    return True

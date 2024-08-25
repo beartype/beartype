@@ -308,6 +308,13 @@ test-tox = [
     #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
     "sphinx; python_version >= '3.8.0'",
 
+    # ....................{ DOOR                           }....................
+    # DOOR-specific optional test-time dependencies required to exercise all
+    # possible edge cases of the "beartype.door" subpackage.
+
+    # Required by optional beartype.door.infer_hint()-specific unit tests.
+    "pygments",
+
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 

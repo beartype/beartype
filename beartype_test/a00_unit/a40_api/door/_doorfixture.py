@@ -696,7 +696,7 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             func_args_paramspec_return_hinted,
         )
 
-        # Extend this list to be returned with "ParamSpec"-specific cases.
+        # Extend this list with "ParamSpec"-specific cases.
         INFER_HINT_CASES.extend((
             # ..................{ PEP 612                    }..................
             # A pure-Python callable annotated by a return type hint accepting
@@ -829,12 +829,6 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             ),
         ))
     # Else, the PEP 612-compliant "ParamSpec" class is unimportable.
-
-    # ..................{ LIBRARIES ~ numpy                  }..................
-    # If NumPy is importable under the active Python interpreter...
-    if is_module('numpy'):
-        pass
-    # Else, NumPy is unimportable.
 
     # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.
