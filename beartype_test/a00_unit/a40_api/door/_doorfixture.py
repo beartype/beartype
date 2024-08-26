@@ -187,8 +187,9 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ClassSized,
     )
     from beartype_test.a00_unit.data.func.data_func import (
-        func_unhinted,
+        func_argless_return_unhinted,
         func_argless_return_hinted,
+        func_args_unhinted_return_unhinted,
         func_args_flex_mandatory_kwonly_mandatory_hinted_return_hinted,
         func_args_flex_mandatory_optional_hinted_return_unhinted,
         func_args_flex_mandatory_varkw_hinted_return_hinted,
@@ -394,19 +395,13 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             Callable,
         ),
 
-        # An unannotated pure-Python callable is annotated as the unsubscripted
-        # PEP 484- or 585-compliant "Callable" type.
+        # A pure-Python callable annotated by *NO* return type hint accepting
+        # *NO* parameters is annotated as the PEP 484- or 585-compliant
+        # "Callable" type subscripted by the empty list followed by the
+        # ignorable "object" superclass.
         (
-            func_unhinted,
-            Callable,
-        ),
-
-        # A pure-Python callable annotated by a return type hint and *NO*
-        # parameter type hints is annotated as the PEP 484- or 585-compliant
-        # "Callable" type subscripted by an ellipsis followed by that hint.
-        (
-            func_args_unhinted_return_hinted,
-            Callable[..., str],
+            func_argless_return_unhinted,
+            Callable[[], object],
         ),
 
         # A pure-Python callable annotated by a return type hint accepting *NO*
@@ -417,9 +412,53 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
             Callable[[], str],
         ),
 
+        # An unannotated pure-Python callable is annotated as the PEP 484- or
+        # 585-compliant "Callable" type subscripted by either...
+        (
+            func_args_unhinted_return_unhinted,
+            (
+                # If the active Python interpreter targets Python >= 3.11 and
+                # thus supports PEP 612:
+                # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                #   hint factory subscripted by one "object" child type hint for
+                #   each mandatory positional-only or flexible parameter
+                #   accepted by that callable followed by a trailing ellipsis.
+                # * The ignorable "object" superclass, matching the return.
+                Callable[Concatenate[object, object, ...], object]
+                if IS_PYTHON_AT_LEAST_3_11 else
+                # Else, the active Python interpreter targets Python < 3.11 and
+                # thus fails to support PEP 612. In this case, the unsubscripted
+                # PEP 484- or 585-compliant "Callable" type.
+                Callable
+            )
+        ),
+
+        # A pure-Python callable annotated by a return type hint and *NO*
+        # parameter type hints is annotated as the PEP 484- or 585-compliant
+        # "Callable" type subscripted by either...
+        (
+            func_args_unhinted_return_hinted,
+            (
+                # If the active Python interpreter targets Python >= 3.11 and
+                # thus supports PEP 612:
+                # * The PEP 612-compliant "typing(|_extensions).Concatenate"
+                #   hint factory subscripted by one "object" child type hint for
+                #   each mandatory positional-only or flexible parameter
+                #   accepted by that callable followed by a trailing ellipsis.
+                # * That return type hint.
+                Callable[Concatenate[object, object, ...], str]
+                if IS_PYTHON_AT_LEAST_3_11 else
+                # Else, the active Python interpreter targets Python < 3.11 and
+                # thus fails to support PEP 612. In this case, an ellipsis
+                # followed by that return type hint.
+                Callable[..., str]
+            )
+        ),
+
         # A pure-Python callable annotated by *NO* return type hint and one or
         # more mandatory and optional flexible parameter type hints is annotated
-        # as either...
+        # as the PEP 484- or 585-compliant "Callable" type subscripted by
+        # either...
         (
             func_args_flex_mandatory_optional_hinted_return_unhinted,
             (
@@ -440,7 +479,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
 
         # A pure-Python callable annotated by a return type hint and one or
         # more mandatory flexible parameter type hints and a variadic positional
-        # parameter type hint is annotated as either...
+        # parameter type hint is annotated as the PEP 484- or 585-compliant
+        # "Callable" type subscripted by either...
         (
             func_args_flex_mandatory_varpos_hinted_return_hinted,
             (
@@ -462,7 +502,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
 
         # A pure-Python callable annotated by a return type hint and one or
         # more mandatory flexible parameter type hints and a variadic keyword
-        # parameter type hint is annotated as either...
+        # parameter type hint is annotated as the PEP 484- or 585-compliant
+        # "Callable" type subscripted by either...
         (
             func_args_flex_mandatory_varkw_hinted_return_hinted,
             (
@@ -484,7 +525,8 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
 
         # A pure-Python callable annotated by a return type hint and one or
         # more mandatory flexible parameter type hints and a mandatory
-        # keyword-only parameter type hint is annotated as either...
+        # keyword-only parameter type hint is annotated as the PEP 484- or
+        # 585-compliant "Callable" type subscripted by either...
         (
             func_args_flex_mandatory_kwonly_mandatory_hinted_return_hinted,
             (

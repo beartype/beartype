@@ -111,7 +111,25 @@ def func_args_5_flex_mandatory_varpos_kwonly_varkw(
 # Callables defined to exercise various possible edge case with respect to
 # parameter and return type hints.
 
-def func_unhinted(
+def func_argless_return_unhinted():
+    '''
+    Arbitrary unannotated callable accepting *no* parameters annotated by *no*
+    return type hint.
+    '''
+
+    return 'The children of the autumnal whirlwind bore,'
+
+
+def func_argless_return_hinted() -> str:
+    '''
+    Arbitrary callable annotated by a return type hint accepting *no*
+    parameters.
+    '''
+
+    return 'In the light of evening, and its precipice'
+
+
+def func_args_unhinted_return_unhinted(
     bright_flowers_departed,
     and_the_beautiful_shade,
     *of_the_green_groves,
@@ -139,15 +157,6 @@ def func_args_unhinted_return_hinted(
     '''
 
     return 'The stream, that with a larger volume now'
-
-
-def func_argless_return_hinted() -> str:
-    '''
-    Arbitrary callable annotated by a return type hint accepting *no*
-    parameters.
-    '''
-
-    return 'In the light of evening, and its precipice'
 
 
 def func_args_flex_mandatory_optional_hinted_return_unhinted(
