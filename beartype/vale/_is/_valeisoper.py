@@ -250,5 +250,5 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
             is_valid=is_valid,
             is_valid_code=is_valid_code,
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda: f'{self._basename}[{repr(obj)}]',
+            get_repr=lambda: f'beartype.vale.{self._basename}[{repr(obj)}]',
         )

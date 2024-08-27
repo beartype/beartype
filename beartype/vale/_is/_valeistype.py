@@ -223,7 +223,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
             # representation as a string rather than lambda function returning
             # a string, as this string is safely, immediately, and efficiently
             # constructable from these arguments' representation.
-            get_repr=f'{self._basename}[{types_repr}]',
+            get_repr=f'beartype.vale.{self._basename}[{types_repr}]',
         )
 
 # ....................{ SUBCLASSES ~ subclass              }....................
@@ -426,5 +426,5 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
             # representation as a string rather than lambda function returning
             # a string, as this string is safely, immediately, and efficiently
             # constructable from these arguments' representation.
-            get_repr=f'{self._basename}[{types_repr}]',
+            get_repr=f'beartype.vale.{self._basename}[{types_repr}]',
         )

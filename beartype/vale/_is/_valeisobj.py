@@ -209,7 +209,10 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # machine-readable representation of this validator), defined *AFTER*
         # localizing these validator arguments.
         get_repr = lambda: (
-            f'{self._basename}[{repr(attr_name)}, {repr(attr_validator)}]')
+            f'beartype.vale.{self._basename}['
+            f'{repr(attr_name)}, {repr(attr_validator)}'
+            f']'
+        )
 
         # If this name is *NOT* a string, raise an exception.
         if not isinstance(attr_name, str):

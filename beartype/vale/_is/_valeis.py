@@ -313,7 +313,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         # expense of accurately retrieving the source code for this validator
         # (especially when this validator is itself a lambda function).
         get_repr = lambda: (
-            f'{self._basename}['
+            f'beartype.vale.{self._basename}['
             f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'
             f']'
         )
