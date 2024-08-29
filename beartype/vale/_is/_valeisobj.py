@@ -64,8 +64,8 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
     calling any callables and thus incurs *no* time performance penalties.
 
     Examples
-    ----------
-    .. code-block:: python
+    --------
+    .. code-block:: pycon
 
        # Import the requisite machinery.
        >>> from beartype import beartype
@@ -128,7 +128,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
        violates validator IsAttr['ndim', IsEqual[2]].
 
     See Also
-    ----------
+    --------
     :class:`beartype.vale.Is`
         Further commentary.
     '''
@@ -156,12 +156,12 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
               satisfy.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this factory was subscripted by either:
 
@@ -171,7 +171,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
         See Also
         ----------
-        :class:`_IsAttrFactory`
+        :class:`._IsAttrFactory`
             Usage instructions.
         '''
 
@@ -260,8 +260,8 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
             def is_valid(pith: Any) -> bool:
                 f'''
-                ``True`` only if the passed object defines an attribute named
-                "{attr_name}" whose value satisfies the validator
+                :data:`True` only if the passed object defines an attribute
+                named "{attr_name}" whose value satisfies the validator
                 {repr(attr_validator)}.
                 '''
 
@@ -307,6 +307,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             #      f'{{obj}}_isattr_'
             #      f'{next(_local_name_obj_attr_value_counter)}'
             #  )
+            #
             #Of course, this assumes "Counter" objects are thread-safe. If
             #they're not, we'll need to further obfuscate all this behind a
             #[R]Lock of some sort. *sigh*
@@ -324,10 +325,23 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             #   being validated by this code.
             local_name_attr_value = f'{{obj}}_isattr_{attr_name}'
 
+            #FIXME: *OVERKILL.* The "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
+            #"VALE_CODE_CHECK_ISATTR_TEST" globals are *ONLY* ever accessed in
+            #this specific method. Refactor as follows, please:
+            #* Merge the entirety of the lower-level
+            #  "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" substring into the parent
+            #  "VALE_CODE_CHECK_ISATTR_TEST" substring.
+            #* Remove the "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
+            #  "_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW" globals entirely.
+
             # Python expression expanding to the value of this attribute,
             # efficiently optimized under Python >= 3.8 with an assignment
             # expression to avoid inefficient access of this value.
             attr_value_expr = VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format(
+                #FIXME: Inefficient and unnecessary. Since "attr_name" is
+                #guaranteed to be a valid Python identifier, the
+                #"VALE_CODE_CHECK_ISATTR_VALUE_EXPR" template should just
+                #forcefully embed "{attr_name_expr}" inside single quotes.
                 attr_name_expr=repr(attr_name),
                 local_name_attr_value=local_name_attr_value,
                 local_name_sentinel=local_name_sentinel,
@@ -336,20 +350,18 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             # Python expression validating the value of this attribute,
             # formatted so as to be safely embeddable in the larger code
             # expression defined below.
-            attr_value_is_valid_expr = (
-                attr_validator._is_valid_code.format(
-                    # Replace the placeholder substring "{obj}" in this code
-                    # with the expression expanding to this attribute's value,
-                    # defined as the name of the local variable previously
-                    # assigned the value of this attribute by the
-                    # "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" code snippet
-                    # subsequently embedded in the
-                    # "VALE_CODE_CHECK_ISATTR_VALUE_TEST" code snippet.
-                    obj=local_name_attr_value,
-                    # Replace the placeholder substring "{indent}" in this code
-                    # with an indentation increased by one level.
-                    indent=VALE_CODE_INDENT_1,
-                ))
+            attr_value_is_valid_expr = attr_validator._is_valid_code.format(
+                # Replace the placeholder substring "{obj}" in this code with
+                # the expression expanding to this attribute's value, defined as
+                # the name of the local variable previously assigned the value
+                # of this attribute by the "VALE_CODE_CHECK_ISATTR_VALUE_EXPR"
+                # code snippet subsequently embedded in the
+                # "VALE_CODE_CHECK_ISATTR_VALUE_TEST" code snippet.
+                obj=local_name_attr_value,
+                # Replace the placeholder substring "{indent}" in this code with
+                # an indentation increased by one level.
+                indent=VALE_CODE_INDENT_1,
+            )
 
             # Code snippet efficiently validating against this object.
             is_valid_code = VALE_CODE_CHECK_ISATTR_TEST_format(

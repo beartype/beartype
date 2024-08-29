@@ -106,7 +106,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     calling any callables and thus incurs *no* time performance penalties.
 
     Caveats
-    ----------
+    -------
     **This class is intentionally subscriptable by only a single object.** Why?
     Disambiguity. When subscripted by variadic positional (i.e., one or more)
     objects, this class internally treats those objects as items of a tuple to
@@ -126,8 +126,8 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     Don't blame us. We didn't vote for :pep:`560`.
 
     Examples
-    ----------
-    .. code-block:: python
+    --------
+    .. code-block:: pycon
 
        # Import the requisite machinery.
        >>> from beartype import beartype
@@ -174,7 +174,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
        11, 13, 15, 17, 19]].
 
     See Also
-    ----------
+    --------
     :class:`beartype.vale.Is`
         Further commentary.
     '''
@@ -195,12 +195,12 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
             Arbitrary object to validate equality against.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this factory was subscripted by either:
 
@@ -208,8 +208,8 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
             * Two or more arguments.
 
         See Also
-        ----------
-        :class:`_IsEqualFactory`
+        --------
+        :class:`._IsEqualFactory`
             Usage instructions.
         '''
 

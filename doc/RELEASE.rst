@@ -69,7 +69,7 @@ Beartype is releasable to all supported platforms as follows:
    permitting this release to be packaged into a cross-platform pre-compiled
    binary distribution supported by both PyPI_ and ``pip``. This optional
    dependency installs the ``hatch`` command invoked below when locally testing
-   the generation of source tarballs and/or binary wheels. 
+   the generation of source tarballs and/or binary wheels.
 
    .. code-block:: shell-session
 
