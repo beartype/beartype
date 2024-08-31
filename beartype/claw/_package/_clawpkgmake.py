@@ -18,6 +18,7 @@ from beartype.roar import (
 )
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
+from beartype._conf.conftest import die_unless_conf
 from beartype._data.hint.datahinttyping import IterableStrs
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from collections.abc import Iterable as IterableABC
@@ -50,7 +51,7 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
 
     Raises
     ------
-    BeartypeClawHookException
+    BeartypeConfException
         If the passed ``conf`` parameter is *not* a beartype configuration
         (i.e., :class:`BeartypeConf` instance).
 
@@ -60,13 +61,9 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
         Further details.
     '''
 
-    # If the "conf" parameter is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeClawHookException(
-            f'Beartype configuration {repr(conf)} invalid (i.e., not '
-            f'"beartype.BeartypeConf" instance).'
-        )
-    # Else, the "conf" parameter is a configuration.
+    # If this configuration is invalid, raise an exception.
+    die_unless_conf(conf=conf, exception_cls=BeartypeClawHookException)
+    # Else, this configuration is valid.
 
     # If the caller did *NOT* explicitly set the
     # "warning_cls_on_decorator_exception" configuration parameter governing the

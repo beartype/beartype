@@ -27,10 +27,9 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.conftest import die_unless_conf
 from beartype._data.hint.datahinttyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
@@ -55,12 +54,10 @@ def beartype(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> BeartypeReturn:
 
-    # If "conf" is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeConfException(
-            f'{repr(conf)} not beartype configuration.')
-    # Else, "conf" is a configuration.
-    #
+    # If this configuration is invalid, raise an exception.
+    die_unless_conf(conf)
+    # Else, this configuration is valid.
+
     # If passed an object to be decorated, this decorator is in decoration
     # rather than configuration mode. In this case, decorate this object with
     # type-checking configured by this configuration.
@@ -73,7 +70,7 @@ def beartype(
     # decorator overloads declared above. Nonetheless, we're largely permissive
     # here; callers that are doing this are sufficiently intelligent to be
     # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
-    elif obj is not None:
+    if obj is not None:
         return beartype_object(obj, conf)
     # Else, we were passed *NO* object to be decorated. In this case, this
     # decorator is in configuration rather than decoration mode.

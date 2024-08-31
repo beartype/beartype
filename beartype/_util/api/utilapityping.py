@@ -47,15 +47,15 @@ def is_typing_attr(
     ----------
     typing_attr_basename : str
         Unqualified name of the attribute to be imported from a typing module.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilModuleException`.
 
     Returns
     -------
     bool
         :data:`True` only if the :mod:`typing` or :mod:`typing_extensions`
         modules declare an attribute with this name.
-    exception_cls : Type[Exception]
-        Type of exception to be raised by this function. Defaults to
-        :class:`._BeartypeUtilModuleException`.
 
     Raises
     ------

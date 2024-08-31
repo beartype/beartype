@@ -33,7 +33,10 @@ from beartype._conf.confoverrides import (
     beartype_hint_overrides_pep484_tower,
     BeartypeHintOverrides,
 )
-from beartype._data.hint.datahinttyping import DictStrToAny
+from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
+    TypeException,
+)
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.text.utiltextidentifier import is_identifier
 from collections.abc import (
@@ -41,7 +44,13 @@ from collections.abc import (
 )
 
 # ....................{ RAISERS                            }....................
-def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
+def die_unless_conf(
+    # Mandatory parameters.
+    conf: 'beartype.BeartypeConf',
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeConfException,
+) -> None:
     '''
     Raise an exception unless the passed object is a beartype configuration.
 
@@ -49,10 +58,13 @@ def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
     ----------
     conf : beartype.BeartypeConf
         Object to be validated.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeConfException`.
 
     Raises
     ------
-    BeartypeConfException
+    exception_cls
         If this object is *not* a beartype configuration.
     '''
 
@@ -61,8 +73,13 @@ def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
 
     # If this object is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
-        raise BeartypeConfException(
-            f'{repr(conf)} not beartype configuration.')
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+
+        raise exception_cls(
+            f'Beartype configuration {repr(conf)} invalid '
+            f'(i.e., not "beartype.BeartypeConf" instance).'
+        )
     # Else, this object is a configuration.
 
 

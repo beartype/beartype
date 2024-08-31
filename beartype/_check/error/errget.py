@@ -119,10 +119,8 @@ from beartype.roar._roarexc import (
 from beartype.typing import Optional
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (

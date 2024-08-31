@@ -20,8 +20,8 @@ from ast import (
     Name,
 )
 from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import NodeVisitResult
-from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
 from beartype._util.ast.utilastmake import (
     make_node_call_expr,
     make_node_kwarg,

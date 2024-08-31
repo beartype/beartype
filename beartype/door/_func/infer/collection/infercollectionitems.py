@@ -11,28 +11,33 @@ one or more items).
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeConfException
 from beartype.typing import (
     Counter,
     Optional,
     Tuple,
 )
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import FrozenSetInts
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
     make_hint_pep484585_tuple_fixed_hint)
 from beartype._util.hint.pep.proposal.utilpep484604 import (
     make_hint_pep484604_union)
+from beartype._util.kind.integer.utilintget import (
+    get_integer_pseudorandom_signed_32bit)
 from collections.abc import (
     Collection as CollectionABC,
     Mapping as MappingABC,
+    Sequence as SequenceABC,
 )
 
 # ....................{ INFERERS                           }....................
-#FIXME: Conditionally annotate tuples less than a certain fixed length (e.g., 10
-#items) as fixed-length rather than variable-length tuple type hints. Yeah!
 def infer_hint_collection_items(
     # Mandatory parameters.
     obj: CollectionABC,
     hint_factory: object,
+    conf: BeartypeConf,
     __beartype_obj_ids_seen__: FrozenSetInts,
 
     # Optional parameters.
@@ -56,6 +61,9 @@ def infer_hint_collection_items(
         Subscriptable type hint factory validating this collection (e.g., the
         :pep:`585`-compliant :class:`list` builtin type if this collection is a
         list).
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard.** See also the parameter of the same name accepted by
         the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
@@ -90,6 +98,7 @@ def infer_hint_collection_items(
         iterable).
     '''
     assert isinstance(obj, CollectionABC), f'{repr(obj)} not collection.'
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(__beartype_obj_ids_seen__, frozenset), (
         f'{repr(__beartype_obj_ids_seen__)} not frozen set.')
 
@@ -148,6 +157,7 @@ def infer_hint_collection_items(
     hint = hint_inferer(
         obj=obj,  # type: ignore[arg-type]
         hint_factory=hint_factory,
+        conf=conf,
         __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
     )
 
@@ -186,6 +196,7 @@ less than or equal to this magic number of items, this heuristic follows.
 def _infer_hint_mapping_items(
     obj: MappingABC,
     hint_factory: object,
+    conf: BeartypeConf,
     __beartype_obj_ids_seen__: FrozenSetInts,
 ) -> object:
     '''
@@ -205,48 +216,111 @@ def _infer_hint_mapping_items(
     # Because that protocol fails to support so-called "virtual subclasses" as
     # of Python 3.13 and is thus fundamentally broken. See also the parent
     # infer_hint_collection_items() function "origin_type" parameter. *sigh*
-    assert isinstance(obj, CollectionABC), f'{repr(obj)} not collection.'
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype.door._func.infer.inferhint import infer_hint
 
     # ....................{ LOCALS                         }....................
-    # Set of all child key and value type hints to conjoin into a union.
-    hints_key = set()
-    hints_value = set()
+    # Child key and value hints to subscript this factory with, defaulting to
+    # the ignorable "object" superclass.
+    hints_key: object = object
+    hints_value: object = object
 
     # ....................{ RECURSION                      }....................
-    # For each key-value pair in this mapping...
-    for key, value in obj.items():
-        # Child key and value type hints validating this key and value.
-        hint_key = infer_hint(
-            obj=key, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
-        hint_value = infer_hint(
-            obj=value, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
+    # Note that the caller guarantees this mapping to be non-empty.
 
-        # Add this child type hint to this set.
-        hints_key.add(hint_key)
-        hints_value.add(hint_value)
+    # If either...
+    if (
+        # This mapping contains only one key-value pair *OR*...
+        #
+        # Note that this is a negligible optimization for this common case.
+        len(obj) == 1 or
+        # The caller requested O(1) constant-time complexity...
+        conf.strategy is BeartypeStrategy.O1
+    ):
+        # First key-value pair of this mapping.
+        key, value = next(iter(obj.items()))
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize with similar logic below.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Child key and value type hints validating this key and value.
+        hints_key = infer_hint(
+            obj=key,
+            conf=conf,
+            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+        )
+        hints_value = infer_hint(
+            obj=value,
+            conf=conf,
+            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+        )
+    # Else, the caller did *NOT* request O(1) constant-time complexity.
+    #
+    # If the caller requested O(n) linear-time complexity...
+    elif conf.strategy is BeartypeStrategy.On:
+        # Set of all child key and value hints to conjoin into a union.
+        hints_key_set = set()
+        hints_value_set = set()
+
+        # For each key-value pair in this mapping...
+        for key, value in obj.items():
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAUTION: Synchronize with similar logic above.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # Child key and value type hints validating this key and value.
+            hint_key = infer_hint(
+                obj=key,
+                conf=conf,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+            hint_value = infer_hint(
+                obj=value,
+                conf=conf,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+
+            # Add this child type hint to this set.
+            hints_key_set.add(hint_key)
+            hints_value_set.add(hint_value)
+
+        # PEP 604- or 484-compliant union of these child key and value hints.
+        hints_key = make_hint_pep484604_union(tuple(hints_key_set))
+        hints_value = make_hint_pep484604_union(tuple(hints_value_set))
+    # Else, the caller did *NOT* request O(n) linear-time complexity.
+    #
+    # Thus, the caller requested a currently unsupported time complexity. In
+    # this case, raise an exception.
+    else:
+        raise BeartypeConfException(
+            f'Beartype configuration {repr(conf)} '
+            f'strategy {repr(conf.strategy)} currently unsupported by '
+            f'beartype.door.infer_hint() (i.e., neither '
+            f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
+        )
 
     # ....................{ SUBSCRIPTION                   }....................
-    # PEP 604- or 484-compliant union of these child key and value type hints.
-    hints_key_union = make_hint_pep484604_union(tuple(hints_key))
-    hints_value_union = make_hint_pep484604_union(tuple(hints_value))
-
-    # Type hint recursively validating this mapping, defined as either...
-    hint = (
-        # If this mapping is a counter (i.e., instance of the standard
-        # "collections.Counter" class), subscripting this factory by only this
-        # key union. By definition, *ALL* values of *ALL* counters are
-        # unconditionally constrained to be integers and thus need *NOT* (and
-        # indeed *CANNOT*) be explicitly specified;
-        hint_factory[hints_key_union]  # type: ignore[index]
-        if hint_factory is Counter else
-        # Else, this mapping is *NOT* a counter. In this case, sequentially
-        # subscripting this factory by both this key and value union.
-        hint_factory[hints_key_union, hints_value_union]  # type: ignore[index]
-    )
+    # If these child key and value hints are still the ignorable "object"
+    # superclass, return this factory as is unsubscripted.
+    if hints_key is object and hints_value is object:
+        hint = hint_factory
+    # Else, at least one of these child key or value hints is no longer the
+    # ignorable "object" superclass. In this case...
+    else:
+        # Type hint recursively validating this mapping, defined as either...
+        hint = (
+            # If this mapping is a counter (i.e., instance of the standard
+            # "collections.Counter" class), subscripting this factory by only
+            # this key union. By definition, *ALL* values of *ALL* counters are
+            # unconditionally constrained to be integers and thus need *NOT*
+            # (and indeed *CANNOT*) be explicitly specified;
+            hint_factory[hints_key]  # type: ignore[index]
+            if hint_factory is Counter else
+            # Else, this mapping is *NOT* a counter. In this case, sequentially
+            # subscripting this factory by both this key and value union.
+            hint_factory[hints_key, hints_value]  # type: ignore[index]
+        )
     # print(f'Inferred {repr(obj)} hint as {repr(hint)}...')
 
     # Return this hint.
@@ -256,6 +330,7 @@ def _infer_hint_mapping_items(
 def _infer_hint_reiterable_items(
     obj: CollectionABC,
     hint_factory: object,
+    conf: BeartypeConf,
     __beartype_obj_ids_seen__: FrozenSetInts,
 ) -> object:
     '''
@@ -275,21 +350,9 @@ def _infer_hint_reiterable_items(
     # Avoid circular import dependencies.
     from beartype.door._func.infer.inferhint import infer_hint
 
-    # ....................{ LOCALS                         }....................
-    # List of all child type hints validating the items of this collection.
-    hints_child = []
-
     # ....................{ RECURSION                      }....................
-    # For each item in this collection...
-    for item in obj:
-        # Child type hint validating this item.
-        hint_child = infer_hint(
-            obj=item, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
+    # Note that the caller guarantees this mapping to be non-empty.
 
-        # Append this child type hint to this list.
-        hints_child.append(hint_child)
-
-    # ....................{ SUBSCRIPTION                   }....................
     # If...
     if (
         # This collection is a tuple *AND*...
@@ -303,42 +366,144 @@ def _infer_hint_reiterable_items(
         # number of tuple items...
         len(obj) <= _ROOT_TUPLE_FIXED_ITEMS_LEN_MAX
     ):
+        # List of all child type hints validating the items of this tuple.
+        hints_item_list = []
+
+        # For each item in this tuple...
+        #
+        # Note that we intentionally ignore the "conf.strategy" option
+        # providing caller's preferred time complexity in this edge case. Why?
+        # Because:
+        # * This behaviour mirrors that of the *ALL* other beartype runtime
+        #   type-checkers, which similarly ignore the "conf.strategy" option
+        #   when checking fixed-length tuple type hints.
+        # * This tuple is guaranteed to be small, effectively reducing this
+        #   iteration to O(1) constant-time complexity in any case.
+        for item in obj:
+            # Child type hint validating this item.
+            hint_item = infer_hint(
+                obj=item,
+                conf=conf,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+
+            # Append this child type hint to this list.
+            hints_item_list.append(hint_item)
+
         # Then this root tuple is subjectively small enough to be returned as
         # the value returned by a multiple-return function (i.e., returning two
         # or more values as items of this tuple). In this case, validate this
         # tuple with a fixed-length tuple type hint. See the
         # "_ROOT_TUPLE_FIXED_ITEMS_LEN_MAX" docstring for further details.
-        hint = make_hint_pep484585_tuple_fixed_hint(tuple(hints_child))
+        hint = make_hint_pep484585_tuple_fixed_hint(tuple(hints_item_list))
     # Else, this collection is *NOT* a subjectively small root tuple. In this
     # case, defer to generic logic.
     else:
-        # Attempt to temporarily coerce this list of child type hints into a
-        # set to trivially remove *ALL* duplicate hints.
-        try:
-            hints_child = set(hints_child)  # type: ignore[assignment]
-        # If doing so raises *ANY* exception whatsoever, silently ignore this
-        # exception. In all likelihood, this exception connotes a hashability
-        # error due to one or more of these child type hints being unhashable
-        # and thus *NOT* addable to a set. Although non-ideal, this certainly
-        # isn't worth destroying type hint inference over.
-        except Exception:
-            pass
+        # Child item hint to subscript this factory with, defaulting to the
+        # ignorable "object" superclass.
+        hints_item: object = object
 
-        # PEP 604- or 484-compliant union of these child type hints.
-        hints_child_union = make_hint_pep484604_union(tuple(hints_child))
+        # If either...
+        if (
+            # This reiterable contains only one item *OR*...
+            #
+            # Note that this is a negligible optimization for this common case.
+            len(obj) == 1 or
+            # The caller requested O(1) constant-time complexity...
+            conf.strategy is BeartypeStrategy.O1
+        ):
+            # Item of this reiterable to infer the child type hint of.
+            item: object = None  # type: ignore[no-redef]
 
-        # Type hint recursively validating this reiterable, defined by...
-        hint = (
-            # If this collection is a tuple, subscripting this tuple hint
-            # factory by the variadic-length variant of this union followed by
-            # an ellipses (signifying this tuple to contain arbitrarily many
-            # items);
-            hint_factory[hints_child_union, ...]  # type: ignore[index]
-            if hint_factory is Tuple else
-            # Else, this collection is *NOT* a tuple. In this case, trivially
-            # subscripting this non-tuple hint factory by this union.
-            hint_factory[hints_child_union]  # type: ignore[index]
-        )
+            # If this reiterable is a sequence, this reiterable supports
+            # efficient random access to arbitrary items. In this case...
+            if isinstance(obj, SequenceABC):
+                # Pseudorandom signed 32-bit integer.
+                int_random = get_integer_pseudorandom_signed_32bit()
+
+                # 0-based pseudorandom index into this sequence.
+                obj_item_index_random = int_random % len(obj)
+
+                # Pseudorandom item of this sequence.
+                item = obj[obj_item_index_random]
+            # Else, this reiterable is *NOT* a sequence, implying this
+            # reiterable fails to support efficient random access to arbitrary
+            # items. In this case...
+            else:
+                # First item of this reiterable.
+                item = next(iter(obj))
+
+            # Child type hint validating this item.
+            hints_item = infer_hint(
+                obj=item,
+                conf=conf,
+                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+            )
+        # Else, the caller did *NOT* request O(1) constant-time complexity.
+        #
+        # If the caller requested O(n) linear-time complexity...
+        elif conf.strategy is BeartypeStrategy.On:
+            # List of all child type hints validating the items of this reiterable.
+            hints_item_list = []
+
+            # For each item in this reiterable...
+            for item in obj:
+                # Child type hint validating this item.
+                hint_item = infer_hint(
+                    obj=item,
+                    conf=conf,
+                    __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+                )
+
+                # Append this child type hint to this list.
+                hints_item_list.append(hint_item)
+
+            # Attempt to temporarily coerce this list of child type hints into a
+            # set to trivially remove *ALL* duplicate hints.
+            try:
+                hints_item_list = set(hints_item_list)  # type: ignore[assignment]
+            # If doing so raises *ANY* exception whatsoever, silently ignore this
+            # exception. In all likelihood, this exception connotes a hashability
+            # error due to one or more of these child type hints being unhashable
+            # and thus *NOT* addable to a set. Although non-ideal, this certainly
+            # isn't worth destroying type hint inference over.
+            except Exception:
+                pass
+
+            # PEP 604- or 484-compliant union of these child type hints.
+            hints_item = make_hint_pep484604_union(tuple(hints_item_list))
+        # Else, the caller did *NOT* request O(n) linear-time complexity.
+        #
+        # Thus, the caller requested a currently unsupported time complexity. In
+        # this case, raise an exception.
+        else:
+            raise BeartypeConfException(
+                f'Beartype configuration {repr(conf)} '
+                f'strategy {repr(conf.strategy)} currently unsupported by '
+                f'beartype.door.infer_hint() (i.e., neither '
+                f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
+            )
+
+        # ....................{ SUBSCRIPTION               }....................
+        # If this child hint is still the ignorable "object" superclass, return
+        # this factory as is unsubscripted.
+        if hints_item is object:
+            hint = hint_factory
+        # Else, this child hint is no longer the ignorable "object" superclass.
+        # In this case...
+        else:
+            # Type hint recursively validating this reiterable, defined by...
+            hint = (
+                # If this collection is a tuple, subscripting this tuple hint
+                # factory by the variadic-length variant of this union followed
+                # by an ellipses (signifying this tuple to contain arbitrarily
+                # many items);
+                hint_factory[hints_item, ...]  # type: ignore[index]
+                if hint_factory is Tuple else
+                # Else, this collection is *NOT* a tuple. In this case,
+                # subscripting this non-tuple hint factory by this union.
+                hint_factory[hints_item]  # type: ignore[index]
+            )
 
     # Return this hint.
     return hint

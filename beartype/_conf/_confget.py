@@ -55,12 +55,12 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
         Original ``is_color`` parameter passed to that constructor.
 
     Returns
-    ----------
+    -------
     BoolTristate
         Final ``is_color`` parameter to be used inside that constructor.
 
     Raises
-    ----------
+    ------
     BeartypeConfParamException
         If the original``is_color`` parameter is *not* a tri-state boolean.
     BeartypeConfShellVarException

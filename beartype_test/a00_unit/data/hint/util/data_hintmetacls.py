@@ -19,10 +19,8 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from collections.abc import Iterable as IterableABC
 
 # ....................{ CLASSES ~ hint : [un]satisfied     }....................

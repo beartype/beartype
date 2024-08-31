@@ -30,7 +30,6 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.hint.datahinttyping import (
     DictTypeToAny,
-    FrozenSetInts,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
@@ -41,8 +40,7 @@ from collections import (
 )
 
 # ....................{ INFERERS                           }....................
-def infer_hint_collection_builtin(
-    obj: object, __beartype_obj_ids_seen__: FrozenSetInts) -> Optional[object]:
+def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
     '''
     **Builtin collection type hint** (i.e., subscripted C-based type whose
     instances contain one or more reiterable items) recursively validating the
@@ -60,9 +58,10 @@ def infer_hint_collection_builtin(
     ----------
     obj : object
         Object to infer a type hint from.
-    __beartype_obj_ids_seen__ : FrozenSet[int]
-        **Recursion guard.** See also the parameter of the same name accepted by
-        the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`beartype.door._func.infer.collection.infercollectionitems.infer_hint_collection_items`
+    function.
 
     Returns
     -------
@@ -99,10 +98,7 @@ def infer_hint_collection_builtin(
         # this collection type by the union of the child type hints validating
         # all items recursively reachable from this collection.
         hint = infer_hint_collection_items(
-            obj=obj,  # type: ignore[arg-type]
-            hint_factory=hint_factory,
-            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
-        )
+            obj=obj, hint_factory=hint_factory, **kwargs,)  # type: ignore[arg-type]
     # Else, this type is *NOT* a subclass of a builtin collection type. In this
     # case, fallback to returning "None".
 

@@ -23,10 +23,8 @@ from beartype.typing import (
     TYPE_CHECKING,
     Callable,
 )
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import (
     BeartypeReturn,
     BeartypeableT,

@@ -25,7 +25,7 @@ def test_make_check_code_decoration() -> None:
 
     # Defer test-specific imports.
     from beartype._check.code.codemake import make_check_expr
-    from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
+    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 
     # Assert this function generates identical code for identical hints and is
     # thus cached via memoization.

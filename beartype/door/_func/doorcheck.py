@@ -10,9 +10,19 @@ against type hints at *any* time during the lifecycle of the active Python
 process).
 '''
 
+# ....................{ TODO                               }....................
 #FIXME: Consider adding the following new tester:
-#    def is_similar(obj: object, schema: object) -> bool:
-#        return is_bearable(obj, infer_hint(schema))
+#    def is_objects_similar(
+#        # Mandatory parameters.
+#        obj: object,
+#        schema: object,
+#
+#        # Optional keyword-only parameters.
+#        *,
+#        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+#    ) -> bool:
+#        schema_hint = infer_hint(schema, conf=conf)
+#        return is_bearable(obj, schema_hint, conf=conf)
 #
 #This test implements a new **typing structural similarity** metric answering
 #the question: "Do these two objects have a similar structure?" This is a softer
@@ -39,10 +49,8 @@ from beartype._check.checkmake import (
     make_func_raiser,
     make_func_tester,
 )
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import T
 

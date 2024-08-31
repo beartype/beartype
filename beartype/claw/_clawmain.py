@@ -20,15 +20,13 @@ this private submodule is *not* intended for importation by downstream callers.
 #imported (i.e., are in the "sys.modules" list).
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeClawHookUnpackagedException
 from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._package.clawpkghook import hook_packages
+from beartype.roar import BeartypeClawHookUnpackagedException
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.module.datamodpy import SCRIPT_MODULE_NAME
 from beartype._util.func.utilfuncfile import get_func_filename_or_none
 from beartype._util.func.utilfuncframe import (

@@ -564,8 +564,26 @@ def door_cases_infer_hint() -> 'Iterable[Tuple[object, object]]':
         ),
 
         # ..................{ PEP [484|585] ~ dict           }..................
-        # A deque of items all of the same class is annotated as the PEP 484- or
-        # 585-compliant "deque" type subscripted by that class.
+        #FIXME: Validate that all other empty data structures behave as
+        #expected, please. *sigh*
+
+        # The empty dictionary is annotated as the unsubscripted PEP 484- or
+        # 585-compliant "dict" type.
+        (
+            {},
+            Dict,
+        ),
+
+        # A dictionary of one item is annotated as the PEP 484- or 585-compliant
+        # "dict" type subscripted by the classes of that item.
+        (
+            {'In wanton sport, those bright leaves,': b'whose decay,',},
+            Dict[str, bytes],
+        ),
+
+        # A dictionary of two or more items all of the same class is annotated
+        # as the PEP 484- or 585-compliant "dict" type subscripted by that
+        # class.
         (
             {b'Grey rocks': 'did peep from', b'the spare moss,': 'and stemmed'},
             Dict[bytes, str],

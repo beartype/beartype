@@ -366,7 +366,7 @@ def test_get_hint_object_violation() -> None:
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._check.error.errget import get_hint_object_violation
-    from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
+    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from pytest import raises
 
     # ..................{ LOCALS                             }..................

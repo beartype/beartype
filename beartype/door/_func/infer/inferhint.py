@@ -9,11 +9,6 @@ type hint inferrers** (i.e., high-level functions dynamically inferring the type
 hints best describing arbitrary objects).
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Consider defining a memoized "BeartypeInferHintConf" dataclass modelled
-#after the memoized "BeartypeConf" dataclass, enabling callers to efficiently
-#configure type hint inference.
-
 # ....................{ IMPORTS                            }....................
 from beartype.door._func.infer.kind.infercallable import (
     infer_hint_callable)
@@ -26,9 +21,13 @@ from beartype.door._func.infer.collection.infercollectionsabc import (
 from beartype.roar import BeartypeDoorInferHintRecursionWarning
 from beartype.typing import (
     Callable,
+    Optional,
     Tuple,
     Type,
 )
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import get_beartype_conf_strategy_on
+from beartype._conf.conftest import die_unless_conf
 from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR
 from beartype._data.hint.datahinttyping import (
     FrozenSetInts,
@@ -48,13 +47,15 @@ class BeartypeInferHintContainerRecursion(object):
         return 'RecursiveContainer'
 
 # ....................{ INFERERS                           }....................
-#FIXME: Add support for dictionaries. That's pretty much mandatory. Pretty much
-#useless without at least that. *sigh*
 def infer_hint(
     # Mandatory parameters.
     obj: object,
 
-    # Hidden parameters. *GULP*
+    # Optional keyword-only parameters.
+    *,
+    conf: Optional[BeartypeConf] = None,
+
+    # Optional keyword-only hidden parameters. *GULP*
     __beartype_obj_ids_seen__: FrozenSetInts = frozenset(),
 ) -> object:
     '''
@@ -112,6 +113,24 @@ def infer_hint(
     ----------
     obj : object
         Arbitrary object to infer a type hint from.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf(strategy=BeartypeStrategy.On))``, the default
+        :math:`O(n)` linear-time configuration. Why not the default
+        :math:`O(1)` constant-time configuration like the remainder of the
+        :mod:`beartype` codebase? Because type hints are *typically* only useful
+        when perfectly describing the internal structure of objects; type hints
+        that imperfectly describe the internal structure of objects induce
+        **false positives** (i.e., cause both static and runtime type-checkers
+        to improperly emit errors and raise exceptions for otherwise valid
+        objects that would have satisfied those hints had those hints more
+        perfectly described the internal structure of those objects). Exceptions
+        do exist, however. Downstream third-party consumers that only call this
+        function to create an temporary in-memory type hint that is then passed
+        to other runtime type-checking functionality (e.g.,
+        :func:`beartype.door.is_bearable`, :func:`beartype.door.is_subhint`)
+        often benefits from :math:`O(1)` constant-time type hint inference.
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard** (i.e., frozen set of the integers uniquely
         identifying all previously visited containers passed as the ``obj``
@@ -135,9 +154,14 @@ def infer_hint(
         self-referentially refers to itself, typically due to being a container
         containing one or more items that self-referentially refer to that same
         container).
+
+    Raises
+    ------
+    BeartypeConfException
+        If the passed ``conf`` parameter is *not* a beartype configuration.
     '''
 
-    # ....................{ PROTECTION                     }....................
+    # ....................{ PREAMBLE                       }....................
     # If the integer uniquely identifying this object already resides in this
     # recursion guard, this object has already been visited by a prior call to
     # this function in the same call stack and is thus a recursive container.
@@ -157,6 +181,16 @@ def infer_hint(
         # placeholder instance of a dataclass describing this situation.
         return BeartypeInferHintContainerRecursion
     # Else, this object has yet to be visited.
+
+    # If the caller explicitly passed *NO* configuration, default to the default
+    # linear-time configuration.
+    if conf is None:
+        conf = get_beartype_conf_strategy_on()
+    # Else, the caller explicitly passed a configuration.
+
+    # If this configuration is invalid, raise an exception.
+    die_unless_conf(conf)
+    # Else, this configuration is valid.
 
     # ....................{ PEP                            }....................
     #FIXME: Generalize to support iterable parametrized generics (e.g.,
@@ -182,7 +216,7 @@ def infer_hint(
     #   "Type[obj]" rather than "obj".
     #
     # Specifically, if...
-    elif (
+    if (
         # This object is a PEP-compliant type hint *AND*...
         is_hint_pep(obj) and
         # This object is *NOT* a string. There exists an ambiguity here. Under
@@ -238,7 +272,10 @@ def infer_hint(
         # inferer inferred such a hint *OR* "None" otherwise (i.e., if this
         # inferer failed to infer a hint for this object).
         hint = hint_inferer(  # type: ignore[call-arg]
-            obj=obj, __beartype_obj_ids_seen__=__beartype_obj_ids_seen__)
+            obj=obj,
+            conf=conf,
+            __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+        )
 
         # If this inferer inferred a hint for this object, return this hint.
         if hint is not None:

@@ -64,7 +64,6 @@ from beartype.typing import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.hint.datahinttyping import (
-    FrozenSetInts,
     FrozenSetStrs,
 )
 from beartype._util.api.utilapityping import import_typing_attr_or_none
@@ -78,8 +77,7 @@ from collections.abc import (
 )
 
 # ....................{ INFERERS                           }....................
-def infer_hint_collections_abc(
-    obj: object, __beartype_obj_ids_seen__: FrozenSetInts) -> Optional[object]:
+def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
     '''
     **Collections protocol type hint** (i.e., possibly subscripted abstract base
     class (ABC) published by the :mod:`collections.abc` subpackage) recursively
@@ -116,9 +114,10 @@ def infer_hint_collections_abc(
     ----------
     obj : object
         Object to infer a type hint from.
-    __beartype_obj_ids_seen__ : FrozenSet[int]
-        **Recursion guard.** See also the parameter of the same name accepted by
-        the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`beartype.door._func.infer.collection.infercollectionitems.infer_hint_collection_items`
+    function.
 
     Returns
     -------
@@ -179,7 +178,7 @@ def infer_hint_collections_abc(
                 obj=obj,  # type: ignore[arg-type]
                 hint_factory=hint_factory,
                 origin_type=origin_type,
-                __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
+                **kwargs
             )
         # Else, this protocol is *NOT* a container protocol. In this case, we
         # have *NO* safe means of inferring the child type hints subscripting
