@@ -1236,7 +1236,7 @@ say you tried:
 
      .. code-block:: bash
 
-        pytest --beartype-packages='{your_package},...,{another_package}'``
+        pytest --beartype-packages='{your_package},...,{another_package}'
 
    * Add the ``beartype_packages`` option to your ``pyproject.toml`` file:
 
