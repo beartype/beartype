@@ -17,27 +17,130 @@ This submodule unit tests the public :mod:`beartype.door.infer_hint` function.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_unless_package
 
-# ....................{ TESTS ~ inferers                   }....................
+# ....................{ TESTS                              }....................
 def test_door_infer_hint(
-    door_cases_infer_hint: 'Iterable[Tuple[object, object]]') -> None:
+    door_cases_infer_hint: (
+    'Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]')) -> None:
     '''
     Test the :func:`beartype.door.infer_hint` function.
 
     Parameters
     ----------
-    door_cases_infer_hint : Iterable[Tuple[object, object]]
-        Iterable of **type hint inference cases** (i.e., 2-tuples ``(obj,
-        hint)`` describing the type hint matching an arbitrary object).
+    door_cases_infer_hint : Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]
+        Dictionary mapping from each relevant beartype configuration to a
+        corresponding iterable of all **type hint inference cases** specific to
+        that configuration.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import infer_hint
+    from beartype.roar import BeartypeConfException
+    from beartype._conf.confcommon import get_beartype_conf_strategy_on
+    from pytest import raises
 
-    # For each type hint inference case to be tested...
-    for obj, hint in door_cases_infer_hint:
-        # Assert this function returns the expected type hint for this object.
-        assert infer_hint(obj) == hint
+    # ....................{ LOCALS                         }....................
+    # Default linear-time configuration.
+    CONF_STRATEGY_ON = get_beartype_conf_strategy_on()
 
+    # ....................{ PASS                           }....................
+    # For each relevant beartype configuration...
+    for conf, cases in door_cases_infer_hint.items():
+        # If this is the default linear-time configuration...
+        if conf == CONF_STRATEGY_ON:
+            # For each test object and expected type hint to be inferred from
+            # that object...
+            for obj, hint in cases:
+                # Assert this function returns this type hint for this object
+                # *WITHOUT* explicitly passing this configuration. Doing so
+                # exercises that this function behaves as expected when passed
+                # *NO* configuration.
+                assert infer_hint(obj) == hint
+        # Else, this is a non-default configuration. In this case...
+        else:
+            # For each test object and expected type hint to be inferred from
+            # that object...
+            for obj, hint in cases:
+                # Assert this function returns this type hint for this object
+                # under this non-default configuration.
+                assert infer_hint(obj, conf=conf) == hint
+
+    # ....................{ FAIL                           }....................
+    # Assert that this function raises the expected exception when passed an
+    # arbitrary object and an invalid beartype configuration.
+    with raises(BeartypeConfException):
+        infer_hint('Red, yellow,', conf='or ethereally pale,')
+
+
+def test_door_infer_hint_recursion() -> None:
+    '''
+    Test the :func:`beartype.door.infer_hint` function with respect to
+    **container recursion** (i.e., objects self-referentially containing
+    themselves as items inside themselves).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import (
+        BeartypeConf,
+        BeartypeStrategy,
+    )
+    from beartype.door import infer_hint
+    from beartype.door._func.infer.inferhint import (
+        BeartypeInferHintContainerRecursion)
+    from beartype.roar import BeartypeDoorInferHintRecursionWarning
+    from beartype.typing import (
+        List,
+        Union,
+    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from pytest import warns
+
+    # ..................{ LOCALS ~ list                      }..................
+    # Recursive list containing *ONLY* a reference to itself and thus suitable
+    # for O(1) constant-time type hint inference.
+    LIST_RECURSIVE_STRATEGY_O1 = []
+    LIST_RECURSIVE_STRATEGY_O1.append(LIST_RECURSIVE_STRATEGY_O1)
+
+    # Recursive list containing a reference to itself as well as other unrelated
+    # items and thus suitable for O(n) linear-time type hint inference.
+    LIST_RECURSIVE_STRATEGY_ON = [
+        "Rivals the pride of summer. 'Tis the haunt",
+        b'Of every gentle wind, whose breath can teach',
+    ]
+    LIST_RECURSIVE_STRATEGY_ON.append(LIST_RECURSIVE_STRATEGY_ON)
+
+    # ..................{ ASSERTS                            }..................
+    # Assert that this function, when configured for O(1) constant-time type
+    # hint inference and passed a recursive list containing *ONLY* a reference
+    # to itself:
+    # * Emits the expected warning.
+    # * Returns the expected type hint.
+    with warns(BeartypeDoorInferHintRecursionWarning):
+        assert infer_hint(
+            LIST_RECURSIVE_STRATEGY_O1,
+            conf=BeartypeConf(strategy=BeartypeStrategy.O1),
+        ) == List[BeartypeInferHintContainerRecursion]
+
+    # Assert that this function, when configured for O(n) linear-time type hint
+    # inference and passed a recursive list containing a reference to itself as
+    # well as other unrelated itemsf:
+    # * Emits the expected warning.
+    # * Returns the expected type hint.
+    with warns(BeartypeDoorInferHintRecursionWarning):
+        assert infer_hint(LIST_RECURSIVE_STRATEGY_ON) == List[
+            # If the active Python interpreter targets Python >= 3.10 and thus
+            # supports PEP 604-compliant new-style unions, this kind of union;
+            str | bytes | BeartypeInferHintContainerRecursion
+            if IS_PYTHON_AT_LEAST_3_10 else
+            # Else, the active Python interpreter targets Python < 3.10 and thus
+            # fails to support PEP 604-compliant new-style unions. In this case,
+            # fallback to a PEP 484-compliant old-style union.
+            Union[str, bytes, BeartypeInferHintContainerRecursion]
+        ]
+
+# ....................{ TESTS ~ third-party                }....................
+# Tests exercising infer_hint() with respect to third-party packages.
 
 def test_door_infer_hint_numpy(
     door_cases_infer_hint: 'Iterable[Tuple[object, object]]',

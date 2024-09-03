@@ -34,6 +34,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
+from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion(object):
@@ -172,8 +173,8 @@ def infer_hint(
             cls=BeartypeDoorInferHintRecursionWarning,
             message=(
                 f'Container recursion detected; short-circuiting for safety. '
-                f'Container {type(obj)} self-referentially refers to '
-                f'same container.'
+                f'Container {represent_object(obj)} self-referentially '
+                f'contains itself as an item.'
             ),
         )
 

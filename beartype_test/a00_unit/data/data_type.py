@@ -954,7 +954,7 @@ Frozen set of all **fake builtin types** (i.e., types that are *not* builtin
 but which nonetheless erroneously masquerade as being builtin).
 
 See Also
-----------
+--------
 :data:`beartype._data.cls.datacls.TYPES_BUILTIN_FAKE`
     Related runtime set. Whereas that runtime-specific set is efficiently
     defined explicitly by listing all non-builtin builtin mimic types, this
