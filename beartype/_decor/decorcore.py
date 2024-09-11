@@ -221,23 +221,31 @@ def _beartype_object_nonfatal(
             f'{repr(warning_category)} not warning category.')
 
         # Original lower-level error message to be embedded in the higher-level
-        # warning message to be emitted below, defined as either...
-        error_message = (
-            # If this exception is beartype-specific, this exception's message
-            # is probably human-readable as is. In this case, maximize brevity
-            # and readability by coercing *ONLY* this message (rather than both
-            # this message *AND* traceback) truncated to a reasonable maximum
-            # length into a warning message.
-            truncate_str(text=label_exception(exception), max_len=1024)
-            if isinstance(exception, BeartypeException) else
-            # Else, this exception is *NOT* beartype-specific. In this case,
-            # this exception's message is probably *NOT* human-readable as is.
-            # Prepend that non-human-readable message by this exception's
-            # traceback for disambiguity and debuggability. Note that the
-            # format_exc() function appends this exception's message to this
-            # traceback and thus suffices as is.
-            format_exc()
-        )
+        # warning message to be emitted below.
+        error_message = format_exc()
+
+        #FIXME: Once, we thought this truncation was useful. Having actually
+        #*USED* @beartype in the real world, however, we now regard this
+        #truncation is the ultimate horror that prevents debugging. Lessons!
+        # # Original lower-level error message to be embedded in the higher-level
+        # # warning message to be emitted below, defined as either...
+        # error_message = (
+        #     # If this exception is beartype-specific, this exception's message
+        #     # is probably human-readable as is. In this case, maximize brevity
+        #     # and readability by coercing *ONLY* this message (rather than both
+        #     # this message *AND* traceback) truncated to a reasonable maximum
+        #     # length into a warning message.
+        #     # truncate_str(text=label_exception(exception), max_len=1024)
+        #     label_exception(exception)
+        #     if isinstance(exception, BeartypeException) else
+        #     # Else, this exception is *NOT* beartype-specific. In this case,
+        #     # this exception's message is probably *NOT* human-readable as is.
+        #     # Prepend that non-human-readable message by this exception's
+        #     # traceback for disambiguity and debuggability. Note that the
+        #     # format_exc() function appends this exception's message to this
+        #     # traceback and thus suffices as is.
+        #     format_exc()
+        # )
 
         # Indent this message by globally replacing *EVERY* newline in this
         # message with a newline followed by four spaces. Doing so visually

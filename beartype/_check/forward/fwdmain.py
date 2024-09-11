@@ -33,8 +33,10 @@ from beartype._util.func.utilfuncscope import (
 )
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
+from beartype._util.text.utiltextansi import color_hint
 from beartype._util.utilobject import get_object_name
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
+from traceback import format_exc
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
@@ -115,8 +117,8 @@ def resolve_hint(
             # callable itself);
             frozenset(func.__qualname__.rsplit(sep='.'))
             if decor_meta.func_wrappee_is_nested else
-            # Else, the decorated callable is a global function. In this
-            # case, the empty frozen set.
+            # Else, the decorated callable is a global function. In this case,
+            # the empty frozen set.
             FROZENSET_EMPTY
         )
     # Else, this frozen set has already been decided.
@@ -606,16 +608,19 @@ def resolve_hint(
             # Human-readable message to be raised.
             exception_message = (
                 f'{exception_prefix}stringified type hint '
-                f'{repr(hint)} syntactically invalid '
-                f'(i.e., {repr(exception)}).'
+                f'{color_hint(text=repr(hint), is_color=decor_meta.conf.is_color)} '
+                f'invalid, as attempting to dynamically import '
+                f'the attribute referred to by this hint raises:\n'
+                f'{format_exc()}'
             )
 
             # If the beartype configuration associated with the decorated
             # callable enabled debugging, append debug-specific metadata to this
             # message.
+            # if True:
             if decor_meta.conf.is_debug:
                 exception_message += (
-                    f' Composite global and local scope enclosing this hint:\n\n'
+                    f'\nComposite global and local scope enclosing this hint:\n\n'
                     f'{repr(decor_meta.func_wrappee_scope_forward)}'
                 )
             # Else, the beartype configuration associated with the decorated
