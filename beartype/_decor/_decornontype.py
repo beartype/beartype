@@ -291,36 +291,8 @@ def beartype_func(
         func_name=decor_meta.func_wrapper_name,
         func_code=func_wrapper_code,
         func_locals=decor_meta.func_wrapper_scope,
-
-        #FIXME: String formatting is infamously slow. As an optimization, it'd
-        #be strongly preferable to instead pass a lambda function accepting *NO*
-        #parameters and returning the desired string, which make_func() should
-        #then internally call on an as-needed basis to make this string: e.g.,
-        #    func_label_factory=lambda: f'@beartyped {decor_meta.func_wrapper_name}() wrapper',
-        #
-        #This is trivial. The only question then is: "Which is actually faster?"
-        #Before finalizing this refactoring, let's profile both, adopt whichever
-        #outperforms the other, and then document this choice in make_func().
-        #FIXME: *WAIT.* We don't need a lambda at all. All we need is to:
-        #* Define a new BeartypeDecorMeta.label_func_wrapper() method resembling:
-        #      def label_func_wrapper(self) -> str:
-        #          return f'@beartyped {self.func_wrapper_name}() wrapper'
-        #* Refactor make_func() to accept a new optional keyword-only
-        #  "func_label_factory" parameter, passed here as:
-        #      func_label_factory=decor_meta.label_func_wrapper,
-        #
-        #That's absolutely guaranteed to be the fastest approach.
-        #FIXME: Right. Do that -- except instead of a new unique
-        #label_func_wrapper() method name, just define the standard
-        #BeartypeDecorMeta.__repr__() dunder method: e.g.,
-        #    class BeartypeDecorMeta(object):
-        #        ...
-        #        def __repr__(self) -> str:
-        #            return f'@beartyped {self.func_wrapper_name}() wrapper'
-        #Then pass a new "func_label_obj_repr=decor_meta" parameter. Win!
-        func_label=f'@beartyped {decor_meta.func_wrapper_name}() wrapper',
-
-        func_wrapped=func,
+        func_wrapped=func,  # pyright: ignore
+        func_labeller=decor_meta.label_func_wrapper,
         is_debug=conf.is_debug,
         exception_cls=BeartypeDecorWrapperException,
     )

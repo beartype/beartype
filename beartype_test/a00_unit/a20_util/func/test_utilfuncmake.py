@@ -31,8 +31,8 @@ def test_make_func(capsys) -> None:
         :mod:`pytest` fixture enabling standard output and error to be reliably
         captured and tested against from within unit tests and fixtures.
 
-    Parameters
-    ----------
+    See Also
+    --------
     https://docs.pytest.org/en/latest/how-to/capture-stdout-stderr.html#accessing-captured-output-from-a-test-function
         Official ``capsys`` reference documentation.
     '''
@@ -51,7 +51,8 @@ def test_make_func(capsys) -> None:
     THO_MUCH_IS_TAKEN = 'much abides; and tho’'
 
     # ....................{ FUNCS                          }....................
-    # Arbitrary callable wrapped by wrappers created below.
+    # Arbitrary callable wrapped by wrappers created below, including an
+    # arbitrary docstring to be propagated.
     def we_are_not_now_that_strength_which_in_old_days() -> str:
         '''
         One equal temper of heroic hearts,
@@ -59,6 +60,16 @@ def test_make_func(capsys) -> None:
 
         return 'Moved earth and heaven, that which we are, we are;'
 
+
+    def func_labeller() -> str:
+        '''
+        Arbitrary function label factory to be passed as the ``func_labeller``
+        parameter to the :func:`.make_func` function.
+        '''
+
+        return 'Geriatric you_and_i_are_old() function',
+
+    # ....................{ LOCALS                         }....................
     # Arbitrary wrapper accessing both globally and locally scoped attributes,
     # exercising most optional parameters.
     ulysses = make_func(
@@ -138,6 +149,19 @@ def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
     assert 'return and_not_to_yield' in func_cache_code
 
     # ....................{ FAIL                           }....................
+    # Assert that attempting to pass both the "func_label" and "func_labeller"
+    # parameters raises the expected exception.
+    with raises(AssertionError):
+        make_func(
+            func_name='and_led_the_loveliest',
+            func_code='''
+def and_led_the_loveliest(among_human_forms: str) -> str:
+    return among_human_forms
+''',
+            func_label='To make their wild haunts the depository',
+            func_labeller=func_labeller,
+        )
+
     # Assert that attempting to create a function whose name collides with that
     # of a caller-defined local variable raises the expected exception.
     with raises(_BeartypeUtilCallableException):
@@ -175,7 +199,7 @@ def to_sail_beyond_the_sunset(and_the_baths: str) -> str:
 def old_age_hath_yet_his_honour_and_his_toil() -> str:
     return 'Death closes all: but something ere the end'
 ''',
-            func_label='Geriatric you_and_i_are_old() function',
+            func_labeller=func_labeller,
             exception_cls=BeartypeDecorWrapperException,
         )
 

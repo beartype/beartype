@@ -68,16 +68,16 @@ class BeartypeDecorMeta(object):
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
     :func:`beartype._check.code.codemake.make_func_pith_code`) **and
-    higher-level callables** (e.g.,
-    :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, memoized
-    callables *must* return that state as additional return values up the call
-    stack to those higher-level callables. By definition, memoized callables
-    are *not* recalled on subsequent calls passed the same parameters. Since
-    only the first call to those callables passed those parameters would set
-    the appropriate state on this object intended to be communicated to
-    higher-level callables, *all* subsequent calls would subtly fail with
-    difficult-to-diagnose issues. See also `<issue #5_>`__, which exhibited
-    this very complaint.
+    high-level unmemoized callables** (e.g.,
+    :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, low-level
+    memoized callables *must* return that state as additional return values up
+    the call stack to those high-level unmemoized callables. By definition,
+    memoized callables are *not* recalled on subsequent calls passed the same
+    parameters. Since only the first call to those callables passed those
+    parameters would set the appropriate state on this object intended to be
+    communicated to unmemoized callables, *all* subsequent calls would subtly
+    fail with difficult-to-diagnose issues. See also `<issue #5_>`__, which
+    exhibited this very complaint.
 
     .. _issue #5:
        https://github.com/beartype/beartype/issues/5
@@ -189,8 +189,9 @@ class BeartypeDecorMeta(object):
         **Local scope** (i.e., dictionary mapping from the name to value of
         each attribute referenced in the signature) of this wrapper function.
     func_wrapper_name : Optional[str]
-        Machine-readable name of the wrapper function to be generated and
-        returned by this decorator.
+        Unqualified basename of the type-checking wrapper function to be
+        generated and returned by the current invocation of the
+        :func:`beartype.beartype` decorator.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -746,6 +747,23 @@ class BeartypeDecorMeta(object):
             f'conf={repr(self.conf)}'
             f')'
         )
+
+    # ..................{ LABELLERS                          }..................
+    def label_func_wrapper(self) -> str:
+        '''
+        Human-readable label describing the type-checking wrapper function to be
+        generated and returned by the current invocation of the
+        :func:`beartype.beartype` decorator.
+
+        This method is a non-negligible optimization. Since string munging is
+        *extremely* slow and this method necessarily munges strings, external
+        callers delay this string munging as late as possible by delaying all
+        calls to this method as late as possible (e.g., until an exception
+        message requiring this label is actually required).
+        '''
+
+        # One-liner of Ultimate Beauty: we invoke thee in this line!
+        return f'@beartyped {self.func_wrapper_name}() wrapper'
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Optional
+from beartype.typing import (
+    Callable,
+    Optional,
+)
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
@@ -20,7 +23,6 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
-from collections.abc import Callable
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]
 from weakref import finalize
@@ -36,6 +38,7 @@ def make_func(
     func_locals: Optional[LexicalScope] = None,
     func_doc: Optional[str] = None,
     func_label: Optional[str] = None,
+    func_labeller: Optional[Callable[[], str]] = None,
     func_wrapped: Optional[Callable] = None,
     is_debug: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
@@ -70,7 +73,18 @@ def make_func(
         :data:`None`, in which case this function remains undocumented.
     func_label : str | None
         Human-readable label describing this function for error-handling
-        purposes. Defaults to :data:`None`, in which case this label effectively
+        purposes. Note that this parameter is mutually exclusive with the
+        competing ``func_labeller`` parameter; if both are non-:data:`None`, an
+        exception is raised. Defaults to :data:`None`, in which case this label
+        effectively defaults to ``"{func_name}()"``.
+    func_labeller : Callable[[], str] | None
+        Callback accepting *no* parameters and returning a human-readable label
+        describing this function for error-handling purposes, intended for use
+        cases in which simply passing this label as the ``func_label`` parameter
+        is prohibitively expensive (e.g., due to the cost of string munging).
+        Note that this parameter is mutually exclusive with the competing
+        ``func_label`` parameter; if both are non-:data:`None`, an exception is
+        raised. Defaults to :data:`None`, in which case this label effectively
         defaults to ``"{func_name}()"``.
     func_wrapped : Callable | None
         Callable wrapped by the function to be created. If non-:data:`None`,
@@ -115,6 +129,7 @@ def make_func(
         * ``func_locals`` contains a key whose value is that of ``func_name``,
           implying the caller already declared a local attribute whose name
           collides with that of this function.
+        * ``func_label`` and ``func_labeller`` are both non-:data:`None`.
         * This code snippet is syntactically invalid.
         * This code snippet is syntactically valid but fails to declare a
           function with this name.
@@ -126,26 +141,41 @@ def make_func(
     assert isinstance(is_debug, bool), f'{repr(is_debug)} not bool.'
     assert func_name, 'Parameter "func_name" empty.'
     assert func_code, 'Parameter "func_code" empty.'
+    assert func_label is None or func_labeller is None, (
+        f'Parameters "func_label" and "func_labeller" both non-"None".')
 
     # Default all unpassed parameters.
     if func_globals is None:
         func_globals = {}
     if func_locals is None:
         func_locals = {}
-    if func_label is None:
-        func_label = f'{func_name}()'
     assert isinstance(func_globals, dict), (
         f'{repr(func_globals)} not dictionary.')
     assert isinstance(func_locals, dict), (
         f'{repr(func_locals)} not dictionary.')
-    assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+
+    # If "func_labeller" is unpassed...
+    if func_labeller is None:
+        # If both "func_label" *AND* "func_labeller" are unpassed, default
+        # "func_label" to a sensible label.
+        if func_label is None:
+            func_label = f'{func_name}()'
+        # Else, only "func_labeller" is unpassed.
+        #
+        # In either case, "func_label" should now be a valid label.
+
+        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+    # Else, "func_labeller" is passed. In this case...
+    else:
+        assert callable(func_labeller), f'{repr(func_labeller)} uncallable.'
 
     # If that function's name is already in this local scope, the caller
     # already declared a local attribute whose name collides with that
     # function's. In this case, raise an exception for safety.
     if func_name in func_locals:
         raise exception_cls(
-            f'{func_label} already defined by caller locals:\n'
+            f'{func_label or func_labeller()} '  # type: ignore[misc]
+            f'already defined by caller locals:\n'
             f'{repr(func_locals)}'
         )
     # Else, that function's name is *NOT* already in this local scope.
@@ -254,8 +284,9 @@ def make_func(
         #          ^
         #     SyntaxError: invalid syntax
         raise exception_cls(
-            f'{func_label} unparseable, as @beartype generated '
-            f'invalid code raising "{label_exception(exception)}":\n\n'
+            f'{func_label or func_labeller()} '  # type: ignore[misc]
+            f'unparseable, as @beartype generated invalid code raising:\n'
+            f'\t{label_exception(exception)}\n\n'
             f'{number_str_lines(func_code)}'
         ) from exception
 
@@ -264,7 +295,8 @@ def make_func(
     # failed to declare that function. In this case, raise an exception.
     if func_name not in func_locals:
         raise exception_cls(
-            f'{func_label} undefined by code snippet:\n\n'
+            f'{func_label or func_labeller()} '  # type: ignore[misc]
+            f'undefined by code snippet:\n\n'
             f'{number_str_lines(func_code)}'
         )
     # Else, that function's name is in this local scope.
@@ -275,7 +307,8 @@ def make_func(
     # If that function is uncallable, raise an exception.
     if not callable(func):
         raise exception_cls(
-            f'{func_label} defined by code snippet uncallable:\n\n'
+            f'{func_label or func_labeller()} '  # type: ignore[misc]
+            f'defined by code snippet uncallable:\n\n'
             f'{number_str_lines(func_code)}'
         )
     # Else, that function is callable.
@@ -325,8 +358,7 @@ def make_func(
         )
 
         # Define and register a cleanup callback removing that function's
-        # linecache entry called if and when that function is
-        # garbage-collected.
+        # linecache entry called if and when that function is garbage-collected.
         def _remove_func_linecache_entry():
             linecache_cache.pop(func_filename, None)
         finalize(func, _remove_func_linecache_entry)

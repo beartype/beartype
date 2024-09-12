@@ -598,6 +598,11 @@ def _make_func_checker(
     assert callable(make_code_check), f'{repr(make_code_check)} uncallable.'
 
     # Attempt to...
+    #
+    # Note that the passed "exception_prefix" is intentionally *NOT* passed to
+    # functions in the body of this "try" block. Why? Memoization efficiency.
+    # Instead, the placeholder "EXCEPTION_PLACEHOLDER" is intentionally passed.
+    # The "except" block then catches and replaces that with "exception_prefix".
     try:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
         # during this logic for subsequent "playback" below...
@@ -655,12 +660,12 @@ def _make_func_checker(
             #
             #Sounds fun! Sounds like a lot of non-trivial work, too. But that's
             #where all the fun resides, doesn't it? *DOESN'T IT!?*
-            #FIXME: *WAIT.* That doesn't quite work. The issue, of course, that
-            #the scope in which a callable is called may no longer have access
-            #to the scope in which a callable was defined, which is where the
-            #class referred to by relative forward references actually lives.
-            #So, we absolutely should *NOT* "Consider refactoring our..." No.
-            #Don't do that. That said, the above idea *SHOULD* still behave
+            #FIXME: *WAIT.* That doesn't quite work. The issue, of course, is
+            #that the scope in which a callable is called may no longer have
+            #access to the scope in which a callable was defined, which is where
+            #the class referred to by relative forward references actually
+            #lives. So, we absolutely should *NOT* "Consider refactoring our..."
+            #No. Don't do that. That said, the above idea *SHOULD* still behave
             #itself for if_bearable() and die_if_unbearable(), because these
             #statement-level type-checkers actually do run in the same scopes
             #that their type hints are defined in. Huh. Pretty nifty, eh? This
@@ -739,7 +744,14 @@ def _make_func_checker(
                 func_name=func_checker_name,
                 func_code=func_checker_code,
                 func_locals=func_scope,
-                func_label='die_if_unbearable() or is_bearable() type-checker',
+
+                #FIXME: Almost right but *NOT* quite right. Why? Because
+                #make_func() will append a space to "func_label", but
+                #"EXCEPTION_PLACEHOLDER" is *ALREADY* suffixed by a space. Oh,
+                #well. It's not a super-big deal. In theory, this function
+                #should *NEVER* raise exceptions, anyway. *shrug*
+                func_label=EXCEPTION_PLACEHOLDER,
+
                 is_debug=conf.is_debug,
             )
         # If one or more warnings were issued, reissue these warnings with each
