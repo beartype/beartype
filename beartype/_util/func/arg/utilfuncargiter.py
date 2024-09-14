@@ -97,9 +97,9 @@ accepted by the pure-Python callable passed to that generator, defined as the
 4-tuple ``(arg_kind, arg_name, arg_default_or_mandatory, arg_hint_or_unhinted)``
 where:
 
-* ``arg_kind`` is this parameter's **kind** (i.e., ".ArgKind" enumeration member
-  conveying the syntactic class of this parameter, constraining how the callable
-  declaring this parameter requires this parameter to be passed).
+* ``arg_kind`` is this parameter's **kind** (i.e., :class:`.ArgKind` enumeration
+  member conveying the syntactic class of this parameter, constraining how the
+  callable declaring this parameter requires this parameter to be passed).
 * ``arg_name`` is this parameter's **name** (i.e., syntactically valid Python
   identifier uniquely identifying this parameter in its parameter list).
 * ``arg_default_or_mandatory`` is either:

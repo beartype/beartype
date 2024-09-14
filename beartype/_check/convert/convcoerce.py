@@ -60,7 +60,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import NotImplementedType
-from beartype._cave._cavemap import NoneTypeOr
+# from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.metadata.metadecor import BeartypeDecorMeta

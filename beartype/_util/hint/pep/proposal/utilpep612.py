@@ -11,10 +11,6 @@ utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-#FIXME: Still insufficient, sadly. We also have to validate "pairage": that is,
-#that if "*args: P.args" is a parameter, then "**kwargs: P.kwargs" is also a
-#parameter.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep612Exception
 from beartype.typing import (
@@ -26,7 +22,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecType,
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
-    HintPep612ParamSpecVarTypes,
+    # HintPep612ParamSpecVarTypes,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -40,7 +36,10 @@ from beartype._util.func.arg.utilfuncargget import (
     get_func_arg_meta_variadic_keyword_or_none,
     get_func_arg_meta_variadic_positional_or_none,
 )
-from beartype._util.func.arg.utilfuncargiter import ARG_META_INDEX_NAME
+from beartype._util.func.arg.utilfuncargiter import (
+    ARG_META_INDEX_NAME,
+    ArgKind,
+)
 from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_name_variadic_keyword,
     is_func_arg_name_variadic_positional,
@@ -162,7 +161,7 @@ def make_hint_pep612_concatenate_list_or_none(
     return hint
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
+def reduce_hint_pep612_args(hint: object, **kwargs,) -> object:
     '''
     Reduce the passed :pep:`612`-compliant **parameter specification variadic
     positional parameter instance variable** (i.e., low-level C-based
@@ -211,9 +210,9 @@ def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
     # Defer to this lower-level general-purpose reducer.
     return _reduce_hint_pep612_args_or_kwargs(
         hint=hint,
+        arg_kind_expected=ArgKind.VARIADIC_POSITIONAL,
         pith_name_label=_VAR_POS_PITH_NAME_LABEL,
         pith_name_syntax=_VAR_POS_PITH_NAME_SYNTAX,
-        pith_name_tester=_VAR_POS_PITH_NAME_TESTER,
         other_hint=get_hint_pep612_paramspec(hint).kwargs,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecKwargs,
         other_pith_name_getter=get_func_arg_meta_variadic_keyword_or_none,
@@ -244,9 +243,9 @@ def reduce_hint_pep612_kwargs(hint: object, **kwargs) -> object:
     # Defer to this lower-level general-purpose reducer.
     return _reduce_hint_pep612_args_or_kwargs(
         hint=hint,
+        arg_kind_expected=ArgKind.VARIADIC_KEYWORD,
         pith_name_label=_VAR_KW_PITH_NAME_LABEL,
         pith_name_syntax=_VAR_KW_PITH_NAME_SYNTAX,
-        pith_name_tester=_VAR_KW_PITH_NAME_TESTER,
         other_hint=get_hint_pep612_paramspec(hint).args,  # type: ignore[attr-defined,arg-type]
         other_hint_sign=HintSignParamSpecArgs,
         other_pith_name_getter=get_func_arg_meta_variadic_positional_or_none,
@@ -298,17 +297,29 @@ parameter.
 
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_pep612_args_or_kwargs(
+    # General-purpose parameters passed by the higher-level
+    # beartype._check.convert.convreduce.reduce_hint() reducer to this
+    # lower-level reducer.
     hint: object,
     decor_meta: Optional[BeartypeDecorMeta],
     pith_name: Optional[str],
+    arg_kind: Optional[ArgKind],
+
+    # PEP 612-specific parameters passed by the higher-level
+    # reduce_hint_pep612_args() or reduce_hint_pep612_kwargs() reducer to this
+    # lower-level reducer.
+    arg_kind_expected: ArgKind,
     pith_name_label: str,
     pith_name_syntax: str,
-    pith_name_tester: Callable,
     other_hint: object,
     other_hint_sign: HintSign,
     other_pith_name_getter: Callable,
     other_pith_name_label: str,
     exception_prefix: str,
+
+    # Ignorable general-purpose parameters passed by the higher-level
+    # beartype._check.convert.convreduce.reduce_hint() reducer *NOT* required
+    # by this lower-level reducer.
     **kwargs
 ) -> object:
     '''
@@ -351,6 +362,21 @@ def _reduce_hint_pep612_args_or_kwargs(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter of some callable, that parameter's
+          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
+          syntactic class of that parameter, constraining how the callable
+          declaring that parameter requires that parameter to be passed).
+        * Else, :data:`None`.
+    arg_kind_expected : ArgKind
+        **Expected parameter kind**, defined as either:
+
+        * If this hint is expected to annotate a variadic positional parameter,
+          the :attr:`.ArgKind.VARIADIC_POSITIONAL` enumeration member.
+        * If this hint is expected to annotate a variadic keyword parameter,
+          the :attr:`.ArgKind.VARIADIC_KEYWORD` enumeration member.
     pith_name_label : str
         Either:
 
@@ -365,15 +391,6 @@ def _reduce_hint_pep612_args_or_kwargs(
           machine-readable substring ``"*args"``.
         * If this hint annotates a variadic keyword parameter, the
           machine-readable substring ``"**kwargs"``.
-    pith_name_tester : Callable
-        Either:
-
-        * If this hint annotates a variadic positional parameter, the
-          :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name_variadic_positional`
-          tester.
-        * If this hint annotates a variadic keyword parameter, the
-          :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name_variadic_keyword`
-          tester.
     other_hint : object
         Either:
 
@@ -420,11 +437,12 @@ def _reduce_hint_pep612_args_or_kwargs(
     BeartypeDecorHintPep612Exception
         If this hint does *not* annotate a variadic positional parameter.
     '''
+    assert isinstance(arg_kind_expected, ArgKind), (
+        f'{repr(arg_kind_expected)} not argument kind.')
     assert isinstance(pith_name_label, str), (
         f'{repr(pith_name_label)} not string.')
     assert isinstance(pith_name_syntax, str), (
         f'{repr(pith_name_syntax)} not string.')
-    assert callable(pith_name_tester), f'{repr(pith_name_tester)} uncallable.'
     assert isinstance(other_hint_sign, HintSign), (
         f'{repr(other_hint_sign)} not type hint sign.')
     assert callable(other_pith_name_getter), (
@@ -473,13 +491,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # If this hint directly annotates a callable parameter or return that is
     # *NOT* a variadic positional or keyword parameter, raise an exception.
-    if not pith_name_tester(
-        func=func,
-        arg_name=pith_name,
-        is_unwrap=False,  # <-- "func" is already a fully unwrapped callable
-        exception_cls=BeartypeDecorHintPep612Exception,
-        exception_prefix=exception_prefix,
-    ):
+    if arg_kind is not arg_kind_expected:
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '

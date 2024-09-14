@@ -16,6 +16,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.convert.convcoerce import (
     coerce_func_hint_root,
@@ -28,6 +29,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -36,11 +38,12 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 #FIXME: Unit test us up, please.
 def sanify_hint_root_func(
     # Mandatory parameters.
-    hint: object,
     decor_meta: BeartypeDecorMeta,
+    hint: object,
     pith_name: str,
 
     # Optional parameters.
+    arg_kind: Optional[ArgKind] = None,
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
 ) -> object:
     '''
@@ -81,15 +84,25 @@ def sanify_hint_root_func(
 
     Parameters
     ----------
-    hint : object
-        Possibly PEP-noncompliant root type hint to be sanified.
     decor_meta : BeartypeDecorMeta
         Decorated callable directly annotated by this hint.
+    hint : object
+        Possibly PEP-noncompliant root type hint to be sanified.
     pith_name : str
         Either:
 
         * If this hint annotates a parameter, the name of that parameter.
         * If this hint annotates the return, ``"return"``.
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter, that parameter's **kind** (i.e.,
+          :class:`.ArgKind` enumeration member conveying the syntactic class of
+          that parameter, constraining how the callable declaring that parameter
+          requires that parameter to be passed).
+        * If this hint annotates the return, :data:`None`.
+
+        Defaults to :data:`None`.
     exception_prefix : str, optional
         Human-readable label prefixing exception messages raised by this
         function. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
@@ -111,6 +124,8 @@ def sanify_hint_root_func(
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
+    assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
+        f'{repr(arg_kind)} neither argument kind nor "None".')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
@@ -124,9 +139,9 @@ def sanify_hint_root_func(
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
     hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
+        decor_meta=decor_meta,
         hint=hint,
         pith_name=pith_name,
-        decor_meta=decor_meta,
         exception_prefix=exception_prefix,
     )
 
@@ -176,8 +191,9 @@ def sanify_hint_root_func(
     hint = reduce_hint(
         hint=hint,
         conf=decor_meta.conf,
-        cls_stack=decor_meta.cls_stack,
         decor_meta=decor_meta,
+        arg_kind=arg_kind,
+        cls_stack=decor_meta.cls_stack,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )

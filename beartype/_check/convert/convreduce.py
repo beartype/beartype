@@ -89,6 +89,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.nonpep.api.utilmodnumpy import (
     reduce_hint_numpy_ndarray)
 from beartype._util.hint.nonpep.api.utilmodpandera import (
@@ -135,9 +136,10 @@ def reduce_hint(
     conf: BeartypeConf,
 
     # Optional parameters.
-    cls_stack: TypeStack = None,
     decor_meta: Optional[BeartypeDecorMeta] = None,
     pith_name: Optional[str] = None,
+    arg_kind: Optional[ArgKind] = None,
+    cls_stack: TypeStack = None,
     exception_prefix: str = '',
 ) -> object:
     '''
@@ -165,11 +167,6 @@ def reduce_hint(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
     decor_meta : Optional[BeartypeDecorMeta], optional
         Either:
 
@@ -186,6 +183,21 @@ def reduce_hint(
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
 
+        Defaults to :data:`None`.
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter of some callable, that parameter's
+          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
+          syntactic class of that parameter, constraining how the callable
+          declaring that parameter requires that parameter to be passed).
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
@@ -220,9 +232,10 @@ def reduce_hint(
         hint = _reduce_hint_uncached(
             hint=hint,
             conf=conf,
-            pith_name=pith_name,
-            cls_stack=cls_stack,
             decor_meta=decor_meta,
+            pith_name=pith_name,
+            arg_kind=arg_kind,
+            cls_stack=cls_stack,
             exception_prefix=exception_prefix,
         )
 
@@ -249,9 +262,10 @@ def reduce_hint(
 def _reduce_hint_uncached(
     hint: Any,
     conf: BeartypeConf,
-    cls_stack: TypeStack,
     decor_meta: Optional[BeartypeDecorMeta],
+    arg_kind: Optional[ArgKind],
     pith_name: Optional[str],
+    cls_stack: TypeStack,
     exception_prefix: str,
 ) -> object:
     '''
@@ -274,10 +288,6 @@ def _reduce_hint_uncached(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    cls_stack : TypeStack
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
     decor_meta : Optional[BeartypeDecorMeta]
         Either:
 
@@ -291,6 +301,18 @@ def _reduce_hint_uncached(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter of some callable, that parameter's
+          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
+          syntactic class of that parameter, constraining how the callable
+          declaring that parameter requires that parameter to be passed).
+        * Else, :data:`None`.
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
     exception_prefix : str
         Human-readable substring prefixing exception messages raised by this
         reducer.
@@ -321,9 +343,10 @@ def _reduce_hint_uncached(
         hint = hint_reducer(
             hint=hint,  # pyright: ignore
             conf=conf,
-            cls_stack=cls_stack,
             decor_meta=decor_meta,
             pith_name=pith_name,
+            arg_kind=arg_kind,
+            cls_stack=cls_stack,
             exception_prefix=exception_prefix,
         )
         # print(f'...{repr(hint)}.')

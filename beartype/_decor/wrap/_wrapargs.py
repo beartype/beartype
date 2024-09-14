@@ -254,7 +254,11 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # readily consumable by @beartype's code generator *BEFORE*
                 # passing this hint to any further callables.
                 hint = sanify_hint_root_func(
-                    hint=hint_insane, pith_name=arg_name, decor_meta=decor_meta)
+                    hint=hint_insane,
+                    decor_meta=decor_meta,
+                    pith_name=arg_name,
+                    arg_kind=arg_kind,
+                )
 
                 # If this hint is ignorable, continue to the next parameter.
                 #
