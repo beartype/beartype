@@ -304,6 +304,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     decor_meta: Optional[BeartypeDecorMeta],
     pith_name: Optional[str],
     arg_kind: Optional[ArgKind],
+    exception_prefix: str,
 
     # PEP 612-specific parameters passed by the higher-level
     # reduce_hint_pep612_args() or reduce_hint_pep612_kwargs() reducer to this
@@ -315,7 +316,6 @@ def _reduce_hint_pep612_args_or_kwargs(
     other_hint_sign: HintSign,
     other_pith_name_getter: Callable,
     other_pith_name_label: str,
-    exception_prefix: str,
 
     # Ignorable general-purpose parameters passed by the higher-level
     # beartype._check.convert.convreduce.reduce_hint() reducer *NOT* required
@@ -370,6 +370,9 @@ def _reduce_hint_pep612_args_or_kwargs(
           syntactic class of that parameter, constraining how the callable
           declaring that parameter requires that parameter to be passed).
         * Else, :data:`None`.
+    exception_prefix : str
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
     arg_kind_expected : ArgKind
         **Expected parameter kind**, defined as either:
 
@@ -421,9 +424,6 @@ def _reduce_hint_pep612_args_or_kwargs(
           human-readable substring ``"keyword"``.
         * If this hint annotates a variadic keyword parameter, the
           human-readable substring ``"positional"``.
-    exception_prefix : str
-        Human-readable substring prefixing exception messages raised by this
-        reducer.
 
     All remaining passed parameters are silently ignored.
 
@@ -462,7 +462,7 @@ def _reduce_hint_pep612_args_or_kwargs(
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint "{repr(hint)}" erroneously subscripts '
+            f'type hint {repr(hint)} erroneously subscripts '
             f'a parent type hint as a nested child type hint rather than '
             f'directly annotating '
             f'variadic {pith_name_label} parameter "{pith_name_syntax}" as a '
@@ -495,7 +495,7 @@ def _reduce_hint_pep612_args_or_kwargs(
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint "{repr(hint)}" erroneously annotates '
+            f'type hint {repr(hint)} erroneously annotates '
             f'parameter "{pith_name}" rather than '
             f'variadic {pith_name_label} parameter "{pith_name_syntax}"'
             f'{_get_pep612_exception_message_suffix(func=func)}'
@@ -513,10 +513,10 @@ def _reduce_hint_pep612_args_or_kwargs(
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint "{repr(hint)}" not paired with '
+            f'type hint {repr(hint)} not paired with '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint "{repr(other_hint)}" (i.e., '
+            f'type hint {repr(other_hint)} (i.e., '
             f'that callable accepts no '
             f'variadic {other_pith_name_label} parameter)'
             f'{_get_pep612_exception_message_suffix(func=func)}'
@@ -536,31 +536,32 @@ def _reduce_hint_pep612_args_or_kwargs(
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint "{repr(hint)}" paired with unannotated '
+            f'type hint {repr(hint)} paired with unannotated '
             f'variadic {other_pith_name_label} parameter (i.e., '
             f'variadic {other_pith_name_label} parameter annotated by no '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint "{repr(other_hint)}")'
+            f'type hint {repr(other_hint)})'
             f'{_get_pep612_exception_message_suffix(func=func)}'
         )
-    # Else, the other variadic parameter is annotated by a type hint.
+    # Else, the other variadic parameter is annotated by a hint.
 
+    # Sign uniquely identifying the hint annotating other variadic parameter.
     other_arg_hint_sign = get_hint_pep_sign_or_none(other_arg_hint)
 
-    # If the type hint annotating the other variadic parameter is *NOT* the
-    # other variadic positional or keyword parameter type hint required by PEP
+    # If the hint annotating the other variadic parameter is *NOT* the other
+    # variadic positional or keyword parameter hint required by PEP
     # 612 to be paired with the passed hint, raise an exception.
     if other_arg_hint_sign is not other_hint_sign:
         raise BeartypeDecorHintPep612Exception(
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint "{repr(hint)}" paired with '
+            f'type hint {repr(hint)} paired with '
             f'variadic {other_pith_name_label} parameter erroneously annotated '
             f'by type hint {repr(other_arg_hint)} rather than '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint "{repr(other_hint)}"'
+            f'type hint {repr(other_hint)}'
             f'{_get_pep612_exception_message_suffix(func=func)}'
         )
     # Else, the type hint annotating the other variadic parameter is the

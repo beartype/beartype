@@ -71,7 +71,6 @@ def is_hint_pep589(hint: object) -> bool:
 
     # If this hint is *NOT* a "dict" subclass, this hint *CANNOT* be a typed
     # dictionary. By definition, typed dictionaries are "dict" subclasses.
-    #
     # Note that PEP 589 actually lies about the type of typed dictionaries:
     #     Methods are not allowed, since the runtime type of a TypedDict object
     #     will always be just dict (it is never a subclass of dict).
@@ -97,7 +96,6 @@ def is_hint_pep589(hint: object) -> bool:
     # "__required_keys__" and "__optional_keys__" dunder attributes. Ergo, if
     # the active Python interpreter targets exactly Python 3.8, we relax this
     # test to *ONLY* test for the "__annotations__" dunder attribute.
-    # Specifically, we return true only if...
     #
     # Technically, this test can also be performed by inefficiently violating
     # privacy encapsulation. Specifically, this test could perform an O(k) walk
@@ -117,12 +115,12 @@ def is_hint_pep589(hint: object) -> bool:
     # nonetheless declaring the same dunder attributes declared by that
     # superclass. Since the likelihood of any user-defined "dict" subclass
     # accidentally defining these attributes is vanishingly small *AND* since
-    # "typing.TypedDict" usage is largely discouraged in the typing community,
+    # "typing.TypedDict" usage is sorta discouraged in the typing community,
     # this error is unlikely to meaningfully arise in real-world use cases.
     # Ergo, it is preferable to implement this test portably, safely, and
     # efficiently rather than accommodate this error.
     #
-    # In short, the current approach of is strongly preferable.
+    # In short, the current approach is strongly preferable.
     return (
         # This "dict" subclass defines these "TypedDict" attributes *AND*...
         hasattr(hint, '__annotations__') and

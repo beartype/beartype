@@ -10,22 +10,59 @@ hints describing callable objects).
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: We can and should do better. Currently, infer_hint_callable() returns
-#the generic "collections.abc.Callable" protocol for unhinted callables.
-#However, callables accepting *ONLY* mandatory positional-only and flexible
-#parameters can and absolutely should be hinted with a more descriptive
-#"collections.abc.Callable[...]" type hint exhibiting the *NUMBER* of those
-#parameters. We can't do better than that, because we can at least do that. This
-#is particularly critical for lambda functions, which typically accept *ONLY*
-#mandatory flexible parameters, are commonly employed as callbacks: e.g.,
+#FIXME: We can and should do better. Currently, infer_hint_callable() reduces
+#all unannotated variadic positional arguments (e.g., "*args") and annotated
+#variadic positional arguments (e.g., "*args: int") to simply
+#"Concatenate[...]", basically. Previously, we thought that was the best we
+#could do. However, it turns out that PEP 646 under Python >= 3.11 provides an
+#obscure means of representing variadic positional arguments with *UNPACKED
+#TUPLE TYPE HINTS*. Notably:
+#    The behavior of a Callable containing an unpacked item, whether the item is
+#    a TypeVarTuple or a tuple type, is to treat the elements as if they were
+#    the type for *args. So, Callable[[*Ts], None] is treated as the type of the
+#    function:
+#        def foo(*args: *Ts) -> None: ...
+#
+#    Callable[[int, *Ts, T], Tuple[T, *Ts]] is treated as the type of the
+#    function:
+#        def foo(*args: *Tuple[int, *Ts, T]) -> Tuple[T, *Ts]: ...
+#
+#Given the above, it *SHOULD* theoretically follow that the type hint inferred
+#from a callable with signature:
+#    def muh_func(*args: int) -> None:
+#
+#...is this "Callable[...]" type hint:
+#    Callable[[*Tuple[int]], None]
+#
+#We know. Looks weird, but that's what a casual reading of the above section
+#explicitly suggests. Let's test that theory against mypy, please.
+#FIXME: *HMM.* Looks like mypy currently fails to type-check this properly. mypy
+#assorts that the following code snippet passes. Surely that isn't right,
+#though?
+#    from collections.abc import Callable
+#
+#    def muh_func(*args: int) -> None: pass
+#    def moo_func(*args: float) -> None: pass
+#    def ugh(glugh: Callable[[*tuple[int]], None]) -> None: pass
+#
+#    ugh(muh_func)  # <-- this passes. GOOD!
+#    ugh(moo_func)  # <-- this passes, too. BAD!
+#
+#Why does mypy pass both? Is mypy bugged? Is our reading of PEP 646 bugged? Does
+#mypy simply fail to fully support PEP 646? That would kinda explain why nobody
+#has bothered @beartype about supporting PEP 646, frankly. We're currently
+#inclined to believe that mypy has yet to implement this. Surely mypy should be
+#saying *SOMETHING* about that case, even if that something is to just notify us
+#of how "creative" we are. Let's check back sometime in 2025, please.
+
 #    >>> from beartype.door import infer_hint
 #
 #    # Ideally, this...
-#    >>> infer_hint(lambda: None, Foo)
+#    >>> infer_hint(lambda: None, True)
 #    collections.abc.Callable
 #
 #    # ...should instead resemble this.
-#    >>> infer_hint(lambda: None, Foo)
+#    >>> infer_hint(lambda: None, True)
 #    collections.abc.Callable[[], object]
 
 # ....................{ IMPORTS                            }....................
