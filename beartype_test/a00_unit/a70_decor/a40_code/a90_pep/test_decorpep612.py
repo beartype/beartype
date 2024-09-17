@@ -63,7 +63,7 @@ def test_decor_pep612() -> None:
 
     # ....................{ PASS                           }....................
     # Assert that a callable accepting both variadic positional and keyword
-    # parameters correctly annotated by valid :pep:`612`-compliant parameter
+    # parameters correctly annotated by valid PEP 612-compliant parameter
     # specification positional and keyword parameter type hints returns the
     # expected object.
     assert as_shapes(

@@ -13,6 +13,101 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP 646] Actually implement *SUPERFICIAL* type-checking support for PEP
+#646-compliant tuple type hint unpacking:
+#    Tuple[int, *Tuple[str, ...], str] - a tuple type where the first element is
+#    guaranteed to be of type int, the last element is guaranteed to be of type
+#    str, and the elements in the middle are zero or more elements of type str..
+#
+#Interestingly, even detecting accursed objects like "*Tuple[str, ...]" at
+#runtime is highly non-trivial. They do *NOT* have a sane unambiguous type,
+#significantly complicating detection. For some utterly inane reason, their type
+#is simply the ambiguous "types.GenericAlias" type. That... wasn't what we were
+#expecting *AT ALL*. For example, under Python 3.13:
+#    # Note that Python *REQUIRES* unpacked tuple type hints to be embedded in
+#    # some larger syntactic construct. So, just throw it into a list. This is
+#    # insane, because we're only going to rip it right back out of that list.
+#    # Blame the CPython interpreter. *shrug*
+#    >>> yam = [*tuple[int, str]]
+#
+#    # Arbitrary unpacked tuple type hint.
+#    >>> yim = yam[0]
+#    >>> repr(yim)
+#    *tuple[int, str]  # <-- gud
+#    >>> type(yim)
+#    <class 'types.GenericAlias'>  # <-- *TOTALLY NOT GUD. WTF, PYTHON!?*
+#
+#    # Now look at this special madness. The type of this object isn't even in
+#    # its method-resolution order (MRO)!?!? I've actually never seen that
+#    # before. The type of any object is *ALWAYS* the first item in its
+#    # method-resolution order (MRO), isn't it? I... guess not. *facepalm*
+#    >>> yim.__mro__
+#    (<class 'tuple'>, <class 'object'>)
+#
+#    # So, "*tuple[int, str]" is literally both a tuple *AND* a "GenericAlias"
+#    # at the same time. That makes no sense, but here we are. What are the
+#    # contents of this unholy abomination?
+#    >>> dir(yim)
+#    ['__add__', '__args__', '__bases__', '__class__', '__class_getitem__',
+#    '__contains__', '__copy__', '__deepcopy__', '__delattr__', '__dir__',
+#    '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__',
+#    '__getitem__', '__getnewargs__', '__getstate__', '__gt__', '__hash__',
+#    '__init__', '__init_subclass__', '__iter__', '__le__', '__len__', '__lt__',
+#    '__mro_entries__', '__mul__', '__ne__', '__new__', '__origin__',
+#    '__parameters__', '__reduce__', '__reduce_ex__', '__repr__', '__rmul__',
+#    '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
+#    '__typing_unpacked_tuple_args__', '__unpacked__', 'count', 'index']
+#
+#    # Lotsa weird stuff there, honestly. Let's poke around a bit.
+#    >>> yim.__args__
+#    (<class 'int'>, <class 'str'>)  # <-- gud
+#    >>> yim.__typing_unpacked_tuple_args__
+#    (<class 'int'>, <class 'str'>)  # <-- gud, albeit weird
+#    >>> yim.__unpacked__
+#    True  # <-- *WTF!?!? what the heck is this nonsense?*
+#    >>> yim.__origin__
+#    tuple  # <-- so you lie about everything, huh?
+#
+#Basically, the above means that the only means of reliably detecting an
+#unpacked tuple type hint at runtime is as follows:
+#def is_pep646_hint_tuple_unpacked(obj: object) -> bool:
+#    return (
+#        obj.__class__ is types.GenericAlias and
+#        #FIXME: Globalize this magic constant for efficiency. *shrug*
+#        obj.__mro__ == (tuple, object) and
+#        getattr(obj, '__unpacked__', None) is True
+#        (
+#            getattr(obj, '__args__', False) ==
+#            getattr(obj, '__typing_unpacked_tuple_args__', True)
+#        )
+#    )
+#
+#That's super-inefficient *AND* fragile across Python versions, but... what you
+#gonna do, huh? PEP 646 authors *REALLY* dropped the ball on this one, sadly.
+#
+#Of course, all of that only gets us to just detecting these accursed objects.
+#We then need to actually *TYPE-CHECK* their contents, somehow. A few ideas:
+#* A parent tuple hint can contain at most *ONE* unpacked child tuple hint. So,
+#  we'll now need to record the number of unpacked child tuple hints that have
+#  been previously handled and raise an exception if two or more are seen. Ugh!
+#* If the child tuple hint being unpacked is variadic (i.e., it's last item is
+#  "...") while the parent tuple hint containing that child tuple hint is
+#  fixed-length, we're now in trouble. This is exactly the example shown above.
+#  Supporting this requires possibly intense generalizations to our code
+#  generation algorithm for tuple hints, which previously partitioned support
+#  for fixed-length and variadic tuple hints into two separate logic paths. Now,
+#  the fixed-length tuple hint code path will need to detect and handle unpacked
+#  child variadic tuple hints. Kinda madness, honestly. We sigh. *sigh*
+
+#FIXME: [PEP 692] *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]"
+#after reduction, a fixed-length tuple hint. Clearly, however,
+#"Tuple[Unpack[Ts]]" should instead be semantically equivalent to a variadic
+#tuple hint: e.g.,
+#    # This is what we want! Tuple[*Ts] == Tuple[Unpack[Ts]] ==
+#    Tuple[Any, ...]
+#
+#See commentary in "data_pep646" for how to address this. *sigh*
+
 #FIXME: [PEP 692] Actually implement deep type-checking support for PEP
 #692-compliant unpack type hints of the form "**kwargs:
 #typing.Unpack[UserTypedDict]". Doing so will *ALMOST CERTAINLY* necessitate a
@@ -22,7 +117,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    # BeartypeDecorHintPep646Exception,
+    BeartypeDecorHintPep646Exception,
     BeartypeDecorHintPep692Exception,
 )
 from beartype.typing import (
@@ -161,7 +256,7 @@ def reduce_hint_pep646692_unpack(
     # If this child hint is *NOT* a PEP 646-compliant "typing.TypeVarTuple"
     # object, raise an exception.
     if hint_child_sign is not HintSignTypeVarTuple:
-        raise BeartypeDecorHintPep692Exception(
+        raise BeartypeDecorHintPep646Exception(
             f'{exception_prefix}PEP 646 unpack type hint {repr(hint)} '
             f'child type hint {repr(hint_child)} not '
             f'PEP 646 type variable tuple '

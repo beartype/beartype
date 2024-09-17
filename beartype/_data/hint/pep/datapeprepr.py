@@ -87,6 +87,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignType,
     HintSignTypeVar,
+    HintSignTypeVarTuple,
     # HintSignTypedDict,
     HintSignUnion,
     HintSignValuesView,
@@ -465,6 +466,11 @@ def _init() -> None:
         # PEP 612-compliant "**kwargs: P.kwargs" type hints as merely instances
         # of the low-level C-based "typing.ParamSpecKwargs" type.
         'ParamSpecKwargs': HintSignParamSpecKwargs,
+
+        # ....................{ PEP 646                    }....................
+        # All PEP 646-compliant type variable tuples are necessarily instances
+        # of the same class.
+        'TypeVarTuple': HintSignTypeVarTuple,
 
         # ....................{ PEP 695                    }....................
         # PEP 695-compliant "type" aliases are merely instances of the low-level

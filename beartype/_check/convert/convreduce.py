@@ -85,6 +85,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeGuard,
     HintSignTypeVar,
     HintSignTypedDict,
+    HintSignUnpack,
     HintSignValuesView,
 )
 from beartype._data.hint.datahinttyping import TypeStack
@@ -120,6 +121,8 @@ from beartype._util.hint.pep.proposal.utilpep612 import (
     reduce_hint_pep612_kwargs,
 )
 from beartype._util.hint.pep.proposal.utilpep613 import reduce_hint_pep613
+from beartype._util.hint.pep.proposal.utilpep646692 import (
+    reduce_hint_pep646692_unpack)
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
 from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
@@ -780,6 +783,20 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Note that, to ensure that one such warning is emitted for each such hint,
     # this reducer is intentionally uncached rather than cached.
     HintSignTypeAlias: reduce_hint_pep613,
+
+    # ..................{ PEP (646|692)                      }..................
+    # Reduce PEP 646- or 692-compliant "typing.Unpack[...]" type hints to
+    # either:
+    # * If this hint annotates the variadic positional argument of some
+    #   callable *AND* this is a PEP 692-compliant
+    #   "typing.Unpack[{SomeTypedDict}]" for "{SomeTypedDict}" some user-defined
+    #   PEP 589-compliant "typing.TypedDict" subclass, the ignorable "object"
+    #   superclass.
+    # * Else if this is a PEP 646-compliant "typing.Unpack[TypeVarTuple(...)]"
+    #   for some user-defined PEP 646-compliant type variable tuple
+    #   "TypeVarTuple(...)", the ignorable "object" superclass.
+    # * Else, raise an exception.
+    HintSignUnpack: reduce_hint_pep646692_unpack,
 
     # ..................{ PEP 647                            }..................
     # Reduce PEP 647-compliant "typing.TypeGuard[...]" type hints to either:

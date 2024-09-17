@@ -83,6 +83,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeGuard,
     HintSignTypeVar,
     HintSignUnion,
+    HintSignUnpack,
     HintSignValuesView,
 )
 
@@ -544,6 +545,9 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: _FrozenSetHintSign = frozenset((
     # ..................{ PEP 613                            }..................
     HintSignTypeAlias,
 
+    # ..................{ PEP 646                            }..................
+    HintSignUnpack,
+
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
 
@@ -569,47 +573,51 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
     HINT_SIGNS_REITERABLE_ARGS_1 |
     HINT_SIGNS_SEQUENCE_ARGS_1 |
     frozenset((
-    # ..................{ PEP 484                            }..................
-    # Note that the "NoReturn" type hint is invalid in almost all possible
-    # syntactic contexts and thus intentionally omitted here. See the
-    # "datapepsigns" submodule for further commentary.
-    HintSignAny,
-    HintSignBinaryIO,
-    HintSignForwardRef,
-    HintSignIO,
-    HintSignNewType,
-    HintSignNone,
-    HintSignTextIO,
+        # ..................{ PEP 484                        }..................
+        # Note that the "NoReturn" type hint is invalid in almost all possible
+        # syntactic contexts and thus intentionally omitted here. See the
+        # "datapepsigns" submodule for further commentary.
 
-    # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
-    # under Python <= 3.9. The implementations of the "typing" module under
-    # those older Python versions transparently reduced "typing.Optional" to
-    # "typing.Union" at runtime. Since this reduction is no longer the case,
-    # both *MUST* now be explicitly listed here.
-    HintSignOptional,
-    HintSignUnion,
+        #FIXME: These should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW",
+        #instead.
+        HintSignAny,
+        HintSignBinaryIO,
+        HintSignForwardRef,
+        HintSignIO,
+        HintSignNewType,
+        HintSignNone,
+        HintSignTextIO,
 
-    # ..................{ PEP (484|585)                      }..................
-    HintSignGeneric,
-    HintSignTupleFixed,
-    HintSignType,
+        # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
+        # under Python <= 3.9. The implementations of the "typing" module under
+        # those older Python versions transparently reduced "typing.Optional" to
+        # "typing.Union" at runtime. Since this reduction is no longer the case,
+        # both *MUST* now be explicitly listed here.
+        HintSignOptional,
+        HintSignUnion,
 
-    # ..................{ PEP 544                            }..................
-    HintSignProtocol,
+        # ..................{ PEP (484|585)                  }..................
+        HintSignGeneric,
+        HintSignTupleFixed,
+        HintSignType,
 
-    # ..................{ PEP 557                            }..................
-    HintSignPep557DataclassInitVar,
+        # ..................{ PEP 544                        }..................
+        HintSignProtocol,
 
-    # ..................{ PEP 586                            }..................
-    HintSignLiteral,
+        # ..................{ PEP 557                        }..................
+        HintSignPep557DataclassInitVar,
 
-    # ..................{ PEP 593                            }..................
-    HintSignAnnotated,
+        # ..................{ PEP 586                        }..................
+        HintSignLiteral,
 
-    # ..................{ NON-PEP ~ package : numpy          }..................
-    #FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
-    HintSignNumpyArray,
-)))
+        # ..................{ PEP 593                        }..................
+        HintSignAnnotated,
+
+        # ..................{ NON-PEP ~ package : numpy      }..................
+        #FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
+        HintSignNumpyArray,
+    ))
+)
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints for which the :func:`beartype.beartype`
