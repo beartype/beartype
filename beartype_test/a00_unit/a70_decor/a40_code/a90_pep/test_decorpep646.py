@@ -18,11 +18,7 @@ This submodule unit tests :pep:`646` support implemented in the
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-#FIXME: *YIKES!* Support Python 3.11 please. Sadly, the Python 3.11-specific
-#implementation of type variable tuple unpacking (e.g., "*Ts") appears to be
-#totally different under Python 3.11. Well, isn't this madness. *sigh*
-@skip_if_python_version_less_than('3.12.0')
-# @skip_if_python_version_less_than('3.11.0')
+@skip_if_python_version_less_than('3.11.0')
 def test_decor_pep646() -> None:
     '''
     Test :pep:`646` support implemented in the :func:`beartype.beartype`

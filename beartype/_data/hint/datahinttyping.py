@@ -312,6 +312,49 @@ PEP-compliant type hint matching *any* collection of zero or more strings.
 '''
 
 # ....................{ DICT                               }....................
+DictStrToType = Dict[str, type]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to types.
+'''
+
+# ....................{ DICT ~ any                         }....................
+DictStrToAny = Dict[str, Any]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to arbitrary
+objects.
+'''
+
+
+MappingStrToAny = Mapping[str, object]
+'''
+PEP-compliant type hint matching a mapping mapping from keys to arbitrary
+objects.
+'''
+
+
+DictTypeToAny = Dict[type, Any]
+'''
+PEP-compliant type hint matching a dictionary mapping from types to arbitrary
+objects.
+'''
+
+
+HintAnnotations = DictStrToAny
+'''
+PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
+the name of each annotated parameter or return of a callable or annotated
+variable of a class to the type hint annotating that parameter, return, or
+variable).
+'''
+
+# ....................{ DICT ~ sign                        }....................
+DictStrToHintSign = Dict[str, HintSign]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to **signs**
+(i.e., objects uniquely identifying type hints).
+'''
+
+
 HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
 '''
 PEP-compliant type hint matching a **sign trie** (i.e.,
@@ -328,40 +371,6 @@ PEP-compliant type hint matching a **sign-to-string-formatter map** (i.e.,
 dictionary mapping from signs uniquely identifying type hints to
 :meth:`str.format` methods bound to code snippets type-checking various aspects
 of those type hints).
-'''
-
-# ....................{ DICT ~ any                         }....................
-DictStrToAny = Dict[str, Any]
-'''
-PEP-compliant type hint matching a mapping whose keys are *all* strings.
-'''
-
-
-DictStrToType = Dict[str, type]
-'''
-PEP-compliant type hint matching a mapping whose keys are *all* strings and
-whose values are *all* types.
-'''
-
-
-DictTypeToAny = Dict[type, Any]
-'''
-PEP-compliant type hint matching a mapping whose keys are *all* types.
-'''
-
-
-HintAnnotations = DictStrToAny
-'''
-PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
-the name of each annotated parameter or return of a callable or annotated
-variable of a class to the type hint annotating that parameter, return, or
-variable).
-'''
-
-
-MappingStrToAny = Mapping[str, object]
-'''
-PEP-compliant type hint matching a mapping whose keys are *all* strings.
 '''
 
 # ....................{ CODE                               }....................

@@ -43,6 +43,29 @@ def unit_test_decor_pep646() -> None:
     # Arbitrary type variable tuple.
     Ts = TypeVarTuple('Ts')
 
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class ItsMotions(Generic[Unpack[Ts]]):
+        '''
+        Generic over an arbitrary number of type variables, decorated by
+        :func:`beartype.beartype` and defined by subclassing the
+        :class:`.Generic` superclass subscripted by the :pep:`646`-compliant
+        :obj:`typing.Unpack` type hint factory subscripted by a
+        :pep:`646`-compliant type variable tuple.
+
+        Note that this is semantically equivalent to:
+
+        .. code-block:: python
+
+           class ItsMotions(Generic[*Ts]):
+        '''
+
+        pass
+
+
+    # Arbitrary instance of this class.
+    render_up_its_majesty = ItsMotions()
+
     # ....................{ CALLABLES                      }....................
     #FIXME: *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]" after
     #reduction, a fixed-length tuple hint. Clearly, however, "Tuple[Unpack[Ts]]"
@@ -71,13 +94,29 @@ def unit_test_decor_pep646() -> None:
     #
     #We still need to handle "Tuple[Unpack[Ts]] == Tuple[object, ...]"
     #reduction, however. Or maybe not? Maybe everything will magically work!?
+    #FIXME: Actually, even detecting is insufficient. In truth, there no longer
+    #exists a hard distinction between "fixed-length" and "variadic" tuple
+    #hints. A tuple hint may now contain effectively arbitrary combinations
+    #of either form by unpacking tuple hints inside other tuple hints.
+    #
+    #Sadly, this suggests that:
+    #* We'll want to unwind our prior detection of:
+    #  * Fixed-length tuple hints as "HintSignTupleFixed".
+    #  * Variadic tuple hints as "HintSignTuple".
+    #* Instead, handle both fixed-length and variadic tuple hints under the same
+    #  "HintSignTuple" sign. *WOOPS.*
+    #* Remove the "HintSignTupleFixed" sign, which is no longer required.
+    #* Handle tuple hint unpacking inside tuple hints.
     @beartype
-    def of_all_the_grace(*and_beauty_that_endued: *Ts) -> object:
-    # def of_all_the_grace(*and_beauty_that_endued: *Ts) -> Tuple[*Ts]:
+    def of_all_the_grace(
+        and_to_the_damp_leaves: ItsMotions,
+        *and_beauty_that_endued: *Ts
+    # ) -> Tuple[ItsMotions, *Ts]:
+    ) -> object:
         '''
         Arbitrary callable simply returning the tuple of all passed variadic
-        positional parameters, decorated by :func:`beartype.beartype` and
-        correctly annotated by:
+        positional parameters prepended by the passed generic, decorated by
+        :func:`beartype.beartype` and correctly annotated by:
 
         * A variadic positional parameter typed as a :pep:`646`-compliant
           unpacked type variable tuple hint.
@@ -85,37 +124,15 @@ def unit_test_decor_pep646() -> None:
           by the same :pep:`646`-compliant unpacked type variable tuple hint.
         '''
 
-        # Return this variadic positional parameter as is.
-        return and_beauty_that_endued
-
-    # ....................{ CLASSES                        }....................
-    @beartype
-    class ItsMotions(Generic[Unpack[Ts]]):
-        '''
-        Generic over an arbitrary number of type variables, decorated by
-        :func:`beartype.beartype` and defined by subclassing the
-        :class:`.Generic` superclass subscripted by the :pep:`646`-compliant
-        :obj:`typing.Unpack` type hint factory subscripted by a
-        :pep:`646`-compliant type variable tuple.
-
-        Note that this is semantically equivalent to:
-
-        .. code-block:: python
-
-           class ItsMotions(Generic[*Ts]):
-        '''
-
-        pass
-
-    # Arbitrary instance of this class.
-    render_up_its_majesty = ItsMotions()
+        # Return this variadic positional parameter prepended by this generic.
+        return (and_to_the_damp_leaves,) + and_beauty_that_endued
 
     # ....................{ PASS                           }....................
     # Assert that this callable returns a tuple of all passed positional
     # parameters.
     assert of_all_the_grace(
-        'Of all the grace', 'and beauty', 'that endued') == (
-        'Of all the grace', 'and beauty', 'that endued')
+        render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued') == (
+        render_up_its_majesty, 'Of all the grace', 'and beauty', 'that endued')
 
     # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when decorating a

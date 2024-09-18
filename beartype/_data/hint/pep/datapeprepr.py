@@ -14,17 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Dict,
-    FrozenSet,
     Set,
-    # Union,
 )
-from beartype._data.hint.datahinttyping import HintSignTrie
+from beartype._data.hint.datahinttyping import (
+    DictStrToHintSign,
+    FrozenSetStrs,
+    HintSignTrie,
+)
 from beartype._data.hint.pep.sign import datapepsigns
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
-    # HintSignAnnotated,
-    # HintSignAny,
     HintSignAsyncContextManager,
     HintSignAsyncIterable,
     HintSignAsyncIterator,
@@ -34,9 +33,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignByteString,
     HintSignCallable,
     HintSignChainMap,
-    # HintSignClassVar,
     HintSignCollection,
-    # HintSignConcatenate,
     HintSignContainer,
     HintSignCoroutine,
     HintSignContextManager,
@@ -44,64 +41,49 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
-    # HintSignFinal,
     HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
-    # HintSignGeneric,
-    # HintSignHashable,
     HintSignIO,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
     HintSignKeysView,
     HintSignList,
-    # HintSignLiteral,
     HintSignMapping,
     HintSignMappingView,
     HintSignMatch,
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
-    # HintSignNamedTuple,
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
-    # HintSignOptional,
     HintSignOrderedDict,
     HintSignPanderaAny,
     HintSignParamSpec,
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
-    # HintSignParamSpecArgs,
     HintSignPep557DataclassInitVar,
-    # HintSignTypeAlias,
     HintSignPep695TypeAlias,
-    # HintSignProtocol,
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
-    # HintSignSized,
     HintSignPattern,
     HintSignTextIO,
     HintSignTuple,
     HintSignType,
     HintSignTypeVar,
     HintSignTypeVarTuple,
-    # HintSignTypedDict,
     HintSignUnion,
     HintSignValuesView,
-)
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_MOST_3_8,
 )
 
 # ....................{ MAPPINGS ~ repr                    }....................
 # The majority of this dictionary is initialized with automated inspection below
 # in the _init() function. The *ONLY* key-value pairs explicitly defined here
 # are those *NOT* amenable to such inspection.
-HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
+HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
     # ..................{ PEP 484                            }..................
     # All other PEP 484-compliant representation prefixes are defined by
     # automated inspection below.
@@ -126,7 +108,8 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     'None': HintSignNone,
 
     #FIXME: Almost certain that these should be detected instead via the
-    #slightly more efficient and elegant "HINT_TYPE_NAME_TO_SIGN" global below.
+    #slightly more efficient and elegant "HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN"
+    #global below.
     # PEP 484-compliant abstract base classes (ABCs) requiring non-standard and
     # non-trivial type-checking. Although most types are trivially type-checked
     # by the isinstance() builtin, these types break the mold in various ways.
@@ -155,7 +138,7 @@ Notably, this dictionary maps from the representation prefixes of:
 
 
 # The majority of this dictionary is defined by explicit key-value pairs here.
-HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
+HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: DictStrToHintSign = {
     # ..................{ PEP 585                            }..................
     # PEP 585-compliant type hints *MUST* by definition be subscripted (e.g.,
     # "list[str]" rather than "list"). While the stdlib types underlying those
@@ -266,54 +249,83 @@ identifying sign.
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
-    # ..................{ PEP 484                            }..................
-    # PEP 484-compliant forward reference type hints may be annotated either:
-    # * Explicitly as "typing.ForwardRef" instances, which automated inspection
-    #   performed by the _init() function below already handles.
-    # * Implicitly as strings, which this key-value pair here detects. Note
-    #   this unconditionally matches *ALL* strings, including both:
-    #   * Invalid Python identifiers (e.g., "0d@yw@r3z").
-    #   * Absolute forward references (i.e., fully-qualified classnames)
-    #     technically non-compliant with PEP 484 but seemingly compliant with
-    #     PEP 585.
-    #   Since the distinction between PEP-compliant and -noncompliant forward
-    #   references is murky at best and since unconditionally matching *ALL*
-    #   string as PEP-compliant substantially simplifies logic throughout the
-    #   codebase, we (currently) opt to do so.
-    'builtins.str': HintSignForwardRef,
+HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: Dict[str, DictStrToHintSign] = {
+    # ..................{ BUILTINS                           }..................
+    # Standard builtins module.
+    'builtins': {
+        # ..................{ PEP 484                        }..................
+        # PEP 484-compliant forward reference type hints may be annotated either:
+        # * Explicitly as "typing.ForwardRef" instances, which automated
+        #   inspection performed by the _init() function below already handles.
+        # * Implicitly as strings, which this key-value pair here detects. Note
+        #   this unconditionally matches *ALL* strings, including both:
+        #   * Invalid Python identifiers (e.g., "0d@yw@r3z").
+        #   * Absolute forward references (i.e., fully-qualified classnames)
+        #     technically non-compliant with PEP 484 but seemingly compliant
+        #     with PEP 585.
+        #   Since the distinction between PEP-compliant and -noncompliant
+        #   forward references is murky at best and since unconditionally
+        #   matching *ALL* string as PEP-compliant substantially simplifies
+        #   logic throughout the codebase, we (currently) opt to do so.
+        'str': HintSignForwardRef,
+    },
 
-    # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints as
-    # instances of that pure-Python class. Regardless of the current Python
-    # version, "typing_extensions.NewType" type hints remain implemented in the
-    # manner of Python < 3.10 -- which is to say, as closures of that function.
-    # Ergo, we intentionally omit "typing_extensions.NewType" here. See also:
-    #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
-    'typing.NewType': HintSignNewType,
+    # ..................{ DATACLASSES                        }..................
+    # Standard PEP 557-compliant dataclass module.
+    'dataclasses': {
+        # ..................{ PEP 557                        }..................
+        # PEP 557-compliant "dataclasses.InitVar" type hints are merely
+        # instances of that class.
+        'InitVar': HintSignPep557DataclassInitVar,
+    },
 
-    # ..................{ PEP 557                            }..................
-    # PEP 557-compliant "dataclasses.InitVar" type hints are merely instances of
-    # that class.
-    'dataclasses.InitVar': HintSignPep557DataclassInitVar,
+    # ..................{ TYPES                              }..................
+    # Standard module containing common low-level C-based types.
+    'types': {
+        # ..................{ PEP 604                        }..................
+        # PEP 604-compliant |-style unions (e.g., "int | float") are internally
+        # implemented as instances of the low-level C-based "types.UnionType"
+        # type. Thankfully, these unions are semantically interchangeable with
+        # comparable PEP 484-compliant unions (e.g., "typing.Union[int,
+        # float]"); both kinds expose equivalent dunder attributes (e.g.,
+        # "__args__", "__parameters__"), enabling subsequent code generation to
+        # conflate the two without issue.
+        'UnionType': HintSignUnion,
+    },
 
-    # ..................{ PEP 604                            }..................
-    # PEP 604-compliant |-style unions (e.g., "int | float") are internally
-    # implemented as instances of the low-level C-based "types.UnionType" type.
-    # Thankfully, these unions are semantically interchangeable with comparable
-    # PEP 484-compliant unions (e.g., "typing.Union[int, float]"); both kinds
-    # expose equivalent dunder attributes (e.g., "__args__", "__parameters__"),
-    # enabling subsequent code generation to conflate the two without issue.
-    'types.UnionType': HintSignUnion,
+    # ..................{ TYPING                             }..................
+    # Standard typing module.
+    'typing': {
+        # ..................{ PEP 484                        }..................
+        # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type
+        # hints as instances of that pure-Python class. Regardless of the
+        # current Python version, "typing_extensions.NewType" type hints remain
+        # implemented in the manner of Python < 3.10 -- which is to say, as
+        # closures of that function. Ergo, we intentionally omit
+        # "typing_extensions.NewType" here. See also:
+        #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
+        'NewType': HintSignNewType,
+    },
+
+    # Third-party typing backports module, intentionally mapped here to the
+    # empty dictionary to simplify logic in the _init() function called below.
+    'typing_extensions': {},
+
+    # Third-party @beartype typing module, intentionally mapped here to the
+    # empty dictionary to simplify logic in the _init() function called below.
+    'beartype.typing': {},
 }
 '''
-Dictionary mapping from the fully-qualified classnames of all PEP-compliant
-type hints uniquely identifiable by those classnames to their identifying
-signs.
+**Type hint trie** (i.e., dictionary,of-dictionaries tree data structure mapping
+from the fully-qualified names of packages and modules to a nested dictionary
+mapping from the unqualified basenames of the types of all PEP-compliant type
+hints residing in those packages and modules that are uniquely identifiable by
+those types to their identifying signs).
 '''
 
 # ....................{ SETS ~ deprecated                  }....................
 # Initialized with automated inspection below in the _init() function.
-HINTS_PEP484_REPR_PREFIX_DEPRECATED: FrozenSet[str] = set()  # type: ignore[assignment]
+HINTS_PEP484_REPR_PREFIX_DEPRECATED: FrozenSetStrs = set()  # type: ignore[assignment]
 '''
 Frozen set of all **bare deprecated** :pep:`484`-compliant **type hint
 representations** (i.e., machine-readable strings returned by the :func:`repr`
@@ -326,7 +338,7 @@ subscriptable classes).
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
-HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
+HINTS_REPR_IGNORABLE_SHALLOW: FrozenSetStrs = {  # type: ignore[assignment]
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize changes to this set with the corresponding
     # testing-specific set
@@ -372,7 +384,7 @@ builtin for all PEP-compliant type hints that are unconditionally ignorable by
 the :func:`beartype.beartype` decorator in *all* possible contexts)
 
 Caveats
-----------
+-------
 **The high-level**
 :func:`beartype._util.hint.pep.utilhinttest.is_hint_ignorable` **tester
 function should always be called in lieu of testing type hints against this
@@ -389,10 +401,19 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    # ..................{ EXTERNALS                          }..................
+    # ..................{ IMPORTS                            }..................
     # Defer initialization-specific imports.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignUnpack,
+    )
     from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_3_11,
+        IS_PYTHON_AT_LEAST_3_9,
+        IS_PYTHON_3_8,
+    )
 
+    # ..................{ GLOBALS                            }..................
     # Permit redefinition of these globals below.
     global \
         HINTS_PEP484_REPR_PREFIX_DEPRECATED, \
@@ -421,14 +442,40 @@ def _init() -> None:
     # the unqualified names and representations of pants typing attributes.
     _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
 
-    # If the active Python interpreter targets Python >= 3.7.x <= 3.8.x (i.e.,
-    # either Python 3.7 or 3.8), resynchronize the unqualified names and
-    # representations of desynchronized typing attributes. Bizarrely:
+    # If the active Python interpreter targets Python 3.11.x, identify PEP 646-
+    # and 692-compliant hints that are instances of the private
+    # "typing._UnpackGenericAlias" as "Unpack[...]" hints.
+    #
+    # Note that this fragile violation of privacy encapsulation is *ONLY* needed
+    # under Python 3.11.x, where the machine-readable representation of unpacked
+    # type variable tuples is ambiguously idiosyncratic and thus *NOT* a
+    # reasonable heuristic for detecting such unpacking: e.g.,
+    #     $ python3.11
+    #     >>> from typing import TypeVarTuple
+    #     >>> Ts = TypeVarTuple('Ts')
+    #     >>> list_of_Ts = [*Ts]
+    #     >>> repr(list_of_Ts[0])
+    #     *Ts    # <-- ambiguous and thus a significant issue
+    #
+    #     $ python3.12
+    #     >>> from typing import TypeVarTuple
+    #     >>> Ts = TypeVarTuple('Ts')
+    #     >>> list_of_Ts = [*Ts]
+    #     >>> repr(list_of_Ts[0])
+    #     typing.Unpack[Ts]    # <-- unambiguous and thus a non-issue
+    if IS_PYTHON_3_11:
+        HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
+            'typing']['_UnpackGenericAlias'] = HintSignUnpack
+    # Else, the active Python interpreter does *NOT* target Python 3.11.x.
+    #
+    # If the active Python interpreter targets Python 3.8.x, resynchronize the
+    # unqualified names and representations of desynchronized typing attributes.
+    # Bizarrely:
     # * Python 3.7.0 first desynchronized these attributes, despite the
     #   otherwise insane Python 3.6.x series having actually gotten this right.
     # * Python 3.8.x preserved this bad behaviour.
     # * Python 3.9.0 rectified this issue finally. *sigh*
-    if IS_PYTHON_AT_MOST_3_8:
+    elif IS_PYTHON_3_8:
         _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.update({
             'AsyncContextManager': 'AbstractAsyncContextManager',
             'ContextManager': 'AbstractContextManager',
@@ -678,9 +725,9 @@ def _init() -> None:
         # For the unqualified classname identifying each sign to that sign...
         for typing_attr_name, hint_sign in _HINT_TYPE_BASENAME_TO_SIGN.items():
             # Map from that classname in this module to this sign.
-            # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_name}" -> {repr(hint_sign)}...')
-            HINT_TYPE_NAME_TO_SIGN[
-                f'{typing_module_name}.{typing_attr_name}'] = hint_sign
+            # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_name}" -> {repr(hint_sign)}')
+            HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
+                typing_module_name][typing_attr_name] = hint_sign
 
         # For each shallowly ignorable typing non-class attribute name...
         for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
@@ -716,7 +763,7 @@ def _init() -> None:
     # print(f'HINTS_PEP484_REPR_PREFIX_DEPRECATED: {pformat(HINTS_PEP484_REPR_PREFIX_DEPRECATED)}')
     # print(f'HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN)}')
     # print(f'HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN)}')
-    # print(f'HINT_TYPE_NAME_TO_SIGN: {pformat(HINT_TYPE_NAME_TO_SIGN)}')
+    # print(f'HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: {pformat(HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN)}')
 
 # Initialize this submodule.
 _init()

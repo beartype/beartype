@@ -136,7 +136,7 @@
 #      of the "HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN" set.
 #    * The "hint_detect_from_type_name" parameter is the fully-qualified name
 #      of a caller-defined class (e.g., "muh_package.MuhTypeHintFactoryType"),
-#      corresponding exactly to the items of the "HINT_TYPE_NAME_TO_SIGN" set.
+#      corresponding exactly to the items of the "HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN" set.
 #    * The "hint_reduce" parameter is an arbitrary caller-defined callable
 #      reducing all type hints identified by one or more of the detection
 #      schemes below to another arbitrary (but hopefully PEP-compliant and

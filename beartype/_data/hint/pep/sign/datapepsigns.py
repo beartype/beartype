@@ -225,6 +225,9 @@ module:
 '''
 
 
+#FIXME: *WOOPS.* Turns out this was an awful idea, thanks to PEP 646 (i.e.,
+#tuple type hint unpacking). Probably should have seen that coming. See the
+#"data_pep646" test submodule for clarity on what to do now. It's not pretty.
 HintSignTupleFixed = _HintSign(name='TupleFixed')
 '''
 Sign uniquely identifying **fixed-length tuple type hints,** including:

@@ -31,7 +31,7 @@ from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
-    HINT_TYPE_NAME_TO_SIGN,
+    HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -43,6 +43,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     is_hint_pep484_newtype_pre_python310)
@@ -582,14 +583,20 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     hint_type = hint.__class__
 
     #FIXME: Is this actually the case? Do non-physical classes dynamically
-    #defined at runtime actually define these dunder attributes as well?
-    # Fully-qualified name of this class. Note that *ALL* classes are
-    # guaranteed to define the dunder attributes accessed here.
-    hint_type_name = f'{hint_type.__module__}.{hint_type.__qualname__}'
+    #defined at runtime actually define *BOTH* of these dunder attributes:
+    #* "hint_type.__module__"?
+    #* "hint_type.__qualname__"?
+    # Dictionary mapping from the unqualified basenames of the types of all
+    # PEP-compliant hints residing in the package defining this hint that are
+    # uniquely identifiable by those types to their identifying signs if that
+    # package is recognized *OR* the empty dictionary otherwise (i.e., if the
+    # package defining this hint is unrecognized).
+    hint_type_name_to_sign = HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN.get(
+        hint_type.__module__, DICT_EMPTY)
 
     # Sign identifying this hint if this hint is identifiable by its classname
     # *OR* "None" otherwise.
-    hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
+    hint_sign = hint_type_name_to_sign.get(hint_type.__qualname__)
     # print(f'hint_type: {hint_type}')
     # print(f'hint_sign [by type]: {hint_sign}')
 
