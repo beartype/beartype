@@ -18,6 +18,8 @@ TYPING_MODULE_NAMES_STANDARD = frozenset((
     'typing',
     # Third-party typing compatibility layer bundled with @beartype itself.
     'beartype.typing',
+    # Contains ForwardRef as of 3.14
+    'annotationlib',
 ))
 '''
 Frozen set of the fully-qualified names of all **standard typing modules**
