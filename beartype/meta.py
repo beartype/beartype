@@ -137,7 +137,7 @@ metadata).
 '''
 
 # ....................{ METADATA ~ version                 }....................
-VERSION = '0.19.0'
+VERSION = '0.20.0rc0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
