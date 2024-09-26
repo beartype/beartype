@@ -292,12 +292,12 @@ def resolve_pep563(
         #
         # While the @beartype decorator goes to great lengths to preserve the
         # originating "__annotations__" dictionary as is, PEP 563 is
-        # sufficiently expensive, non-trivial, and general-purpose to implement
-        # that generally resolving postponed annotations for downstream
+        # sufficiently expensive, non-trivial, and general-purpose to support
+        # that generically resolving postponed annotations for all downstream
         # third-party callers is justified. Everyone benefits from replacing
         # useless postponed annotations with useful real annotations; so, do so.
         func.__annotations__ = arg_name_to_hint
-    # If doing so fails with an exception resembling the following, then that
+    # If doing so fails with an exception resembling the following, that
     # callable is *NOT* a pure-Python callable but rather a C-based decorator
     # object of some sort (e.g., class, property, or static method descriptor):
     #     AttributeError: 'method' object has no attribute '__annotations__'
@@ -305,7 +305,7 @@ def resolve_pep563(
     # C-based decorator objects define a read-only "__annotations__" dunder
     # attribute that proxies an original writeable "__annotations__" dunder
     # attribute of the pure-Python callables they originally decorated. Ergo,
-    # detecting this edge case is non-trivial and most most easily deferred to
+    # detecting this edge case is non-trivial and most easily deferred to
     # this late time. While non-ideal, simplicity >>>> idealism in this case.
     except AttributeError:
         # For the name of each annotated parameter and return of that callable

@@ -226,8 +226,7 @@ def callable_cached(func: CallableT) -> CallableT:
             # Value returned by a prior call to the decorated callable when
             # passed these parameters *OR* a sentinel placeholder otherwise
             # (i.e., if this callable has yet to be passed these parameters).
-            return_value = args_flat_to_return_value_get(
-                args_flat, SENTINEL)
+            return_value = args_flat_to_return_value_get(args_flat, SENTINEL)
 
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.

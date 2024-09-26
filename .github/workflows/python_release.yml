@@ -105,12 +105,6 @@ jobs:
           python -VV
           python -m site
           python -m pip --quiet install --upgrade pip hatch wheel
-
-      #FIXME: Pretty sure that "twine" is no longer required. *shrug*
-      # - name: 'Installing package dependencies...'
-      #   run: |
-      #     python -m pip --quiet install --upgrade twine
-
       - name: "Creating source tarball and binary wheel..."
         run: |
           set -xe
