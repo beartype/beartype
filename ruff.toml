@@ -1,0 +1,252 @@
+# 120 is too match, but ok, 88 - is ok
+# 79 - is best, because of some people's broken eyes
+# and vertical oriented monitotes (dangerous people).
+line-length = 275
+target-version = "py38"
+include = [
+    "beartype/*.py",
+    "pyproject.toml",
+    "ruff.toml",
+]
+exclude = []
+
+[lint]
+select = ["ALL"]
+ignore = [
+    # Will be auto-fixed:
+    "C402", # [*] unnecessary-generator-dict
+    "C408", # [*] unnecessary-collection-call
+    "COM819", # [*] prohibited-trailing-comma
+    "D200", # [*] fits-on-one-line
+    "D201", # [*] no-blank-line-before-function
+    "D203", # [*] one-blank-line-before-class
+    "D204", # [*] one-blank-line-after-class
+    "D211", # no-blank-line-before-class
+    "D214", # [*] section-not-over-indented
+    "D215", # [*] section-underline-not-over-indented
+    "D409", # [*] section-underline-matches-section-length
+    "D416", # [*] section-name-ends-in-colon
+    "E201", # [*] whitespace-after-open-bracket
+    "E203", # [*] whitespace-before-punctuation
+    "E211", # [*] whitespace-before-parameters
+    "E221", # [*] multiple-spaces-before-operator
+    "E225", # [*] missing-whitespace-around-operator
+    "E226", # [*] missing-whitespace-around-arithmetic-operator
+    "E231", # [*] missing-whitespace
+    "E241", # [*] multiple-spaces-after-comma
+    "E251", # [*] unexpected-spaces-around-keyword-parameter-equals
+    "E252", # [*] missing-whitespace-around-parameter-equals
+    "E261", # [*] too-few-spaces-before-inline-comment
+    "E262", # [*] no-space-after-inline-comment
+    "E265", # [*] no-space-after-block-comment
+    "E266", # [*] multiple-leading-hashes-for-block-comment
+    "E271", # [*] multiple-spaces-after-keyword
+    "E302", # [*] blank-lines-top-level
+    "E303", # [*] too-many-blank-lines
+    "E305", # [*] blank-lines-after-function-or-class
+    "EM101", # [*] raw-string-in-exception
+    "EM102", # [*] f-string-in-exception
+    "EM103", # [*] dot-format-in-exception
+    "F541", # [*] f-string-missing-placeholders
+    "F841", # [*] unused-variable
+    "I001", # [*] unsorted-imports
+    "N804", # [*] invalid-first-argument-name-for-class-method
+    "N805", # [*] invalid-first-argument-name-for-method
+    "PIE790", # [*] unnecessary-placeholder
+    "PIE808", # [*] unnecessary-range-start
+    "PIE810", # [*] multiple-starts-ends-with
+    "PLR0402", # [*] manual-from-import
+    "Q000", # [*] bad-quotes-inline-string
+    "RET504", # [*] unnecessary-assign
+    "RET505", # [*] superfluous-else-return
+    "RET506", # [*] superfluous-else-raise
+    "RET508", # [*] superfluous-else-break
+    "RUF010", # [*] explicit-f-string-type-conversion
+    "RUF022", # [*] unsorted-dunder-all
+    "RUF023", # [*] unsorted-dunder-slots
+    "SIM118", # [*] in-dict-keys
+    "TRY201", # [*] verbose-raise
+    "UP004", # [*] useless-object-inheritance
+    "UP032", # [*] f-string
+    "UP034", # [*] extraneous-parentheses
+    "W291", # [*] trailing-whitespace
+    "W293", # [*] blank-line-with-whitespace
+    # Will/can be (semy)manually fixed:
+    "ANN002", # [] missing-type-args
+    "ANN003", # [] missing-type-kwargs
+    "B009", # [*] get-attr-with-constant
+    "D413", # [*] blank-line-after-last-section
+    "FURB140", # [*] reimplemented-starmap
+    "PLR5501", # [*] collapsible-else-if
+    "RUF021", # [*] parenthesize-chained-operators
+    "SIM110", # [*] reimplemented-builtin
+    # Manual fixup:
+    "ANN001", # []  Missing type annotation for function argument
+    "ANN202", # [ ] missing-return-type-private-function
+    "ANN204", # [ ] missing-return-type-special-method
+    "ANN206", # [ ] missing-return-type-class-method
+    "B007", # [ ] unused-loop-control-variable
+    "B021", # [ ] f-string-docstring
+    "B028", # [ ] no-explicit-stacklevel
+    "DOC202", # [ ] docstring-extraneous-returns 
+    "DOC402", # [ ] docstring-missing-yields
+    "DOC403", # [ ] docstring-extraneous-yields
+    "F401", # [ ] unused-import
+    "F821", # [ ] undefined-name
+    "FBT003", # [ ] Boolean positional value in function call
+    "ISC001", # [ ] single-line-implicit-string-concatenation
+    "N802", # Function name `visit_Lambda` should be lowercase
+    "N812", # Lowercase imported as non-lowercase
+    "PLC2801", # [ ] unnecessary-dunder-call
+    "PLR1704", # [ ] redefined-argument-from-local
+    "PLW2901", # [ ] redefined-loop-name
+    "PT018", # [ ] pytest-composite-assertion
+    "RUF005", # [ ] collection-literal-concatenation
+    "SIM103", # [ ] needless-bool
+    "SLOT001", # [ ] no-slots-in-tuple-subclass
+    "TRY301", # [ ] raise-within-try
+    # Needs desision and will be auto-fixed:
+    "B006", # [*] mutable-argument-default
+    "D212", # [*] multi-line-summary-first-line
+    "D300", # [*] triple-single-quotes
+    "D301", # [*] escape-sequence-in-docstring
+    "E272", # [*] multiple-spaces-before-keyword
+    "FURB180", # [*] meta-class-abc-meta
+    "Q001", # [*] Single quote multiline found but double quotes preferred
+    "Q002", # [*] bad-quotes-docstring
+    "SIM114", # [*] Combine `if` branches using logical `or` operator
+    # Will be configured with ruff.toml:
+    "C901", # [ ] complex-structure
+    "PLC0414", # [*] useless-import-alias
+    "PLR0904", # [] Too many public methods
+    "PLR0911", # [ ] too-many-return-statements
+    "PLR0912", # [ ] too-many-branches
+    "PLR0913", # [ ] too-many-arguments
+    "PLR0914", # [ ] too-many-locals
+    "PLR0915", # [ ] too-many-statements
+    "PLR0917", # [ ] too-many-positional-arguments
+    "PLR1702", # [ ] Too many nested blocks
+    "TCH001", # [*] typing-only-first-party-import
+    "TCH003", # [*] typing-only-standard-library-import
+    # Manual, needs desision:
+    "B004", # [ ] unreliable-callable-check
+    "E722", # [ ] bare-except
+    "N803", # [ ] invalid-argument-name
+    "N806", # [ ] Variable in function should be lowercase
+    "N818", # [ ] Exception name `_BeartypeHintForwardRefExceptionMixin` should be named with an Error suffix
+    "RUF001", # [ ] ambiguous-unicode-character-string
+    "RUF002", # [ ] ambiguous-unicode-character-docstring
+    "RUF003", # [ ] ambiguous-unicode-character-comment
+    "S307", # [ ] S307 Use of possibly insecure function; consider using `ast.literal_eval` beartype/_check/forward/fwdmain.py:517:25
+    "SIM102", # [ ] Use a single `if` statement instead of nested `if` statements
+    # Ungrouped (try to fix and see):
+    "D202", # [*] no-blank-line-after-function
+    "D205", # [ ] blank-line-after-summary
+    # Per-file ignore:
+    # beartype/typing/__init__.py: 30 F401 imported but unused
+    # beartype/typing/__init__.py 3 N812 [] Lowercase imported as non-lowercase
+    # beartype/claw/_ast/*.py: 6 N802 [ ] invalid-function-name
+    # Ignore by inline-noqa:
+    "T201", # [*] print
+    # Will be ignored:
+    "ANN401", # [ ] Dynamically typed expressions (typing.Any) are disallowed
+    "ARG001", #, [] Unused function argument
+    "ARG002", # [ ] Unused method argument
+    "ARG003", # [ ] Unused class method argument
+    "BLE001", #, [] Do not catch blind exception: `Exception`
+    "COM812", #, [*] Trailing comma missing
+    "CPY001", #, [] Missing copyright notice at top of file
+    "D400", #, [] First line should end with a period
+    "D401", #, [] First line of docstring should be in imperative mood
+    "D415", # [ ] First line should end with a period, question mark, or exclamation point
+    "D417", #, [] Missing argument descriptions in the docstring
+    "DOC201", #, [] `return` is not documented in docstring
+    "DOC501", #, [] Raised exception missing from docstring
+    "DOC502", #, [] Raised (in docstring) exception is not explicitly raised
+    "E115", # [ ] Expected an indented block
+    "E402", #, [] Module level import not at top of file
+    "E701", # [ ]  Multiple statements on one line
+    "E731", # [*] Do not assign a `lambda` expression, use a `def`
+    "ERA001", #, [*] Found commented-out code
+    "EXE001", #, [] Shebang is present but file is not executable
+    "EXE003", #, [] Shebang should contain `python`
+    "EXE005", #, [] Shebang should be at the beginning of the file
+    "F811", # [ ] Redefinition of unused
+    "FBT001", #, [] Boolean-typed positional argument in function definition
+    "FBT002", #, [] Boolean default positional argument in function definition
+    "FIX001", #, [] Line contains FIXME, consider resolving the issue
+    "PGH003", #, [] Use specific rule codes when ignoring type issues
+    "PLC0415", #, [] `import` should be at the top-level of a file
+    "PLC2701", # [ ] Private name import from external module
+    "PLR1714", # [*] Consider merging multiple comparisons. Use a `set` if the elements are hashable.
+    "PLR2004", #, [] Magic value used in comparison, consider replacing with a constant variable
+    "PLR6201", # [*] Use a set literal when testing for membership
+    "PLR6301", # [ ] Method could be a function, class method, or static method
+    "PLW0603", #, [] Using the global statement to update is discouraged
+    "PLW3201", # [ ] Dunder method `__beartype_xxx__` has no special meaning in Python 3
+    "PTH120", # [ ] `os.path.dirname()` should be replaced by `Path.parent`
+    "PYI025", #, [] Use `from collections.abc import Set as AbstractSet` to avoid confusion with the `set` builtin
+    "PYI034", # [ ] `__imul__` methods in classes like usually return `self` at runtime
+    "PYI057", # [ ] Do not use `typing.ByteString`, which has unclear semantics and is deprecated
+    "S101", #, [] Use of `assert` detected
+    "S102", # [ ] S102 Use of `exec` detected
+    "S110", # [ ] `try`-`except`-`pass` detected, consider logging the exception
+    "SIM105", #, [] Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+    "SIM108", # [ ] Use ternary operator `val = a if foo else b` instead of `if`-`else`-block
+    "SIM109", # [*] Use `foo in (a, b)` instead of multiple equality comparisons
+    "SLF001", #, [] Private member accessed
+    "TD001", #, [] Invalid TODO tag: `FIXME`
+    "TD002", #, [] Missing author in TODO; try: `# TODO(<author_name>): ...` or `# TODO @<author_name>: ...`
+    "TD003", #, [] Missing issue link on the line following this TODO
+    "TRY003", #, [] Avoid specifying long messages outside the exception class
+]
+extend-safe-fixes = [
+    "TCH", # flake8-type-checking. TYPE_CHECKING support
+    "UP",  # pyupgrade
+]
+extend-unsafe-fixes = [
+    "F841",   # Checks for the presence of unused variables in function scopes.
+]
+preview = true
+
+[format]
+docstring-code-format = true
+line-ending = "lf"           # Use `\n` line endings for all files
+preview = true
+quote-style = "preserve"  # Ideally replace this with "signale" or "double"
+
+[lint.pyupgrade]
+keep-runtime-typing = true
+
+[lint.pycodestyle]
+max-line-length = 275 
+
+[lint.flake8-annotations]
+allow-star-arg-any = true
+
+[lint.per-file-ignores]
+"!**/beartype_test/*" = ["PT017"] # Checks for assert statements in except clauses.
+"**/beartype_test/*" = ["RUF018"] # Checks for named assignment expressions (e.g., x := 0) in assert statements.
+"beartype/claw/_ast/*.py"=["N802"] # Function name should be lowercase
+
+[lint.flake8-type-checking]
+exempt-modules = ["typing", "typing_extensions"]
+runtime-evaluated-base-classes = []
+runtime-evaluated-decorators = [
+    "beartype.beartype",
+]
+strict = true
+
+[lint.isort]
+force-single-line = false
+lines-after-imports = 1
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.flake8-quotes]
+# Don't bother trying to avoid escapes.
+avoid-escape = false
+# docstring-quotes = "single"
+# inline-quotes = "single"
+# multiline-quotes = "single"
