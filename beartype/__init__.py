@@ -276,6 +276,6 @@ def __getattr__(attr_name: str) -> object:
     # Return the value of this deprecated attribute and emit a warning.
     return deprecate_module_attr(
         attr_deprecated_name=attr_name,
-        attr_deprecated_name_to_nondeprecated_name={'abby': 'door',},
+        attr_deprecated_name_to_nondeprecated_name={'abby': 'door'},
         attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
     )

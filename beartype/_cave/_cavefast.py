@@ -1404,7 +1404,7 @@ parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
 '''
 
 # ....................{ TUPLES ~ call                      }....................
-FunctionTypes = (FunctionType, FunctionOrMethodCType,)
+FunctionTypes = (FunctionType, FunctionOrMethodCType)
 '''
 Tuple of all **function types** (i.e., types whose instances are either
 built-in or user-defined functions).
@@ -1589,7 +1589,7 @@ callables implemented in pure Python whose declaration is preceded by the
 '''
 
 # ....................{ TUPLES ~ scalar                    }....................
-BoolOrNumberTypes = (BoolType, NumberType,)
+BoolOrNumberTypes = (BoolType, NumberType)
 '''
 Tuple of all **boolean** and **number types** (i.e., classes whose instances
 are either numbers or types trivially convertible into numbers).
@@ -1624,7 +1624,7 @@ API.
 '''
 
 
-NumberOrIterableTypes = (NumberType, IterableType,)
+NumberOrIterableTypes = (NumberType, IterableType)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Iterable`
@@ -1632,7 +1632,7 @@ API.
 '''
 
 
-NumberOrSequenceTypes = (NumberType, SequenceType,)
+NumberOrSequenceTypes = (NumberType, SequenceType)
 '''
 Tuple of all numeric types *and* all container base classes conforming to (but
 *not* necessarily subclassing) the canonical :class:`collections.abc.Sequence`
