@@ -94,7 +94,7 @@ class CallableTypeHint(TypeHint):
         # unsubscripted "Callable" should already be implicitly handled by the
         # "ClassTypeHint" subclass. Nonetheless, this branch exists for safety.
         if not args:  # pragma: no cover
-            args = (..., Any,)
+            args = (..., Any)
         else:
             # Parameters type hint(s) subscripting this callable type hint.
             #

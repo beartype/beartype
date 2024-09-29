@@ -1155,7 +1155,7 @@ else:
 
 
 HintPep612ParamSpecVarTypes: _TupleTyping[type, ...] = (
-    HintPep612ParamSpecArgType, HintPep612ParamSpecKwargType,)
+    HintPep612ParamSpecArgType, HintPep612ParamSpecKwargType)
 '''
 Tuple of all :pep:`612`-compliant **parameter specification variadic parameter
 instance variables** (i.e., low-level C-based :obj:`typing.ParamSpecArgs`

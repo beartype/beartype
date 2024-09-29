@@ -668,7 +668,7 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
             nodes_next={
                 # ....................{ COLLECTION         }....................
                 # "collections.abc.Collection" FSM.
-                frozenset(('__iter__', '__len__',)): _FiniteStateMachineNode(
+                frozenset(('__iter__', '__len__')): _FiniteStateMachineNode(
                     hint_factory=Collection,
                     nodes_next={
                         # ....................{ SEQUENCE   }....................

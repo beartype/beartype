@@ -268,7 +268,7 @@ def transform_hint_beartypehintable(
         hints_parent_beartypehintable = frozenset((hint,))
     else:
         #FIXME: Unsure if this works for frozensets. Probably not. *sigh*
-        hints_parent_beartypehintable |= {hint, }
+        hints_parent_beartypehintable |= {hint}
 
     # Return this transformed hint.
     return (hint, hints_parent_beartypehintable)

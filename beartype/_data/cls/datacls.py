@@ -46,7 +46,7 @@ This set includes:
 '''
 
 
-TYPES_SET_OR_TUPLE: TupleTypes = (tuple, SetABC,)
+TYPES_SET_OR_TUPLE: TupleTypes = (tuple, SetABC)
 '''
 Tuple of all **set and tuple types** (i.e., superclasses of all sets and
 tuples).

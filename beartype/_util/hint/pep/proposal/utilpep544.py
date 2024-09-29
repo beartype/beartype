@@ -287,7 +287,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     return pep544_protocol
 
 # ....................{ PRIVATE ~ mappings                 }....................
-_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
+_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO))
 '''
 Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
 :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by the

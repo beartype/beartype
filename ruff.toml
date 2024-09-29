@@ -11,7 +11,6 @@ exclude = []
 select = ["ALL"]
 ignore = [
     # Will be auto-fixed:
-    "COM819", # [*] prohibited-trailing-comma
     "D200", # [*] fits-on-one-line
     "D203", # [*] one-blank-line-before-class
     "D211", # no-blank-line-before-class

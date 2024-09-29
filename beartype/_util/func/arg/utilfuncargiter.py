@@ -493,7 +493,7 @@ def iter_func_args(
         # callable, yield a tuple describing this parameter.
         for arg_name in args_name[
             args_index_kind_first:args_len_posonly_mandatory]:
-            yield (ArgKind.POSITIONAL_ONLY, arg_name, ArgMandatory,)
+            yield (ArgKind.POSITIONAL_ONLY, arg_name, ArgMandatory)
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_len_posonly_mandatory
@@ -586,7 +586,7 @@ def iter_func_args(
         # a tuple describing this parameter.
         for arg_name in args_name[
             args_index_kind_first:args_index_kind_last_after]:
-            yield (ArgKind.POSITIONAL_OR_KEYWORD, arg_name, ArgMandatory,)
+            yield (ArgKind.POSITIONAL_OR_KEYWORD, arg_name, ArgMandatory)
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_index_kind_last_after

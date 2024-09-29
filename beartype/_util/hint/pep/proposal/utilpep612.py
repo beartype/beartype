@@ -161,7 +161,7 @@ def make_hint_pep612_concatenate_list_or_none(
     return hint
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep612_args(hint: object, **kwargs,) -> object:
+def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
     '''
     Reduce the passed :pep:`612`-compliant **parameter specification variadic
     positional parameter instance variable** (i.e., low-level C-based

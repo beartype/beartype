@@ -500,7 +500,7 @@ def get_hint_object_violation(
 
     # List of the one or more culprits responsible for this violation,
     # initialized to the passed parameter or returned value violating this hint.
-    violation_culprits = [obj,]
+    violation_culprits = [obj]
 
     # If the actual object directly responsible for this violation is *NOT* the
     # passed parameter or returned value indirectly violating this hint, then

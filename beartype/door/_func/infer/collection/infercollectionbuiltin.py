@@ -98,7 +98,7 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
         # this collection type by the union of the child type hints validating
         # all items recursively reachable from this collection.
         hint = infer_hint_collection_items(
-            obj=obj, hint_factory=hint_factory, **kwargs,)  # type: ignore[arg-type]
+            obj=obj, hint_factory=hint_factory, **kwargs)  # type: ignore[arg-type]
     # Else, this type is *NOT* a subclass of a builtin collection type. In this
     # case, fallback to returning "None".
 
