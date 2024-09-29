@@ -143,6 +143,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
         # guaranteed to be the desired human-readable exception message.
         return self.args[0]
 
+
 # ....................{ DECORATOR                          }....................
 class BeartypeDecorException(BeartypeException):
     '''
@@ -745,6 +746,7 @@ class BeartypeDecorHintParamDefaultViolation(BeartypeCallHintViolation):
     parameter whose default value violates the type hint annotating that
     parameter.
     '''
+
 
 # ....................{ PEP                                }....................
 class BeartypePepException(BeartypeDecorException):

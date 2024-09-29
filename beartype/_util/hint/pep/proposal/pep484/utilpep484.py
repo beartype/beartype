@@ -27,6 +27,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
+
 # ....................{ TESTERS                            }....................
 #FIXME: Remove this *AFTER* properly supporting type variables. For now,
 #ignoring type variables is required ta at least shallowly support generics
@@ -57,6 +58,7 @@ def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
 
     # Ignore *ALL* PEP 484-compliant type variables.
     return True
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_deprecated(

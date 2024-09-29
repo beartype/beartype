@@ -65,6 +65,7 @@ else:
     ``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type hint).
     '''
 
+
 # ....................{ VALIDATORS                         }....................
 def _die_unless_hint_pep484585_callable(
     # Mandatory parameters.
@@ -129,6 +130,7 @@ def _die_unless_hint_pep484585_callable(
             msg
         )
     # Else, this object is a callable type hint, raise an exception.
+
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep484585_callable_params(

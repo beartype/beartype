@@ -771,6 +771,7 @@ class BeartypeDecorMeta:
         # One-liner of Ultimate Beauty: we invoke thee in this line!
         return f'@beartyped {self.func_wrapper_name}() wrapper'
 
+
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_beartype_call(**kwargs) -> BeartypeDecorMeta:

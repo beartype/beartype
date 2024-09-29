@@ -64,6 +64,7 @@ sub-subpackages of that subpackage).
 #
 #See the __init__() dunder method for similar validation logic, please.
 
+
 class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
     '''
     **(Sub)package (sub)trie blacklist** (i.e., recursively nested dictionary
@@ -227,6 +228,7 @@ singleton arbitrarily signifying the current leaf node of a packages trie
 blacklist to blacklist the corresponding (sub)package).
 '''
 
+
 # ....................{ SUBCLASSES ~ whitelist             }....................
 class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
     '''
@@ -373,6 +375,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
             ')',
         ))
 
+
 # ....................{ RAISERS                            }....................
 def die_if_packages_trie() -> None:
     '''
@@ -415,6 +418,7 @@ def die_if_packages_trie() -> None:
         raise BeartypeClawHookException(
             msg
         )
+
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -535,6 +539,7 @@ def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
     # Return this boolean.
     return is_blacklisted
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
@@ -638,6 +643,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
     # Return this beartype configuration if any *OR* "None" otherwise.
     return subpackage_conf
 
+
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
 def iter_packages_trie(
@@ -714,6 +720,7 @@ def iter_packages_trie(
 
         # Yield this subtrie whitelist describing this parent package.
         yield subpackages_trie_whitelist
+
 
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.

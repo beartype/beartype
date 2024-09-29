@@ -149,6 +149,7 @@ def die_unless_hint_pep(
         raise exception_cls(
             msg)
 
+
 # ....................{ EXCEPTIONS ~ supported             }....................
 #FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
 #all or most calls to this function into calls to the
@@ -245,6 +246,7 @@ def die_if_hint_pep_unsupported(
     raise BeartypeDecorHintPepUnsupportedException(
         msg
     )
+
 
 # ....................{ WARNINGS                           }....................
 #FIXME: Unit test us up.
@@ -548,6 +550,7 @@ def is_hint_pep_supported(hint: object) -> bool:
 
     # Return true only if this sign is supported.
     return hint_sign in HINT_SIGNS_SUPPORTED
+
 
 # ....................{ TESTERS ~ typing                   }....................
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with

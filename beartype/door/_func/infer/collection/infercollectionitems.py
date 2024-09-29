@@ -190,6 +190,7 @@ real-world multiple-return functions of interest return a root tuple containing
 less than or equal to this magic number of items, this heuristic follows.
 '''
 
+
 # ....................{ PRIVATE ~ inferers                 }....................
 def _infer_hint_mapping_items(
     obj: MappingABC,

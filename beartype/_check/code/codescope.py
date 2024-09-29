@@ -137,6 +137,7 @@ def add_func_scope_ref(
     return add_func_scope_attr(
         func_scope=func_scope, attr=hint_ref)
 
+
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.
 def add_func_scope_type_or_types(
@@ -519,6 +520,7 @@ def add_func_scope_types(
     # Return the name of a new parameter passing this tuple.
     return add_func_scope_attr(
         attr=types, func_scope=func_scope, exception_prefix=exception_prefix)
+
 
 # ....................{ EXPRESSERS ~ type                  }....................
 def express_func_scope_type_ref(

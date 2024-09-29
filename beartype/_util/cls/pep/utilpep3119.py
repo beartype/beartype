@@ -334,6 +334,7 @@ def die_unless_type_isinstanceable(
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
 
+
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_object_issubclassable(
     # Mandatory parameters.
@@ -540,6 +541,7 @@ def die_unless_type_issubclassable(
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
 
+
 # ....................{ TESTERS ~ isinstanceable           }....................
 #FIXME: Define is_object_isinstanceable() similar to as done below, please.
 
@@ -656,6 +658,7 @@ def is_type_isinstanceable(
 
     # Look. Just do it. *sigh*
     return True
+
 
 # ....................{ TESTERS ~ issubclassable           }....................
 #FIXME: Unit test us up, please.
@@ -875,6 +878,7 @@ def is_type_issubclassable(
     # Look. Just do it. *sigh*
     return True
 
+
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_object_uncheckable(
     obj: TypeOrTupleTypes,
@@ -1038,6 +1042,7 @@ def _die_if_object_uncheckable(
             # raised an exception above), we nonetheless do so for safety.
             msg = f'{exception_message}.'
             raise exception_cls(msg) from exception
+
 
 # ....................{ PRIVATE ~ testers                  }....................
 #FIXME: Unit test us up, please.

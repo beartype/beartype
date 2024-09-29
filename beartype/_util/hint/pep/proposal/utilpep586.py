@@ -154,6 +154,7 @@ def die_unless_hint_pep586(
             )
         # Else, this argument is valid as a literal argument.
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep586_literals(

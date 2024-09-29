@@ -273,6 +273,7 @@ def sanify_hint_root_statement(
     # sanify_hint_root_func() for further commentary.
     return reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)
 
+
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
 def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:

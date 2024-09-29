@@ -41,6 +41,7 @@ types and forward references to deferred types specified as the fully-qualified
 names of those types).
 '''
 
+
 # ....................{ CLASSES                            }....................
 class _NoneTypeOrType(dict):
     '''

@@ -162,6 +162,7 @@ def represent_object(
     # Return this representation.
     return obj_repr
 
+
 # ....................{ REPRESENTER ~ callable             }....................
 def represent_func(
     # Mandatory parameters.
@@ -235,6 +236,7 @@ def represent_func(
 
     # Return the machine-readable representation of that callable as a fallback.
     return repr(func)
+
 
 # ....................{ REPRESENTERS ~ pith                }....................
 def represent_pith(

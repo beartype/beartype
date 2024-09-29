@@ -84,6 +84,7 @@ class BeartypeHintable:
             msg
         )
 
+
 # ....................{ TESTERS                            }....................
 #FIXME: Document us up, please.
 #FIXME: Unit test us up, please.
@@ -93,6 +94,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 
     # Return true only if this hint defines the "__beartype_hint__" attribute.
     return hasattr(hint, '__beartype_hint__')
+
 
 # ....................{ TRANSFORMERS ~ more than meets the }....................
 # ....................{                                eye }....................

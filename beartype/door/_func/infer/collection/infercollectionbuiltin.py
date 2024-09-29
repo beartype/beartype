@@ -105,6 +105,7 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
     # Return this hint.
     return hint
 
+
 # ....................{ PRIVATE ~ inferers                 }....................
 @callable_cached
 def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:

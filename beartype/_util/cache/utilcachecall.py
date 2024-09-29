@@ -262,6 +262,7 @@ def callable_cached(func: CallableT) -> CallableT:
     # Return this wrapper.
     return _callable_cached  # type: ignore[return-value]
 
+
 # ....................{ DECORATORS ~ method                }....................
 def method_cached_arg_by_id(func: CallableT) -> CallableT:
     '''
@@ -477,6 +478,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
 
     # Return this wrapper.
     return _method_cached  # type: ignore[return-value]
+
 
 # ....................{ DECORATORS ~ property              }....................
 def property_cached(func: CallableT) -> CallableT:

@@ -228,6 +228,7 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
     # Return this hint.
     return hint
 
+
 # ....................{ PRIVATE ~ inferers                 }....................
 @callable_cached
 def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
@@ -448,6 +449,7 @@ PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
   instances) of this FSM to follow these transitions to.
 '''
 
+
 # ....................{ PRIVATE ~ classes                  }....................
 class _FiniteStateMachineNode:
     '''
@@ -583,6 +585,7 @@ class _FiniteStateMachineNode:
             f'    nodes_next={repr(self.nodes_next)},',
             ')',
         ))
+
 
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached

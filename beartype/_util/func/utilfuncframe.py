@@ -78,6 +78,7 @@ ValueError
      of the current call stack.
 '''
 
+
 #FIXME: Preserve until we inevitably require this getter, please.
 #def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
 #    try:

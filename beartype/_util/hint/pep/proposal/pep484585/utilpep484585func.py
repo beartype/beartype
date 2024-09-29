@@ -186,6 +186,7 @@ def reduce_hint_pep484585_func_return(
     # Return this possibly reduced hint.
     return hint
 
+
 # ....................{ PRIVATE ~ validators               }....................
 def _die_of_hint_return_invalid(
     # Mandatory parameters.

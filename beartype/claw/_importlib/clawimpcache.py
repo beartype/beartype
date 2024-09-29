@@ -203,6 +203,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
                 msg
             ) from exception
 
+
 # ....................{ CACHERS                            }....................
 #FIXME: Unit test us up, please.
 def cache_from_source_beartype(*args, **kwargs) -> str:

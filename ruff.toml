@@ -15,7 +15,6 @@ ignore = [
     "D203", # [*] one-blank-line-before-class
     "D211", # no-blank-line-before-class
     "E265", # [*] no-space-after-block-comment
-    "E302", # [*] blank-lines-top-level
     "I001", # [*] unsorted-imports
     "Q000", # [*] bad-quotes-inline-string
     "RUF010", # [*] explicit-f-string-type-conversion

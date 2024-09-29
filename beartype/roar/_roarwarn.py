@@ -55,6 +55,7 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
         # warning. See the docstring for justification.
         self.__class__.__module__ = 'beartype.roar'
 
+
 # ....................{ CLAW                               }....................
 class BeartypeClawWarning(BeartypeWarning):
     '''

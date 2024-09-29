@@ -63,6 +63,7 @@ def prefix_beartypeable(
         f'{label_callable(func=obj, is_color=is_color)} '  # type: ignore[arg-type]
     )
 
+
 # ....................{ PREFIXERS : callable : name        }....................
 def prefix_callable_pith(
     # Mandatory parameters.
@@ -185,6 +186,7 @@ def prefix_callable_return(
     # Create and return this label.
     return f'{prefix_beartypeable(obj=func, is_color=is_color)}return '
 
+
 # ....................{ PREFIXERS : callable : value       }....................
 def prefix_callable_arg_value(
     # Mandatory parameters.
@@ -271,6 +273,7 @@ def prefix_callable_return_value(
         f'{prefix_callable_return(func=func, is_color=is_color)}'
         f'{prefix_pith_value(pith=return_value, is_color=is_color)}'
     )
+
 
 # ....................{ PREFIXERS ~ pith                   }....................
 def prefix_pith_type(

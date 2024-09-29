@@ -174,6 +174,7 @@ BEARTYPE_HINT_OVERRIDES_EMPTY = BeartypeHintOverrides()
 instance overriding *no* type hints).
 '''
 
+
 # ....................{ GETTERS                            }....................
 @callable_cached
 def beartype_hint_overrides_pep484_tower() -> BeartypeHintOverrides:

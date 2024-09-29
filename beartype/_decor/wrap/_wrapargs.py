@@ -459,6 +459,7 @@ Frozen set of all **positional parameter kinds** (i.e.,
 either may *or* must be passed positionally).
 '''
 
+
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_arg_default_unbearable(
     decor_meta: BeartypeDecorMeta, arg_default: object, hint: object) -> None:

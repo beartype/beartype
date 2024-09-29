@@ -316,6 +316,7 @@ the :func:`beartype.beartype` decorator to the set of the unqualified basenames
 of all classes in that module decorated by that decorator).
 '''
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 def _uncache_beartype_if_type_redefined(cls: type) -> None:
     '''

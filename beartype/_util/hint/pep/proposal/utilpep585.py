@@ -32,6 +32,7 @@ placeholder object otherwise to guarantee failure when comparing arbitrary
 objects against this object via equality tests.
 '''
 
+
 # ....................{ RAISERS                            }....................
 def die_unless_hint_pep585_generic(
     # Mandatory parameters.
@@ -219,6 +220,7 @@ is_hint_pep585_generic.__doc__ = '''
         :data:`True` only if this object is a :pep:`585`-compliant generic.
     '''
 
+
 # ....................{ GETTERS                            }....................
 def get_hint_pep585_generic_bases_unerased(
     # Mandatory parameters.
@@ -351,6 +353,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
 
     # Return this set coerced into a tuple.
     return tuple(hint_typevars)
+
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.

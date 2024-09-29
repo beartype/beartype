@@ -242,6 +242,7 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     # Defer to the getter function handling non-"typing" classes. Presto!
     return find_cause_instance_type(cause.permute(hint=hint_type))
 
+
 # ....................{ GETTERS ~ instance : types         }....................
 def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     '''

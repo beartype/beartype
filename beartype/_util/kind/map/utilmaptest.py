@@ -141,6 +141,7 @@ def die_if_mappings_two_items_collide(
     # print(exception_message)
     raise _BeartypeUtilMappingException(exception_message)
 
+
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_mapping_keys_all(

@@ -138,6 +138,7 @@ class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
         # referenced by this forward reference.
         return issubclass(obj, cls.__type_beartype__)  # type: ignore[arg-type]
 
+
 # ....................{ SUPERCLASSES ~ index               }....................
 #FIXME: Unit test us up, please.
 class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):

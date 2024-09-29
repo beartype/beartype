@@ -188,6 +188,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # Return a new callable decorating that callable with type-checking.
     return beartype_func(obj, **kwargs)  # type: ignore[return-value]
 
+
 # ....................{ DECORATORS ~ func                  }....................
 def beartype_func(
     # Mandatory parameters.
@@ -345,6 +346,7 @@ def beartype_func_contextlib_contextmanager(
 
     # Return re-decorated generator factory function by @contextlib.contextmanager.
     return contextmanager(generator_checked)  # type: ignore[return-value]
+
 
 # ....................{ DECORATORS ~ descriptor            }....................
 def beartype_descriptor_decorator_builtin(
@@ -533,6 +535,7 @@ def beartype_descriptor_decorator_builtin(
     raise BeartypeDecorWrappeeException(
         msg
     )
+
 
 # ....................{ PRIVATE ~ decorators               }....................
 def _beartype_descriptor_boundmethod(

@@ -65,6 +65,7 @@ def is_func_file(func: Codeobjable) -> bool:
     # One-liners for abstruse abstraction.
     return get_func_filename_or_none(func) is not None
 
+
 # ....................{ GETTERS                            }....................
 def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
     '''

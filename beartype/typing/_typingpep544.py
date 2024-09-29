@@ -113,6 +113,7 @@ _TT = TypeVar("_TT", bound="_CachingProtocolMeta")
 Arbitrary type variable bound (i.e., confined) to classes.
 '''
 
+
 # ....................{ PRIVATE ~ metaclasses              }....................
 class _CachingProtocolMeta(_ProtocolMeta):
     '''
@@ -333,6 +334,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
             return self._abc_inst_check_cache[inst_t]
 
+
 # ....................{ PRIVATE ~ functions                }....................
 #FIXME: Docstring us up, please.
 #FIXME: Comment us up, please.
@@ -385,6 +387,7 @@ def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT={}) -> bool:
     # Else, the passed object satisfies this protocol. In this case, return
     # true.
     return True
+
 
 # ....................{ CLASSES                            }....................
 # @runtime_checkable
@@ -539,6 +542,7 @@ class Protocol(
 # @beartype (and possibly other third-party packages) expect the two
 # representations to comply, this awkward monkey-patch preserves sanity.
 Protocol.__module__ = 'beartype.typing'
+
 
 # ....................{ PROTOCOLS                          }....................
 class SupportsAbs(_SupportsAbsSlow[_T_co], Protocol, Generic[_T_co]):

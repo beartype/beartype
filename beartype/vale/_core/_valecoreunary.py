@@ -180,6 +180,7 @@ class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
     def _operator_symbol(self) -> str:
         return '~'
 
+
 # ....................{ PRIVATE ~ validators               }....................
 def _validate_operand(
     self: BeartypeValidatorUnaryABC,

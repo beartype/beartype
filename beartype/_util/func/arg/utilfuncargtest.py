@@ -213,6 +213,7 @@ def is_func_argless(
         exception_prefix=exception_prefix,
     )
 
+
 # ....................{ TESTERS ~ kind : non-variadic      }....................
 #FIXME: Unit test us up, please.
 def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
@@ -239,6 +240,7 @@ def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
 
     # Return true only if this callable accepts any non-variadic parameters.
     return bool(get_func_args_nonvariadic_len(*args, **kwargs))
+
 
 # ....................{ TESTERS ~ kind : variadic          }....................
 def is_func_arg_variadic(*args, **kwargs) -> bool:
@@ -332,6 +334,7 @@ def is_func_arg_variadic_keyword(*args, **kwargs) -> bool:
 
     # Return true only if this callable accepts a variadic keyword argument.
     return func_args_lens[ARGS_LENS_INDEX_VAR_KW]  # type: ignore[return-value]
+
 
 # ....................{ TESTERS ~ name                     }....................
 def is_func_arg_name(arg_name: str, *args, **kwargs) -> bool:

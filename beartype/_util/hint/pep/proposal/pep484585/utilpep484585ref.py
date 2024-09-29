@@ -100,6 +100,7 @@ def die_unless_hint_pep484585_ref(
         )
     # Else, this object is a forward reference type hint.
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep484585_ref_names(
@@ -557,6 +558,7 @@ def get_hint_pep484585_ref_names_relative_to(
 
     # Return metadata describing this forward reference relative to this module.
     return hint_module_name, hint_ref_name
+
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.

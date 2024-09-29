@@ -45,6 +45,7 @@ _SENTINEL = object()
 Sentinel object of arbitrary value.
 '''
 
+
 # ....................{ DECORATORS                         }....................
 def callable_cached_minimal(func: Callable) -> Callable:
     '''

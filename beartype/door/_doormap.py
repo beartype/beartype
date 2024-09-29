@@ -173,6 +173,7 @@ _HINT_SIGNS_ORIGINLESS = frozenset((
 Frozen set of all **origin-less signs.**
 '''
 
+
 # ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:
     '''

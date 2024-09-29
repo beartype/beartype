@@ -132,6 +132,7 @@ def join_delimited(
     # Return these two substrings, delimited appropriately.
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
+
 # ....................{ JOINERS ~ conjunction              }....................
 #FIXME: Unit test us up, please.
 def join_delimited_conjunction(strs: IterableStrs, **kwargs) -> str:
@@ -175,6 +176,7 @@ def join_delimited_conjunction(strs: IterableStrs, **kwargs) -> str:
         delimiter_if_three_or_more_last=', and ',
         **kwargs
     )
+
 
 # ....................{ JOINERS ~ disjunction              }....................
 def join_delimited_disjunction(strs: IterableStrs, **kwargs) -> str:

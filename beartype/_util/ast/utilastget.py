@@ -51,6 +51,7 @@ def get_node_repr_indented(node: AST) -> str:
         ast_dump(node)
     )
 
+
 # ....................{ GETTERS ~ node                     }....................
 #FIXME: Unit test us up, please. When we do, remove the "pragma: no cover" from
 #the body of this getter below.

@@ -80,6 +80,7 @@ def uppercase_str_char_first(text: str) -> str:
     # Return this possibly changed string.
     return text
 
+
 # ....................{ NUMBERERS                          }....................
 def number_str_lines(text: str) -> str:
     '''
@@ -106,6 +107,7 @@ def number_str_lines(text: str) -> str:
         f'(line {text_line_number:0>4d}) {text_line}'
         for text_line_number, text_line in enumerate(text.splitlines(), start=1)
     )
+
 
 # ....................{ REPLACERS                          }....................
 def replace_str_substrs(text: str, old: str, new: str) -> str:
@@ -172,6 +174,7 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
     # replaced by this target substring.
     return text.replace(old, new)
 
+
 # ....................{ SUFFIXERS                          }....................
 def suffix_str_unless_suffixed(text: str, suffix: str) -> str:
     '''
@@ -200,6 +203,7 @@ def suffix_str_unless_suffixed(text: str, suffix: str) -> str:
 
     # Suffix us up the redemption arc.
     return text if text.endswith(suffix) else text + suffix
+
 
 # ....................{ TRUNCATERS                         }....................
 def truncate_str(

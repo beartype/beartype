@@ -125,6 +125,7 @@ def die_if_unbearable(
     # violates this hint.
     func_raiser(obj)  # pyright: ignore[reportUnboundVariable]
 
+
 # ....................{ TESTERS ~ is_bearable              }....................
 # Note that this PEP 484- and 647-compliant API is entirely the brain child of
 # @asford (Alex Ford). If this breaks, redirect all ~~vengeance~~ enquiries to:
@@ -249,6 +250,7 @@ def is_bearable(obj, hint, *, conf=BEARTYPE_CONF_DEFAULT):  # pyright: ignore
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore
+
 
 # ....................{ TESTERS                            }....................
 def is_subhint(subhint: object, superhint: object) -> bool:

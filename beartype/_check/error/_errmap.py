@@ -30,6 +30,7 @@ which is dynamically dispatched by that function to describe type-checking
 failures specific to that unsubscripted :mod:`typing` attribute.
 '''
 
+
 # ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:
     '''

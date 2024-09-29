@@ -83,6 +83,7 @@ def get_func_boundmethod_self(
     # Return the pure-Python function wrapped by this descriptor. Just do it!
     return func.__self__
 
+
 # ....................{ GETTERS ~ hints                    }....................
 #FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
 #attribute to instead call this high-level getter, please.

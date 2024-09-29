@@ -98,6 +98,7 @@ def die_unless_hint(
     # an exception.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
+
 # ....................{ TESTERS                            }....................
 @callable_cached
 def is_hint(hint: object) -> bool:
@@ -255,6 +256,7 @@ def is_hint_uncached(hint: object) -> bool:
         # gain, we strongly prefer the current trivial and efficient approach.
         is_hint_pep604(hint)
     )
+
 
 # ....................{ TESTERS ~ needs                    }....................
 @callable_cached

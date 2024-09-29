@@ -561,6 +561,7 @@ def get_func_locals(
     # Return the local scope of the passed callable.
     return func_scope
 
+
 # ....................{ ADDERS                             }....................
 def add_func_scope_attr(
     # Mandatory parameters.

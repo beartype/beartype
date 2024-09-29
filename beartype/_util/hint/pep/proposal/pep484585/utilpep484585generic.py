@@ -169,6 +169,7 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     #FIXME: Probably insufficient. *shrug*
     return False
 
+
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(
     # Mandatory parameters.
@@ -395,6 +396,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # Return this tuple of these pseudo-superclasses.
     return hint_pep_generic_bases_unerased
 
+
 # ....................{ GETTERS ~ type                     }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep484585_generic_type(
@@ -553,6 +555,7 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     # Return the "None" singleton.
     return None
 
+
 # ....................{ FINDERS                            }....................
 def find_hint_pep484585_generic_module_base_first(
     # Mandatory parameters.
@@ -705,6 +708,7 @@ def find_hint_pep484585_generic_module_base_first(
     raise exception_cls(
         msg
     )
+
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.

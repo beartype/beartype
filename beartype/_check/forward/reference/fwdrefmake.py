@@ -94,6 +94,7 @@ def make_forwardref_indexable_subtype(
         type_bases=_BeartypeForwardRefIndexableABC_BASES,
     )
 
+
 # ....................{ PRIVATE ~ factories                }....................
 def _make_forwardref_subtype(
     scope_name: Optional[str],

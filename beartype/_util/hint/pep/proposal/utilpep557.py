@@ -81,6 +81,7 @@ def get_hint_pep557_initvar_arg(
     # the "__args__" dunder tuple standardized by PEP 484.
     return hint.type  # type: ignore[attr-defined]
 
+
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep557_initvar(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:

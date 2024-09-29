@@ -105,6 +105,7 @@ def die_unless_module_attr_name(
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
+
 # ....................{ TESTERS                            }....................
 def is_module(
     # Mandatory parameters.
@@ -217,6 +218,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 
     # Return true only if this module's version satisfies this minimum.
     return version_actual_parts >= version_minimum_parts
+
 
 # ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.

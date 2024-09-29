@@ -43,6 +43,7 @@ def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
     # Donkey One-liner Country: Codebase Freeze!
     return sys_modules.get(module_name)
 
+
 # ....................{ GETTERS ~ object                   }....................
 def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
     '''
@@ -114,6 +115,7 @@ def get_object_module(obj: object) -> ModuleType:
     # Return this module.
     return module
 
+
 # ....................{ GETTERS ~ object : line            }....................
 def get_object_module_line_number_begin(obj: object) -> int:
     '''
@@ -176,6 +178,7 @@ def get_object_module_line_number_begin(obj: object) -> int:
     msg = f'{repr(obj)} neither callable nor class.'
     raise _BeartypeUtilModuleException(
         msg)
+
 
 # ....................{ GETTERS ~ object : name            }....................
 #FIXME: Unit test us up, please.
@@ -248,6 +251,7 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
     # Let it be, speaking one-liners of wisdom.
     return getattr(obj, '__module__', None)
 
+
 # ....................{ GETTERS ~ object : type : name     }....................
 #FIXME: Unit test us up, please.
 def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
@@ -278,6 +282,7 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
 
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))
+
 
 # ....................{ GETTERS ~ module : dir             }....................
 #FIXME: Unit test us up.
@@ -314,6 +319,7 @@ def get_module_dir(module: ModuleType) -> Path:
     # directly containing this file.
     module_file = Path(module_filename)
     return module_file.parent
+
 
 # ....................{ GETTERS ~ module : file            }....................
 #FIXME: Unit test us up.

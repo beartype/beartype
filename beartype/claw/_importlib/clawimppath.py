@@ -107,6 +107,7 @@ def add_beartype_pathhook() -> None:
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
 
+
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.
 def remove_beartype_pathhook() -> None:
@@ -191,6 +192,7 @@ See Also
     global, which implements nearly identical functionality (albeit in a
     :mod:`beartype`-specific manner).
 '''
+
 
 # ....................{ PRIVATE ~ cachers                  }....................
 #FIXME: Unit test us up, please.

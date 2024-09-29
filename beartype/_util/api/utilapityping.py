@@ -78,6 +78,7 @@ def is_typing_attr(
     return import_typing_attr_or_none(
         typing_attr_basename, exception_cls) is not None
 
+
 # ....................{ IMPORTERS                          }....................
 def import_typing_attr(
     # Mandatory parameters.
@@ -328,6 +329,7 @@ def import_typing_attr_or_fallback(
     # attribute *OR* this fallback otherwise.
     return typing_attr
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 @callable_cached
@@ -380,6 +382,7 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
 
     # Return this set, coerced into a frozen set for caching purposes.
     return frozenset(typing_attrs)
+
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Replace *ALL* calls to this by calls to get_typing_attrs(), please.

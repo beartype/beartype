@@ -270,6 +270,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
     # Return this hint, possibly coerced as a context-agnostic type hint.
     return coerce_hint_any(hint)
 
+
 # ....................{ COERCERS ~ any                     }....................
 def coerce_hint_any(hint: object) -> Any:
     '''

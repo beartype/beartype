@@ -183,6 +183,7 @@ def is_hint_pep544_protocol(hint: object) -> bool:
         not is_type_builtin_or_fake(hint)  # pyright: ignore
     )
 
+
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic_io_to_pep544_protocol(
     hint: Any, exception_prefix: str) -> Any:
@@ -378,6 +379,7 @@ _Pep544TextIO: Any = None  # type: ignore[assignment]
 '''
 Typed version of the return of :func:`open` in text mode.
 '''
+
 
 # ....................{ INITIALIZERS                       }....................
 def _init() -> None:

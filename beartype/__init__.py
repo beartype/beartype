@@ -61,6 +61,7 @@ For :pep:`8` compliance, this specifier has the canonical name
 ``VERSION_PARTS``).
 '''
 
+
 # ....................{ PRIVATE ~ callables                }....................
 def _init() -> None:
     '''
@@ -205,6 +206,7 @@ example, :mod:`mypy` emits an error resembling:
     error: Module 'beartype' does not explicitly export attribute 'beartype';
     implicit reexport disabled.
 '''
+
 
 # ....................{ DUNDERS                            }....................
 def __getattr__(attr_name: str) -> object:

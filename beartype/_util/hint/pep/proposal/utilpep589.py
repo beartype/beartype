@@ -140,6 +140,7 @@ def is_hint_pep589(hint: object) -> bool:
         )
     )
 
+
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
 #shallowly type-checking such hints by reduction to untyped dictionaries

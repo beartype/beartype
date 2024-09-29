@@ -47,6 +47,7 @@ class BeartypeInferHintContainerRecursion:
     def __repr__(self) -> str:
         return 'RecursiveContainer'
 
+
 # ....................{ INFERERS                           }....................
 def infer_hint(
     # Mandatory parameters.

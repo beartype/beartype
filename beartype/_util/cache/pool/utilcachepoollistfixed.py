@@ -35,6 +35,7 @@ contexts requiring a "reasonably large" list -- where "reasonably" and "large"
 are both subjective but *should* cover 99.9999% of use cases in this codebase.
 '''
 
+
 # ....................{ CLASSES                            }....................
 class FixedList(list):
     '''
@@ -294,6 +295,7 @@ Caveats
 :func:`.acquire_fixed_list` and :func:`.release_fixed_list` functions, which
 efficiently validate both input *and* output to conform to sane expectations.
 '''
+
 
 # ....................{ (ACQUIRERS|RELEASERS)              }....................
 def acquire_fixed_list(size: int) -> FixedList:

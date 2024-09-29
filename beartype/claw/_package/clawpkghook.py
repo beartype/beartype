@@ -162,6 +162,7 @@ def hook_packages(
         #   function, which accesses this trie.
         add_beartype_pathhook()
 
+
 # ....................{ PRIVATE ~ blacklisters             }....................
 #FIXME: Docstring us up, please.
 def _blacklist_packages(package_names: IterableStrs) -> None:
@@ -282,6 +283,7 @@ def _blacklist_packages(package_names: IterableStrs) -> None:
         #     subpackages of this package to the entire package. Score!
         subpackages_trie_blacklist[package_basename_last] = (
             PackagesTrieBlacklisted)
+
 
 # ....................{ PRIVATE ~ whitelisters             }....................
 def _whitelist_packages_all(conf: BeartypeConf) -> None:

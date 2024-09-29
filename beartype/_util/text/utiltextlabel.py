@@ -143,6 +143,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     # Return a sane placeholder.
     return 'object'
 
+
 # ....................{ LABELLERS ~ callable               }....................
 #FIXME: Unit test up the "is_context" parameter, which is currently untested.
 def label_callable(
@@ -247,6 +248,7 @@ def label_callable(
     # Return that prefix followed by the fully-qualified name of that callable.
     return f'{func_label_prefix}{func_label}{func_label_suffix}'
 
+
 # ....................{ LABELLERS ~ exception              }....................
 def label_exception(exception: Exception) -> str:
     '''
@@ -274,6 +276,7 @@ def label_exception(exception: Exception) -> str:
     # Return the fully-qualified name of the class of this exception followed by
     # this exception's message.
     return f'{get_object_type_name(exception)}: {str(exception)}'
+
 
 # ....................{ LABELLERS ~ context                }....................
 #FIXME: Unit test us up, please.
@@ -320,6 +323,7 @@ def label_object_context(obj: object) -> str:
     # Let's hear it for giving up here and going home. Yeah! Go, @beartype!
     return ''
 
+
 # ....................{ LABELLERS ~ pith                   }....................
 def label_pith_value(
     # Mandatory parameters.
@@ -354,6 +358,7 @@ def label_pith_value(
 
     # Glory be to the one liner that you are about to read.
     return color_pith(text=represent_object(pith), is_color=is_color)
+
 
 # ....................{ LABELLERS ~ type                   }....................
 def label_type(

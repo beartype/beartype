@@ -105,6 +105,7 @@ of either:
 # Delete the above counter for safety and sanity in equal measure.
 del __args_lens_index_counter
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_func_args_len(*args, **kwargs) -> int:
@@ -282,6 +283,7 @@ def get_func_args_lens(
     # Return this metadata.
     return func_args_lens
 
+
 # ....................{ GETTERS ~ kind                     }....................
 def get_func_args_flexible_len(
     # Mandatory parameters.
@@ -446,6 +448,7 @@ def get_func_args_nonvariadic_len(*args, **kwargs) -> int:
         func_args_lens[ARGS_LENS_INDEX_POSONLY_OR_FLEX] +
         func_args_lens[ARGS_LENS_INDEX_KWONLY]
     )
+
 
 # ....................{ PRIVATE ~ getters : len            }....................
 def _get_func_boundmethod_args_flexible_len(

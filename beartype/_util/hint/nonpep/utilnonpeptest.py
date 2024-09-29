@@ -213,6 +213,7 @@ def die_unless_hint_nonpep(
         msg
     )
 
+
 # ....................{ VALIDATORS ~ kind                  }....................
 #FIXME: Unit test us up.
 def die_unless_hint_nonpep_type(
@@ -433,6 +434,7 @@ def die_unless_hint_nonpep_tuple(
                 msg
             )
 
+
 # ....................{ TESTERS                            }....................
 def is_hint_nonpep(
     # Mandatory parameters.
@@ -501,6 +503,7 @@ def is_hint_nonpep(
         # PEP-noncompliant. In this case, fallback to returning false.
         False
     )
+
 
 # ....................{ TESTERS ~ private                  }....................
 @callable_cached

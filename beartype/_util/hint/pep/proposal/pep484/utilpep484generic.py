@@ -108,6 +108,7 @@ def is_hint_pep484_generic(hint: object) -> bool:
     #   object to be a PEP-compliant generic.
     return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
 
+
 # ....................{ GETTERS                            }....................
 @callable_cached
 def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
@@ -440,6 +441,7 @@ def get_hint_pep484_generic_bases_unerased(
     # we defer ignoring these superclasses to the caller -- which necessarily
     # already (and hopefully efficiently) ignores ignorable superclasses.
     return hint_bases[1:-1]
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic(

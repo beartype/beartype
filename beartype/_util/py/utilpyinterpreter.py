@@ -89,6 +89,7 @@ def is_python_optimized() -> bool:
     # Return false as a fallback.
     return False
 
+
 # ....................{ GETTERS ~ path                     }....................
 @callable_cached
 def get_interpreter_command_words() -> CommandWords:

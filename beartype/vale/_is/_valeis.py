@@ -550,6 +550,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             get_repr=get_repr,
         )
 
+
 # ....................{ PRIVATE ~ protocols                }....................
 class _SupportsBool(Protocol):
     '''

@@ -284,6 +284,7 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
         # validation of this second child validator is required.
         return not self._validator_operand_1.is_valid(obj)
 
+
 # ....................{ SUBCLASSES ~ |                     }....................
 class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     '''
@@ -347,6 +348,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
         # then this parent validator as a whole is satisfied; no further
         # validation of this second child validator is required.
         return self._validator_operand_1.is_valid(obj)
+
 
 # ....................{ PRIVATE ~ validators               }....................
 def _validate_operands(

@@ -95,6 +95,7 @@ def beartype_object(
         _beartype_object_nonfatal(obj, conf=conf, **kwargs)
     )
 
+
 # ....................{ PRIVATE ~ decorators               }....................
 def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     '''

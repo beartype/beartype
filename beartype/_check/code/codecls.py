@@ -207,6 +207,7 @@ class HintMeta:
         self.pith_expr = SENTINEL  # type: ignore[assignment]
         self.indent_level = SENTINEL  # type: ignore[assignment]
 
+
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
 class HintsMeta(FixedList):

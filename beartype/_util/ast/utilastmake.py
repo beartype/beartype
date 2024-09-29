@@ -115,6 +115,7 @@ def make_node_importfrom(
     # Return this import-from node.
     return node_importfrom
 
+
 # ....................{ FACTORIES ~ attribute              }....................
 #FIXME: Unit test us up, please.
 def make_node_object_attr_load(
@@ -221,6 +222,7 @@ def make_node_object_attr_load(
     # Return this node.
     return node_attribute_load
 
+
 # ....................{ FACTORIES ~ call                   }....................
 #FIXME: Unit test us up, please.
 def make_node_call_expr(*args, node_sibling: AST, **kwargs) -> Expr:
@@ -319,6 +321,7 @@ def make_node_call(
     # Return this call node.
     return node_func_call
 
+
 # ....................{ FACTORIES ~ call : arg             }....................
 #FIXME: Unit test us up, please.
 def make_node_kwarg(
@@ -356,6 +359,7 @@ def make_node_kwarg(
     # Return this expression node.
     return node_kwarg
 
+
 # ....................{ FACTORIES ~ literal : string       }....................
 #FIXME: Unit test us up, please.
 def make_node_str(text: str, node_sibling: AST) -> Constant:
@@ -385,6 +389,7 @@ def make_node_str(text: str, node_sibling: AST) -> Constant:
 
     # Return this string literal node.
     return node_str
+
 
 # ....................{ FACTORIES ~ literal : f-string     }....................
 #FIXME: Unit test us up, please.
@@ -431,6 +436,7 @@ def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
 
     # Return this f-string field node.
     return node_fstr_field
+
 
 # ....................{ FACTORIES ~ name                   }....................
 #FIXME: Unit test us up.

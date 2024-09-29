@@ -227,6 +227,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
             get_repr=f'beartype.vale.{self._basename}[{types_repr}]',
         )
 
+
 # ....................{ SUBCLASSES ~ subclass              }....................
 class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
     '''

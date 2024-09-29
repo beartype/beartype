@@ -100,6 +100,7 @@ def infer_hint_thirdparty(obj: object, **kwargs) -> Optional[object]:
     # Return this hint.
     return hint
 
+
 # ....................{ PRIVATE ~ inferers                 }....................
 def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     '''

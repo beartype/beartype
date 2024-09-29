@@ -104,6 +104,7 @@ def get_hint_pep484585_sign_tuplefixed_or_same(
     # Return this sign.
     return hint_sign
 
+
 # ....................{ TESTERS                            }....................
 def is_hint_pep484585_tuple_empty(hint: object) -> bool:
     '''
@@ -163,6 +164,7 @@ def is_hint_pep484585_tuple_empty(hint: object) -> bool:
         hint == HINT_PEP585_TUPLE_EMPTY or
         hint == HINT_PEP484_TUPLE_EMPTY
     )
+
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

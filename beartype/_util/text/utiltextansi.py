@@ -64,6 +64,7 @@ STYLE_BOLD = '\033[1m'
 ANSI escape sequence stylizing all subsequent characters as bold.
 '''
 
+
 # ....................{ TESTERS                            }....................
 def is_str_ansi(text: str) -> bool:
     '''
@@ -86,6 +87,7 @@ def is_str_ansi(text: str) -> bool:
     # Return true only this compiled regex matching ANSI escape sequences
     # returns a non-"None" match object when passed this text.
     return _ANSI_REGEX.search(text) is not None
+
 
 # ....................{ COLOURIZERS                        }....................
 def color_hint(
@@ -204,6 +206,7 @@ def color_type(
         text
     )
 
+
 # ....................{ COLOURIZERS ~ name                 }....................
 def color_attr_name(
     # Mandatory parameters.
@@ -283,6 +286,7 @@ def color_arg_name(
         text
     )
 
+
 # ....................{ STRIPPERS                          }....................
 #FIXME: Unit test up the "is_color" parameter.
 def strip_str_ansi(
@@ -337,6 +341,7 @@ _ANSI_REGEX = re_compile(r'\033\[[0-9;?]*[A-Za-z]')
 '''
 Compiled regular expression matching a single ANSI escape sequence.
 '''
+
 
 # ....................{ PRIVATE ~ testers                  }....................
 def _is_color(is_color: BoolTristate) -> bool:

@@ -124,6 +124,7 @@ def get_hint_pep484_typevar_bound_or_none(
     # Return "None".
     return None
 
+
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove this function *AFTER* deeply type-checking type variables.
 def reduce_hint_pep484_typevar(

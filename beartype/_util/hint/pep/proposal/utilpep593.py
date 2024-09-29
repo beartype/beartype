@@ -66,6 +66,7 @@ def die_unless_hint_pep593(
             msg
         )
 
+
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up.
 def is_hint_pep593(hint: Any) -> bool:
@@ -135,6 +136,7 @@ def is_hint_pep593_ignorable(hint: object) -> bool:
         not is_hint_pep593_beartype(hint)
     )
 
+
 # ....................{ TESTERS ~ beartype                 }....................
 def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
@@ -182,6 +184,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     # ignore this exception by returning false instead.
     except:
         return False
+
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -292,6 +295,7 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
     # hints originating from a standard class rather than in a
     # metahint-specific dunder attribute.
     return hint.__origin__
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep593(

@@ -84,6 +84,7 @@ def is_func_functools_partial(func: Any) -> TypeGuard[
     # standard functools.partial() factory.
     return isinstance(func, CallableFunctoolsPartialType)
 
+
 # ....................{ GETTERS                            }....................
 def get_func_functools_partial_args(
     func: CallableFunctoolsPartialType) -> Tuple[tuple, DictStrToAny]:
@@ -226,6 +227,7 @@ def get_func_functools_partial_args_flexible_len(
 
     # Return this number.
     return func_args_flexible_len
+
 
 # ....................{ UNWRAPPERS                         }....................
 def unwrap_func_functools_partial_once(

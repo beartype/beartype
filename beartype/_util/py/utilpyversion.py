@@ -208,6 +208,7 @@ IS_PYTHON_3_8 = version_info[:2] == (3, 8)
 :data:`True` only if the active Python interpreter targets exactly Python 3.8.x.
 '''
 
+
 # ....................{ GETTERS                            }....................
 def get_python_version_major_minor() -> str:
     '''

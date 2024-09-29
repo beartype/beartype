@@ -165,6 +165,7 @@ These types are explicitly listed by :pep:`586` as follows:
     bools, Enum values and None.
 '''
 
+
 # ....................{ PRIVATE ~ init                     }....................
 def _init() -> None:
     '''

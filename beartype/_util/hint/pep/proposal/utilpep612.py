@@ -82,6 +82,7 @@ def get_hint_pep612_paramspec(
     # One-liners are fine. One-liners never cross the line! ¯\_(ツ)_/¯
     return paramspec_var.__origin__  # type: ignore[union-attr]
 
+
 # ....................{ FACTORIES                          }....................
 def make_hint_pep612_concatenate_list_or_none(
     hints_child_first: list,
@@ -159,6 +160,7 @@ def make_hint_pep612_concatenate_list_or_none(
 
     # Return this "Concatenate[...]" hint.
     return hint
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep612_args(hint: object, **kwargs) -> object:
@@ -295,6 +297,7 @@ Human-readable substring validating that a :pep:`612`-compliant parameter
 specification variadic keyword parameter type hint annotates a variadic keyword
 parameter.
 '''
+
 
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_pep612_args_or_kwargs(
@@ -586,6 +589,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Reduce *ALL* PEP 612 type hints to an arbitrary ignorable type hint.
     return object
+
 
 # ....................{ PRIVATE ~ constants                }....................
 def _get_pep612_exception_message_suffix(

@@ -59,6 +59,7 @@ class _TypeHintTypeFactoryMeta(type):
         # "TypeHintTypeFactory" class specific to this arbitrary type.
         return super().__call__(type_factory)
 
+
 # ....................{ CLASSES                            }....................
 class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
     '''

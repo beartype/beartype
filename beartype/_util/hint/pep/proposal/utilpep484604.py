@@ -213,6 +213,7 @@ is_hint_pep604.__doc__ = (
         :data:`True` only if this object is a :pep:`604`-compliant union.
     ''')
 
+
 # ....................{ TESTERS                            }....................
 def is_hint_pep484604_union_ignorable(hint: object) -> bool:
     '''
@@ -269,6 +270,7 @@ def is_hint_pep484604_union_ignorable(hint: object) -> bool:
 
     # Return false as a fallback.
     return False
+
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

@@ -267,6 +267,7 @@ def get_func_codeobj_or_none(
     # Return this code object.
     return func_codeobj
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_func_codeobj_basename(func: Codeobjable, **kwargs) -> str:

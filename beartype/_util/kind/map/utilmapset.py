@@ -212,6 +212,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     # Return this merged mapping.
     return mapping_merged
 
+
 # ....................{ UPDATERS                           }....................
 def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     '''

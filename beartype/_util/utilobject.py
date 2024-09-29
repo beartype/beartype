@@ -38,6 +38,7 @@ This object is internally leveraged by various utility functions to identify
 erroneous and edge-case input (e.g., iterables of insufficient length).
 '''
 
+
 # ....................{ TESTERS                            }....................
 def is_object_context_manager(obj: object) -> bool:
     '''
@@ -113,6 +114,7 @@ def is_object_hashable(obj: object) -> bool:
     # Else, this object is hashable. Return true.
     return True
 
+
 # ....................{ GETTERS ~ name                     }....................
 def get_object_name(obj: Any) -> str:
     '''
@@ -179,6 +181,7 @@ def get_object_name(obj: Any) -> str:
         # Else, this object name as is.
         object_scopes_name
     )
+
 
 # ....................{ GETTERS ~ basename                 }....................
 def get_object_basename_scoped(obj: Any) -> str:
@@ -329,6 +332,7 @@ def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
         object_scoped_name
     )
 
+
 # ....................{ GETTERS ~ filename                 }....................
 def get_object_filename_or_none(obj: object) -> Optional[str]:
     '''
@@ -376,6 +380,7 @@ def get_object_filename_or_none(obj: object) -> Optional[str]:
         None
     )
 
+
 # ....................{ GETTERS ~ type                     }....................
 def get_object_type_unless_type(obj: object) -> type:
     '''
@@ -402,6 +407,7 @@ def get_object_type_unless_type(obj: object) -> type:
     '''
 
     return obj if isinstance(obj, type) else type(obj)
+
 
 # ....................{ GETTERS ~ type : name              }....................
 def get_object_type_basename(obj: object) -> str:

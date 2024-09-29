@@ -147,6 +147,7 @@ def is_hint_pep695_ignorable(hint: HintPep695Type) -> bool:
     # Return true only if this hint aliases an ignorable child type hint.
     return is_hint_ignorable(get_hint_pep695_alias(hint))
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep695_alias(
@@ -214,6 +215,7 @@ def get_hint_pep695_alias(
 
     # Return this unaliased type alias.
     return hint
+
 
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_forwardrefs(
@@ -418,6 +420,7 @@ def iter_hint_pep695_forwardrefs(
             # Store the unqualified basename of this previously undeclared
             # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep695(

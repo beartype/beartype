@@ -349,6 +349,7 @@ get_hint_pep_typevars.__doc__ = '''
        (T, S)
     '''
 
+
 # ....................{ GETTERS ~ sign                     }....................
 def get_hint_pep_sign(
     # Mandatory parameters.
@@ -823,6 +824,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Return "None".
     return None
 
+
 # ....................{ GETTERS ~ origin                   }....................
 def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     '''
@@ -911,6 +913,7 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
     # Return this hint's origin object if any *OR* "None" otherwise.
     return getattr(hint, '__origin__', None)
+
 
 # ....................{ GETTERS ~ origin : type            }....................
 #FIXME: Unit test us up, please.

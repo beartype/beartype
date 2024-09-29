@@ -184,6 +184,7 @@ def get_func_arg_meta_variadic_keyword_or_none(
         msg
     )
 
+
 # ....................{ GETTERS ~ name                     }....................
 def get_func_arg_name_first_or_none(*args, **kwargs) -> Optional[str]:
     '''

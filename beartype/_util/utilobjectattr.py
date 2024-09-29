@@ -240,6 +240,7 @@ def get_object_methods_name_to_value_explicit(
         predicate=_is_object_attr_callable_not_object_slot_wrapper,
     )
 
+
 # ....................{ PRIVATE ~ testers                  }....................
 def _is_object_attr_callable_not_object_slot_wrapper(
     attr_name: str, attr_value: object) -> bool:

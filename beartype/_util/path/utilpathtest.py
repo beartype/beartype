@@ -72,6 +72,7 @@ def die_unless_dir(
         raise exception_cls(msg)
     # Else, a directory with this dirname exists.
 
+
 # ....................{ RAISERS ~ file                     }....................
 #FIXME: Unit test us up, please.
 def die_unless_file(

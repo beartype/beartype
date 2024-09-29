@@ -261,6 +261,7 @@ def reduce_hint(
     # Return this possibly reduced hint.
     return hint
 
+
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_uncached(
     hint: Any,

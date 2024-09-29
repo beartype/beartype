@@ -69,6 +69,7 @@ def unwrap_func_once(func: Callable) -> Callable:
     # Return this immediate wrappee callable.
     return func_wrappee
 
+
 # ....................{ UNWRAPPERS ~ once : descriptor     }....................
 #FIXME: Unit test us up, please.
 def unwrap_func_boundmethod_once(
@@ -243,6 +244,7 @@ def unwrap_func_staticmethod_once(
 
     # Return the pure-Python function wrapped by this descriptor. Just do it!
     return func.__func__
+
 
 # ....................{ UNWRAPPERS ~ all                   }....................
 def unwrap_func_all(func: Callable) -> Callable:

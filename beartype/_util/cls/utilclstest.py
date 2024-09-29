@@ -135,6 +135,7 @@ def die_unless_type_or_types(
         raise exception_cls(msg)
     # Else, this object is either a class *OR* tuple of one or more classes.
 
+
 # ....................{ TESTERS                            }....................
 def is_type_or_types(type_or_types: object) -> bool:
     '''
@@ -166,6 +167,7 @@ def is_type_or_types(type_or_types: object) -> bool:
             all(isinstance(cls, type) for cls in type_or_types)
         )
     )
+
 
 # ....................{ TESTERS ~ builtin                  }....................
 def is_type_builtin(cls: type) -> bool:
@@ -260,6 +262,7 @@ def is_type_builtin_or_fake(cls: type) -> bool:
     # This return true only if this name is that of the "builtins" module
     # declaring all builtin types.
     return cls_module_name == BUILTINS_MODULE_NAME
+
 
 # ....................{ TESTERS ~ subclass                 }....................
 def is_type_subclass(

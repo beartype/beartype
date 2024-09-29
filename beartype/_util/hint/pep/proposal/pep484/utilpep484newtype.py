@@ -150,6 +150,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
         :pep:`484`-compliant new type.
     '''
 
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 @callable_cached
@@ -212,6 +213,7 @@ def get_hint_pep484_newtype_alias(
 
     # Return this unaliased type hint.
     return hint
+
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_newtype(

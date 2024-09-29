@@ -119,6 +119,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
         'void': memoryview,
     }
 
+
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_numpy_dtype(
@@ -184,6 +185,7 @@ def reduce_numpy_dtype(
     # is reducible to such a type *OR* this dtype as is otherwise. And return this reduced type.
     return DTYPE_NAME_SANITIZED_TO_TYPE_REDUCED.get(
         dtype_name_sanitized, dtype)
+
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

@@ -47,6 +47,7 @@ Caveats
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
+
 # ....................{ (ACQUIRERS|RELEASERS)              }....................
 def acquire_object_typed(cls: type) -> Any:
     '''

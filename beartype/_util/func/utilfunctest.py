@@ -60,6 +60,7 @@ AST-based parsing, which comes with its own substantial caveats, concerns,
 edge cases, and false positives. If you must pick your poison, pick this one.
 '''
 
+
 # ....................{ RAISERS                            }....................
 def die_unless_func_python(
     # Mandatory parameters.
@@ -120,6 +121,7 @@ def die_unless_func_python(
         raise exception_cls(
             msg)
     # Else, that callable is pure-Python.
+
 
 # ....................{ RAISERS ~ descriptors              }....................
 #FIXME: Unit test us up, please.
@@ -353,6 +355,7 @@ def die_unless_func_staticmethod(
         )
     # Else, this object is a static method descriptor.
 
+
 # ....................{ TESTERS                            }....................
 def is_func_lambda(func: Any) -> TypeGuard[Callable]:
     '''
@@ -410,6 +413,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
     # Return true only if a pure-Python code object underlies this object.
     # C-based callables are associated with *NO* code objects.
     return get_func_codeobj_or_none(func) is not None
+
 
 # ....................{ TESTERS ~ descriptor               }....................
 #FIXME: Unit test us up, please.
@@ -549,6 +553,7 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     # Does the one-liner have Buddhahood? Mu.
     return isinstance(func, staticmethod)
 
+
 # ....................{ TESTERS ~ async                    }....................
 def is_func_async(func: object) -> TypeGuard[Callable]:
     '''
@@ -687,6 +692,7 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
         func_codeobj.co_flags & CO_ASYNC_GENERATOR != 0
     )
 
+
 # ....................{ TESTERS ~ sync                     }....................
 def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
     '''
@@ -739,6 +745,7 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
         # synchronous generator.
         func_codeobj.co_flags & CO_GENERATOR != 0
     )
+
 
 # ....................{ TESTERS : nested                   }....................
 def is_func_nested(func: Callable) -> bool:
@@ -822,6 +829,7 @@ def is_func_nested(func: Callable) -> bool:
         '.' in func.__qualname__
     )
 
+
 # ....................{ TESTERS ~ nested : closure         }....................
 def is_func_closure(func: Any) -> TypeGuard[Callable]:
     '''
@@ -851,6 +859,7 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
     # * If that callable is a pure-Python non-closure, "None".
     # * If that callable is C-based, undefined.
     return getattr(func, '__closure__', None) is not None
+
 
 # ....................{ TESTERS ~ wrapper                  }....................
 def is_func_wrapper(func: Any) -> TypeGuard[Callable]:

@@ -86,6 +86,7 @@ def _check_methods(C: type, *methods: str):
 
     return True
 
+
 # ....................{ SUPERCLASSES                       }....................
 class BoolType(metaclass=ABCMeta):
     '''

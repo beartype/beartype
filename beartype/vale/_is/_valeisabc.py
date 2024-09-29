@@ -37,6 +37,7 @@ class _BeartypeValidatorFactoryABCMeta(ABCMeta):
         # clarity and usability.
         cls.__module__ = 'beartype.vale'
 
+
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Pyright appears to be extremely confused. It thinks that the
 #"_BeartypeValidatorFactoryABCMeta" metaclass is a "generic" (i.e., subclasses
