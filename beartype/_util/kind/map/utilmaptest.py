@@ -121,16 +121,16 @@ def die_if_mappings_two_items_collide(
     # Dictionary of all unsafe key-value pairs (i.e., pairs such that merging
     # these keys would silently override the values associated with these keys
     # in either the first or second mappings) from these mappings.
-    mapping_a_unsafe = dict(
-        (key_shared_unsafe, mapping_a[key_shared_unsafe])
+    mapping_a_unsafe = {
+        key_shared_unsafe: mapping_a[key_shared_unsafe]
         for key_shared_unsafe in mapping_keys_shared
         if key_shared_unsafe not in mapping_keys_shared_safe
-    )
-    mapping_b_unsafe = dict(
-        (key_shared_unsafe, mapping_b[key_shared_unsafe])
+    }
+    mapping_b_unsafe = {
+        key_shared_unsafe: mapping_b[key_shared_unsafe]
         for key_shared_unsafe in mapping_keys_shared
         if key_shared_unsafe not in mapping_keys_shared_safe
-    )
+    }
 
     # Raise a human-readable exception.
     exception_message = (
