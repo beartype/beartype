@@ -42,7 +42,7 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignAnnotated, (
         f'{cause.hint_sign} not "HintSignAnnotated".')
 
@@ -76,7 +76,7 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
         if not isinstance(hint_validator, BeartypeValidator):
             msg = (
                 f'{cause_deep.exception_prefix}PEP 593 type hint '
-                f'{repr(cause_deep.hint)} argument {repr(hint_validator)} '
+                f'{cause_deep.hint!r} argument {hint_validator!r} '
                 f'not beartype validator '
                 f'(i.e., "beartype.vale.Is*[...]" object).'
             )
@@ -99,7 +99,7 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
             # Human-readable string describing this failure.
             cause_deep.cause_str_or_none = (
                 f'{represent_pith(cause_deep.pith)} violates validator '
-                f'{repr(hint_validator)}:\n'
+                f'{hint_validator!r}:\n'
                 f'{hint_diagnosis}'
             )
 

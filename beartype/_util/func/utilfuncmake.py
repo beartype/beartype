@@ -137,9 +137,9 @@ def make_func(
     '''
 
     # ..................{ VALIDATION ~ pre                   }..................
-    assert isinstance(func_name, str), f'{repr(func_name)} not string.'
-    assert isinstance(func_code, str), f'{repr(func_code)} not string.'
-    assert isinstance(is_debug, bool), f'{repr(is_debug)} not bool.'
+    assert isinstance(func_name, str), f'{func_name!r} not string.'
+    assert isinstance(func_code, str), f'{func_code!r} not string.'
+    assert isinstance(is_debug, bool), f'{is_debug!r} not bool.'
     assert func_name, 'Parameter "func_name" empty.'
     assert func_code, 'Parameter "func_code" empty.'
     assert func_label is None or func_labeller is None, (
@@ -151,9 +151,9 @@ def make_func(
     if func_locals is None:
         func_locals = {}
     assert isinstance(func_globals, dict), (
-        f'{repr(func_globals)} not dictionary.')
+        f'{func_globals!r} not dictionary.')
     assert isinstance(func_locals, dict), (
-        f'{repr(func_locals)} not dictionary.')
+        f'{func_locals!r} not dictionary.')
 
     # If "func_labeller" is unpassed...
     if func_labeller is None:
@@ -165,10 +165,10 @@ def make_func(
         #
         # In either case, "func_label" should now be a valid label.
 
-        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+        assert isinstance(func_label, str), f'{func_label!r} not string.'
     # Else, "func_labeller" is passed. In this case...
     else:
-        assert callable(func_labeller), f'{repr(func_labeller)} uncallable.'
+        assert callable(func_labeller), f'{func_labeller!r} uncallable.'
 
     # If that function's name is already in this local scope, the caller
     # already declared a local attribute whose name collides with that
@@ -177,7 +177,7 @@ def make_func(
         msg = (
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'already defined by caller locals:\n'
-            f'{repr(func_locals)}'
+            f'{func_locals!r}'
         )
         raise exception_cls(
             msg
@@ -329,7 +329,7 @@ def make_func(
     # If that function is a wrapper wrapping a wrappee callable, propagate
     # dunder attributes from that wrappee onto this wrapper.
     if func_wrapped is not None:
-        assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
+        assert callable(func_wrapped), f'{func_wrapped!r} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
     # Else, that function is *NOT* such a wrapper.
 
@@ -340,7 +340,7 @@ def make_func(
     # attributes to enable callers to explicitly overwrite documentation
     # propagated from that wrappee onto this wrapper.
     if func_doc is not None:
-        assert isinstance(func_doc, str), f'{repr(func_doc)} not string.'
+        assert isinstance(func_doc, str), f'{func_doc!r} not string.'
         assert func_doc, '"func_doc" empty.'
 
         # Document that function.

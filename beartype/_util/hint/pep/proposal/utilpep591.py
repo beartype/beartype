@@ -94,7 +94,7 @@ def reduce_hint_pep591(
     #     <class 'float'>).
     else:
         msg = (
-            f'{exception_prefix}PEP 591 type hint {repr(hint)} '
+            f'{exception_prefix}PEP 591 type hint {hint!r} '
             f'erroneously subscripted by {hint_args_len} child type hints.'
         )
         raise BeartypeDecorHintPep591Exception(

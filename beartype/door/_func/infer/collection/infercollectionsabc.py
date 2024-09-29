@@ -299,7 +299,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
           the narrowest such protocol.
         * Else, :data:`None`.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(cls, type), f'{cls!r} not type.'
 
     # ....................{ PREAMBLE                       }....................
     # List of the names of all attributes bound to this class.
@@ -547,7 +547,7 @@ class _FiniteStateMachineNode:
             Defaults to the empty dictionary.
         '''
         assert isinstance(nodes_next, dict), (
-            f'{repr(nodes_next)} not dictionary.')
+            f'{nodes_next!r} not dictionary.')
 
         # Classify all passed parameters.
         self.hint_factory = hint_factory
@@ -563,9 +563,9 @@ class _FiniteStateMachineNode:
             # Validate the types of this key-value pair.
             assert isinstance(
                 node_next_method_names, frozenset), (
-                f'{repr(node_next_method_names)} not frozen set.')
+                f'{node_next_method_names!r} not frozen set.')
             assert isinstance(node_next, _FiniteStateMachineNode), (
-                f'{repr(node_next)} not "_FiniteStateMachineNode".')
+                f'{node_next!r} not "_FiniteStateMachineNode".')
 
             # Update this set with this frozen set of all method names.
             nodes_next_method_names.update(node_next_method_names)
@@ -581,9 +581,9 @@ class _FiniteStateMachineNode:
 
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    hint_factory={repr(self.hint_factory)},',
-            f'    nodes_next_method_names={repr(self.nodes_next_method_names)},',
-            f'    nodes_next={repr(self.nodes_next)},',
+            f'    hint_factory={self.hint_factory!r},',
+            f'    nodes_next_method_names={self.nodes_next_method_names!r},',
+            f'    nodes_next={self.nodes_next!r},',
             ')',
         ))
 

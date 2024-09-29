@@ -452,7 +452,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                 the lambda functions to be unparsed by this visitor.
             '''
             assert isinstance(lambda_lineno, int), (
-                f'{repr(lambda_lineno)} not integer.')
+                f'{lambda_lineno!r} not integer.')
             assert lambda_lineno >= 0, f'{lambda_lineno} < 0.'
 
             # Initialize our superclass.

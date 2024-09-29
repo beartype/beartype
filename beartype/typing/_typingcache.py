@@ -70,7 +70,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
     :func:`beartype._util.cache.utilcachecall.callable_cached`
         Further details.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that

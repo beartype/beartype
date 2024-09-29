@@ -105,20 +105,20 @@ def die_unless_func_python(
     # If that callable is *NOT* pure-Python, raise an exception.
     if not is_func_python(func):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # If that callable is uncallable, raise an appropriate exception.
         if not callable(func):
-            msg = f'{exception_prefix}{repr(func)} not callable.'
+            msg = f'{exception_prefix}{func!r} not callable.'
             raise exception_cls(msg)
         # Else, that callable is callable.
 
         # Raise a human-readable exception.
-        msg = f'{exception_prefix}{repr(func)} not pure-Python function.'
+        msg = f'{exception_prefix}{func!r} not pure-Python function.'
         raise exception_cls(
             msg)
     # Else, that callable is pure-Python.
@@ -167,15 +167,15 @@ def die_unless_func_boundmethod(
     # If this object is *NOT* a bound method descriptor, raise an exception.
     if not is_func_boundmethod(func):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Raise a human-readable exception.
         msg = (
-            f'{exception_prefix}{repr(func)} not '
+            f'{exception_prefix}{func!r} not '
             f'C-based bound instance method descriptor.'
         )
         raise exception_cls(
@@ -225,15 +225,15 @@ def die_unless_func_classmethod(
     # If this object is *NOT* a class method descriptor, raise an exception.
     if not is_func_classmethod(func):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Raise a human-readable exception.
         msg = (
-            f'{exception_prefix}{repr(func)} not '
+            f'{exception_prefix}{func!r} not '
             f'C-based unbound class method descriptor.'
         )
         raise exception_cls(
@@ -282,15 +282,15 @@ def die_unless_func_property(
     # If this object is *NOT* a property method descriptor, raise an exception.
     if not is_func_property(func):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Raise a human-readable exception.
         msg = (
-            f'{exception_prefix}{repr(func)} not '
+            f'{exception_prefix}{func!r} not '
             f'C-based unbound property method descriptor.'
         )
         raise exception_cls(
@@ -340,15 +340,15 @@ def die_unless_func_staticmethod(
     # If this object is *NOT* a static method descriptor, raise an exception.
     if not is_func_staticmethod(func):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Raise a human-readable exception.
         msg = (
-            f'{exception_prefix}{repr(func)} not '
+            f'{exception_prefix}{func!r} not '
             f'C-based unbound static method descriptor.'
         )
         raise exception_cls(

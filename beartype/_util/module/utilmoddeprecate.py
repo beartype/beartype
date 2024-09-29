@@ -86,11 +86,11 @@ def deprecate_module_attr(
         :pep:`562`-compliant dunder function inspiring this implementation.
     '''
     assert isinstance(attr_deprecated_name, str), (
-        f'{repr(attr_deprecated_name)} not string.')
+        f'{attr_deprecated_name!r} not string.')
     assert isinstance(attr_deprecated_name_to_nondeprecated_name, dict), (
-        f'{repr(attr_deprecated_name_to_nondeprecated_name)} not dictionary.')
+        f'{attr_deprecated_name_to_nondeprecated_name!r} not dictionary.')
     assert isinstance(attr_nondeprecated_name_to_value, dict), (
-        f'{repr(attr_nondeprecated_name_to_value)} not dictionary.')
+        f'{attr_nondeprecated_name_to_value!r} not dictionary.')
 
     # Fully-qualified name of the caller's submodule. Since all physical
     # submodules (i.e., those defined on-disk) define this dunder attribute
@@ -106,7 +106,7 @@ def deprecate_module_attr(
     # If this attribute is deprecated...
     if attr_nondeprecated_name is not SENTINEL:
         assert isinstance(attr_nondeprecated_name, str), (
-            f'{repr(attr_nondeprecated_name)} not string.')
+            f'{attr_nondeprecated_name!r} not string.')
 
         # Value of the non-deprecated attribute originating this deprecated
         # attribute if the former exists *OR* the sentintel.

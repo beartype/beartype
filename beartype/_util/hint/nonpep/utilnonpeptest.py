@@ -85,14 +85,14 @@ def die_if_hint_nonpep(
     # than keyword parameters to maximize efficiency.
     if is_hint_nonpep(hint, is_forwardref_valid):
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception type.')
+            f'{exception_cls!r} not exception type.')
 
         raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} '
+            f'{exception_prefix}type hint {hint!r} '
             f'is PEP-noncompliant (e.g., either ' +
             (
                 (
@@ -170,9 +170,9 @@ def die_unless_hint_nonpep(
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not type.')
+        f'{exception_cls!r} not type.')
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
 
     # If this object is a class...
     if isinstance(hint, type):
@@ -202,7 +202,7 @@ def die_unless_hint_nonpep(
 
     # Raise a generic exception.
     msg = (
-        f'{exception_prefix}type hint {repr(hint)} either '
+        f'{exception_prefix}type hint {hint!r} either '
         f'PEP-noncompliant or PEP-compliant but currently '
         f'unsupported by @beartype. '
         f'You suddenly feel encouraged to submit a feature request '
@@ -368,10 +368,10 @@ def die_unless_hint_nonpep_tuple(
     #
     # Note that the prior call has already validated "is_forwardref_valid".
     assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
-    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+        f'{is_forwardref_valid!r} not bool.')
+    assert isinstance(exception_cls, type), f'{exception_cls!r} not type.'
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the _is_hint_nonpep_tuple() tester.
@@ -379,7 +379,7 @@ def die_unless_hint_nonpep_tuple(
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
-        msg = f'{exception_prefix}type hint {repr(hint)} not tuple.'
+        msg = f'{exception_prefix}type hint {hint!r} not tuple.'
         raise exception_cls(
             msg)
     # Else, this object is a tuple.
@@ -413,7 +413,7 @@ def die_unless_hint_nonpep_tuple(
             # If forward references are unsupported, raise an exception.
             if not is_forwardref_valid:
                 msg = (
-                    f'{exception_prefix}tuple type hint {repr(hint)} '
+                    f'{exception_prefix}tuple type hint {hint!r} '
                     f'forward reference "{hint_item}" unsupported.'
                 )
                 raise exception_cls(
@@ -426,8 +426,8 @@ def die_unless_hint_nonpep_tuple(
         # forward references are permitted or not.
         else:
             msg = (
-                f'{exception_prefix}tuple type hint {repr(hint)} '
-                f'item {repr(hint_item)} invalid '
+                f'{exception_prefix}tuple type hint {hint!r} '
+                f'item {hint_item!r} invalid '
                 f'{"neither type nor string" if is_forwardref_valid else "not type"}.'
             )
             raise exception_cls(
@@ -481,7 +481,7 @@ def is_hint_nonpep(
           * If ``is_forwardref_valid`` is :data:`True`, forward references.
     '''
     assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
+        f'{is_forwardref_valid!r} not bool.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
@@ -537,7 +537,7 @@ def _is_hint_nonpep_tuple(
           * If ``is_forwardref_valid`` is :data:`True`, forward references.
     '''
     assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
+        f'{is_forwardref_valid!r} not bool.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.

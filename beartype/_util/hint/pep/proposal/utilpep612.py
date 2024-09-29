@@ -132,7 +132,7 @@ def make_hint_pep612_concatenate_list_or_none(
         ellipsis.
     '''
     assert isinstance(hints_child_first, list), (
-        f'{repr(hints_child_first)} not list.')
+        f'{hints_child_first!r} not list.')
 
     # "Concatenate[...]" hint to be returned, subscripted by these child hints.
     hint = None
@@ -442,17 +442,17 @@ def _reduce_hint_pep612_args_or_kwargs(
         If this hint does *not* annotate a variadic positional parameter.
     '''
     assert isinstance(arg_kind_expected, ArgKind), (
-        f'{repr(arg_kind_expected)} not argument kind.')
+        f'{arg_kind_expected!r} not argument kind.')
     assert isinstance(pith_name_label, str), (
-        f'{repr(pith_name_label)} not string.')
+        f'{pith_name_label!r} not string.')
     assert isinstance(pith_name_syntax, str), (
-        f'{repr(pith_name_syntax)} not string.')
+        f'{pith_name_syntax!r} not string.')
     assert isinstance(other_hint_sign, HintSign), (
-        f'{repr(other_hint_sign)} not type hint sign.')
+        f'{other_hint_sign!r} not type hint sign.')
     assert callable(other_pith_name_getter), (
-        f'{repr(other_pith_name_getter)} uncallable.')
+        f'{other_pith_name_getter!r} uncallable.')
     assert isinstance(other_pith_name_label, str), (
-        f'{repr(other_pith_name_label)} not string.')
+        f'{other_pith_name_label!r} not string.')
 
     # ....................{ VALIDATE                       }....................
     # Validate basic sanity.
@@ -466,7 +466,7 @@ def _reduce_hint_pep612_args_or_kwargs(
         msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint {repr(hint)} erroneously subscripts '
+            f'type hint {hint!r} erroneously subscripts '
             f'a parent type hint as a nested child type hint rather than '
             f'directly annotating '
             f'variadic {pith_name_label} parameter "{pith_name_syntax}" as a '
@@ -502,7 +502,7 @@ def _reduce_hint_pep612_args_or_kwargs(
         msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint {repr(hint)} erroneously annotates '
+            f'type hint {hint!r} erroneously annotates '
             f'parameter "{pith_name}" rather than '
             f'variadic {pith_name_label} parameter "{pith_name_syntax}"'
             f'{_get_pep612_exception_message_suffix(func=func)}'
@@ -523,10 +523,10 @@ def _reduce_hint_pep612_args_or_kwargs(
         msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint {repr(hint)} not paired with '
+            f'type hint {hint!r} not paired with '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint {repr(other_hint)} (i.e., '
+            f'type hint {other_hint!r} (i.e., '
             f'that callable accepts no '
             f'variadic {other_pith_name_label} parameter)'
             f'{_get_pep612_exception_message_suffix(func=func)}'
@@ -549,12 +549,12 @@ def _reduce_hint_pep612_args_or_kwargs(
         msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint {repr(hint)} paired with unannotated '
+            f'type hint {hint!r} paired with unannotated '
             f'variadic {other_pith_name_label} parameter (i.e., '
             f'variadic {other_pith_name_label} parameter annotated by no '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint {repr(other_hint)})'
+            f'type hint {other_hint!r})'
             f'{_get_pep612_exception_message_suffix(func=func)}'
         )
         raise BeartypeDecorHintPep612Exception(
@@ -572,12 +572,12 @@ def _reduce_hint_pep612_args_or_kwargs(
         msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
-            f'type hint {repr(hint)} paired with '
+            f'type hint {hint!r} paired with '
             f'variadic {other_pith_name_label} parameter erroneously annotated '
-            f'by type hint {repr(other_arg_hint)} rather than '
+            f'by type hint {other_arg_hint!r} rather than '
             f'corresponding PEP 612 "ParamSpec" '
             f'variadic {other_pith_name_label} parameter '
-            f'type hint {repr(other_hint)}'
+            f'type hint {other_hint!r}'
             f'{_get_pep612_exception_message_suffix(func=func)}'
         )
         raise BeartypeDecorHintPep612Exception(

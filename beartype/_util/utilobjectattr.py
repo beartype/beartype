@@ -118,9 +118,9 @@ def get_object_attrs_name_to_value_explicit(
         predicate (in ascending lexicographic order of attribute name).
     '''
     assert obj_dir is None or isinstance(obj_dir, list), (
-        f'{repr(obj_dir)} neither list of strings nor "None".')
+        f'{obj_dir!r} neither list of strings nor "None".')
     assert predicate is None or callable(predicate), (
-        f'{repr(predicate)} neither callable nor "None".')
+        f'{predicate!r} neither callable nor "None".')
 
     # Dictionary mapping from the name of each attribute of the passed object
     # satisfying the passed predicate to the corresponding explicit value of

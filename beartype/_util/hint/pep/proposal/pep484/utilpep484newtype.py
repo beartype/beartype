@@ -192,7 +192,7 @@ def get_hint_pep484_newtype_alias(
     # If this object is *NOT* a new type, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignNewType:
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} not '
+            f'{exception_prefix}type hint {hint!r} not '
             f'PEP 484 "typing.NewType(...)" object.'
         )
         raise BeartypeDecorHintPep484Exception(

@@ -88,12 +88,12 @@ def die_unless_hint_pep484585_ref(
     # If this object is *NOT* a forward reference type hint, raise an exception.
     if not isinstance(hint, TYPES_PEP484585_REF):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} not forward reference '
+            f'{exception_prefix}type hint {hint!r} not forward reference '
             f'(i.e., neither string nor "typing.ForwardRef" object).'
         )
         raise exception_cls(
@@ -451,9 +451,9 @@ def get_hint_pep484585_ref_names_relative_to(
 
     # Validate sanity.
     assert isinstance(cls_stack, NoneTypeOr[Sequence]), (
-        f'{repr(cls_stack)} neither sequence nor "None".')
+        f'{cls_stack!r} neither sequence nor "None".')
     assert isinstance(func, NoneTypeOr[Callable]), (
-        f'{repr(func)} neither callable nor "None".')
+        f'{func!r} neither callable nor "None".')
 
     # If this reference annotates a method of a class...
     if cls_stack:
@@ -511,7 +511,7 @@ def get_hint_pep484585_ref_names_relative_to(
                     # Append this message by...
                     exception_message += (
                         # Substring describing this class *AND*...
-                        f':\n* {repr(cls)} ' +  # pyright: ignore
+                        f':\n* {cls!r} ' +  # pyright: ignore
                         (
                             # If that class defines a "__module__" dunder
                             # attribute, substring describing that module.
@@ -539,7 +539,7 @@ def get_hint_pep484585_ref_names_relative_to(
                     (
                         f'{label_callable(func)} '
                         if callable(func) else
-                        f'{repr(func)} '
+                        f'{func!r} '
                     ) +
                     # Substring describing this module.
                     (

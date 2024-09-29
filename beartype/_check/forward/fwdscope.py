@@ -131,7 +131,7 @@ class BeartypeForwardScope(LexicalScope):
             If this scope name is *not* a valid Python attribute name.
         '''
         assert isinstance(scope_dict, dict), (
-            f'{repr(scope_dict)} not dictionary.')
+            f'{scope_dict!r} not dictionary.')
 
         # Initialize our superclass with this lexical scope, efficiently
         # pre-populating this dictionary with all previously declared attributes

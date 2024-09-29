@@ -72,7 +72,7 @@ def reduce_hint_pep613(
     issue_warning(
         cls=BeartypeDecorHintPep613DeprecationWarning,
         message=(
-            f'{exception_prefix}PEP 613 type hint {repr(hint)} '
+            f'{exception_prefix}PEP 613 type hint {hint!r} '
             f'deprecated by PEP 695. Consider either:\n'
             f'* Requiring Python >= 3.12 and refactoring PEP 613 type aliases '
             f'into PEP 695 type aliases. Note that Python < 3.12 will hate you '

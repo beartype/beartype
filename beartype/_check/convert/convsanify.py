@@ -126,7 +126,7 @@ def sanify_hint_root_func(
         * A supported PEP-compliant type hint.
     '''
     assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
-        f'{repr(arg_kind)} neither argument kind nor "None".')
+        f'{arg_kind!r} neither argument kind nor "None".')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.

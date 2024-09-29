@@ -77,7 +77,7 @@ def get_func_globals(
         If this callable is a wrapper wrapping a C-based rather than
         pure-Python wrappee callable.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import die_unless_func_python
@@ -204,7 +204,7 @@ def get_func_locals(
         of the parent callable or class declaring that callable), enabling
         callers to identify this common edge case.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
     assert isinstance(func_scope_names_ignore, int), (
         f'{func_scope_names_ignore} not integer.')
     assert func_scope_names_ignore >= 0, (
@@ -604,9 +604,9 @@ def add_func_scope_attr(
         *never* generate name collisions. This exception is thus intentionally
         raised as a private rather than public exception.
     '''
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    assert isinstance(func_scope, dict), f'{func_scope!r} not dictionary.'
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
 
     # Possibly negative integer uniquely identifying the new attribute referring
     # to this object in this scope.
@@ -646,8 +646,8 @@ def add_func_scope_attr(
         msg = (
             f'{exception_prefix}"{attr_name}" already exists with '
             f'differing value:\n'
-            f'~~~~[ NEW VALUE ]~~~~\n{repr(attr)}\n'
-            f'~~~~[ OLD VALUE ]~~~~\n{repr(func_scope[attr_name])}'
+            f'~~~~[ NEW VALUE ]~~~~\n{attr!r}\n'
+            f'~~~~[ OLD VALUE ]~~~~\n{func_scope[attr_name]!r}'
         )
         raise _BeartypeUtilCallableScopeException(
             msg

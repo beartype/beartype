@@ -62,7 +62,7 @@ def reduce_hint_pep673(
         * ``cls_stack`` is non-:data:`None` but empty.
     '''
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-        f'{repr(cls_stack)} neither tuple nor "None".')
+        f'{cls_stack!r} neither tuple nor "None".')
 
     # If either no type stack *OR* an empty type stack was passed, *NO* class is
     # currently being decorated by @beartype. It follows that either:
@@ -80,7 +80,7 @@ def reduce_hint_pep673(
     if not cls_stack:
         # We didn't make crazy. We only document it.
         msg = (
-            f'{exception_prefix}PEP 673 type hint "{repr(hint)}" '
+            f'{exception_prefix}PEP 673 type hint "{hint!r}" '
             f'invalid outside @beartype-decorated class. '
             f'PEP 673 type hints are valid only inside classes decorated by '
             f'@beartype. If this hint annotates a method decorated by '

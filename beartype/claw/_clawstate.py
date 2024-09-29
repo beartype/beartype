@@ -165,10 +165,10 @@ class BeartypeClawState:
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
-            f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
-            f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',
-            f'    packages_trie_whitelist={repr(self.packages_trie_whitelist)},\n',
+            f'    beartype_pathhook={self.beartype_pathhook!r},\n',
+            f'    module_name_to_beartype_conf={self.module_name_to_beartype_conf!r},\n',
+            f'    packages_trie_blacklist={self.packages_trie_blacklist!r},\n',
+            f'    packages_trie_whitelist={self.packages_trie_whitelist!r},\n',
             ')',
         ))
 

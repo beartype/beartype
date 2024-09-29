@@ -132,7 +132,7 @@ class TupleVariableTypeHint(_TypeHintOriginIsinstanceable):
         # Note that the previously called get_hint_pep_sign() getter already
         # validated this to be the case.
         assert len(args) == 2 and args[1] is Ellipsis, (
-            f'Variable-length tuple type hint {repr(self._hint)} '
+            f'Variable-length tuple type hint {self._hint!r} '
             f'not of the form "tuple[{{child_hint}}, ...]".'
         )
 

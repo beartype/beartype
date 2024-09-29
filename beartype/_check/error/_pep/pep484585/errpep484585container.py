@@ -49,9 +49,9 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output violation cause finder type-checking this input.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign in HINT_SIGNS_CONTAINER_ARGS_1, (
-        f'{repr(cause.hint)} not 1-argument container type hint.')
+        f'{cause.hint!r} not 1-argument container type hint.')
 
     # Number of child type hints expected to be subscripting this hint.
     hints_child_len_expected = (
@@ -60,7 +60,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_childs) in hints_child_len_expected, (
-        f'Sequence type hint {repr(cause.hint)} number of child type hints '
+        f'Sequence type hint {cause.hint!r} number of child type hints '
         f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
     )
 
@@ -106,7 +106,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     if hint_sign_logic is None:  # pragma: no cover
         msg = (
             f'{cause.exception_prefix}1-argument container type hint '
-            f'{repr(cause.hint)} beartype sign {repr(cause.hint_sign)} '
+            f'{cause.hint!r} beartype sign {cause.hint_sign!r} '
             f'code generation logic not found.'
         )
         raise _BeartypeCallHintPepRaiseException(
@@ -166,9 +166,9 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output violation cause finder type-checking this input.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignTupleFixed, (
-        f'{repr(cause.hint_sign)} not "HintSignTupleFixed".')
+        f'{cause.hint_sign!r} not "HintSignTupleFixed".')
 
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "tuple" for the hint

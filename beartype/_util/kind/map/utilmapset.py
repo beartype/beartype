@@ -173,7 +173,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     :func:`beartype._util.kind.map.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
-    assert isinstance(mappings, SequenceABC), f'{repr(mappings)} not sequence.'
+    assert isinstance(mappings, SequenceABC), f'{mappings!r} not sequence.'
 
     # Number of passed mappings.
     MAPPINGS_LEN = len(mappings)
@@ -194,7 +194,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
             msg)
     # Else, two or more mappings are passed.
     assert isinstance(mappings[0], Mapping), (
-        f'First mapping {repr(mappings[0])} not mapping.')
+        f'First mapping {mappings[0]!r} not mapping.')
 
     # Merged mapping to be returned, initialized to the merger of the first two
     # passed mappings.
@@ -244,9 +244,9 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
         Further details.
     '''
     assert isinstance(mapping_trg, MutableMapping), (
-        f'{repr(mapping_trg)} not mutable mapping.')
+        f'{mapping_trg!r} not mutable mapping.')
     assert isinstance(mapping_src, Mapping), (
-        f'{repr(mapping_src)} not mapping.')
+        f'{mapping_src!r} not mapping.')
 
     # If the second mapping is empty, silently reduce to a noop.
     if not mapping_src:

@@ -140,8 +140,8 @@ class FrozenDict(dict):
         # If the passed dictionary is *NOT* a dictionary, raise an exception.
         if not isinstance(other, Mapping):
             msg = (
-                f'Non-dictionary {repr(other)} not addable to '
-                f'immutable dictionary {repr(self)}.'
+                f'Non-dictionary {other!r} not addable to '
+                f'immutable dictionary {self!r}.'
             )
             raise BeartypeKindFrozenDictException(
                 msg
@@ -179,8 +179,8 @@ class FrozenDict(dict):
     # current immutable dictionary) to raise exceptions instead.
     def __setitem__(self, key, value) -> NoReturn:
         msg = (
-            f'Immutable dictionary {repr(self)} '
-            f'key {repr(key)} not settable to {repr(value)}.'
+            f'Immutable dictionary {self!r} '
+            f'key {key!r} not settable to {value!r}.'
         )
         raise BeartypeKindFrozenDictException(
             msg
@@ -188,36 +188,36 @@ class FrozenDict(dict):
 
     def __delitem__(self, key) -> NoReturn:
         msg = (
-            f'Immutable dictionary {repr(self)} '
-            f'key {repr(key)} not deletable.'
+            f'Immutable dictionary {self!r} '
+            f'key {key!r} not deletable.'
         )
         raise BeartypeKindFrozenDictException(
             msg
         )
 
     def clear(self) -> NoReturn:
-        msg = f'Immutable dictionary {repr(self)} not clearable.'
+        msg = f'Immutable dictionary {self!r} not clearable.'
         raise BeartypeKindFrozenDictException(
             msg)
 
     def pop(self, key, default=None) -> NoReturn:
         msg = (
-            f'Immutable dictionary {repr(self)} '
-            f'key {repr(key)} with default {repr(default)} not poppable.'
+            f'Immutable dictionary {self!r} '
+            f'key {key!r} with default {default!r} not poppable.'
         )
         raise BeartypeKindFrozenDictException(
             msg
         )
 
     def popitem(self) -> NoReturn:
-        msg = f'Immutable dictionary {repr(self)} not poppable.'
+        msg = f'Immutable dictionary {self!r} not poppable.'
         raise BeartypeKindFrozenDictException(
             msg)
 
     def setdefault(self, key, default=None) -> NoReturn:
         msg = (
-            f'Immutable dictionary {repr(self)} '
-            f'key {repr(key)} with default {repr(default)} not settable.'
+            f'Immutable dictionary {self!r} '
+            f'key {key!r} with default {default!r} not settable.'
         )
         raise BeartypeKindFrozenDictException(
             msg
@@ -225,9 +225,9 @@ class FrozenDict(dict):
 
     def update(self, *args, **kwargs) -> NoReturn:
         msg = (
-            f'Immutable dictionary {repr(self)} '
-            f'not updatable from positional arguments {repr(args)} '
-            f'and keyword arguments {repr(kwargs)}.'
+            f'Immutable dictionary {self!r} '
+            f'not updatable from positional arguments {args!r} '
+            f'and keyword arguments {kwargs!r}.'
         )
         raise BeartypeKindFrozenDictException(
             msg

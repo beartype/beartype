@@ -194,8 +194,8 @@ class BeartypeForwardRefMeta(type):
         # * The die_if_hint_pep604_inconsistent() raiser.
         cls_repr = (
             f'<forwardref {cls.__name__}('
-              f'__name_beartype__={repr(cls.__name_beartype__)}'
-            f', __scope_name_beartype__={repr(cls.__scope_name_beartype__)}'
+              f'__name_beartype__={cls.__name_beartype__!r}'
+            f', __scope_name_beartype__={cls.__scope_name_beartype__!r}'
         )
 
         #FIXME: Unit test this edge case, please.
@@ -213,8 +213,8 @@ class BeartypeForwardRefMeta(type):
         # this subclass itself. In short, this is why you play with madness.
         try:
             cls_repr += (
-                f', __args_beartype__={repr(cls.__args_beartype__)}'
-                f', __kwargs_beartype__={repr(cls.__kwargs_beartype__)}'
+                f', __args_beartype__={cls.__args_beartype__!r}'
+                f', __kwargs_beartype__={cls.__kwargs_beartype__!r}'
             )
         # If doing so fails with the expected "AttributeError", then this is
         # *NOT* a subscripted forward reference subclass. Since this is
@@ -314,7 +314,7 @@ class BeartypeForwardRefMeta(type):
             # and instead raise a human-readable exception.
             if referee is cls:
                 msg = (
-                    f'Forward reference proxy {repr(cls)} circularly '
+                    f'Forward reference proxy {cls!r} circularly '
                     f'(i.e., infinitely recursively) references itself.'
                 )
                 raise BeartypeCallHintForwardRefException(

@@ -432,7 +432,7 @@ def get_hint_pep_sign(
         # die_if_hint_pep_unsupported() function here, which calls the
         # is_hint_pep_supported() function, which calls this function.
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} '
+            f'{exception_prefix}type hint {hint!r} '
             f'currently unsupported by beartype. '
             f'You suddenly feel encouraged to submit a feature request '
             f'for this hint to our friendly issue tracker at:\n'
@@ -987,7 +987,7 @@ def get_hint_pep_origin_type(
         # appropriate exception.
         if hint_origin is None:
             msg = (
-                f'{exception_prefix}type hint {repr(hint)} '
+                f'{exception_prefix}type hint {hint!r} '
                 f'originates from no other object.'
             )
             raise exception_cls(
@@ -998,8 +998,8 @@ def get_hint_pep_origin_type(
 
         # Raise an appropriate exception.
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'originates from non-type {repr(hint_origin)}.'
+            f'{exception_prefix}type hint {hint!r} '
+            f'originates from non-type {hint_origin!r}.'
         )
         raise exception_cls(
             msg
@@ -1122,7 +1122,7 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     # If this type does *NOT* exist, raise an exception.
     if hint_origin_type is None:
         msg = (
-            f'Type hint {repr(hint)} not isinstanceable (i.e., does not '
+            f'Type hint {hint!r} not isinstanceable (i.e., does not '
             f'originate from isinstanceable class).'
         )
         raise BeartypeDecorHintPepException(

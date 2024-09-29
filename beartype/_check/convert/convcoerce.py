@@ -128,9 +128,9 @@ def coerce_func_hint_root(
         * Else, this hint as is unmodified.
     '''
     assert isinstance(pith_name, str), (
-        f'{repr(pith_name)} not string.')
+        f'{pith_name!r} not string.')
     assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not @beartype metadata.')
+        f'{decor_meta!r} not @beartype metadata.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................

@@ -115,12 +115,12 @@ def _die_unless_hint_pep484585_callable(
     # If this object is *NOT* a callable type hint, raise an exception.
     if hint_sign is not HintSignCallable:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
+            f'{exception_cls!r} not exception class.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} not '
+            f'{exception_prefix}type hint {hint!r} not '
             f'PEP 484 or 585 callable type hint '
             f'(i.e., "typing.Callable[...]" or '
             f'"collections.abc.Callable[...]").'

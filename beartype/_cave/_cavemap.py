@@ -127,7 +127,7 @@ class _NoneTypeOrType(dict):
         elif isinstance(hint, tuple):
             # If this tuple is empty, raise an exception.
             if not hint:
-                msg = f'"NoneTypeOr" key {repr(hint)} tuple empty.'
+                msg = f'"NoneTypeOr" key {hint!r} tuple empty.'
                 raise BeartypeCaveNoneTypeOrKeyException(
                     msg
                 )
@@ -137,7 +137,7 @@ class _NoneTypeOrType(dict):
             # raise an exception.
             if not all(isinstance(cls, type) for cls in hint):
                 msg = (
-                    f'"NoneTypeOr" key {repr(hint)} tuple invalid '
+                    f'"NoneTypeOr" key {hint!r} tuple invalid '
                     f'(i.e., tuple contains one or more non-class items).'
                 )
                 raise BeartypeCaveNoneTypeOrKeyException(
@@ -158,7 +158,7 @@ class _NoneTypeOrType(dict):
         # Nonetheless, raise a human-readable exception for sanity.
         else:
             msg = (
-                f'"NoneTypeOr" key {repr(hint)} unsupported '
+                f'"NoneTypeOr" key {hint!r} unsupported '
                 f'(i.e., neither "None" nor tuple).'
             )
             raise BeartypeCaveNoneTypeOrKeyException(

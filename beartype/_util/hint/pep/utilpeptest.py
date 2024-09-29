@@ -95,13 +95,13 @@ def die_if_hint_pep(
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Raise an exception of this class.
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} is PEP-compliant '
+            f'{exception_prefix}type hint {hint!r} is PEP-compliant '
             f'(e.g., rather than isinstanceable class).'
         )
         raise exception_cls(
@@ -145,11 +145,11 @@ def die_unless_hint_pep(
     # If this hint is *NOT* PEP-compliant, raise an exception.
     if not is_hint_pep(hint):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
-        msg = f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.'
+        msg = f'{exception_prefix}type hint {hint!r} not PEP-compliant.'
         raise exception_cls(
             msg)
 
@@ -220,7 +220,7 @@ def die_if_hint_pep_unsupported(
     # If this hint is *NOT* PEP-compliant, raise an exception.
     die_unless_hint_pep(hint=hint, exception_prefix=exception_prefix)
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
 
     # Else, this hint is PEP-compliant.
     #
@@ -228,9 +228,9 @@ def die_if_hint_pep_unsupported(
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:
         msg = (
-            f'{exception_prefix}PEP 484 type hint "{repr(hint)}" '
+            f'{exception_prefix}PEP 484 type hint "{hint!r}" '
             f'invalid in this type hint context (i.e., '
-            f'"{repr(hint)}" valid only as non-nested return annotation).'
+            f'"{hint!r}" valid only as non-nested return annotation).'
         )
         raise BeartypeDecorHintPep484Exception(
             msg
@@ -244,7 +244,7 @@ def die_if_hint_pep_unsupported(
     # we raise a similar exception in either case. Ergo, there is *NO* practical
     # benefit to validating that expectation here.
     msg = (
-        f'{exception_prefix}type hint {repr(hint)} '
+        f'{exception_prefix}type hint {hint!r} '
         f'currently unsupported by @beartype.'
     )
     raise BeartypeDecorHintPepUnsupportedException(

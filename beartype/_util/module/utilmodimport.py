@@ -371,7 +371,7 @@ def import_module_attr_or_sentinel(
         unimportable due to module-scoped side effects at importation time.
     '''
     assert isinstance(module_name, NoneTypeOr[str]), (
-        f'{repr(module_name)} neither string nor "None".')
+        f'{module_name!r} neither string nor "None".')
 
     # If this attribute name is *NOT* a syntactically valid Python identifier,
     # raise an exception.

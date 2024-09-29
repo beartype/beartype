@@ -122,7 +122,7 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     # Validate sanity.
-    assert isinstance(obj, ndarray), f'{repr(obj)} not NumPy array.'
+    assert isinstance(obj, ndarray), f'{obj!r} not NumPy array.'
 
     # ....................{ DTYPE                          }....................
     # Coarse-grained NumPy-agnostic builtin type (e.g., "int") reduced from the

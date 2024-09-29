@@ -175,15 +175,15 @@ def reissue_warnings_placeholder(
         StackOverflow answer strongly inspiring this implementation.
     '''
     assert isinstance(warnings, IterableABC), (
-        f'{repr(warnings)} not iterable.')
-    assert isinstance(source_str, str), f'{repr(source_str)} not string.'
-    assert isinstance(target_str, str), f'{repr(target_str)} not string.'
+        f'{warnings!r} not iterable.')
+    assert isinstance(source_str, str), f'{source_str!r} not string.'
+    assert isinstance(target_str, str), f'{target_str!r} not string.'
 
     # For each warning descriptor in this iterable of zero or more warning
     # descriptors...
     for warning_info in warnings:
         assert isinstance(warning_info, WarningMessage), (  # <-- terrible name!
-           f'{repr(warning_info)} not "WarningMessage" instance.')
+           f'{warning_info!r} not "WarningMessage" instance.')
 
         # Original warning wrapped by this warning descriptor, localized both
         # for readability *AND* negligible speed. *sigh*

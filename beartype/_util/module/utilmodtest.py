@@ -73,13 +73,13 @@ def die_unless_module_attr_name(
           * One or more ``.`` characters but syntactically invalid as an
             identifier (e.g., ``0h!muh?G0d.``).
     '''
-    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+    assert isinstance(exception_cls, type), f'{exception_cls!r} not type.'
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
 
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
-        msg = f'{exception_prefix}{repr(module_attr_name)} not string.'
+        msg = f'{exception_prefix}{module_attr_name!r} not string.'
         raise exception_cls(
             msg)
     # Else, this object is a string.
@@ -203,7 +203,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         to raising module-scoped exceptions at importation time.
     '''
     assert isinstance(version_minimum, str), (
-        f'{repr(version_minimum)} not string.')
+        f'{version_minimum!r} not string.')
 
     # If this module is unimportable, return false immediately.
     if not is_module(module_name):

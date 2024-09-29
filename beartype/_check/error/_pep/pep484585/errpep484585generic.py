@@ -40,9 +40,9 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignGeneric, (
-        f'{repr(cause.hint_sign)} not generic.')
+        f'{cause.hint_sign!r} not generic.')
     # print(f'[find_cause_generic] cause.pith: {cause.pith}')
     # print(f'[find_cause_generic] cause.hint [pre-reduction]: {cause.hint}')
 
@@ -78,7 +78,7 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
             # Human-readable string prefixing this failure with additional
             # metadata describing this pseudo-superclass.
             cause_deep.cause_str_or_none = (
-                f'generic base {repr(hint_child)} '
+                f'generic base {hint_child!r} '
                 f'{cause_deep.cause_str_or_none}'
             )
 

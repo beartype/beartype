@@ -59,7 +59,7 @@ def die_unless_identifier(
         assert isinstance(exception_prefix, str), (
             'f{repr(exception_prefix)} not string.')
 
-        msg = f'{exception_prefix}{repr(text)} not valid Python attribute name.'
+        msg = f'{exception_prefix}{text!r} not valid Python attribute name.'
         raise exception_cls(
             msg)
     # Else, this string is a valid Python attribute name.
@@ -82,7 +82,7 @@ def is_dunder(text: str) -> bool:
     bool
         :data:`True` only if this string conforms to a dunder attribute name.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return us up the powerful one-liner of power.
     return text.startswith('__') and text.endswith('__')
@@ -125,7 +125,7 @@ def is_identifier(text: str) -> bool:
         :data:`True` only if this string is the ``.``-delimited concatenation of
         one or more syntactically valid Python identifiers.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # If this text contains *NO* "." delimiters and is thus expected to be an
     # unqualified Python identifier, return true only if this is the case.

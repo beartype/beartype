@@ -88,8 +88,8 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         # Callable accepting no arguments returning a machine-readable
         # representation of this binary validator.
         get_repr = lambda: (
-            f'{repr(validator_operand_1)} {self._operator_symbol} '
-            f'{repr(validator_operand_2)}'
+            f'{validator_operand_1!r} {self._operator_symbol} '
+            f'{validator_operand_2!r}'
         )
 
         # Initialize our superclass with all remaining parameters.

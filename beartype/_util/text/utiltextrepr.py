@@ -86,7 +86,7 @@ def represent_object(
         Pretty-printed quasi-human-readable variant of this object's
         non-pretty-printed machine-readable representation.
     '''
-    assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
+    assert isinstance(max_len, int), f'{max_len!r} not integer.'
 
     #FIXME: Render this safe against infinitely recursive data structures.
     #Unfortunately, we *CANNOT* call the standard pprint.saferepr() function to
@@ -203,7 +203,7 @@ def represent_func(
     str
         Machine-readable representation of that callable.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunccode import get_func_code_or_none

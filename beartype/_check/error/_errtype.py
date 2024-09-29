@@ -80,7 +80,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
 
     # Isinstanceable class against which this pith was type-checked.
     hint = cause.hint
@@ -121,7 +121,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
         if get_hint_violation_str:
             # Human-readable substring prefixing *ALL* exceptions raised below.
             EXCEPTION_PREFIX = (
-                f'{cause.exception_prefix}{repr(hint)} '
+                f'{cause.exception_prefix}{hint!r} '
                 f'beartype-specific dunder method __instancecheck_str__() '
             )
 
@@ -187,7 +187,7 @@ def find_cause_instance_type_forwardref(
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignForwardRef, (
         f'{cause.hint_sign} not forward reference.')
 
@@ -223,7 +223,7 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
 
     # Isinstanceable origin type originating this hint if any *OR* "None".
     hint_type = get_hint_pep_origin_type_isinstanceable_or_none(cause.hint)
@@ -232,7 +232,7 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     if hint_type is None:
         msg = (
             f'{cause.exception_prefix}type hint '
-            f'{repr(cause.hint)} not originated from '
+            f'{cause.hint!r} not originated from '
             f'isinstanceable origin type.'
         )
         raise _BeartypeCallHintPepRaiseException(
@@ -261,7 +261,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
 
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(
@@ -304,7 +304,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignType, (
         f'{cause.hint_sign} not HintSignType.')
 

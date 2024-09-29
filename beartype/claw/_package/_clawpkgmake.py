@@ -136,9 +136,9 @@ def make_package_names_from_args(
           * A non-empty string that is *not* a valid **package name** (i.e.,
             ``"."``-delimited concatenation of valid Python identifiers).
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
     assert isinstance(claw_coverage, BeartypeClawCoverage), (
-        f'{repr(claw_coverage)} not beartype claw coverage.')
+        f'{claw_coverage!r} not beartype claw coverage.')
 
     # If the caller requested all-packages coverage...
     if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:
@@ -146,8 +146,8 @@ def make_package_names_from_args(
         # all-packages coverage, raise an exception.
         if package_name is not None:
             msg = (
-                f'Coverage {repr(BeartypeClawCoverage.PACKAGES_ALL)} '
-                f'but package name {repr(package_name)} passed.'
+                f'Coverage {BeartypeClawCoverage.PACKAGES_ALL!r} '
+                f'but package name {package_name!r} passed.'
             )
             raise BeartypeClawHookException(
                 msg
@@ -158,8 +158,8 @@ def make_package_names_from_args(
         # requesting all-packages coverage, raise an exception.
         if package_names is not None:
             msg = (
-                f'Coverage {repr(BeartypeClawCoverage.PACKAGES_ALL)} '
-                f'but package names {repr(package_names)} passed.'
+                f'Coverage {BeartypeClawCoverage.PACKAGES_ALL!r} '
+                f'but package names {package_names!r} passed.'
             )
             raise BeartypeClawHookException(
                 msg
@@ -175,7 +175,7 @@ def make_package_names_from_args(
             if package_name is None:
                 msg = (
                     f'beartype_package() '
-                    f'package name {repr(package_name)} invalid.'
+                    f'package name {package_name!r} invalid.'
                 )
                 raise BeartypeClawHookException(
                     msg
@@ -192,7 +192,7 @@ def make_package_names_from_args(
         if not isinstance(package_names, IterableABC):
             msg = (
                 f'beartype_packages() '
-                f'package names {repr(package_name)} not iterable.'
+                f'package names {package_name!r} not iterable.'
             )
             raise BeartypeClawHookException(
                 msg
@@ -210,7 +210,7 @@ def make_package_names_from_args(
         for package_name in package_names:
             # If this package name is *NOT* a string, raise an exception.
             if not isinstance(package_name, str):
-                msg = f'Package name {repr(package_name)} not string.'
+                msg = f'Package name {package_name!r} not string.'
                 raise BeartypeClawHookException(
                     msg)
             # Else, this package name is a string.

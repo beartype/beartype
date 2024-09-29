@@ -107,7 +107,7 @@ def get_func_arg_meta_variadic_positional_or_none(
     # Note that this should *NEVER* occur. Naturally, this just occurred.
     msg = (
         f'Callable inexplicably accepts no variadic positional parameter '
-        f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+        f'despite claiming to do so:\n\t{args!r}\n\t{kwargs!r}'
     )
     raise _BeartypeUtilCallableException(  # pragma: no cover
         msg
@@ -176,7 +176,7 @@ def get_func_arg_meta_variadic_keyword_or_none(
     # Note that this should *NEVER* occur. Naturally, this just occurred.
     msg = (
         f'Callable inexplicably accepts no variadic keyword parameter '
-        f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+        f'despite claiming to do so:\n\t{args!r}\n\t{kwargs!r}'
     )
     raise _BeartypeUtilCallableException(  # pragma: no cover
         msg
@@ -325,7 +325,7 @@ def get_func_arg_names(
          If the passed callable is *not* pure-Python.
     '''
     assert isinstance(is_omit_boundmethod_arg_first, bool), (
-        f'{repr(is_omit_boundmethod_arg_first)} not boolean.')
+        f'{is_omit_boundmethod_arg_first!r} not boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import is_func_boundmethod

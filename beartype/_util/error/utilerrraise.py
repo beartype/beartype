@@ -104,9 +104,9 @@ def reraise_exception_placeholder(
         Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (
-        f'{repr(exception)} not exception.')
-    assert isinstance(source_str, str), f'{repr(source_str)} not string.'
-    assert isinstance(target_str, str), f'{repr(target_str)} not string.'
+        f'{exception!r} not exception.')
+    assert isinstance(source_str, str), f'{source_str!r} not string.'
+    assert isinstance(target_str, str), f'{target_str!r} not string.'
 
     # If this is a conventional exception...
     if is_exception_message_str(exception):

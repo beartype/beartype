@@ -88,13 +88,13 @@ def join_delimited(
         'Fulgrim, Perturabo, Angron, and Mortarion'
     '''
     assert isinstance(strs, Iterable) and not isinstance(strs, str), (
-        f'{repr(strs)} not non-string iterable.')
+        f'{strs!r} not non-string iterable.')
     assert isinstance(delimiter_if_two, str), (
-        f'{repr(delimiter_if_two)} not string.')
+        f'{delimiter_if_two!r} not string.')
     assert isinstance(delimiter_if_three_or_more_nonlast, str), (
-        f'{repr(delimiter_if_three_or_more_nonlast)} not string.')
+        f'{delimiter_if_three_or_more_nonlast!r} not string.')
     assert isinstance(delimiter_if_three_or_more_last, str), (
-        f'{repr(delimiter_if_three_or_more_last)} not string.')
+        f'{delimiter_if_three_or_more_last!r} not string.')
 
     # If this iterable is *NOT* a sequence, internally coerce this iterable
     # into a sequence for subsequent indexing purposes.

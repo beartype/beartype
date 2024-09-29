@@ -213,9 +213,9 @@ class BeartypeNodeTransformer(
             recursively decorated by this node transformer).
         '''
         assert isinstance(module_name_beartype, str), (
-            f'{repr(module_name_beartype)} not string.')
+            f'{module_name_beartype!r} not string.')
         assert isinstance(conf_beartype, BeartypeConf), (
-            f'{repr(conf_beartype)} not beartype configuration.')
+            f'{conf_beartype!r} not beartype configuration.')
 
         # Initialize our superclass.
         super().__init__()

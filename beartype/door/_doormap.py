@@ -106,7 +106,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         # Else, raise an exception.
         else:
             msg = (
-                f'Type hint {repr(hint)} '
+                f'Type hint {hint!r} '
                 f'currently unsupported by "beartype.door.TypeHint".'
             )
             raise BeartypeDoorNonpepException(

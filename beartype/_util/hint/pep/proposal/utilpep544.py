@@ -226,7 +226,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # raise an exception.
     if not is_hint_pep484_generic_io(hint):
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} not '
+            f'{exception_prefix}type hint {hint!r} not '
             f'PEP 484 IO generic base class '
             f'(i.e., "typing.IO", "typing.BinaryIO", or "typing.TextIO").'
         )
@@ -266,7 +266,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         if not hint_typevars:
             msg = (
                 f'{exception_prefix}PEP 484 IO generic base class '
-                f'{repr(hint)} invalid (i.e., not subscripted (indexed) by '
+                f'{hint!r} invalid (i.e., not subscripted (indexed) by '
                 f'either "str", "bytes", "typing.Any", or "typing.AnyStr").'
             )
             raise BeartypeDecorHintPep544Exception(

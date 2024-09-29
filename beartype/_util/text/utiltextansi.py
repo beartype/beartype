@@ -83,7 +83,7 @@ def is_str_ansi(text: str) -> bool:
         :data:`True` only if this text contains one or more ANSI escape
         sequences.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return true only this compiled regex matching ANSI escape sequences
     # returns a non-"None" match object when passed this text.
@@ -116,7 +116,7 @@ def color_hint(
     str
         This text conditionally coloured as a type hint.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -157,7 +157,7 @@ def color_pith(
     str
         This text conditionally coloured as a representation.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -195,7 +195,7 @@ def color_type(
     str
         This text conditionally coloured as a simple class.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -235,7 +235,7 @@ def color_attr_name(
     str
         This text conditionally coloured as a Python identifier.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -275,7 +275,7 @@ def color_arg_name(
     str
         This text coloured as an argument name.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -324,7 +324,7 @@ def strip_str_ansi(
     str
         This text conditionally stripped of ANSI.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return either...
     return (
@@ -369,7 +369,7 @@ def _is_color(is_color: BoolTristate) -> bool:
         :attr:`beartype.BeartypeConf.is_color` attribute for further details.
     '''
     assert isinstance(is_color, bool) or is_color is None, (  # <-- "NoneTypeOr" is unavailable here
-        f'{repr(is_color)} not tri-state boolean.')
+        f'{is_color!r} not tri-state boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.os.utilostty import is_stdout_terminal

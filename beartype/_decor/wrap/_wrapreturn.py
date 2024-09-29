@@ -79,7 +79,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
           compliant with annotation-centric PEPs)).
     '''
     assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
+        f'{decor_meta!r} not beartype call.')
 
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).

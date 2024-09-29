@@ -98,7 +98,7 @@ def prefix_callable_pith(
         Human-readable label describing either the name of this parameter *or*
         this return value.
     '''
-    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
+    assert isinstance(pith_name, str), f'{pith_name!r} not string.'
 
     # Return a human-readable label describing either...
     return (
@@ -141,7 +141,7 @@ def prefix_callable_arg_name(
     str
         Human-readable label describing this parameter's name.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+    assert isinstance(arg_name, str), f'{arg_name!r} not string.'
 
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextansi import color_arg_name
@@ -222,7 +222,7 @@ def prefix_callable_arg_value(
     str
         Human-readable label describing this parameter's name and value.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+    assert isinstance(arg_name, str), f'{arg_name!r} not string.'
 
     # Avoid circular import dependencies.
     #

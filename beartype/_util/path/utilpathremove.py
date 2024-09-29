@@ -56,7 +56,7 @@ def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
         bytecode files from.
     '''
     assert isinstance(package_dirname, PathnameLikeTuple), (
-        f'{repr(package_dirname)} neither string nor "Path" object.')
+        f'{package_dirname!r} neither string nor "Path" object.')
 
     # Avoid circular import dependencies.
     from beartype._util.path.utilpathtest import die_unless_dir
@@ -151,8 +151,8 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
         StackOverflow answer strongly inspiring this implementation.
     '''
     assert isinstance(dirname, PathnameLikeTuple), (
-        f'{repr(dirname)} neither string nor "Path" object.')
-    assert isinstance(glob, str), f'{repr(glob)} not string.'
+        f'{dirname!r} neither string nor "Path" object.')
+    assert isinstance(glob, str), f'{glob!r} not string.'
 
     # Avoid circular import dependencies.
     from beartype._util.path.utilpathtest import die_unless_dir

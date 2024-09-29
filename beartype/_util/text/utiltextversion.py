@@ -60,7 +60,7 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
     _BeartypeUtilTextVersionException
         If this string is syntactically invalid as a version.
     '''
-    assert isinstance(version, str), f'{repr(version)} not version string.'
+    assert isinstance(version, str), f'{version!r} not version string.'
 
     # List of either:
     # * If this version contains one or more "." delimiters, all "."-delimited
@@ -85,8 +85,8 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
             # If this component is negative, raise an exception.
             if version_part < 0:
                 msg = (
-                    f'Version {repr(version)} syntactically invalid '
-                    f'(i.e., version component {repr(version_substr)} negative).'
+                    f'Version {version!r} syntactically invalid '
+                    f'(i.e., version component {version_substr!r} negative).'
                 )
                 raise _BeartypeUtilTextVersionException(
                     msg
@@ -101,8 +101,8 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
             # Raise an exception.
             if version_substr_index != version_substr_index_last:
                 msg = (
-                    f'Version {repr(version)} syntactically invalid '
-                    f'(i.e., version component {repr(version_substr)} '
+                    f'Version {version!r} syntactically invalid '
+                    f'(i.e., version component {version_substr!r} '
                     f'not an integer).'
                 )
                 raise _BeartypeUtilTextVersionException(
@@ -120,8 +120,8 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
             # If this component is syntactically invalid, raise an exception.
             if version_substr_match is None:
                 msg = (
-                    f'Version {repr(version)} syntactically invalid '
-                    f'(i.e., version component {repr(version_substr)} '
+                    f'Version {version!r} syntactically invalid '
+                    f'(i.e., version component {version_substr!r} '
                     f'not an integer).'
                 )
                 raise _BeartypeUtilTextVersionException(

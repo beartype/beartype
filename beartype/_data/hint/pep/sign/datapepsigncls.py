@@ -47,7 +47,7 @@ class HintSign:
             identified by this sign (e.g., ``Literal`` for :pep:`586`-compliant
             type hints).
         '''
-        assert isinstance(name, str), f'{repr(name)} not string.'
+        assert isinstance(name, str), f'{name!r} not string.'
 
         # Classify all passed parameters.
         self.name = name

@@ -186,7 +186,7 @@ def _blacklist_packages(package_names: IterableStrs) -> None:
         Iterable of the absolute names of all packages to be blacklisted.
     '''
     assert isinstance(package_names, IterableABC), (
-        f'{repr(package_names)} not iterable.')
+        f'{package_names!r} not iterable.')
 
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import claw_state
@@ -305,7 +305,7 @@ def _whitelist_packages_all(conf: BeartypeConf) -> None:
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
 
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import claw_state
@@ -329,9 +329,9 @@ def _whitelist_packages_all(conf: BeartypeConf) -> None:
             f'beartype_all() previously passed '
             f'conflicting beartype configuration:\n'
             f'\t----------( OLD "conf" PARAMETER )----------\n'
-            f'\t{repr(conf_curr)}\n'
+            f'\t{conf_curr!r}\n'
             f'\t----------( NEW "conf" PARAMETER )----------\n'
-            f'\t{repr(conf)}\n'
+            f'\t{conf!r}\n'
         )
         raise BeartypeClawHookException(
             msg
@@ -367,8 +367,8 @@ def _whitelist_packages_some(
         recursively decorated by the path hook added by this function).
     '''
     assert isinstance(package_names, IterableABC), (
-        f'{repr(package_names)} not iterable.')
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+        f'{package_names!r} not iterable.')
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
 
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import claw_state
@@ -434,9 +434,9 @@ def _whitelist_packages_some(
                 f'previously passed conflicting beartype configuration for '
                 f'package "{package_name}":\n'
                 f'\t----------( OLD "conf" PARAMETER )----------\n'
-                f'\t{repr(conf_curr)}\n'
+                f'\t{conf_curr!r}\n'
                 f'\t----------( NEW "conf" PARAMETER )----------\n'
-                f'\t{repr(conf)}\n'
+                f'\t{conf!r}\n'
             )
             raise BeartypeClawHookException(
                 msg

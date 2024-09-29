@@ -47,9 +47,9 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign in HINT_SIGNS_MAPPING, (
-        f'{repr(cause.hint)} not mapping hint.')
+        f'{cause.hint!r} not mapping hint.')
 
     # Number of child type hints expected to be subscripting this hint.
     hints_child_len_expected = (
@@ -58,7 +58,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_childs) in hints_child_len_expected, (
-        f'Mapping type hint {repr(cause.hint)} number of child type hints '
+        f'Mapping type hint {cause.hint!r} number of child type hints '
         f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
     )
 

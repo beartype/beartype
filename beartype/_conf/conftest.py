@@ -76,10 +76,10 @@ def die_unless_conf(
     # If this object is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception type.')
+            f'{exception_cls!r} not exception type.')
 
         msg = (
-            f'Beartype configuration {repr(conf)} invalid '
+            f'Beartype configuration {conf!r} invalid '
             f'(i.e., not "beartype.BeartypeConf" instance).'
         )
         raise exception_cls(
@@ -114,7 +114,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     ):
         msg = (
             f'Beartype configuration parameter "claw_decoration_position_funcs" '
-            f'value {repr(conf_kwargs["claw_decoration_position_funcs"])} not '
+            f'value {conf_kwargs["claw_decoration_position_funcs"]!r} not '
             f'"beartype.BeartypeDecorationPosition" enumeration member.'
         )
         raise BeartypeConfParamException(
@@ -130,7 +130,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     ):
         msg = (
             f'Beartype configuration parameter "claw_decoration_position_types" '
-            f'value {repr(conf_kwargs["claw_decoration_position_types"])} not '
+            f'value {conf_kwargs["claw_decoration_position_types"]!r} not '
             f'"beartype.BeartypeDecorationPosition" enumeration member.'
         )
         raise BeartypeConfParamException(
@@ -142,7 +142,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['claw_is_pep526'], bool):
         msg = (
             f'Beartype configuration parameter "claw_is_pep526" '
-            f'value {repr(conf_kwargs["claw_is_pep526"])} not boolean.'
+            f'value {conf_kwargs["claw_is_pep526"]!r} not boolean.'
         )
         raise BeartypeConfParamException(
             msg
@@ -167,7 +167,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     ):
         msg = (
             f'Beartype configuration parameter "claw_skip_package_names" '
-            f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
+            f'value {conf_kwargs["claw_skip_package_names"]!r} not '
             f'collection of non-empty strings.'
         )
         raise BeartypeConfParamException(
@@ -179,7 +179,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['hint_overrides'], BeartypeHintOverrides):
         msg = (
             f'Beartype configuration parameter "hint_overrides" '
-            f'value {repr(conf_kwargs["hint_overrides"])} not '
+            f'value {conf_kwargs["hint_overrides"]!r} not '
             f'frozen dictionary '
             f'(i.e., "beartype.BeartypeHintOverrides" instance).'
         )
@@ -192,7 +192,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
         msg = (
             f'Beartype configuration parameter "is_color" '
-            f'value {repr(conf_kwargs["is_color"])} not tri-state boolean '
+            f'value {conf_kwargs["is_color"]!r} not tri-state boolean '
             f'(i.e., "True", "False", or "None").'
         )
         raise BeartypeConfParamException(
@@ -204,7 +204,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['is_debug'], bool):
         msg = (
             f'Beartype configuration parameter "is_debug" '
-            f'value {repr(conf_kwargs["is_debug"])} not boolean.'
+            f'value {conf_kwargs["is_debug"]!r} not boolean.'
         )
         raise BeartypeConfParamException(
             msg
@@ -215,7 +215,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['is_pep484_tower'], bool):
         msg = (
             f'Beartype configuration parameter "is_pep484_tower" '
-            f'value {repr(conf_kwargs["is_debug"])} not boolean.'
+            f'value {conf_kwargs["is_debug"]!r} not boolean.'
         )
         raise BeartypeConfParamException(
             msg
@@ -226,7 +226,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     if not isinstance(conf_kwargs['strategy'], BeartypeStrategy):
         msg = (
             f'Beartype configuration parameter "strategy" '
-            f'value {repr(conf_kwargs["strategy"])} not '
+            f'value {conf_kwargs["strategy"]!r} not '
             f'"beartype.BeartypeStrategy" enumeration member.'
         )
         raise BeartypeConfParamException(
@@ -240,7 +240,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         conf_kwargs['violation_verbosity'], BeartypeViolationVerbosity):
         msg = (
             f'Beartype configuration parameter "violation_verbosity" '
-            f'value {repr(conf_kwargs["violation_verbosity"])} not '
+            f'value {conf_kwargs["violation_verbosity"]!r} not '
             f'"beartype.BeartypeViolationVerbosity" enumeration member.'
         )
         raise BeartypeConfParamException(
@@ -258,7 +258,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         msg = (
             f'Beartype configuration parameter '
             f'"warning_cls_on_decorator_exception" value '
-            f'{repr(conf_kwargs["warning_cls_on_decorator_exception"])} '
+            f'{conf_kwargs["warning_cls_on_decorator_exception"]!r} '
             f'neither "None" nor warning category '
             f'(i.e., "Warning" subclass).'
         )
@@ -278,7 +278,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
             msg = (
                 f'Beartype configuration parameter '
                 f'"{arg_name_exception_subclass}" value '
-                f'{repr(conf_kwargs[arg_name_exception_subclass])} not '
+                f'{conf_kwargs[arg_name_exception_subclass]!r} not '
                 f'exception type.'
             )
             raise BeartypeConfParamException(
@@ -300,7 +300,7 @@ def default_conf_kwargs_before(conf_kwargs: DictStrToAny) -> None:
         Dictionary mapping from the names to values of *all* possible keyword
         parameters configuring this configuration.
     '''
-    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
+    assert isinstance(conf_kwargs, dict), f'{conf_kwargs!r} not dictionary.'
 
     # ..................{ DEFAULT ~ violation_*type          }..................
     # Default violation type if passed *OR* "None" if unpassed.
@@ -316,7 +316,7 @@ def default_conf_kwargs_before(conf_kwargs: DictStrToAny) -> None:
     ):
         msg = (
             f'Beartype configuration parameter "violation_type" value '
-            f'{repr(violation_type)} not exception type.'
+            f'{violation_type!r} not exception type.'
         )
         raise BeartypeConfParamException(
             msg
@@ -361,7 +361,7 @@ def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
         Dictionary mapping from the names to values of *all* possible keyword
         parameters configuring this configuration.
     '''
-    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
+    assert isinstance(conf_kwargs, dict), f'{conf_kwargs!r} not dictionary.'
 
     # ..................{ DEFAULT ~ hint_overrides           }..................
     # If enabling the PEP 484-compliant implicit numeric tower...
@@ -410,7 +410,7 @@ def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
                 f'parameter "hint_overrides" key '
                 f'"{hint_override_cls_conflict.__name__}" '
                 f'value '
-                f'{repr(hint_overrides[hint_override_cls_conflict])}.'
+                f'{hint_overrides[hint_override_cls_conflict]!r}.'
             )
             raise BeartypeConfParamException(
                 msg

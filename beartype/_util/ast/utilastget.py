@@ -38,7 +38,7 @@ def get_node_repr_indented(node: AST) -> str:
     str
         Human-readable string pretty-printing the contents of this AST.
     '''
-    assert isinstance(node, AST), f'{repr(node)} not AST.'
+    assert isinstance(node, AST), f'{node!r} not AST.'
 
     # Return either...
     return (
@@ -85,14 +85,14 @@ def get_code_child_node(code: str) -> AST:
     _BeartypeUtilAstException
         If this string defines either no *or* two or more child objects.
     '''
-    assert isinstance(code, str), f'{repr(code)} not string.'
+    assert isinstance(code, str), f'{code!r} not string.'
 
     # "ast.Module" AST tree parsed from this string.
     node_module = ast_parse(code)
 
     # If this node is *NOT* actually a module node, raise an exception.
     if not isinstance(node_module, Module):  # pragma: no cover
-        msg = f'{repr(node_module)} not AST module node.'
+        msg = f'{node_module!r} not AST module node.'
         raise _BeartypeUtilAstException(
             msg)
     # Else, this node is a module node.
@@ -104,7 +104,7 @@ def get_code_child_node(code: str) -> AST:
     # an exception.
     if len(nodes_child) != 1:  # pragma: no cover
         msg = (
-            f'Python code {repr(code)} defines '
+            f'Python code {code!r} defines '
             f'{len(nodes_child)} != 1 child objects.'
         )
         raise _BeartypeUtilAstException(

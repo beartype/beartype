@@ -70,11 +70,11 @@ def format_diagnosis_line(
         ``True``, ``False``, or ``None``).
     '''
     assert isinstance(validator_repr, str), (
-        f'{repr(validator_repr)} not string.')
+        f'{validator_repr!r} not string.')
     assert isinstance(indent_level_outer, str), (
-        f'{repr(indent_level_outer)} not string.')
+        f'{indent_level_outer!r} not string.')
     assert isinstance(indent_level_inner, str), (
-        f'{repr(indent_level_inner)} not string.')
+        f'{indent_level_inner!r} not string.')
 
     # If "is_obj_valid" is *NOT* a tri-state boolean, raise an exception.
     #
@@ -85,7 +85,7 @@ def format_diagnosis_line(
     if not isinstance(is_obj_valid, NoneTypeOr[bool]):
         msg = (
             f'beartype.vale._valeutiltext.format_diagnosis_line() parameter '
-            f'"is_obj_valid" value {repr(is_obj_valid)} '
+            f'"is_obj_valid" value {is_obj_valid!r} '
             f'not tri-state boolean for '
             f'validator representation: {validator_repr}'
         )

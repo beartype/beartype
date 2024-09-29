@@ -163,7 +163,7 @@ def reduce_hint_numpy_ndarray(
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
         msg = (
-            f'{exception_prefix}typed NumPy array {repr(hint)} '
+            f'{exception_prefix}typed NumPy array {hint!r} '
             f'not subscripted by exactly two arguments.'
         )
         raise BeartypeDecorHintNonpepNumpyException(
@@ -184,8 +184,8 @@ def reduce_hint_numpy_ndarray(
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
         msg = (
-            f'{exception_prefix}typed NumPy array {repr(hint)} '
-            f'data type subhint {repr(hint_dtype_subhint)} '
+            f'{exception_prefix}typed NumPy array {hint!r} '
+            f'data type subhint {hint_dtype_subhint!r} '
             f'not subscripted by exactly one argument.'
         )
         raise BeartypeDecorHintNonpepNumpyException(
@@ -221,8 +221,8 @@ def reduce_hint_numpy_ndarray(
         issue_warning(
             cls=BeartypeDecorHintNonpepNumpyWarning,
             message=(
-                f'{exception_prefix}typed NumPy array {repr(hint)} '
-                f'reduced to untyped NumPy array {repr(ndarray)} '
+                f'{exception_prefix}typed NumPy array {hint!r} '
+                f'reduced to untyped NumPy array {ndarray!r} '
                 f'(i.e., as neither "typing.Annotated" nor '
                 f'"typing_extensions.Annotated" importable).'
             ),

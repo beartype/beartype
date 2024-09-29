@@ -80,7 +80,7 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
         :meth:`__init__` method.
         '''
         assert isinstance(message, str), (
-            f'{repr(message)} not exception message.')
+            f'{message!r} not exception message.')
         # print(f'{type(self)} message: {message}')
 
         # If...
@@ -633,7 +633,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         #FIXME: Unit test us up, please.
         # If the culprits are *NOT* a tuple, raise an exception.
         if not isinstance(culprits, tuple):
-            msg = f'Culprits {repr(culprits)} not tuple.'
+            msg = f'Culprits {culprits!r} not tuple.'
             raise _BeartypeUtilExceptionException(
                 msg)
         # Else, the culprits are a tuple.

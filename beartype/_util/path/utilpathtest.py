@@ -59,7 +59,7 @@ def die_unless_dir(
     # exists but this path is not a directory...
     if not dirname_path.is_dir():
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
 
         # If no path with this pathname exists, raise an appropriate exception.
         if not dirname_path.exists():
@@ -108,7 +108,7 @@ def die_unless_file(
     # exists but this path is not a file...
     if not filename_path.is_file():
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
 
         # If no path with this pathname exists, raise an appropriate exception.
         if not filename_path.exists():
@@ -168,7 +168,7 @@ def die_unless_file_executable(
     # If the current user has *NO* permission to execute this file...
     if not is_path_permissions(filename_str, X_OK):
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{exception_cls!r} not type.')
 
         # Raise an appropriate exception.
         msg = f'File "{filename_str}" not executable.'

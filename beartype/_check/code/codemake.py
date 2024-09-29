@@ -551,7 +551,7 @@ def make_check_expr(
         #   and undebuggable Python code.
         hint_child_placeholder = (
             f'{CODE_HINT_CHILD_PLACEHOLDER_PREFIX}'
-            f'{str(hints_meta_index_last)}'
+            f'{hints_meta_index_last!s}'
             f'{CODE_HINT_CHILD_PLACEHOLDER_SUFFIX}'
         )
 
@@ -615,7 +615,7 @@ def make_check_expr(
         # of unused items of the parent fixed list containing this tuple, since
         # an unused item of this list is initialized to "None" by default.
         assert hint_curr_meta.__class__ is tuple, (
-            f'Current hint metadata {repr(hint_curr_meta)} at '
+            f'Current hint metadata {hint_curr_meta!r} at '
             f'index {hints_meta_index_curr} not tuple.'
         )
 
@@ -701,7 +701,7 @@ def make_check_expr(
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
                 f'{EXCEPTION_PREFIX}ignorable type hint '
-                f'{repr(hint_curr)} not ignored.'
+                f'{hint_curr!r} not ignored.'
             )
 
             # Sign uniquely identifying this hint.
@@ -1101,7 +1101,7 @@ def make_check_expr(
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
                         f'{EXCEPTION_PREFIX}union type hint '
-                        f'{repr(hint_curr)} unsubscripted.'
+                        f'{hint_curr!r} unsubscripted.'
                     )
                     # Else, this union is subscripted by two or more arguments.
                     # Why two rather than one? Because the "typing" module
@@ -1469,8 +1469,8 @@ def make_check_expr(
                             msg = (
                                 f'{EXCEPTION_PREFIX} '
                                 f'1-argument container type hint '
-                                f'{repr(hint_curr)} '
-                                f'beartype sign {repr(hint_curr_sign)} '
+                                f'{hint_curr!r} '
+                                f'beartype sign {hint_curr_sign!r} '
                                 f'code generation logic not found.'
                             )
                             raise BeartypeDecorHintPepException(
@@ -1908,7 +1908,7 @@ def make_check_expr(
                         if not isinstance(hint_child, BeartypeValidator):
                             msg = (
                                 f'{EXCEPTION_PREFIX}PEP 593 type hint '
-                                f'{repr(hint_curr)} subscripted by both '
+                                f'{hint_curr!r} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
                                 f'beartype validator).'
@@ -2037,7 +2037,7 @@ def make_check_expr(
                                     obj=hint_child,  # type: ignore[arg-type]
                                     exception_prefix=(
                                         f'{EXCEPTION_PREFIX}PEP 484 or 585 '
-                                        f'subclass type hint {repr(hint_curr)} '
+                                        f'subclass type hint {hint_curr!r} '
                                         f'child type hint '
                                     ),
                                 )
@@ -2248,9 +2248,9 @@ def make_check_expr(
                 else:
                     msg = (
                         f'{EXCEPTION_PREFIX_HINT}'
-                        f'{repr(hint_curr)} unsupported but '
+                        f'{hint_curr!r} unsupported but '
                         f'erroneously detected as supported under '
-                        f'beartype sign {repr(hint_curr_sign)}.'
+                        f'beartype sign {hint_curr_sign!r}.'
                     )
                     raise BeartypeDecorHintPepUnsupportedException(
                         msg
@@ -2299,7 +2299,7 @@ def make_check_expr(
         #     disabled by passing such an option to that call.
         else:
             msg = (
-                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+                f'{EXCEPTION_PREFIX_HINT}{hint_curr!r} '
                 f'not PEP-compliant.'
             )
             raise BeartypeDecorHintPepException(
@@ -2313,7 +2313,7 @@ def make_check_expr(
         # type of this hint.
         if func_curr_code is None:
             assert hint_curr_expr is not None, (
-                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+                f'{EXCEPTION_PREFIX_HINT}{hint_curr!r} '
                 f'expression undefined.'
             )
 
@@ -2353,7 +2353,7 @@ def make_check_expr(
     # "func_wrapper_code" code snippet if this function behaved as expected,
     # which it should have... but may not have, which is why we're testing.
     if func_wrapper_code == func_root_code:
-        msg = f'{EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.'
+        msg = f'{EXCEPTION_PREFIX_HINT}{hint_root!r} unchecked.'
         raise BeartypeDecorHintPepException(
             msg)
     # Else, the breadth-first search above successfully generated code.

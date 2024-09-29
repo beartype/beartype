@@ -81,13 +81,13 @@ def make_func_signature(
     str
         Signature of this callable.
     '''
-    assert isinstance(func_name, str), f'{repr(func_name)} not string.'
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(func_name, str), f'{func_name!r} not string.'
+    assert isinstance(func_scope, dict), f'{func_scope!r} not dictionary.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
     assert isinstance(code_signature_format, str), (
-        f'{repr(code_signature_format)} not string.')
+        f'{code_signature_format!r} not string.')
     assert isinstance(code_signature_prefix, str), (
-        f'{repr(code_signature_prefix)} not string.')
+        f'{code_signature_prefix!r} not string.')
 
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above

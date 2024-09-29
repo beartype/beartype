@@ -187,9 +187,9 @@ class HintMeta:
             Pith variable name index. See the class docstring.
         '''
         assert isinstance(pith_var_name_index, int), (
-            f'{repr(pith_var_name_index)} not integer.')
+            f'{pith_var_name_index!r} not integer.')
         assert pith_var_name_index >= 0, (
-            f'{repr(pith_var_name_index)} negative.')
+            f'{pith_var_name_index!r} negative.')
 
         # Classify all passed parameters.
         self.pith_var_name_index = pith_var_name_index
@@ -198,7 +198,7 @@ class HintMeta:
         # current pith against this hint.
         self.hint_placeholder = (
             f'{CODE_HINT_CHILD_PLACEHOLDER_PREFIX}'
-            f'{str(pith_var_name_index)}'
+            f'{pith_var_name_index!s}'
             f'{CODE_HINT_CHILD_PLACEHOLDER_SUFFIX}'
         )
 
@@ -308,7 +308,7 @@ class HintsMeta(FixedList):
         HintMeta
             Type hint type-checking metadata at this index.
         '''
-        assert isinstance(index, int), f'{repr(index)} not integer.'
+        assert isinstance(index, int), f'{index!r} not integer.'
         assert 0 <= index <= len(self), f'{index} not in [0, {len(self)}].'
 
         # Type hint type-checking metadata at this index.
@@ -356,11 +356,11 @@ class HintsMeta(FixedList):
             this child pith against this child type hint.
         '''
         assert isinstance(pith_expr, str), (
-            f'{repr(pith_expr)} not string.')
+            f'{pith_expr!r} not string.')
         assert isinstance(indent_level, int), (
-            f'{repr(indent_level)} not integer.')
-        assert pith_expr, f'{repr(pith_expr)} empty.'
-        assert indent_level > 1, f'{repr(indent_level)} <= 1.'
+            f'{indent_level!r} not integer.')
+        assert pith_expr, f'{pith_expr!r} empty.'
+        assert indent_level > 1, f'{indent_level!r} <= 1.'
 
         # Increment the 0-based index of metadata describing the last visitable
         # hint in this list (which also serves as the unique identifier of the

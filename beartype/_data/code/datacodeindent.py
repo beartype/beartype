@@ -52,7 +52,7 @@ class _IndentLevelToCode(dict):
               or equal to 0).
         '''
         assert isinstance(indent_level, int), (
-            f'{repr(indent_level)} not integer.')
+            f'{indent_level!r} not integer.')
         assert indent_level > 0, f'{indent_level} <= 0.'
         # print(f'Generating indentation level {indent_level}...')
 

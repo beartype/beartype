@@ -220,7 +220,7 @@ def _beartype_object_nonfatal(
         # Category of warning to be emitted.
         warning_category: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
         assert is_type_subclass(warning_category, Warning), (
-            f'{repr(warning_category)} not warning category.')
+            f'{warning_category!r} not warning category.')
 
         # Original lower-level error message to be embedded in the higher-level
         # warning message to be emitted below.

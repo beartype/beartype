@@ -46,8 +46,8 @@ def die_if_mappings_two_items_collide(
     _BeartypeUtilMappingException
         If these mappings contain one or more key-value collisions.
     '''
-    assert isinstance(mapping_a, Mapping), f'{repr(mapping_a)} not mapping.'
-    assert isinstance(mapping_b, Mapping), f'{repr(mapping_b)} not mapping.'
+    assert isinstance(mapping_a, Mapping), f'{mapping_a!r} not mapping.'
+    assert isinstance(mapping_b, Mapping), f'{mapping_b!r} not mapping.'
 
     # For each key of the first mapping...
     for mapping_a_key in mapping_a:
@@ -136,8 +136,8 @@ def die_if_mappings_two_items_collide(
     # Raise a human-readable exception.
     exception_message = (
         f'Mappings not safely mergeable due to key-value collisions:\n'
-        f'~~~~[ mapping_a collisions ]~~~~\n{repr(mapping_a_unsafe)}\n'
-        f'~~~~[ mapping_b collisions ]~~~~\n{repr(mapping_b_unsafe)}'
+        f'~~~~[ mapping_a collisions ]~~~~\n{mapping_a_unsafe!r}\n'
+        f'~~~~[ mapping_b collisions ]~~~~\n{mapping_b_unsafe!r}'
     )
     # print(exception_message)
     raise _BeartypeUtilMappingException(exception_message)
@@ -162,8 +162,8 @@ def is_mapping_keys_all(
     bool
         :data:`True` only if this mapping contains *all* of these keys.
     '''
-    assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
-    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+    assert isinstance(mapping, Mapping), f'{mapping!r} not mapping.'
+    assert isinstance(keys, Set), f'{keys!r} not set.'
     assert bool(keys), 'Keys empty.'
 
     # Return true only if this mapping contains *ALL* of these keys,
@@ -195,8 +195,8 @@ def is_mapping_keys_any(
     bool
         :data:`True` only if this mapping contains *any* of these keys.
     '''
-    assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
-    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+    assert isinstance(mapping, Mapping), f'{mapping!r} not mapping.'
+    assert isinstance(keys, Set), f'{keys!r} not set.'
     assert bool(keys), 'Keys empty.'
 
     # Return true only if this mapping contains one or more of these keys,

@@ -96,7 +96,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         * A supported PEP-compliant type hint.
     '''
     assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
+        f'{decor_meta!r} not beartype call.')
 
     # ..................{ LOCALS ~ func                      }..................
     # If *NO* callable parameters are annotated, silently reduce to a noop.
@@ -324,7 +324,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # function should have simply ignored this parameter.
                 if ARG_LOCALIZE_TEMPLATE is None:
                     msg = (
-                        f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
+                        f'{EXCEPTION_PLACEHOLDER}kind {arg_kind!r} '
                         f'currently unsupported by @beartype.'
                     )
                     raise BeartypeDecorHintPepException(
@@ -503,7 +503,7 @@ def _die_if_arg_default_unbearable(
     # Else, this parameter is optional and thus defaults to a default value.
 
     assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
+        f'{decor_meta!r} not beartype call.')
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports prohibited at global scope.

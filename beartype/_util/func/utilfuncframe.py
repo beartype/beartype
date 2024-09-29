@@ -134,7 +134,7 @@ def get_frame_package_name(
         Related getter getting the unqualified basename of that callable.
     '''
     assert isinstance(frame, CallableFrameType), (
-        f'{repr(frame)} not stack frame.')
+        f'{frame!r} not stack frame.')
 
     # Return fully-qualified name of the parent package of the child module declaring
     # the callable whose code object is that of this stack frame's if that
@@ -178,7 +178,7 @@ def get_frame_module_name(
         Related getter getting the unqualified basename of that callable.
     '''
     assert isinstance(frame, CallableFrameType), (
-        f'{repr(frame)} not stack frame.')
+        f'{frame!r} not stack frame.')
 
     # Return fully-qualified name of the module declaring the callable described by
     # this frame.

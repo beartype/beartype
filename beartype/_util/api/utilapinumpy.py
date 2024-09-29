@@ -227,9 +227,9 @@ def make_numpy_dtype(
         If this object is *not* coercible into a NumPy data type.
     '''
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
     assert isinstance(exception_cls, type), (
-        f'{repr(exception_cls)} not exception type.')
+        f'{exception_cls!r} not exception type.')
 
     # Defer heavyweight imports.
     from numpy import dtype as numpy_dtype  # pyright: ignore
@@ -257,7 +257,7 @@ def make_numpy_dtype(
     #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
     except Exception as exception:
         msg = (
-            f'{exception_prefix}NumPy data type {repr(dtype)} invalid '
+            f'{exception_prefix}NumPy data type {dtype!r} invalid '
             f'(i.e., neither data type nor coercible into data type).'
         )
         raise exception_cls(

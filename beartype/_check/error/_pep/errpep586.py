@@ -35,9 +35,9 @@ def find_cause_literal(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignLiteral, (
-        f'{repr(cause.hint_sign)} not "HintSignLiteral".')
+        f'{cause.hint_sign!r} not "HintSignLiteral".')
 
     # Tuple of zero or more literal objects subscripting this hint,
     # intentionally replacing the current such tuple due to the non-standard

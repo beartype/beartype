@@ -43,9 +43,9 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign in HINT_SIGNS_UNION, (
-        f'{repr(cause.hint)} not union sign.')
+        f'{cause.hint!r} not union sign.')
 
     # Indentation preceding each line of the strings returned by child getter
     # functions called by this parent getter function, offset to visually
@@ -145,7 +145,7 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
             # hints or non-"typing" classes.
             assert isinstance(hint_child, type), (
                 f'{cause.exception_prefix}union type hint '
-                f'{repr(cause.hint)} child hint {repr(hint_child)} invalid '
+                f'{cause.hint!r} child hint {hint_child!r} invalid '
                 f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
@@ -201,7 +201,7 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
     if not cause_strs:
         msg = (
             f'{cause.exception_prefix}type hint '
-            f'{repr(cause.hint)} failure causes unknown.'
+            f'{cause.hint!r} failure causes unknown.'
         )
         raise _BeartypeCallHintPepRaiseException(
             msg

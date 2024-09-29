@@ -369,12 +369,12 @@ def add_func_scope_types(
         as a private rather than public exception.
     '''
     assert isinstance(is_unique, NoneTypeOr[bool]), (
-        f'{repr(is_unique)} neither bool nor "None".')
+        f'{is_unique!r} neither bool nor "None".')
 
     # ....................{ VALIDATE                       }....................
     # If this container is neither a set nor tuple, raise an exception.
     if not isinstance(types, TYPES_SET_OR_TUPLE):
-        msg = f'{exception_prefix}{repr(types)} neither set nor tuple.'
+        msg = f'{exception_prefix}{types!r} neither set nor tuple.'
         raise BeartypeDecorHintNonpepException(
             msg)
     # Else, this container is either a set or tuple.
@@ -508,7 +508,7 @@ def add_func_scope_types(
     # In either case, this container is now guaranteed to be a tuple containing
     # only duplicate-free classes.
     assert isinstance(types, tuple), (
-        f'{exception_prefix}{repr(types)} not tuple.')
+        f'{exception_prefix}{types!r} not tuple.')
 
     # ....................{ CACHE                          }....................
     # If this tuple has *NOT* already been cached, do so.
@@ -610,7 +610,7 @@ def express_func_scope_type_ref(
     # Else, this classname is unqualified. In this case...
     else:
         assert isinstance(forwardrefs_class_basename, NoneTypeOr[set]), (
-            f'{repr(forwardrefs_class_basename)} neither set nor "None".')
+            f'{forwardrefs_class_basename!r} neither set nor "None".')
 
         # If this set of unqualified classnames referred to by all relative
         # forward references has yet to be instantiated, do so.

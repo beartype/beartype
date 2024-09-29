@@ -320,8 +320,8 @@ def iter_func_args(
          If that callable is *not* pure-Python.
     '''
     assert isinstance(is_omit_boundmethod_arg_first, bool), (
-        f'{repr(is_omit_boundmethod_arg_first)} not boolean.')
-    assert isinstance(is_unwrap, bool), f'{repr(is_unwrap)} not boolean.'
+        f'{is_omit_boundmethod_arg_first!r} not boolean.')
+    assert isinstance(is_unwrap, bool), f'{is_unwrap!r} not boolean.'
 
     # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.

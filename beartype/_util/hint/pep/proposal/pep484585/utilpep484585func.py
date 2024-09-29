@@ -80,7 +80,7 @@ def reduce_hint_pep484585_func_return(
           by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
     assert isinstance(func_arg_name_to_hint, dict), (
-        f'{repr(func_arg_name_to_hint)} not dictionary.')
+        f'{func_arg_name_to_hint!r} not dictionary.')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
@@ -218,10 +218,10 @@ def _die_of_hint_return_invalid(
     exception_cls
         Exception explaining the invalidity of this return type hint.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
-    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not class.'
+    assert callable(func), f'{func!r} not callable.'
+    assert isinstance(exception_cls, type), f'{exception_cls!r} not class.'
     assert isinstance(exception_suffix, str), (
-        f'{repr(exception_suffix)} not string.')
+        f'{exception_suffix!r} not string.')
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
@@ -230,7 +230,7 @@ def _die_of_hint_return_invalid(
     # Raise an exception of this type with a message suffixed by this suffix.
     msg = (
         f'{prefix_callable_return(func)}type hint '
-        f'{repr(hint)} contextually invalid{exception_suffix}'
+        f'{hint!r} contextually invalid{exception_suffix}'
     )
     raise exception_cls(
         msg

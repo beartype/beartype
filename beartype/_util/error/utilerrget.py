@@ -51,7 +51,7 @@ def get_name_error_attr_name(name_error: NameError) -> str:
        name 'undefined_attr' is not defined
     '''
     assert isinstance(name_error, NameError), (
-        f'{repr(name_error)} not "NameError" exception.')
+        f'{name_error!r} not "NameError" exception.')
 
     # Message associated with this name error.
     error_message = str(name_error)

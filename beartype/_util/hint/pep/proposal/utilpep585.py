@@ -65,7 +65,7 @@ def die_unless_hint_pep585_generic(
 
     # If this object is *NOT* a PEP 585-compliant generic, raise an exception.
     if not is_hint_pep585_generic(hint):
-        msg = f'{exception_prefix}type hint {repr(hint)} not PEP 585 generic.'
+        msg = f'{exception_prefix}type hint {hint!r} not PEP 585 generic.'
         raise exception_cls(
             msg)
     # Else, this object is a PEP 585-compliant generic.

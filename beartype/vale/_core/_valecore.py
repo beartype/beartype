@@ -303,7 +303,7 @@ class BeartypeValidator:
         elif not is_func_argless(
             func=get_repr, exception_cls=BeartypeValeSubscriptionException):
             msg = (
-                f'Representer {repr(get_repr)} neither string nor '
+                f'Representer {get_repr!r} neither string nor '
                 f'argumentless pure-Python callable.'
             )
             raise BeartypeValeSubscriptionException(
@@ -439,7 +439,7 @@ class BeartypeValidator:
             Substring diagnosing this object against this validator.
         '''
         assert isinstance(is_shortcircuited, bool), (
-            f'{repr(is_shortcircuited)} not boolean.')
+            f'{is_shortcircuited!r} not boolean.')
 
         # True only if the passed object satisfies this validator.
         is_obj_valid = None

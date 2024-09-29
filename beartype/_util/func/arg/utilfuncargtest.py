@@ -98,14 +98,14 @@ def die_unless_func_args_len_flexible_equal(
     # parameters, raise an exception.
     if func_args_len_flexible_actual != func_args_len_flexible:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{exception_cls!r} not class.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         msg = (
-            f'{exception_prefix}callable {repr(func)} flexible argument count '
+            f'{exception_prefix}callable {func!r} flexible argument count '
             f'{func_args_len_flexible_actual} != {func_args_len_flexible} '
-            f'(i.e., {repr(func)} accepts {func_args_len_flexible_actual} '
+            f'(i.e., {func!r} accepts {func_args_len_flexible_actual} '
             f'rather than {func_args_len_flexible} positional and/or keyword '
             f'parameters).'
         )
@@ -360,7 +360,7 @@ def is_func_arg_name(arg_name: str, *args, **kwargs) -> bool:
     exception_cls
          If the passed callable is *not* pure-Python.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+    assert isinstance(arg_name, str), f'{arg_name!r} not string.'
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import get_func_arg_names

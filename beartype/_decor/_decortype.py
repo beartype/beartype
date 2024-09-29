@@ -62,9 +62,9 @@ def beartype_type(
     BeartypeableT
         This class decorated by :func:`beartype.beartype`.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(cls, type), f'{cls!r} not type.'
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-        f'{repr(cls_stack)} neither tuple nor "None".')
+        f'{cls_stack!r} neither tuple nor "None".')
     # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     # print(f'Decorating type {repr(obj)}...')
 

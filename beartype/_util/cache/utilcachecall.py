@@ -150,7 +150,7 @@ def callable_cached(func: CallableT) -> CallableT:
         If this callable accepts a variadic positional parameter (e.g.,
         ``*args``).
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize against the @method_cached_arg_by_id decorator
@@ -347,7 +347,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     :func:`callable_cached`
         Further details.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncwrap import unwrap_func_all
@@ -549,7 +549,7 @@ def property_cached(func: CallableT) -> CallableT:
     CallableT
         Dynamically generated function wrapping this property with memoization.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
+    assert callable(func), f'{func!r} not callable.'
 
     # Name of the private instance variable to which this decorator caches the
     # value returned by the decorated property method.

@@ -30,7 +30,7 @@ def lowercase_str_char_first(text: str) -> str:
     str
         This string with the first character lowercased.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # If...
     if (
@@ -65,7 +65,7 @@ def uppercase_str_char_first(text: str) -> str:
     str
         This string with the first character uppercased.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # If...
     if (
@@ -97,7 +97,7 @@ def number_str_lines(text: str) -> str:
     str
         This string with all lines numbered.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # For radical benevolence!
     return '\n'.join(
@@ -158,9 +158,9 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
         beartype.roar._BeartypeUtilTextException: String "I shot the
         ALBATROSS." substring "dross" not found.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-    assert isinstance(old, str), f'{repr(old)} not string.'
-    assert isinstance(new, str), f'{repr(new)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
+    assert isinstance(old, str), f'{old!r} not string.'
+    assert isinstance(new, str), f'{new!r} not string.'
 
     # If this subject contains *NO* instances of this substring, raise an
     # exception.
@@ -198,8 +198,8 @@ def suffix_str_unless_suffixed(text: str, suffix: str) -> str:
           suffixed by this suffix.
         * Else, this string as is.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-    assert isinstance(suffix, str), f'{repr(suffix)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
+    assert isinstance(suffix, str), f'{suffix!r} not string.'
 
     # Suffix us up the redemption arc.
     return text if text.endswith(suffix) else text + suffix
@@ -244,8 +244,8 @@ def truncate_str(
     str
         This string possibly truncated.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-    assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
+    assert isinstance(text, str), f'{text!r} not string.'
+    assert isinstance(max_len, int), f'{max_len!r} not integer.'
     assert max_len >= 0, f'{max_len} < 0.'
 
     # If this maximum length is *NOT* long enough to at least allow truncation

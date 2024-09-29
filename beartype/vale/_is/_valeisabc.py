@@ -76,7 +76,7 @@ class _BeartypeValidatorFactoryABC(
             Machine-readable basename of the public factory singleton
             instantiating this private factory subclass (e.g., ``"IsAttr"``).
         '''
-        assert isinstance(basename, str), f'{repr(basename)} not string.'
+        assert isinstance(basename, str), f'{basename!r} not string.'
 
         # Classify all passed parameters.
         self._basename = basename

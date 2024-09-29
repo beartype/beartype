@@ -89,7 +89,7 @@ def copy_node_metadata(
         complexity for :math:`k` the number of types of source code metadata.
         Typically, :math:`k == 4`.
     '''
-    assert isinstance(node_src, AST), f'{repr(node_src)} not AST node.'
+    assert isinstance(node_src, AST), f'{node_src!r} not AST node.'
 
     # If passed only a single target node, wrap this node in a 1-tuple
     # containing only this node for simplicity.
@@ -100,7 +100,7 @@ def copy_node_metadata(
     # For each passed target node...
     for node_trg_cur in node_trg:
         assert isinstance(node_trg_cur, AST), (
-            f'{repr(node_trg_cur)} not AST node.')
+            f'{node_trg_cur!r} not AST node.')
 
         # Copy all source code metadata from this source to target node.
         node_trg_cur.lineno = node_src.lineno  # type: ignore[attr-defined]

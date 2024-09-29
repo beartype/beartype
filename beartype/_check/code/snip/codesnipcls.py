@@ -58,7 +58,7 @@ class PithIndexToVarName(dict):
             * ``pith_level`` is *not* an integer.
             * ``pith_level`` is a **negative integer** (i.e., less than 0).
         '''
-        assert isinstance(pith_index, int), f'{repr(pith_index)} not integer.'
+        assert isinstance(pith_index, int), f'{pith_index!r} not integer.'
         assert pith_index >= 0, f'{pith_index} < 0.'
         # print(f'Generating indentation level {indent_level}...')
 

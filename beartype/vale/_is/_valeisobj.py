@@ -216,7 +216,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # localizing these validator arguments.
         get_repr = lambda: (
             f'beartype.vale.{self._basename}['
-            f'{repr(attr_name)}, {repr(attr_validator)}'
+            f'{attr_name!r}, {attr_validator!r}'
             f']'
         )
 
@@ -263,7 +263,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             # exception.
             if not attr_name.isidentifier():
                 msg = (
-                    f'{get_repr()} first argument {repr(attr_name)} not '
+                    f'{get_repr()} first argument {attr_name!r} not '
                     f'syntactically valid Python identifier.'
                 )
                 raise BeartypeValeSubscriptionException(
@@ -275,7 +275,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
                 f'''
                 :data:`True` only if the passed object defines an attribute
                 named "{attr_name}" whose value satisfies the validator
-                {repr(attr_validator)}.
+                {attr_validator!r}.
                 '''
 
                 # Attribute of this object with this name if this object
@@ -389,7 +389,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             #raise an exception simply because we ran out of time for this. :{
             msg = (
                 f'{get_repr()} first argument '
-                f'{repr(attr_name)} not unqualified Python identifier '
+                f'{attr_name!r} not unqualified Python identifier '
                 f'(i.e., contains one or more "." characters).'
             )
             raise BeartypeValeSubscriptionException(

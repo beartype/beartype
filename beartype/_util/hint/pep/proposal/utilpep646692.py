@@ -239,8 +239,8 @@ def reduce_hint_pep646692_unpack(
         # subclass, raise an exception.
         if hint_child_sign is not HintSignTypedDict:
             msg = (
-                f'{exception_prefix}PEP 692 unpack type hint {repr(hint)} '
-                f'child type hint {repr(hint_child)} not '
+                f'{exception_prefix}PEP 692 unpack type hint {hint!r} '
+                f'child type hint {hint_child!r} not '
                 f'PEP 589 "typing.TypeDict" subclass.'
             )
             raise BeartypeDecorHintPep692Exception(
@@ -260,8 +260,8 @@ def reduce_hint_pep646692_unpack(
     # object, raise an exception.
     if hint_child_sign is not HintSignTypeVarTuple:
         msg = (
-            f'{exception_prefix}PEP 646 unpack type hint {repr(hint)} '
-            f'child type hint {repr(hint_child)} not '
+            f'{exception_prefix}PEP 646 unpack type hint {hint!r} '
+            f'child type hint {hint_child!r} not '
             f'PEP 646 type variable tuple '
             f'(i.e., "typing.TypeVarTuple" object).'
         )

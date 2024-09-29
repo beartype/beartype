@@ -82,11 +82,11 @@ def make_node_importfrom(
     ImportFrom
         Import-from node importing this attribute from this module.
     '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(module_name, str), f'{module_name!r} not string.'
     assert isinstance(source_attr_name, str), (
-        f'{repr(source_attr_name)} not string.')
+        f'{source_attr_name!r} not string.')
     assert isinstance(target_attr_name, NoneTypeOr[str]), (
-        f'{repr(target_attr_name)} neither string nor "None".')
+        f'{target_attr_name!r} neither string nor "None".')
 
     # Node encapsulating the name of the attribute to import from this module,
     # defined as either...
@@ -176,7 +176,7 @@ def make_node_object_attr_load(
         * Neither the ``node_obj`` nor ``obj_name`` parameters are passed.
         * Both of the ``node_obj`` and ``obj_name`` parameters are passed.
     '''
-    assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+    assert isinstance(attr_name, str), f'{attr_name!r} not string.'
 
     # If the caller passed *NO* name node accessing the parent object to load
     # this attribute from...
@@ -211,7 +211,7 @@ def make_node_object_attr_load(
     #
     # In any case, the "node_obj" variable is now the desired object node.
     assert isinstance(node_obj, expr), (
-        f'{repr(node_obj)} not AST expression node.')
+        f'{node_obj!r} not AST expression node.')
 
     # Object attribute node accessing this attribute of this object.
     node_attribute_load = Attribute(
@@ -296,14 +296,14 @@ def make_node_call(
     Call
         Callable call node calling this callable with these parameters.
     '''
-    assert isinstance(nodes_args, list), f'{repr(nodes_args)} not list.'
-    assert isinstance(nodes_kwargs, list), f'{repr(nodes_kwargs)} not list.'
+    assert isinstance(nodes_args, list), f'{nodes_args!r} not list.'
+    assert isinstance(nodes_kwargs, list), f'{nodes_kwargs!r} not list.'
     assert all(
         isinstance(node_args, expr) for node_args in nodes_args), (
-        f'{repr(nodes_args)} not list of AST expression nodes.')
+        f'{nodes_args!r} not list of AST expression nodes.')
     assert all(
         isinstance(node_kwargs, keyword) for node_kwargs in nodes_kwargs), (
-        f'{repr(nodes_kwargs)} not list of AST keyword nodes.')
+        f'{nodes_kwargs!r} not list of AST keyword nodes.')
 
     # Child node referencing the callable to be called.
     node_func_name = make_node_name_load(
@@ -347,9 +347,9 @@ def make_node_kwarg(
     keyword
         Keyword node passing a keyword argument with this name and value.
     '''
-    assert isinstance(kwarg_name, str), f'{repr(kwarg_name)} not string.'
+    assert isinstance(kwarg_name, str), f'{kwarg_name!r} not string.'
     assert isinstance(kwarg_value, expr), (
-        f'{repr(kwarg_value)} not AST expression node.')
+        f'{kwarg_value!r} not AST expression node.')
 
     # Child node encapsulating this keyword argument.
     node_kwarg = keyword(arg=kwarg_name, value=kwarg_value)
@@ -380,7 +380,7 @@ def make_node_str(text: str, node_sibling: AST) -> Constant:
     Constant
         String literal node encapsulating this string.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Child node encapsulating this string.
     node_str = Constant(value=text)
@@ -424,7 +424,7 @@ def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
         Name node accessing this attribute in the current lexical scope.
     '''
     assert isinstance(node_expr, expr), (
-        f'{repr(node_expr)} not AST expression node.')
+        f'{node_expr!r} not AST expression node.')
 
     # Child node encapsulating a formatting field "{node_expr.value}" in some
     # parent node encapsulating an f-string embedding this field. For unknown
@@ -459,7 +459,7 @@ def make_node_name_load(name: str, node_sibling: AST) -> Name:
     Name
         Name node accessing this attribute in the current lexical scope.
     '''
-    assert isinstance(name, str), f'{repr(name)} not string.'
+    assert isinstance(name, str), f'{name!r} not string.'
 
     # Child node accessing this attribute in the current lexical scope.
     node_name = Name(name, ctx=NODE_CONTEXT_LOAD)
@@ -490,7 +490,7 @@ def make_node_name_store(name: str, node_sibling: AST) -> Name:
     Name
         Name node assigning this attribute in the current lexical scope.
     '''
-    assert isinstance(name, str), f'{repr(name)} not string.'
+    assert isinstance(name, str), f'{name!r} not string.'
 
     # Child node assigning this attribute in the current lexical scope.
     node_name = Name(name, ctx=NODE_CONTEXT_STORE)

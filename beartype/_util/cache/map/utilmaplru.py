@@ -111,7 +111,7 @@ class CacheLruStrong(dict):
         super().__init__()
 
         if not isinstance(size, int):
-            msg = f'LRU cache capacity {repr(size)} not integer.'
+            msg = f'LRU cache capacity {size!r} not integer.'
             raise _BeartypeUtilCacheLruException(
                 msg)
         if size < 1:

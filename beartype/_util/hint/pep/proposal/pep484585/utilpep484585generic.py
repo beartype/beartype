@@ -384,9 +384,9 @@ def get_hint_pep484585_generic_bases_unerased(
     # * If this generic is PEP 585-compliant, CPython or PyPy itself.
     if not hint_pep_generic_bases_unerased:
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
         msg = (
-            f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+            f'{exception_prefix}PEP 484 or 585 generic {hint!r} '
             f'subclasses no superclasses.'
         )
         raise exception_cls(
@@ -472,7 +472,7 @@ def get_hint_pep484585_generic_type(
     # If this hint is *NOT* a generic, raise an exception.
     if hint_generic_type is None:
         msg = (
-            f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+            f'{exception_prefix}PEP 484 or 585 generic {hint!r} '
             f'not generic (i.e., originates from no isinstanceable class).'
         )
         raise exception_cls(
@@ -638,7 +638,7 @@ def find_hint_pep484585_generic_module_base_first(
         ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
         <class 'pandas.DataFrame'>
     '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(module_name, str), f'{module_name!r} not string.'
 
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodget import get_object_module_name_or_none
@@ -701,10 +701,10 @@ def find_hint_pep484585_generic_module_base_first(
 
     # Raise an exception of the passed type.
     msg = (
-        f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
-        f'type {repr(hint_type)} subclasses no "{module_name}" type '
+        f'{exception_prefix}PEP 484 or 585 generic {hint!r} '
+        f'type {hint_type!r} subclasses no "{module_name}" type '
         f'(i.e., type with module name prefixed by "{module_name}" not '
-        f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
+        f'found in method resolution order (MRO) {hint_type.__mro__!r}).'
     )
     raise exception_cls(
         msg

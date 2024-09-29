@@ -128,7 +128,7 @@ class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
         type_factory : Type[T]
             Arbitrary type to be returned from the :meth:`__getitem__` method.
         '''
-        assert isinstance(type_factory, type), f'{repr(type_factory)} not type.'
+        assert isinstance(type_factory, type), f'{type_factory!r} not type.'
 
         # Classify all passed parameters.
         self._type_factory = type_factory

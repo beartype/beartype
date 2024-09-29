@@ -85,7 +85,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
 
     # Validate that the passed object is *NOT* a class.
-    assert not isinstance(obj, type), f'{repr(obj)} is class.'
+    assert not isinstance(obj, type), f'{obj!r} is class.'
     # print(f'Decorating non-type {repr(obj)}...')
 
     # Type of this object.
@@ -125,7 +125,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     #
     # If this object is uncallable, raise an exception.
     if not callable(obj):
-        msg = f'Uncallable {repr(obj)} not decoratable by @beartype.'
+        msg = f'Uncallable {obj!r} not decoratable by @beartype.'
         raise BeartypeDecorWrappeeException(
             msg)
     # Else, this object is callable.
@@ -241,9 +241,9 @@ def beartype_func(
     # Else, the caller passed a callable to be unwrapped. Preserve it up!
 
     # Validate all explicitly passed parameters.
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert callable(func), f'{repr(func)} uncallable.'
-    assert callable(wrapper), f'{repr(wrapper)} uncallable.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
+    assert callable(func), f'{func!r} uncallable.'
+    assert callable(wrapper), f'{wrapper!r} uncallable.'
 
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
@@ -528,7 +528,7 @@ def beartype_descriptor_decorator_builtin(
 
     # Raise a fallback exception. This should *NEVER happen. This *WILL* happen.
     msg = (
-        f'Builtin method descriptor {repr(descriptor)} '
+        f'Builtin method descriptor {descriptor!r} '
         f'not decoratable by @beartype '
         f'(i.e., neither property, class method, nor static method descriptor).'
     )
@@ -561,7 +561,7 @@ def _beartype_descriptor_boundmethod(
         New pure-Python callable wrapping this descriptor with type-checking.
     '''
     assert is_func_boundmethod(descriptor), (
-        f'{repr(descriptor)} not builtin bound method descriptor.')
+        f'{descriptor!r} not builtin bound method descriptor.')
 
     # Possibly C-based callable wrappee object encapsulated by this descriptor.
     descriptor_wrappee = unwrap_func_boundmethod_once(descriptor)
@@ -668,7 +668,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # another kind of callable object under future versions.
     if pseudofunc_call_boundmethod is None:  # pragma: no cover
         msg = (
-            f'Callable {repr(pseudofunc)} not pseudo-callable object '
+            f'Callable {pseudofunc!r} not pseudo-callable object '
             f'(i.e., defines no bound __call__() dunder method).'
         )
         raise BeartypeDecorWrappeeException(
@@ -680,7 +680,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # pseudo-callable. In this case, raise an exception.
     if pseudofunc_call_type_method is None:  # pragma: no cover
         msg = (
-            f'Callable {repr(pseudofunc)} type {repr(pseudofunc.__class__)} '
+            f'Callable {pseudofunc!r} type {pseudofunc.__class__!r} '
             f'not pseudo-callable object type '
             f'(i.e., defines no unbound __call__() dunder method).'
         )
@@ -777,7 +777,7 @@ def beartype_pseudofunc_functools_lru_cache(
     # callable, raise an exception.
     if not is_func_functools_lru_cache(pseudofunc):
         msg = (
-            f'@functools.lru_cache-memoized callable {repr(pseudofunc)} not  '
+            f'@functools.lru_cache-memoized callable {pseudofunc!r} not  '
             f'decorated by @functools.lru_cache.'
         )
         raise BeartypeDecorWrappeeException(  # pragma: no cover
@@ -796,7 +796,7 @@ def beartype_pseudofunc_functools_lru_cache(
     # exception providing a pragmatic workaround.
     if IS_PYTHON_3_8:
         msg = (
-            f'@functools.lru_cache-memoized callable {repr(func)} not '
+            f'@functools.lru_cache-memoized callable {func!r} not '
             f'decoratable by @beartype under Python 3.8. '
             f'Consider manually decorating this callable by '
             f'@beartype first and then by @functools.lru_cache to preserve '

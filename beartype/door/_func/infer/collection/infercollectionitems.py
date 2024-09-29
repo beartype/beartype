@@ -97,10 +97,10 @@ def infer_hint_collection_items(
         containing one or more items that self-referentially refer to this same
         iterable).
     '''
-    assert isinstance(obj, CollectionABC), f'{repr(obj)} not collection.'
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(obj, CollectionABC), f'{obj!r} not collection.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
     assert isinstance(__beartype_obj_ids_seen__, frozenset), (
-        f'{repr(__beartype_obj_ids_seen__)} not frozen set.')
+        f'{__beartype_obj_ids_seen__!r} not frozen set.')
 
     # ....................{ PREAMBLE                       }....................
     # If this collection is empty, return the this unsubscripted hint factory
@@ -117,7 +117,7 @@ def infer_hint_collection_items(
         origin_type = obj.__class__
     # Else, an origin type was passed. Preserve this type as is.
     assert isinstance(origin_type, type), (
-        f'{repr(origin_type)} not type.')
+        f'{origin_type!r} not type.')
 
     # ....................{ LOCALS                         }....................
     # Add the integer uniquely identifying this collection to this set, thus
@@ -293,8 +293,8 @@ def _infer_hint_mapping_items(
     # this case, raise an exception.
     else:
         msg = (
-            f'Beartype configuration {repr(conf)} '
-            f'strategy {repr(conf.strategy)} currently unsupported by '
+            f'Beartype configuration {conf!r} '
+            f'strategy {conf.strategy!r} currently unsupported by '
             f'beartype.door.infer_hint() (i.e., neither '
             f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
         )
@@ -480,8 +480,8 @@ def _infer_hint_reiterable_items(
         # this case, raise an exception.
         else:
             msg = (
-                f'Beartype configuration {repr(conf)} '
-                f'strategy {repr(conf.strategy)} currently unsupported by '
+                f'Beartype configuration {conf!r} '
+                f'strategy {conf.strategy!r} currently unsupported by '
                 f'beartype.door.infer_hint() (i.e., neither '
                 f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
             )

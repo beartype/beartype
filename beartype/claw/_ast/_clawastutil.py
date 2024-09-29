@@ -93,9 +93,9 @@ class BeartypeNodeTransformerUtilityMixin:
             decorated by a parent node passing this dataclass to that
             decorator).
         '''
-        assert isinstance(node, AST), f'{repr(node)} not AST node.'
+        assert isinstance(node, AST), f'{node!r} not AST node.'
         assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not configuration.')
+            f'{conf!r} not configuration.')
 
         # Child decoration node decorating that callable by the @beartype
         # decorator.
@@ -163,8 +163,8 @@ class BeartypeNodeTransformerUtilityMixin:
         # raise an exception. Note that this should *NEVER* occur.
         else:  # pragma: no cover
             msg = (
-                f'Beartype configuration {repr(conf)} '
-                f'decorator position {repr(decoration_position)} unsupported.'
+                f'Beartype configuration {conf!r} '
+                f'decorator position {decoration_position!r} unsupported.'
             )
             raise BeartypeClawImportConfException(
                 msg

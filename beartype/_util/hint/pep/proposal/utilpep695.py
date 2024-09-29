@@ -191,7 +191,7 @@ def get_hint_pep695_alias(
     # If this hint is *NOT* a PEP 695-compliant type alias, raise an exception.
     if not isinstance(hint, HintPep695Type):
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} '
+            f'{exception_prefix}type hint {hint!r} '
             f'not PEP 695 type alias.'
         )
         raise BeartypeDecorHintPep695Exception(
@@ -492,7 +492,7 @@ def reduce_hint_pep695(
         # Raise a human-readable exception describing this issue.
         msg = (
             f'{exception_prefix}PEP 695 type alias "{hint_name}" '
-            f'unquoted relative forward reference {repr(hint_ref_name)} in '
+            f'unquoted relative forward reference {hint_ref_name!r} in '
             f'module "{hint_module_name}" unsupported outside '
             f'"beartype.claw" import hooks. Consider either:\n'
             f'* Quoting this forward reference in this type alias: e.g.,\n'

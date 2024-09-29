@@ -156,7 +156,7 @@ class BeartypeHintOverrides(FrozenDict):
             if hint_override_recursion is not None:
                 msg = (
                     f'Recursive type hint override '
-                    f'{repr(hint_override_src)}: {repr(hint_override_trg)} '
+                    f'{hint_override_src!r}: {hint_override_trg!r} '
                     f'currently unsupported. Please complain on our friendly '
                     f'issue tracker if you feel that this is dumb:\n'
                     f'\t{URL_ISSUES}'

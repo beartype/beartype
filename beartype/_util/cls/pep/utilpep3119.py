@@ -280,9 +280,9 @@ def die_unless_type_isinstanceable(
     # See the docstring for further discussion.
     except Exception as exception:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
+            f'{exception_cls!r} not exception class.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # If this exception ambiguously fails to indicate non-isinstanceability,
         # silently reduce to a noop.
@@ -324,7 +324,7 @@ def die_unless_type_isinstanceable(
 
         # Exception message to be raised.
         exception_message = (
-            f'{exception_prefix}{repr(cls)} uncheckable at runtime '
+            f'{exception_prefix}{cls!r} uncheckable at runtime '
             f'(i.e., not passable as second parameter to isinstance(), '
             f'due to raising "{exception.__class__.__name__}: {exception}" '
             f'from metaclass '
@@ -512,9 +512,9 @@ def die_unless_type_issubclassable(
     # See the die_unless_type_isinstanceable() docstring for details.
     except Exception as exception:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
+            f'{exception_cls!r} not exception class.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # If this exception ambiguously fails to indicate non-issubclassability,
         # silently reduce to a noop.
@@ -531,7 +531,7 @@ def die_unless_type_issubclassable(
 
         # Exception message to be raised.
         exception_message = (
-            f'{exception_prefix}{repr(cls)} uncheckable at runtime '
+            f'{exception_prefix}{cls!r} uncheckable at runtime '
             f'(i.e., not passable as second parameter to issubclass(), '
             f'due to raising "{exception.__class__.__name__}: {exception}" '
             f'from metaclass '
@@ -606,7 +606,7 @@ def is_type_isinstanceable(
         Further details.
     '''
     assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
+        f'{is_forwardref_valid!r} not bool.')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import is_forwardref
@@ -825,7 +825,7 @@ def is_type_issubclassable(
         Further details.
     '''
     assert isinstance(is_forwardref_valid, bool), (
-        f'{repr(is_forwardref_valid)} not bool.')
+        f'{is_forwardref_valid!r} not bool.')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import is_forwardref
@@ -939,8 +939,8 @@ def _die_if_object_uncheckable(
         If this object is *not* runtime-checkable according to the passed
         object tester and raiser.
     '''
-    assert callable(obj_raiser), f'{repr(obj_raiser)} uncallable.'
-    assert callable(obj_tester), f'{repr(obj_tester)} uncallable.'
+    assert callable(obj_raiser), f'{obj_raiser!r} uncallable.'
+    assert callable(obj_tester), f'{obj_tester!r} uncallable.'
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import die_unless_type_or_types
@@ -985,9 +985,9 @@ def _die_if_object_uncheckable(
         # See the die_unless_type_isinstanceable() docstring for details.
         except Exception as exception:
             assert isinstance(exception_cls, type), (
-                f'{repr(exception_cls)} not exception class.')
+                f'{exception_cls!r} not exception class.')
             assert isinstance(exception_prefix, str), (
-                f'{repr(exception_prefix)} not string.')
+                f'{exception_prefix!r} not string.')
 
             # If this exception ambiguously fails to indicate
             # non-isinstanceability, silently reduce to a noop.
@@ -1020,7 +1020,7 @@ def _die_if_object_uncheckable(
 
             # Exception message to be raised.
             exception_message = (
-                f'{exception_prefix} {obj_label} {repr(obj)} '
+                f'{exception_prefix} {obj_label} {obj!r} '
                 f'uncheckable at runtime'
             )
 

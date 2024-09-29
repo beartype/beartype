@@ -54,7 +54,7 @@ def get_hint_pep484585_sign_tuplefixed_or_same(
     HintSign
         Sign uniquely and unambiguously identifying this hint.
     '''
-    assert isinstance(hint_sign, HintSign), f'{repr(hint_sign)} not sign.'
+    assert isinstance(hint_sign, HintSign), f'{hint_sign!r} not sign.'
 
     # If this is a tuple hint, disambiguate between the following two
     # fundamentally distinct kinds of tuple hints:
@@ -182,7 +182,7 @@ def make_hint_pep484585_tuple_fixed_hint(hints: tuple) -> object:
     object
         Fixed-length tuple type hint subscripted by these child type hints.
     '''
-    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+    assert isinstance(hints, tuple), f'{hints!r} not tuple.'
 
     # Return a fixed-length tuple type hint subscripted by these child type
     # hints, defined as either...

@@ -100,7 +100,7 @@ def reduce_hint_pep484_deprecated(
         the active Python interpreter targets Python >= 3.9.
     '''
     assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
+        f'{exception_prefix!r} not string.')
     # print(f'Testing PEP 484 type hint {repr(hint)} for PEP 585 deprecation...')
     # print(f'{HINTS_PEP484_REPR_PREFIX_DEPRECATED}')
 
@@ -126,7 +126,7 @@ def reduce_hint_pep484_deprecated(
         issue_warning(
             cls=BeartypeDecorHintPep585DeprecationWarning,
             message=(
-                f'{exception_prefix}PEP 484 type hint {repr(hint)} '
+                f'{exception_prefix}PEP 484 type hint {hint!r} '
                 f'deprecated by PEP 585. '
                 f'This hint is scheduled for removal in the first Python '
                 f'version released after October 5th, 2025. To resolve this, '

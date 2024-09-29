@@ -98,9 +98,9 @@ def resolve_hint(
         type hint is a :pep:`604`-compliant new-style union, which requires
         Python >= 3.10.
     '''
-    assert isinstance(hint, str), f'{repr(hint)} not stringified type hint.'
+    assert isinstance(hint, str), f'{hint!r} not stringified type hint.'
     assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not @beartype call.')
+        f'{decor_meta!r} not @beartype call.')
     # print(f'Resolving stringified type hint {repr(hint)}...')
 
     # ..................{ LOCALS                             }..................
@@ -455,7 +455,7 @@ def resolve_hint(
                 f'{exception_prefix}forward reference type hint "{hint}" '
                 f'unresolvable, as '
                 f'"{get_object_name(func)}.__module__" dunder attribute '
-                f'undefined (e.g., due to {repr(func)} being defined only '
+                f'undefined (e.g., due to {func!r} being defined only '
                 f'dynamically in-memory). '
                 f'So much bad stuff is happening here all at once that '
                 f'@beartype can no longer cope with the explosion in badness.'
@@ -524,9 +524,9 @@ def resolve_hint(
     # If doing so failed for *ANY* reason whatsoever...
     except Exception as exception:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not exception class.')
+            f'{exception_cls!r} not exception class.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Human-readable message to be raised if this message has been defined
         # *OR* "None" otherwise (i.e., if this message has yet to be defined).
@@ -587,8 +587,8 @@ def resolve_hint(
                 # Human-readable message providing various recommendations.
                 exception_message = (
                     f'{exception_prefix}stringified PEP 604 type hint '
-                    f'{repr(hint)} syntactically invalid under Python < 3.10 '
-                    f'(i.e., {repr(exception)}). Consider either:\n'
+                    f'{hint!r} syntactically invalid under Python < 3.10 '
+                    f'(i.e., {exception!r}). Consider either:\n'
                     f'* Requiring Python >= 3.10. Abandon Python < 3.10 all '
                     f'ye who code here.\n'
                     f'* Refactoring PEP 604 type hints into '
@@ -626,7 +626,7 @@ def resolve_hint(
             if decor_meta.conf.is_debug:
                 exception_message += (
                     f'\nComposite global and local scope enclosing this hint:\n\n'
-                    f'{repr(decor_meta.func_wrappee_scope_forward)}'
+                    f'{decor_meta.func_wrappee_scope_forward!r}'
                 )
             # Else, the beartype configuration associated with the decorated
             # callable disabled debugging. In this case, avoid appending

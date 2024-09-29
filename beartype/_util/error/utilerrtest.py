@@ -30,7 +30,7 @@ def is_exception_message_str(exception: Exception) -> bool:
     bool
         :data:`True` only if this exception's message is a simple string.
     '''
-    assert isinstance(exception, Exception), f'{repr(exception)} not exception.'
+    assert isinstance(exception, Exception), f'{exception!r} not exception.'
 
     # Return true only if...
     return bool(

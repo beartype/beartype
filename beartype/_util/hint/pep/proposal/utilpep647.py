@@ -78,9 +78,9 @@ def reduce_hint_pep647(
     # Raise an exception. Type guards are contextually valid *ONLY* as top-level
     # return annotations.
     msg = (
-        f'{exception_prefix}PEP 647 type hint {repr(hint)} '
+        f'{exception_prefix}PEP 647 type hint {hint!r} '
         f'invalid in this type hint context (i.e., '
-        f'{repr(hint)} valid only as non-nested return annotation).'
+        f'{hint!r} valid only as non-nested return annotation).'
     )
     raise BeartypeDecorHintPep647Exception(
         msg

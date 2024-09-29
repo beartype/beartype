@@ -117,8 +117,8 @@ class CallableTypeHint(TypeHint):
             # parameter type hint, raise an exception. *sigh*
             if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
                 msg = (
-                    f'PEP 484 or 585 callable type hint {repr(self._hint)} '
-                    f'PEP 612 child type hint {repr(args_params)} '
+                    f'PEP 484 or 585 callable type hint {self._hint!r} '
+                    f'PEP 612 child type hint {args_params!r} '
                     f'currently unsupported.'
                 )
                 raise BeartypeDoorPepUnsupportedException(

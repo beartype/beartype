@@ -56,7 +56,7 @@ def die_unless_type(
         assert isinstance(exception_prefix, str), (
             'f{repr(exception_prefix)} not string.')
 
-        msg = f'{exception_prefix}{repr(cls)} not class.'
+        msg = f'{exception_prefix}{cls!r} not class.'
         raise exception_cls(msg)
     # Else, this object is a class.
 
@@ -97,13 +97,13 @@ def die_unless_type_or_types(
         assert isinstance(exception_cls, type), (
             'f{repr(exception_cls)} not exception class.')
         assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception subclass.')
+            f'{exception_cls!r} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Exception message to be raised below.
         exception_message = (
-            f'{exception_prefix}{repr(type_or_types)} neither '
+            f'{exception_prefix}{type_or_types!r} neither '
             f'class nor tuple of one or more classes'
         )
 
@@ -121,7 +121,7 @@ def die_unless_type_or_types(
                         # Note this.
                         exception_message += (
                             f' (i.e., tuple item {cls_index} '
-                            f'{repr(cls)} not class)'
+                            f'{cls!r} not class)'
                         )
 
                         # Halt iteration.
@@ -315,7 +315,7 @@ def is_type_subclass(
         superclass(es).
     '''
     assert isinstance(base_classes, TestableTypesTuple), (
-        f'{repr(base_classes)} neither class nor tuple of classes.')
+        f'{base_classes!r} neither class nor tuple of classes.')
 
     # Return true only if...
     return (
@@ -360,7 +360,7 @@ def is_type_subclass_proper(
         superclass(es).
     '''
     assert isinstance(base_classes, TestableTypesTuple), (
-        f'{repr(base_classes)} neither class nor tuple of classes.')
+        f'{base_classes!r} neither class nor tuple of classes.')
 
     # Return true only if...
     return (

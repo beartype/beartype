@@ -74,7 +74,7 @@ def get_hint_pep484585_args(
     BeartypeDecorHintPep585Exception
         If this hint is subscripted by an unexpected number of child type hints.
     '''
-    assert isinstance(args_len, int), f'{repr(args_len)} not integer.'
+    assert isinstance(args_len, int), f'{args_len!r} not integer.'
     assert args_len >= 1, f'{args_len} < 0.'
 
     # Avoid circular import dependencies.
@@ -87,7 +87,7 @@ def get_hint_pep484585_args(
     # hints...
     if len(hint_args) != args_len:
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
 
         # Human-readable noun describing the grammatically correct plurality of
         # the number of expected child type hints. English! Why!?!?
@@ -96,7 +96,7 @@ def get_hint_pep484585_args(
 
         # Raise an exception.
         msg = (
-            f'{exception_prefix}PEP 585 type hint {repr(hint)} '
+            f'{exception_prefix}PEP 585 type hint {hint!r} '
             f'not subscripted (indexed) by {args_len} {exception_noun} (i.e., '
             f'subscripted by {len(hint_args)} != {args_len} child type hints).'
         )

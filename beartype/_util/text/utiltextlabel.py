@@ -189,9 +189,9 @@ def label_callable(
     str
         Human-readable label describing this callable.
     '''
-    assert callable(func), f'{repr(func)} uncallable.'
+    assert callable(func), f'{func!r} uncallable.'
     assert isinstance(is_context, bool) or is_context is None, (  # <-- "NoneTypeOr" is unavailable here
-        f'{repr(is_context)} not tri-state boolean.')
+        f'{is_context!r} not tri-state boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncarglen import get_func_args_flexible_len
@@ -270,11 +270,11 @@ def label_exception(exception: Exception) -> str:
         Human-readable label describing this exception.
     '''
     assert isinstance(exception, Exception), (
-        f'{repr(exception)} not exception.')
+        f'{exception!r} not exception.')
 
     # Return the fully-qualified name of the class of this exception followed by
     # this exception's message.
-    return f'{get_object_type_name(exception)}: {str(exception)}'
+    return f'{get_object_type_name(exception)}: {exception!s}'
 
 
 # ....................{ LABELLERS ~ context                }....................
@@ -383,7 +383,7 @@ def label_type(
     str
         Human-readable label describing this class.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not class.'
+    assert isinstance(cls, type), f'{cls!r} not class.'
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin

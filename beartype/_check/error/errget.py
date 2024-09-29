@@ -204,8 +204,8 @@ def get_func_pith_violation(
         Further details.
     '''
     assert isinstance(check_meta, BeartypeCheckMeta), (
-        f'{repr(check_meta)} not type-checking call metadata.')
-    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
+        f'{check_meta!r} not type-checking call metadata.')
+    assert isinstance(pith_name, str), f'{pith_name!r} not string.'
 
     # Type hint annotating this parameter or return if this parameter or return
     # is annotated *OR* the placeholder sentinel otherwise (i.e., if this
@@ -220,10 +220,10 @@ def get_func_pith_violation(
     # knowledge or permission, precautions are warranted.
     if hint is SENTINEL:
         msg = (
-            f'{repr(check_meta.func)} parameter "{pith_name}" unannotated '
+            f'{check_meta.func!r} parameter "{pith_name}" unannotated '
             f'(or originally annotated but since deleted) in '
             f'"__annotations__" dunder dictionary:\n'
-            f'{repr(check_meta.func_arg_name_to_hint)}'
+            f'{check_meta.func_arg_name_to_hint!r}'
         )
         raise _BeartypeCallHintPepRaiseException(
             msg
@@ -485,7 +485,7 @@ def get_hint_object_violation(
         pith_value_repr = represent_object(
             obj=obj, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         msg = (
-            f'{exception_prefix}violates type hint {repr(hint)}, '
+            f'{exception_prefix}violates type hint {hint!r}, '
             f'but violation factory get_hint_object_violation() '
             f'erroneously suggests this object satisfies this hint. '
             f'Please report this desynchronization failure to '
@@ -551,7 +551,7 @@ def get_hint_object_violation(
             # this case, append the machine-readable representation of this
             # non-default configuration to this exception message for
             # disambiguity and clarity.
-            f' under non-default configuration {repr(conf)}'
+            f' under non-default configuration {conf!r}'
         ),
     }
 

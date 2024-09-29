@@ -108,7 +108,7 @@ def get_object_module(obj: object) -> ModuleType:
     # and thus having been imported from something, this object deceptively lies
     # about its module. In this case, raise an exception.
     if module is None:
-        msg = f'{repr(obj)} module "{module_name}" not found.'
+        msg = f'{obj!r} module "{module_name}" not found.'
         raise _BeartypeUtilModuleException(
             msg)
     # If this module was previously imported.
@@ -176,7 +176,7 @@ def get_object_module_line_number_begin(obj: object) -> int:
     # Else, this object is neither a pure-Python callable *NOR* a class.
 
     # In this case, raise an exception.
-    msg = f'{repr(obj)} neither callable nor class.'
+    msg = f'{obj!r} neither callable nor class.'
     raise _BeartypeUtilModuleException(
         msg)
 
@@ -214,7 +214,7 @@ def get_object_module_name(obj: object) -> str:
     # an exception.
     if module_name is None:
         msg = (
-            f'{repr(obj)} "__module__" dunder attribute undefined '
+            f'{obj!r} "__module__" dunder attribute undefined '
             f'(e.g., due to being neither class nor callable).'
         )
         raise _BeartypeUtilModuleException(
@@ -357,7 +357,7 @@ def get_module_filename(module: ModuleType) -> str:
     # If this module resides *ONLY* in memory, raise an exception.
     if module_filename is None:
         msg = (
-            f'Module {repr(module)} file not found '
+            f'Module {module!r} file not found '
             f'(e.g., due to either being a namespace (sub)package or '
             f'a dynamically defined in-memory module).'
         )

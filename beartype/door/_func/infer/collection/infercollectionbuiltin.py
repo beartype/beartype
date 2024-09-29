@@ -143,7 +143,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
           factory validating that type.
         * Else, :data:`None`.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(cls, type), f'{cls!r} not type.'
 
     # ....................{ IS                             }....................
     # Hint factory describing this class if this class is a builtin collection

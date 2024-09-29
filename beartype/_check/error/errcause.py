@@ -204,21 +204,21 @@ class ViolationCause:
         See the class docstring for a description of these parameters.
         '''
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-            f'{repr(cls_stack)} neither tuple nor "None".')
+            f'{cls_stack!r} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not configuration.')
+            f'{conf!r} not configuration.')
         assert func is None or callable(func), (
-            f'{repr(func)} neither callable nor "None".')
+            f'{func!r} neither callable nor "None".')
         assert isinstance(pith_name, NoneTypeOr[str]), (
-            f'{repr(pith_name)} not string or "None".')
+            f'{pith_name!r} not string or "None".')
         assert isinstance(cause_indent, str), (
-            f'{repr(cause_indent)} not string.')
+            f'{cause_indent!r} not string.')
         assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
+            f'{exception_prefix!r} not string.')
         assert isinstance(random_int, NoneTypeOr[int]), (
-            f'{repr(random_int)} not integer or "None".')
+            f'{random_int!r} not integer or "None".')
         assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
-            f'{repr(cause_str_or_none)} not string or "None".')
+            f'{cause_str_or_none!r} not string or "None".')
 
         # Classify all passed parameters.
         self.func = func
@@ -437,7 +437,7 @@ class ViolationCause:
             if cause_finder is None:
                 msg = (
                     f'{self.exception_prefix} type hint '
-                    f'{repr(self.hint)} unsupported (i.e., no '
+                    f'{self.hint!r} unsupported (i.e., no '
                     f'"find_cause_"-prefixed getter function defined '
                     f'for this category of hint).'
                 )

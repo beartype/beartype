@@ -35,9 +35,9 @@ def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
     ViolationCause
         Output cause type-checking this data.
     '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert isinstance(cause, ViolationCause), f'{cause!r} not cause.'
     assert cause.hint_sign is HintSignNoReturn, (
-        f'{repr(cause.hint)} not "HintSignNoReturn".')
+        f'{cause.hint!r} not "HintSignNoReturn".')
 
     # Decorated callable originating this violation.
     func: Callable = cause.func  # type: ignore[assignment]

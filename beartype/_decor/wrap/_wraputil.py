@@ -71,12 +71,12 @@ def unmemoize_func_wrapper_code(
         to the currently decorated callable.
     '''
     assert decor_meta.__class__ is BeartypeDecorMeta, (
-        f'{repr(decor_meta)} not @beartype call.')
+        f'{decor_meta!r} not @beartype call.')
     assert isinstance(func_wrapper_code, str), (
-        f'{repr(func_wrapper_code)} not string.')
-    assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
+        f'{func_wrapper_code!r} not string.')
+    assert isinstance(pith_repr, str), f'{pith_repr!r} not string.'
     assert isinstance(hint_refs_type_basename, Iterable), (
-        f'{repr(hint_refs_type_basename)} not iterable.')
+        f'{hint_refs_type_basename!r} not iterable.')
 
     # Generate an unmemoized parameter-specific code snippet type-checking this
     # parameter by replacing in this parameter-agnostic code snippet...

@@ -602,7 +602,7 @@ def _make_func_checker(
     -----
     All warnings emitted by the lower-level :func:`.make_check_expr` factory.
     '''
-    assert callable(make_code_check), f'{repr(make_code_check)} uncallable.'
+    assert callable(make_code_check), f'{make_code_check!r} uncallable.'
 
     # Attempt to...
     #
@@ -724,7 +724,7 @@ def _make_func_checker(
                     # arbitrarily chosen for convenience.
                     hint=hint_refs_type_basename[0],
                     exception_prefix=(
-                        f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '),
+                        f'{EXCEPTION_PLACEHOLDER}type hint {hint!r} '),
                 )
             # Else, this hint contains *NO* relative forward references.
 
@@ -844,11 +844,11 @@ def _make_code_raiser_violation(
     :func:`.make_check_expr`
         Further details.
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(conf, BeartypeConf), f'{conf!r} not configuration.'
     assert isinstance(func_scope, dict), (
-        f'{repr(func_scope)} not dictionary.')
+        f'{func_scope!r} not dictionary.')
     assert isinstance(is_param, NoneTypeOr[bool]), (
-        f'{repr(is_param)} neither boolean nor "None".')
+        f'{is_param!r} neither boolean nor "None".')
 
     # Pass a hidden parameter to this raiser function exposing the passed
     # beartype configuration accessed by this snippet.

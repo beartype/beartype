@@ -87,7 +87,7 @@ def die_unless_hint_pep586(
     # If this hint is *NOT* PEP 586-compliant, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignLiteral:
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} not PEP 586-compliant '
+            f'{exception_prefix}type hint {hint!r} not PEP 586-compliant '
             f'(e.g., "typing.Literal[...]", "typing_extensions.Literal[...]").'
         )
         raise exception_cls(
@@ -101,7 +101,7 @@ def die_unless_hint_pep586(
     # If this hint is unsubscripted...
     if not hint_literals:
         # Exception message to be raised.
-        exception_message = f'{exception_prefix}PEP 586 type hint {repr(hint)} '
+        exception_message = f'{exception_prefix}PEP 586 type hint {hint!r} '
 
         # If this hint defines the standard "__args__" dunder attribute, this
         # hint *MUST* have been subscripted by the the empty tuple. Ideally, the
@@ -145,9 +145,9 @@ def die_unless_hint_pep586(
 
             # Raise an exception.
             msg = (
-                f'{exception_prefix}PEP 586 type hint {repr(hint)} '
+                f'{exception_prefix}PEP 586 type hint {hint!r} '
                 f'argument {hint_literal_index} '
-                f'{repr(hint_literal)} not {hint_literal_types}.'
+                f'{hint_literal!r} not {hint_literal_types}.'
             )
             raise exception_cls(
                 msg

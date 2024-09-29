@@ -339,7 +339,7 @@ class HintSignLogicSequenceArgs1(HintSignLogicContainerArgs1):
     def _get_cause_enumerator_item(
         self, cause: ViolationCause) -> EnumeratorItem:
         assert cause.random_int is not None, (
-            f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+            f'Violation cause {cause!r} pseudo-random integer is "None".')
 
         # 0-based index of this item calculated from this random integer in the
         # *SAME EXACT WAY* as in the parent @beartype-generated wrapper.

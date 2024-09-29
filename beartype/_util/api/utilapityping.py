@@ -360,7 +360,7 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
         all importable typing modules.
     '''
     assert isinstance(typing_attr_basename, str), (
-        f'{repr(typing_attr_basename)} not string.')
+        f'{typing_attr_basename!r} not string.')
 
     # Set of all importable attributes to be returned by this getter.
     typing_attrs: set = set()
@@ -445,7 +445,7 @@ def iter_typing_attrs(
         f'{typing_attr_basenames} not string.')
     assert typing_attr_basenames, '"typing_attr_basenames" empty.'
     assert isinstance(typing_module_names, IterableABC), (
-        f'{repr(typing_module_names)} not iterable.')
+        f'{typing_module_names!r} not iterable.')
     assert typing_module_names, '"typing_module_names" empty.'
     assert all(
         isinstance(typing_module_name, str)

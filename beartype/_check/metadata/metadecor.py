@@ -380,19 +380,19 @@ class BeartypeDecorMeta:
 
         # If the callable to be type-checked is uncallable, raise an exception.
         if not callable(func):
-            msg = f'{repr(func)} uncallable.'
+            msg = f'{func!r} uncallable.'
             raise BeartypeDecorWrappeeException(msg)
         # Else, that callable is callable.
         #
         # If the callable to be unwrapped is uncallable, raise an exception.
         if not callable(wrapper):
-            msg = f'{repr(wrapper)} uncallable.'
+            msg = f'{wrapper!r} uncallable.'
             raise BeartypeDecorWrappeeException(msg)
         # Else, that callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
         if not isinstance(conf, BeartypeConf):
-            msg = f'"conf" {repr(conf)} not beartype configuration.'
+            msg = f'"conf" {conf!r} not beartype configuration.'
             raise BeartypeDecorWrappeeException(
                 msg)
         # Else, this configuration is a configuration.
@@ -400,7 +400,7 @@ class BeartypeDecorMeta:
         # If this class stack is neither a tuple *NOR* "None", raise an
         # exception.
         if not isinstance(cls_stack, NoneTypeOr[tuple]):
-            msg = f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".'
+            msg = f'"cls_stack" {cls_stack!r} neither tuple nor "None".'
             raise BeartypeDecorWrappeeException(
                 msg)
         # Else, this class stack is either a tuple *OR* "None".
@@ -411,7 +411,7 @@ class BeartypeDecorMeta:
             for cls_stack_item in cls_stack:
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
-                    msg = f'"cls_stack" item {repr(cls_stack_item)} not type.'
+                    msg = f'"cls_stack" item {cls_stack_item!r} not type.'
                     raise BeartypeDecorWrappeeException(
                         msg)
                 # Else, this item is a type.
@@ -749,8 +749,8 @@ class BeartypeDecorMeta:
         # needed to reasonably describe this metadata.
         return (
             f'BeartypeDecorMeta('
-            f'func={repr(self.func_wrappee)}, '
-            f'conf={repr(self.conf)}'
+            f'func={self.func_wrappee!r}, '
+            f'conf={self.conf!r}'
             f')'
         )
 

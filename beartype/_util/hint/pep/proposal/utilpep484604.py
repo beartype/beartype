@@ -327,7 +327,7 @@ def make_hint_pep484604_union(hints: tuple) -> object:
     BeartypeDecorHintPep604Exception
         If this tuple is empty.
     '''
-    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+    assert isinstance(hints, tuple), f'{hints!r} not tuple.'
 
     # If this tuple is empty, raise an exception.
     if not hints:

@@ -92,7 +92,7 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
             msg = (
                 f'Beartype configuration environment variable '
                 f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
-                f'value {repr(is_color_shell_var_value)} invalid '
+                f'value {is_color_shell_var_value!r} invalid '
                 f'(i.e., neither {IS_COLOR_SHELL_VAR_VALUES}).'
             )
             raise BeartypeConfShellVarException(
@@ -122,10 +122,10 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
                 cls=BeartypeConfShellVarWarning,
                 message=(
                     f'Beartype configuration parameter "is_color" '
-                    f'value {repr(is_color)} ignored in favour of '
+                    f'value {is_color!r} ignored in favour of '
                     f'environment variable '
                     f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
-                    f'value {repr(is_color_override)}.'
+                    f'value {is_color_override!r}.'
                 ),
             )
 

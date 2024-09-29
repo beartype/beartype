@@ -113,7 +113,7 @@ class KeyPool:
                from collections.abc import Hashable
                def item_maker(key: Hashable) -> object: ...
         '''
-        assert callable(item_maker), f'{repr(item_maker)} not callable.'
+        assert callable(item_maker), f'{item_maker!r} not callable.'
 
         # Classify these parameters as instance variables.
         self._pool_item_maker = item_maker
@@ -289,7 +289,7 @@ class KeyPool:
                 # exception.
                 if not self._pool_item_id_to_is_acquired.get(item_id, False):
                     msg = (
-                        f'Unacquired key pool item {repr(item)} '
+                        f'Unacquired key pool item {item!r} '
                         f'not releasable.'
                     )
                     raise _BeartypeUtilCachedKeyPoolException(

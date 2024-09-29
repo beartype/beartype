@@ -39,7 +39,7 @@ def is_str_float_or_int(text: str) -> bool:
         ``True`` only if this string is a valid machine-readable representation
         of either an integer or finite floating-point number.
     '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
+    assert isinstance(text, str), f'{text!r} not string.'
 
     # Return true only if this text represents a finite number. See also:
     #     s.lstrip('-').replace('.','',1).replace('e-','',1).replace('e','',1).isdigit()

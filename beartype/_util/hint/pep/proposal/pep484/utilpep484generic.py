@@ -151,7 +151,7 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     # If this hint originates from *NO* such superclass, raise an exception.
     if hint_origin_type is None:
         msg = (
-            f'Unerased PEP 484 generic or PEP 544 protocol {repr(hint)} '
+            f'Unerased PEP 484 generic or PEP 544 protocol {hint!r} '
             f'originates from no erased superclass.'
         )
         raise BeartypeDecorHintPep484Exception(
@@ -363,7 +363,7 @@ def get_hint_pep484_generic_bases_unerased(
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
     if not is_hint_pep484_generic(hint):
         msg = (
-            f'{exception_prefix}type hint {repr(hint)} neither '
+            f'{exception_prefix}type hint {hint!r} neither '
             f'PEP 484 generic nor PEP 544 protocol.'
         )
         raise exception_cls(
@@ -399,8 +399,8 @@ def get_hint_pep484_generic_bases_unerased(
     # * The "object" root superclass.
     if len(hint_bases) < 4:
         msg = (
-            f'{exception_prefix}PEP 484 generic {repr(hint)} '
-            f'subclasses less than four superclasses {repr(hint_bases)}.'
+            f'{exception_prefix}PEP 484 generic {hint!r} '
+            f'subclasses less than four superclasses {hint_bases!r}.'
         )
         raise exception_cls(
             msg
@@ -411,16 +411,16 @@ def get_hint_pep484_generic_bases_unerased(
     # expectations, raise an exception.
     if hint_bases[0] is not hint:
         msg = (
-            f'{exception_prefix}PEP 484 generic {repr(hint)} '
-            f'first superclass {repr(hint_bases[0])} != {repr(hint)}.'
+            f'{exception_prefix}PEP 484 generic {hint!r} '
+            f'first superclass {hint_bases[0]!r} != {hint!r}.'
         )
         raise exception_cls(
             msg
         )
     if hint_bases[-1] is not object:
         msg = (
-            f'{exception_prefix}PEP 484 generic {repr(hint)} '
-            f'last superclass {repr(hint_bases[-1])} != {repr(object)}.'
+            f'{exception_prefix}PEP 484 generic {hint!r} '
+            f'last superclass {hint_bases[-1]!r} != {object!r}.'
         )
         raise exception_cls(
             msg

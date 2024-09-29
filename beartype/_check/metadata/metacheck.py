@@ -135,12 +135,12 @@ class BeartypeCheckMeta:
             hint annotating that parameter).
         '''
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-            f'{repr(cls_stack)} neither tuple nor "None".')
+            f'{cls_stack!r} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not beartype configuration.')
-        assert callable(func), f'{repr(func)} uncallable.'
+            f'{conf!r} not beartype configuration.')
+        assert callable(func), f'{func!r} uncallable.'
         assert isinstance(func_arg_name_to_hint, dict), (
-            f'{repr(func_arg_name_to_hint)} not dictionary.')
+            f'{func_arg_name_to_hint!r} not dictionary.')
 
         # Classify all passed parameters as instance variables.
         self.cls_stack = cls_stack

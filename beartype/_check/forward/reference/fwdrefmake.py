@@ -154,10 +154,10 @@ def _make_forwardref_subtype(
     # Else, this proxy has yet to be created.
 
     assert isinstance(scope_name, NoneTypeOr[str]), (
-        f'{repr(scope_name)} neither string nor "None".')
-    assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
+        f'{scope_name!r} neither string nor "None".')
+    assert isinstance(hint_name, str), f'{hint_name!r} not string.'
     assert len(type_bases) == 1, (
-        f'{repr(type_bases)} not 1-tuple of a single superclass.')
+        f'{type_bases!r} not 1-tuple of a single superclass.')
 
     # If this attribute name is *NOT* a syntactically valid Python identifier,
     # raise an exception.

@@ -143,7 +143,7 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
         If ``obj_weakref`` is invalid: i.e., neither ``None``,
         :data:`_WEAKREF_NONE`, nor a weak reference.
     '''
-    assert isinstance(obj_repr, str), f'{repr(obj_repr)} not string.'
+    assert isinstance(obj_repr, str), f'{obj_repr!r} not string.'
 
     # If this weak reference is "None", the prior call to
     # make_obj_weakref_and_repr() was passed an object that could *NOT* be
@@ -163,7 +163,7 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     # If this weak reference is *NOT* a weak reference, raise an exception.
     if not isinstance(obj_weakref, weakref_ref):
         msg = (
-            f'Weak reference {repr(obj_weakref)} invalid '
+            f'Weak reference {obj_weakref!r} invalid '
             f'(i.e., neither weak reference, "None", nor "_WEAKREF_NONE").'
         )
         raise _BeartypeUtilPythonWeakrefException(

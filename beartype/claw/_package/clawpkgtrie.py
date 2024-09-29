@@ -159,7 +159,7 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
             Defaults to :data:`None`.
         '''
         assert isinstance(package_basename, NoneTypeOr[str]), (
-            f'{repr(package_basename)} neither string nor "None".')
+            f'{package_basename!r} neither string nor "None".')
 
         # Initialize our superclass to the empty dictionary.
         super().__init__()
@@ -188,7 +188,7 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
             ):
                 # Raise us up the exception bomb.
                 msg = (
-                    f'{repr(subpackage_basename_to_trie)} neither "None" nor '
+                    f'{subpackage_basename_to_trie!r} neither "None" nor '
                     f'dictionary mapping keys to packages trie blacklists.'
                 )
                 raise BeartypeClawHookException(
@@ -216,7 +216,7 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
         # Return a full representation of this blacklist.
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    package_basename={repr(self.package_basename)},',
+            f'    package_basename={self.package_basename!r},',
             f'    dict={super().__repr__()},',
             ')',
         ))
@@ -351,7 +351,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
             Defaults to :data:`None`.
         '''
         assert isinstance(package_basename, NoneTypeOr[str]), (
-            f'{repr(package_basename)} neither string nor "None".')
+            f'{package_basename!r} neither string nor "None".')
 
         # Initialize our superclass to the empty dictionary.
         super().__init__()
@@ -370,8 +370,8 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 
         return '\n'.join((
             f'{self.__class__.__name__}(',
-            f'    package_basename={repr(self.package_basename)},',
-            f'    conf_if_hooked={repr(self.conf_if_hooked)},',
+            f'    package_basename={self.package_basename!r},',
+            f'    conf_if_hooked={self.conf_if_hooked!r},',
             f'    dict={super().__repr__()},',
             ')',
         ))
@@ -402,7 +402,7 @@ def die_if_packages_trie() -> None:
                 f'Prior call to package-agnostic import hook '
                 f'beartype.claw.beartype_all() already registered all packages '
                 f'for type-checking under global beartype configuration '
-                f'{repr(claw_state.packages_trie_whitelist.conf_if_hooked)}.'
+                f'{claw_state.packages_trie_whitelist.conf_if_hooked!r}.'
             )
             raise BeartypeClawHookException(
                 msg
@@ -414,7 +414,7 @@ def die_if_packages_trie() -> None:
             f'Prior call to package-specific import hook '
             f'beartype.claw.beartype_*() already registered some packages '
             f'for type-checking under beartype configurations:\n\t'
-            f'{repr(claw_state.packages_trie_whitelist)}'
+            f'{claw_state.packages_trie_whitelist!r}'
         )
         raise BeartypeClawHookException(
             msg
@@ -480,7 +480,7 @@ def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
         :data:`True` only if this package has been blacklisted.
     '''
     assert isinstance(package_basenames, CollectionABC), (
-        f'{repr(package_basenames)} not collection.')
+        f'{package_basenames!r} not collection.')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
@@ -690,7 +690,7 @@ def iter_packages_trie(
         transitive parent package of the package with this name.
     '''
     assert isinstance(package_basenames, CollectionABC), (
-        f'{repr(package_basenames)} not collection.')
+        f'{package_basenames!r} not collection.')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.

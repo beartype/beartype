@@ -162,7 +162,7 @@ def get_type_locals(
         If the next non-ignored frame following the last ignored frame is *not*
         the parent callable or module directly declaring the passed callable.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(cls, type), f'{cls!r} not type.'
 
     # Return the dictionary of class attributes bundled with this class.
     return cls.__dict__  # type: ignore[return-value]

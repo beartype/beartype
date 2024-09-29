@@ -93,7 +93,7 @@ class FixedList(list):
 
         # If this length is *NOT* an integer, raise an exception.
         if not isinstance(size, int):
-            msg = f'Fixed list length {repr(size)} not integer.'
+            msg = f'Fixed list length {size!r} not integer.'
             raise _BeartypeUtilCachedFixedListException(
                 msg)
         # Else, this length is an integer.
@@ -132,7 +132,7 @@ class FixedList(list):
     # to raise exceptions.
 
     def __delitem__(self, index) -> NoReturn:
-        msg = f'{self._label} index {repr(index)} not deletable.'
+        msg = f'{self._label} index {index!r} not deletable.'
         raise _BeartypeUtilCachedFixedListException(
             msg)
 
@@ -339,7 +339,7 @@ def acquire_fixed_list(size: int) -> FixedList:
     # Thread-safely acquire a fixed list of this length.
     fixed_list = _fixed_list_pool.acquire(size)
     assert isinstance(fixed_list, FixedList), (
-        f'{repr(fixed_list)} not fixed list.')
+        f'{fixed_list!r} not fixed list.')
 
     # Return this list.
     return fixed_list
@@ -376,7 +376,7 @@ def release_fixed_list(fixed_list: FixedList) -> None:
         Previously acquired fixed list to be released.
     '''
     assert isinstance(fixed_list, FixedList), (
-        f'{repr(fixed_list)} not fixed list.')
+        f'{fixed_list!r} not fixed list.')
 
     # Thread-safely release this fixed list.
     _fixed_list_pool.release(key=len(fixed_list), item=fixed_list)

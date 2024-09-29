@@ -36,7 +36,7 @@ def die_unless_typehint(obj: object) -> None:
     # If this object is *NOT* a type hint wrapper, raise an exception.
     if not isinstance(obj, TypeHint):
         msg = (
-            f'{repr(obj)} not type hint wrapper '
+            f'{obj!r} not type hint wrapper '
             f'(i.e., "beartype.door.TypeHint" instance).'
         )
         raise BeartypeDoorException(

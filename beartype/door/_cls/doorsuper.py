@@ -179,7 +179,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Else, this concrete subclass is public.
 
         # Return this machine-readable representation.
-        return f'{hint_wrapper_basename}({repr(self._hint)})'
+        return f'{hint_wrapper_basename}({self._hint!r})'
 
     # ..................{ DUNDERS ~ compare : equals         }..................
     # Note that we intentionally avoid typing this method as returning

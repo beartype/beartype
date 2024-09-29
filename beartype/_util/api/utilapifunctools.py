@@ -112,7 +112,7 @@ def get_func_functools_partial_args(
           this partial.
     '''
     assert isinstance(func, CallableFunctoolsPartialType), (
-        f'{repr(func)} not "function.partial"-wrapped callable.')
+        f'{func!r} not "function.partial"-wrapped callable.')
 
     # Return a 2-tuple providing the positional and keyword parameters with
     # which this partial was originally partialized.
@@ -166,7 +166,7 @@ def get_func_functools_partial_args_flexible_len(
          If that callable is *not* pure-Python.
     '''
     assert isinstance(func, CallableFunctoolsPartialType), (
-        f'{repr(func)} not "function.partial"-wrapped callable.')
+        f'{func!r} not "function.partial"-wrapped callable.')
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncarglen import get_func_args_flexible_len
@@ -212,9 +212,9 @@ def get_func_functools_partial_args_flexible_len(
     # wrappees accept. Ergo, validation is required to guarantee sanity.
     if func_args_flexible_len < 0:
         msg = (
-            f'{exception_prefix}{repr(func)} passes '
+            f'{exception_prefix}{func!r} passes '
             f'{partial_args_flexible_len} parameter(s) to '
-            f'{repr(wrappee)} accepting only '
+            f'{wrappee!r} accepting only '
             f'{wrappee_args_flexible_len} parameter(s) '
             f'(i.e., {partial_args_flexible_len} > '
             f'{wrappee_args_flexible_len}).'
@@ -248,7 +248,7 @@ def unwrap_func_functools_partial_once(
         Possibly C-based callable directly wrapped by this partial.
     '''
     assert isinstance(func, CallableFunctoolsPartialType), (
-        f'{repr(func)} not "function.partial"-wrapped callable.')
+        f'{func!r} not "function.partial"-wrapped callable.')
 
     # Return the public "func" instance variable of this partial wrapper as is.
     return func.func
