@@ -213,7 +213,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     version_actual = get_module_version(module_name)
 
     # Tuples of version parts parsed from version strings.
-    version_actual_parts  = convert_str_version_to_tuple(version_actual)
+    version_actual_parts = convert_str_version_to_tuple(version_actual)
     version_minimum_parts = convert_str_version_to_tuple(version_minimum)
 
     # Return true only if this module's version satisfies this minimum.

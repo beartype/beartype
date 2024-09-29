@@ -391,8 +391,8 @@ def beartype_descriptor_decorator_builtin(
         # Pure-Python unbound getter, setter, and deleter functions wrapped by
         # this descriptor if any *OR* "None" otherwise (i.e., for each such
         # function currently unwrapped by this descriptor).
-        descriptor_getter  = descriptor.fget  # type: ignore[assignment,union-attr]
-        descriptor_setter  = descriptor.fset  # type: ignore[assignment,union-attr]
+        descriptor_getter = descriptor.fget  # type: ignore[assignment,union-attr]
+        descriptor_setter = descriptor.fset  # type: ignore[assignment,union-attr]
         descriptor_deleter = descriptor.fdel  # type: ignore[assignment,union-attr]
 
         # Decorate this getter function with type-checking.

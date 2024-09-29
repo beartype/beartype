@@ -180,7 +180,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
 
     # Kind and name of this parameter.
     arg_kind: ArgKind = None  # type: ignore[assignment]
-    arg_name: str     = None  # type: ignore[assignment]
+    arg_name: str = None  # type: ignore[assignment]
 
     #FIXME: Uncomment as needed, please. *sigh*
     # # Default value of this parameter if this parameter is optional *OR* the

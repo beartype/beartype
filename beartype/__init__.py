@@ -83,7 +83,7 @@ def _init() -> None:
 
     # Alias PEP 8-compliant string globals defined by this submodule to PEP
     # 8-noncompliant string globals defined elsewhere.
-    __version__      = VERSION
+    __version__ = VERSION
     __version_info__ = VERSION_PARTS  # type: ignore[assignment]
 
     # If this physical distribution installed with this package defines the
