@@ -171,7 +171,7 @@ CODE_PEP484585_MAPPING_KEY_VALUE = f'''
 {{indent_curr}}        # True only if this key satisfies this hint.
 {{indent_curr}}        {{hint_key_placeholder}} and
 {{indent_curr}}        # True only if this value satisfies this hint.
-{{indent_curr}}        {{hint_value_placeholder}}'''
+{{indent_curr}}        {{hint_value_placeholder}}'''  # noqa: E501 line-too-long
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
 key-value pair of the current pith against *only* the key and value child type

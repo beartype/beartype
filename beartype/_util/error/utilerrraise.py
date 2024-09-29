@@ -90,17 +90,18 @@ def reraise_exception_placeholder(
            portend_high_level_winter()
          File "<input>", line 27, in portend_high_level_winter
            'Random "Dark Souls" plaintext meme'
-         File "/home/leycec/py/beartype/beartype._util.error.utilerrraise.py", line 225, in reraise_exception_placeholder
+         File "beartype/beartype._util.error.utilerrraise.py", line 225, in reraise_exception_placeholder
            raise exception.with_traceback(exception.__traceback__)
          File "<input>", line 20, in portend_high_level_winter
            print(portend_low_level_winter(is_winter_coming=True))
-         File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 296, in _callable_cached
+         File "beartype/beartype/_util/cache/utilcachecall.py", line 296, in _callable_cached
            raise exception
-         File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
+         File "beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
            *args, **kwargs)
          File "<input>", line 13, in portend_low_level_winter
            EXCEPTION_PLACEHOLDER))
-       beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
+       beartype.roar.BeartypeDecorHintPepException:
+        Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (
         f'{repr(exception)} not exception.')

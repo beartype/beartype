@@ -422,23 +422,46 @@ def make_check_expr(
     # and then repeatedly type-checking that variable rather than the logic
     # required to continually reacquire this child pith: e.g.,
     #
-    #     # Type-checking conditional for "List[List[str]]" under Python < 3.8.
-    #     if not (
-    #         isinstance(__beartype_pith_0, list) and
-    #         (
-    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
-    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)][__beartype_random_int % len(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)])], str) if __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)] else True
-    #         ) if __beartype_pith_0 else True
-    #     ):
+    # Type-checking conditional for "List[List[str]]" under Python < 3.8.
+    # if not (
+    #     isinstance(__beartype_pith_0, list)
+    #     and (
+    #         isinstance(
+    #             __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list
+    #         )
+    #         and isinstance(
+    #             __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)][
+    #                 __beartype_random_int
+    #                 % len(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)])
+    #             ],
+    #             str,
+    #         )
+    #         if __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)]
+    #         else True
+    #     )
+    #     if __beartype_pith_0
+    #     else True
+    # ):
     #
-    #     # The same conditional under Python >= 3.8.
-    #     if not (
-    #         isinstance(__beartype_pith_0, list) and
-    #         (
-    #             isinstance(__beartype_pith_1 := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
-    #             isinstance(__beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str) if __beartype_pith_1 else True
-    #         ) if __beartype_pith_0 else True
-    #     ):
+    # The same conditional under Python >= 3.8.
+    # if not (
+    #     isinstance(__beartype_pith_0, list)
+    #     and (
+    #         isinstance(
+    #             __beartype_pith_1 := __beartype_pith_0[
+    #                 __beartype_random_int % len(__beartype_pith_0)
+    #             ],
+    #             list,
+    #         )
+    #         and isinstance(
+    #             __beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str
+    #         )
+    #         if __beartype_pith_1
+    #         else True
+    #     )
+    #     if __beartype_pith_0
+    #     else True
+    # ):
     #
     # Note that:
     # * The random item selected from the root pith (i.e., "__beartype_pith_1

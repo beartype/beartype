@@ -686,7 +686,10 @@ class BeartypeDecorMeta(object):
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
         self.func_arg_name_to_hint = get_func_annotations(wrapper)
-        # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_arg_name_to_hint}...')
+        # print(
+        #     f'Beartyping func {repr(func)} + wrapper {repr(wrapper)}'
+        #     f'w/ annotations {self.func_arg_name_to_hint}...'
+        # )
 
         # dict.get() method bound to this dictionary.
         self.func_arg_name_to_hint_get = self.func_arg_name_to_hint.get

@@ -713,12 +713,18 @@ def _init() -> None:
             #        hint_sign, hint_sign)
             #
             #    # Map from that attribute in this module to this sign.
-            #    # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
+            #    # print(
+            #    #     f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]")'
+            #    #     f'-> {repr(hint_sign)}...'
+            #    # )
             #    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
             #        f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign_replaced
 
             # Map from that attribute in this module to this sign.
-            # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
+            # print(
+            #     f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]")'
+            #     f' -> {repr(hint_sign)}...'
+            # )
             HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
                 f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign
 

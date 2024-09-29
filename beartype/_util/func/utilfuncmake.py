@@ -226,10 +226,10 @@ def make_func(
     # to non-human-readability, which is less than ideal: e.g.,
     #
     #    Traceback (most recent call last):
-    #      File "/home/leycec/py/betsee/betsee/gui/simconf/stack/widget/mixin/guisimconfwdgeditscalar.py", line 313, in _set_alias_to_widget_value_if_sim_conf_open
+    #      File "betsee/.../guisimconfwdgeditscalar.py", line 313, in _set_alias_to_widget_value_if_sim_conf_open
     #        widget=self, value_old=self._widget_value_last)
     #      File "<string>", line 25, in func_beartyped
-    #      File "/home/leycec/py/betsee/betsee/gui/simconf/stack/widget/mixin/guisimconfwdgeditscalar.py", line 409, in __init__
+    #      File "betsee/.../guisimconfwdgeditscalar.py", line 409, in __init__
     #        *args, widget=widget, synopsis=widget.undo_synopsis, **kwargs)
     #      File "<string>", line 13, in func_beartyped
     #
