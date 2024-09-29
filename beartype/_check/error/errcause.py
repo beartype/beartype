@@ -158,7 +158,6 @@ class ViolationCause:
         'random_int',
     )
 
-
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
         'cause_str_or_none',

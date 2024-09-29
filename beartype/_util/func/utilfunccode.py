@@ -262,13 +262,11 @@ if IS_PYTHON_AT_LEAST_3_9:
     # Defer version-specific imports.
     from ast import unparse as ast_unparse  # type: ignore[attr-defined]
 
-
     _LAMBDA_CODE_FILESIZE_MAX = 1000000
     '''
     Maximum size (in bytes) of files to be safely parsed for lambda function
     declarations by the :func:`get_func_code_or_none` getter.
     '''
-
 
     def get_func_code_or_none(
         # Mandatory parameters.
@@ -418,7 +416,6 @@ if IS_PYTHON_AT_LEAST_3_9:
         # callable. Defer to the get_func_code_lines_or_none() function.
         return get_func_code_lines_or_none(func=func, warning_cls=warning_cls)
 
-
     # Helper class instantiated above to decompile AST lambda nodes.
     class _LambdaNodeUnparser(NodeVisitor):
         '''
@@ -465,7 +462,6 @@ if IS_PYTHON_AT_LEAST_3_9:
 
             # Initialize all remaining instance variables.
             self.lambdas_code: List[str] = []
-
 
         def visit_Lambda(self, node):
             '''

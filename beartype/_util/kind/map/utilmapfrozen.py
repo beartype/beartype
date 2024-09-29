@@ -81,7 +81,6 @@ class FrozenDict(dict):
         # Return the precomputed hash for this immutable dictionary.
         return self._hash
 
-
     def __reduce_ex__(self, protocol: SupportsIndex) -> Tuple[type, object]:
         '''
         Pickle this immutable dictionary.
@@ -100,7 +99,6 @@ class FrozenDict(dict):
         # Dark magic is both dark and magical.
         return (type(self), (dict(self),))
 
-
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this immutable dictionary.
@@ -115,7 +113,6 @@ class FrozenDict(dict):
 
         # Return an appropriate representation of this immutable dictionary.
         return f'{type_name}({dict_repr})'
-
 
     def __or__(self, other: Mapping) -> 'FrozenDict':
         '''
@@ -188,7 +185,6 @@ class FrozenDict(dict):
             msg
         )
 
-
     def __delitem__(self, key) -> NoReturn:
         msg = (
             f'Immutable dictionary {repr(self)} '
@@ -198,12 +194,10 @@ class FrozenDict(dict):
             msg
         )
 
-
     def clear(self) -> NoReturn:
         msg = f'Immutable dictionary {repr(self)} not clearable.'
         raise BeartypeKindFrozenDictException(
             msg)
-
 
     def pop(self, key, default = None) -> NoReturn:
         msg = (
@@ -214,12 +208,10 @@ class FrozenDict(dict):
             msg
         )
 
-
     def popitem(self) -> NoReturn:
         msg = f'Immutable dictionary {repr(self)} not poppable.'
         raise BeartypeKindFrozenDictException(
             msg)
-
 
     def setdefault(self, key, default = None) -> NoReturn:
         msg = (
@@ -229,7 +221,6 @@ class FrozenDict(dict):
         raise BeartypeKindFrozenDictException(
             msg
         )
-
 
     def update(self, *args, **kwargs) -> NoReturn:
         msg = (

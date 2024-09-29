@@ -175,7 +175,6 @@ class BeartypeCheckMeta:
             func_arg_name_to_hint=decor_meta.func_arg_name_to_hint,
         )
 
-
     @classmethod
     def make_from_decor_meta_kwargs(cls, **kwargs) -> 'BeartypeCheckMeta':
         '''

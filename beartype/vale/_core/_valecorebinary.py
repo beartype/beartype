@@ -192,8 +192,6 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         symbolizing this operation.
         '''
 
-
-
     @abstractmethod
     def _is_shortcircuited(self, obj: object) -> bool:
         '''
@@ -278,7 +276,6 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
     def _operator_symbol(self) -> str:
         return '&'
 
-
     def _is_shortcircuited(self, obj: object) -> bool:
 
         # Return true only if the passed object violates this first child
@@ -342,7 +339,6 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     @property
     def _operator_symbol(self) -> str:
         return '|'
-
 
     def _is_shortcircuited(self, obj: object) -> bool:
 

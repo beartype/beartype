@@ -153,7 +153,6 @@ class _TypeHintMeta(ABCMeta):
                 arg=hint,
             ))
 
-
     # ..................{ PRIVATE                            }..................
     def _make_wrapper(cls: '_TypeHintMeta', hint: object) -> object:
         '''

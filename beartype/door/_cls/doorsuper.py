@@ -162,7 +162,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         return hash(self._hint)
 
-
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this type hint wrapper.
@@ -221,7 +220,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Defer to the subclass-specific implementation of this test.
         return self._is_equal(other)
 
-
     def __ne__(self, other: object) -> bool:
         return not (self == other)
 
@@ -236,7 +234,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         return self.is_subhint(other)
 
-
     def __lt__(self, other: object) -> bool:
         '''
         :data:`True` if this hint is a strict subhint of the passed hint.
@@ -247,7 +244,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         return self.is_subhint(other) and self != other
 
-
     def __ge__(self, other: object) -> bool:
         '''
         :data:`True` if this hint is a superhint of the passed hint.
@@ -257,7 +253,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             return NotImplemented
 
         return self.is_superhint(other)
-
 
     def __gt__(self, other: object) -> bool:
         '''
@@ -280,7 +275,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Sgt. Pepper's One-liners GitHub Club Band.
         return hint_child in self._args_wrapped_frozenset
-
 
     def __iter__(self) -> Iterable['TypeHint']:
         '''
@@ -366,7 +360,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # See __len__() for further commentary.
         return bool(self._args_wrapped_tuple)
 
-
     #FIXME: Unit test us up, please.
     def __len__(self) -> int:
         '''
@@ -398,7 +391,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Who could argue with a working one-liner? Not you. Surely, not you.
         return self._args
 
-
     @property
     def hint(self) -> T:
         '''
@@ -408,7 +400,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Q: Can one-liners solve all possible problems? A: Yes.
         return self._hint
-
 
     @property
     def is_ignorable(self) -> bool:
@@ -560,7 +551,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             exception_prefix=exception_prefix,
         )
 
-
     def is_bearable(
         self,
 
@@ -657,7 +647,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             # case, defer to the subclass-specific implementation of this test.
             self._is_subhint(other)
         )
-
 
     def is_superhint(self, other: 'TypeHint') -> bool:
         '''
@@ -791,7 +780,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             for other_branch in other._branches
         )
 
-
     def _is_subhint_branch(self, branch: 'TypeHint') -> bool:
         '''
         :data:`True` only if this type hint is a subhint of the passed branch of
@@ -853,7 +841,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # One-liner, don't fail us now!
         return tuple(TypeHint(hint_child) for hint_child in self._args)
 
-
     @property  # type: ignore
     @property_cached
     def _args_wrapped_frozenset(self) -> FrozenSet['TypeHint']:
@@ -869,7 +856,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
 
         return frozenset(self._args_wrapped_tuple)
-
 
     @property  # type: ignore
     @property_cached
@@ -892,7 +878,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Default to returning the 1-tuple containing only this instance, as
         # *ALL* subclasses except "_HintTypeUnion" require this default.
         return (self,)
-
 
     @property  # type: ignore
     @property_cached

@@ -268,7 +268,6 @@ class BeartypeNodeTransformerUtilityMixin:
         # implying the current node resides directly in the body of a module.
         return not self._scope_stack_beartype  # type: ignore[attr-defined]
 
-
     @property
     def _is_scope_class_beartype(self) -> bool:
         '''

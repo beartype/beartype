@@ -122,7 +122,6 @@ class BeartypeForwardRefMeta(type):
             f'{cls.__name_beartype__}.{hint_name}',
         )
 
-
     def __instancecheck__(cls: BeartypeForwardRef, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is an instance of the external
@@ -149,7 +148,6 @@ class BeartypeForwardRefMeta(type):
         # Return true only if this forward reference subclass insists that this
         # object satisfies the external class referenced by this subclass.
         return cls.__is_instance_beartype__(obj)
-
 
     def __subclasscheck__(cls: BeartypeForwardRef, obj: object) -> bool:  # type: ignore[misc]
         '''
@@ -178,7 +176,6 @@ class BeartypeForwardRefMeta(type):
         # object is an instance of the external class referenced by this
         # subclass.
         return cls.__is_subclass_beartype__(obj)
-
 
     def __repr__(cls: BeartypeForwardRef) -> str:  # type: ignore[misc]
         '''

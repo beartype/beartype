@@ -62,7 +62,6 @@ class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
     type hint referenced by this forward reference subclass.
     '''
 
-
     __scope_name_beartype__: Optional[str] = None
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
@@ -112,7 +111,6 @@ class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
         # Return true only if this object is an instance of the external class
         # referenced by this forward reference.
         return isinstance(obj, cls.__type_beartype__)  # type: ignore[arg-type]
-
 
     @classmethod
     def __is_subclass_beartype__(cls, obj: object) -> bool:
@@ -169,7 +167,6 @@ class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
     Tuple of all positional arguments subscripting this forward reference.
     '''
-
 
     __kwargs_beartype__: LexicalScope = None  # type: ignore[assignment]
     '''

@@ -67,7 +67,6 @@ class AnnotatedTypeHint(TypeHint):
             and self._metadata == other._metadata
         )
 
-
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
         # If the other type is not annotated, we ignore annotations on this

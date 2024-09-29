@@ -108,7 +108,6 @@ class _BeartypeValidatorFactoryABC(
             Beartype validator encapsulating this validation.
         '''
 
-
     # ..................{ PRIVATE ~ validator                }..................
     #FIXME: Unit test us up, please.
     def _die_unless_getitem_args_1(self, args: Any) -> None:

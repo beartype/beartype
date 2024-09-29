@@ -274,7 +274,6 @@ class _CachingProtocolMeta(_ProtocolMeta):
         # Return this caching protocol.
         return cls
 
-
     def __instancecheck__(self, inst: Any) -> bool:
         '''
         :data:`True` only if the passed object is a **structural subtype**

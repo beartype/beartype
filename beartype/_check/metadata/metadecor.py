@@ -267,7 +267,6 @@ class BeartypeDecorMeta:
         # Nullify instance variables for safety.
         self.deinit()
 
-
     def deinit(self) -> None:
         '''
         Deassociate this metadata from the callable passed to the most recent
@@ -298,7 +297,6 @@ class BeartypeDecorMeta:
         self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_name) = None  # type: ignore[assignment]
-
 
     def reinit(
         self,

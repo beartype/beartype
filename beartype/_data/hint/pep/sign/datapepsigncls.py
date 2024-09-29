@@ -52,14 +52,12 @@ class HintSign:
         # Classify all passed parameters.
         self.name = name
 
-
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this sign.
         '''
 
         return f"HintSign('{self.name}')"
-
 
     def __str__(self) -> str:
         '''

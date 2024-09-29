@@ -1118,7 +1118,6 @@ elif IS_PYTHON_AT_LEAST_3_10:
     :class:`typing.ParamSpec` type available only under Python >= 3.10.
     '''
 
-
     HintPep612ParamSpecArgType = _typing.ParamSpecArgs
     '''
     C-based type of all :pep:`612`-compliant **parameter specification variadic
@@ -1131,7 +1130,6 @@ elif IS_PYTHON_AT_LEAST_3_10:
     This type is a version-agnostic generalization of the standard
     :class:`typing.ParamSpecArgs` type available only under Python >= 3.10.
     '''
-
 
     HintPep612ParamSpecKwargType = _typing.ParamSpecKwargs
     '''

@@ -135,12 +135,10 @@ class FixedList(list):
         raise _BeartypeUtilCachedFixedListException(
             msg)
 
-
     def __iadd__(self, value) -> NoReturn:  # type: ignore[misc]
         msg = f'{self._label} not addable by {represent_object(value)}.'
         raise _BeartypeUtilCachedFixedListException(
             msg)
-
 
     def __imul__(self, value) -> NoReturn:  # type: ignore[misc]
         msg = f'{self._label} not multipliable by {represent_object(value)}.'
@@ -177,7 +175,6 @@ class FixedList(list):
     #     # an iterable of the same length as that slice. In either case, this
     #     # operation preserves the length of this list and is thus acceptable.
     #     return super().__setitem__(index, value)
-
 
     #FIXME: Disabled as currently only called by __setitem__(). *sigh*
     # def _die_if_slice_len_ne_value_len(self, index, value) -> None:
@@ -247,24 +244,20 @@ class FixedList(list):
         raise _BeartypeUtilCachedFixedListException(
             msg)
 
-
     def clear(self) -> NoReturn:
         msg = f'{self._label} not clearable.'
         raise _BeartypeUtilCachedFixedListException(
             msg)
-
 
     def extend(self, obj) -> NoReturn:
         msg = f'{self._label} not extendable by {represent_object(obj)}.'
         raise _BeartypeUtilCachedFixedListException(
             msg)
 
-
     def pop(self, *args) -> NoReturn:
         msg = f'{self._label} not poppable.'
         raise _BeartypeUtilCachedFixedListException(
             msg)
-
 
     def remove(self, *args) -> NoReturn:
         msg = f'{self._label} not removable.'

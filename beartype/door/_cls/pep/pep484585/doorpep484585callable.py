@@ -217,7 +217,6 @@ class CallableTypeHint(TypeHint):
 
         return self._args_wrapped_tuple[:-1]
 
-
     @property
     def return_hint(self) -> TypeHint:
         '''
@@ -243,12 +242,10 @@ class CallableTypeHint(TypeHint):
         # Callable[..., Any] (or just `Callable`)
         return self.is_params_ignorable and self.is_return_ignorable
 
-
     @property
     def is_params_ignorable(self) -> bool:
         # Callable[..., ???]
         return self._args[0] is Ellipsis
-
 
     @property
     def is_return_ignorable(self) -> bool:

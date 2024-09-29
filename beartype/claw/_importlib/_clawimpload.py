@@ -387,7 +387,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             _bootstrap_external.cache_from_source = (
                 cache_from_source_original)
 
-
     # Note that we explicitly ignore mypy override complaints here. For unknown
     # reasons, mypy believes that "importlib.machinery.SourceFileLoader"
     # subclasses comply with the "importlib.abc.InspectLoader" abstract base

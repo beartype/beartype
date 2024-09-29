@@ -30,7 +30,6 @@ def is_python_pypy() -> bool:
     return python_implementation() == 'PyPy'
 
 
-
 def is_python_optimized() -> bool:
     '''
     :data:`True` only if the active Python interpreter is currently

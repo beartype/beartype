@@ -109,7 +109,6 @@ class BeartypeClawState:
         # Reinitialize this singleton safely.
         self._reinit_safe()
 
-
     def _reinit_safe(self) -> None:
         '''
         Reinitialize *all* beartype import hook state encapsulated by this data
@@ -136,7 +135,6 @@ class BeartypeClawState:
         #FIXME: Restore this in favour of the above, please. *sigh*
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie={'beartype': PackagesTrieBlacklisted})
-
 
     def reinit(self) -> None:
         '''

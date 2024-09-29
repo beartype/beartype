@@ -164,7 +164,6 @@ class BeartypeDecorWrappeeException(BeartypeDecorException):
     '''
 
 
-
 class BeartypeDecorWrapperException(BeartypeDecorException):
     '''
     **Beartype decorator parse exception.**
@@ -189,7 +188,6 @@ class BeartypeDecorHintException(BeartypeDecorException):
     '''
 
 
-
 class BeartypeDecorHintForwardRefException(
     BeartypeDecorHintException, _BeartypeHintForwardRefExceptionMixin):
     '''
@@ -200,7 +198,6 @@ class BeartypeDecorHintForwardRefException(
     **invalid forward reference type hint** (i.e., string whose value is the
     name of a user-defined class that has yet to be declared).
     '''
-
 
 
 class BeartypeDecorHintTypeException(BeartypeDecorHintException):
@@ -233,7 +230,6 @@ class BeartypeDecorHintNonpepException(BeartypeDecorHintException):
     '''
 
 
-
 class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
     '''
     **Beartype decorator PEP-noncompliant NumPy type hint exception.**
@@ -243,7 +239,6 @@ class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
     **invalid NumPy type hint** (e.g., ``numpy.typing.NDArray[...]`` type hint
     subscripted by an invalid number of arguments).
     '''
-
 
 
 class BeartypeDecorHintNonpepPanderaException(BeartypeDecorHintNonpepException):
@@ -272,7 +267,6 @@ class BeartypeDecorHintPepException(BeartypeDecorHintException):
     '''
 
 
-
 class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
     '''
     **Beartype decorator PEP-compliant type hint sign exception.**
@@ -283,7 +277,6 @@ class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
     identifiable by a **sign** (i.e., object uniquely identifying a category
     of PEP-compliant type hints).
     '''
-
 
 
 class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
@@ -316,7 +309,6 @@ class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`484`-compliant **type hint exception.**
@@ -331,7 +323,6 @@ class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep484585Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`484`- or :pep:`585`-compliant **dual type hint
@@ -342,7 +333,6 @@ class BeartypeDecorHintPep484585Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints violating :pep:`484`, :pep:`585`, *or*
     this decorator's implementation of :pep:`484` or :pep:`585`.
     '''
-
 
 
 class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
@@ -356,7 +346,6 @@ class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep557Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`557`-compliant **type hint exception.**
@@ -366,7 +355,6 @@ class BeartypeDecorHintPep557Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`557` *or* this
     decorator's implementation of :pep:`557`.
     '''
-
 
 
 class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
@@ -380,7 +368,6 @@ class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`586`-compliant **type hint exception.**
@@ -390,7 +377,6 @@ class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`586` *or* this
     decorator's implementation of :pep:`586`.
     '''
-
 
 
 class BeartypeDecorHintPep591Exception(BeartypeDecorHintPepException):
@@ -404,7 +390,6 @@ class BeartypeDecorHintPep591Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`593`-compliant **type hint exception.**
@@ -414,7 +399,6 @@ class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`593` *or* this
     decorator's implementation of :pep:`593`.
     '''
-
 
 
 class BeartypeDecorHintPep604Exception(BeartypeDecorHintPepException):
@@ -428,7 +412,6 @@ class BeartypeDecorHintPep604Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep612Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`612`-compliant **type hint exception.**
@@ -438,7 +421,6 @@ class BeartypeDecorHintPep612Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`612` *or* this
     decorator's implementation of :pep:`612`.
     '''
-
 
 
 class BeartypeDecorHintPep646Exception(BeartypeDecorHintPepException):
@@ -452,7 +434,6 @@ class BeartypeDecorHintPep646Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep647Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`647`-compliant **type hint exception.**
@@ -462,7 +443,6 @@ class BeartypeDecorHintPep647Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`647` *or* this
     decorator's implementation of :pep:`647`.
     '''
-
 
 
 class BeartypeDecorHintPep673Exception(BeartypeDecorHintPepException):
@@ -476,7 +456,6 @@ class BeartypeDecorHintPep673Exception(BeartypeDecorHintPepException):
     '''
 
 
-
 class BeartypeDecorHintPep692Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`692`-compliant **type hint exception.**
@@ -486,7 +465,6 @@ class BeartypeDecorHintPep692Exception(BeartypeDecorHintPepException):
     one or more PEP-compliant type hints either violating :pep:`692` *or* this
     decorator's implementation of :pep:`692`.
     '''
-
 
 
 class BeartypeDecorHintPep695Exception(BeartypeDecorHintPepException):
@@ -511,7 +489,6 @@ class BeartypeDecorParamException(BeartypeDecorException):
     '''
 
 
-
 class BeartypeDecorParamNameException(BeartypeDecorParamException):
     '''
     **Beartype decorator parameter name exception.**
@@ -532,7 +509,6 @@ class BeartypeCallException(BeartypeException):
     generated by the :func:`beartype.beartype` decorator, typically when
     failing a runtime type-check at call time.
     '''
-
 
 
 class BeartypeCallUnavailableTypeException(BeartypeCallException):
@@ -558,7 +534,6 @@ class BeartypeCallHintException(BeartypeCallException):
     parameter or returning a value violating a type hint annotating that
     parameter or return.
     '''
-
 
 
 class BeartypeCallHintForwardRefException(
@@ -749,7 +724,6 @@ class BeartypeCallHintParamViolation(BeartypeCallHintViolation):
     '''
 
 
-
 class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     '''
     **Beartyped callable return type-checking exception.**
@@ -759,7 +733,6 @@ class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     that call returns an object violating the type hint annotating the return
     of that decorated callable.
     '''
-
 
 
 class BeartypeDecorHintParamDefaultViolation(BeartypeCallHintViolation):
@@ -782,7 +755,6 @@ class BeartypePepException(BeartypeDecorException):
     Instances of subclasses of this exception are raised at both call time and
     decoration time on receiving a callable or class violating a specific PEP.
     '''
-
 
 
 class BeartypePep563Exception(BeartypePepException):
@@ -817,7 +789,6 @@ class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
     '''
 
 
-
 class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
     '''
     **Beartype cave** ``None`` **tuple factory key exception.**
@@ -832,7 +803,6 @@ class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
       * **Tuples of types** (i.e., tuples whose items are all
         :class:`beartype.cave.ClassType` instances).
     '''
-
 
 
 #FIXME: Unsure what this is about. We no longer raise this anywhere. *sigh*
@@ -870,7 +840,6 @@ class BeartypeClawHookException(BeartypeClawException):
     '''
 
 
-
 class BeartypeClawHookUnpackagedException(BeartypeClawHookException):
     '''
     **Beartype import hook-time unpackaged exception.**
@@ -894,7 +863,6 @@ class BeartypeClawImportException(BeartypeClawException):
     '''
 
 
-
 class BeartypeClawImportAstException(BeartypeClawImportException):
     '''
     **Beartype import hook abstract syntax tree (AST) exception.**
@@ -904,7 +872,6 @@ class BeartypeClawImportAstException(BeartypeClawImportException):
     by the :mod:`beartype.claw` subpackage) erroneously transforms a module from
     its original syntactically valid AST into a new syntactically invalid AST.
     '''
-
 
 
 class BeartypeClawImportConfException(BeartypeClawImportException):
@@ -929,7 +896,6 @@ class BeartypeConfException(BeartypeException):
     '''
 
 
-
 class BeartypeConfParamException(BeartypeConfException):
     '''
     **Beartype configuration parameter exception.**
@@ -938,7 +904,6 @@ class BeartypeConfParamException(BeartypeConfException):
     :class:`beartype.BeartypeConf` class when the caller attempts to erroneously
     instantiate that class with an invalid parameter.
     '''
-
 
 
 class BeartypeConfShellVarException(BeartypeConfException):
@@ -961,7 +926,6 @@ class BeartypeDoorException(BeartypeException):
     Instances of subclasses of this exception are raised at call time from
     callables and classes published by the :func:`beartype.door` subpackage.
     '''
-
 
 
 class BeartypeDoorHintViolation(BeartypeCallHintViolation):
@@ -1003,7 +967,6 @@ class BeartypeDoorPepException(BeartypeDoorException):
     '''
 
 
-
 class BeartypeDoorPepArgsLenException(BeartypeDoorException):
     '''
     **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
@@ -1015,7 +978,6 @@ class BeartypeDoorPepArgsLenException(BeartypeDoorException):
     the :mod:`beartype.door` API but otherwise invalid due to having been
     subscripted by an invalid number of child type hints).
     '''
-
 
 
 class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
@@ -1055,7 +1017,6 @@ class BeartypeKindFrozenDictException(BeartypeException):
     '''
 
 
-
 class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
     '''
     **Beartype hint overrides exception.**
@@ -1077,7 +1038,6 @@ class BeartypeLibraryException(BeartypeException):
     utilities** (i.e., callables and classes interfacing with third-party
     packages and modules outside the control of :mod:`beartype`).
     '''
-
 
 
 class BeartypeLibraryNumpyException(BeartypeLibraryException):
@@ -1105,7 +1065,6 @@ class BeartypePlugException(BeartypeException):
     '''
 
 
-
 class BeartypePlugInstancecheckStrException(BeartypePlugException):
     '''
     **Beartype** ``__instancecheck_str__()`` **exception.**
@@ -1129,7 +1088,6 @@ class BeartypeValeException(BeartypeException):
     '''
 
 
-
 class BeartypeValeSubscriptionException(BeartypeValeException):
     '''
     **Beartype validator subscription exception.**
@@ -1147,7 +1105,6 @@ class BeartypeValeSubscriptionException(BeartypeValeException):
       **validator** (i.e., tester function satisfying the type hint
       ``collections.abc.Callable[[typing.Any,], bool]``).
     '''
-
 
 
 class BeartypeValeValidationException(BeartypeValeException):
@@ -1198,7 +1155,6 @@ class _BeartypeUtilException(BeartypeException):
     '''
 
 
-
 class _BeartypeUtilExceptionException(_BeartypeUtilException):
     '''
     **Beartype exception utility exception.**
@@ -1236,7 +1192,6 @@ class _BeartypeUtilCachedException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     '''
     **Beartype memoization exception.**
@@ -1249,7 +1204,6 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilCacheLruException(_BeartypeUtilCachedException):
@@ -1280,7 +1234,6 @@ class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
     '''
     **Beartype decorator fixed list exception.**
@@ -1294,7 +1247,6 @@ class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
@@ -1328,7 +1280,6 @@ class _BeartypeCallHintRaiseException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     '''
     **Beartype PEP-compliant human-readable exception raiser exception.**
@@ -1340,7 +1291,6 @@ class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeCallHintPepRaiseDesynchronizationException(
@@ -1382,7 +1332,6 @@ class _BeartypeUtilCallFrameException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilMappingException(_BeartypeUtilException):
     '''
     **Beartype mapping utility exception.**
@@ -1392,7 +1341,6 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     critical internal issue and should thus *never* be raised -- let alone
     allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilModuleException(_BeartypeUtilException):
@@ -1413,7 +1361,6 @@ class _BeartypeUtilModuleException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilPathException(_BeartypeUtilException):
     '''
     **Beartype path utility exception.**
@@ -1423,7 +1370,6 @@ class _BeartypeUtilPathException(_BeartypeUtilException):
     exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilTypeException(_BeartypeUtilException):
@@ -1449,7 +1395,6 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
     '''
     **Beartype callable scope utility exception.**
@@ -1459,7 +1404,6 @@ class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
     critical internal issue and should thus *never* be raised -- let alone
     allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilCallableScopeNotFoundException(
@@ -1475,7 +1419,6 @@ class _BeartypeUtilCallableScopeNotFoundException(
     should thus *never* be raised -- let alone allowed to percolate up the call
     stack to end users.
     '''
-
 
 
 class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
@@ -1499,7 +1442,6 @@ class _BeartypeUtilObjectException(_BeartypeUtilException):
     exceptions denote critical internal issues and should thus *never* be raised
     -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
@@ -1527,7 +1469,6 @@ class _BeartypeUtilPythonException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
     '''
     Beartype **Python interpreter utility exception.**
@@ -1537,7 +1478,6 @@ class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilPythonWeakrefException(_BeartypeUtilPythonException):
@@ -1564,7 +1504,6 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
     '''
 
 
-
 class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
     '''
     Beartype **Python identifier utility exception.**
@@ -1574,7 +1513,6 @@ class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
 
 
 class _BeartypeUtilTextVersionException(_BeartypeUtilTextException):

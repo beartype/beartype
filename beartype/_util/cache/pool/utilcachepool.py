@@ -234,7 +234,6 @@ class KeyPool:
             # Return this item.
             return pool_item
 
-
     def release(
         self,
 

@@ -89,7 +89,6 @@ if IS_PYTHON_AT_LEAST_3_9:
             not is_hint_pep484585_generic(hint)
         )
 
-
     @callable_cached
     def is_hint_pep585_generic(hint: object) -> bool:  # pyright: ignore[reportGeneralTypeIssues]
 

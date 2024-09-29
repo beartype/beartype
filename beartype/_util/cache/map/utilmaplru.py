@@ -121,7 +121,6 @@ class CacheLruStrong(dict):
         self._size = size
         self._lock = Lock()
 
-
     def __getitem__(
         self,
         key: Hashable,
@@ -169,7 +168,6 @@ class CacheLruStrong(dict):
             msg = f'Key Error: {key}'
             raise KeyError(msg)
 
-
     def __setitem__(
         self,
         key: Hashable,
@@ -206,7 +204,6 @@ class CacheLruStrong(dict):
             # Prune this cache.
             if __len(self) > self._size:
                 __delitem(self, next(__iter(self)))
-
 
     def __contains__(
         self,

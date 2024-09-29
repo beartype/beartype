@@ -982,7 +982,6 @@ class BeartypeConf:
 
         return self._hint_overrides
 
-
     @property
     def strategy(self) -> BeartypeStrategy:
         '''
@@ -998,7 +997,6 @@ class BeartypeConf:
         '''
 
         return self._strategy
-
 
     @property
     def warning_cls_on_decorator_exception(self) -> (
@@ -1042,7 +1040,6 @@ class BeartypeConf:
 
         return self._is_color
 
-
     @property
     def is_debug(self) -> bool:
         '''
@@ -1055,7 +1052,6 @@ class BeartypeConf:
         '''
 
         return self._is_debug
-
 
     @property
     def is_pep484_tower(self) -> bool:
@@ -1089,7 +1085,6 @@ class BeartypeConf:
 
         return self._claw_decoration_position_funcs
 
-
     @property
     def claw_decoration_position_types(self) -> BeartypeDecorationPosition:
         '''
@@ -1106,7 +1101,6 @@ class BeartypeConf:
 
         return self._claw_decoration_position_types
 
-
     @property
     def claw_is_pep526(self) -> bool:
         '''
@@ -1122,7 +1116,6 @@ class BeartypeConf:
         '''
 
         return self._claw_is_pep526
-
 
     @property
     def claw_skip_package_names(self) -> CollectionStrs:
@@ -1159,7 +1152,6 @@ class BeartypeConf:
 
         return self._violation_door_type
 
-
     @property
     def violation_param_type(self) -> TypeException:
         '''
@@ -1175,7 +1167,6 @@ class BeartypeConf:
         '''
 
         return self._violation_param_type
-
 
     @property
     def violation_return_type(self) -> TypeException:
@@ -1193,7 +1184,6 @@ class BeartypeConf:
 
         return self._violation_return_type
 
-
     @property
     def violation_type(self) -> Optional[TypeException]:
         '''
@@ -1209,7 +1199,6 @@ class BeartypeConf:
         '''
 
         return self._violation_type
-
 
     @property
     def violation_verbosity(self) -> BeartypeViolationVerbosity:
@@ -1269,7 +1258,6 @@ class BeartypeConf:
             NotImplemented  # type: ignore[return-value]
         )
 
-
     def __hash__(self) -> int:
         '''
         **Hash** (i.e., non-negative integer quasi-uniquely identifying this
@@ -1283,7 +1271,6 @@ class BeartypeConf:
 
         # Return the precomputed hash for this configuration.
         return self._hash
-
 
     def __repr__(self) -> str:
         '''

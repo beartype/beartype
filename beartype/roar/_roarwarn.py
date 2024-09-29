@@ -67,7 +67,6 @@ class BeartypeClawWarning(BeartypeWarning):
     '''
 
 
-
 class BeartypeClawDecorWarning(BeartypeClawWarning):
     '''
     **Beartype import hook decoration warning.**
@@ -88,7 +87,6 @@ class BeartypeConfWarning(BeartypeWarning):
     :class:`beartype.BeartypeConf` class to inform the user of various non-fatal
     edge cases concerning beartype configuration.
     '''
-
 
 
 class BeartypeConfShellVarWarning(BeartypeConfWarning):
@@ -115,8 +113,6 @@ class BeartypeDecorHintWarning(BeartypeWarning):
     '''
 
 
-
-
 class BeartypeDecorHintParamDefaultForwardRefWarning(BeartypeDecorHintWarning):
     '''
     **Beartyped decorator optional parameter default value type-checking
@@ -141,7 +137,6 @@ class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
     by a suspicious (but *not* necessarily erroneous) PEP-compliant type hint
     warranting non-fatal warnings *without* raising fatal exceptions.
     '''
-
 
 
 #FIXME: Consider removal.
@@ -192,7 +187,6 @@ class BeartypeDecorHintPepDeprecationWarning(
     '''
 
 
-
 #FIXME: This should *REALLY* have been called
 #"BeartypeDecorHintPep484DeprecationWarning". Oh well. Let's preserve backward
 #compatibility by just accepting this as is. This goes away in 2026, anyway.
@@ -214,7 +208,6 @@ class BeartypeDecorHintPep585DeprecationWarning(
     https://github.com/beartype/beartype#pep-585-deprecations
         Further discussion
     '''
-
 
 
 class BeartypeDecorHintPep613DeprecationWarning(
@@ -245,7 +238,6 @@ class BeartypeDecorHintNonpepWarning(BeartypeWarning):
     '''
 
 
-
 class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
     '''
     **Beartype decorator PEP-noncompliant NumPy type hint warning.**
@@ -273,7 +265,6 @@ class BeartypeModuleWarning(BeartypeWarning):
     '''
 
 
-
 class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
     '''
     **Beartype missing optional dependency warning.**
@@ -283,7 +274,6 @@ class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
     installed under the active Python interpreter whose installation is
     technically optional but recommended).
     '''
-
 
 
 class BeartypeModuleAttributeNotFoundWarning(BeartypeModuleWarning):
@@ -298,7 +288,6 @@ class BeartypeModuleAttributeNotFoundWarning(BeartypeModuleWarning):
     unexpectedly old and thus failing to define an attribute defined by modern
     versions of that package).
     '''
-
 
 
 class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
@@ -326,7 +315,6 @@ class BeartypeDoorWarning(BeartypeWarning):
     '''
 
 
-
 class BeartypeDoorInferHintWarning(BeartypeDoorWarning):
     '''
     Abstract base class of all **beartype Decidedly Object-Oriented
@@ -338,7 +326,6 @@ class BeartypeDoorInferHintWarning(BeartypeDoorWarning):
     *not* necessarily erroneous) PEP-compliant type hints warranting non-fatal
     warnings *without* raising fatal exceptions.
     '''
-
 
 
 class BeartypeDoorInferHintRecursionWarning(BeartypeDoorInferHintWarning):
@@ -365,7 +352,6 @@ class BeartypeValeWarning(BeartypeWarning):
     erroneous) PEP-compliant type hints warranting non-fatal warnings *without*
     raising fatal exceptions.
     '''
-
 
 
 class BeartypeValeLambdaWarning(BeartypeValeWarning):

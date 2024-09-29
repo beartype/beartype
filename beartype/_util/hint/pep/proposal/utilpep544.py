@@ -497,7 +497,6 @@ def _init() -> None:
         def __exit__(self, cls, value, traceback) -> None:
             pass
 
-
     # PEP-compliant type hint matching file handles opened in text rather than
     # binary mode.
     #

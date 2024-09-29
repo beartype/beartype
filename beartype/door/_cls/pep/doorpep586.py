@@ -37,7 +37,6 @@ class LiteralTypeHint(TypeHint):
         # tuple to be a singleton.
         return ()
 
-
     @property
     def _is_args_ignorable(self) -> bool:
         return False

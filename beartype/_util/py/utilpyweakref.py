@@ -95,7 +95,6 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
     return obj_weakref, obj_repr
 
 
-
 def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     '''
     Object weakly referred to by the passed object if this object is indeed a

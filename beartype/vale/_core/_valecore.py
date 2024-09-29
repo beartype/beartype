@@ -266,7 +266,6 @@ class BeartypeValidator:
 
         return self._get_repr
 
-
     @get_repr.setter
     def get_repr(self, get_repr: BeartypeValidatorRepresenter) -> None:
         '''
@@ -511,7 +510,6 @@ class BeartypeValidator:
             validator_operand_2=other,
         )
 
-
     def __or__(self, other: 'BeartypeValidator') -> 'BeartypeValidator':
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
@@ -539,7 +537,6 @@ class BeartypeValidator:
             validator_operand_1=self,
             validator_operand_2=other,
         )
-
 
     #FIXME: Fun optimization: if inverting something that's already been
     #inverted, return the original "BeartypeValidator" object sans inversion.
