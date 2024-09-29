@@ -252,6 +252,7 @@ def get_func_file_code_lines_or_none(
     # Return "None" as a fallback.
     return None
 
+
 # ....................{ GETTERS ~ code : lambda            }....................
 # If the active Python interpreter targets Python >= 3.9 and thus defines the
 # ast.unparse() function required to decompile AST nodes into source code,

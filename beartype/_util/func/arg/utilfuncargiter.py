@@ -79,6 +79,7 @@ class ArgKind(Enum):
     KEYWORD_ONLY = next_enum_member_value()
     VARIADIC_KEYWORD = next_enum_member_value()
 
+
 # ....................{ SINGLETONS                         }....................
 ArgMandatory = Iota()
 '''

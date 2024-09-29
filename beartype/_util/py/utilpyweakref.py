@@ -183,6 +183,7 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
         obj_repr
     )
 
+
 # ....................{ PROPERTIES ~ constants             }....................
 _WEAKREF_NONE = object()
 '''

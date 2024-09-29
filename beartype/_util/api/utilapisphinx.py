@@ -73,6 +73,7 @@ def is_sphinx_autodocing() -> bool:
     # Else, *NO* scope's module is the "autodoc" extension. Return false.
     return False
 
+
 # ....................{ PRIVATE ~ magic                    }....................
 _SPHINX_AUTODOC_SUBPACKAGE_NAME = 'sphinx.ext.autodoc'
 '''

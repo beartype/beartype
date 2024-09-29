@@ -66,6 +66,7 @@ def warnings_ignored() -> Iterator[None]:
             simplefilter('ignore')
             yield
 
+
 # ....................{ WARNERS                            }....................
 # If the active Python interpreter targets Python >= 3.12, the standard
 # warnings.warn() function supports the optional "skip_file_prefixes" parameter

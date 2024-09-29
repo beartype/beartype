@@ -149,6 +149,7 @@ def remove_beartype_pathhook() -> None:
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _LOADERS_DETAILS = (
     # Beartype-agnostic C extension loader details. Since C extensions *CANNOT*

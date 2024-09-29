@@ -291,6 +291,7 @@ def infer_hint(
     # the integer "42" is trivially satisfied by the builtin type "int").
     return obj_type
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _HINT_INFERERS: Tuple[Callable, ...] = (
     # Builtin collections should typically (but *NOT* always, interestingly) be

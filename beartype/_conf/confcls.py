@@ -1328,6 +1328,7 @@ class BeartypeConf:
         # Return the machine-readable representation of this configuration.
         return self._repr
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _beartype_conf_lock = Lock()
 '''

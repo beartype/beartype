@@ -398,6 +398,7 @@ class BeartypeForwardRefMeta(type):
         # Return this previously resolved referee.
         return referee  # type: ignore[return-value]
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _forwardref_to_referee: Dict[BeartypeForwardRef, type] = {}
 '''

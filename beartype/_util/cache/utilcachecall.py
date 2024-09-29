@@ -577,6 +577,7 @@ def property_cached(func: CallableT) -> CallableT:
     # Return this wrapper method.
     return local_attrs['property_method_cached']
 
+
 # ....................{ PRIVATE ~ constants : var          }....................
 _CALLABLE_CACHED_VAR_NAME_PREFIX = '__beartype_cached__'
 '''

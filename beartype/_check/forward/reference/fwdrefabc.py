@@ -227,6 +227,7 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
         # Return this subscripted forward reference.
         return forwardref_indexed_subtype
 
+
 # ....................{ PRIVATE ~ tuples                   }....................
 _BeartypeForwardRefIndexableABC_BASES = (_BeartypeForwardRefIndexableABC,)
 '''

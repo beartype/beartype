@@ -603,6 +603,7 @@ def get_hint_object_violation(
     # this exception directly from that wrapper.
     return exception
 
+
 # ....................{ PRIVATE ~ constants                }....................
 # Assuming a line length of 80 characters, this magic number truncates
 # arbitrary object representations to 100 lines (i.e., 8000/80), which seems

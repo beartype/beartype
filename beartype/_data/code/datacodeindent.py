@@ -68,6 +68,7 @@ class _IndentLevelToCode(dict):
         # Return this string constant.
         return indent_code
 
+
 # ....................{ MAPPINGS                           }....................
 INDENT_LEVEL_TO_CODE = _IndentLevelToCode()
 '''

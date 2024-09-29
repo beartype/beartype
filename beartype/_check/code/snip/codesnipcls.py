@@ -71,6 +71,7 @@ class PithIndexToVarName(dict):
         # Return this name.
         return pith_var_name
 
+
 # ....................{ MAPPINGS                           }....................
 PITH_INDEX_TO_VAR_NAME = PithIndexToVarName()
 '''

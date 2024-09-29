@@ -181,6 +181,7 @@ def reduce_hint_pandera(
         exception_prefix=exception_prefix,
     )
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _PANDAS_MODULE_NAME = 'pandas'
 '''

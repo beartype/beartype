@@ -132,6 +132,7 @@ def beartype(
     # Return this private decorator.
     return beartype_confed
 
+
 # ....................{ SINGLETONS                         }....................
 _bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
 '''

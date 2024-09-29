@@ -28,6 +28,7 @@ class Iota:
 
     __slots__ = ()
 
+
 # ....................{ CONSTANTS                          }....................
 SENTINEL = Iota()
 '''

@@ -137,6 +137,7 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
     # Return this list coerced into a tuple.
     return tuple(version_list)
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _VERSION_SUBSTR_LAST_REGEX = re_compile(r'([0-9]+).+')
 '''

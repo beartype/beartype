@@ -170,6 +170,7 @@ class _NoneTypeOrType(dict):
         # Return this tuple.
         return hint_or_none
 
+
 # ....................{ SINGLETONS                         }....................
 NoneTypeOr: Any = _NoneTypeOrType()
 '''

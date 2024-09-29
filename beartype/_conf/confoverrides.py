@@ -166,6 +166,7 @@ class BeartypeHintOverrides(FrozenDict):
                 )
             # Else, this hint override contains *NO* such recursion.
 
+
 # ....................{ GLOBALS                            }....................
 BEARTYPE_HINT_OVERRIDES_EMPTY = BeartypeHintOverrides()
 '''

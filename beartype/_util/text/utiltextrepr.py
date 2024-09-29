@@ -273,6 +273,7 @@ def represent_pith(
         f'{label_pith_value(pith=pith, is_color=is_color)}'
     )
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _TYPES_UNQUOTABLE = (
     # Byte strings, whose representations are already quoted as "b'...'".

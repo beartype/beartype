@@ -1182,6 +1182,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         None
     )
 
+
 # ....................{ PRIVATE ~ args                     }....................
 _HINT_ARGS_EMPTY_TUPLE = ((),)
 '''

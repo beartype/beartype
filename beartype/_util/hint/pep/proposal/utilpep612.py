@@ -253,6 +253,7 @@ def reduce_hint_pep612_kwargs(hint: object, **kwargs) -> object:
         **kwargs
     )
 
+
 # ....................{ PRIVATE ~ constants : positional   }....................
 _VAR_POS_PITH_NAME_LABEL = 'positional'
 '''

@@ -436,6 +436,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # Return this code.
     return func_wrapper_code
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _ARG_KINDS_KEYWORD = frozenset((
     ArgKind.KEYWORD_ONLY,

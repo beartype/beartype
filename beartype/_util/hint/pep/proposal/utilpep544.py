@@ -292,6 +292,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # Return this protocol.
     return pep544_protocol
 
+
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO))
 '''

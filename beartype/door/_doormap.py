@@ -145,6 +145,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     # Return this subclass.
     return wrapper_subclass
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.
 _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
@@ -220,6 +221,7 @@ def _init() -> None:
         # "beartype.door" subpackage to both improve the readability of
         # exceptions and discourage users from violating privacy encapsulation.
         typehint_cls.__module__ = 'beartype.door'
+
 
 # ....................{ MAIN                               }....................
 # Initialize this submodule.

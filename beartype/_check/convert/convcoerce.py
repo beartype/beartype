@@ -413,6 +413,7 @@ def coerce_hint_any(hint: object) -> Any:
     # Return this uncoerced hint as is.
     return hint
 
+
 # ....................{ PRIVATE ~ mappings                 }....................
 _hint_repr_to_hint = CacheUnboundedStrong()
 '''

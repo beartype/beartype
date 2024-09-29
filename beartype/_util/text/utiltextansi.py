@@ -331,6 +331,7 @@ def strip_str_ansi(
         _ANSI_REGEX.sub('', text)
     )
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _ANSI_REGEX = re_compile(r'\033\[[0-9;?]*[A-Za-z]')
 '''

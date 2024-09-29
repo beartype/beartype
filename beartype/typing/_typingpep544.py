@@ -521,6 +521,7 @@ class Protocol(
         # We're done! Time for a honey brewskie break. We earned it.
         return gen_alias
 
+
 #FIXME: Ensure that the main @beartype codebase handles protocols whose
 #repr() starts with "beartype.typing" as well, please.
 
@@ -601,6 +602,7 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
 
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
+
 
 # ....................{ MONKEY-PATCHES                     }....................
 # If the active Python interpreter targets Python >= 3.12, monkey-patch the

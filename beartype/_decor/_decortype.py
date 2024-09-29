@@ -306,6 +306,7 @@ def beartype_type(
     # Return this class as is.
     return cls  # type: ignore[return-value]
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _BEARTYPED_MODULE_TO_TYPE_NAME: Dict[str, Set[str]] = defaultdict(set)
 '''

@@ -264,6 +264,7 @@ def make_numpy_dtype(
     # Return this dtype.
     return dtype  # type: ignore[return-value]
 
+
 # ....................{ PRIVATE ~ constants                }....................
 _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER = str.maketrans('', '', digits + '_')
 '''

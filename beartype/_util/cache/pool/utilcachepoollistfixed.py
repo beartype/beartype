@@ -281,6 +281,7 @@ class FixedList(list):
         # One-liners for magnanimous pusillanimousness.
         return f'Fixed list {represent_object(self)}'
 
+
 # ....................{ PRIVATE ~ factories                }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)
 '''

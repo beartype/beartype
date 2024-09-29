@@ -172,6 +172,7 @@ class BeartypeClawState:
             ')',
         ))
 
+
 # ....................{ GLOBALS                            }....................
 claw_lock = RLock()
 '''

@@ -66,6 +66,7 @@ class HintSign:
 
         return f'"HintSign{self.name}"'
 
+
 # ....................{ HINTS                              }....................
 HintSignOrType = Union[HintSign, type]
 '''

@@ -629,6 +629,7 @@ def express_func_scope_type_ref(
     # Return a 2-tuple of this expression and set of unqualified classnames.
     return ref_expr, forwardrefs_class_basename
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _tuple_union_to_tuple_union: Dict[TupleTypes, TupleTypes] = {}
 '''

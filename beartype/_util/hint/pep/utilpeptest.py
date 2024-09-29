@@ -668,6 +668,7 @@ def is_hint_pep_type_typing(hint: object) -> bool:
     # In short, there is no general-purpose clever solution. *sigh*
     return hint_type.__module__ in TYPING_MODULE_NAMES
 
+
 # ....................{ PRIVATE ~ dicts                    }....................
 # Note that these type hints would ideally be defined with the mypy-specific
 # "callback protocol" pseudostandard, documented here:

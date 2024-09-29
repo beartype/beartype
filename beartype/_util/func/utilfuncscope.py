@@ -659,6 +659,7 @@ def add_func_scope_attr(
     # Return this name.
     return attr_name
 
+
 # ....................{ PRIVATE                            }....................
 _ATTR_NAME_PREFIX_ID_POSITIVE = '__beartype_object_'
 '''

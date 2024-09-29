@@ -431,6 +431,7 @@ def _reduce_hint_cached(
     # Return this possibly reduced hint.
     return hint
 
+
 # ....................{ PRIVATE ~ hints                    }....................
 # Note that these type hints would ideally be defined with the mypy-specific
 # "callback protocol" pseudostandard, documented here:

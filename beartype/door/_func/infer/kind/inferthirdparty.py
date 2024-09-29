@@ -157,6 +157,7 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     # Return this hint.
     return hint
 
+
 # ....................{ PRIVATE ~ globals                  }....................
 _PACKAGE_NAME_TO_TYPE_BASENAME_TO_INFERER: Dict[str, Dict[str, Callable]] = {
     # NumPy.

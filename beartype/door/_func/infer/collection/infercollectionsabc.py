@@ -430,6 +430,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     # *OR* "None".
     return node_curr.hint_factory
 
+
 # ....................{ PRIVATE ~ hints                    }....................
 _FiniteStateMachine = Dict[FrozenSetStrs, '_FiniteStateMachineNode']
 '''
