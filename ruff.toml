@@ -16,7 +16,6 @@ ignore = [
     "D211", # no-blank-line-before-class
     "E265", # [*] no-space-after-block-comment
     "Q000", # [*] bad-quotes-inline-string
-    "RUF022", # [*] unsorted-dunder-all
     # Will/can be (semy)manually fixed:
     "ANN002", # [] missing-type-args
     "ANN003", # [] missing-type-kwargs

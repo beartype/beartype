@@ -178,9 +178,9 @@ __all__ = [
     'BeartypeHintOverrides',
     'BeartypeStrategy',
     'BeartypeViolationVerbosity',
-    'beartype',
     '__version__',
     '__version_info__',
+    'beartype',
 ]
 '''
 Special list global of the unqualified names of all public package attributes
