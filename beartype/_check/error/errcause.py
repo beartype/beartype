@@ -493,7 +493,7 @@ class ViolationCause(object):
         '''
 
         # For the name of each passed keyword argument...
-        for arg_name in kwargs.keys():
+        for arg_name in kwargs:
             # If this name is *NOT* that of a parameter accepted by the
             # __init__() method, raise an exception.
             if arg_name not in self._INIT_PARAM_NAMES:

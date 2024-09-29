@@ -186,7 +186,7 @@ def _init() -> None:
     # For each sign in the dictionary mapping from signs uniquely identifying
     # type hint factories originating from isinstanceable types to the fixed
     # number of child type hints subscripting those factories...
-    for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.keys():
+    for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE:
         # If this sign has *NOT* already been mapped to an existing "TypeHint"
         # subclass, map this sign to the generic private
         # "_TypeHintOriginIsinstanceable" subclass.

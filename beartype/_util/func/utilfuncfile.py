@@ -148,7 +148,7 @@ def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
         #   declared in-memory by the
         #   beartype._util.func.utilfuncmake.make_func() function, possibly
         #   cached with the standard "linecache" module.
-        func_filename[ 0] == '<' and
+        func_filename[0] == '<' and
         func_filename[-1] == '>' and
         # This in-memory callable's source code was *NOT* cached with the
         # "linecache" module and has thus effectively been destroyed.

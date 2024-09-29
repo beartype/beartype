@@ -11,7 +11,6 @@ exclude = []
 select = ["ALL"]
 ignore = [
     # Will be auto-fixed:
-    "C408", # [*] unnecessary-collection-call
     "COM819", # [*] prohibited-trailing-comma
     "D200", # [*] fits-on-one-line
     "D203", # [*] one-blank-line-before-class
@@ -19,7 +18,6 @@ ignore = [
     "D211", # no-blank-line-before-class
     "D409", # [*] section-underline-matches-section-length
     "D416", # [*] section-name-ends-in-colon
-    "E201", # [*] whitespace-after-open-bracket
     "E203", # [*] whitespace-before-punctuation
     "E221", # [*] multiple-spaces-before-operator
     "E231", # [*] missing-whitespace
@@ -31,12 +29,9 @@ ignore = [
     "E305", # [*] blank-lines-after-function-or-class
     "EM101", # [*] raw-string-in-exception
     "EM102", # [*] f-string-in-exception
-    "EM103", # [*] dot-format-in-exception
     "F541", # [*] f-string-missing-placeholders
     "I001", # [*] unsorted-imports
     "PIE790", # [*] unnecessary-placeholder
-    "PIE808", # [*] unnecessary-range-start
-    "PIE810", # [*] multiple-starts-ends-with
     "Q000", # [*] bad-quotes-inline-string
     "RET504", # [*] unnecessary-assign
     "RET505", # [*] superfluous-else-return
@@ -45,7 +40,6 @@ ignore = [
     "RUF010", # [*] explicit-f-string-type-conversion
     "RUF022", # [*] unsorted-dunder-all
     "RUF023", # [*] unsorted-dunder-slots
-    "SIM118", # [*] in-dict-keys
     "TRY201", # [*] verbose-raise
     "UP004", # [*] useless-object-inheritance
     "UP032", # [*] f-string

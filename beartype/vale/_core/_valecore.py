@@ -202,7 +202,7 @@ class BeartypeValidator(object):
         # ")", do so to ensure this code remains safely evaluable when
         # embedded in parent expressions.
         elif not (
-            is_valid_code[ 0] == '(' and
+            is_valid_code[0] == '(' and
             is_valid_code[-1] == ')'
         ):
             is_valid_code = f'({is_valid_code})'

@@ -69,7 +69,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 #       >>> range(min, max).stop == max
 #       True
 
-_ARGS_LEN_0 = range(0, 1)  # == [0, 1) == [0, 0]
+_ARGS_LEN_0 = range(1)  # == [0, 1) == [0, 0]
 '''
 **Zero-argument length range** (i.e., :class:`range` instance effectively
 equivalent to the integer ``0``, describing type hint factories subscriptable by

@@ -426,8 +426,7 @@ def label_type(
     # publicity and standardization, there exists *NO* general-purpose means of
     # detecting whether an arbitrary class supports structural subtyping.
     elif (
-        classname.startswith('collections.abc.') or
-        classname.startswith('contextlib.')
+        classname.startswith(('collections.abc.', 'contextlib.'))
     ):
         classname = f'<protocol ABC "{classname}">'
     # Else, this is a standard class. In this case, label this class as such.
