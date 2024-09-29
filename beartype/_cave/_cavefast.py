@@ -121,7 +121,7 @@ from types import (
 #     _Collection = None
 
 # ....................{ CLASSES                            }....................
-class UnavailableType(object):
+class UnavailableType:
     '''
     **Unavailable type** (i.e., type *not* available under the active Python
     interpreter, typically due to insufficient Python version or non-installed
@@ -571,7 +571,7 @@ def _lru_cache_func(n: int) -> int:
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
 if TYPE_CHECKING:
-    class CallableFunctoolsLruCacheType(object): pass
+    class CallableFunctoolsLruCacheType: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
@@ -595,7 +595,7 @@ del _lru_cache_func
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
 if TYPE_CHECKING:
-    class ClassDictType(object): pass
+    class ClassDictType: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
@@ -1004,7 +1004,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 #     beartype/_util/hint/pep/proposal/utilpep695.py:120: note:
 #         See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
-    class HintGenericSubscriptedType(object): pass
+    class HintGenericSubscriptedType: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
@@ -1057,7 +1057,7 @@ else:
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
 if TYPE_CHECKING:
-    class HintPep604Type(object): pass
+    class HintPep604Type: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
@@ -1098,9 +1098,9 @@ objects permissible as the items of new unions), including:
 # type-checker, ignore false positives complaining that these types are not
 # types.
 if TYPE_CHECKING:
-    class HintPep612ParamSpecType(object): pass
-    class HintPep612ParamSpecArgType(object): pass
-    class HintPep612ParamSpecKwargType(object): pass
+    class HintPep612ParamSpecType: pass
+    class HintPep612ParamSpecArgType: pass
+    class HintPep612ParamSpecKwargType: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker.
 #
@@ -1174,7 +1174,7 @@ objects annotating variadic parameters with syntax resembling
 #     beartype/_util/hint/pep/proposal/utilpep695.py:120: note:
 #         See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
-    class HintPep695Type(object): pass
+    class HintPep695Type: pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:

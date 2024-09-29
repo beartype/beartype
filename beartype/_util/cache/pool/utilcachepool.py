@@ -32,7 +32,7 @@ from collections.abc import Callable, Hashable
 from threading import Lock
 
 # ....................{ CLASSES                            }....................
-class KeyPool(object):
+class KeyPool:
     '''
     Thread-safe **key pool** (i.e., object cache implemented as a dictionary of
     lists of arbitrary objects to be cached, where objects cached to the same

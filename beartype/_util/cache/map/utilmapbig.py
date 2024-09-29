@@ -23,7 +23,7 @@ from threading import Lock
 # ....................{ CLASSES                            }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
-class CacheUnboundedStrong(object):
+class CacheUnboundedStrong:
     '''
     **Thread-safe strongly unbounded cache** (i.e., mapping of unlimited size
     from strongly referenced arbitrary keys onto strongly referenced arbitrary

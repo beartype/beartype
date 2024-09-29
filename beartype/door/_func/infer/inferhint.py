@@ -37,7 +37,7 @@ from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CLASSES                            }....................
-class BeartypeInferHintContainerRecursion(object):
+class BeartypeInferHintContainerRecursion:
     '''
     Child type hint subscripting all **recursive container type hints** (i.e.,
     parent type hints describing a container containing one or more items

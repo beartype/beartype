@@ -31,7 +31,7 @@ from beartype._data.code.pep.datacodepep484585 import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class HintSignLogicABC(object, metaclass=ABCMeta):
+class HintSignLogicABC(metaclass=ABCMeta):
     '''
     Abstract base class (ABC) of all **hint sign logic** (i.e., dataclasses
     encapsulating all low-level Python code snippets and associated metadata

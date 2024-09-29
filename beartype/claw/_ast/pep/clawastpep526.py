@@ -39,7 +39,7 @@ from beartype._util.text.utiltextansi import color_attr_name
 # and public attributes of this subclass by "_beartype".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-class BeartypeNodeTransformerPep526Mixin(object):
+class BeartypeNodeTransformerPep526Mixin:
     '''
     Beartype :pep:`526`-compliant **abstract syntax tree (AST) node
     transformer** (i.e., visitor pattern recursively transforming *all*

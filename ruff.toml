@@ -30,7 +30,6 @@ ignore = [
     "RET506", # [*] superfluous-else-raise
     "RUF010", # [*] explicit-f-string-type-conversion
     "RUF022", # [*] unsorted-dunder-all
-    "UP004", # [*] useless-object-inheritance
     # Will/can be (semy)manually fixed:
     "ANN002", # [] missing-type-args
     "ANN003", # [] missing-type-kwargs

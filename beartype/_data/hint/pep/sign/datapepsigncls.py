@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Union
 
 # ....................{ CLASSES                            }....................
-class HintSign(object):
+class HintSign:
     '''
     **Sign** (i.e., object uniquely identifying PEP-compliant type hints in a
     safe, non-deprecated manner regardless of the Python version targeted by

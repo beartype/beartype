@@ -22,7 +22,7 @@ from beartype.typing import (
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MIXINS                             }....................
-class BeartypeHintable(object):
+class BeartypeHintable:
     '''
     **Beartype hintable mixin** (i.e., class intended to be subclassed as a
     mixin by user-defined classes extending :mod:`beartype` with class-specific

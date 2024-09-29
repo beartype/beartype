@@ -125,7 +125,7 @@ from beartype._util.ast.utilastmake import (
 # and public attributes of this subclass by "_beartype".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-class BeartypeNodeTransformerPep695Mixin(object):
+class BeartypeNodeTransformerPep695Mixin:
     '''
     Beartype :pep:`695`-compliant **abstract syntax tree (AST) node
     transformer** (i.e., visitor pattern recursively transforming *all*

@@ -35,7 +35,7 @@ from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
+class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
     '''
     Abstract base class (ABC) of all **forward reference subclasses** (i.e.,
     classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the

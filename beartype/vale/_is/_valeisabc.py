@@ -43,7 +43,7 @@ class _BeartypeValidatorFactoryABCMeta(ABCMeta):
 #"typing.Generic"), when in fact that metaclass merely subclasses the standard
 #"abc.ABCMeta" metaclass. Consider submitting an upstream pyright issue, please.
 class _BeartypeValidatorFactoryABC(
-    object, metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore
+    metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore
     '''
     Abstract base class of all **beartype validator factory subclasses**
     (i.e., subclasses that, when subscripted (indexed) by subclass-specific

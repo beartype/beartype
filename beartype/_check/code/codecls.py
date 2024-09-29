@@ -42,7 +42,7 @@ from beartype._util.utilobject import SENTINEL
 
 # ....................{ DATACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class HintMeta(object):
+class HintMeta:
     '''
     **Type hint type-checking metadata** (i.e., low-level dataclass storing
     metadata describing the possibly nested type hint visited by the current

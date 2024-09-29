@@ -87,7 +87,7 @@ def _check_methods(C: type, *methods: str):
     return True
 
 # ....................{ SUPERCLASSES                       }....................
-class BoolType(object, metaclass=ABCMeta):
+class BoolType(metaclass=ABCMeta):
     '''
     Type of all **booleans** (i.e., objects defining the ``__bool__()`` dunder
     method; objects reducible in boolean contexts like ``if`` conditionals to
