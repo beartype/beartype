@@ -161,12 +161,9 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
             )
     # Else, this pith is an instance of this class.
 
-    # Output cause to be returned, permuted from this input cause with this
+    # Return output cause, permuted from this input cause with this
     # output cause justification.
-    cause_return = cause.permute(cause_str_or_none=cause_str_or_none)
-
-    # Return this output cause.
-    return cause_return
+    return cause.permute(cause_str_or_none=cause_str_or_none)
 
 
 def find_cause_instance_type_forwardref(
@@ -267,9 +264,9 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     )
     # Else, this hint is a tuple union.
 
-    # Output cause to be returned, permuted from this input cause such that the
+    # Return output cause, permuted from this input cause such that the
     # output cause justification is either...
-    cause_return = cause.permute(cause_str_or_none=(
+    return cause.permute(cause_str_or_none=(
         # If this pith is an instance of one or more types in this tuple union,
         # "None";
         None
@@ -283,8 +280,6 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
         )
     ))
 
-    # Return this cause.
-    return cause_return
 
 # ....................{ GETTERS ~ subclass : type          }....................
 def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:

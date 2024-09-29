@@ -196,8 +196,8 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     # including pathological classes that defy norms and expectations.
     type_collection_builtin = next(iter(types_collection_builtin))
 
-    # Hint factory validating this type, defined as either...
-    hint_factory = (
+    # Return hint factory validating this type, defined as either...
+    return (
         # If the active Python interpreter targets Python >= 3.9 and thus
         # supports PEP 585, this class as is. Since *ALL* builtin containers
         # types are PEP 585-compliant subscriptable type hint factories under
@@ -216,8 +216,6 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
         _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY[type_collection_builtin]
     )
 
-    # Return this hint factory and type.
-    return hint_factory
 
 # ....................{ PRIVATE ~ mappings                 }....................
 #FIXME: Also add:

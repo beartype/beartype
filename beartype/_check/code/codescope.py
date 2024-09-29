@@ -133,12 +133,9 @@ def add_func_scope_ref(
     # Forward reference proxy referring to this class.
     hint_ref = make_forwardref_indexable_subtype(ref_module_name, ref_name)
 
-    # Name of a new parameter passing this forward reference proxy.
-    hint_ref_arg_name = add_func_scope_attr(
+    # Return the name of a new parameter passing this forward reference proxy.
+    return add_func_scope_attr(
         func_scope=func_scope, attr=hint_ref)
-
-    # Return this name.
-    return hint_ref_arg_name
 
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.

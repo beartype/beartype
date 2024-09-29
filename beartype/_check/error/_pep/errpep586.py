@@ -89,10 +89,7 @@ def find_cause_literal(cause: ViolationCause) -> ViolationCause:
     cause_literals_unsatisfied = join_delimited_disjunction(
         repr(hint_literal) for hint_literal in hint_childs)
 
-    # Deep output cause to be returned, permuted from this input cause such that
+    # Return deep output cause, permuted from this input cause such that
     # the justification is a human-readable string describing this failure.
-    cause_deep = cause.permute(cause_str_or_none=(
+    return cause.permute(cause_str_or_none=(
         f'{represent_pith(cause.pith)} != {cause_literals_unsatisfied}.'))
-
-    # Return this cause.
-    return cause_deep

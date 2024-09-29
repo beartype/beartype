@@ -107,7 +107,8 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     # lacking a corresponding builtin type, interestingly. Since Python itself
     # has no concept of an "unsigned integer" the NumPy-specific
     # "unsignedinteger" ABC is preferred instead.
-    _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE = {
+    # Return dictionary with dtype_name sanitized to builtin type
+    return {
         'bool': bool,
         'bytes': bytes,
         'complex': complex,
@@ -117,9 +118,6 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
         'str': str,
         'void': memoryview,
     }
-
-    # Return this dictionary.
-    return _DTYPE_NAME_SANITIZED_TO_BUILTIN_TYPE
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
@@ -183,12 +181,9 @@ def reduce_numpy_dtype(
         get_numpy_dtype_name_sanitized_to_type_reduced())
 
     # Possibly NumPy-agnostic builtin type reduced from this dtype if this dtype
-    # is reducible to such a type *OR* this dtype as is otherwise.
-    type_reduced = DTYPE_NAME_SANITIZED_TO_TYPE_REDUCED.get(
+    # is reducible to such a type *OR* this dtype as is otherwise. And return this reduced type.
+    return DTYPE_NAME_SANITIZED_TO_TYPE_REDUCED.get(
         dtype_name_sanitized, dtype)
-
-    # Return this reduced type.
-    return type_reduced
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

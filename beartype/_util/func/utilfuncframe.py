@@ -134,15 +134,12 @@ def get_frame_package_name(
     assert isinstance(frame, CallableFrameType), (
         f'{repr(frame)} not stack frame.')
 
-    # Fully-qualified name of the parent package of the child module declaring
+    # Return fully-qualified name of the parent package of the child module declaring
     # the callable whose code object is that of this stack frame's if that
     # module declares its name *OR* the empty string otherwise (e.g., if that
     # module is either a top-level module or script residing outside any parent
     # package structure).
-    frame_package_name = frame.f_globals.get('__package__')
-
-    # Return the name of this parent package.
-    return frame_package_name
+    return frame.f_globals.get('__package__')
 
 
 #FIXME: Unit test us up, please.
@@ -181,12 +178,9 @@ def get_frame_module_name(
     assert isinstance(frame, CallableFrameType), (
         f'{repr(frame)} not stack frame.')
 
-    # Fully-qualified name of the module declaring the callable described by
+    # Return fully-qualified name of the module declaring the callable described by
     # this frame.
-    frame_module_name = frame.f_globals.get('__name__')
-
-    # Return this name.
-    return frame_module_name
+    return frame.f_globals.get('__name__')
 
 
 #FIXME: Preserved for posterity. Currently unused, but potentially useful.

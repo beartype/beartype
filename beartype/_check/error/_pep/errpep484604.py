@@ -204,9 +204,9 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
         )
     # Else, prior logic appended one or more strings describing these failures.
 
-    # Output cause to be returned, permuted from this input cause such that the
+    # Return output cause, permuted from this input cause such that the
     # output cause justification is either...
-    cause_return = cause.permute(cause_str_or_none=(
+    return cause.permute(cause_str_or_none=(
         # If prior logic appended one cause, a single-line
         # substring intended to be embedded in a longer string;
         f'{pith_repr} {cause_strs[0]}'
@@ -233,6 +233,3 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
             )
         )
     ))
-
-    # Return this cause.
-    return cause_return

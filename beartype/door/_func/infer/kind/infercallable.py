@@ -248,10 +248,6 @@ def infer_hint_callable(func: CallableABC) -> object:
         return Callable
     # Else, this callable is pure-Python.
 
-    # Hint to be returned, defaulting to the unsubscripted
-    # "collections.abc.Callable" protocol.
-    hint: object = Callable
-
     # Dictionary mapping from the name of each annotated parameter accepted by
     # that unwrapped callable to the type hint annotating that parameter.
     #
@@ -526,8 +522,8 @@ def infer_hint_callable(func: CallableABC) -> object:
     # mandatory positional-only and/or flexible parameters. In this case,
     # preserve this list of all child parameter hints as is.
 
-    # Callable hint to be returned, defined as either...
-    hint = (
+    # Return Callable hint to be returned, defined as either...
+    return (
         # The unsubscripted "collections.abc.Callable" protocol if...
         Callable
         if (
@@ -541,6 +537,3 @@ def infer_hint_callable(func: CallableABC) -> object:
         # these unignorable child parameter and return type hints.
         Callable[hint_params, hint_return]  # pyright: ignore
     )
-
-    # Return this hint.
-    return hint

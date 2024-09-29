@@ -450,17 +450,17 @@ class BeartypeNodeTransformer(
         #   docstring and/or one or more "from __future__" import statements.
         #   Semantically, these sorts of modules are effectively empty as well.
 
-        # Recursively transform *ALL* child nodes of this parent module node.
-        node = self.generic_visit(node)
-
         # #FIXME: Conditionally perform this logic if "conf.is_debug", please.
+        # node = self.generic_visit(node)
         # print(
         #     f'Module abstract syntax tree (AST) transformed by @beartype to:\n\n'
         #     f'{get_node_repr_indented(node)}'
         # )
+        # return node
 
         # Return this transformed module node.
-        return node
+        # Recursively transform *ALL* child nodes of this parent module node.
+        return self.generic_visit(node)
 
     # ..................{ VISITORS ~ class                   }..................
     #FIXME: Implement us up, please.

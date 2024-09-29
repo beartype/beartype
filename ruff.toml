@@ -25,7 +25,6 @@ ignore = [
     "I001", # [*] unsorted-imports
     "PIE790", # [*] unnecessary-placeholder
     "Q000", # [*] bad-quotes-inline-string
-    "RET504", # [*] unnecessary-assign
     "RET505", # [*] superfluous-else-return
     "RET506", # [*] superfluous-else-raise
     "RUF010", # [*] explicit-f-string-type-conversion

@@ -850,8 +850,5 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
             _FiniteStateMachineNode(hint_factory=Buffer))
     # Else, the active Python interpreter targets Python < 3.12.
 
-    # "collections.abc" finite state machine (FSM).
-    START_NODE = _FiniteStateMachineNode(nodes_next=_START_NODE_NODES_NEXT)
-
-    # Return this FSM.
-    return START_NODE
+    # Return "collections.abc" finite state machine (FSM).
+    return _FiniteStateMachineNode(nodes_next=_START_NODE_NODES_NEXT)

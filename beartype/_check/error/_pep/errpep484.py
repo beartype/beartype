@@ -42,12 +42,9 @@ def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
     # Decorated callable originating this violation.
     func: Callable = cause.func  # type: ignore[assignment]
 
-    # Output cause to be returned, permuted from this input cause such that the
+    # Return output cause, permuted from this input cause such that the
     # justification is a human-readable string describing this failure.
-    cause_return = cause.permute(cause_str_or_none=(
+    return cause.permute(cause_str_or_none=(
         f'{label_callable(func)} annotated by PEP 484 return type hint '
         f'"typing.NoReturn" returned {represent_pith(cause.pith)}'
     ))
-
-    # Return this cause.
-    return cause_return

@@ -386,10 +386,7 @@ def reduce_hint_pep585_builtin_subscripted_unknown(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 
-    # Pure-Python origin class originating this unrecognized subscripted builtin
+    # Return pure-Python origin class originating this unrecognized subscripted builtin
     # type hint if this hint originates from such a class *OR* raise an
     # exception otherwise (i.e., if this hint originates from *NO* such class).
-    origin_type = get_hint_pep_origin_type(hint)
-
-    # Return this origin.
-    return origin_type
+    return get_hint_pep_origin_type(hint)

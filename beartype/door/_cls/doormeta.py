@@ -139,10 +139,10 @@ class _TypeHintMeta(ABCMeta):
             id(hint)
         )
 
-        # Type hint wrapper wrapping this hint, efficiently cached such that
+        # Return type hint wrapper wrapping this hint, efficiently cached such that
         # each hint that evaluates to the same key is wrapped by the same
         # instance of the "TypeHint" class under this Python interpreter.
-        wrapper = (
+        return (
             _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(
                 # Cache this wrapper singleton under this key.
                 key=hint_key,
@@ -153,8 +153,6 @@ class _TypeHintMeta(ABCMeta):
                 arg=hint,
             ))
 
-        # Return this wrapper.
-        return wrapper
 
     # ..................{ PRIVATE                            }..................
     def _make_wrapper(cls: '_TypeHintMeta', hint: object) -> object:
@@ -218,14 +216,12 @@ class _TypeHintMeta(ABCMeta):
         wrapper_subclass = get_typehint_subclass(hint)
         # print(f'!!!!!!!!!!!!! [ in {repr(cls)}.__new__() ] !!!!!!!!!!!!!!!')
 
-        # Type hint wrapper wrapping this hint as a new singleton instance of
+        # Return type hint wrapper wrapping this hint as a new singleton instance of
         # this subclass.
-        wrapper = wrapper_subclass(hint)
+        return wrapper_subclass(hint)
         # wrapper = super(_TypeHintMeta, wrapper_subclass).__call__(hint)
         # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
 
-        # Return this wrapper.
-        return wrapper
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(

@@ -342,11 +342,8 @@ def beartype_func_contextlib_contextmanager(
     # Decorate this generator factory function with type-checking.
     generator_checked = beartype_func(func=generator, **kwargs)
 
-    # Re-decorate this generator factory function by @contextlib.contextmanager.
-    generator_checked_contextmanager = contextmanager(generator_checked)
-
-    # Return this context manager.
-    return generator_checked_contextmanager  # type: ignore[return-value]
+    # Return re-decorated generator factory function by @contextlib.contextmanager.
+    return contextmanager(generator_checked)  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ descriptor            }....................
 def beartype_descriptor_decorator_builtin(
@@ -602,6 +599,7 @@ def _beartype_descriptor_boundmethod(
     #
     #See also this open issue on the Python bug tracker requesting this be
     #resolved. Sadly, Python has yet to resolve this:
+    #    https://github.com/python/cpython/issues/91309
     #    https://bugs.python.org/issue47153
     # # Propagate the docstring from the prior to the new descriptor.
     # #
@@ -612,7 +610,8 @@ def _beartype_descriptor_boundmethod(
     # descriptor_new.__doc__ = descriptor.__doc__
 
     # Return this new descriptor, implicitly destroying the prior descriptor.
-    return descriptor_new  # type: ignore[return-value]
+    return descriptor_new  # type: ignore[return-value] # noqa: RET504 unnecessary-assign
+
 
 # ....................{ DECORATORS ~ pseudo-callable       }....................
 def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
@@ -734,9 +733,8 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
 
     # Unbound __call__() dunder method runtime type-checking the original bound
     # __call__() dunder method of the passed pseudo-callable object.
-    pseudofunc_call_type_method_checked = beartype_func(
+    return beartype_func(
         func=pseudofunc_call_boundmethod, **kwargs)
-    return pseudofunc_call_type_method_checked
 
 
 def beartype_pseudofunc_functools_lru_cache(
@@ -824,8 +822,5 @@ def beartype_pseudofunc_functools_lru_cache(
     lru_cache_configured = lru_cache(**lru_cache_kwargs)
 
     # Re-decorate that callable by @functools.lru_cache by the same parameters
-    # originally passed by the caller to that decorator.
-    pseudofunc_checked = lru_cache_configured(func_checked)
-
-    # Return that new pseudo-callable.
-    return pseudofunc_checked
+    # originally passed by the caller to that decorator. And return that new pseudo-callable.
+    return lru_cache_configured(func_checked)

@@ -305,13 +305,10 @@ def get_module_dir(module: ModuleType) -> Path:
     # abstractly defined only in-memory).
     module_filename = get_module_filename(module)
 
-    # High-level "Path" object encapsulating this file and the parent directory
+    # Return high-level "Path" object encapsulating this file and the parent directory
     # directly containing this file.
     module_file = Path(module_filename)
-    module_dir = module_file.parent
-
-    # Return this "Path" object.
-    return module_dir
+    return module_file.parent
 
 # ....................{ GETTERS ~ module : file            }....................
 #FIXME: Unit test us up.

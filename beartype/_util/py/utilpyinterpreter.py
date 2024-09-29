@@ -149,11 +149,8 @@ def get_interpreter_command_words() -> CommandWords:
     # else:
     #     command_words = [get_interpreter_filename()]
 
-    # Iterable of all interpreter shell words to be returned.
-    command_words = (get_interpreter_filename(),)
-
-    # Return this iterable.
-    return command_words
+    # Return iterable of all interpreter shell words to be returned.
+    return (get_interpreter_filename(),)
 
 
 @callable_cached

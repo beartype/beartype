@@ -315,8 +315,8 @@ def truncate_str(
     # print(f'[after eating dots] text_prefix_len: {text_prefix_len}')
     # print(f'[after eating dots up] text_suffix_start_index: {text_suffix_start_index}')
 
-    # Truncated string to be returned, comprising...
-    text = (
+    # Return truncated string, comprising...
+    return (
         # The prefixing substring of this string *NOT* exceeding this maximum
         # length.
         f'{text[:text_prefix_len]}'
@@ -325,6 +325,3 @@ def truncate_str(
         # The suffixing substring of trailing punctuation characters.
         f'{text[text_suffix_start_index:]}'
     )
-
-    # Return this truncated string.
-    return text

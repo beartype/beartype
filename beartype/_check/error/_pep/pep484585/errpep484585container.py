@@ -186,27 +186,23 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
             return cause
         # Else, this tuple is non-empty and thus fails to satisfy this hint.
 
-        # Deep output cause to be returned, permuted from this input cause
+        # Return deep output cause, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
+        return cause.permute(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} non-empty'))
 
-        # Return this cause.
-        return cause_deep
     # Else, this hint is a standard fixed-length tuple.
     #
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
     elif len(cause.pith) != len(cause.hint_childs):
-        # Deep output cause to be returned, permuted from this input cause
+        # Return deep output cause, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
+        return cause.permute(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} length '
             f'{len(cause.pith)} != {len(cause.hint_childs)}'
         ))
 
-        # Return this cause.
-        return cause_deep
     # Else, this pith and hint are of the same length.
 
     # For each enumerated item of this tuple...

@@ -186,9 +186,10 @@ def sanify_hint_root_func(
     # their current form and thus temporarily reduced in-memory into a more
     # convenient form for beartype-specific type-checking purposes elsewhere.
     #
+    # Return sanified hint.
     # Note that parameters are intentionally passed positionally to both
     # optimize memoization efficiency and circumvent memoization warnings.
-    hint = reduce_hint(
+    return reduce_hint(
         hint=hint,
         conf=decor_meta.conf,
         decor_meta=decor_meta,
@@ -197,9 +198,6 @@ def sanify_hint_root_func(
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
-
-    # Return this sanified hint.
-    return hint
 
 
 #FIXME: Unit test us up, please.
@@ -271,12 +269,9 @@ def sanify_hint_root_statement(
     hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
-    # reducible *OR* this hint as is otherwise. See
+    # reducible *OR* this hint as is otherwise and return it. See
     # sanify_hint_root_func() for further commentary.
-    hint = reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)
-
-    # Return this sanified hint.
-    return hint
+    return reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.

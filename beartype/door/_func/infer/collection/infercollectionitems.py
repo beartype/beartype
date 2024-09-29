@@ -153,16 +153,14 @@ def infer_hint_collection_items(
     )
     # print(f'Inferring {repr(obj)} child hints with {repr(hint_inferer)}...')
 
-    # Type hint recursively validating this collection.
-    hint = hint_inferer(
+    # Return type hint recursively validating this collection.
+    return hint_inferer(
         obj=obj,  # type: ignore[arg-type]
         hint_factory=hint_factory,
         conf=conf,
         __beartype_obj_ids_seen__=__beartype_obj_ids_seen__,
     )
 
-    # Return this hint.
-    return hint
 
 # ....................{ PRIVATE ~ constants                }....................
 _ROOT_TUPLE_FIXED_ITEMS_LEN_MAX = 10

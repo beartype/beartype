@@ -393,12 +393,9 @@ def import_module_attr_or_sentinel(
         # If either no module name was passed *OR* only an empty module name was
         # passed...
         if not module_name:
-            # Builtin type with this name if any *OR* the sentinel otherwise
+            # Return builtin type with this name if any *OR* the sentinel otherwise
             # (i.e., if *NO* builtin type with this name exists).
-            module_attr = TYPE_BUILTIN_NAME_TO_TYPE.get(attr_name, SENTINEL)
-
-            # Return this object.
-            return module_attr
+            return TYPE_BUILTIN_NAME_TO_TYPE.get(attr_name, SENTINEL)
         # Else, a non-empty module name was passed.
     # Else, this attribute name contains one or more "." characters.
     else:
