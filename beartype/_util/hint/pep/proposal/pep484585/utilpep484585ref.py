@@ -417,7 +417,7 @@ def get_hint_pep484585_ref_names_relative_to(
     # If this reference does *NOT* annotate a callable, then this reference also
     # does *NOT* annotate a method of a class (i.e., "cls is None"). Why?
     # Because a method is a callable. In this case...
-    elif not func:
+    if not func:
         # If a builtin type with this classname exists, assume this reference
         # refers to this builtin type exposed by the standard "builtins" module.
         if hint_ref_name in TYPE_BUILTIN_NAME_TO_TYPE:

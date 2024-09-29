@@ -261,7 +261,7 @@ def get_hint_pep484585_callable_params(
     # nested list of two or more parameter type hints. In this case, return the
     # tuple slice containing the parameter type hints omitting the trailing
     # return type hint.
-    elif hint_params_len >= 2:
+    if hint_params_len >= 2:
         return hint_args[:-1]
     # Else, this callable type hint was subscripted by exactly one parameter
     # type hint... which could be either a nested list of one or more parameter

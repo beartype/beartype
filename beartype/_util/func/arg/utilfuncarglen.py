@@ -361,7 +361,7 @@ def get_func_args_flexible_len(
     # Else, that callable has *NO* code object.
     #
     # If that callable is *NOT* actually callable, raise an exception.
-    elif not callable(func):
+    if not callable(func):
         msg = f'{exception_prefix}{repr(func)} uncallable.'
         raise exception_cls(msg)
     # Else, that callable is callable.

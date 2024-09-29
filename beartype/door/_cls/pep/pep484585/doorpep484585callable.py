@@ -261,11 +261,11 @@ class CallableTypeHint(TypeHint):
         # a test for compatible origin types.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
-        elif not isinstance(branch, CallableTypeHint):
+        if not isinstance(branch, CallableTypeHint):
             return False
-        elif not issubclass(self._origin, branch._origin):
+        if not issubclass(self._origin, branch._origin):
             return False
-        elif not branch.is_params_ignorable and (
+        if not branch.is_params_ignorable and (
 
                 self.is_params_ignorable or
                 len(self.param_hints) != len(branch.param_hints) or
@@ -284,7 +284,7 @@ class CallableTypeHint(TypeHint):
         #    return self.return_hint <= branch.return_hint
         #
         # Are we missing something? We're probably missing something. *sigh*
-        elif not branch.is_return_ignorable:
+        if not branch.is_return_ignorable:
             return (
                 False
                 if self.is_return_ignorable else

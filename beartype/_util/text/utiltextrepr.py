@@ -137,7 +137,7 @@ def represent_object(
     # Else, this representation is non-empty.
     #
     # If this representation is neither...
-    elif not (
+    if not (
         # Prefixed by punctuation *NOR*...
         obj_repr[0] in CHARS_PUNCTUATION or
         # An instance of a class whose representations do *NOT* benefit from

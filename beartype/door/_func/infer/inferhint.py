@@ -237,13 +237,13 @@ def infer_hint(
     # ....................{ PEP [484|585]                  }....................
     # If this object is a type, this type is trivially satisfied by a PEP 484-
     # or 585-compliant subclass type hint subscripted by this type.
-    elif isinstance(obj, type):
+    if isinstance(obj, type):
         return Type[obj]
     # Else, this object is *NOT* a type.
     #
     # If this object is callable, defer to this lower-level function inferring a
     # "typing.Callable[...]" type hint from this callable.
-    elif callable(obj):
+    if callable(obj):
         return infer_hint_callable(obj)
     # Else, this object is uncallable.
 

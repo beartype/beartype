@@ -387,11 +387,10 @@ if IS_PYTHON_AT_LEAST_3_9:
                         # expect that line number to define one or more lambda
                         # functions. If it does not, raising an exception seems
                         # superficially reasonable. Yet, we don't. See above.
-                        else:
-                            issue_warning(
-                                cls=warning_cls,
-                                message=f'{label_callable(func)} not found.',
-                            )
+                        issue_warning(
+                            cls=warning_cls,
+                            message=f'{label_callable(func)} not found.',
+                        )
                 # Else, that lambda is dynamically defined in-memory.
             # If *ANY* of the dodgy stdlib callables (e.g., ast.parse(),
             # inspect.findsource()) called above raise *ANY* other unexpected

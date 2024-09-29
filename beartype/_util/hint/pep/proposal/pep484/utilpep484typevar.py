@@ -116,7 +116,7 @@ def get_hint_pep484_typevar_bound_or_none(
     #
     # If this type variable was parametrized by an upper bound, return that
     # bound as is.
-    elif hint.__bound__ is not None:
+    if hint.__bound__ is not None:
         return hint.__bound__
     # Else, this type variable was parametrized by neither constraints *NOR* an
     # upper bound.

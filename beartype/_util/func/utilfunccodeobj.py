@@ -221,7 +221,7 @@ def get_func_codeobj_or_none(
     #
     # If this callable is a bound method, reduce this callable to the unbound
     # function underlying this bound method.
-    elif is_func_boundmethod(func):
+    if is_func_boundmethod(func):
         func = unwrap_func_boundmethod_once(func)
     # Else, this callable is *NOT* a pure-Python bound method.
 

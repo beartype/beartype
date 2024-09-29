@@ -545,7 +545,7 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     #
     # Else if this hint is already a type, this type is effectively already its
     # origin type. In this case, return this type as is.
-    elif isinstance(hint, type):
+    if isinstance(hint, type):
         return hint
     # Else, this hint is *NOT* a type. In this case, this hint originates from
     # *NO* origin type.

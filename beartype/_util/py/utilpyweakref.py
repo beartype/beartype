@@ -155,12 +155,12 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     # If this weak reference is "_WEAKREF_NONE", the prior call to
     # make_obj_weakref_and_repr() was passed the "None" singleton. In this case,
     # substitute this placeholder for "None". See that factory.
-    elif obj_weakref is _WEAKREF_NONE:
+    if obj_weakref is _WEAKREF_NONE:
         return None
     # Else, this weak reference is *NOT* that placeholder.
     #
     # If this weak reference is *NOT* a weak reference, raise an exception.
-    elif not isinstance(obj_weakref, weakref_ref):
+    if not isinstance(obj_weakref, weakref_ref):
         msg = (
             f'Weak reference {repr(obj_weakref)} invalid '
             f'(i.e., neither weak reference, "None", nor "_WEAKREF_NONE").'

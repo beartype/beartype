@@ -99,7 +99,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         # Disambiguate these two cases on behalf of callers by returning a
         # 1-tuple containing only the empty tuple (i.e., "((),)") rather than
         # returning the empty tuple (i.e., "()").
-        elif not hint_args:
+        if not hint_args:
             return _HINT_ARGS_EMPTY_TUPLE
         # Else, this hint is either subscripted *OR* is unsubscripted but not
         # PEP 585-compliant.
@@ -649,7 +649,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # representation.
     #
     # If this representation (and thus this hint) is subscripted...
-    elif hint_repr_subscripted:
+    if hint_repr_subscripted:
         # Sign identifying this necessarily subscripted hint if this hint is
         # identifiable by its necessarily subscripted representation *OR*
         # "None" otherwise.
@@ -767,7 +767,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
     #
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
-    elif is_hint_pep589(hint):
+    if is_hint_pep589(hint):
         return HintSignTypedDict
     # Else, this hint is *NOT* a PEP 589-compliant typed dictionary.
     #
@@ -784,7 +784,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #     >>> import typing as t
     #     >>> repr(t.NewType('FakeStr', str))
     #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
-    elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python310(hint):
+    if IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python310(hint):
         return HintSignNewType
 
     # ..................{ ERROR                              }..................

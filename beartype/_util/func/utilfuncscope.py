@@ -370,7 +370,7 @@ def get_func_locals(
     # mistaken. Whereas the prior branch is a non-erroneous condition that
     # commonly occurs, this current branch is an erroneous condition that should
     # *NEVER* occur. In this case...
-    elif func_scope_names_search_len < 0:
+    if func_scope_names_search_len < 0:
         # Number of parent lexical scopes containing that callable.
         func_scope_parents_len = func_scope_names_len - 1
 

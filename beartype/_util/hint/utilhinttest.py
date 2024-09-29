@@ -177,7 +177,7 @@ def is_hint_ignorable(hint: object) -> bool:
     # Else, this hint is *NOT* shallowly ignorable.
     #
     # If this hint is PEP-compliant...
-    elif is_hint_pep(hint):
+    if is_hint_pep(hint):
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_ignorable)

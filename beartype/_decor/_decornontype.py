@@ -124,7 +124,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # Else, this object is *NOT* an uncallable builtin method descriptor.
     #
     # If this object is uncallable, raise an exception.
-    elif not callable(obj):
+    if not callable(obj):
         msg = f'Uncallable {repr(obj)} not decoratable by @beartype.'
         raise BeartypeDecorWrappeeException(
             msg)
@@ -426,7 +426,7 @@ def beartype_descriptor_decorator_builtin(
     # Else, this descriptor is *NOT* a property method.
     #
     # If this descriptor is a class method...
-    elif descriptor_type is MethodDecoratorClassType:
+    if descriptor_type is MethodDecoratorClassType:
         # Possibly C-based callable wrappee object decorated by this descriptor.
         #
         # Note that this wrappee is typically but *NOT* necessarily a
@@ -511,7 +511,7 @@ def beartype_descriptor_decorator_builtin(
     # Else, this descriptor is *NOT* a class method.
     #
     # If this descriptor is a static method...
-    elif descriptor_type is MethodDecoratorStaticType:
+    if descriptor_type is MethodDecoratorStaticType:
         # Possibly C-based callable wrappee object decorated by this descriptor.
         descriptor_wrappee = unwrap_func_staticmethod_once(descriptor)  # type: ignore[arg-type]
 

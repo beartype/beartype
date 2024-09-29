@@ -89,7 +89,7 @@ class ClassTypeHint(TypeHint):
         #instance of this class? Why? That makes *NO* sense. "typing.Any" should
         #be wrapped by its own "TypeHintAny" subclass, please. *sigh*
         # "Any" is only a subclass of "Any".
-        elif self._hint is Any:
+        if self._hint is Any:
             return False
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.

@@ -113,7 +113,7 @@ def infer_hint_collection_items(
     # Else, this collection is non-empty.
     #
     # If no origin type was passed, default this to the type of this collection.
-    elif origin_type is None:
+    if origin_type is None:
         origin_type = obj.__class__
     # Else, an origin type was passed. Preserve this type as is.
     assert isinstance(origin_type, type), (

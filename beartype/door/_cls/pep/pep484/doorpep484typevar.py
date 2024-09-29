@@ -99,7 +99,7 @@ class TypeVarTypeHint(UnionTypeHint):
         #
         # If this type variable is constrained, return the n-tuple containing
         # each of these wrapped constraints.
-        elif self._hint.__constraints__:
+        if self._hint.__constraints__:
             return tuple(TypeHint(t) for t in self._hint.__constraints__)
         # Else, this type variable is unconstrained.
 

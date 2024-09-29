@@ -85,7 +85,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # Else, this pith is an instance of this type.
     #
     # If either...
-    elif (
+    if (
         # This container is empty, all items of this container (of which there are
         # none) are necessarily valid *OR*...
         not cause.pith or
@@ -183,7 +183,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this hint is the empty fixed-length tuple, validate this pith to be
     # the empty tuple.
-    elif is_hint_pep484585_tuple_empty(cause.hint):
+    if is_hint_pep484585_tuple_empty(cause.hint):
         # If this pith is the empty tuple, this path satisfies this hint.
         if not cause.pith:
             return cause
@@ -198,7 +198,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
-    elif len(cause.pith) != len(cause.hint_childs):
+    if len(cause.pith) != len(cause.hint_childs):
         # Return deep output cause, permuted from this input cause
         # with a human-readable string describing this failure.
         return cause.permute(cause_str_or_none=(

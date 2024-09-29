@@ -109,7 +109,7 @@ class _TypeHintMeta(ABCMeta):
         # return this wrapper as is. This guarantees the following constraint:
         #     >>> TypeHint(TypeHint(hint)) is TypeHint(hint)
         #     True
-        elif isinstance(hint, TypeHint):
+        if isinstance(hint, TypeHint):
             # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] reducing to noop... !!!!!!!!!!!!!!!')
             return hint
         # Else, this hint is *NOT* already a wrapper.

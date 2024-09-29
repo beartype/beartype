@@ -75,7 +75,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # If this mapping is empty, all items of this mapping (of which there are
     # none) are valid. By definition, this mapping satisfies this hint. In this
     # case, return the passed cause as is.
-    elif not cause.pith:
+    if not cause.pith:
         return cause
     # Else, this mapping is non-empty.
 

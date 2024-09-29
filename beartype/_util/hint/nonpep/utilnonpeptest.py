@@ -191,7 +191,7 @@ def die_unless_hint_nonpep(
     # Else, this object is *NOT* a class.
     #
     # If this object is a tuple, raise a tuple-specific exception.
-    elif isinstance(hint, tuple):
+    if isinstance(hint, tuple):
         die_unless_hint_nonpep_tuple(
             hint=hint,
             is_forwardref_valid=is_forwardref_valid,

@@ -115,11 +115,11 @@ def join_delimited(
     if num_strs == 0:
         return ''
     # If one string is passed, return this string as is.
-    elif num_strs == 1:
+    if num_strs == 1:
         # This is clearly a string, yet mypy thinks it's Any
         return strs[0]  # type: ignore[no-any-return]
     # If two strings are passed, return these strings delimited appropriately.
-    elif num_strs == 2:
+    if num_strs == 2:
         return f'{strs[0]}{delimiter_if_two}{strs[1]}'
     # Else, three or more strings are passed.
 

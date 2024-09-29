@@ -19,7 +19,6 @@ ignore = [
     "E302", # [*] blank-lines-top-level
     "I001", # [*] unsorted-imports
     "Q000", # [*] bad-quotes-inline-string
-    "RET505", # [*] superfluous-else-return
     "RET506", # [*] superfluous-else-raise
     "RUF010", # [*] explicit-f-string-type-conversion
     "RUF022", # [*] unsorted-dunder-all

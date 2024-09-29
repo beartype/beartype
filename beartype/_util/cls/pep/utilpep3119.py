@@ -292,7 +292,7 @@ def die_unless_type_isinstanceable(
         #
         # If this exception already human-readably describes this
         # non-isinstanceability, re-raise this exception as is.
-        elif _is_exception_sufficient(exception):
+        if _is_exception_sufficient(exception):
             raise
         # Else, this exception fails to human-readably describe this
         # non-isinstanceability.
@@ -523,7 +523,7 @@ def die_unless_type_issubclassable(
         #
         # If this exception already human-readably describes this
         # non-issubclassability, re-raise this exception as is.
-        elif _is_exception_sufficient(exception):
+        if _is_exception_sufficient(exception):
             raise
         # Else, this exception fails to human-readably describe this
         # non-issubclassability.
@@ -622,7 +622,7 @@ def is_type_isinstanceable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_forwardref(cls):
+    if is_forwardref_valid and is_forwardref(cls):
         # print(f'{repr(cls)} is forward reference proxy!')
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
@@ -838,7 +838,7 @@ def is_type_issubclassable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_forwardref(cls):
+    if is_forwardref_valid and is_forwardref(cls):
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.

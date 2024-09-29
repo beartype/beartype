@@ -368,23 +368,22 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     if is_type_subclass(cause.pith, hint_child):
         return cause
     # Else, this pith does *NOT* subclass this superclass. In this case...
-    else:
-        # Output cause to be returned, permuted from this input cause.
-        cause_return = cause.permute()
+    # Output cause to be returned, permuted from this input cause.
+    cause_return = cause.permute()
 
-        # Description of this superclasses, defined as either...
-        hint_child_label = (
-            # If this superclass is a class, a description of this class;
-            label_type(hint_child)
-            if isinstance(hint_child, type) else
-            # Else, this superclass is a tuple of classes. In this case, a
-            # description of these classes...
-            join_delimited_disjunction_types(hint_child)
-        )
+    # Description of this superclasses, defined as either...
+    hint_child_label = (
+        # If this superclass is a class, a description of this class;
+        label_type(hint_child)
+        if isinstance(hint_child, type) else
+        # Else, this superclass is a tuple of classes. In this case, a
+        # description of these classes...
+        join_delimited_disjunction_types(hint_child)
+    )
 
-        # Human-readable string describing this failure.
-        cause_return.cause_str_or_none = (
-            f'{represent_pith(cause.pith)} not subclass of {hint_child_label}')
+    # Human-readable string describing this failure.
+    cause_return.cause_str_or_none = (
+        f'{represent_pith(cause.pith)} not subclass of {hint_child_label}')
 
     # Return this cause.
     return cause_return

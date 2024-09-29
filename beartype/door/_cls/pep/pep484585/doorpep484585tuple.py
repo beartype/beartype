@@ -73,7 +73,7 @@ class TupleFixedTypeHint(TypeHint):
         # If that hint is a variable-length tuple, then this fixed-length tuple
         # is commensurable (i.e., comparable) with that hint despite having a
         # differing class. In this case...
-        elif isinstance(branch, TupleVariableTypeHint):
+        if isinstance(branch, TupleVariableTypeHint):
             # Child hint subscripting that variable-length tuple.
             branch_child = branch._args_wrapped_tuple[0]
 
@@ -92,13 +92,13 @@ class TupleFixedTypeHint(TypeHint):
         #
         # If the other hint is also *NOT* a fixed-length tuple, these two hints
         # are incommensurable. In this case, return false.
-        elif not isinstance(branch, TupleFixedTypeHint):
+        if not isinstance(branch, TupleFixedTypeHint):
             return False
         # Else, the other hint is also a fixed-length tuple.
         #
         # If these two hints are subscripted by a differing number of child
         # hints, return false.
-        elif len(self) != len(branch):
+        if len(self) != len(branch):
             return False
         # Else, these two hints are subscripted by the same number of child
         # hints.

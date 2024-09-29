@@ -115,7 +115,7 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
     # Else, the first mapping is non-empty.
     #
     # If the second mapping is empty, return the first mapping as is.
-    elif not mapping_b:
+    if not mapping_b:
         return mapping_a
     # Else, both mappings are non-empty.
 

@@ -60,7 +60,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     # Else, this object is *NOT* a pure-Python class.
     #
     # If this object is a pure-Python callable...
-    elif is_func_python(obj):
+    if is_func_python(obj):
         # Human-readable prefix describing the exotic nature of this callable if
         # this is callable is exotic (e.g., coroutine or generator factory)
         # suffixed by trailing whitespace *OR* the empty string otherwise.
