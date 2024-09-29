@@ -403,9 +403,12 @@ def get_hint_object_violation(
     if pith_name is None:
         # If the caller also passed *NO* exception prefix, raise an exception.
         if exception_prefix is None:
-            raise _BeartypeCallHintPepRaiseException(
+            msg = (
                 'get_hint_object_violation() passed neither '
                 '"exception_prefix" nor "pith_name" parameters.'
+            )
+            raise _BeartypeCallHintPepRaiseException(
+                msg
             )
         # Else, the caller passed an exception prefix.
 
@@ -421,9 +424,12 @@ def get_hint_object_violation(
     else:
         # If the caller also passed an exception prefix, raise an exception.
         if exception_prefix is not None:
-            raise _BeartypeCallHintPepRaiseException(
+            msg = (
                 'get_hint_object_violation() passed both '
                 '"exception_prefix" and "pith_name" parameters.'
+            )
+            raise _BeartypeCallHintPepRaiseException(
+                msg
             )
         # Else, the caller passed *NO* exception prefix.
 

@@ -73,5 +73,6 @@ class UnionTypeHint(TypeHint):
 
 
     def _is_subhint_branch(self, branch: TypeHint) -> bool:  # pragma: no cover
+        msg = 'UnionTypeHint._is_subhint_branch() unsupported.'
         raise NotImplementedError(
-            'UnionTypeHint._is_subhint_branch() unsupported.')
+            msg)

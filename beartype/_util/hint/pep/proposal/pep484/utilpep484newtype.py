@@ -66,9 +66,12 @@ def is_hint_pep484_newtype_ignorable(hint: object) -> bool:
 # unique to prior Python versions to raise an exception.
 if IS_PYTHON_AT_LEAST_3_10:
     def is_hint_pep484_newtype_pre_python310(hint: object) -> bool:
-        raise BeartypeDecorHintPep484Exception(
+        msg = (
             'is_hint_pep484_newtype_pre_python310() assumes Python < 3.10, '
             'but current Python interpreter targets Python >= 3.10.'
+        )
+        raise BeartypeDecorHintPep484Exception(
+            msg
         )
 # Else, the active Python interpreter targets Python < 3.10 and thus defines
 # "typing.NewType" type hints as closures returned by that function. Since

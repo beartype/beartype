@@ -76,9 +76,12 @@ class BeartypeHintable(object):
         class with additional runtime type-checking).
         '''
 
-        raise NotImplementedError(  # pragma: no cover
+        msg = (
             'Abstract base class method '
             'BeartypeHintable.__beartype_hint__() undefined.'
+        )
+        raise NotImplementedError(  # pragma: no cover
+            msg
         )
 
 # ....................{ TESTERS                            }....................

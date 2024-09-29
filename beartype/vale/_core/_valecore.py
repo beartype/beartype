@@ -185,7 +185,8 @@ class BeartypeValidator(object):
         #
         # If this code is the empty string, raise an exception.
         elif not is_valid_code:
-            raise BeartypeValeSubscriptionException('Validator code empty.')
+            msg = 'Validator code empty.'
+            raise BeartypeValeSubscriptionException(msg)
         # Else, this code is a non-empty string.
         #
         # If this code does *NOT* contain the test subject substring
@@ -284,8 +285,9 @@ class BeartypeValidator(object):
         if isinstance(get_repr, str):
             # If this string is empty, raise an exception.
             if not get_repr:
+                msg = 'Representer string empty.'
                 raise BeartypeValeSubscriptionException(
-                    'Representer string empty.')
+                    msg)
         # Else, this representer is *NOT* a string.
         #
         # If this representer is *NOT* a pure-Python callable accepting one

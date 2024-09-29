@@ -187,8 +187,9 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
                 f'{represent_object(mappings[0])} passed.')
         # Else, no mappings are passed. Raise an appropriate exception.
         else:
+            msg = 'Two or more mappings expected, but no mappings passed.'
             raise _BeartypeUtilMappingException(
-                'Two or more mappings expected, but no mappings passed.')
+                msg)
     # Else, two or more mappings are passed.
     assert isinstance(mappings[0], Mapping), (
         f'First mapping {repr(mappings[0])} not mapping.')

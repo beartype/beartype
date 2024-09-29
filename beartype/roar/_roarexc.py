@@ -698,7 +698,8 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         #
         # If the culprits are the empty tuple, raise an exception.
         elif not culprits:
-            raise _BeartypeUtilExceptionException('Culprits tuple empty.')
+            msg = 'Culprits tuple empty.'
+            raise _BeartypeUtilExceptionException(msg)
         # Else, the culprits are a non-empty tuple.
 
         # Tuple of 2-tuples ("culprit_weakref", "culprit_repr") weakly referring

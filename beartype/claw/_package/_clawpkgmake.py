@@ -188,8 +188,9 @@ def make_package_names_from_args(
         #
         # If *NO* package names were passed, raise an exception.
         elif not package_names:
+            msg = 'beartype_packages() package names empty.'
             raise BeartypeClawHookException(
-                'beartype_packages() package names empty.')
+                msg)
         # Else, one or more package names were passed.
 
         # For each such package name...

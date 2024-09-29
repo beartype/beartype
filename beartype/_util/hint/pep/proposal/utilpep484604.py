@@ -325,7 +325,8 @@ def make_hint_pep484604_union(hints: tuple) -> object:
 
     # If this tuple is empty, raise an exception.
     if not hints:
-        raise BeartypeDecorHintPep604Exception('"hints" tuple empty.')
+        msg = '"hints" tuple empty.'
+        raise BeartypeDecorHintPep604Exception(msg)
     # Else, this tuple contains one or more child type hints.
     #
     # If this tuple contains only one child type hint, return this hint as is.

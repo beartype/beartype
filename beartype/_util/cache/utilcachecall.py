@@ -246,7 +246,7 @@ def callable_cached(func: CallableT) -> CallableT:
                 args_flat_to_exception[args_flat] = exception
 
                 # Re-raise this exception.
-                raise exception
+                raise
         # If one or more objects either passed to *OR* returned from this call
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.
@@ -459,7 +459,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
                 args_flat_to_exception[args_flat] = exception
 
                 # Re-raise this exception.
-                raise exception
+                raise
         # If one or more objects either passed to *OR* returned from this call
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.

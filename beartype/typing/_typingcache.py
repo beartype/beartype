@@ -160,7 +160,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
                 params_flat_to_exception[params_flat] = exception
 
                 # Re-raise this exception.
-                raise exception
+                raise
         # If one or more objects either passed to *OR* returned from this call
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.

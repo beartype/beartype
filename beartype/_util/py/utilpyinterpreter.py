@@ -189,8 +189,9 @@ def get_interpreter_filename() -> str:
     #     If Python is unable to retrieve the real path to its executable,
     #     sys.executable will be an empty string or None.
     if not sys_executable:
+        msg = 'Absolute filename of active Python interpreter not found.'
         raise _BeartypeUtilPythonInterpreterException(
-            'Absolute filename of active Python interpreter not found.')
+            msg)
     # Else, Python provides this filename.
 
     # If this file is *NOT* executable, raise an exception.
