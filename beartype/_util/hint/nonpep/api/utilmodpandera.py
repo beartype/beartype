@@ -151,12 +151,12 @@ def reduce_hint_pandera(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     type
         Isinstanceable Pandas type subclassed by this Pandera type hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintNonpepPanderaException
         If either:
 

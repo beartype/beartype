@@ -72,7 +72,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         :meth:`BeartypeValidator.__init__` method.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If either of these operands are *not* beartype validators.
         '''
@@ -213,7 +213,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             Arbitrary object to be diagnosed against this validator.
 
         Returns
-        ----------
+        -------
         bool
             ``True`` only if this the passed object short-circuits the second
             child operand validator underlying this parent binary validator.
@@ -247,7 +247,7 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
             Second validator operated upon by this higher-level validator.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If either of these operands are *not* beartype validators.
         '''
@@ -311,7 +311,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
             Second validator operated upon by this higher-level validator.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If either of these operands are *not* beartype validators.
         '''
@@ -367,7 +367,7 @@ def _validate_operands(
         Second validator operated upon by this higher-level validator.
 
     Raises
-    ----------
+    ------
     BeartypeValeSubscriptionException
         If either of these operands are *not* beartype validators.
     '''

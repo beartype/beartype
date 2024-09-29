@@ -66,7 +66,7 @@ def beartype_object(
     decorator this higher-level decorator calls on the passed beartypeable.
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 
@@ -76,7 +76,7 @@ def beartype_object(
           callable with dynamically generated type-checking.
 
     See Also
-    ----------
+    --------
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
@@ -111,7 +111,7 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     defined by this submodule (e.g., :func:`.beartype_func`).
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 
@@ -121,7 +121,7 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
           callable with dynamically generated type-checking.
 
     See Also
-    ----------
+    --------
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
@@ -188,7 +188,7 @@ def _beartype_object_nonfatal(
     higher-level decorator on the passed beartypeable.
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 

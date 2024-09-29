@@ -218,7 +218,7 @@ def is_hint_uncached(hint: object) -> bool:
         :data:`True` only if this type hint is uncached.
 
     See Also
-    ----------
+    --------
     :func:`beartype._check.convert.convcoerce.coerce_hint_any`
         Further details.
     '''

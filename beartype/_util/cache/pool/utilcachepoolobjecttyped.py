@@ -64,12 +64,12 @@ def acquire_object_typed(cls: type) -> Any:
         Type of the object to be acquired.
 
     Returns
-    ----------
+    -------
     object
         Arbitrary object of this type.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCachedObjectTypedException
         If this type is *not* actually a type.
     '''

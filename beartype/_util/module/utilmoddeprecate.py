@@ -60,7 +60,7 @@ def deprecate_module_attr(
         stack inspection is non-portable under Python.
 
     Returns
-    ----------
+    -------
     object
         Value of this deprecated attribute.
 
@@ -70,7 +70,7 @@ def deprecate_module_attr(
         If this attribute is deprecated.
 
     Raises
-    ----------
+    ------
     AttributeError
         If this attribute is unrecognized and thus erroneous.
     ImportError
@@ -80,7 +80,7 @@ def deprecate_module_attr(
         dictionary.
 
     See Also
-    ----------
+    --------
     https://www.python.org/dev/peps/pep-0562/#id8
         :pep:`562`-compliant dunder function inspiring this implementation.
     '''

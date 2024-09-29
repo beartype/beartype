@@ -56,7 +56,7 @@ def add_beartype_pathhook() -> None:
     locking primitive managed by the caller.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/43573798/2809027
         StackOverflow answer strongly inspiring the low-level implementation of
         this function with respect to inscrutable :mod:`importlib` machinery.

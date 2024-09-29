@@ -232,7 +232,7 @@ class CacheLruStrong(dict):
             :data:`True` only if this key is cached.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is unhashable.
         '''

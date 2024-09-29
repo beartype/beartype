@@ -266,12 +266,12 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
         PEP-compliant type hint annotated by this metahint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep593Exception
         If this object is *not* a :pep:`593`-compliant type metahint.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep593_metadata`
         Related getter.
     '''

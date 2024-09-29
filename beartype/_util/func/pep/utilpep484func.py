@@ -28,7 +28,7 @@ def is_func_pep484_notypechecked(func: Callable) -> bool:
         Callable to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         ``True`` only if that callable was decorated by the
         :pep:`484`-compliant :func:`typing.no_type_check` decorator.

@@ -85,7 +85,7 @@ class HintMeta:
           produce catastrophically erroneous and undebuggable Python code.
 
     Example:
-    ------
+    -------
         For example, the
         :func:`beartype._check.code.codemake.make_check_expr` factory might
         generate intermediary code resembling the following on visiting the

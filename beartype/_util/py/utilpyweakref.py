@@ -28,7 +28,7 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
         Arbitrary object to be weakly referred to.
 
     Returns
-    ----------
+    -------
     Tuple[object, str]
         2-tuple ``(weakref, repr)`` weakly referring to this object such that:
 
@@ -120,7 +120,7 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
         some number of characters to avoid worst-case space consumption.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -137,7 +137,7 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
           weak reference is ``None``). In this case, the passed representation.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilPythonWeakrefException
         If ``obj_weakref`` is invalid: i.e., neither ``None``,
         :data:`_WEAKREF_NONE`, nor a weak reference.

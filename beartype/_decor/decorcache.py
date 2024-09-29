@@ -107,7 +107,7 @@ def beartype(
             Beartypeable to be decorated.
 
         Returns
-        ----------
+        -------
         BeartypeableT
             Either:
 
@@ -117,7 +117,7 @@ def beartype(
               that callable with dynamically generated type-checking.
 
         See Also
-        ----------
+        --------
         :func:`beartype.beartype`
             Further details.
         '''

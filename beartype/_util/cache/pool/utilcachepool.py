@@ -168,12 +168,12 @@ class KeyPool:
             Defaults to ``False``.
 
         Returns
-        ----------
+        -------
         object
             Pool item associated with this hashable object.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is unhashable and thus *not* a key.
         '''
@@ -267,7 +267,7 @@ class KeyPool:
             previously acquired. Defaults to ``False``.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is unhashable (i.e. *not* a key).
         _BeartypeUtilCachedKeyPoolException

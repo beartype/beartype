@@ -46,7 +46,7 @@ class BeartypeCachingMeta(type):
     sufficiently slow as to entirely defeat the point of caching. That's bad.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/8665179/2809027
         StackOverflow answers strongly inspiring this implementation.
     '''

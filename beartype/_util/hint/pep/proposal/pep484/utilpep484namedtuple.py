@@ -88,7 +88,7 @@ def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         ``True`` only if this object is a :pep:`484`-compliant named tuple
         subclass.

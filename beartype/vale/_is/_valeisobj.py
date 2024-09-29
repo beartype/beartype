@@ -170,7 +170,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             * Three or more arguments.
 
         See Also
-        ----------
+        --------
         :class:`._IsAttrFactory`
             Usage instructions.
         '''

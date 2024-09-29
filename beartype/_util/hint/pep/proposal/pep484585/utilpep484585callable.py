@@ -172,12 +172,12 @@ def get_hint_pep484585_callable_params(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     _HINT_PEP484585_CALLABLE_PARAMS
         First argument originally subscripting this hint.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this hint is *not* a callable type hint.
     '''
@@ -365,12 +365,12 @@ def get_hint_pep484585_callable_return(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Last argument originally subscripting this hint.
 
     Raises
-    ----------
+    ------
     :exc:`exception_cls`
         If this hint is *not* a callable type hint.
     '''

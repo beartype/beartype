@@ -66,7 +66,7 @@ def _check_methods(C: type, *methods: str):
         Tuple of the names of all methods to validate this class as defining.
 
     Returns
-    ----------
+    -------
     Either:
 
         * ``True`` if this class defines all of these methods.
@@ -124,7 +124,7 @@ class BoolType(metaclass=ABCMeta):
     detection implemented by this ABC suffices to match *all* boolean types.
 
     See Also
-    ----------
+    --------
     :class:`beartype.cave.ContainerType`
         Further details on structural subtyping.
     '''

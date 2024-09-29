@@ -32,7 +32,7 @@ def find_cause_literal(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''

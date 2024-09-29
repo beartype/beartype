@@ -30,12 +30,12 @@ def is_type_pep557(cls: type) -> bool:
         Class to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this class is a dataclass.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTypeException
         If this object is *not* a class.
     '''

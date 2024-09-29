@@ -192,7 +192,7 @@ def __getattr__(attr_deprecated_name: str) -> object:
         Unqualified name of the deprecated attribute to be retrieved.
 
     Returns
-    ----------
+    -------
     object
         Value of this deprecated attribute.
 
@@ -202,7 +202,7 @@ def __getattr__(attr_deprecated_name: str) -> object:
         If this attribute is deprecated.
 
     Raises
-    ----------
+    ------
     :exc:`AttributeError`
         If this attribute is unrecognized and thus erroneous.
     '''

@@ -33,7 +33,7 @@ def is_str_float_or_int(text: str) -> bool:
         String to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         ``True`` only if this string is a valid machine-readable representation
         of either an integer or finite floating-point number.

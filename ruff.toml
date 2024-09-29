@@ -14,7 +14,6 @@ ignore = [
     "D200", # [*] fits-on-one-line
     "D203", # [*] one-blank-line-before-class
     "D211", # no-blank-line-before-class
-    "D409", # [*] section-underline-matches-section-length
     "E221", # [*] multiple-spaces-before-operator
     "E251", # [*] unexpected-spaces-around-keyword-parameter-equals
     "E265", # [*] no-space-after-block-comment

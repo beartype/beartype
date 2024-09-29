@@ -135,7 +135,7 @@ def resolve_pep563(
         lexically nesting the current class. In short, just pass everything.
 
     Raises
-    ----------
+    ------
     BeartypePep563Exception
         If either:
 

@@ -78,7 +78,7 @@ def get_hint_pep484_typevar_bound_or_none(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -88,7 +88,7 @@ def get_hint_pep484_typevar_bound_or_none(
         * Else, :data:`None`.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484Exception
         if this object is *not* a :pep:`484`-compliant type variable.
     '''
@@ -148,7 +148,7 @@ def reduce_hint_pep484_typevar(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''

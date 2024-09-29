@@ -141,7 +141,7 @@ class CacheUnboundedStrong:
             this key has yet to be associated with any value.
 
         Returns
-        ----------
+        -------
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''
@@ -207,7 +207,7 @@ class CacheUnboundedStrong:
             Arbitrary object to be passed as is to this value factory.
 
         Returns
-        ----------
+        -------
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''

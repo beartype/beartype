@@ -59,12 +59,12 @@ def format_diagnosis_line(
         Defaults to ``None``.
 
     Returns
-    ----------
+    -------
     str
         This diagnosis line formatted with this indentation level.
 
     Raises
-    ----------
+    ------
     _BeartypeValeUtilException
         If ``is_obj_valid`` is *not* a **tri-state boolean** (i.e., either
         ``True``, ``False``, or ``None``).

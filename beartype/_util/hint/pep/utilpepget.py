@@ -950,7 +950,7 @@ def get_hint_pep_origin_type(
         Type originating this hint.
 
     Raises
-    -------
+    ------
     exception_cls
         If this hint either:
 

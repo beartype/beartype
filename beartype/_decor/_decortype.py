@@ -57,7 +57,7 @@ def beartype_type(
         Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     BeartypeableT
         This class decorated by :func:`beartype.beartype`.
     '''

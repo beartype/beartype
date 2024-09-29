@@ -40,12 +40,12 @@ def reduce_hint_pep591(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep591Exception
         If this hint is subscripted by two or more child type hints.
     '''

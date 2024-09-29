@@ -38,7 +38,7 @@ def is_stdout_terminal() -> bool:
     value of the global :attr:`sys.stdout` output stream.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/questions/3818511/how-to-tell-if-python-script-is-being-run-in-a-terminal-or-via-gui
         StackOverflow thread strongly inspiring this implementation.
     '''

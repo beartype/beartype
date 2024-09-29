@@ -287,7 +287,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             Arbitrary object to check against this protocol.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this object satisfies this protocol.
         '''
@@ -408,7 +408,7 @@ class Protocol(
     results.
 
     Examples
-    ----------
+    --------
     .. code-block:: python
 
        >>> from abc import abstractmethod

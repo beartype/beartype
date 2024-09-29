@@ -110,7 +110,7 @@ def get_func_code_lines_or_none(
         Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
@@ -181,7 +181,7 @@ def get_func_file_code_lines_or_none(
         Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 

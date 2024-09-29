@@ -137,7 +137,7 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
         directories to be removed from this directory (e.g., ``"*.jpg"``).
 
     Raises
-    ----------
+    ------
     _BeartypeUtilPathException
         If either:
 
@@ -145,7 +145,7 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
         * This directory exists but is *not* actually a directory.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/38189275/2809027
         StackOverflow answer strongly inspiring this implementation.
     '''

@@ -44,12 +44,12 @@ def get_hint_pep557_initvar_arg(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         PEP-compliant child type hint subscripting this parent type hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep557Exception
         If this object is *not* a dataclass initialization-only instance
         variable type hint.
@@ -106,7 +106,7 @@ def reduce_hint_pep557_initvar(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''

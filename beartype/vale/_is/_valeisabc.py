@@ -103,7 +103,7 @@ class _BeartypeValidatorFactoryABC(
         :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             Beartype validator encapsulating this validation.
         '''

@@ -79,7 +79,7 @@ def get_code_child_node(code: str) -> AST:
         AST node encapsulating the object defined by this string.
 
     Raises
-    -------
+    ------
     _BeartypeUtilAstException
         If this string defines either no *or* two or more child objects.
     '''

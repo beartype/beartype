@@ -316,7 +316,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
        IsAttr['type', IsSubclass[numpy.floating]]]
 
     See Also
-    ----------
+    --------
     :class:`beartype.vale.Is`
         Further commentary.
     '''

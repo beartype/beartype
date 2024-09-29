@@ -59,12 +59,12 @@ def callable_cached_minimal(func: Callable) -> Callable:
         Callable to be memoized.
 
     Returns
-    ----------
+    -------
     Callable
         Closure wrapping this callable with memoization.
 
     See Also
-    ----------
+    --------
     :func:`beartype._util.cache.utilcachecall.callable_cached`
         Further details.
     '''

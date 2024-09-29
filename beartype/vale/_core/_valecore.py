@@ -72,7 +72,7 @@ class BeartypeValidator:
         to dynamically compile this validator code into byte code at runtime.
 
     See Also
-    ----------
+    --------
     :class:`Is`
         Class docstring for further details.
     '''
@@ -280,7 +280,7 @@ class BeartypeValidator:
             type hint for further details.
 
         Raises
-        ----------
+        ------
         :exc:`BeartypeValeSubscriptionException`
             This representer is either:
 
@@ -490,12 +490,12 @@ class BeartypeValidator:
             Object to conjunctively synthesize with this object.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             New object conjunctively synthesized with this object.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If the passed object is *not* also an instance of the same class.
         '''
@@ -523,7 +523,7 @@ class BeartypeValidator:
             Object to disjunctively synthesize with this object.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             New object disjunctively synthesized with this object.
         '''
@@ -548,7 +548,7 @@ class BeartypeValidator:
         returns :data:`False`.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             New object negating this object.
         '''
