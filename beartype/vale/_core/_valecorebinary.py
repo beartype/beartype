@@ -192,7 +192,6 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         symbolizing this operation.
         '''
 
-        pass
 
 
     @abstractmethod
@@ -222,7 +221,6 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             child operand validator underlying this parent binary validator.
         '''
 
-        pass
 
 # ....................{ SUBCLASSES ~ &                     }....................
 class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):

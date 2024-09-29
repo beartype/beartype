@@ -34,7 +34,6 @@ class _BeartypeHintForwardRefExceptionMixin(Exception, metaclass=_ABCMeta):
     * :exc:`.BeartypeDecorHintForwardRefException`.
     '''
 
-    pass
 
 # ....................{ SUPERCLASS                         }....................
 class BeartypeException(Exception, metaclass=_ABCMeta):
@@ -153,7 +152,6 @@ class BeartypeDecorException(BeartypeException):
     from the :func:`beartype.beartype` decorator.
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ wrapp[ee|er]           }....................
 class BeartypeDecorWrappeeException(BeartypeDecorException):
@@ -165,7 +163,6 @@ class BeartypeDecorWrappeeException(BeartypeDecorException):
     to be decorated by this decorator) of invalid type.
     '''
 
-    pass
 
 
 class BeartypeDecorWrapperException(BeartypeDecorException):
@@ -178,7 +175,6 @@ class BeartypeDecorWrapperException(BeartypeDecorException):
     callable).
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint                   }....................
 class BeartypeDecorHintException(BeartypeDecorException):
@@ -192,7 +188,6 @@ class BeartypeDecorHintException(BeartypeDecorException):
     decorator).
     '''
 
-    pass
 
 
 class BeartypeDecorHintForwardRefException(
@@ -206,7 +201,6 @@ class BeartypeDecorHintForwardRefException(
     name of a user-defined class that has yet to be declared).
     '''
 
-    pass
 
 
 class BeartypeDecorHintTypeException(BeartypeDecorHintException):
@@ -219,7 +213,6 @@ class BeartypeDecorHintTypeException(BeartypeDecorHintException):
     typically due to failing to support runtime :func:`isinstance` calls).
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint : non-pep         }....................
 class BeartypeDecorHintNonpepException(BeartypeDecorHintException):
@@ -239,7 +232,6 @@ class BeartypeDecorHintNonpepException(BeartypeDecorHintException):
     (e.g., dictionaries, lists, numbers, sets).
     '''
 
-    pass
 
 
 class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
@@ -252,7 +244,6 @@ class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
     subscripted by an invalid number of arguments).
     '''
 
-    pass
 
 
 class BeartypeDecorHintNonpepPanderaException(BeartypeDecorHintNonpepException):
@@ -266,7 +257,6 @@ class BeartypeDecorHintNonpepPanderaException(BeartypeDecorHintNonpepException):
     PEP-noncompliant :func:`pandera.check_types` decorator).
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint : pep             }....................
 class BeartypeDecorHintPepException(BeartypeDecorHintException):
@@ -281,7 +271,6 @@ class BeartypeDecorHintPepException(BeartypeDecorHintException):
     implementation of such a PEP.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
@@ -295,7 +284,6 @@ class BeartypeDecorHintPepSignException(BeartypeDecorHintPepException):
     of PEP-compliant type hints).
     '''
 
-    pass
 
 
 class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
@@ -309,7 +297,6 @@ class BeartypeDecorHintPepUnsupportedException(BeartypeDecorHintPepException):
     decorator.
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint : pep : proposal  }....................
 class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
@@ -328,7 +315,6 @@ class BeartypeDecorHintPep3119Exception(BeartypeDecorHintPepException):
       classes declared by the standard :mod:`typing` module.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
@@ -344,7 +330,6 @@ class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
       ``typing.List[typing.NoReturn]``).
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep484585Exception(BeartypeDecorHintPepException):
@@ -358,7 +343,6 @@ class BeartypeDecorHintPep484585Exception(BeartypeDecorHintPepException):
     this decorator's implementation of :pep:`484` or :pep:`585`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
@@ -371,7 +355,6 @@ class BeartypeDecorHintPep544Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`544`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep557Exception(BeartypeDecorHintPepException):
@@ -384,7 +367,6 @@ class BeartypeDecorHintPep557Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`557`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
@@ -397,7 +379,6 @@ class BeartypeDecorHintPep585Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`585`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
@@ -410,7 +391,6 @@ class BeartypeDecorHintPep586Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`586`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep591Exception(BeartypeDecorHintPepException):
@@ -423,7 +403,6 @@ class BeartypeDecorHintPep591Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`591`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
@@ -436,7 +415,6 @@ class BeartypeDecorHintPep593Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`593`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep604Exception(BeartypeDecorHintPepException):
@@ -449,7 +427,6 @@ class BeartypeDecorHintPep604Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`604`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep612Exception(BeartypeDecorHintPepException):
@@ -462,7 +439,6 @@ class BeartypeDecorHintPep612Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`612`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep646Exception(BeartypeDecorHintPepException):
@@ -475,7 +451,6 @@ class BeartypeDecorHintPep646Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`646`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep647Exception(BeartypeDecorHintPepException):
@@ -488,7 +463,6 @@ class BeartypeDecorHintPep647Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`647`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep673Exception(BeartypeDecorHintPepException):
@@ -501,7 +475,6 @@ class BeartypeDecorHintPep673Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`673`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep692Exception(BeartypeDecorHintPepException):
@@ -514,7 +487,6 @@ class BeartypeDecorHintPep692Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`692`.
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep695Exception(BeartypeDecorHintPepException):
@@ -527,7 +499,6 @@ class BeartypeDecorHintPep695Exception(BeartypeDecorHintPepException):
     decorator's implementation of :pep:`695`.
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ param                  }....................
 class BeartypeDecorParamException(BeartypeDecorException):
@@ -539,7 +510,6 @@ class BeartypeDecorParamException(BeartypeDecorException):
     declaring invalid parameters.
     '''
 
-    pass
 
 
 class BeartypeDecorParamNameException(BeartypeDecorParamException):
@@ -552,7 +522,6 @@ class BeartypeDecorParamNameException(BeartypeDecorParamException):
     :mod:`beartype`-reserved substring ``"__bear"``).
     '''
 
-    pass
 
 # ....................{ CALL                               }....................
 class BeartypeCallException(BeartypeException):
@@ -564,7 +533,6 @@ class BeartypeCallException(BeartypeException):
     failing a runtime type-check at call time.
     '''
 
-    pass
 
 
 class BeartypeCallUnavailableTypeException(BeartypeCallException):
@@ -578,7 +546,6 @@ class BeartypeCallUnavailableTypeException(BeartypeCallException):
     active Python interpreter.
     '''
 
-    pass
 
 # ....................{ CALL ~ hint                        }....................
 class BeartypeCallHintException(BeartypeCallException):
@@ -592,7 +559,6 @@ class BeartypeCallHintException(BeartypeCallException):
     parameter or return.
     '''
 
-    pass
 
 
 class BeartypeCallHintForwardRefException(
@@ -607,7 +573,6 @@ class BeartypeCallHintForwardRefException(
     *not* actually a class.
     '''
 
-    pass
 
 # ....................{ CALL ~ hint : violation            }....................
 class BeartypeCallHintViolation(BeartypeCallHintException):
@@ -783,7 +748,6 @@ class BeartypeCallHintParamViolation(BeartypeCallHintViolation):
     that parameter of that decorated callable.
     '''
 
-    pass
 
 
 class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
@@ -796,7 +760,6 @@ class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     of that decorated callable.
     '''
 
-    pass
 
 
 class BeartypeDecorHintParamDefaultViolation(BeartypeCallHintViolation):
@@ -820,7 +783,6 @@ class BeartypePepException(BeartypeDecorException):
     decoration time on receiving a callable or class violating a specific PEP.
     '''
 
-    pass
 
 
 class BeartypePep563Exception(BeartypePepException):
@@ -833,7 +795,6 @@ class BeartypePep563Exception(BeartypePepException):
     postponed annotation of a callable for which :pep:`563` is active.
     '''
 
-    pass
 
 # ....................{ API ~ cave                         }....................
 class BeartypeCaveException(BeartypeException):
@@ -844,7 +805,6 @@ class BeartypeCaveException(BeartypeException):
     various types published by the :func:`beartype.cave` submodule.
     '''
 
-    pass
 
 # ....................{ API ~ cave : nonetypeor            }....................
 class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
@@ -856,7 +816,6 @@ class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
     the :func:`beartype.cave.NoneTypeOr` tuple factory.
     '''
 
-    pass
 
 
 class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
@@ -874,7 +833,6 @@ class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
         :class:`beartype.cave.ClassType` instances).
     '''
 
-    pass
 
 
 #FIXME: Unsure what this is about. We no longer raise this anywhere. *sigh*
@@ -898,7 +856,6 @@ class BeartypeClawException(BeartypeException):
     callables and classes published by the :mod:`beartype.claw` subpackage.
     '''
 
-    pass
 
 # ....................{ API ~ claw : hook                  }....................
 class BeartypeClawHookException(BeartypeClawException):
@@ -912,7 +869,6 @@ class BeartypeClawHookException(BeartypeClawException):
     parameters).
     '''
 
-    pass
 
 
 class BeartypeClawHookUnpackagedException(BeartypeClawHookException):
@@ -926,7 +882,6 @@ class BeartypeClawHookUnpackagedException(BeartypeClawHookException):
     outside any package structure (e.g., top-level module or executable script).
     '''
 
-    pass
 
 # ....................{ API ~ claw : import                }....................
 class BeartypeClawImportException(BeartypeClawException):
@@ -938,7 +893,6 @@ class BeartypeClawImportException(BeartypeClawException):
     to a public function published by the :mod:`beartype.claw` subpackage.
     '''
 
-    pass
 
 
 class BeartypeClawImportAstException(BeartypeClawImportException):
@@ -951,7 +905,6 @@ class BeartypeClawImportAstException(BeartypeClawImportException):
     its original syntactically valid AST into a new syntactically invalid AST.
     '''
 
-    pass
 
 
 class BeartypeClawImportConfException(BeartypeClawImportException):
@@ -964,7 +917,6 @@ class BeartypeClawImportConfException(BeartypeClawImportException):
     non-existent beartype configuration.
     '''
 
-    pass
 
 # ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
@@ -976,7 +928,6 @@ class BeartypeConfException(BeartypeException):
     edge cases concerning beartype configuration.
     '''
 
-    pass
 
 
 class BeartypeConfParamException(BeartypeConfException):
@@ -988,7 +939,6 @@ class BeartypeConfParamException(BeartypeConfException):
     instantiate that class with an invalid parameter.
     '''
 
-    pass
 
 
 class BeartypeConfShellVarException(BeartypeConfException):
@@ -1001,7 +951,6 @@ class BeartypeConfShellVarException(BeartypeConfException):
     ``${BEARTYPE_IS_COLOR}``) to an invalid value.
     '''
 
-    pass
 
 # ....................{ API ~ door                         }....................
 class BeartypeDoorException(BeartypeException):
@@ -1013,7 +962,6 @@ class BeartypeDoorException(BeartypeException):
     callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
-    pass
 
 
 class BeartypeDoorHintViolation(BeartypeCallHintViolation):
@@ -1028,7 +976,6 @@ class BeartypeDoorHintViolation(BeartypeCallHintViolation):
       object violating the current type hint.
     '''
 
-    pass
 
 # ....................{ API ~ door : non-pep               }....................
 class BeartypeDoorNonpepException(BeartypeDoorException):
@@ -1042,7 +989,6 @@ class BeartypeDoorNonpepException(BeartypeDoorException):
     :mod:`beartype.door` API).
     '''
 
-    pass
 
 # ....................{ API ~ door : pep                   }....................
 class BeartypeDoorPepException(BeartypeDoorException):
@@ -1056,7 +1002,6 @@ class BeartypeDoorPepException(BeartypeDoorException):
     :mod:`beartype.door` API but otherwise invalid for various reasons).
     '''
 
-    pass
 
 
 class BeartypeDoorPepArgsLenException(BeartypeDoorException):
@@ -1071,7 +1016,6 @@ class BeartypeDoorPepArgsLenException(BeartypeDoorException):
     subscripted by an invalid number of child type hints).
     '''
 
-    pass
 
 
 class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
@@ -1085,7 +1029,6 @@ class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
     :mod:`beartype.door` API).
     '''
 
-    pass
 
 # ....................{ API ~ kind                         }....................
 class BeartypeKindException(BeartypeException):
@@ -1098,7 +1041,6 @@ class BeartypeKindException(BeartypeException):
     defined by :mod:`beartype`).
     '''
 
-    pass
 
 # ....................{ API ~ kind : dict                  }....................
 class BeartypeKindFrozenDictException(BeartypeException):
@@ -1112,7 +1054,6 @@ class BeartypeKindFrozenDictException(BeartypeException):
     instances of this class.
     '''
 
-    pass
 
 
 class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
@@ -1126,7 +1067,6 @@ class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
     ``BeartypeHintOverrides{str: list[str]})``).
     '''
 
-    pass
 
 # ....................{ API ~ library                      }....................
 class BeartypeLibraryException(BeartypeException):
@@ -1138,7 +1078,6 @@ class BeartypeLibraryException(BeartypeException):
     packages and modules outside the control of :mod:`beartype`).
     '''
 
-    pass
 
 
 class BeartypeLibraryNumpyException(BeartypeLibraryException):
@@ -1152,7 +1091,6 @@ class BeartypeLibraryNumpyException(BeartypeLibraryException):
     :func:`beartype.door.infer_hint` function).
     '''
 
-    pass
 
 # ....................{ API ~ plug                         }....................
 class BeartypePlugException(BeartypeException):
@@ -1166,7 +1104,6 @@ class BeartypePlugException(BeartypeException):
     module.
     '''
 
-    pass
 
 
 class BeartypePlugInstancecheckStrException(BeartypePlugException):
@@ -1180,7 +1117,6 @@ class BeartypePlugInstancecheckStrException(BeartypePlugException):
     to satisfy those classes).
     '''
 
-    pass
 
 # ....................{ API ~ vale                         }....................
 class BeartypeValeException(BeartypeException):
@@ -1192,7 +1128,6 @@ class BeartypeValeException(BeartypeException):
     the :mod:`beartype.vale` subpackage.
     '''
 
-    pass
 
 
 class BeartypeValeSubscriptionException(BeartypeValeException):
@@ -1213,7 +1148,6 @@ class BeartypeValeSubscriptionException(BeartypeValeException):
       ``collections.abc.Callable[[typing.Any,], bool]``).
     '''
 
-    pass
 
 
 class BeartypeValeValidationException(BeartypeValeException):
@@ -1230,7 +1164,6 @@ class BeartypeValeValidationException(BeartypeValeException):
       :class:`bool` *nor* implicitly convertible into a :class:`bool`).
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ door                       }..................
 class _BeartypeDoorTextException(BeartypeDoorException):
@@ -1242,7 +1175,6 @@ class _BeartypeDoorTextException(BeartypeDoorException):
     whose message is *not* prefixed by the expected substring).
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ vale                     }....................
 class _BeartypeValeUtilException(BeartypeValeException):
@@ -1253,7 +1185,6 @@ class _BeartypeValeUtilException(BeartypeValeException):
     :func:`beartype.vale._util` subpackage.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util                     }....................
 class _BeartypeUtilException(BeartypeException):
@@ -1266,7 +1197,6 @@ class _BeartypeUtilException(BeartypeException):
     raised, let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilExceptionException(_BeartypeUtilException):
@@ -1280,7 +1210,6 @@ class _BeartypeUtilExceptionException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : ast                 }..................
 class _BeartypeUtilAstException(_BeartypeUtilException):
@@ -1294,7 +1223,6 @@ class _BeartypeUtilAstException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : cache               }..................
 class _BeartypeUtilCachedException(_BeartypeUtilException):
@@ -1307,7 +1235,6 @@ class _BeartypeUtilCachedException(_BeartypeUtilException):
     alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
@@ -1323,7 +1250,6 @@ class _BeartypeUtilCallableCachedException(_BeartypeUtilCachedException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCacheLruException(_BeartypeUtilCachedException):
@@ -1339,7 +1265,6 @@ class _BeartypeUtilCacheLruException(_BeartypeUtilCachedException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : cache : pool        }..................
 class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
@@ -1354,7 +1279,6 @@ class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
@@ -1371,7 +1295,6 @@ class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
@@ -1387,7 +1310,6 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : call                }..................
 class _BeartypeCallHintRaiseException(_BeartypeUtilException):
@@ -1405,7 +1327,6 @@ class _BeartypeCallHintRaiseException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
@@ -1420,7 +1341,6 @@ class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeCallHintPepRaiseDesynchronizationException(
@@ -1449,7 +1369,6 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : kind                }..................
 class _BeartypeUtilCallFrameException(_BeartypeUtilException):
@@ -1462,7 +1381,6 @@ class _BeartypeUtilCallFrameException(_BeartypeUtilException):
     percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilMappingException(_BeartypeUtilException):
@@ -1475,7 +1393,6 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilModuleException(_BeartypeUtilException):
@@ -1495,7 +1412,6 @@ class _BeartypeUtilModuleException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilPathException(_BeartypeUtilException):
@@ -1508,7 +1424,6 @@ class _BeartypeUtilPathException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilTypeException(_BeartypeUtilException):
@@ -1521,7 +1436,6 @@ class _BeartypeUtilTypeException(_BeartypeUtilException):
     percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : kind : callable     }..................
 class _BeartypeUtilCallableException(_BeartypeUtilException):
@@ -1534,7 +1448,6 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
@@ -1547,7 +1460,6 @@ class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
     allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCallableScopeNotFoundException(
@@ -1564,7 +1476,6 @@ class _BeartypeUtilCallableScopeNotFoundException(
     stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
@@ -1577,7 +1488,6 @@ class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
     allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : object              }..................
 class _BeartypeUtilObjectException(_BeartypeUtilException):
@@ -1590,7 +1500,6 @@ class _BeartypeUtilObjectException(_BeartypeUtilException):
     -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
@@ -1605,7 +1514,6 @@ class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
     allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : python              }..................
 class _BeartypeUtilPythonException(_BeartypeUtilException):
@@ -1618,7 +1526,6 @@ class _BeartypeUtilPythonException(_BeartypeUtilException):
     alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
@@ -1631,7 +1538,6 @@ class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilPythonWeakrefException(_BeartypeUtilPythonException):
@@ -1644,7 +1550,6 @@ class _BeartypeUtilPythonWeakrefException(_BeartypeUtilPythonException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : text                }..................
 class _BeartypeUtilTextException(_BeartypeUtilException):
@@ -1658,7 +1563,6 @@ class _BeartypeUtilTextException(_BeartypeUtilException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
@@ -1671,7 +1575,6 @@ class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 
 class _BeartypeUtilTextVersionException(_BeartypeUtilTextException):
@@ -1683,5 +1586,3 @@ class _BeartypeUtilTextVersionException(_BeartypeUtilTextException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
-
-    pass

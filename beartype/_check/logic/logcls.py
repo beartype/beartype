@@ -268,7 +268,6 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
             * ``item`` is that item.
         '''
 
-        pass
 
 # ....................{ SUBCLASSES ~ container             }....................
 class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):

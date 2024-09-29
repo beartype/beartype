@@ -27,7 +27,6 @@ class TypeHintGeneric(TypeHint):
     GenericListOfStrs(list[str]): ...``).
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ subclasses               }....................
 class _TypeHintOriginIsinstanceable(TypeHint):

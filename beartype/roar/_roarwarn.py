@@ -66,7 +66,6 @@ class BeartypeClawWarning(BeartypeWarning):
     to decorate callables or classes in modules imported by those hooks.
     '''
 
-    pass
 
 
 class BeartypeClawDecorWarning(BeartypeClawWarning):
@@ -79,7 +78,6 @@ class BeartypeClawDecorWarning(BeartypeClawWarning):
     declared in a module imported by those hooks.
     '''
 
-    pass
 
 # ....................{ CONF                               }....................
 class BeartypeConfWarning(BeartypeWarning):
@@ -91,7 +89,6 @@ class BeartypeConfWarning(BeartypeWarning):
     edge cases concerning beartype configuration.
     '''
 
-    pass
 
 
 class BeartypeConfShellVarWarning(BeartypeConfWarning):
@@ -105,7 +102,6 @@ class BeartypeConfShellVarWarning(BeartypeConfWarning):
     corresponding parameter also passed to that class (e.g., ``is_color``).
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint                   }....................
 class BeartypeDecorHintWarning(BeartypeWarning):
@@ -118,7 +114,6 @@ class BeartypeDecorHintWarning(BeartypeWarning):
     non-fatal warnings *without* raising fatal exceptions.
     '''
 
-    pass
 
 
 
@@ -134,7 +129,6 @@ class BeartypeDecorHintParamDefaultForwardRefWarning(BeartypeDecorHintWarning):
     user-defined object that is undefined at that decoration time.
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint : pep             }....................
 class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
@@ -148,7 +142,6 @@ class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
     warranting non-fatal warnings *without* raising fatal exceptions.
     '''
 
-    pass
 
 
 #FIXME: Consider removal.
@@ -198,7 +191,6 @@ class BeartypeDecorHintPepDeprecationWarning(
       :pep:`585`-compliant type hints (e.g., ``list[int]``).
     '''
 
-    pass
 
 
 #FIXME: This should *REALLY* have been called
@@ -223,7 +215,6 @@ class BeartypeDecorHintPep585DeprecationWarning(
         Further discussion
     '''
 
-    pass
 
 
 class BeartypeDecorHintPep613DeprecationWarning(
@@ -240,7 +231,6 @@ class BeartypeDecorHintPep613DeprecationWarning(
     3.10 and thus supports :pep:`613`.
     '''
 
-    pass
 
 # ....................{ DECORATOR ~ hint : non-pep         }....................
 class BeartypeDecorHintNonpepWarning(BeartypeWarning):
@@ -254,7 +244,6 @@ class BeartypeDecorHintNonpepWarning(BeartypeWarning):
     hint warranting non-fatal warnings *without* raising fatal exceptions.
     '''
 
-    pass
 
 
 class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
@@ -270,7 +259,6 @@ class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
       **untyped NumPy arrays** (i.e., :class:`numpy.ndarray`).
     '''
 
-    pass
 
 # ....................{ MODULE                             }....................
 class BeartypeModuleWarning(BeartypeWarning):
@@ -284,7 +272,6 @@ class BeartypeModuleWarning(BeartypeWarning):
     exceptions.
     '''
 
-    pass
 
 
 class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
@@ -297,7 +284,6 @@ class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
     technically optional but recommended).
     '''
 
-    pass
 
 
 class BeartypeModuleAttributeNotFoundWarning(BeartypeModuleWarning):
@@ -313,7 +299,6 @@ class BeartypeModuleAttributeNotFoundWarning(BeartypeModuleWarning):
     versions of that package).
     '''
 
-    pass
 
 
 class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
@@ -326,7 +311,6 @@ class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
     exceptions from module scope when imported).
     '''
 
-    pass
 
 # ....................{ DOOR                               }....................
 class BeartypeDoorWarning(BeartypeWarning):
@@ -341,7 +325,6 @@ class BeartypeDoorWarning(BeartypeWarning):
     warnings *without* raising fatal exceptions.
     '''
 
-    pass
 
 
 class BeartypeDoorInferHintWarning(BeartypeDoorWarning):
@@ -356,7 +339,6 @@ class BeartypeDoorInferHintWarning(BeartypeDoorWarning):
     warnings *without* raising fatal exceptions.
     '''
 
-    pass
 
 
 class BeartypeDoorInferHintRecursionWarning(BeartypeDoorInferHintWarning):
@@ -371,7 +353,6 @@ class BeartypeDoorInferHintRecursionWarning(BeartypeDoorInferHintWarning):
     same container).
     '''
 
-    pass
 
 # ....................{ VALE                               }....................
 class BeartypeValeWarning(BeartypeWarning):
@@ -385,7 +366,6 @@ class BeartypeValeWarning(BeartypeWarning):
     raising fatal exceptions.
     '''
 
-    pass
 
 
 class BeartypeValeLambdaWarning(BeartypeValeWarning):
@@ -398,7 +378,6 @@ class BeartypeValeLambdaWarning(BeartypeValeWarning):
     lambda.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ conf                     }....................
 class _BeartypeConfReduceDecoratorExceptionToWarningDefault(
@@ -433,7 +412,6 @@ class _BeartypeConfReduceDecoratorExceptionToWarningDefault(
     this warning is a placeholder that should *never* be emitted to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util                     }....................
 class _BeartypeUtilWarning(BeartypeWarning):
@@ -446,7 +424,6 @@ class _BeartypeUtilWarning(BeartypeWarning):
     be emitted, let alone allowed to percolate up the call stack to end users.
     '''
 
-    pass
 
 # ....................{ PRIVATE ~ util : call              }....................
 class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
@@ -463,5 +440,3 @@ class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
     This warning denotes a critical internal issue and should thus *never* be
     emitted to end users.
     '''
-
-    pass

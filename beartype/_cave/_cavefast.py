@@ -147,7 +147,6 @@ class _UnavailableTypesTuple(tuple):
     version or non-installed third-party dependencies).
     '''
 
-    pass
 
 # ....................{ TYPES ~ core                       }....................
 AnyType = object

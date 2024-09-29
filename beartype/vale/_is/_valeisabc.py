@@ -108,7 +108,6 @@ class _BeartypeValidatorFactoryABC(
             Beartype validator encapsulating this validation.
         '''
 
-        pass
 
     # ..................{ PRIVATE ~ validator                }..................
     #FIXME: Unit test us up, please.

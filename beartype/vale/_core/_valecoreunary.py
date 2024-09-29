@@ -139,7 +139,6 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
         symbolizing this operation.
         '''
 
-        pass
 
 # ....................{ SUBCLASSES                         }....................
 class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
