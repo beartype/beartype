@@ -14,6 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from contextlib import contextmanager
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype.claw._clawstate import (
     claw_lock,
     claw_state,
@@ -26,9 +30,6 @@ from beartype.typing import (
     Iterator,
     Optional,
 )
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from contextlib import contextmanager
 
 # ....................{ CONTEXTS                           }....................
 #FIXME: Unit test us up, please.

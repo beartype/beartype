@@ -17,9 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # by this submodule. This submodule is typically called from the "__init__"
 # submodules of public subpackages.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import Any, Dict
-from beartype._util.utilobject import SENTINEL
 from warnings import warn
+
+from beartype._util.utilobject import SENTINEL
+from beartype.typing import Any, Dict
 
 # ....................{ IMPORTERS                          }....................
 def deprecate_module_attr(

@@ -47,6 +47,35 @@ This private submodule is *not* intended for importation by downstream callers.
 #Done and done. Phew!
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Set
+
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.code.snip.codesnipstr import (
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
+)
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype,
+)
+from beartype._check.forward.reference.fwdreftest import is_forwardref
+from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    Pep484585ForwardRef,
+    SetOrTupleTypes,
+    TupleTypes,
+    TypeOrTupleTypes,
+)
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_object_isinstanceable,
+    die_unless_type_isinstanceable,
+)
+from beartype._util.cls.utilclstest import is_type_builtin
+from beartype._util.func.utilfuncscope import add_func_scope_attr
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
+    get_hint_pep484585_ref_names,
+)
+from beartype._util.utilobject import get_object_type_basename
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype.typing import (
     Dict,
@@ -54,32 +83,6 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
-from beartype._check.forward.reference.fwdreftest import is_forwardref
-from beartype._check.code.snip.codesnipstr import (
-    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
-    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
-)
-from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-    Pep484585ForwardRef,
-    SetOrTupleTypes,
-    TypeOrTupleTypes,
-    TupleTypes,
-)
-from beartype._util.cls.pep.utilpep3119 import (
-    die_unless_type_isinstanceable,
-    die_unless_object_isinstanceable,
-)
-from beartype._util.cls.utilclstest import is_type_builtin
-from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_names)
-from beartype._util.utilobject import get_object_type_basename
-from collections.abc import Set
 
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.

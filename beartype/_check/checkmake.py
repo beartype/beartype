@@ -13,39 +13,41 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Callable,
-    Optional,
+from itertools import count
+from warnings import (
+    catch_warnings,
+    warn,
 )
+
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check._checksnip import (
+    CODE_CHECKER_SIGNATURE,
+    CODE_GET_FUNC_PITH_VIOLATION,
+    CODE_GET_HINT_OBJECT_VIOLATION,
+    CODE_GET_VIOLATION_RANDOM_INT,
+    CODE_RAISE_VIOLATION,
+    CODE_RAISER_FUNC_PITH_CHECK_PREFIX,
+    CODE_RAISER_HINT_OBJECT_CHECK_PREFIX,
+    CODE_TESTER_CHECK_PREFIX,
+    CODE_WARN_VIOLATION,
+)
 from beartype._check.checkmagic import (
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
-    ARG_NAME_GETRANDBITS,
     ARG_NAME_GET_VIOLATION,
+    ARG_NAME_GETRANDBITS,
     ARG_NAME_HINT,
     ARG_NAME_WARN,
     CODE_PITH_ROOT_NAME_PLACEHOLDER,
     FUNC_CHECKER_NAME_PREFIX,
 )
-from beartype._check.convert.convsanify import sanify_hint_root_statement
 from beartype._check.code.codemake import make_check_expr
+from beartype._check.convert.convsanify import sanify_hint_root_statement
 from beartype._check.error.errget import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._check._checksnip import (
-    CODE_CHECKER_SIGNATURE,
-    CODE_RAISER_FUNC_PITH_CHECK_PREFIX,
-    CODE_RAISER_HINT_OBJECT_CHECK_PREFIX,
-    CODE_TESTER_CHECK_PREFIX,
-    CODE_GET_FUNC_PITH_VIOLATION,
-    CODE_GET_HINT_OBJECT_VIOLATION,
-    CODE_GET_VIOLATION_RANDOM_INT,
-    CODE_RAISE_VIOLATION,
-    CODE_WARN_VIOLATION,
-)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.conftest import die_unless_conf
@@ -64,12 +66,12 @@ from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_names_relative_to)
+    get_hint_pep484585_ref_names_relative_to,
+)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from itertools import count
-from warnings import (
-    catch_warnings,
-    warn,
+from beartype.typing import (
+    Callable,
+    Optional,
 )
 
 # ....................{ FACTORIES ~ func                   }....................

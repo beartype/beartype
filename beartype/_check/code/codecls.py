@@ -27,9 +27,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #Well, isn't this turning out to be a significant facepalm.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    TYPE_CHECKING,
-)
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
@@ -39,6 +36,9 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
     FixedList,
 )
 from beartype._util.utilobject import SENTINEL
+from beartype.typing import (
+    TYPE_CHECKING,
+)
 
 # ....................{ DATACLASSES                        }....................
 #FIXME: Unit test us up, please.

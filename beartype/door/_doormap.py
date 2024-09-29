@@ -12,28 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
-from beartype.door._cls.doorsub import TypeHintGeneric
-from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
-from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
-from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
-from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
-from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
-from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
-from beartype.door._cls.pep.pep484585.doorpep484585callable import (
-    CallableTypeHint)
-from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
-    TupleFixedTypeHint,
-    TupleVariableTypeHint,
-)
-from beartype.roar import (
-    BeartypeDoorNonpepException,
-    # BeartypeDoorPepUnsupportedException,
-)
-from beartype.typing import (
-    Dict,
-    Type,
-)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -50,6 +28,27 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign_or_none,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
+from beartype.door._cls.doorsub import TypeHintGeneric
+from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
+from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
+from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
+from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
+from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
+from beartype.door._cls.pep.pep484585.doorpep484585callable import CallableTypeHint
+from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
+    TupleFixedTypeHint,
+    TupleVariableTypeHint,
+)
+from beartype.roar import (
+    BeartypeDoorNonpepException,
+    # BeartypeDoorPepUnsupportedException,
+)
+from beartype.typing import (
+    Dict,
+    Type,
+)
 
 # ....................{ GETTERS                            }....................
 def get_typehint_subclass(hint: object) -> Type[TypeHint]:
@@ -181,10 +180,11 @@ def _init() -> None:
     '''
 
     # Isolate function-specific imports.
-    from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
     from beartype._data.hint.pep.sign.datapepsignmap import (
-        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
+        HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE,
+    )
     from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+    from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
 
     # Fully initialize the "_HINT_SIGN_TO_TYPEHINT_CLS" global dictionary.
     #

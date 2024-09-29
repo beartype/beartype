@@ -12,11 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import (
-    Optional,
-    Tuple,
+from collections.abc import (
+    Callable,
+    Sequence,
 )
+
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import (
     TYPE_BUILTIN_NAME_TO_TYPE,
@@ -32,9 +32,10 @@ from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.module.utilmodtest import is_module
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype._util.text.utiltextlabel import label_callable
-from collections.abc import (
-    Callable,
-    Sequence,
+from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.typing import (
+    Optional,
+    Tuple,
 )
 
 # ....................{ VALIDATORS                         }....................
@@ -629,7 +630,8 @@ def import_pep484585_ref_type(
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdrefmake import (
-        make_forwardref_indexable_subtype)
+        make_forwardref_indexable_subtype,
+    )
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference relative to this type

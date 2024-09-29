@@ -11,17 +11,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Iterable as IterableABC
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.conftest import die_unless_conf
+from beartype._data.hint.datahinttyping import IterableStrs
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
 from beartype.roar import (
     BeartypeClawDecorWarning,
     BeartypeClawHookException,
 )
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.conftest import die_unless_conf
-from beartype._data.hint.datahinttyping import IterableStrs
-from beartype._util.text.utiltextidentifier import die_unless_identifier
-from collections.abc import Iterable as IterableABC
 
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test us up, please.

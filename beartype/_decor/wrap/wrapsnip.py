@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
+
 from beartype._check.checkmagic import (
     ARG_NAME_ARGS_NAME_KEYWORDABLE,
     ARG_NAME_FUNC,
@@ -20,10 +22,9 @@ from beartype._check.checkmagic import (
     VAR_NAME_ARGS_LEN,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._data.code.datacodeindent import CODE_INDENT_1
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from collections.abc import Callable
+from beartype._util.func.arg.utilfuncargiter import ArgKind
 
 # ....................{ STRINGS                            }....................
 EXCEPTION_PREFIX_DEFAULT = f'{EXCEPTION_PLACEHOLDER}default '

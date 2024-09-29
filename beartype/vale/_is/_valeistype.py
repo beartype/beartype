@@ -13,27 +13,27 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeValeSubscriptionException
-from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._util._valeutilsnip import (
-    VALE_CODE_CHECK_ISINSTANCE_TEST_format,
-    VALE_CODE_CHECK_ISSUBCLASS_TEST_format,
-)
-from beartype.vale._core._valecore import BeartypeValidator
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeOrTupleTypes,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
-    die_unless_type_isinstanceable,
     die_unless_object_isinstanceable,
-    die_unless_type_issubclassable,
     die_unless_object_issubclassable,
+    die_unless_type_isinstanceable,
+    die_unless_type_issubclassable,
 )
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.utilobject import get_object_name
+from beartype.roar import BeartypeValeSubscriptionException
+from beartype.vale._core._valecore import BeartypeValidator
+from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilsnip import (
+    VALE_CODE_CHECK_ISINSTANCE_TEST_format,
+    VALE_CODE_CHECK_ISSUBCLASS_TEST_format,
+)
 
 # ....................{ SUBCLASSES ~ instance              }....................
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):

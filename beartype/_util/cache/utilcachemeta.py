@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Type
 from beartype._data.hint.datahinttyping import T
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype.typing import Type
 
 # ....................{ METACLASSES                        }....................
 class BeartypeCachingMeta(type):

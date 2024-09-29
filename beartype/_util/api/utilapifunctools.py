@@ -11,11 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-    Tuple,
-)
+from collections.abc import Callable
+
 from beartype._cave._cavefast import (
     CallableFunctoolsLruCacheType,
     CallableFunctoolsPartialType,
@@ -25,7 +22,11 @@ from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeException,
 )
-from collections.abc import Callable
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Any,
+    Tuple,
+)
 
 # ....................{ TESTERS                            }....................
 def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
@@ -168,8 +169,7 @@ def get_func_functools_partial_args_flexible_len(
         f'{repr(func)} not "function.partial"-wrapped callable.')
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncarglen import (
-        get_func_args_flexible_len)
+    from beartype._util.func.arg.utilfuncarglen import get_func_args_flexible_len
 
     # Pure-Python wrappee callable wrapped by that partial.
     wrappee = unwrap_func_functools_partial_once(func)

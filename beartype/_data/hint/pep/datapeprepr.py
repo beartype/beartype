@@ -12,10 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Set,
-)
 from beartype._data.hint.datahinttyping import (
     DictStrToHintSign,
     FrozenSetStrs,
@@ -25,9 +21,9 @@ from beartype._data.hint.pep.sign import datapepsigns
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
     HintSignAsyncContextManager,
+    HintSignAsyncGenerator,
     HintSignAsyncIterable,
     HintSignAsyncIterator,
-    HintSignAsyncGenerator,
     HintSignAwaitable,
     HintSignBinaryIO,
     HintSignByteString,
@@ -35,8 +31,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignChainMap,
     HintSignCollection,
     HintSignContainer,
-    HintSignCoroutine,
     HintSignContextManager,
+    HintSignCoroutine,
     HintSignCounter,
     HintSignDefaultDict,
     HintSignDeque,
@@ -64,12 +60,12 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpec,
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
+    HintSignPattern,
     HintSignPep557DataclassInitVar,
     HintSignPep695TypeAlias,
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
-    HintSignPattern,
     HintSignTextIO,
     HintSignTuple,
     HintSignType,
@@ -77,6 +73,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVarTuple,
     HintSignUnion,
     HintSignValuesView,
+)
+from beartype.typing import (
+    Dict,
+    Set,
 )
 
 # ....................{ MAPPINGS ~ repr                    }....................
@@ -409,9 +409,9 @@ def _init() -> None:
     )
     from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_3_8,
         IS_PYTHON_3_11,
         IS_PYTHON_AT_LEAST_3_9,
-        IS_PYTHON_3_8,
     )
 
     # ..................{ GLOBALS                            }..................

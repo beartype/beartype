@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 """
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilTextException
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
+from beartype.roar._roarexc import _BeartypeUtilTextException
 
 # ....................{ CASERS                             }....................
 #FIXME: Unit test us up, please.

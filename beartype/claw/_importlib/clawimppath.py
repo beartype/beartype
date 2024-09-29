@@ -16,13 +16,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
+# Intentionally violate privacy encapsulate in the standard Python library,
+# because there is *NO* valid alternative. This low-level private getter
+# function returns a tuple of the filetypes of *ALL* C extensions supported by
+# the current platform (e.g., as shared libraries).
+from _imp import extension_suffixes
 from importlib import invalidate_caches
 from importlib.machinery import (
     BYTECODE_SUFFIXES,
     SOURCE_SUFFIXES,
-    FileFinder,
     ExtensionFileLoader,
+    FileFinder,
     SourcelessFileLoader,
 )
 from sys import (
@@ -30,11 +34,7 @@ from sys import (
     path_importer_cache,
 )
 
-# Intentionally violate privacy encapsulate in the standard Python library,
-# because there is *NO* valid alternative. This low-level private getter
-# function returns a tuple of the filetypes of *ALL* C extensions supported by
-# the current platform (e.g., as shared libraries).
-from _imp import extension_suffixes
+from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
 
 # ....................{ ADDERS                             }....................
 #FIXME: Unit test us up, please.

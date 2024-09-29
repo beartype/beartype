@@ -11,14 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahinttyping import TypeException
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import (
     Any,
     Generic,
 )
-from beartype._data.hint.datahinttyping import TypeException
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep484_generic(hint: object) -> bool:
@@ -56,7 +56,8 @@ def is_hint_pep484_generic(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        get_hint_pep484585_generic_type_or_none)
+        get_hint_pep484585_generic_type_or_none,
+    )
 
     # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
     # generic but could still be a subscripted generic (i.e., generic
@@ -352,7 +353,8 @@ def get_hint_pep484_generic_bases_unerased(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        get_hint_pep484585_generic_type_or_none)
+        get_hint_pep484585_generic_type_or_none,
+    )
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See is_hint_pep484_generic() for details.

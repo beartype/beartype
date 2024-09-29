@@ -29,9 +29,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #  caching strategies implemented by concrete subclasses.
 
 # ....................{ IMPORTS                            }....................
+from threading import Lock
+
 from beartype.roar._roarexc import _BeartypeUtilCacheLruException
 from beartype.typing import Hashable
-from threading import Lock
 
 # ....................{ CLASSES                            }....................
 class CacheLruStrong(dict):

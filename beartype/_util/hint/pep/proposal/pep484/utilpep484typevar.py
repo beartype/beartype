@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import TypeVar
-from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ GETTERS                            }....................
 @callable_cached
@@ -108,7 +108,8 @@ def get_hint_pep484_typevar_bound_or_none(
     if hint.__constraints__:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
-            make_hint_pep484_union)
+            make_hint_pep484_union,
+        )
 
         # Create and return the PEP 484-compliant union of these constraints.
         return make_hint_pep484_union(hint.__constraints__)

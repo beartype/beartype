@@ -10,15 +10,16 @@ prohibiting modification).
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Mapping
+
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobject import get_object_type_basename
 from beartype.roar import BeartypeKindFrozenDictException
 from beartype.typing import (
     NoReturn,
     SupportsIndex,
     Tuple,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobject import get_object_type_basename
-from collections.abc import Mapping
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.

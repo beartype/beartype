@@ -12,6 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Iterable as IterableABC
+
+from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.module.utilmodimport import import_module_attr_or_none
 from beartype.roar import BeartypeModuleAttributeNotFoundWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import (
@@ -19,12 +26,6 @@ from beartype.typing import (
     Iterable,
     Union,
 )
-from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.module.utilmodimport import import_module_attr_or_none
-from collections.abc import Iterable as IterableABC
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.

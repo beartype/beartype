@@ -10,15 +10,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Hashable
+from contextlib import AbstractContextManager
+from threading import Lock
+
+from beartype._util.utilobject import SENTINEL
 from beartype.typing import (
     Callable,
     Dict,
     Union,
 )
-from beartype._util.utilobject import SENTINEL
-from collections.abc import Hashable
-from contextlib import AbstractContextManager
-from threading import Lock
 
 # ....................{ CLASSES                            }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:

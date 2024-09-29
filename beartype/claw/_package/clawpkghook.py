@@ -12,6 +12,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import (
+    Iterable as IterableABC,
+)
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahinttyping import IterableStrs
+from beartype.claw._importlib.clawimppath import (
+    add_beartype_pathhook,
+    # remove_beartype_pathhook,
+)
+from beartype.claw._package._clawpkgmake import (
+    make_conf_hookable,
+    make_package_names_from_args,
+)
 from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._package.clawpkgtrie import (
     PackagesTrieBlacklist,
@@ -20,21 +34,8 @@ from beartype.claw._package.clawpkgtrie import (
     # iter_packages_trie,
     # remove_beartype_pathhook_unless_packages_trie,
 )
-from beartype.claw._package._clawpkgmake import (
-    make_conf_hookable,
-    make_package_names_from_args,
-)
-from beartype.claw._importlib.clawimppath import (
-    add_beartype_pathhook,
-    # remove_beartype_pathhook,
-)
 from beartype.roar import BeartypeClawHookException
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahinttyping import IterableStrs
-from collections.abc import (
-    Iterable as IterableABC,
-)
 
 # ....................{ HOOKERS                            }....................
 #FIXME: Unit test us up, please.

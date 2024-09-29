@@ -26,12 +26,14 @@ insufficient.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from beartype._util.text.utiltextversion import (
-    convert_str_version_to_tuple as _convert_str_version_to_tuple)
 from importlib.metadata import metadata as _get_package_metadata
 from typing import (
     TYPE_CHECKING,  # <-- *MUST* be import as "TYPE_CHECKING" or mypy ignores it
     Optional as _Optional,
+)
+
+from beartype._util.text.utiltextversion import (
+    convert_str_version_to_tuple as _convert_str_version_to_tuple,
 )
 
 # ....................{ METADATA                           }....................

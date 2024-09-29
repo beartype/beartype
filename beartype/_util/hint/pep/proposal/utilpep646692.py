@@ -116,13 +116,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #against that user-defined "UserTypedDict". Feasible, but non-trivial. *sigh*
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintPep646Exception,
-    BeartypeDecorHintPep692Exception,
-)
-from beartype.typing import (
-    Optional,
-)
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypedDict,
     HintSignTypeVarTuple,
@@ -131,6 +124,13 @@ from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign_or_none,
+)
+from beartype.roar import (
+    BeartypeDecorHintPep646Exception,
+    BeartypeDecorHintPep692Exception,
+)
+from beartype.typing import (
+    Optional,
 )
 
 # ....................{ REDUCERS                           }....................

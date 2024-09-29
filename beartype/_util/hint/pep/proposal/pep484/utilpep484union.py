@@ -12,9 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import Union
-from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ FACTORIES                          }....................
 @callable_cached

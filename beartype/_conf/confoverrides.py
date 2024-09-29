@@ -10,8 +10,11 @@ parameter accepted by the :class:`beartype.BeartypeConf.__init__` method).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
-from beartype.roar import BeartypeHintOverridesException
+from re import (
+    escape as re_escape,
+    search as re_search,
+)
+
 from beartype._data.hint.datahinttyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
@@ -20,10 +23,8 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 from beartype._util.utilobject import get_object_type_basename
-from re import (
-    escape as re_escape,
-    search as re_search,
-)
+from beartype.meta import URL_ISSUES
+from beartype.roar import BeartypeHintOverridesException
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
@@ -75,8 +76,7 @@ class BeartypeHintOverrides(FrozenDict):
             # loop to defer this importation until the last possible moment.
             # Performing this importation earlier (e.g., at the top of this
             # method body) would induce a circular import dependency. *sigh*
-            from beartype._util.hint.pep.utilpepget import (
-                get_hint_pep_sign_or_none)
+            from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
             # The machine-readable representation of this source override,
             # defined as either...

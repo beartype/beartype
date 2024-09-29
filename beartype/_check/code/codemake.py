@@ -16,12 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintPep593Exception,
-    BeartypeDecorHintPepException,
-    BeartypeDecorHintPepUnsupportedException,
-)
-from beartype.typing import Optional
+from random import getrandbits
+
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
@@ -32,8 +28,8 @@ from beartype._check.code.codemagic import (
 )
 from beartype._check.code.codescope import (
     add_func_scope_type,
-    add_func_scope_types,
     add_func_scope_type_or_types,
+    add_func_scope_types,
     express_func_scope_type_ref,
 )
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
@@ -44,55 +40,53 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none,
     sanify_hint_child,
+    sanify_hint_child_if_unignorable_or_none,
 )
-from beartype._check.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+from beartype._check.logic.logmap import HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
+from beartype._data.code.pep.datacodepep586 import (
+    CODE_PEP586_SUFFIX,
+    CODE_PEP586_LITERAL_format,
+    CODE_PEP586_PREFIX_format,
+)
+from beartype._data.code.pep.datacodepep593 import (
+    CODE_PEP593_VALIDATOR_PREFIX,
+    CODE_PEP593_VALIDATOR_IS_format,
+    CODE_PEP593_VALIDATOR_METAHINT_format,
+    CODE_PEP593_VALIDATOR_SUFFIX_format,
+)
 from beartype._data.code.pep.datacodepep484585 import (
-    CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
+    CODE_PEP484585_TUPLE_FIXED_PREFIX,
+    CODE_PEP484585_TUPLE_FIXED_SUFFIX,
+    CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_MAPPING_format,
     CODE_PEP484585_MAPPING_KEY_ONLY_format,
-    CODE_PEP484585_MAPPING_KEY_VALUE_format,
-    CODE_PEP484585_MAPPING_VALUE_ONLY_format,
     CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_MAPPING_KEY_VALUE_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_MAPPING_VALUE_ONLY_format,
+    CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SUBCLASS_format,
     CODE_PEP484585_TUPLE_FIXED_EMPTY_format,
     CODE_PEP484585_TUPLE_FIXED_LEN_format,
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format,
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_TUPLE_FIXED_PREFIX,
-    CODE_PEP484585_TUPLE_FIXED_SUFFIX,
 )
 from beartype._data.code.pep.datacodepep484604 import (
-    CODE_PEP484604_UNION_CHILD_PEP_format,
-    CODE_PEP484604_UNION_CHILD_NONPEP_format,
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
+    CODE_PEP484604_UNION_CHILD_NONPEP_format,
+    CODE_PEP484604_UNION_CHILD_PEP_format,
 )
-from beartype._data.code.pep.datacodepep586 import (
-    CODE_PEP586_LITERAL_format,
-    CODE_PEP586_PREFIX_format,
-    CODE_PEP586_SUFFIX,
-)
-from beartype._data.code.pep.datacodepep593 import (
-    CODE_PEP593_VALIDATOR_IS_format,
-    CODE_PEP593_VALIDATOR_METAHINT_format,
-    CODE_PEP593_VALIDATOR_PREFIX,
-    CODE_PEP593_VALIDATOR_SUFFIX_format,
-)
-from beartype._data.error.dataerrmagic import (
-    EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     LexicalScope,
@@ -116,7 +110,6 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
@@ -126,30 +119,32 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_object_issubclassable,
     is_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args)
+    get_hint_pep484585_args,
+)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
-    is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.utilpep586 import (
-    get_hint_pep586_literals)
+    is_hint_pep484585_tuple_empty,
+)
+from beartype._util.hint.pep.proposal.utilpep586 import get_hint_pep586_literals
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
+    get_hint_pep_origin_type_isinstanceable,
     get_hint_pep_sign,
     get_hint_pep_sign_or_none,
-    get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
@@ -159,7 +154,12 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
-from random import getrandbits
+from beartype.roar import (
+    BeartypeDecorHintPep593Exception,
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepUnsupportedException,
+)
+from beartype.typing import Optional
 
 # ....................{ MAKERS                             }....................
 @callable_cached

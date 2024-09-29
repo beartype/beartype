@@ -13,16 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+)
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     NoReturn,
     Optional,
     Type,
 )
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-)
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 
 # ....................{ SUPERCLASSES                       }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -211,7 +211,8 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.reference.fwdrefmake import (
-            _make_forwardref_subtype)
+            _make_forwardref_subtype,
+        )
 
         # Subscripted forward reference to be returned.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (

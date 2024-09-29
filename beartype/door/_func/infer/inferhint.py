@@ -10,21 +10,6 @@ hints best describing arbitrary objects).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer.kind.infercallable import (
-    infer_hint_callable)
-from beartype.door._func.infer.kind.inferthirdparty import (
-    infer_hint_thirdparty)
-from beartype.door._func.infer.collection.infercollectionbuiltin import (
-    infer_hint_collection_builtin)
-from beartype.door._func.infer.collection.infercollectionsabc import (
-    infer_hint_collections_abc)
-from beartype.roar import BeartypeDoorInferHintRecursionWarning
-from beartype.typing import (
-    Callable,
-    Optional,
-    Tuple,
-    Type,
-)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import get_beartype_conf_strategy_on
 from beartype._conf.conftest import die_unless_conf
@@ -35,6 +20,21 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.text.utiltextrepr import represent_object
+from beartype.door._func.infer.collection.infercollectionbuiltin import (
+    infer_hint_collection_builtin,
+)
+from beartype.door._func.infer.collection.infercollectionsabc import (
+    infer_hint_collections_abc,
+)
+from beartype.door._func.infer.kind.infercallable import infer_hint_callable
+from beartype.door._func.infer.kind.inferthirdparty import infer_hint_thirdparty
+from beartype.roar import BeartypeDoorInferHintRecursionWarning
+from beartype.typing import (
+    Callable,
+    Optional,
+    Tuple,
+    Type,
+)
 
 # ....................{ CLASSES                            }....................
 class BeartypeInferHintContainerRecursion:

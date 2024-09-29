@@ -19,22 +19,22 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    TYPE_CHECKING,
-    Callable,
-)
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahinttyping import (
-    BeartypeReturn,
-    BeartypeableT,
-)
-from beartype._util.py.utilpyinterpreter import is_python_optimized
-
 # Intentionally import the standard mypy-friendly @typing.overload decorator
 # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
 # which, in any case, would be needlessly inefficient and thus bad.
 from typing import overload
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.hint.datahinttyping import (
+    BeartypeableT,
+    BeartypeReturn,
+)
+from beartype._util.py.utilpyinterpreter import is_python_optimized
+from beartype.typing import (
+    TYPE_CHECKING,
+    Callable,
+)
 
 # ....................{ OVERLOADS                          }....................
 # Declare PEP 484-compliant overloads to avoid breaking downstream code

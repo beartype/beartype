@@ -12,15 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep3119Exception
-from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
-from beartype.typing import Callable
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype.roar import BeartypeDecorHintPep3119Exception
+from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
+from beartype.typing import Callable
 
 # ....................{ RAISERS ~ instance                 }....................
 def die_unless_object_isinstanceable(

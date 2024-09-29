@@ -12,20 +12,21 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
+from collections.abc import Iterable
+
+# Intentionally import PEP 484-compliant "typing" type hint factories rather
+# than possibly PEP 585-compliant "beartype.typing" type hint factories.
+from typing import Generic
+
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     get_hint_pep484_generic_bases_unerased,
     is_hint_pep484_generic,
@@ -34,11 +35,11 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
-from collections.abc import Iterable
-
-# Intentionally import PEP 484-compliant "typing" type hint factories rather
-# than possibly PEP 585-compliant "beartype.typing" type hint factories.
-from typing import Generic
+from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 
 # ....................{ TESTERS                            }....................
 @callable_cached
@@ -845,9 +846,11 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
     # Avoid circular import dependencies.
     from beartype._check.convert.convsanify import (
-        sanify_hint_child_if_unignorable_or_none)
+        sanify_hint_child_if_unignorable_or_none,
+    )
     from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin_subscripted)
+        is_hint_pep585_builtin_subscripted,
+    )
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 

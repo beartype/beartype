@@ -13,17 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype import typing
+from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_PARAMS
+from beartype._data.kind.datakindsequence import TUPLE_EMPTY
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
     TYPE_CHECKING,
     Union,
 )
-from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_CALLABLE_PARAMS)
-from beartype._data.kind.datakindsequence import TUPLE_EMPTY
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ HINTS                              }....................
 #FIXME: Uhh... What? Extreme overkill, thy name is this type hint. Don't bother

@@ -12,18 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Iterable,
-    Optional,
-    Tuple,
-)
-from beartype._data.hint.datahinttyping import (
-    TypeException,
-)
-from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
-from beartype._util.utilobject import Iota
 from collections.abc import Callable
 from enum import (
     Enum,
@@ -32,6 +20,19 @@ from enum import (
 )
 from itertools import count
 from types import CodeType
+
+from beartype._data.hint.datahinttyping import (
+    TypeException,
+)
+from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
+from beartype._util.utilobject import Iota
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Iterable,
+    Optional,
+    Tuple,
+)
 
 # ....................{ ENUMERATIONS                       }....................
 @die_unless_enum_member_values_unique

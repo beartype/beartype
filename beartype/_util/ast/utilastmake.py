@@ -25,11 +25,7 @@ from ast import (
     expr,
     keyword,
 )
-from beartype.roar import BeartypeClawImportAstException
-from beartype.typing import (
-    List,
-    Optional,
-)
+
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.ast.dataast import (
     NODE_CONTEXT_LOAD,
@@ -38,6 +34,11 @@ from beartype._data.ast.dataast import (
 from beartype._data.hint.datahinttyping import NodesList
 from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype.roar import BeartypeClawImportAstException
+from beartype.typing import (
+    List,
+    Optional,
+)
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.

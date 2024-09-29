@@ -15,14 +15,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
-from beartype.roar import (
-    BeartypeDecorHintForwardRefException,
-    BeartypeDecorHintPep604Exception,
-)
-from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
-from beartype.typing import Optional
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+
+from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
+from traceback import format_exc
+
 from beartype._check.forward.fwdscope import BeartypeForwardScope
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
@@ -35,8 +33,12 @@ from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.utilobject import get_object_name
-from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
-from traceback import format_exc
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+    BeartypeDecorHintPep604Exception,
+)
+from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
+from beartype.typing import Optional
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.

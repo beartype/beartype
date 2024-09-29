@@ -11,12 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import Optional
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
 )
+from beartype.roar._roarexc import _BeartypeUtilTypeException
+from beartype.typing import Optional
+
 # from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ GETTERS                            }....................
@@ -47,9 +48,9 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodget import (
         get_module_filename_or_none,
+        get_module_imported_or_none,
         get_object_module_name_or_none,
     )
-    from beartype._util.module.utilmodget import get_module_imported_or_none
 
     # Fully-qualified name of the module declaring this type if any *OR* "None".
     #

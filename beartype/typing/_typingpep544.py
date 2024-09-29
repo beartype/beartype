@@ -32,11 +32,6 @@ performance improvements.
 #that. Classmethods clearly require explicit handling and caching. *sigh*
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing._typingcache import callable_cached_minimal
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_12,
-    IS_PYTHON_AT_LEAST_3_9,
-)
 from typing import (  # type: ignore[attr-defined]
     EXCLUDED_ATTRIBUTES,  # pyright: ignore
     TYPE_CHECKING,
@@ -53,6 +48,12 @@ from typing import (  # type: ignore[attr-defined]
     TypeVar,
     runtime_checkable,
 )
+
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_12,
+)
+from beartype.typing._typingcache import callable_cached_minimal
 
 # If either *NO* pure-static type-checker is currently statically type-checking
 # @beartype *OR* the active Python interpreter targets Python < 3.9, the active
@@ -613,7 +614,9 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
 # standard "typing" module to support our "Protocol" superclass.
 if IS_PYTHON_AT_LEAST_3_12:
     import typing
-    from typing import _generic_class_getitem as _generic_class_getitem_old  # type: ignore[attr-defined]
+    from typing import (
+        _generic_class_getitem as _generic_class_getitem_old,  # type: ignore[attr-defined]
+    )
 
     def _generic_class_getitem_new(cls, params):
         '''

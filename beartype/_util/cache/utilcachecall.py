@@ -19,8 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #the current general-purpose @callable_cached approach.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-from beartype.typing import Dict
+from functools import wraps
+
 from beartype._data.hint.datahinttyping import CallableT
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
@@ -28,7 +28,8 @@ from beartype._util.func.arg.utilfuncargtest import (
 )
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import SENTINEL
-from functools import wraps
+from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
+from beartype.typing import Dict
 
 # ....................{ DECORATORS ~ callable              }....................
 def callable_cached(func: CallableT) -> CallableT:

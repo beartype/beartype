@@ -10,12 +10,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep586Exception
-from beartype.typing import Any
 from beartype._data.cls.datacls import TYPES_PEP586_ARG
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
+from beartype.roar import BeartypeDecorHintPep586Exception
+from beartype.typing import Any
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep586(

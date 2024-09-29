@@ -12,12 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import _BeartypeUtilPathException
+from importlib.machinery import BYTECODE_SUFFIXES
+from pathlib import Path
+
 from beartype._data.hint.datahinttyping import (
     PathnameLike,
     PathnameLikeTuple,
 )
-from importlib.machinery import BYTECODE_SUFFIXES
-from pathlib import Path
 
 # ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.

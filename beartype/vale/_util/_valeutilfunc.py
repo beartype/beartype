@@ -11,10 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.func.arg.utilfuncargtest import (
+    die_unless_func_args_len_flexible_equal,
+)
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
-from beartype._util.func.arg.utilfuncargtest import (
-    die_unless_func_args_len_flexible_equal)
 
 # ....................{ FORMATTERS                         }....................
 def die_unless_validator_tester(

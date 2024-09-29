@@ -34,13 +34,9 @@ callers.
 #* "warning_cls_on_decorator_exception".
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarwarn import (
-    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
-from beartype.typing import (
-    TYPE_CHECKING,
-    Dict,
-    Optional,
-)
+from threading import Lock
+
+from beartype._conf._confget import get_is_color
 from beartype._conf.confenum import (
     BeartypeDecorationPosition,
     BeartypeStrategy,
@@ -55,7 +51,7 @@ from beartype._conf.conftest import (
     default_conf_kwargs_before,
     die_if_conf_kwargs_invalid,
 )
-from beartype._conf._confget import get_is_color
+from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
     CollectionStrs,
@@ -63,9 +59,15 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeWarning,
 )
-from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._util.utilobject import get_object_type_basename
-from threading import Lock
+from beartype.roar._roarwarn import (
+    _BeartypeConfReduceDecoratorExceptionToWarningDefault,
+)
+from beartype.typing import (
+    TYPE_CHECKING,
+    Dict,
+    Optional,
+)
 
 # ....................{ DATACLASSES                        }....................
 class BeartypeConf:

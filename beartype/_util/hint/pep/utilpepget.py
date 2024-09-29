@@ -12,6 +12,52 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahinttyping import (
+    TupleTypes,
+    # HintSignTrie,
+    TypeException,
+)
+from beartype._data.hint.pep.datapeprepr import (
+    HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
+    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
+    HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
+    HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
+)
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignGeneric,
+    HintSignNewType,
+    HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignTypedDict,
+)
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
+)
+from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+    is_hint_pep484_newtype_pre_python310,
+)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    is_hint_pep484585_generic,
+)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    get_hint_pep484585_sign_tuplefixed_or_same,
+)
+from beartype._util.hint.pep.proposal.utilpep585 import (
+    get_hint_pep585_generic_typevars,
+    is_hint_pep585_builtin_subscripted,
+    is_hint_pep585_generic,
+)
+from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
+from beartype._util.hint.pep.proposal.utilpep484604 import (
+    die_if_hint_pep604_inconsistent,
+)
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9,
+    # IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_MOST_3_9,
+)
 from beartype.meta import URL_ISSUES
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -23,48 +69,6 @@ from beartype.typing import (
     Optional,
     # Union,
 )
-from beartype._data.hint.datahinttyping import (
-    # HintSignTrie,
-    TypeException,
-)
-from beartype._data.hint.pep.datapeprepr import (
-    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
-    HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
-    HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
-    HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
-)
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignGeneric,
-    HintSignNewType,
-    HintSignTypedDict,
-    HintSignPep585BuiltinSubscriptedUnknown,
-)
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-)
-from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-    is_hint_pep484_newtype_pre_python310)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    is_hint_pep484585_generic)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
-    get_hint_pep484585_sign_tuplefixed_or_same)
-from beartype._util.hint.pep.proposal.utilpep585 import (
-    get_hint_pep585_generic_typevars,
-    is_hint_pep585_builtin_subscripted,
-    is_hint_pep585_generic,
-)
-from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.utilpep484604 import (
-    die_if_hint_pep604_inconsistent)
-from beartype._util.py.utilpyversion import (
-    # IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_MOST_3_9,
-    IS_PYTHON_AT_LEAST_3_9,
-)
-from beartype._data.hint.datahinttyping import TupleTypes
 
 # ....................{ GETTERS ~ args                     }....................
 # If the active Python interpreter targets Python >= 3.9, implement this

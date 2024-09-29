@@ -11,14 +11,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import Optional
+from importlib.metadata import (
+    version as get_module_version,  # type: ignore[attr-defined]
+)
+
 from beartype._cave._cavefast import ModuleType
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.text.utiltextversion import convert_str_version_to_tuple
-from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
+from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import Optional
 
 # ....................{ RAISERS                            }....................
 #FIXME: Excise us up. This function is no longer called anywhere. *sigh*

@@ -13,13 +13,31 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype  # <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
     AST,
     AsyncFunctionDef,
     ClassDef,
     FunctionDef,
 )
+from collections.abc import Callable as CallableABC
+from importlib.abc import PathEntryFinder
+from pathlib import Path
+from types import (
+    CodeType,
+    FrameType,
+    GeneratorType,
+)
+
+import beartype  # <-- satisfy mypy [note to self: i can't stand you, mypy]
+from beartype._cave._cavefast import (
+    MethodBoundInstanceOrClassType,
+    MethodDecoratorClassType,
+    MethodDecoratorPropertyType,
+    MethodDecoratorStaticType,
+)
+from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype.typing import (
     AbstractSet,
     Any,
@@ -38,23 +56,6 @@ from beartype.typing import (
     Type,
     TypeVar,
     Union,
-)
-from beartype._cave._cavefast import (
-    MethodBoundInstanceOrClassType,
-    MethodDecoratorClassType,
-    MethodDecoratorPropertyType,
-    MethodDecoratorStaticType,
-)
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from collections.abc import Callable as CallableABC
-from importlib.abc import PathEntryFinder
-from pathlib import Path
-from types import (
-    CodeType,
-    FrameType,
-    GeneratorType,
 )
 
 # ....................{ TYPEVARS                           }....................

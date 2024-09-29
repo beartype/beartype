@@ -12,8 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.cache.utilcachecall import property_cached
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
+
 # from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     TYPE_CHECKING,
@@ -21,7 +23,6 @@ from beartype.typing import (
     Tuple,
     TypeVar,
 )
-from beartype._util.cache.utilcachecall import property_cached
 
 # ....................{ SUBCLASSES                         }....................
 class TypeVarTypeHint(UnionTypeHint):

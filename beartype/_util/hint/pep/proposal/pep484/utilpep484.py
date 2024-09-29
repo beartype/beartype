@@ -10,16 +10,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_PEP585_DEPRECATIONS
-from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
-from beartype._cave._cavefast import NoneType
-from beartype._data.hint.pep.datapeprepr import (
-    HINTS_PEP484_REPR_PREFIX_DEPRECATED)
-from beartype._util.error.utilerrwarn import issue_warning
-
 # Intentionally import PEP 484-compliant "typing" type hint factories rather
 # than possibly PEP 585-compliant "beartype.typing" type hint factories.
 from typing import Tuple
+
+from beartype._cave._cavefast import NoneType
+from beartype._data.hint.pep.datapeprepr import HINTS_PEP484_REPR_PREFIX_DEPRECATED
+from beartype._util.error.utilerrwarn import issue_warning
+from beartype.meta import URL_PEP585_DEPRECATIONS
+from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 
 # ....................{ HINTS                              }....................
 HINT_PEP484_TUPLE_EMPTY = Tuple[()]

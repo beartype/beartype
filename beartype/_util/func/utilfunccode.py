@@ -56,21 +56,22 @@ from ast import (
     NodeVisitor,
     parse as ast_parse,
 )
-from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
-from beartype.typing import (
-    List,
-    Optional,
-)
-from beartype._data.hint.datahinttyping import TypeWarning
-from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable
 from inspect import (
     findsource,
     getsource,
 )
 from traceback import format_exc
+
+from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
+from beartype.typing import (
+    List,
+    Optional,
+)
 
 # ....................{ GETTERS ~ code : lines             }....................
 #FIXME: Unit test us up.

@@ -11,18 +11,19 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import abstractmethod
+from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
+
+from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
+from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype.typing import (
+    IO,
     Any,
     BinaryIO,
     Dict,
-    IO,
     Optional,
     TextIO,
 )
-from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
-from beartype._util.cls.utilclstest import is_type_builtin_or_fake
-from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep544_ignorable(hint: object) -> bool:
@@ -125,8 +126,7 @@ def is_hint_pep484_generic_io(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_origin_or_none)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
     # Return true only if this hint is either...
     return (

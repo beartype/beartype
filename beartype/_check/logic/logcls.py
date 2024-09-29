@@ -14,20 +14,21 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
-from beartype.typing import (
-    TYPE_CHECKING,
-)
+
 from beartype._check.error.errcause import ViolationCause
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.hint.datahinttyping import (
-    CallableStrFormat,
-    EnumeratorItem,
-    Enumerator,
-)
 from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_CONTAINER_ARGS_1_format,
     CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
+)
+from beartype._data.hint.datahinttyping import (
+    CallableStrFormat,
+    Enumerator,
+    EnumeratorItem,
+)
+from beartype.typing import (
+    TYPE_CHECKING,
 )
 
 # ....................{ SUPERCLASSES                       }....................

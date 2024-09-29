@@ -12,17 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype
-from beartype.roar import (
-    BeartypeConfException,
-    BeartypeConfParamException,
-    BeartypeCallHintParamViolation,
-    BeartypeCallHintReturnViolation,
-    BeartypeDoorHintViolation,
+from collections.abc import (
+    Collection as CollectionABC,
 )
-# from beartype.roar._roarwarn import (
-#     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
-from beartype.typing import Optional
+
+import beartype
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
     BeartypeDecorationPosition,
@@ -30,8 +24,8 @@ from beartype._conf.confenum import (
     BeartypeViolationVerbosity,
 )
 from beartype._conf.confoverrides import (
-    beartype_hint_overrides_pep484_tower,
     BeartypeHintOverrides,
+    beartype_hint_overrides_pep484_tower,
 )
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
@@ -39,9 +33,17 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.text.utiltextidentifier import is_identifier
-from collections.abc import (
-    Collection as CollectionABC,
+from beartype.roar import (
+    BeartypeCallHintParamViolation,
+    BeartypeCallHintReturnViolation,
+    BeartypeConfException,
+    BeartypeConfParamException,
+    BeartypeDoorHintViolation,
 )
+
+# from beartype.roar._roarwarn import (
+#     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
+from beartype.typing import Optional
 
 # ....................{ RAISERS                            }....................
 def die_unless_conf(

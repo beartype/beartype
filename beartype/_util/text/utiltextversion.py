@@ -11,9 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from re import compile as re_compile
+
 from beartype.roar._roarexc import _BeartypeUtilTextVersionException
 from beartype.typing import Tuple
-from re import compile as re_compile
 
 # ....................{ CONVERTERS                         }....................
 def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:

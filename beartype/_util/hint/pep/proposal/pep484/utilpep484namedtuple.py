@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.cls.utilclstest import is_type_subclass_proper
+
 # from beartype.roar import BeartypeDecorHintPep484Exception
 # from beartype.typing import Any
 # from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType

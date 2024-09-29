@@ -40,11 +40,6 @@ process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import (
-    Any,
-    Type,
-    overload,
-)
 from beartype._check.checkmake import (
     make_func_raiser,
     make_func_tester,
@@ -53,6 +48,11 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import T
+from beartype.typing import (
+    Any,
+    Type,
+    overload,
+)
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(

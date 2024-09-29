@@ -15,6 +15,7 @@ from ast import (
     Load,
     Store,
 )
+
 from beartype.meta import (
     NAME,
     VERSION,

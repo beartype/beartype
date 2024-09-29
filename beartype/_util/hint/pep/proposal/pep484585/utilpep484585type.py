@@ -12,10 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-    get_hint_pep484585_args)
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
+)
+
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    get_hint_pep484585_args,
 )
 
 # ....................{ REDUCERS                           }....................

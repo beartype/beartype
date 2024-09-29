@@ -13,6 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from threading import RLock
+
+from beartype._data.hint.datahinttyping import ImportPathHook
 from beartype.claw._importlib.clawimpcache import ModuleNameToBeartypeConf
 from beartype.claw._package.clawpkgtrie import (
     PackagesTrieBlacklist,
@@ -23,8 +26,6 @@ from beartype.typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._data.hint.datahinttyping import ImportPathHook
-from threading import RLock
 
 # ....................{ CLASSES                            }....................
 class BeartypeClawState:
@@ -145,8 +146,7 @@ class BeartypeClawState:
         '''
 
         # Avoid circular import dependencies.
-        from beartype.claw._importlib.clawimppath import (
-            remove_beartype_pathhook)
+        from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 
         # Perform the subset of reinitialization that is safe to be called from
         # the __init__() method.

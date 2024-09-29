@@ -103,20 +103,20 @@ from ast import (
     # JoinedStr,
     Subscript,
 )
-from beartype.claw._clawmagic import (
-    BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME)
+
 from beartype._data.ast.dataast import NODE_CONTEXT_STORE
 from beartype._data.hint.datahinttyping import NodeVisitResult
 from beartype._data.kind.datakindsequence import LIST_EMPTY
-from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilastmake import (
-    make_node_object_attr_load,
     make_node_call,
     # make_node_call_expr,
     # make_node_fstr_field,
     make_node_name_load,
     make_node_name_store,
+    make_node_object_attr_load,
 )
+from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype.claw._clawmagic import BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

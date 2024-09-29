@@ -11,15 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from inspect import getattr_static
+
+# from beartype._cave._cavefast import MethodBoundInstanceDunderCType
+from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
+from beartype._data.hint.datahinttyping import DictStrToAny
 from beartype.typing import (
     Callable,
     List,
     Optional,
 )
-# from beartype._cave._cavefast import MethodBoundInstanceDunderCType
-from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
-from beartype._data.hint.datahinttyping import DictStrToAny
-from inspect import getattr_static
 
 # ....................{ GETTERS                            }....................
 def get_object_attrs_name_to_value_explicit(

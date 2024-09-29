@@ -133,17 +133,6 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "from typing import Annotated" rather than
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_MOST_3_15  as _IS_PYTHON_AT_MOST_3_15,
-    IS_PYTHON_AT_MOST_3_13  as _IS_PYTHON_AT_MOST_3_13,
-    IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
-    IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
-    IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9  as _IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_MOST_3_8   as _IS_PYTHON_AT_MOST_3_8,
-)
-
 # ....................{ IMPORTS ~ all                      }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
@@ -155,11 +144,11 @@ from beartype._util.py.utilpyversion import (
 #     explicitly export attribute "BeartypeCallUnavailableTypeException";
 #     implicit reexport disabled  [attr-defined]
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 # Import all public attributes of the "typing" module both available under all
 # supported Python versions and *NOT* deprecated by a subsequent Python version
 # under their original names.
 from typing import (
+    IO as IO,
     TYPE_CHECKING as TYPE_CHECKING,
     Any as Any,
     BinaryIO as BinaryIO,
@@ -168,18 +157,17 @@ from typing import (
     ForwardRef as ForwardRef,
     Generic as Generic,
     Hashable as Hashable,
-    IO as IO,
     Literal as Literal,  # pyright: ignore
-    NewType as NewType,
     NamedTuple as NamedTuple,
+    NewType as NewType,
     NoReturn as NoReturn,
     Optional as Optional,
     Reversible as Reversible,  # pyright: ignore
     Sized as Sized,
     SupportsIndex as SupportsIndex,  # pyright: ignore
-    TypedDict as TypedDict,  # pyright: ignore
     Text as Text,
     TextIO as TextIO,
+    TypedDict as TypedDict,  # pyright: ignore
     TypeVar as TypeVar,
     Union as Union,
     cast as cast,
@@ -190,6 +178,17 @@ from typing import (
     no_type_check as no_type_check,
     no_type_check_decorator as no_type_check_decorator,
     overload as overload,
+)
+
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9 as _IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
+    IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
+    IS_PYTHON_AT_MOST_3_8 as _IS_PYTHON_AT_MOST_3_8,
+    IS_PYTHON_AT_MOST_3_13 as _IS_PYTHON_AT_MOST_3_13,
+    IS_PYTHON_AT_MOST_3_15 as _IS_PYTHON_AT_MOST_3_15,
 )
 
 # ....................{ IMPORTS ~ version : at least       }....................
@@ -234,20 +233,19 @@ if _IS_PYTHON_AT_LEAST_3_10:
     # If the active Python interpreter targets Python >= 3.11...
     if _IS_PYTHON_AT_LEAST_3_11:
         from typing import (  # type: ignore[attr-defined]
-               LiteralString as LiteralString,  # pyright: ignore
-               Never as Never,  # pyright: ignore
-               NotRequired as NotRequired,  # pyright: ignore
-               Required as Required,  # pyright: ignore
-               Self as Self,  # pyright: ignore
-               TypeVarTuple as TypeVarTuple,  # pyright: ignore
-               Unpack as Unpack,  # pyright: ignore
-               assert_never as assert_never,  # pyright: ignore
-               assert_type as assert_type,  # pyright: ignore
-               clear_overloads as clear_overloads,  # pyright: ignore
-               dataclass_transform as dataclass_transform,  # pyright: ignore
-               reveal_type as reveal_type,  # pyright: ignore
-               get_overloads as get_overloads,  # pyright: ignore
-               reveal_type as reveal_type,  # pyright: ignore
+            LiteralString as LiteralString,  # pyright: ignore
+            Never as Never,  # pyright: ignore
+            NotRequired as NotRequired,  # pyright: ignore
+            Required as Required,  # pyright: ignore
+            Self as Self,  # pyright: ignore
+            TypeVarTuple as TypeVarTuple,  # pyright: ignore
+            Unpack as Unpack,  # pyright: ignore
+            assert_never as assert_never,  # pyright: ignore
+            assert_type as assert_type,  # pyright: ignore
+            clear_overloads as clear_overloads,  # pyright: ignore
+            dataclass_transform as dataclass_transform,  # pyright: ignore
+            get_overloads as get_overloads,  # pyright: ignore
+            reveal_type as reveal_type,  # pyright: ignore  # pyright: ignore
         )
 
         # If the active Python interpreter targets Python >= 3.12...
@@ -363,18 +361,18 @@ if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
         KeysView as KeysView,
         List as List,
         Mapping as Mapping,
-        Match as Match,
         MappingView as MappingView,
+        Match as Match,
         MutableMapping as MutableMapping,
         MutableSequence as MutableSequence,
         MutableSet as MutableSet,
         OrderedDict as OrderedDict,
         Pattern as Pattern,
         Reversible as Reversible,
+        Sequence as Sequence,
         Set as Set,
         Tuple as Tuple,
         Type as Type,
-        Sequence as Sequence,
         ValuesView as ValuesView,
     )
 # Else, the active Python interpreter targets Python >= 3.9 and thus supports
@@ -390,9 +388,9 @@ else:
         deque as Deque,
     )
     from collections.abc import (
+        AsyncGenerator as AsyncGenerator,
         AsyncIterable as AsyncIterable,
         AsyncIterator as AsyncIterator,
-        AsyncGenerator as AsyncGenerator,
         Awaitable as Awaitable,
         Callable as Callable,
         Collection as Collection,
@@ -410,12 +408,12 @@ else:
         MutableSet as MutableSet,
         Reversible as Reversible,
         Sequence as Sequence,
-        ValuesView as ValuesView,
         Set as AbstractSet,
+        ValuesView as ValuesView,
     )
     from contextlib import (
-        AbstractContextManager as ContextManager,
         AbstractAsyncContextManager as AsyncContextManager,
+        AbstractContextManager as ContextManager,
     )
     from re import (
         Match as Match,

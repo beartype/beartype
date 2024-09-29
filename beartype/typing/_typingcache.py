@@ -21,9 +21,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from functools import wraps
 from typing import TYPE_CHECKING
+
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # If either a pure-static type-checker is currently statically type-checking
 # @beartype *OR* the active Python interpreter targets Python >= 3.9, PEP 585 is

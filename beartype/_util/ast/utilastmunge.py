@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import AST
+
 from beartype.typing import (
     Iterable,
     Union,

@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import FrozenSet
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
@@ -21,8 +20,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAny,
     HintSignAsyncContextManager,
     HintSignAsyncGenerator,
-    HintSignAsyncIterator,
     HintSignAsyncIterable,
+    HintSignAsyncIterator,
     HintSignAwaitable,
     HintSignBinaryIO,
     HintSignByteString,
@@ -34,7 +33,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignContextManager,
     HintSignCoroutine,
     HintSignCounter,
-    HintSignPep557DataclassInitVar,
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
@@ -59,15 +57,15 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignMutableSequence,
     HintSignMutableSet,
     HintSignNewType,
-    HintSignNumpyArray,
     HintSignNone,
+    HintSignNumpyArray,
     HintSignOptional,
     HintSignOrderedDict,
     # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
+    HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignTypeAlias,
     HintSignPep695TypeAlias,
     HintSignProtocol,
     HintSignReversible,
@@ -79,6 +77,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
+    HintSignTypeAlias,
     HintSignTypedDict,
     HintSignTypeGuard,
     HintSignTypeVar,
@@ -86,6 +85,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnpack,
     HintSignValuesView,
 )
+from beartype.typing import FrozenSet
 
 # ....................{ PRIVATE ~ hints                    }....................
 _FrozenSetHintSign = FrozenSet[HintSign]

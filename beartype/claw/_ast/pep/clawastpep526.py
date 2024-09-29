@@ -19,7 +19,7 @@ from ast import (
     Attribute,
     Name,
 )
-from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
+
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import NodeVisitResult
 from beartype._util.ast.utilastmake import (
@@ -31,6 +31,7 @@ from beartype._util.ast.utilastmake import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextansi import color_attr_name
+from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

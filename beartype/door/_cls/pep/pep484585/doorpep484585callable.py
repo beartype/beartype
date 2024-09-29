@@ -12,14 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsuper import TypeHint
-from beartype.roar import BeartypeDoorPepUnsupportedException
-from beartype.typing import (
-    Any,
-    Tuple,
-)
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_CALLABLE_PARAMS)
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_PARAMS
+
 # from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
@@ -27,6 +21,12 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_return,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype.door._cls.doorsuper import TypeHint
+from beartype.roar import BeartypeDoorPepUnsupportedException
+from beartype.typing import (
+    Any,
+    Tuple,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class CallableTypeHint(TypeHint):

@@ -137,12 +137,12 @@ Instead, callers are expected to (in order):
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._is._valeis import _IsFactory
+from beartype.vale._is._valeisobj import _IsAttrFactory
+from beartype.vale._is._valeisoper import _IsEqualFactory
 from beartype.vale._is._valeistype import (
     _IsInstanceFactory,
     _IsSubclassFactory,
 )
-from beartype.vale._is._valeisobj import _IsAttrFactory
-from beartype.vale._is._valeisoper import _IsEqualFactory
 
 # ....................{ SINGLETONS                         }....................
 # Public factory singletons instantiating these private factory classes.

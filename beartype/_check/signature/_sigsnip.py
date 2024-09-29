@@ -13,12 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
+
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_RANDOM_INT,
 )
 from beartype._data.code.datacodeindent import CODE_INDENT_1
-from collections.abc import Callable
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE_SCOPE_ARG = (

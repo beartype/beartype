@@ -12,11 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
@@ -29,6 +24,11 @@ from beartype._util.func.arg.utilfuncargiter import (
 )
 from beartype._util.func.arg.utilfuncarglen import get_func_args_len
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 
 # ....................{ GETTERS ~ meta                     }....................
 #FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
@@ -83,8 +83,7 @@ def get_func_arg_meta_variadic_positional_or_none(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargtest import (
-        is_func_arg_variadic_positional)
+    from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_positional
 
     # If the passed callable accepts *NO* variadic positional parameter,
     # silently reduce to a noop.
@@ -153,8 +152,7 @@ def get_func_arg_meta_variadic_keyword_or_none(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargtest import (
-        is_func_arg_variadic_keyword)
+    from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 
     # If the passed callable accepts *NO* variadic keyword parameter,
     # silently reduce to a noop.

@@ -16,20 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doormeta import _TypeHintMeta
-from beartype.door._doortest import die_unless_typehint
-from beartype.door._func.doorcheck import (
-    die_if_unbearable,
-    is_bearable,
-)
-from beartype.typing import (
-    Any,
-    FrozenSet,
-    Generic,
-    Iterable,
-    Tuple,
-    overload,
-)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import T
@@ -44,6 +30,20 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.utilobject import get_object_type_basename
+from beartype.door._cls.doormeta import _TypeHintMeta
+from beartype.door._doortest import die_unless_typehint
+from beartype.door._func.doorcheck import (
+    die_if_unbearable,
+    is_bearable,
+)
+from beartype.typing import (
+    Any,
+    FrozenSet,
+    Generic,
+    Iterable,
+    Tuple,
+    overload,
+)
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.

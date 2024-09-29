@@ -12,10 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    is_hint_pep484585_tuple_empty,
+)
 from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
 from beartype.door._cls.doorsuper import TypeHint
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
-    is_hint_pep484585_tuple_empty)
 
 # ....................{ SUBCLASSES                         }....................
 class TupleFixedTypeHint(TypeHint):

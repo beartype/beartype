@@ -12,8 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Tuple
+from inspect import (
+    CO_VARARGS,
+    CO_VARKEYWORDS,
+)
+from itertools import count
+
 from beartype._cave._cavefast import (
     FunctionType,
     MethodBoundInstanceOrClassType,
@@ -23,11 +27,8 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from inspect import (
-    CO_VARARGS,
-    CO_VARKEYWORDS,
-)
-from itertools import count
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import Tuple
 
 # ....................{ HINTS                              }....................
 CallableArgsLens = Tuple[int, int, bool, bool]

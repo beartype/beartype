@@ -11,9 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Iterator
-from beartype._util.func.utilfunccodeobj import get_func_codeobj_basename
 from contextlib import contextmanager
+
+from beartype._util.func.utilfunccodeobj import get_func_codeobj_basename
+from beartype.typing import Iterator
 
 # ....................{ STRINGS                            }....................
 @contextmanager

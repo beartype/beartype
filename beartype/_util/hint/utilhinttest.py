@@ -180,8 +180,7 @@ def is_hint_ignorable(hint: object) -> bool:
     # If this hint is PEP-compliant...
     if is_hint_pep(hint):
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import (
-            is_hint_pep_ignorable)
+        from beartype._util.hint.pep.utilpeptest import is_hint_pep_ignorable
 
         # Defer to the function testing whether this hint is an ignorable
         # PEP-compliant type hint.
@@ -226,7 +225,8 @@ def is_hint_uncached(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin_subscripted)
+        is_hint_pep585_builtin_subscripted,
+    )
     from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

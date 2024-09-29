@@ -11,10 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    ForwardRef,
+from collections.abc import (
+    Set as SetABC,
 )
+from pathlib import Path
+
 from beartype._cave._cavefast import (
     ClassType,
     EnumMemberType,
@@ -27,10 +28,10 @@ from beartype._data.hint.datahinttyping import (
     FrozenSetTypes,
     TupleTypes,
 )
-from collections.abc import (
-    Set as SetABC,
+from beartype.typing import (
+    Dict,
+    ForwardRef,
 )
-from pathlib import Path
 
 # ....................{ TYPES ~ abc                        }....................
 TYPES_CONTEXTMANAGER_FAKE: TupleTypes = (Path,)

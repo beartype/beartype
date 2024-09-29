@@ -11,8 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
@@ -21,6 +19,8 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.text.utiltextidentifier import die_unless_identifier
+from beartype.roar._roarexc import _BeartypeUtilTypeException
+from beartype.typing import Optional
 
 # ....................{ MAKERS                             }....................
 def make_type(

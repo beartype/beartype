@@ -13,24 +13,25 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import NoReturn
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from warnings import catch_warnings
+
 from beartype._check.checkmake import (
-    make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
+    make_code_raiser_func_pith_check,
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
 from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._decor.wrap.wrapsnip import (
     CODE_RETURN_CHECK_PREFIX,
     CODE_RETURN_CHECK_SUFFIX,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.hint.utilhinttest import (
@@ -40,7 +41,7 @@ from beartype._util.hint.utilhinttest import (
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from beartype._util.utilobject import SENTINEL
-from warnings import catch_warnings
+from beartype.typing import NoReturn
 
 # ....................{ CODERS                             }....................
 def code_check_return(decor_meta: BeartypeDecorMeta) -> str:

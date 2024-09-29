@@ -14,10 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Set,
-)
+from collections import defaultdict
+from functools import wraps
+
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkcache import clear_checker_caches
 from beartype._conf.confcls import BeartypeConf
@@ -28,8 +27,10 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from collections import defaultdict
-from functools import wraps
+from beartype.typing import (
+    Dict,
+    Set,
+)
 
 # ....................{ DECORATORS ~ type                  }....................
 def beartype_type(

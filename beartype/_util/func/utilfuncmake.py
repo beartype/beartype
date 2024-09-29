@@ -11,11 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Callable,
-    Optional,
-)
+from functools import update_wrapper
+from linecache import cache as linecache_cache  # type: ignore[attr-defined]
+from weakref import finalize
+
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
@@ -23,9 +22,11 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
-from functools import update_wrapper
-from linecache import cache as linecache_cache  # type: ignore[attr-defined]
-from weakref import finalize
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Callable,
+    Optional,
+)
 
 # ....................{ MAKERS                             }....................
 def make_func(

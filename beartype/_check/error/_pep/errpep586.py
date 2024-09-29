@@ -14,8 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.error.errcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
-from beartype._util.hint.pep.proposal.utilpep586 import (
-    get_hint_pep586_literals)
+from beartype._util.hint.pep.proposal.utilpep586 import get_hint_pep586_literals
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_pith
 

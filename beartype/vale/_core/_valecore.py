@@ -16,16 +16,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._util.func.arg.utilfuncargtest import is_func_argless
+from beartype._util.text.utiltextrepr import represent_object
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._util._valeutilfunc import die_unless_validator_tester
 from beartype.vale._util._valeutiltext import format_diagnosis_line
 from beartype.vale._util._valeutiltyping import (
-    BeartypeValidatorTester,
     BeartypeValidatorRepresenter,
+    BeartypeValidatorTester,
 )
-from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._util.func.arg.utilfuncargtest import is_func_argless
-from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CLASSES                            }....................
 class BeartypeValidator:
@@ -501,8 +501,7 @@ class BeartypeValidator:
         '''
 
         # Avoid circular import dependencies.
-        from beartype.vale._core._valecorebinary import (
-            BeartypeValidatorConjunction)
+        from beartype.vale._core._valecorebinary import BeartypeValidatorConjunction
 
         # Closures for great justice.
         return BeartypeValidatorConjunction(
@@ -529,8 +528,7 @@ class BeartypeValidator:
         '''
 
         # Avoid circular import dependencies.
-        from beartype.vale._core._valecorebinary import (
-            BeartypeValidatorDisjunction)
+        from beartype.vale._core._valecorebinary import BeartypeValidatorDisjunction
 
         # Closures for great justice.
         return BeartypeValidatorDisjunction(
@@ -554,8 +552,7 @@ class BeartypeValidator:
         '''
 
         # Avoid circular import dependencies.
-        from beartype.vale._core._valecoreunary import (
-            BeartypeValidatorNegation)
+        from beartype.vale._core._valecoreunary import BeartypeValidatorNegation
 
         # Closures for profound lore.
         return BeartypeValidatorNegation(validator_operand=self)

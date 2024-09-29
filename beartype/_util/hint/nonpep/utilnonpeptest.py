@@ -18,14 +18,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #    from beartype._util.module.utilmodget import die_unless_module_attr_name
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
-from beartype.roar import BeartypeDecorHintNonpepException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
-from beartype._data.hint.datahinttyping import TypeException
+from beartype.meta import URL_ISSUES
+from beartype.roar import BeartypeDecorHintNonpepException
 
 # ....................{ VALIDATORS                         }....................
 #FIXME: Unit test us up, please.

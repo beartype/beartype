@@ -11,18 +11,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-)
-from beartype._data.hint.datahintfactory import TypeGuard
-from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj_or_none,
-    get_func_codeobj_basename,
-)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import (
     Callable,
     # Generator,
+)
+
+from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._util.func.utilfunccodeobj import (
+    get_func_codeobj_basename,
+    get_func_codeobj_or_none,
+)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
+from beartype.typing import (
+    Any,
 )
 
 # ....................{ TESTERS                            }....................
@@ -87,7 +88,8 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
     # Defer heavyweight tester-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
     from beartype._data.module.datamodcontextlib import (
-        CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME)
+        CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME,
+    )
 
     # Fully-qualified name of that code object.
     func_codeobj_name = get_func_codeobj_basename(func_codeobj)

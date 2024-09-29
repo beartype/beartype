@@ -14,13 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Dict
 from beartype._check.logic.logcls import (
     HintSignLogicContainerArgs1,
     HintSignLogicReiterableArgs1,
     HintSignLogicSequenceArgs1,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype.typing import Dict
 
 # ....................{ MAPPINGS                           }....................
 # Initialized by the _init() function defined below.

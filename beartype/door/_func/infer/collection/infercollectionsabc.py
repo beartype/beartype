@@ -56,24 +56,24 @@ standard :mod:`collections.abc` protocols).
 #That's it. That's the entire solution. Ridiculous, huh? Genius is genius.
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import (
+    Collection as CollectionABC,
+)
+
+from beartype._data.hint.datahinttyping import (
+    FrozenSetStrs,
+)
+from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.api.utilapityping import import_typing_attr_or_none
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobjectattr import get_object_methods_name_to_value_explicit
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
     Optional,
     Set,
-)
-from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._data.hint.datahinttyping import (
-    FrozenSetStrs,
-)
-from beartype._util.api.utilapityping import import_typing_attr_or_none
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobjectattr import (
-    get_object_methods_name_to_value_explicit)
-from collections.abc import (
-    Collection as CollectionABC,
 )
 
 # ....................{ INFERERS                           }....................
@@ -150,7 +150,8 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
         if isinstance(obj, CollectionABC):
             # Avoid circular import dependencies.
             from beartype.door._func.infer.collection.infercollectionitems import (
-                infer_hint_collection_items)
+                infer_hint_collection_items,
+            )
 
             # "collections.abc" protocol validating this type, defined as
             # either...
@@ -610,6 +611,7 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
 
     # ....................{ IMPORTS                        }....................
     # Defer function-specific imports.
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype.typing import (
         AsyncGenerator,
         AsyncIterable,
@@ -629,7 +631,6 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
         Sequence,
         Sized,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 
     # ....................{ LOCALS                         }....................
     # Dictionary mapping the transitions directed out of the start node of this

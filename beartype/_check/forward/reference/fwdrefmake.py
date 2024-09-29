@@ -14,24 +14,24 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.forward.reference.fwdrefabc import (
+    _BeartypeForwardRefIndexableABC,
+    _BeartypeForwardRefIndexableABC_BASES,
+)
+from beartype._data.hint.datahinttyping import (
+    BeartypeForwardRef,
+    BeartypeForwardRefArgs,
+    TupleTypes,
+)
+from beartype._util.cls.utilclsmake import make_type
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     Dict,
     Optional,
     Type,
 )
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.hint.datahinttyping import (
-    BeartypeForwardRef,
-    BeartypeForwardRefArgs,
-    TupleTypes,
-)
-from beartype._check.forward.reference.fwdrefabc import (
-    _BeartypeForwardRefIndexableABC,
-    _BeartypeForwardRefIndexableABC_BASES,
-)
-from beartype._util.cls.utilclsmake import make_type
-from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ FACTORIES                          }....................
 def make_forwardref_indexable_subtype(

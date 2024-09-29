@@ -15,7 +15,6 @@ ignore = [
     "D203", # [*] one-blank-line-before-class
     "D211", # no-blank-line-before-class
     "E265", # [*] no-space-after-block-comment
-    "I001", # [*] unsorted-imports
     "Q000", # [*] bad-quotes-inline-string
     "RUF010", # [*] explicit-f-string-type-conversion
     "RUF022", # [*] unsorted-dunder-all
@@ -190,7 +189,7 @@ runtime-evaluated-decorators = [
 strict = true
 
 [lint.isort]
-# combine-as-imports = true
+combine-as-imports = true
 force-single-line = false
 lines-after-imports = 1
 

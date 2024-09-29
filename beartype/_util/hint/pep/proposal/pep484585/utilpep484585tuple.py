@@ -12,20 +12,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Tuple
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignTupleFixed,
 )
-from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
-    HINT_PEP484_TUPLE_EMPTY)
-from beartype._util.hint.pep.proposal.utilpep585 import (
-    HINT_PEP585_TUPLE_EMPTY)
+from beartype._util.hint.pep.proposal.pep484.utilpep484 import HINT_PEP484_TUPLE_EMPTY
+from beartype._util.hint.pep.proposal.utilpep585 import HINT_PEP585_TUPLE_EMPTY
 from beartype._util.py.utilpyversion import (
     # IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_9,
 )
+from beartype.typing import Tuple
 
 # ....................{ GETTERS                            }....................
 #FIXME: Docstring us up, please.

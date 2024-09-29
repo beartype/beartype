@@ -66,10 +66,10 @@ hints describing callable objects).
 #    collections.abc.Callable[[], object]
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Callable,
-    Optional,
+from collections.abc import (
+    Callable as CallableABC,
 )
+
 from beartype._cave._cavefast import (
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecType,
@@ -88,14 +88,15 @@ from beartype._util.func.arg.utilfuncargiter import (
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.proposal.utilpep612 import (
     get_hint_pep612_paramspec,
     make_hint_pep612_concatenate_list_or_none,
 )
+from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-from collections.abc import (
-    Callable as CallableABC,
+from beartype.typing import (
+    Callable,
+    Optional,
 )
 
 # ....................{ INFERERS                           }....................

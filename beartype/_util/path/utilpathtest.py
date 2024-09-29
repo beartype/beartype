@@ -12,17 +12,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilPathException
-from beartype._data.hint.datahinttyping import (
-    PathnameLike,
-    # PathnameLikeTuple,
-    TypeException,
-)
 from os import (
     X_OK,
     access as is_path_permissions,
 )
 from pathlib import Path
+
+from beartype._data.hint.datahinttyping import (
+    PathnameLike,
+    # PathnameLikeTuple,
+    TypeException,
+)
+from beartype.roar._roarexc import _BeartypeUtilPathException
 
 # ....................{ RAISERS ~ dir                      }....................
 #FIXME: Unit test us up, please.

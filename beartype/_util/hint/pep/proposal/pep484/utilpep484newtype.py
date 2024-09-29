@@ -11,12 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep484Exception
-from beartype.typing import Any
+from types import FunctionType
+
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from types import FunctionType
+from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.typing import Any
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep484_newtype_ignorable(hint: object) -> bool:

@@ -15,6 +15,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
+from importlib import (  # type: ignore[attr-defined]
+    _bootstrap_external,  # pyright: ignore
+)
+from importlib.machinery import SourceFileLoader
+from importlib.util import decode_source
+from types import CodeType
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._util.text.utiltextlabel import label_exception
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
     cache_from_source_beartype,
@@ -22,15 +32,6 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
 )
 from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
-from beartype._util.ast.utilastget import get_node_repr_indented
-from beartype._util.text.utiltextlabel import label_exception
-from importlib import (  # type: ignore[attr-defined]
-    _bootstrap_external,  # pyright: ignore
-)
-from importlib.machinery import SourceFileLoader
-from importlib.util import decode_source
-from types import CodeType
 
 # ....................{ CLASSES                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

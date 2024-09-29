@@ -11,19 +11,12 @@ C-based container types).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    ChainMap,
-    Counter,
-    Deque,
-    FrozenSet,
-    KeysView,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    ValuesView,
+from collections import (
+    ChainMap as ChainMapType,
+    Counter as CounterType,
+    deque,
 )
+
 from beartype._cave._cavefast import (
     DictKeysViewType,
     DictValuesViewType,
@@ -33,10 +26,18 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from collections import (
-    ChainMap as ChainMapType,
-    Counter as CounterType,
-    deque,
+from beartype.typing import (
+    ChainMap,
+    Counter,
+    Deque,
+    Dict,
+    FrozenSet,
+    KeysView,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    ValuesView,
 )
 
 # ....................{ INFERERS                           }....................
@@ -91,7 +92,8 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
 
         # Avoid circular import dependencies.
         from beartype.door._func.infer.collection.infercollectionitems import (
-            infer_hint_collection_items)
+            infer_hint_collection_items,
+        )
 
         # Hint recursively validating this collection (including *ALL* items
         # transitively reachable from this collection), defined by subscripting

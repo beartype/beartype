@@ -17,8 +17,8 @@ from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
 )
 from beartype._check.signature._sigsnip import (
-    CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
+    CODE_SIGNATURE_SCOPE_ARG_format,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (

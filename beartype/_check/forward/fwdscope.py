@@ -32,14 +32,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #the "ChainMap" itself, resolving any desynchronization woes. *facepalm*
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.forward.reference.fwdrefabc import _BeartypeForwardRefIndexableABC
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype,
+)
+from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Type
-from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._check.forward.reference.fwdrefabc import (
-    _BeartypeForwardRefIndexableABC)
-from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
-from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.

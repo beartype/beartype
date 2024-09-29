@@ -30,9 +30,9 @@ example:
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype.roar._roarexc import _BeartypeUtilCachedObjectTypedException
 from beartype.typing import Any
-from beartype._util.cache.pool.utilcachepool import KeyPool
 
 # ....................{ SINGLETONS ~ private               }....................
 _object_typed_pool = KeyPool(item_maker=lambda cls: cls())

@@ -17,8 +17,9 @@ from ast import (
     dump as ast_dump,
     parse as ast_parse,
 )
-from beartype.roar._roarexc import _BeartypeUtilAstException
+
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype.roar._roarexc import _BeartypeUtilAstException
 
 # ....................{ GETTERS ~ node                     }....................
 #FIXME: Unit test us up, please.

@@ -42,6 +42,17 @@ beartype control, some level of obfuscation is effectively mandatory.
 # applicable callables and classes in third-party modules.
 from beartype._decor.decorcache import beartype as __beartype__
 
+# ....................{ IMPORTS ~ pep : 695                }....................
+# Imports required by PEP 695-compliant nodes injected into the current AST by
+# "beartype.claw._ast.pep.clawastpep695.BeartypeNodeTransformerPep695Mixin".
+# Import our PEP 695-compliant type alias forward reference proxy factory
+# iterator (i.e., generator iteratively creating and yielding one forward
+# reference proxy for each unqualified relative forward reference in the passed
+# PEP 695-compliant type alias).
+from beartype._util.hint.pep.proposal.utilpep695 import (
+    iter_hint_pep695_forwardrefs as __iter_hint_pep695_forwardref_beartype__,
+)
+
 # Import our beartype import hook state (i.e., non-thread-safe singleton
 # centralizing *all* global state maintained by beartype import hooks).
 from beartype.claw._clawstate import claw_state as __claw_state_beartype__
@@ -49,7 +60,6 @@ from beartype.claw._clawstate import claw_state as __claw_state_beartype__
 # ....................{ IMPORTS ~ pep : 526                }....................
 # Imports required by PEP 526-compliant nodes injected into the current AST by
 # "beartype.claw._ast.pep.clawastpep526.BeartypeNodeTransformerPep526Mixin".
-
 # Import our beartype exception-raiser (i.e., beartype-specific function raising
 # exceptions on runtime type-checking violations, applied by our AST transformer
 # to all applicable PEP 526-compliant annotated variable assignments).
@@ -60,18 +70,8 @@ from beartype.claw._clawstate import claw_state as __claw_state_beartype__
 # import than the latter. Whereas the latter imports the full "TypeHint" type
 # hierarchy, the former only imports low-level utility functions.
 from beartype.door._func.doorcheck import (
-    die_if_unbearable as __die_if_unbearable_beartype__)
-
-# ....................{ IMPORTS ~ pep : 695                }....................
-# Imports required by PEP 695-compliant nodes injected into the current AST by
-# "beartype.claw._ast.pep.clawastpep695.BeartypeNodeTransformerPep695Mixin".
-
-# Import our PEP 695-compliant type alias forward reference proxy factory
-# iterator (i.e., generator iteratively creating and yielding one forward
-# reference proxy for each unqualified relative forward reference in the passed
-# PEP 695-compliant type alias).
-from beartype._util.hint.pep.proposal.utilpep695 import (
-    iter_hint_pep695_forwardrefs as __iter_hint_pep695_forwardref_beartype__)
+    die_if_unbearable as __die_if_unbearable_beartype__,
+)
 
 # ....................{ GLOBALS                            }....................
 __all__ = [

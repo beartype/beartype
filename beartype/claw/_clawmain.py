@@ -20,10 +20,8 @@ this private submodule is *not* intended for importation by downstream callers.
 #imported (i.e., are in the "sys.modules" list).
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
-from beartype.claw._package.clawpkghook import hook_packages
-from beartype.roar import BeartypeClawHookUnpackagedException
-from beartype.typing import Iterable
+from pathlib import PurePath
+
 from beartype._cave._cavefast import CallableFrameType
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -34,7 +32,10 @@ from beartype._util.func.utilfuncframe import (
     get_frame_module_name,
     get_frame_package_name,
 )
-from pathlib import PurePath
+from beartype.claw._package.clawpkgenum import BeartypeClawCoverage
+from beartype.claw._package.clawpkghook import hook_packages
+from beartype.roar import BeartypeClawHookUnpackagedException
+from beartype.typing import Iterable
 
 # ....................{ HOOKERS                            }....................
 def beartype_all(

@@ -13,14 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 import sys
+
+from beartype._cave._cavefast import CallableFrameType
+from beartype._data.hint.datahinttyping import TypeException
 from beartype.roar._roarexc import _BeartypeUtilCallFrameException
 from beartype.typing import (
     Callable,
     Iterable,
     Optional,
 )
-from beartype._cave._cavefast import CallableFrameType
-from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GETTERS                            }....................
 #FIXME: Mypy insists this getter can return "None" in certain edge cases. But...

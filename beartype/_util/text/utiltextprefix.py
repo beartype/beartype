@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
+
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
@@ -22,7 +24,6 @@ from beartype._util.text.utiltextlabel import (
     label_callable,
     label_type,
 )
-from collections.abc import Callable
 
 # ....................{ PREFIXERS ~ beartypeable           }....................
 #FIXME: Unit test this function with respect to classes, please.

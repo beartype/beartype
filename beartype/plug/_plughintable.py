@@ -15,11 +15,11 @@ downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MIXINS                             }....................
 class BeartypeHintable:

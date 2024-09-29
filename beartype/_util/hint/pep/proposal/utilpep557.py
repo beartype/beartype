@@ -10,9 +10,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignPep557DataclassInitVar
+from beartype.roar import BeartypeDecorHintPep557Exception
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep557_initvar_arg(

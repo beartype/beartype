@@ -12,22 +12,23 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-    Optional,
-)
-from beartype._data.hint.datahinttyping import (
-    Codeobjable,
-    TypeException,
-)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from types import (
     CodeType,
     FrameType,
     FunctionType,
     GeneratorType,
     MethodType,
+)
+
+from beartype._data.hint.datahinttyping import (
+    Codeobjable,
+    TypeException,
+)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Any,
+    Optional,
 )
 
 # ....................{ GETTERS                            }....................

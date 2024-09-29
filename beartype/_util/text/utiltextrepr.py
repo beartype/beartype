@@ -11,14 +11,15 @@ This private submodule is *not* intended for importation by downstream callers.
 """
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
+from collections.abc import Callable
+from pprint import saferepr
+
 # from beartype.typing import Dict
 from beartype._cave._cavefast import NumberType
 from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
 from beartype._util.utilobject import get_object_basename_scoped_or_none
-from collections.abc import Callable
-from pprint import saferepr
+from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 
 # ....................{ REPRESENTERS                       }....................
 def represent_object(

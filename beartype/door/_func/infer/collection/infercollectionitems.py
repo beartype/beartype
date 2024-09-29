@@ -11,25 +11,25 @@ one or more items).
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import (
+    Collection as CollectionABC,
+    Mapping as MappingABC,
+    Sequence as SequenceABC,
+)
+
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confenum import BeartypeStrategy
+from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    make_hint_pep484585_tuple_fixed_hint,
+)
+from beartype._util.hint.pep.proposal.utilpep484604 import make_hint_pep484604_union
+from beartype._util.kind.integer.utilintget import get_integer_pseudorandom_signed_32bit
 from beartype.roar import BeartypeConfException
 from beartype.typing import (
     Counter,
     Optional,
     Tuple,
-)
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.hint.datahinttyping import FrozenSetInts
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
-    make_hint_pep484585_tuple_fixed_hint)
-from beartype._util.hint.pep.proposal.utilpep484604 import (
-    make_hint_pep484604_union)
-from beartype._util.kind.integer.utilintget import (
-    get_integer_pseudorandom_signed_32bit)
-from collections.abc import (
-    Collection as CollectionABC,
-    Mapping as MappingABC,
-    Sequence as SequenceABC,
 )
 
 # ....................{ INFERERS                           }....................

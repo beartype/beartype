@@ -12,22 +12,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype._data.hint.datahinttyping import (
+    Codeobjable,
+    TypeException,
+)
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_NAME,
 )
 from beartype._util.func.arg.utilfuncarglen import (
-    ARGS_LENS_INDEX_VAR_POS,
     ARGS_LENS_INDEX_VAR_KW,
+    ARGS_LENS_INDEX_VAR_POS,
     get_func_args_flexible_len,
     get_func_args_len,
     get_func_args_lens,
     get_func_args_nonvariadic_len,
 )
-from beartype._data.hint.datahinttyping import (
-    Codeobjable,
-    TypeException,
-)
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_func_args_len_flexible_equal(
@@ -417,7 +417,8 @@ def is_func_arg_name_variadic_positional(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_meta_variadic_positional_or_none)
+        get_func_arg_meta_variadic_positional_or_none,
+    )
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.
@@ -476,7 +477,8 @@ def is_func_arg_name_variadic_keyword(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_meta_variadic_keyword_or_none)
+        get_func_arg_meta_variadic_keyword_or_none,
+    )
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.

@@ -11,12 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.error.errcause import ViolationCause
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype.typing import (
     Callable,
     Dict,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._check.error.errcause import ViolationCause
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.
@@ -38,6 +38,25 @@ def _init() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype._check.error._errtype import (
+        find_cause_instance_type_forwardref,
+        find_cause_subclass_type,
+        find_cause_type_instance_origin,
+    )
+    from beartype._check.error._pep.errpep484 import find_cause_noreturn
+    from beartype._check.error._pep.errpep586 import find_cause_literal
+    from beartype._check.error._pep.errpep593 import find_cause_annotated
+    from beartype._check.error._pep.errpep484604 import find_cause_union
+    from beartype._check.error._pep.pep484585.errpep484585container import (
+        find_cause_container_args_1,
+        find_cause_tuple_fixed,
+    )
+    from beartype._check.error._pep.pep484585.errpep484585generic import (
+        find_cause_generic,
+    )
+    from beartype._check.error._pep.pep484585.errpep484585mapping import (
+        find_cause_mapping,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
         HintSignForwardRef,
@@ -48,28 +67,11 @@ def _init() -> None:
         HintSignType,
     )
     from beartype._data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_CONTAINER_ARGS_1,
         HINT_SIGNS_MAPPING,
         HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-        HINT_SIGNS_CONTAINER_ARGS_1,
         HINT_SIGNS_UNION,
     )
-    from beartype._check.error._errtype import (
-        find_cause_instance_type_forwardref,
-        find_cause_subclass_type,
-        find_cause_type_instance_origin,
-    )
-    from beartype._check.error._pep.errpep484 import find_cause_noreturn
-    from beartype._check.error._pep.errpep484604 import find_cause_union
-    from beartype._check.error._pep.errpep586 import find_cause_literal
-    from beartype._check.error._pep.errpep593 import find_cause_annotated
-    from beartype._check.error._pep.pep484585.errpep484585container import (
-        find_cause_container_args_1,
-        find_cause_tuple_fixed,
-    )
-    from beartype._check.error._pep.pep484585.errpep484585generic import (
-        find_cause_generic)
-    from beartype._check.error._pep.pep484585.errpep484585mapping import (
-        find_cause_mapping)
 
     # Map each originative sign to the appropriate finder *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by

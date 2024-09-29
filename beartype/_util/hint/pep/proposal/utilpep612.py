@@ -12,17 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep612Exception
-from beartype.typing import (
-    Callable,
-    Optional,
-    Union,
-)
 from beartype._cave._cavefast import (
-    HintPep612ParamSpecType,
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
     # HintPep612ParamSpecVarTypes,
+    HintPep612ParamSpecType,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -31,7 +25,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecKwargs,
 )
 from beartype._util.api.utilapityping import import_typing_attr_or_none
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.func.arg.utilfuncargget import (
     get_func_arg_meta_variadic_keyword_or_none,
     get_func_arg_meta_variadic_positional_or_none,
@@ -44,7 +37,14 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_name_variadic_keyword,
     is_func_arg_name_variadic_positional,
 )
+from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.utilobject import SENTINEL
+from beartype.roar import BeartypeDecorHintPep612Exception
+from beartype.typing import (
+    Callable,
+    Optional,
+    Union,
+)
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep612_paramspec(

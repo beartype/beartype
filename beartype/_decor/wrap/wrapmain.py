@@ -28,14 +28,12 @@ from beartype._check.checkmagic import (
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
+from beartype._decor.wrap._wrapargs import code_check_args as _code_check_args
+from beartype._decor.wrap._wrapreturn import code_check_return as _code_check_return
 from beartype._decor.wrap.wrapsnip import (
-    CODE_RETURN_UNCHECKED_format,
     CODE_SIGNATURE,
+    CODE_RETURN_UNCHECKED_format,
 )
-from beartype._decor.wrap._wrapargs import (
-    code_check_args as _code_check_args)
-from beartype._decor.wrap._wrapreturn import (
-    code_check_return as _code_check_return)
 
 # ....................{ GENERATORS                         }....................
 def generate_code(decor_meta: BeartypeDecorMeta) -> str:

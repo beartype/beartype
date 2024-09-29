@@ -11,9 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavemap import NoneTypeOr
 from beartype.roar._roarexc import _BeartypeValeUtilException
 from beartype.typing import Optional
-from beartype._cave._cavemap import NoneTypeOr
 
 # ....................{ FORMATTERS                         }....................
 def format_diagnosis_line(

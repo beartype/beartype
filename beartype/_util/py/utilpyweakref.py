@@ -11,11 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from weakref import ref as weakref_ref
+
 from beartype.roar._roarexc import _BeartypeUtilPythonWeakrefException
 from beartype.typing import (
     Tuple,
 )
-from weakref import ref as weakref_ref
 
 # ....................{ GETTERS                            }....................
 def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:

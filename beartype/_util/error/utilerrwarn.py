@@ -12,19 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Iterable,
-    Iterator,
-)
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._data.hint.datahinttyping import TypeWarning
-from beartype._util.error.utilerrtest import is_exception_message_str
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_12,
-)
-from beartype._util.text.utiltextmunge import uppercase_str_char_first
 from collections.abc import Iterable as IterableABC
 from contextlib import contextmanager
 from warnings import (
@@ -33,6 +20,20 @@ from warnings import (
     simplefilter,
     warn,
     warn_explicit,
+)
+
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._util.error.utilerrtest import is_exception_message_str
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_12,
+)
+from beartype._util.text.utiltextmunge import uppercase_str_char_first
+from beartype.typing import (
+    Any,
+    Iterable,
+    Iterator,
 )
 
 # ....................{ CONTEXTS                           }....................
@@ -75,8 +76,9 @@ def warnings_ignored() -> Iterator[None]:
 if IS_PYTHON_AT_LEAST_3_12:
     # ....................{ IMPORTS                        }....................
     # Defer version-specific imports.
-    import beartype
     from os.path import dirname
+
+    import beartype
 
     # ....................{ WARNERS                        }....................
     def issue_warning(cls: TypeWarning, message: str) -> None:

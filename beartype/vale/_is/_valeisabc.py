@@ -15,10 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
+
+from beartype._util.text.utiltextrepr import represent_object
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.typing import Any
 from beartype.vale._core._valecore import BeartypeValidator
-from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ METACLASSES                        }....................
 class _BeartypeValidatorFactoryABCMeta(ABCMeta):

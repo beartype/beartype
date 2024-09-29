@@ -45,6 +45,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.convert.convsanify import sanify_hint_child_if_unignorable_or_none
+from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
+    HINT_SIGNS_SUPPORTED_DEEP,
+)
+from beartype._util.hint.pep.utilpepget import (
+    get_hint_pep_args,
+    get_hint_pep_sign,
+)
+from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import (
     Any,
@@ -52,20 +65,6 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahinttyping import TypeStack
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-)
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign,
-)
-from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
 
 # ....................{ CLASSES                            }....................
 class ViolationCause:
@@ -384,8 +383,8 @@ class ViolationCause:
         if self.hint_sign is None:
             # Avoid circular import dependencies.
             from beartype._check.error._errtype import (
-                find_cause_instance_types_tuple,
                 find_cause_instance_type,
+                find_cause_instance_types_tuple,
             )
 
             # If this hint is a tuple union, defer to the finder specific to
@@ -416,8 +415,7 @@ class ViolationCause:
         # type origin. In this case, this hint was type-checked shallowly.
         ):
             # Avoid circular import dependencies.
-            from beartype._check.error._errtype import (
-                find_cause_type_instance_origin)
+            from beartype._check.error._errtype import find_cause_type_instance_origin
 
             # Defer to the getter function supporting hints originating from
             # origin types.
@@ -427,8 +425,7 @@ class ViolationCause:
         # type-checked deeply.
         else:
             # Avoid circular import dependencies.
-            from beartype._check.error._errmap import (
-                HINT_SIGN_TO_GET_CAUSE_FUNC)
+            from beartype._check.error._errmap import HINT_SIGN_TO_GET_CAUSE_FUNC
 
             # Getter function returning the desired string for this attribute if
             # any *OR* "None" otherwise.

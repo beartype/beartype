@@ -13,18 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorWrappeeException,
-    BeartypeDecorWrapperException,
-)
-from beartype.typing import (
-    Optional,
-    no_type_check,
-)
+from collections.abc import Callable
+from contextlib import contextmanager
+from functools import lru_cache
+
 from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
-    MethodDecoratorClassType,
     MethodDecoratorBuiltinTypes,
+    MethodDecoratorClassType,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
@@ -42,8 +38,7 @@ from beartype._util.api.utilapibeartype import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
-from beartype._util.api.utilapicontextlib import (
-    is_func_contextlib_contextmanager)
+from beartype._util.api.utilapicontextlib import is_func_contextlib_contextmanager
 from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
 from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfuncmake import make_func
@@ -53,15 +48,20 @@ from beartype._util.func.utilfunctest import (
     is_func_wrapper,
 )
 from beartype._util.func.utilfuncwrap import (
-    unwrap_func_once,
     unwrap_func_boundmethod_once,
     unwrap_func_classmethod_once,
+    unwrap_func_once,
     unwrap_func_staticmethod_once,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
-from collections.abc import Callable
-from contextlib import contextmanager
-from functools import lru_cache
+from beartype.roar import (
+    BeartypeDecorWrappeeException,
+    BeartypeDecorWrapperException,
+)
+from beartype.typing import (
+    Optional,
+    no_type_check,
+)
 
 # ....................{ DECORATORS ~ non-func              }....................
 def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:

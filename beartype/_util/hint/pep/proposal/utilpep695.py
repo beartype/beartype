@@ -102,18 +102,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #adopted the quick-and-dirty approach of raising exceptions instead. Yikes!
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavefast import HintPep695Type
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype,
+)
+from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._util.error.utilerrget import get_name_error_attr_name
+from beartype._util.module.utilmodget import get_module_imported_or_none
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype.typing import (
     Iterable,
     Optional,
 )
-from beartype._cave._cavefast import HintPep695Type
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
-from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
-from beartype._util.error.utilerrget import get_name_error_attr_name
-from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep695_ignorable(hint: HintPep695Type) -> bool:

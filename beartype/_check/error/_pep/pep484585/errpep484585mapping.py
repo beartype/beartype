@@ -13,19 +13,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeStrategy
+from beartype._check.error._errtype import find_cause_type_instance_origin
+from beartype._check.error.errcause import ViolationCause
+from beartype._data.hint.pep.sign.datapepsignmap import (
+    HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE,
+)
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCounter
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
+from beartype._util.text.utiltextprefix import prefix_pith_type
+from beartype._util.text.utiltextrepr import represent_pith
 from beartype.typing import (
     Hashable,
     Iterable,
     Tuple,
 )
-from beartype._data.hint.pep.sign.datapepsignmap import (
-    HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
-from beartype._data.hint.pep.sign.datapepsigns import HintSignCounter
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
-from beartype._check.error.errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_type_instance_origin
-from beartype._util.text.utiltextprefix import prefix_pith_type
-from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
 def find_cause_mapping(cause: ViolationCause) -> ViolationCause:

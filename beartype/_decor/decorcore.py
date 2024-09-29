@@ -17,7 +17,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeException
+from traceback import format_exc
+from warnings import warn
+
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
@@ -36,8 +38,7 @@ from beartype._util.text.utiltextmunge import (
     uppercase_str_char_first,
 )
 from beartype._util.text.utiltextprefix import prefix_beartypeable
-from traceback import format_exc
-from warnings import warn
+from beartype.roar import BeartypeException
 
 # ....................{ DECORATORS                         }....................
 def beartype_object(

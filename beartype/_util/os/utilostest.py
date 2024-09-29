@@ -11,9 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.cache.utilcachecall import callable_cached
 from platform import system as platform_system
 from sys import platform as sys_platform
+
+from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ TESTERS                            }....................
 @callable_cached

@@ -76,15 +76,6 @@ low-level primitive    :func:`isinstance`    :mod:`typing.TypingMeta`
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-from beartype.cave._cavelib import (
-    # Types.
-    ArgParserType as ArgParserType,
-    ArgSubparsersType as ArgSubparsersType,
-    WeakRefCType as WeakRefCType,
-
-    # Type tuples.
-    WeakRefProxyCTypes as WeakRefProxyCTypes,
-)
 from beartype._cave._caveabc import (
     BoolType as BoolType,
 )
@@ -92,22 +83,31 @@ from beartype._cave._cavefast import (
     # Types.
     AnyType as AnyType,
     AsyncCoroutineCType as AsyncCoroutineCType,
+    # Type tuples.
+    AsyncCTypes as AsyncCTypes,
     AsyncGeneratorCType as AsyncGeneratorCType,
+    BoolOrNumberTypes as BoolOrNumberTypes,
     CallableCodeObjectType as CallableCodeObjectType,
-    ClassDictType as ClassDictType,
+    CallableCTypes as CallableCTypes,
     CallableFrameType as CallableFrameType,
     CallableFunctoolsPartialType as CallableFunctoolsPartialType,
+    CallableOrClassTypes as CallableOrClassTypes,
+    CallableOrStrTypes as CallableOrStrTypes,
+    CallableTypes as CallableTypes,
+    ClassDictType as ClassDictType,
     ClassType as ClassType,
     ClosureVarCellType as ClosureVarCellType,
     CollectionType as CollectionType,
     ContainerType as ContainerType,
+    DecoratorTypes as DecoratorTypes,
     EllipsisType as EllipsisType,
-    EnumType as EnumType,
     EnumMemberType as EnumMemberType,
+    EnumType as EnumType,
     ExceptionTracebackType as ExceptionTracebackType,
     FileType as FileType,
-    FunctionType as FunctionType,
     FunctionOrMethodCType as FunctionOrMethodCType,
+    FunctionType as FunctionType,
+    FunctionTypes as FunctionTypes,
     GeneratorCType as GeneratorCType,
     GeneratorType as GeneratorType,
     HashableType as HashableType,
@@ -117,59 +117,55 @@ from beartype._cave._cavefast import (
     IterableType as IterableType,
     IteratorType as IteratorType,
     MappingMutableType as MappingMutableType,
+    MappingOrSequenceTypes as MappingOrSequenceTypes,
     MappingType as MappingType,
     MethodBoundInstanceDunderCType as MethodBoundInstanceDunderCType,
     MethodBoundInstanceOrClassType as MethodBoundInstanceOrClassType,
+    MethodBoundTypes as MethodBoundTypes,
+    MethodDecoratorBuiltinTypes as MethodDecoratorBuiltinTypes,
     MethodDecoratorClassType as MethodDecoratorClassType,
     MethodDecoratorPropertyType as MethodDecoratorPropertyType,
     MethodDecoratorStaticType as MethodDecoratorStaticType,
+    MethodTypes as MethodTypes,
     MethodUnboundClassCType as MethodUnboundClassCType,
     MethodUnboundInstanceDunderCType as MethodUnboundInstanceDunderCType,
     MethodUnboundInstanceNondunderCType as MethodUnboundInstanceNondunderCType,
-    MethodUnboundPropertyNontrivialCExtensionType as
-        MethodUnboundPropertyNontrivialCExtensionType,
-    MethodUnboundPropertyTrivialCExtensionType as
-        MethodUnboundPropertyTrivialCExtensionType,
+    MethodUnboundPropertyNontrivialCExtensionType as MethodUnboundPropertyNontrivialCExtensionType,
+    MethodUnboundPropertyTrivialCExtensionType as MethodUnboundPropertyTrivialCExtensionType,
+    MethodUnboundTypes as MethodUnboundTypes,
+    ModuleOrSequenceTypes as ModuleOrSequenceTypes,
+    ModuleOrStrTypes as ModuleOrStrTypes,
     ModuleType as ModuleType,
     NoneType as NoneType,
     NotImplementedType as NotImplementedType,
+    NumberOrIterableTypes as NumberOrIterableTypes,
+    NumberOrSequenceTypes as NumberOrSequenceTypes,
     NumberRealType as NumberRealType,
     NumberType as NumberType,
-    SizedType as SizedType,
     QueueType as QueueType,
     RegexCompiledType as RegexCompiledType,
     RegexMatchType as RegexMatchType,
-    SetType as SetType,
-    SequenceMutableType as SequenceMutableType,
-    SequenceType as SequenceType,
-    StrType as StrType,
-    UnavailableType as UnavailableType,
-
-    # Type tuples.
-    AsyncCTypes as AsyncCTypes,
-    BoolOrNumberTypes as BoolOrNumberTypes,
-    CallableCTypes as CallableCTypes,
-    CallableOrClassTypes as CallableOrClassTypes,
-    CallableOrStrTypes as CallableOrStrTypes,
-    CallableTypes as CallableTypes,
-    DecoratorTypes as DecoratorTypes,
-    FunctionTypes as FunctionTypes,
-    ModuleOrStrTypes as ModuleOrStrTypes,
-    MethodBoundTypes as MethodBoundTypes,
-    MethodDecoratorBuiltinTypes as MethodDecoratorBuiltinTypes,
-    MethodUnboundTypes as MethodUnboundTypes,
-    MethodTypes as MethodTypes,
-    MappingOrSequenceTypes as MappingOrSequenceTypes,
-    ModuleOrSequenceTypes as ModuleOrSequenceTypes,
-    NumberOrIterableTypes as NumberOrIterableTypes,
-    NumberOrSequenceTypes as NumberOrSequenceTypes,
     RegexTypes as RegexTypes,
     ScalarTypes as ScalarTypes,
+    SequenceMutableType as SequenceMutableType,
+    SequenceType as SequenceType,
+    SetType as SetType,
+    SizedType as SizedType,
+    StrType as StrType,
     TestableTypes as TestableTypes,
+    UnavailableType as UnavailableType,
     UnavailableTypes as UnavailableTypes,
 )
 from beartype._cave._cavemap import (
     NoneTypeOr as NoneTypeOr,
+)
+from beartype.cave._cavelib import (
+    # Types.
+    ArgParserType as ArgParserType,
+    ArgSubparsersType as ArgSubparsersType,
+    WeakRefCType as WeakRefCType,
+    # Type tuples.
+    WeakRefProxyCTypes as WeakRefProxyCTypes,
 )
 
 # ....................{ DEPRECATIONS                       }....................

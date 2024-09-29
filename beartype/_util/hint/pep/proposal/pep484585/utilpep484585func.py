@@ -13,8 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import Tuple
+from collections.abc import (
+    AsyncGenerator,
+    Callable,
+    Generator,
+)
+
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
@@ -27,16 +31,13 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 )
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.utilfunctest import (
-    is_func_coro,
     is_func_async_generator,
+    is_func_coro,
     is_func_sync_generator,
 )
 from beartype._util.text.utiltextprefix import prefix_callable_return
-from collections.abc import (
-    AsyncGenerator,
-    Callable,
-    Generator,
-)
+from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import Tuple
 
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
@@ -83,7 +84,8 @@ def reduce_hint_pep484585_func_return(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-        get_hint_pep484585_args)
+        get_hint_pep484585_args,
+    )
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
     # Type hint annotating this callable's return, which the caller has already

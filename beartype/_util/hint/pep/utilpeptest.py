@@ -11,22 +11,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintPepException,
-    BeartypeDecorHintPepUnsupportedException,
-    BeartypeDecorHintPep484Exception,
-)
-from beartype.typing import (
-    Dict,
-    NoReturn,
-)
+from collections.abc import Callable
+
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignGeneric,
-    HintSignOptional,
     HintSignNewType,
+    HintSignOptional,
     HintSignPep695TypeAlias,
     HintSignProtocol,
     HintSignTypeVar,
@@ -42,17 +35,28 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_typevar_ignorable,
 )
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-    is_hint_pep484_newtype_ignorable)
+    is_hint_pep484_newtype_ignorable,
+)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    is_hint_pep484585_generic_ignorable)
-from beartype._util.hint.pep.proposal.utilpep484604 import (
-    is_hint_pep484604_union_ignorable)
+    is_hint_pep484585_generic_ignorable,
+)
 from beartype._util.hint.pep.proposal.utilpep544 import is_hint_pep544_ignorable
 from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593_ignorable
 from beartype._util.hint.pep.proposal.utilpep695 import is_hint_pep695_ignorable
+from beartype._util.hint.pep.proposal.utilpep484604 import (
+    is_hint_pep484604_union_ignorable,
+)
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
-from collections.abc import Callable
+from beartype.roar import (
+    BeartypeDecorHintPep484Exception,
+    BeartypeDecorHintPepException,
+    BeartypeDecorHintPepUnsupportedException,
+)
+from beartype.typing import (
+    Dict,
+    NoReturn,
+)
 
 # ....................{ EXCEPTIONS                         }....................
 def die_if_hint_pep(
@@ -361,8 +365,7 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_sign_or_none)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
     # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
     # "None" otherwise (i.e., if this hint is *NOT* PEP-compliant).
@@ -580,8 +583,7 @@ def is_hint_pep_typing(hint: object) -> bool:
     # print(f'is_hint_pep_typing({repr(hint)}')
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_sign_or_none)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
     # Return true only if this hint is either...
     return (

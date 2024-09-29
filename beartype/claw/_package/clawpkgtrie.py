@@ -14,6 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import (
+    Collection as CollectionABC,
+)
+
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahinttyping import CollectionStrs
 from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
@@ -21,12 +28,6 @@ from beartype.typing import (
     Dict,
     Iterable,
     Optional,
-)
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahinttyping import CollectionStrs
-from collections.abc import (
-    Collection as CollectionABC,
 )
 
 # ....................{ SUBCLASSES                         }....................

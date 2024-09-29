@@ -54,21 +54,23 @@ This private submodule is *not* intended for importation by downstream callers.
 #Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavefast import NotImplementedType
+from beartype._check.forward.fwdmain import resolve_hint
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
+
+# from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
+from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+    make_hint_pep484_union,
+)
+from beartype._util.hint.utilhinttest import is_hint_uncached
 from beartype.typing import (
     Any,
     Optional,
     Union,
 )
-from beartype._cave._cavefast import NotImplementedType
-# from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.forward.fwdmain import resolve_hint
-from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.utilhinttest import is_hint_uncached
-from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
-    make_hint_pep484_union)
 
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.

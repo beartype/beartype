@@ -34,22 +34,20 @@ standardized by the :mod:`typing` module.
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.door._cls.doorsuper import (
-    TypeHint as TypeHint)
-from beartype.door._cls.pep.doorpep484604 import (
-    UnionTypeHint as UnionTypeHint)
-from beartype.door._cls.pep.doorpep586 import (
-    LiteralTypeHint as LiteralTypeHint)
-from beartype.door._cls.pep.doorpep593 import (
-    AnnotatedTypeHint as AnnotatedTypeHint)
-from beartype.door._cls.pep.pep484.doorpep484class import (
-    ClassTypeHint as ClassTypeHint)
+from beartype.door._cls.doorsuper import TypeHint as TypeHint
+from beartype.door._cls.pep.doorpep586 import LiteralTypeHint as LiteralTypeHint
+from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint as AnnotatedTypeHint
+from beartype.door._cls.pep.doorpep484604 import UnionTypeHint as UnionTypeHint
+from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint as ClassTypeHint
 from beartype.door._cls.pep.pep484.doorpep484newtype import (
-    NewTypeTypeHint as NewTypeTypeHint)
+    NewTypeTypeHint as NewTypeTypeHint,
+)
 from beartype.door._cls.pep.pep484.doorpep484typevar import (
-    TypeVarTypeHint as TypeVarTypeHint)
+    TypeVarTypeHint as TypeVarTypeHint,
+)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
-    CallableTypeHint as CallableTypeHint)
+    CallableTypeHint as CallableTypeHint,
+)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,

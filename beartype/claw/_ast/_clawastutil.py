@@ -22,13 +22,7 @@ from ast import (
     expr,
     keyword,
 )
-from beartype.claw._clawmagic import (
-    NODE_CONTEXT_LOAD,
-    # BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
-    BEARTYPE_CLAW_STATE_OBJ_NAME,
-    BEARTYPE_DECORATOR_FUNC_NAME,
-)
-from beartype.roar import BeartypeClawImportConfException
+
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeDecorationPosition
@@ -41,6 +35,13 @@ from beartype._util.ast.utilastmake import (
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype.claw._clawmagic import (
+    # BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
+    BEARTYPE_CLAW_STATE_OBJ_NAME,
+    BEARTYPE_DECORATOR_FUNC_NAME,
+    NODE_CONTEXT_LOAD,
+)
+from beartype.roar import BeartypeClawImportConfException
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

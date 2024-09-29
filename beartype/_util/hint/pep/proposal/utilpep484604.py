@@ -10,12 +10,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep604Exception
+from functools import reduce
+from operator import __or__ as or_operator
+
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype._util.utilobject import SENTINEL
-from functools import reduce
-from operator import __or__ as or_operator
+from beartype.roar import BeartypeDecorHintPep604Exception
 
 # ....................{ VERSIONS                           }....................
 # If the active Python interpreter targets Python >= 3.10 and thus supports PEP
@@ -24,8 +25,8 @@ if IS_PYTHON_AT_LEAST_3_10:
     # ....................{ IMPORTS                        }....................
     # Defer version-specific imports.
     from beartype._cave._cavefast import (
-        HintPep604Type,
         HintPep604ItemTypes,
+        HintPep604Type,
     )
 
     # ....................{ RAISERS                        }....................
@@ -362,7 +363,8 @@ def make_hint_pep484604_union(hints: tuple) -> object:
     if hint_union is SENTINEL:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
-            make_hint_pep484_union)
+            make_hint_pep484_union,
+        )
 
         # Fallback to a PEP 484-compliant old-style union.
         hint_union = make_hint_pep484_union(hints)

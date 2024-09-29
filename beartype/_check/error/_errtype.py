@@ -12,29 +12,24 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeCallHintForwardRefException,
-    BeartypePlugInstancecheckStrException,
-)
-from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
+from beartype._check.error.errcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
     HintSignUnion,
 )
-from beartype._check.error.errcause import ViolationCause
-from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_object_issubclassable,
     die_unless_type_isinstanceable,
 )
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.arg.utilfuncargtest import (
-    die_unless_func_args_len_flexible_equal)
-from beartype._util.hint.nonpep.utilnonpeptest import (
-    die_unless_hint_nonpep_tuple)
+    die_unless_func_args_len_flexible_equal,
+)
+from beartype._util.hint.nonpep.utilnonpeptest import die_unless_hint_nonpep_tuple
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    import_pep484585_ref_type)
+    import_pep484585_ref_type,
+)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_type_isinstanceable_or_none,
@@ -44,6 +39,12 @@ from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
+from beartype.roar import (
+    BeartypeCallHintForwardRefException,
+    BeartypePlugInstancecheckStrException,
+)
+from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import Optional
 
 # ....................{ GETTERS ~ instance : type          }....................
 def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:

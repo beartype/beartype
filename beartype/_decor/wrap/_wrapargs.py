@@ -17,31 +17,22 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintParamDefaultForwardRefWarning,
-    BeartypeDecorHintParamDefaultViolation,
-    BeartypeDecorHintPepException,
-    BeartypeDecorParamNameException,
-)
-from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
-from beartype.typing import (
-    Optional,
-    Set,
-)
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from warnings import catch_warnings
+
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._decor.wrap.wrapsnip import (
+    ARG_KIND_TO_CODE_LOCALIZE,
     CODE_INIT_ARGS_LEN,
     EXCEPTION_PREFIX_DEFAULT,
-    ARG_KIND_TO_CODE_LOCALIZE,
 )
-from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import (
     issue_warning,
@@ -64,7 +55,17 @@ from beartype._util.text.utiltextprefix import (
     prefix_pith_value,
 )
 from beartype._util.utilobject import SENTINEL
-from warnings import catch_warnings
+from beartype.roar import (
+    BeartypeDecorHintParamDefaultForwardRefWarning,
+    BeartypeDecorHintParamDefaultViolation,
+    BeartypeDecorHintPepException,
+    BeartypeDecorParamNameException,
+)
+from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
+from beartype.typing import (
+    Optional,
+    Set,
+)
 
 # ....................{ CODERS                             }....................
 def code_check_args(decor_meta: BeartypeDecorMeta) -> str:

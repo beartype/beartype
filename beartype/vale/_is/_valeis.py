@@ -15,21 +15,21 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeValeLambdaWarning,
-    BeartypeValeValidationException,
-)
-from beartype.typing import Protocol
-from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._core._valecore import BeartypeValidator
-from beartype.vale._util._valeutilfunc import die_unless_validator_tester
-from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.text.utiltextrepr import (
     represent_func,
     represent_object,
 )
+from beartype.roar import (
+    BeartypeValeLambdaWarning,
+    BeartypeValeValidationException,
+)
+from beartype.typing import Protocol
+from beartype.vale._core._valecore import BeartypeValidator
+from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilfunc import die_unless_validator_tester
+from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
 
 # ....................{ PRIVATE ~ subclasses               }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):

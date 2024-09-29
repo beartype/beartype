@@ -10,15 +10,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype.typing import (
     Any,
     Optional,
     Tuple,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
-from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ RAISERS                            }....................
 #FIXME: Pass "exception_prefix" to all calls of this validator.

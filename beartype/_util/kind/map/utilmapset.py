@@ -11,15 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilMappingException
-from beartype.typing import Sequence
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import (
-    Sequence as SequenceABC,
     Mapping,
     MutableMapping,
+    Sequence as SequenceABC,
 )
+
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.text.utiltextrepr import represent_object
+from beartype.roar._roarexc import _BeartypeUtilMappingException
+from beartype.typing import Sequence
 
 # ....................{ MERGERS                            }....................
 def merge_mappings(*mappings: Mapping) -> Mapping:
@@ -120,8 +121,7 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
     # Else, both mappings are non-empty.
 
     # Avoid circular import dependencies.
-    from beartype._util.kind.map.utilmaptest import (
-        die_if_mappings_two_items_collide)
+    from beartype._util.kind.map.utilmaptest import die_if_mappings_two_items_collide
 
     # If these mappings contain a key-value collision, raise an exception.
     die_if_mappings_two_items_collide(mapping_a, mapping_b)
@@ -254,8 +254,7 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     # Else, the second mapping is non-empty.
 
     # Avoid circular import dependencies.
-    from beartype._util.kind.map.utilmaptest import (
-        die_if_mappings_two_items_collide)
+    from beartype._util.kind.map.utilmaptest import die_if_mappings_two_items_collide
 
     # If these mappings contain a key-value collision, raise an exception.
     die_if_mappings_two_items_collide(mapping_trg, mapping_src)

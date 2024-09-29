@@ -12,13 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import (
+    ItemsView as ItemsViewABC,
+)
+
+from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype.typing import (
     Collection,
     Tuple,
-)
-from beartype._util.api.utilapityping import import_typing_attr_or_none
-from collections.abc import (
-    ItemsView as ItemsViewABC,
 )
 
 # ....................{ REDUCERS                           }....................
@@ -51,7 +52,8 @@ def reduce_hint_pep484585_itemsview(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
-        get_hint_pep484585_args)
+        get_hint_pep484585_args,
+    )
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
 
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)

@@ -22,20 +22,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.conftest import die_unless_conf
+from beartype._data.hint.datahinttyping import (
+    BeartypeableT,
+    BeartypeConfedDecorator,
+    BeartypeReturn,
+)
+from beartype._decor.decorcore import beartype_object
 from beartype.roar import BeartypeConfException
 from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._conf.conftest import die_unless_conf
-from beartype._data.hint.datahinttyping import (
-    BeartypeConfedDecorator,
-    BeartypeReturn,
-    BeartypeableT,
-)
-from beartype._decor.decorcore import beartype_object
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -13,17 +13,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
-from beartype.roar import BeartypeClawImportConfException
-from beartype.typing import Dict
-from beartype._conf.confcls import BeartypeConf
-from pprint import pformat
-
 # Original cache_from_source() function defined by the private (*gulp*)
 # "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
 # replacing that function with our beartype-specific variant in the
 # "beartype.claw._importlib._clawimpload" submodule.
 from importlib.util import cache_from_source as cache_from_source_original
+from pprint import pformat
+
+from beartype._conf.confcls import BeartypeConf
+from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
+from beartype.roar import BeartypeClawImportConfException
+from beartype.typing import Dict
 
 # ....................{ SUBCLASSES                         }....................
 class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):

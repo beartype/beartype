@@ -10,13 +10,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from platform import python_implementation
+from sys import executable as sys_executable
+
+from beartype._data.hint.datahinttyping import CommandWords
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype.roar._roarexc import (
     _BeartypeUtilPythonInterpreterException,
 )
-from beartype._data.hint.datahinttyping import CommandWords
-from beartype._util.cache.utilcachecall import callable_cached
-from platform import python_implementation
-from sys import executable as sys_executable
 
 # ....................{ TESTERS                            }....................
 @callable_cached

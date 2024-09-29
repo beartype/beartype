@@ -12,6 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
+
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     BoolTristate,
@@ -20,7 +22,6 @@ from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
 )
-from collections.abc import Callable
 
 # ....................{ LABELLERS ~ beartypeable           }....................
 def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
@@ -42,6 +43,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     '''
 
     # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import get_func_arg_name_first_or_none
     from beartype._util.func.utilfunctest import (
         is_func_async,
         is_func_async_generator,
@@ -49,8 +51,6 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         is_func_python,
         is_func_sync_generator,
     )
-    from beartype._util.func.arg.utilfuncargget import (
-        get_func_arg_name_first_or_none)
 
     #FIXME: Globalize magic strings for efficiency, please.
 
@@ -194,8 +194,7 @@ def label_callable(
         f'{repr(is_context)} not tri-state boolean.')
 
     # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncarglen import (
-        get_func_args_flexible_len)
+    from beartype._util.func.arg.utilfuncarglen import get_func_args_flexible_len
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda
     from beartype._util.text.utiltextansi import color_attr_name
@@ -301,9 +300,8 @@ def label_object_context(obj: object) -> str:
     '''
 
     # Defer test-specific imports.
+    from beartype._util.module.utilmodget import get_object_module_line_number_begin
     from beartype._util.utilobject import get_object_filename_or_none
-    from beartype._util.module.utilmodget import (
-        get_object_module_line_number_begin)
 
     # Absolute filename of the module or script physically declaring this object
     # if this object was defined on-disk *OR* "None" otherwise (i.e., if this
@@ -389,8 +387,7 @@ def label_type(
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin
-    from beartype._util.hint.pep.proposal.utilpep544 import (
-        is_hint_pep544_protocol)
+    from beartype._util.hint.pep.proposal.utilpep544 import is_hint_pep544_protocol
     from beartype._util.text.utiltextansi import color_attr_name
 
     # Label to be returned, initialized to this class' fully-qualified name.

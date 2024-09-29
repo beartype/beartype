@@ -18,11 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import (
-    BeartypeDecorHintNonpepNumpyException,
-    BeartypeDecorHintNonpepNumpyWarning,
-)
-from beartype.typing import Any
 from beartype._util.api.utilapinumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
@@ -31,6 +26,11 @@ from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobject import is_object_hashable
+from beartype.roar import (
+    BeartypeDecorHintNonpepNumpyException,
+    BeartypeDecorHintNonpepNumpyWarning,
+)
+from beartype.typing import Any
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
@@ -108,13 +108,14 @@ def reduce_hint_numpy_ndarray(
     # almost *ALWAYS* be importable. Why? Because this hint was externally
     # instantiated by the user by first importing the "numpy.typing.NDArray"
     # attribute passed to this getter.
+    from numpy import ndarray  # pyright: ignore
+    from numpy.typing import NDArray  # type: ignore[attr-defined]
+
     from beartype.vale import (
         IsAttr,
         IsEqual,
         IsSubclass,
     )
-    from numpy import ndarray  # pyright: ignore
-    from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
     #particularly feel like arguing tonight, because that's a lonely hill.

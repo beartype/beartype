@@ -12,12 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeConfShellVarException
-from beartype.roar._roarwarn import BeartypeConfShellVarWarning
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.datahinttyping import (
-    BoolTristateUnpassable,
     BoolTristate,
+    BoolTristateUnpassable,
 )
 from beartype._data.os.dataosshell import (
     SHELL_VAR_CONF_IS_COLOR_NAME,
@@ -26,6 +24,8 @@ from beartype._data.os.dataosshell import (
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.os.utilosshell import get_shell_var_value_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
+from beartype.roar import BeartypeConfShellVarException
+from beartype.roar._roarwarn import BeartypeConfShellVarWarning
 
 # ....................{ GETTERS                            }....................
 def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: ignore

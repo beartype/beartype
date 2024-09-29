@@ -12,14 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorWrappeeException
-from beartype.typing import (
-    TYPE_CHECKING,
-    Callable,
-    # Dict,
-    FrozenSet,
-    Optional,
-)
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
@@ -43,6 +35,14 @@ from beartype._util.func.utilfunctest import (
     is_func_nested,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+from beartype.roar import BeartypeDecorWrappeeException
+from beartype.typing import (
+    TYPE_CHECKING,
+    Callable,
+    # Dict,
+    FrozenSet,
+    Optional,
+)
 
 # ....................{ CLASSES                            }....................
 class BeartypeDecorMeta:

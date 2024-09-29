@@ -11,30 +11,31 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-    Optional,
+from collections.abc import Callable
+from inspect import (
+    CO_ASYNC_GENERATOR,
+    CO_COROUTINE,
+    CO_GENERATOR,
 )
+
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
+
 # from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.func.arg.utilfuncarglen import (
-    get_func_args_nonvariadic_len)
+from beartype._util.func.arg.utilfuncarglen import get_func_args_nonvariadic_len
 from beartype._util.func.arg.utilfuncargtest import (
-    is_func_arg_variadic_positional,
     is_func_arg_variadic_keyword,
+    is_func_arg_variadic_positional,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-from collections.abc import Callable
-from inspect import (
-    CO_ASYNC_GENERATOR,
-    CO_COROUTINE,
-    CO_GENERATOR,
+from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Any,
+    Optional,
 )
 
 # ....................{ CONSTANTS                          }....................
@@ -976,8 +977,7 @@ def is_func_wrapper_isomorphic(
     # If this object is a C-based bound method descriptor...
     if is_func_boundmethod(func):
         # Avoid circular import dependencies.
-        from beartype._util.func.utilfuncwrap import (
-            unwrap_func_boundmethod_once)
+        from beartype._util.func.utilfuncwrap import unwrap_func_boundmethod_once
         # print(f'Detecting bound method f{repr(func)} isomorphism...')
 
         # Unwrap this descriptor to the pure-Python callable encapsulated by

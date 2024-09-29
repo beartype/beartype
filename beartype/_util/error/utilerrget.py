@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilExceptionException
 from beartype._util.text.utiltextlabel import label_exception
+from beartype.roar._roarexc import _BeartypeUtilExceptionException
 
 # ....................{ GETTERS                            }....................
 def get_name_error_attr_name(name_error: NameError) -> str:

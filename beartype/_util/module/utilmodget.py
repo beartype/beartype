@@ -11,12 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._cave._cavefast import ModuleType
-from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import Optional
 from inspect import findsource
 from pathlib import Path
 from sys import modules as sys_modules
+
+from beartype._cave._cavefast import ModuleType
+from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import Optional
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.

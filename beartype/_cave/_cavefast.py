@@ -43,13 +43,6 @@ import numbers as _numbers
 import re as _re
 import types as _types
 import typing as _typing
-from beartype.roar import BeartypeCallUnavailableTypeException
-from beartype._cave._caveabc import BoolType
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_12,
-    IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9,
-)
 from collections import deque as _deque
 from collections.abc import (
     Collection as _Collection,
@@ -60,8 +53,8 @@ from collections.abc import (
     Iterator as _Iterator,
     Mapping as _Mapping,
     MutableMapping as _MutableMapping,
-    Sequence as _Sequence,
     MutableSequence as _MutableSequence,
+    Sequence as _Sequence,
     Set as _Set,
     Sized as _Sized,
 )
@@ -70,11 +63,6 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Tuple as _TupleTyping,
-)
 
 # Note that:
 #
@@ -104,6 +92,19 @@ from types import (
     ModuleType as _ModuleType,
     TracebackType as _TracebackType,
 )
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Tuple as _TupleTyping,
+)
+
+from beartype._cave._caveabc import BoolType
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_12,
+)
+from beartype.roar import BeartypeCallUnavailableTypeException
 
 # ....................{ IMPORTS ~ conditional              }....................
 #FIXME: Preserve for when we inevitably require similar logic in the future.

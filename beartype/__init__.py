@@ -69,13 +69,14 @@ def _init() -> None:
     '''
 
     # Defer function-specific imports for safety.
+    from sys import version_info
+
     from beartype.meta import (
-        VERSION,
-        VERSION_PARTS,
         PYTHON_VERSION_MIN,
         PYTHON_VERSION_MIN_PARTS,
+        VERSION,
+        VERSION_PARTS,
     )
-    from sys import version_info
 
     # Global variables to be redefined below.
     global \
@@ -159,20 +160,16 @@ _init()
 
 # Publicize the private @beartype._decor.beartype decorator as
 # @beartype.beartype, preserving all implementation details as private.
-from beartype._decor.decormain import (
-    beartype as beartype)
-
 # Publicize all top-level configuration attributes required to configure the
 # @beartype.beartype decorator.
-from beartype._conf.confcls import (
-    BeartypeConf as BeartypeConf)
+from beartype._conf.confcls import BeartypeConf as BeartypeConf
 from beartype._conf.confenum import (
     BeartypeDecorationPosition as BeartypeDecorationPosition,
     BeartypeStrategy as BeartypeStrategy,
     BeartypeViolationVerbosity as BeartypeViolationVerbosity,
 )
-from beartype._conf.confoverrides import (
-    BeartypeHintOverrides as BeartypeHintOverrides)
+from beartype._conf.confoverrides import BeartypeHintOverrides as BeartypeHintOverrides
+from beartype._decor.decormain import beartype as beartype
 
 # ....................{ GLOBALS ~ __all__                  }....................
 __all__ = [

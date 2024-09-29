@@ -17,21 +17,21 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeValeSubscriptionException
-from beartype.typing import Any, Tuple
-from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
-from beartype.vale._util._valeutilsnip import (
-    VALE_CODE_CHECK_ISATTR_TEST_format,
-    VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format,
-    VALE_CODE_INDENT_1,
-)
-from beartype.vale._core._valecore import BeartypeValidator
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
+from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
+from beartype.roar import BeartypeValeSubscriptionException
+from beartype.typing import Any, Tuple
+from beartype.vale._core._valecore import BeartypeValidator
+from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
+from beartype.vale._util._valeutilsnip import (
+    VALE_CODE_INDENT_1,
+    VALE_CODE_CHECK_ISATTR_TEST_format,
+    VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format,
+)
 
 # ....................{ SUBCLASSES ~ attr                  }....................
 class _IsAttrFactory(_BeartypeValidatorFactoryABC):

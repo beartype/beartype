@@ -18,14 +18,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import BeartypeLibraryNumpyException
+from string import digits
+
 from beartype._data.hint.datahinttyping import (
     DictStrToType,
     FrozenSetTypes,
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from string import digits
+from beartype.roar import BeartypeLibraryNumpyException
 
 # ....................{ PRIVATE ~ getter                   }....................
 #FIXME: File an upstream NumPy issue politely requesting they publicize either:

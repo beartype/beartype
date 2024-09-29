@@ -12,7 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TYPE_CHECKING
+from collections.abc import Callable
+
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
@@ -20,7 +21,7 @@ from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeStack,
 )
-from collections.abc import Callable
+from beartype.typing import TYPE_CHECKING
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.

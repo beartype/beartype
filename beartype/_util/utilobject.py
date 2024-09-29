@@ -11,13 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from contextlib import AbstractContextManager
+
+from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
 from beartype.roar._roarexc import _BeartypeUtilObjectNameException
 from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
-from contextlib import AbstractContextManager
 
 # ....................{ CLASSES                            }....................
 class Iota:
@@ -449,8 +450,7 @@ def get_object_type_name(obj: object) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.module.utilmodget import (
-        get_object_type_module_name_or_none)
+    from beartype._util.module.utilmodget import get_object_type_module_name_or_none
 
     # Type of this object.
     cls = get_object_type_unless_type(obj)

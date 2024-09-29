@@ -18,8 +18,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # package via a module-scoped import. These imports should be isolated to the
 # bodies of callables declared below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._util.func.utilfuncframe import iter_frames
 from sys import modules as module_imported_names
+
+from beartype._util.func.utilfuncframe import iter_frames
 
 # ....................{ TESTERS                            }....................
 def is_sphinx_autodocing() -> bool:

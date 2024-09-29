@@ -11,13 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilMappingException
-from beartype.typing import AbstractSet
 from collections.abc import (
     Hashable,
     Mapping,
     Set,
 )
+
+from beartype.roar._roarexc import _BeartypeUtilMappingException
+from beartype.typing import AbstractSet
 
 # ....................{ VALIDATORS                         }....................
 def die_if_mappings_two_items_collide(

@@ -15,11 +15,12 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
+
+from beartype._data.code.datacodeindent import CODE_INDENT_1
+from beartype._util.text.utiltextrepr import represent_object
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
-from beartype._data.code.datacodeindent import CODE_INDENT_1
-from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ SUPERCLASSES                       }....................
 class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):

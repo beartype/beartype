@@ -10,17 +10,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavefast import HintGenericSubscriptedType
+from beartype._data.hint.datahinttyping import TupleTypes, TypeException
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobject import Iota
 from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype.typing import (
     Any,
     Set,
 )
-from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.hint.datahinttyping import TypeException
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobject import Iota
-from beartype._data.hint.datahinttyping import TupleTypes
 
 # ....................{ HINTS                              }....................
 HINT_PEP585_TUPLE_EMPTY = (
@@ -80,7 +79,8 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-            is_hint_pep484585_generic)
+            is_hint_pep484585_generic,
+        )
 
         # Return true only if this hint...
         return (
@@ -96,7 +96,8 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-            get_hint_pep484585_generic_type_or_none)
+            get_hint_pep484585_generic_type_or_none,
+        )
 
         # If this hint is *NOT* a type, reduce this hint to the object
         # originating this hint if any. See the comparable
@@ -271,7 +272,8 @@ def get_hint_pep585_generic_bases_unerased(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        get_hint_pep484585_generic_type_or_none)
+        get_hint_pep484585_generic_type_or_none,
+    )
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See the is_hint_pep484_generic() tester for details.

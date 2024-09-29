@@ -11,6 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
+from types import CodeType
+
+from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    TypeException,
+)
+from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._util.utilobject import get_object_basename_scoped
 from beartype.roar._roarexc import (
     _BeartypeUtilCallableScopeException,
     _BeartypeUtilCallableScopeNotFoundException,
@@ -19,15 +29,6 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._util.utilobject import get_object_basename_scoped
-from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-    TypeException,
-)
-from beartype._data.kind.datakinddict import DICT_EMPTY
-from collections.abc import Callable
-from types import CodeType
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.

@@ -20,16 +20,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypePep563Exception
-from beartype._check.metadata.metadecor import make_beartype_call
+from collections.abc import Callable
+
 from beartype._check.forward.fwdmain import resolve_hint
+from beartype._check.metadata.metadecor import make_beartype_call
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import TypeStack
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    release_object_typed)
+from beartype._util.cache.pool.utilcachepoolobjecttyped import release_object_typed
 from beartype._util.func.utilfuncget import get_func_annotations
-from collections.abc import Callable
+from beartype.roar import BeartypePep563Exception
 
 # ....................{ RESOLVERS                          }....................
 def resolve_pep563(

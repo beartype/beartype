@@ -22,14 +22,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #only doing so "if threading.active_count():". Profile us up, please.
 
 # ....................{ IMPORTS                            }....................
+from collections import defaultdict
+from collections.abc import Callable, Hashable
+from threading import Lock
+
 from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
 from beartype.typing import (
     Dict,
     Union,
 )
-from collections import defaultdict
-from collections.abc import Callable, Hashable
-from threading import Lock
 
 # ....................{ CLASSES                            }....................
 class KeyPool:

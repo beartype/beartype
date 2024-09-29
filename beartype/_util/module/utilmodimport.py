@@ -11,20 +11,21 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeModuleUnimportableWarning
-from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import (
-    Any,
-    Optional,
-)
+from importlib import import_module as importlib_import_module
+from types import ModuleType
+
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.utilobject import SENTINEL
-from importlib import import_module as importlib_import_module
-from types import ModuleType
+from beartype.roar import BeartypeModuleUnimportableWarning
+from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import (
+    Any,
+    Optional,
+)
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.

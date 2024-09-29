@@ -19,10 +19,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://stackoverflow.com/questions/51558015/implementing-efficient-fixed-size-fifo-in-python
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
-from beartype.typing import NoReturn
 from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import represent_object
+from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
+from beartype.typing import NoReturn
 
 # ....................{ CONSTANTS                          }....................
 FIXED_LIST_SIZE_MEDIUM = 256

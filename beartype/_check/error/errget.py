@@ -111,12 +111,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #        )
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_ISSUES
-from beartype.roar._roarexc import (
-    _BeartypeCallHintPepRaiseDesynchronizationException,
-    _BeartypeCallHintPepRaiseException,
-)
-from beartype.typing import Optional
+from collections.abc import Callable as CallableABC
+
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._conf.confcls import BeartypeConf
@@ -136,13 +132,18 @@ from beartype._util.text.utiltextmunge import (
     uppercase_str_char_first,
 )
 from beartype._util.text.utiltextprefix import (
-    prefix_callable_return_value,
     prefix_callable_arg_value,
+    prefix_callable_return_value,
     prefix_pith_value,
 )
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
-from collections.abc import Callable as CallableABC
+from beartype.meta import URL_ISSUES
+from beartype.roar._roarexc import (
+    _BeartypeCallHintPepRaiseDesynchronizationException,
+    _BeartypeCallHintPepRaiseException,
+)
+from beartype.typing import Optional
 
 # ....................{ GETTERS                            }....................
 def get_func_pith_violation(

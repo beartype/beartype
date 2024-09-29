@@ -14,12 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahinttyping import T
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype.typing import (
     Generic,
     Type,
 )
-from beartype._data.hint.datahinttyping import T
-from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ METACLASSES                        }....................
 class _TypeHintTypeFactoryMeta(type):

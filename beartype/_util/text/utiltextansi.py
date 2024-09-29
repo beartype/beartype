@@ -10,8 +10,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import BoolTristate
 from re import compile as re_compile
+
+from beartype._data.hint.datahinttyping import BoolTristate
 
 # ....................{ CONSTANTS                          }....................
 ANSI_RESET = '\033[0m'

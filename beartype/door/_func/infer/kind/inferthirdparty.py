@@ -11,14 +11,14 @@ objects such as NumPy arrays and PyTorch tensors).
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.api.utilapinumpy import reduce_numpy_dtype
+from beartype._util.api.utilapityping import import_typing_attr_or_none
+from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype.typing import (
     Callable,
     Dict,
     Optional,
 )
-from beartype._util.api.utilapinumpy import reduce_numpy_dtype
-from beartype._util.api.utilapityping import import_typing_attr_or_none
-from beartype._util.module.utilmodget import get_object_module_name_or_none
 
 # ....................{ INFERERS                           }....................
 #FIXME: Unit test us up, please.

@@ -25,11 +25,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #current version of Python or whether "typing_extensions" is installed or not.
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.api.utilapityping import import_typing_attr_or_fallback
+from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype.typing import (
     TYPE_CHECKING,
 )
-from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
-from beartype._util.api.utilapityping import import_typing_attr_or_fallback
 
 # ....................{ FACTORIES                          }....................
 # Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
