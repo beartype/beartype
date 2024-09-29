@@ -614,8 +614,8 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
 # standard "typing" module to support our "Protocol" superclass.
 if IS_PYTHON_AT_LEAST_3_12:
     import typing
-    from typing import (
-        _generic_class_getitem as _generic_class_getitem_old,  # type: ignore[attr-defined]
+    from typing import (  # type: ignore[attr-defined]
+        _generic_class_getitem as _generic_class_getitem_old,  # pyright: ignore[reportAttributeAccessIssue]
     )
 
     def _generic_class_getitem_new(cls, params):
