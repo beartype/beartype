@@ -106,7 +106,7 @@ class FixedList(list):
         # space -- which, conveniently, is also the optimally efficient means
         # of doing so. See also the timings in this StackOverflow answer:
         #     https://stackoverflow.com/a/10617221/2809027
-        super().__init__([obj_init]*size)
+        super().__init__([obj_init] * size)
 
     # ..................{ GOOD ~ non-dunders                 }..................
     # Permit non-dunder methods preserving list length but otherwise requiring

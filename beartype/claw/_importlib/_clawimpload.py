@@ -402,7 +402,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Optional keyword-only parameters.
         *,
-        _optimize: int =-1,
+        _optimize: int = -1,
     ) -> CodeType:
         '''
         Code object dynamically compiled from the **sourceful Python package or

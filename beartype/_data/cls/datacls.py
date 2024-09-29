@@ -190,7 +190,7 @@ def _init() -> None:
             # This is *NOT* a dunder attribute.
             not (
                 builtin_name.startswith('__') and
-                builtin_name.endswith  ('__')
+                builtin_name.endswith('__')
             )
         )
     }

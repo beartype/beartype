@@ -778,7 +778,6 @@ def is_type_issubclassable(
     # Optional parameters.
     is_forwardref_valid: bool = True,
 ) -> bool:
-
     '''
     :data:`True` only if the passed object is an **issubclassable class** (i.e.,
     class whose metaclass does *not* define a ``__subclasscheck__()`` dunder

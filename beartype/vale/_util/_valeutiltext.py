@@ -98,7 +98,7 @@ def format_diagnosis_line(
     #     False ==     Is[lambda foo: foo.x + foo.y <= 10]
     #              )
     is_obj_valid_str = ''
-    if   is_obj_valid is True:  is_obj_valid_str = ' True == '
+    if is_obj_valid is True:  is_obj_valid_str = ' True == '
     elif is_obj_valid is False: is_obj_valid_str = 'False == '
     else:                       is_obj_valid_str = '         '
 

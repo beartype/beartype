@@ -702,7 +702,7 @@ def _init() -> None:
             #FIXME: It'd be great to eventually generalize this to support
             #aliases from one unwanted sign to another wanted sign. Perhaps
             #something resembling:
-            ## In global scope above:
+            # In global scope above:
             #_HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
             #    HintSignProtocol: HintSignGeneric,
             #}

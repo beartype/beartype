@@ -15,29 +15,18 @@ ignore = [
     "C408", # [*] unnecessary-collection-call
     "COM819", # [*] prohibited-trailing-comma
     "D200", # [*] fits-on-one-line
-    "D201", # [*] no-blank-line-before-function
     "D203", # [*] one-blank-line-before-class
     "D204", # [*] one-blank-line-after-class
     "D211", # no-blank-line-before-class
-    "D214", # [*] section-not-over-indented
-    "D215", # [*] section-underline-not-over-indented
     "D409", # [*] section-underline-matches-section-length
     "D416", # [*] section-name-ends-in-colon
     "E201", # [*] whitespace-after-open-bracket
     "E203", # [*] whitespace-before-punctuation
-    "E211", # [*] whitespace-before-parameters
     "E221", # [*] multiple-spaces-before-operator
-    "E225", # [*] missing-whitespace-around-operator
-    "E226", # [*] missing-whitespace-around-arithmetic-operator
     "E231", # [*] missing-whitespace
-    "E241", # [*] multiple-spaces-after-comma
     "E251", # [*] unexpected-spaces-around-keyword-parameter-equals
-    "E252", # [*] missing-whitespace-around-parameter-equals
     "E261", # [*] too-few-spaces-before-inline-comment
-    "E262", # [*] no-space-after-inline-comment
     "E265", # [*] no-space-after-block-comment
-    "E266", # [*] multiple-leading-hashes-for-block-comment
-    "E271", # [*] multiple-spaces-after-keyword
     "E302", # [*] blank-lines-top-level
     "E303", # [*] too-many-blank-lines
     "E305", # [*] blank-lines-after-function-or-class
@@ -67,7 +56,6 @@ ignore = [
     "UP032", # [*] f-string
     "UP034", # [*] extraneous-parentheses
     "W291", # [*] trailing-whitespace
-    "W293", # [*] blank-line-with-whitespace
     # Will/can be (semy)manually fixed:
     "ANN002", # [] missing-type-args
     "ANN003", # [] missing-type-kwargs

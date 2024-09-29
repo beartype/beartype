@@ -182,7 +182,7 @@ def reduce_hint_pandera(
     )
 
 # ....................{ PRIVATE ~ constants                }....................
-_PANDAS_MODULE_NAME='pandas'
+_PANDAS_MODULE_NAME = 'pandas'
 '''
 Fully-qualified name of the package providing the third-party Pandas project.
 '''

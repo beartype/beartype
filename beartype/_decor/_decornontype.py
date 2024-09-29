@@ -504,7 +504,7 @@ def beartype_descriptor_decorator_builtin(
         #   * The low-level beartype_func() decorator (which requires the passed
         #     object to be callable, which the descriptor created and returned
         #     by the @property decorator is *NOT*).
-        func_checked = beartype_nontype(descriptor_wrappee,  **kwargs)
+        func_checked = beartype_nontype(descriptor_wrappee, **kwargs)
 
         # Return a new class method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
