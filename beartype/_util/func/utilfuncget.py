@@ -155,13 +155,17 @@ def get_func_annotations(
 
         # If that callable is uncallable, raise an appropriate exception.
         if not callable(func):
-            raise exception_cls(f'{exception_prefix}{repr(func)} not callable.')
+            msg = f'{exception_prefix}{repr(func)} not callable.'
+            raise exception_cls(msg)
         # Else, that callable is callable.
 
         # Raise a human-readable exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} not annotatable by type hints '
             f'(i.e., fails to define "__annotations__" dunder dictionary).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that callable is pure-Python.
 

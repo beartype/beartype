@@ -90,8 +90,9 @@ def get_code_child_node(code: str) -> AST:
 
     # If this node is *NOT* actually a module node, raise an exception.
     if not isinstance(node_module, Module):  # pragma: no cover
+        msg = f'{repr(node_module)} not AST module node.'
         raise _BeartypeUtilAstException(
-            f'{repr(node_module)} not AST module node.')
+            msg)
     # Else, this node is a module node.
 
     # List of all direct child nodes of this parent module name.
@@ -100,9 +101,12 @@ def get_code_child_node(code: str) -> AST:
     # If this module node contains either no *OR* two or more child nodes, raise
     # an exception.
     if len(nodes_child) != 1:  # pragma: no cover
-        raise _BeartypeUtilAstException(
+        msg = (
             f'Python code {repr(code)} defines '
             f'{len(nodes_child)} != 1 child objects.'
+        )
+        raise _BeartypeUtilAstException(
+            msg
         )
     # Else, this module node contains exactly one child node.
 

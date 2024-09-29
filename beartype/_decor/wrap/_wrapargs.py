@@ -247,8 +247,9 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # If this parameter's name is reserved for use by the @beartype
                 # decorator, raise an exception.
                 if arg_name.startswith('__bear'):
+                    msg = f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.'
                     raise BeartypeDecorParamNameException(
-                        f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
+                        msg)
 
                 # Sanitize this hint into a possibly different type hint more
                 # readily consumable by @beartype's code generator *BEFORE*
@@ -321,9 +322,12 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # Note this edge case should *NEVER* occur, as the parent
                 # function should have simply ignored this parameter.
                 if ARG_LOCALIZE_TEMPLATE is None:
-                    raise BeartypeDecorHintPepException(
+                    msg = (
                         f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
                         f'currently unsupported by @beartype.'
+                    )
+                    raise BeartypeDecorHintPepException(
+                        msg
                     )
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".

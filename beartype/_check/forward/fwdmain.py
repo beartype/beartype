@@ -449,7 +449,7 @@ def resolve_hint(
         # this -- and possibly still does. See also:
         #     https://github.com/beartype/beartype/issues/381
         if not func_module_name:
-            raise exception_cls(
+            msg = (
                 f'{exception_prefix}forward reference type hint "{hint}" '
                 f'unresolvable, as '
                 f'"{get_object_name(func)}.__module__" dunder attribute '
@@ -457,6 +457,9 @@ def resolve_hint(
                 f'dynamically in-memory). '
                 f'So much bad stuff is happening here all at once that '
                 f'@beartype can no longer cope with the explosion in badness.'
+            )
+            raise exception_cls(
+                msg
             )
         # Else, the decorated callable defines that attribute.
 

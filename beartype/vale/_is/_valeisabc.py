@@ -141,13 +141,17 @@ class _BeartypeValidatorFactoryABC(
             # If this object was subscripted by two or more arguments, raise a
             # human-readable exception.
             if args:
-                raise BeartypeValeSubscriptionException(
+                msg = (
                     f'{self._getitem_exception_prefix}two or more arguments '
                     f'{represent_object(args)}.'
+                )
+                raise BeartypeValeSubscriptionException(
+                    msg
                 )
             # Else, this object was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
+                msg = f'{self._getitem_exception_prefix}empty tuple.'
                 raise BeartypeValeSubscriptionException(
-                    f'{self._getitem_exception_prefix}empty tuple.')
+                    msg)
         # Else, this object was subscripted by exactly one argument.

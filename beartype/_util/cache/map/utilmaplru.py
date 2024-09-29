@@ -110,11 +110,13 @@ class CacheLruStrong(dict):
         super().__init__()
 
         if not isinstance(size, int):
+            msg = f'LRU cache capacity {repr(size)} not integer.'
             raise _BeartypeUtilCacheLruException(
-                f'LRU cache capacity {repr(size)} not integer.')
+                msg)
         elif size < 1:
+            msg = f'LRU cache capacity {size} not positive.'
             raise _BeartypeUtilCacheLruException(
-                f'LRU cache capacity {size} not positive.')
+                msg)
 
         self._size = size
         self._lock = Lock()
@@ -164,7 +166,8 @@ class CacheLruStrong(dict):
                 __pushitem(self, key, val)
                 return val
 
-            raise KeyError(f'Key Error: {key}')
+            msg = f'Key Error: {key}'
+            raise KeyError(msg)
 
 
     def __setitem__(

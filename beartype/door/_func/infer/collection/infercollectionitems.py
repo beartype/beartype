@@ -291,11 +291,14 @@ def _infer_hint_mapping_items(
     # Thus, the caller requested a currently unsupported time complexity. In
     # this case, raise an exception.
     else:
-        raise BeartypeConfException(
+        msg = (
             f'Beartype configuration {repr(conf)} '
             f'strategy {repr(conf.strategy)} currently unsupported by '
             f'beartype.door.infer_hint() (i.e., neither '
             f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
+        )
+        raise BeartypeConfException(
+            msg
         )
 
     # ....................{ SUBSCRIPTION                   }....................
@@ -475,11 +478,14 @@ def _infer_hint_reiterable_items(
         # Thus, the caller requested a currently unsupported time complexity. In
         # this case, raise an exception.
         else:
-            raise BeartypeConfException(
+            msg = (
                 f'Beartype configuration {repr(conf)} '
                 f'strategy {repr(conf.strategy)} currently unsupported by '
                 f'beartype.door.infer_hint() (i.e., neither '
                 f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
+            )
+            raise BeartypeConfException(
+                msg
             )
 
         # ....................{ SUBSCRIPTION               }....................

@@ -177,9 +177,12 @@ class BeartypeValidator:
 
         # If this code is *NOT* a string, raise an exception.
         if not isinstance(is_valid_code, str):
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'Validator code not string:\n'
                 f'{represent_object(is_valid_code)}'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this code is a string.
         #
@@ -192,10 +195,13 @@ class BeartypeValidator:
         # If this code does *NOT* contain the test subject substring
         # "{obj}" and is invalid, raise an exception.
         elif '{obj}' not in is_valid_code:
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'Validator code invalid '
                 f'(i.e., test subject substring "{{obj}}" not found):\n'
                 f'{is_valid_code}'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this code is hopefully valid.
         #
@@ -212,9 +218,12 @@ class BeartypeValidator:
         # If this dictionary of code locals is *NOT* a dictionary, raise an
         # exception.
         if not isinstance(is_valid_code_locals, dict):
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'Validator locals '
                 f'{represent_object(is_valid_code_locals)} not dictionary.'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this dictionary of code locals is a dictionary.
 
@@ -294,9 +303,12 @@ class BeartypeValidator:
         # argument, raise an exception.
         elif not is_func_argless(
             func=get_repr, exception_cls=BeartypeValeSubscriptionException):
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'Representer {repr(get_repr)} neither string nor '
                 f'argumentless pure-Python callable.'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this representer is an argumentless pure-Python callable.
 

@@ -163,8 +163,9 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
     # If this subject contains *NO* instances of this substring, raise an
     # exception.
     if old not in text:
+        msg = f'String "{text}" substring "{old}" not found.'
         raise _BeartypeUtilTextException(
-            f'String "{text}" substring "{old}" not found.')
+            msg)
     # Else, this subject contains one or more instances of this substring.
 
     # Return this subject with all instances of this source substring globally

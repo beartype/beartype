@@ -362,7 +362,8 @@ def get_func_args_flexible_len(
     #
     # If that callable is *NOT* actually callable, raise an exception.
     elif not callable(func):
-        raise exception_cls(f'{exception_prefix}{repr(func)} uncallable.')
+        msg = f'{exception_prefix}{repr(func)} uncallable.'
+        raise exception_cls(msg)
     # Else, that callable is callable.
     #
     # If unwrapping that callable *AND* that callable is a partial (i.e.,
@@ -393,9 +394,12 @@ def get_func_args_flexible_len(
     #
     # Note that this should *NEVER* happen. Nonetheless, this just happened.
     if func_call_attr is None:  # pragma: no cover
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} uncallable '
             f'(i.e., defines no __call__() dunder method).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that callable defines the __call__() dunder method.
 
@@ -521,9 +525,12 @@ def _get_func_boundmethod_args_flexible_len(
     # mandatory first "self" parameter for a bound method descriptor, it is
     # infeasible for this edge case to occur. Nonetheless, raise an exception.
     if not wrappee_args_flexible_len:  # pragma: no cover
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} accepts no '
             f'parameters despite being a bound instance method descriptor.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this number is positive.
 

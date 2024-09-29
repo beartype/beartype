@@ -143,14 +143,16 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
 
             # If this string is *NOT* actually a string, raise an exception.
             if not isinstance(cause_str_or_none, str):
+                msg = f'{EXCEPTION_PREFIX}return {cause_str_or_none} not string.'
                 raise BeartypePlugInstancecheckStrException(
-                    f'{EXCEPTION_PREFIX}return {cause_str_or_none} not string.')
+                    msg)
             # Else, this string is actually a string.
             #
             # If this string is empty, raise an exception.
             elif not cause_str_or_none:
+                msg = f'{EXCEPTION_PREFIX}return string empty.'
                 raise BeartypePlugInstancecheckStrException(
-                    f'{EXCEPTION_PREFIX}return string empty.')
+                    msg)
             # Else, this string is non-empty.
         # Else, the metaclass of this class does *NOT* define this method. In
         # this case, fallback to a standard substring describing this violation.
@@ -227,10 +229,13 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_type is None:
-        raise _BeartypeCallHintPepRaiseException(
+        msg = (
             f'{cause.exception_prefix}type hint '
             f'{repr(cause.hint)} not originated from '
             f'isinstanceable origin type.'
+        )
+        raise _BeartypeCallHintPepRaiseException(
+            msg
         )
     # Else, this hint originates from such a type.
 

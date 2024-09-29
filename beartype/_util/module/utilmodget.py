@@ -106,8 +106,9 @@ def get_object_module(obj: object) -> ModuleType:
     # and thus having been imported from something, this object deceptively lies
     # about its module. In this case, raise an exception.
     if module is None:
+        msg = f'{repr(obj)} module "{module_name}" not found.'
         raise _BeartypeUtilModuleException(
-            f'{repr(obj)} module "{module_name}" not found.')
+            msg)
     # If this module was previously imported.
 
     # Return this module.
@@ -172,8 +173,9 @@ def get_object_module_line_number_begin(obj: object) -> int:
     # Else, this object is neither a pure-Python callable *NOR* a class.
 
     # In this case, raise an exception.
+    msg = f'{repr(obj)} neither callable nor class.'
     raise _BeartypeUtilModuleException(
-        f'{repr(obj)} neither callable nor class.')
+        msg)
 
 # ....................{ GETTERS ~ object : name            }....................
 #FIXME: Unit test us up, please.
@@ -207,9 +209,12 @@ def get_object_module_name(obj: object) -> str:
     # If this object defines *NO* "__module__" dunder instance variable, raise
     # an exception.
     if module_name is None:
-        raise _BeartypeUtilModuleException(
+        msg = (
             f'{repr(obj)} "__module__" dunder attribute undefined '
             f'(e.g., due to being neither class nor callable).'
+        )
+        raise _BeartypeUtilModuleException(
+            msg
         )
     # Else, this fully-qualified module name exists.
 
@@ -344,10 +349,13 @@ def get_module_filename(module: ModuleType) -> str:
 
     # If this module resides *ONLY* in memory, raise an exception.
     if module_filename is None:
-        raise _BeartypeUtilModuleException(
+        msg = (
             f'Module {repr(module)} file not found '
             f'(e.g., due to either being a namespace (sub)package or '
             f'a dynamically defined in-memory module).'
+        )
+        raise _BeartypeUtilModuleException(
+            msg
         )
     # Else, this module resides on disk.
 

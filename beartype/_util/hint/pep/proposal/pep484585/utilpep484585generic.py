@@ -383,9 +383,12 @@ def get_hint_pep484585_generic_bases_unerased(
     if not hint_pep_generic_bases_unerased:
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
             f'subclasses no superclasses.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this generic subclasses one or more pseudo-superclasses.
 
@@ -465,9 +468,12 @@ def get_hint_pep484585_generic_type(
 
     # If this hint is *NOT* a generic, raise an exception.
     if hint_generic_type is None:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
             f'not generic (i.e., originates from no isinstanceable class).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this hint is a generic.
 
@@ -690,11 +696,14 @@ def find_hint_pep484585_generic_module_base_first(
     # Else, *NO* superclass of this generic resides in the desired module.
 
     # Raise an exception of the passed type.
-    raise exception_cls(
+    msg = (
         f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
         f'type {repr(hint_type)} subclasses no "{module_name}" type '
         f'(i.e., type with module name prefixed by "{module_name}" not '
         f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
+    )
+    raise exception_cls(
+        msg
     )
 
 # ....................{ ITERATORS                          }....................

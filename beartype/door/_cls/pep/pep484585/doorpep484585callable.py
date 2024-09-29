@@ -116,10 +116,13 @@ class CallableTypeHint(TypeHint):
             # If this hint was first subscripted by a PEP 612-compliant
             # parameter type hint, raise an exception. *sigh*
             if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
-                raise BeartypeDoorPepUnsupportedException(
+                msg = (
                     f'PEP 484 or 585 callable type hint {repr(self._hint)} '
                     f'PEP 612 child type hint {repr(args_params)} '
                     f'currently unsupported.'
+                )
+                raise BeartypeDoorPepUnsupportedException(
+                    msg
                 )
             # Else, this hint was *NOT* first subscripted by a PEP
             # 612-compliant parameter type hint.

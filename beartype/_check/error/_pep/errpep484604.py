@@ -198,9 +198,12 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
 
     # If prior logic appended *NO* causes, raise an exception.
     if not cause_strs:
-        raise _BeartypeCallHintPepRaiseException(
+        msg = (
             f'{cause.exception_prefix}type hint '
             f'{repr(cause.hint)} failure causes unknown.'
+        )
+        raise _BeartypeCallHintPepRaiseException(
+            msg
         )
     # Else, prior logic appended one or more strings describing these failures.
 

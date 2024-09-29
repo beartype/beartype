@@ -426,12 +426,15 @@ def get_hint_pep_sign(
         # Note that we intentionally avoid calling the
         # die_if_hint_pep_unsupported() function here, which calls the
         # is_hint_pep_supported() function, which calls this function.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} '
             f'currently unsupported by beartype. '
             f'You suddenly feel encouraged to submit a feature request '
             f'for this hint to our friendly issue tracker at:\n'
             f'\t{URL_ISSUES}'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this hint is recognized.
 
@@ -976,17 +979,23 @@ def get_hint_pep_origin_type(
         # If this hint does *NOT* originate from another object, raise an
         # appropriate exception.
         if hint_origin is None:
-            raise exception_cls(
+            msg = (
                 f'{exception_prefix}type hint {repr(hint)} '
                 f'originates from no other object.'
+            )
+            raise exception_cls(
+                msg
             )
         # Else, this hint originates from another object. By definition, this
         # object *CANNOT* be a type.
 
         # Raise an appropriate exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} '
             f'originates from non-type {repr(hint_origin)}.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this origin type originates this hint.
 
@@ -1105,9 +1114,12 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
 
     # If this type does *NOT* exist, raise an exception.
     if hint_origin_type is None:
-        raise BeartypeDecorHintPepException(
+        msg = (
             f'Type hint {repr(hint)} not isinstanceable (i.e., does not '
             f'originate from isinstanceable class).'
+        )
+        raise BeartypeDecorHintPepException(
+            msg
         )
     # Else, this type exists.
 

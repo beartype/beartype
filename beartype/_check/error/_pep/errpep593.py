@@ -74,11 +74,14 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
         # Note that this object should already be a beartype validator, as the
         # @beartype decorator enforces this constraint at decoration time.
         if not isinstance(hint_validator, BeartypeValidator):
-            raise _BeartypeCallHintPepRaiseException(
+            msg = (
                 f'{cause_deep.exception_prefix}PEP 593 type hint '
                 f'{repr(cause_deep.hint)} argument {repr(hint_validator)} '
                 f'not beartype validator '
                 f'(i.e., "beartype.vale.Is*[...]" object).'
+            )
+            raise _BeartypeCallHintPepRaiseException(
+                msg
             )
         # Else, this is a beartype validator.
         #

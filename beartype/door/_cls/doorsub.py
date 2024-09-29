@@ -61,8 +61,9 @@ class _TypeHintOriginIsinstanceable(TypeHint):
         # If this factory has *NOT* been associated with such a range, raise an
         # exception. Note that this edge case should *NEVER occur. ----gulp----
         if args_len_range is None:  # pragma: no cover
+            msg = f'Type hint {repr(self._hint)} argument length range unknown.'
             raise BeartypeDoorPepArgsLenException(  # pragma: no cover
-                f'Type hint {repr(self._hint)} argument length range unknown.')
+                msg)
         # Else, this factory has been associated with such a range.
 
         #FIXME: Consider actually testing this. This *IS* technically

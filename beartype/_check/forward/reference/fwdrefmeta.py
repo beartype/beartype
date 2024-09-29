@@ -105,9 +105,12 @@ class BeartypeForwardRefMeta(type):
         #     "__nomnom_beartype__" not found. Did you mean:
         #     '__name_beartype__'?
         if is_dunder(hint_name):
-            raise AttributeError(
+            msg = (
                 f'Forward reference proxy "{cls.__name__}" dunder attribute '
                 f'"{hint_name}" not found'
+            )
+            raise AttributeError(
+                msg
             )
         # Else, this unqualified basename is *NOT* that of a non-existent dunder
         # attribute.
@@ -313,9 +316,12 @@ class BeartypeForwardRefMeta(type):
             # would openly invite infinite recursion, we detect this edge case
             # and instead raise a human-readable exception.
             if referee is cls:
-                raise BeartypeCallHintForwardRefException(
+                msg = (
                     f'Forward reference proxy {repr(cls)} circularly '
                     f'(i.e., infinitely recursively) references itself.'
+                )
+                raise BeartypeCallHintForwardRefException(
+                    msg
                 )
             # Else, this referee is *NOT* this forward reference subclass.
             #

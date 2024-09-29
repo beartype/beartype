@@ -382,25 +382,29 @@ class BeartypeDecorMeta:
 
         # If the callable to be type-checked is uncallable, raise an exception.
         if not callable(func):
-            raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
+            msg = f'{repr(func)} uncallable.'
+            raise BeartypeDecorWrappeeException(msg)
         # Else, that callable is callable.
         #
         # If the callable to be unwrapped is uncallable, raise an exception.
         elif not callable(wrapper):
-            raise BeartypeDecorWrappeeException(f'{repr(wrapper)} uncallable.')
+            msg = f'{repr(wrapper)} uncallable.'
+            raise BeartypeDecorWrappeeException(msg)
         # Else, that callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
+            msg = f'"conf" {repr(conf)} not beartype configuration.'
             raise BeartypeDecorWrappeeException(
-                f'"conf" {repr(conf)} not beartype configuration.')
+                msg)
         # Else, this configuration is a configuration.
         #
         # If this class stack is neither a tuple *NOR* "None", raise an
         # exception.
         elif not isinstance(cls_stack, NoneTypeOr[tuple]):
+            msg = f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".'
             raise BeartypeDecorWrappeeException(
-                f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".')
+                msg)
         # Else, this class stack is either a tuple *OR* "None".
 
         # If the caller passed a non-empty class stack...
@@ -409,8 +413,9 @@ class BeartypeDecorMeta:
             for cls_stack_item in cls_stack:
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
+                    msg = f'"cls_stack" item {repr(cls_stack_item)} not type.'
                     raise BeartypeDecorWrappeeException(
-                        f'"cls_stack" item {repr(cls_stack_item)} not type.')
+                        msg)
                 # Else, this item is a type.
         # Else, the caller either passed no class stack *OR* an empty class
         # stack. In either case, ignore this parameter.

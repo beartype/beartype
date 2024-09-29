@@ -1466,12 +1466,15 @@ def make_check_expr(
                         # an exception. Note that this logic should *ALWAYS* be
                         # non-"None". Nonetheless, assumptions make a donkey.
                         if hint_sign_logic is None:  # pragma: no cover
-                            raise BeartypeDecorHintPepException(
+                            msg = (
                                 f'{EXCEPTION_PREFIX} '
                                 f'1-argument container type hint '
                                 f'{repr(hint_curr)} '
                                 f'beartype sign {repr(hint_curr_sign)} '
                                 f'code generation logic not found.'
+                            )
+                            raise BeartypeDecorHintPepException(
+                                msg
                             )
                         # Else, some hint sign logic type-checks this sign.
 
@@ -1903,12 +1906,15 @@ def make_check_expr(
                         # to be validated, so we do so now for consistency and
                         # safety.
                         if not isinstance(hint_child, BeartypeValidator):
-                            raise BeartypeDecorHintPep593Exception(
+                            msg = (
                                 f'{EXCEPTION_PREFIX}PEP 593 type hint '
                                 f'{repr(hint_curr)} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
                                 f'beartype validator).'
+                            )
+                            raise BeartypeDecorHintPep593Exception(
+                                msg
                             )
                         # Else, this argument is beartype-specific.
                         #
@@ -2240,11 +2246,14 @@ def make_check_expr(
                 # been raised above in this case, this conditional branch
                 # *NEVER* be triggered. Nonetheless, raise an exception.
                 else:
-                    raise BeartypeDecorHintPepUnsupportedException(
+                    msg = (
                         f'{EXCEPTION_PREFIX_HINT}'
                         f'{repr(hint_curr)} unsupported but '
                         f'erroneously detected as supported under '
                         f'beartype sign {repr(hint_curr_sign)}.'
+                    )
+                    raise BeartypeDecorHintPepUnsupportedException(
+                        msg
                     )
 
         # ................{ NON-PEP                            }................
@@ -2289,9 +2298,12 @@ def make_check_expr(
         #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
         #     disabled by passing such an option to that call.
         else:
-            raise BeartypeDecorHintPepException(
+            msg = (
                 f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
                 f'not PEP-compliant.'
+            )
+            raise BeartypeDecorHintPepException(
+                msg
             )
 
         # ................{ CLEANUP                            }................
@@ -2341,8 +2353,9 @@ def make_check_expr(
     # "func_wrapper_code" code snippet if this function behaved as expected,
     # which it should have... but may not have, which is why we're testing.
     if func_wrapper_code == func_root_code:
+        msg = f'{EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.'
         raise BeartypeDecorHintPepException(
-            f'{EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.')
+            msg)
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ scope                       }..................

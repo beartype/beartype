@@ -185,9 +185,12 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
                 )
             ):
                 # Raise us up the exception bomb.
-                raise BeartypeClawHookException(
+                msg = (
                     f'{repr(subpackage_basename_to_trie)} neither "None" nor '
                     f'dictionary mapping keys to packages trie blacklists.'
+                )
+                raise BeartypeClawHookException(
+                    msg
                 )
             # Else, this initial dictionary is valid.
 
@@ -391,21 +394,27 @@ def die_if_packages_trie() -> None:
         # If a global configuration was already added by a prior call to the
         # public beartype.claw.beartype_all() function, raise an exception.
         if claw_state.packages_trie_whitelist.conf_if_hooked is not None:
-            raise BeartypeClawHookException(
+            msg = (
                 f'Prior call to package-agnostic import hook '
                 f'beartype.claw.beartype_all() already registered all packages '
                 f'for type-checking under global beartype configuration '
                 f'{repr(claw_state.packages_trie_whitelist.conf_if_hooked)}.'
             )
+            raise BeartypeClawHookException(
+                msg
+            )
         # Else, or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions. In this case,
         # raise another exception.
         else:
-            raise BeartypeClawHookException(
+            msg = (
                 f'Prior call to package-specific import hook '
                 f'beartype.claw.beartype_*() already registered some packages '
                 f'for type-checking under beartype configurations:\n\t'
                 f'{repr(claw_state.packages_trie_whitelist)}'
+            )
+            raise BeartypeClawHookException(
+                msg
             )
 
 # ....................{ TESTERS                            }....................

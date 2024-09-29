@@ -370,13 +370,15 @@ def add_func_scope_types(
     # ....................{ VALIDATE                       }....................
     # If this container is neither a set nor tuple, raise an exception.
     if not isinstance(types, TYPES_SET_OR_TUPLE):
+        msg = f'{exception_prefix}{repr(types)} neither set nor tuple.'
         raise BeartypeDecorHintNonpepException(
-            f'{exception_prefix}{repr(types)} neither set nor tuple.')
+            msg)
     # Else, this container is either a set or tuple.
     #
     # If this container is empty, raise an exception.
     elif not types:
-        raise BeartypeDecorHintNonpepException(f'{exception_prefix}empty.')
+        msg = f'{exception_prefix}empty.'
+        raise BeartypeDecorHintNonpepException(msg)
     # Else, this container is non-empty.
     #
     # If this container only contains one type, register only this type.

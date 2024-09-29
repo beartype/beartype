@@ -76,17 +76,21 @@ def die_unless_module_attr_name(
 
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
+        msg = f'{exception_prefix}{repr(module_attr_name)} not string.'
         raise exception_cls(
-            f'{exception_prefix}{repr(module_attr_name)} not string.')
+            msg)
     # Else, this object is a string.
     #
     # If this string contains *NO* "." characters and thus either is relative to
     # the calling subpackage or refers to a builtin object, raise an exception.
     elif '.' not in module_attr_name:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}"{module_attr_name}" '
             f'relative or refers to builtin object '
             f'(i.e., due to containing no "." characters).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this string contains one or more "." characters and is thus the
     # fully-qualified name of a non-builtin type.

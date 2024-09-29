@@ -112,9 +112,12 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     #
     # Note that this should *NEVER* occur. Of course, this will occur.
     if not attr_name:
-        raise _BeartypeUtilExceptionException(  # pragma: no cover
+        msg = (
             f'Non-standard "{label_exception(name_error)}" unrecognized '
             f"(i.e., single-quoted substring '{{attr_name}}' not found)."
+        )
+        raise _BeartypeUtilExceptionException(  # pragma: no cover
+            msg
         ) from name_error
     # Else, this name error is recognized.
     #
@@ -122,10 +125,13 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     #
     # Note that this should *NEVER* occur. Of course, this will occur.
     elif not attr_name.isidentifier():
-        raise _BeartypeUtilExceptionException(  # pragma: no cover
+        msg = (
             f'Non-standard "{label_exception(name_error)}" unrecognized '
             f"(i.e., single-quoted substring '{attr_name}' found but not a "
             f'valid Python identifier).'
+        )
+        raise _BeartypeUtilExceptionException(  # pragma: no cover
+            msg
         ) from name_error
     # Else, this name error is a Python identifier.
 

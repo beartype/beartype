@@ -92,9 +92,12 @@ def reduce_hint_pep591(
     #     TypeError: typing.Final accepts only single type. Got (<class 'int'>,
     #     <class 'float'>).
     else:
-        raise BeartypeDecorHintPep591Exception(
+        msg = (
             f'{exception_prefix}PEP 591 type hint {repr(hint)} '
             f'erroneously subscripted by {hint_args_len} child type hints.'
+        )
+        raise BeartypeDecorHintPep591Exception(
+            msg
         )
 
     # Return this reduced hint.

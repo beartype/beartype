@@ -210,13 +210,16 @@ def get_func_functools_partial_args_flexible_len(
     # define invalid partials passing more flexible parameters than their
     # wrappees accept. Ergo, validation is required to guarantee sanity.
     if func_args_flexible_len < 0:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} passes '
             f'{partial_args_flexible_len} parameter(s) to '
             f'{repr(wrappee)} accepting only '
             f'{wrappee_args_flexible_len} parameter(s) '
             f'(i.e., {partial_args_flexible_len} > '
             f'{wrappee_args_flexible_len}).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this number is non-negative. The caller correctly defined a valid
     # partial passing no more flexible parameters than this wrappee accepts.

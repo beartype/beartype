@@ -192,12 +192,15 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
                 return super().__getitem__(__main__.__spec__.name)  # type: ignore[union-attr]
 
             # Raise a high-level human-readable exception instead.
-            raise BeartypeClawImportConfException(
+            msg = (
                 f'Beartype configuration associated with '
                 f'module "{module_name}" hooked by '
                 f'"beartype.claw" not found. '
                 f'Existing beartype configurations associated with '
                 f'hooked modules include:\n\t{pformat(self)}'
+            )
+            raise BeartypeClawImportConfException(
+                msg
             ) from exception
 
 # ....................{ CACHERS                            }....................

@@ -158,18 +158,24 @@ def import_typing_attr(
         # If the "typing_extensions" module is importable, raise an
         # appropriate exception.
         if is_module('typing_extensions'):
-            raise exception_cls(
+            msg = (
                 f'{EXCEPTION_PREFIX} Please either '
                 f'(A) update the "typing_extensions" package or '
                 f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
             )
+            raise exception_cls(
+                msg
+            )
         # Else, the "typing_extensions" module is unimportable. In this
         # case, raise an appropriate exception.
         else:
-            raise exception_cls(
+            msg = (
                 f'{EXCEPTION_PREFIX} Please either '
                 f'(A) install the "typing_extensions" package or '
                 f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
+            )
+            raise exception_cls(
+                msg
             )
     # Else, one or more of these modules declare this attribute.
 

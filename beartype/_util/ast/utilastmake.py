@@ -182,9 +182,12 @@ def make_node_object_attr_load(
         # If the caller also passed *NO* unqualified basename of that object,
         # raise an exception.
         if not obj_name:
-            raise BeartypeClawImportAstException(
+            msg = (
                 f'Attribute "{attr_name}" parent object undefined '
                 f'(i.e., neither "node_obj" nor "obj_name" parameters passed).'
+            )
+            raise BeartypeClawImportAstException(
+                msg
             )
         # Else, the caller also passed the unqualified basename of that object.
 
@@ -195,9 +198,12 @@ def make_node_object_attr_load(
     # If the caller also passed the unqualified basename of that object, raise
     # an exception.
     elif obj_name:
-        raise BeartypeClawImportAstException(
+        msg = (
             f'Attribute "{attr_name}" parent object overly defined '
             f'(i.e., both "node_obj" and "obj_name" parameters passed).'
+        )
+        raise BeartypeClawImportAstException(
+            msg
         )
     # Else, the caller passed *NO* unqualified basename of that object.
     #

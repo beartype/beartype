@@ -182,9 +182,12 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     if MAPPINGS_LEN < 2:
         # If only one mapping is passed, raise an appropriate exception.
         if MAPPINGS_LEN == 1:
-            raise _BeartypeUtilMappingException(
+            msg = (
                 f'Two or more mappings expected, but only one mapping '
-                f'{represent_object(mappings[0])} passed.')
+                f'{represent_object(mappings[0])} passed.'
+            )
+            raise _BeartypeUtilMappingException(
+                msg)
         # Else, no mappings are passed. Raise an appropriate exception.
         else:
             msg = 'Two or more mappings expected, but no mappings passed.'

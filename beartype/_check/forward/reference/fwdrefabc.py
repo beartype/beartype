@@ -78,9 +78,12 @@ class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
         '''
 
         # Instantiatable. It's a word or my username isn't @UncleBobOnAStick.
-        raise BeartypeDecorHintForwardRefException(
+        msg = (
             f'{repr(BeartypeForwardRefABC)} subclass '
             f'{repr(cls)} not instantiatable.'
+        )
+        raise BeartypeDecorHintForwardRefException(
+            msg
         )
 
     # ....................{ PRIVATE ~ testers              }....................

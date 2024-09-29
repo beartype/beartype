@@ -692,8 +692,9 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         #FIXME: Unit test us up, please.
         # If the culprits are *NOT* a tuple, raise an exception.
         if not isinstance(culprits, tuple):
+            msg = f'Culprits {repr(culprits)} not tuple.'
             raise _BeartypeUtilExceptionException(
-                f'Culprits {repr(culprits)} not tuple.')
+                msg)
         # Else, the culprits are a tuple.
         #
         # If the culprits are the empty tuple, raise an exception.

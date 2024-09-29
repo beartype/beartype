@@ -178,9 +178,12 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # If this class was subscripted by one non-tuple argument, raise an
         # exception.
         if not isinstance(args, tuple):
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'{self._getitem_exception_prefix}non-tuple argument '
                 f'{represent_object(args)}.'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this class was subscripted by either no *OR* two or more
         # arguments (contained in this tuple).
@@ -191,15 +194,19 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             # deduction this class was subscripted by three or more arguments.
             # In this case, raise a human-readable exception.
             if args:
-                raise BeartypeValeSubscriptionException(
+                msg = (
                     f'{self._getitem_exception_prefix}three or more arguments '
                     f'{represent_object(args)}.'
+                )
+                raise BeartypeValeSubscriptionException(
+                    msg
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
             else:
+                msg = f'{self._getitem_exception_prefix}empty tuple.'
                 raise BeartypeValeSubscriptionException(
-                    f'{self._getitem_exception_prefix}empty tuple.')
+                    msg)
         # Else, this class was subscripted by exactly two arguments.
 
         # Localize these arguments to human-readable local variables.
@@ -216,16 +223,20 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
         # If this name is *NOT* a string, raise an exception.
         if not isinstance(attr_name, str):
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'{get_repr()} first argument '
                 f'{represent_object(attr_name)} not string.'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
         # Else, this name is a string.
         #
         # If this name is the empty string, raise an exception.
         elif not attr_name:
+            msg = f'{get_repr()} first argument is empty string.'
             raise BeartypeValeSubscriptionException(
-                f'{get_repr()} first argument is empty string.')
+                msg)
         # Else, this name is a non-empty string.
         #
         # Note that this name has *NOT* yet been validated to be valid Python
@@ -252,9 +263,12 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             # If this name is *NOT* a valid Python identifier, raise an
             # exception.
             if not attr_name.isidentifier():
-                raise BeartypeValeSubscriptionException(
+                msg = (
                     f'{get_repr()} first argument {repr(attr_name)} not '
                     f'syntactically valid Python identifier.'
+                )
+                raise BeartypeValeSubscriptionException(
+                    msg
                 )
             # Else, this name is a valid Python identifier.
 
@@ -374,10 +388,13 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         else:
             #FIXME: Implement us up when we find the time, please. We currently
             #raise an exception simply because we ran out of time for this. :{
-            raise BeartypeValeSubscriptionException(
+            msg = (
                 f'{get_repr()} first argument '
                 f'{repr(attr_name)} not unqualified Python identifier '
                 f'(i.e., contains one or more "." characters).'
+            )
+            raise BeartypeValeSubscriptionException(
+                msg
             )
 
         # Create and return this subscription.

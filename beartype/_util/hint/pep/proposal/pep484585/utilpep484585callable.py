@@ -119,11 +119,14 @@ def _die_unless_hint_pep484585_callable(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not '
             f'PEP 484 or 585 callable type hint '
             f'(i.e., "typing.Callable[...]" or '
             f'"collections.abc.Callable[...]").'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a callable type hint, raise an exception.
 

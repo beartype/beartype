@@ -315,10 +315,13 @@ def get_func_locals(
     #     >>> def muh_func(): pass
     #     >>> muh_func.__qualname__ = '<locals>.muh_func'  # <-- curse you!
     if func_scope_names_len < 2:
-        raise exception_cls(
+        msg = (
             f'{func_name_unqualified}() fully-qualified name '
             f'{func.__qualname__}() invalid (e.g., placeholder substring '
             f'"<locals>" not preceded by parent callable name).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that nested callable is encapsulated by at least two lexical
     # scopes identifying at least that nested callable and the parent callable
@@ -329,11 +332,14 @@ def get_func_locals(
     # maliciously renamed one but *NOT* both of "__qualname__" and "__name__".
     # In this case, raise an exception. Again, Python permits this. *sigh*
     elif func_scope_names[-1] != func_name_unqualified:
-        raise exception_cls(
+        msg = (
             f'{func_name_unqualified}() fully-qualified name '
             f'{func.__qualname__}() invalid (i.e., last lexical scope '
             f'"{func_scope_names[-1]}" != unqualified name '
             f'"{func_name_unqualified}").'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, the unqualified basename of the last parent callable lexically
     # containing the passed callable is that callable itself.
@@ -369,13 +375,16 @@ def get_func_locals(
         func_scope_parents_len = func_scope_names_len - 1
 
         # Raise an exception.
-        raise exception_cls(
+        msg = (
             f'Callable name "{func_name_qualified}" contains only '
             f'{func_scope_parents_len} parent lexical scope(s) but '
             f'"func_scope_names_ignore" parameter ignores '
             f'{func_scope_names_ignore} parent lexical scope(s), leaving '
             f'{func_scope_names_search_len} parent lexical scope(s) to be '
             f'searched for {func_name_qualified}() locals.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, there are one or more unignorable lexical scopes to be searched.
 
@@ -467,9 +476,12 @@ def get_func_locals(
         # Because this scope *MUST* necessarily be in the same module as that of
         # this nested callable. In this case, raise an exception.
         if func_frame_name == FUNC_CODEOBJ_NAME_MODULE:
-            raise _BeartypeUtilCallableScopeNotFoundException(
+            msg = (
                 f'{func_name_qualified}() parent lexical scope '
                 f'"{func_scope_name}" not found on call stack.'
+            )
+            raise _BeartypeUtilCallableScopeNotFoundException(
+                msg
             )
         # Else, that scope is *NOT* a module.
         #
@@ -629,11 +641,14 @@ def add_func_scope_attr(
     # If an attribute with the same name but differing value already exists in
     # this scope, raise an exception.
     if func_scope.get(attr_name, attr) is not attr:
-        raise _BeartypeUtilCallableScopeException(
+        msg = (
             f'{exception_prefix}"{attr_name}" already exists with '
             f'differing value:\n'
             f'~~~~[ NEW VALUE ]~~~~\n{repr(attr)}\n'
             f'~~~~[ OLD VALUE ]~~~~\n{repr(func_scope[attr_name])}'
+        )
+        raise _BeartypeUtilCallableScopeException(
+            msg
         )
     # Else, either no attribute with this name exists in this scope *OR* an
     # attribute with this name and value already exists in this scope.

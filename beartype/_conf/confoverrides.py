@@ -154,12 +154,15 @@ class BeartypeHintOverrides(FrozenDict):
             # If this hint override contains one or more instances of
             # subscription-style recursion, raise an exception.
             if hint_override_recursion is not None:
-                raise BeartypeHintOverridesException(
+                msg = (
                     f'Recursive type hint override '
                     f'{repr(hint_override_src)}: {repr(hint_override_trg)} '
                     f'currently unsupported. Please complain on our friendly '
                     f'issue tracker if you feel that this is dumb:\n'
                     f'\t{URL_ISSUES}'
+                )
+                raise BeartypeHintOverridesException(
+                    msg
                 )
             # Else, this hint override contains *NO* such recursion.
 

@@ -91,9 +91,12 @@ def die_unless_hint_pep484585_ref(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not forward reference '
             f'(i.e., neither string nor "typing.ForwardRef" object).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a forward reference type hint.
 
@@ -426,7 +429,7 @@ def get_hint_pep484585_ref_names_relative_to(
         # type-checker (e.g., is_bearable(), die_if_unbearable()). In this case,
         # raise an exception.
         else:
-            raise exception_cls(
+            msg = (
                 f'{exception_prefix}type hint relative forward reference '
                 f'"{hint_ref_name}" currently only type-checkable in '
                 f'type hints annotating '
@@ -437,6 +440,9 @@ def get_hint_pep484585_ref_names_relative_to(
                 f'absolute forward reference '
                 f'(e.g., replace "{hint_ref_name}" with '
                 f'"{{your_package}}.{{your_submodule}}.{hint_ref_name}").'
+            )
+            raise exception_cls(
+                msg
             )
     # Else, this reference annotates a callable and is thus relative to the
     # module defining this callable.

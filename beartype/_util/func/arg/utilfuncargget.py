@@ -106,9 +106,12 @@ def get_func_arg_meta_variadic_positional_or_none(
     # Raise an exception as a last-ditch fallback.
     #
     # Note that this should *NEVER* occur. Naturally, this just occurred.
-    raise _BeartypeUtilCallableException(  # pragma: no cover
+    msg = (
         f'Callable inexplicably accepts no variadic positional parameter '
         f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+    )
+    raise _BeartypeUtilCallableException(  # pragma: no cover
+        msg
     )
 
 
@@ -173,9 +176,12 @@ def get_func_arg_meta_variadic_keyword_or_none(
     # Raise an exception as a last-ditch fallback.
     #
     # Note that this should *NEVER* occur. Naturally, this just occurred.
-    raise _BeartypeUtilCallableException(  # pragma: no cover
+    msg = (
         f'Callable inexplicably accepts no variadic keyword parameter '
         f'despite claiming to do so:\n\t{repr(args)}\n\t{repr(kwargs)}'
+    )
+    raise _BeartypeUtilCallableException(  # pragma: no cover
+        msg
     )
 
 # ....................{ GETTERS ~ name                     }....................

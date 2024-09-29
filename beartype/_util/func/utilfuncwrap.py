@@ -56,10 +56,13 @@ def unwrap_func_once(func: Callable) -> Callable:
 
     # If that callable is *NOT* a wrapper, raise an exception.
     if func_wrappee is None:
-        raise _BeartypeUtilCallableWrapperException(
+        msg = (
             f'Callable {repr(func)} not wrapper '
             f'(i.e., has no "__wrapped__" dunder attribute '
             f'defined by @functools.wrap or functools.update_wrapper()).'
+        )
+        raise _BeartypeUtilCallableWrapperException(
+            msg
         )
     # Else, that callable is a wrapper.
 

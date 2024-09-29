@@ -218,11 +218,14 @@ def get_func_pith_violation(
     # *COULD* deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
     if hint is SENTINEL:
-        raise _BeartypeCallHintPepRaiseException(
+        msg = (
             f'{repr(check_meta.func)} parameter "{pith_name}" unannotated '
             f'(or originally annotated but since deleted) in '
             f'"__annotations__" dunder dictionary:\n'
             f'{repr(check_meta.func_arg_name_to_hint)}'
+        )
+        raise _BeartypeCallHintPepRaiseException(
+            msg
         )
     # Else, this parameter or return is annotated.
 
@@ -480,7 +483,7 @@ def get_hint_object_violation(
     if not violation_cause.cause_str_or_none:
         pith_value_repr = represent_object(
             obj=obj, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
-        raise _BeartypeCallHintPepRaiseDesynchronizationException(
+        msg = (
             f'{exception_prefix}violates type hint {repr(hint)}, '
             f'but violation factory get_hint_object_violation() '
             f'erroneously suggests this object satisfies this hint. '
@@ -491,6 +494,9 @@ def get_hint_object_violation(
             f'    {pith_value_repr}\n'
             f'The bear groans in disappointment. If you feel similarly, '
             f'know that you are not alone.'
+        )
+        raise _BeartypeCallHintPepRaiseDesynchronizationException(
+            msg
         )
     # Else, this pith violates this hint as expected and as required for sanity.
 

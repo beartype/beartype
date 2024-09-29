@@ -92,14 +92,16 @@ class FixedList(list):
 
         # If this length is *NOT* an integer, raise an exception.
         if not isinstance(size, int):
+            msg = f'Fixed list length {repr(size)} not integer.'
             raise _BeartypeUtilCachedFixedListException(
-                f'Fixed list length {repr(size)} not integer.')
+                msg)
         # Else, this length is an integer.
         #
         # If this length is non-positive, raise an exception.
         elif size <= 0:
+            msg = f'Fixed list length {size} <= 0.'
             raise _BeartypeUtilCachedFixedListException(
-                f'Fixed list length {size} <= 0.')
+                msg)
         # Else, this length is positive.
 
         # Make it so with the standard Python idiom for preallocating list
@@ -129,18 +131,21 @@ class FixedList(list):
     # to raise exceptions.
 
     def __delitem__(self, index) -> NoReturn:
+        msg = f'{self._label} index {repr(index)} not deletable.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} index {repr(index)} not deletable.')
+            msg)
 
 
     def __iadd__(self, value) -> NoReturn:  # type: ignore[misc]
+        msg = f'{self._label} not addable by {represent_object(value)}.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not addable by {represent_object(value)}.')
+            msg)
 
 
     def __imul__(self, value) -> NoReturn:  # type: ignore[misc]
+        msg = f'{self._label} not multipliable by {represent_object(value)}.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not multipliable by {represent_object(value)}.')
+            msg)
 
     # ..................{ BAD ~ dunders : setitem            }..................
     #FIXME: Great idea, if efficiency didn't particularly matter. Since
@@ -238,28 +243,33 @@ class FixedList(list):
     # methods to raise exceptions.
 
     def append(self, obj) -> NoReturn:
+        msg = f'{self._label} not appendable by {represent_object(obj)}.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not appendable by {represent_object(obj)}.')
+            msg)
 
 
     def clear(self) -> NoReturn:
+        msg = f'{self._label} not clearable.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not clearable.')
+            msg)
 
 
     def extend(self, obj) -> NoReturn:
+        msg = f'{self._label} not extendable by {represent_object(obj)}.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not extendable by {represent_object(obj)}.')
+            msg)
 
 
     def pop(self, *args) -> NoReturn:
+        msg = f'{self._label} not poppable.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not poppable.')
+            msg)
 
 
     def remove(self, *args) -> NoReturn:
+        msg = f'{self._label} not removable.'
         raise _BeartypeUtilCachedFixedListException(
-            f'{self._label} not removable.')
+            msg)
 
     # ..................{ PRIVATE ~ property                 }..................
     # Read-only properties intentionally prohibiting mutation.

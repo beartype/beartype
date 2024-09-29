@@ -505,13 +505,16 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # exception with a higher-level exception exhibiting the exact issue.
         # Doing so enables users to submit meaningful issues to our tracker.
         except Exception as exception:
-            raise BeartypeClawImportAstException(
+            msg = (
                 f'Module "{self._module_name_beartype}" unimportable, as '
                 f'@beartype generated invalid '
                 f'abstract syntax tree (AST):\n\n'
                 f'{get_node_repr_indented(module_ast_beartyped)}\n\n'
                 f'ast.compile() exception (when passed the above AST):\n\t'
                 f'{label_exception(exception)}'
+            )
+            raise BeartypeClawImportAstException(
+                msg
             ) from exception
 
         # Return this code object.

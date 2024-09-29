@@ -95,9 +95,12 @@ def get_hint_pep484_typevar_bound_or_none(
 
     # If this hint is *NOT* a type variable, raise an exception.
     if not isinstance(hint, TypeVar):
-        raise BeartypeDecorHintPep484Exception(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 484 type variable.'
+        )
+        raise BeartypeDecorHintPep484Exception(
+            msg
         )
     # Else, this hint is a type variable.
 

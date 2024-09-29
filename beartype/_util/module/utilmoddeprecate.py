@@ -129,11 +129,14 @@ def deprecate_module_attr(
         #   *EXCEPT* "ImportError" exceptions. Of necessity, we have *NO*
         #   recourse but to defer to Python's poorly documented API constraints.
         if attr_nondeprecated_value is SENTINEL:
-            raise ImportError(
+            msg = (
                 f'Deprecated attribute '
                 f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
                 f'originates from missing non-deprecated attribute '
                 f'"{attr_nondeprecated_name}" not defined by that submodule.'
+            )
+            raise ImportError(
+                msg
             )
         # Else, that module defines this non-deprecated attribute.
 
@@ -182,5 +185,6 @@ def deprecate_module_attr(
     #
     # Note that Python's non-trivial import machinery silently coerces this
     # "AttributeError" exception into an "ImportError" exception. Just do it!
+    msg = f"module '{MODULE_NAME}' has no attribute '{attr_deprecated_name}'"
     raise AttributeError(
-        f"module '{MODULE_NAME}' has no attribute '{attr_deprecated_name}'")
+        msg)

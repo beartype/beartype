@@ -59,8 +59,9 @@ def die_unless_identifier(
         assert isinstance(exception_prefix, str), (
             'f{repr(exception_prefix)} not string.')
 
+        msg = f'{exception_prefix}{repr(text)} not valid Python attribute name.'
         raise exception_cls(
-            f'{exception_prefix}{repr(text)} not valid Python attribute name.')
+            msg)
     # Else, this string is a valid Python attribute name.
 
 # ....................{ TESTERS                            }....................

@@ -161,9 +161,12 @@ def reduce_hint_numpy_ndarray(
     # If this hint was *NOT* subscripted by exactly two arguments, this hint is
     # malformed as a typed NumPy array. In this case, raise an exception.
     if len(hint_args) != 2:
-        raise BeartypeDecorHintNonpepNumpyException(
+        msg = (
             f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'not subscripted by exactly two arguments.'
+        )
+        raise BeartypeDecorHintNonpepNumpyException(
+            msg
         )
     # Else, this hint was subscripted by exactly two arguments.
 
@@ -179,10 +182,13 @@ def reduce_hint_numpy_ndarray(
     # If this hint was *NOT* subscripted by exactly one argument, this subhint
     # is malformed as a data type subhint. In this case, raise an exception.
     if len(hint_dtype_subhint_args) != 1:
-        raise BeartypeDecorHintNonpepNumpyException(
+        msg = (
             f'{exception_prefix}typed NumPy array {repr(hint)} '
             f'data type subhint {repr(hint_dtype_subhint)} '
             f'not subscripted by exactly one argument.'
+        )
+        raise BeartypeDecorHintNonpepNumpyException(
+            msg
         )
     # Else, this subhint was subscripted by exactly one argument.
 

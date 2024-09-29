@@ -148,9 +148,12 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
 
     # If this hint originates from *NO* such superclass, raise an exception.
     if hint_origin_type is None:
-        raise BeartypeDecorHintPep484Exception(
+        msg = (
             f'Unerased PEP 484 generic or PEP 544 protocol {repr(hint)} '
             f'originates from no erased superclass.'
+        )
+        raise BeartypeDecorHintPep484Exception(
+            msg
         )
     # Else, this hint originates from such a superclass.
 
@@ -356,9 +359,12 @@ def get_hint_pep484_generic_bases_unerased(
 
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
     if not is_hint_pep484_generic(hint):
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this hint is a PEP 484-compliant generic.
 
@@ -389,23 +395,32 @@ def get_hint_pep484_generic_bases_unerased(
     #       class ProtocolCustomABC(ProtocolCustomSuperclass, ABC): pass
     # * The "object" root superclass.
     if len(hint_bases) < 4:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}PEP 484 generic {repr(hint)} '
             f'subclasses less than four superclasses {repr(hint_bases)}.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this MRO lists at least four classes.
     #
     # If any class listed by this MRO fails to comply with the above
     # expectations, raise an exception.
     elif hint_bases[0] is not hint:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}PEP 484 generic {repr(hint)} '
             f'first superclass {repr(hint_bases[0])} != {repr(hint)}.'
         )
-    elif hint_bases[-1] is not object:
         raise exception_cls(
+            msg
+        )
+    elif hint_bases[-1] is not object:
+        msg = (
             f'{exception_prefix}PEP 484 generic {repr(hint)} '
             f'last superclass {repr(hint_bases[-1])} != {repr(object)}.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, all classes listed by this MRO comply with the above expectations.
 

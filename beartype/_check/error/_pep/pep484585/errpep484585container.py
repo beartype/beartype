@@ -104,10 +104,13 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # If *NO* hint sign logic type-checks this sign, raise an exception. Note
     # that this logic should *ALWAYS* be non-"None". Nonetheless, assumptions.
     if hint_sign_logic is None:  # pragma: no cover
-        raise _BeartypeCallHintPepRaiseException(
+        msg = (
             f'{cause.exception_prefix}1-argument container type hint '
             f'{repr(cause.hint)} beartype sign {repr(cause.hint_sign)} '
             f'code generation logic not found.'
+        )
+        raise _BeartypeCallHintPepRaiseException(
+            msg
         )
     # Else, some hint sign logic type-checks this sign.
 

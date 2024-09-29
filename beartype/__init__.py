@@ -130,10 +130,13 @@ def _init() -> None:
                 str(version_part) for version_part in _PYTHON_VERSION_PARTS)
 
             # Die ignominiously.
-            raise RuntimeError(
+            msg = (
                 f'Beartype requires at least Python {PYTHON_VERSION_MIN}, but '
                 f'the active interpreter only targets Python {_PYTHON_VERSION}. '
                 f'We feel unbearable sadness for you.'
+            )
+            raise RuntimeError(
+                msg
             )
         # Else, the active Python interpreter satisfies minimum requirements.
     # Else, this physical distribution installed with this package fails to

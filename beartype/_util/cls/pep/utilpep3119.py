@@ -1036,7 +1036,8 @@ def _die_if_object_uncheckable(
             # Raise this exception chained onto this lower-level exception.
             # Although this should *NEVER* happen (as we should have already
             # raised an exception above), we nonetheless do so for safety.
-            raise exception_cls(f'{exception_message}.') from exception
+            msg = f'{exception_message}.'
+            raise exception_cls(msg) from exception
 
 # ....................{ PRIVATE ~ testers                  }....................
 #FIXME: Unit test us up, please.

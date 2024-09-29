@@ -253,9 +253,12 @@ def make_numpy_dtype(
     #     >>> NDArray['wut']
     #     numpy.ndarray[typing.Any, numpy.dtype['wut']]  # <-- you kidding me?
     except Exception as exception:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}NumPy data type {repr(dtype)} invalid '
             f'(i.e., neither data type nor coercible into data type).'
+        )
+        raise exception_cls(
+            msg
         ) from exception
 
     # Return this dtype.

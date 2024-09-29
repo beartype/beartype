@@ -205,9 +205,12 @@ def _validate_operand(
     #FIXME: Unit test us up, please.
     # If this operand is *NOT* a beartype validator, raise an exception.
     if not isinstance(validator_operand, BeartypeValidator):
-        raise BeartypeValeSubscriptionException(
+        msg = (
             f'Beartype "{self._operator_symbol}" validator operand '
             f'{represent_object(validator_operand)} not beartype '
             f'validator (i.e., "beartype.vale.Is*[...]" object).'
+        )
+        raise BeartypeValeSubscriptionException(
+            msg
         )
     # Else, this operand is a beartype validator.

@@ -201,13 +201,16 @@ def die_unless_hint_nonpep(
     # Else, this object is neither a type nor type tuple.
 
     # Raise a generic exception.
-    raise exception_cls(
+    msg = (
         f'{exception_prefix}type hint {repr(hint)} either '
         f'PEP-noncompliant or PEP-compliant but currently '
         f'unsupported by @beartype. '
         f'You suddenly feel encouraged to submit a feature request '
         f'for this hint to our friendly issue tracker at:\n'
         f'\t{URL_ISSUES}'
+    )
+    raise exception_cls(
+        msg
     )
 
 # ....................{ VALIDATORS ~ kind                  }....................
@@ -375,13 +378,15 @@ def die_unless_hint_nonpep_tuple(
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
+        msg = f'{exception_prefix}type hint {repr(hint)} not tuple.'
         raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} not tuple.')
+            msg)
     # Else, this object is a tuple.
     #
     # If this tuple is empty, raise an exception.
     elif not hint:
-        raise exception_cls(f'{exception_prefix}tuple type hint empty.')
+        msg = f'{exception_prefix}tuple type hint empty.'
+        raise exception_cls(msg)
     # Else, this tuple is non-empty.
 
     # For each item of this tuple...
@@ -406,9 +411,12 @@ def die_unless_hint_nonpep_tuple(
         elif isinstance(hint_item, str):
             # If forward references are unsupported, raise an exception.
             if not is_forwardref_valid:
-                raise exception_cls(
+                msg = (
                     f'{exception_prefix}tuple type hint {repr(hint)} '
                     f'forward reference "{hint_item}" unsupported.'
+                )
+                raise exception_cls(
+                    msg
                 )
             # Else, silently accept this item.
         # Else, this item is neither a class nor forward reference. Ergo,
@@ -416,10 +424,13 @@ def die_unless_hint_nonpep_tuple(
         # raise an exception whose message contextually depends on whether
         # forward references are permitted or not.
         else:
-            raise exception_cls(
+            msg = (
                 f'{exception_prefix}tuple type hint {repr(hint)} '
                 f'item {repr(hint_item)} invalid '
                 f'{"neither type nor string" if is_forwardref_valid else "not type"}.'
+            )
+            raise exception_cls(
+                msg
             )
 
 # ....................{ TESTERS                            }....................

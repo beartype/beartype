@@ -86,9 +86,12 @@ def die_unless_hint_pep586(
 
     # If this hint is *NOT* PEP 586-compliant, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignLiteral:
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not PEP 586-compliant '
             f'(e.g., "typing.Literal[...]", "typing_extensions.Literal[...]").'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this hint is PEP 586-compliant.
 
@@ -141,10 +144,13 @@ def die_unless_hint_pep586(
                 TYPES_PEP586_ARG)
 
             # Raise an exception.
-            raise exception_cls(
+            msg = (
                 f'{exception_prefix}PEP 586 type hint {repr(hint)} '
                 f'argument {hint_literal_index} '
                 f'{repr(hint_literal)} not {hint_literal_types}.'
+            )
+            raise exception_cls(
+                msg
             )
         # Else, this argument is valid as a literal argument.
 

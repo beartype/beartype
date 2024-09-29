@@ -173,10 +173,13 @@ def make_func(
     # already declared a local attribute whose name collides with that
     # function's. In this case, raise an exception for safety.
     if func_name in func_locals:
-        raise exception_cls(
+        msg = (
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'already defined by caller locals:\n'
             f'{repr(func_locals)}'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that function's name is *NOT* already in this local scope.
 
@@ -283,21 +286,27 @@ def make_func(
         #         if not (
         #          ^
         #     SyntaxError: invalid syntax
-        raise exception_cls(
+        msg = (
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'unparseable, as @beartype generated invalid code raising:\n'
             f'\t{label_exception(exception)}\n\n'
             f'{number_str_lines(func_code)}'
+        )
+        raise exception_cls(
+            msg
         ) from exception
 
     # ..................{ VALIDATION ~ post                  }..................
     # If that function's name is *NOT* in this local scope, this code snippet
     # failed to declare that function. In this case, raise an exception.
     if func_name not in func_locals:
-        raise exception_cls(
+        msg = (
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'undefined by code snippet:\n\n'
             f'{number_str_lines(func_code)}'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that function's name is in this local scope.
 
@@ -306,10 +315,13 @@ def make_func(
 
     # If that function is uncallable, raise an exception.
     if not callable(func):
-        raise exception_cls(
+        msg = (
             f'{func_label or func_labeller()} '  # type: ignore[misc]
             f'defined by code snippet uncallable:\n\n'
             f'{number_str_lines(func_code)}'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, that function is callable.
     #

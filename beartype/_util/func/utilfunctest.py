@@ -111,12 +111,14 @@ def die_unless_func_python(
 
         # If that callable is uncallable, raise an appropriate exception.
         if not callable(func):
-            raise exception_cls(f'{exception_prefix}{repr(func)} not callable.')
+            msg = f'{exception_prefix}{repr(func)} not callable.'
+            raise exception_cls(msg)
         # Else, that callable is callable.
 
         # Raise a human-readable exception.
+        msg = f'{exception_prefix}{repr(func)} not pure-Python function.'
         raise exception_cls(
-            f'{exception_prefix}{repr(func)} not pure-Python function.')
+            msg)
     # Else, that callable is pure-Python.
 
 # ....................{ RAISERS ~ descriptors              }....................
@@ -169,9 +171,12 @@ def die_unless_func_boundmethod(
             f'{repr(exception_prefix)} not string.')
 
         # Raise a human-readable exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} not '
             f'C-based bound instance method descriptor.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a bound method descriptor.
 
@@ -224,9 +229,12 @@ def die_unless_func_classmethod(
             f'{repr(exception_prefix)} not string.')
 
         # Raise a human-readable exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} not '
             f'C-based unbound class method descriptor.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a class method descriptor.
 
@@ -278,9 +286,12 @@ def die_unless_func_property(
             f'{repr(exception_prefix)} not string.')
 
         # Raise a human-readable exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} not '
             f'C-based unbound property method descriptor.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a property method descriptor.
 
@@ -333,9 +344,12 @@ def die_unless_func_staticmethod(
             f'{repr(exception_prefix)} not string.')
 
         # Raise a human-readable exception.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}{repr(func)} not '
             f'C-based unbound static method descriptor.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this object is a static method descriptor.
 

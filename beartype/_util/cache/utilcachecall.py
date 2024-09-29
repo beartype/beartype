@@ -367,9 +367,12 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
 
     # If this wrappee accepts variadic arguments, raise an exception.
     if is_func_arg_variadic(func_wrappee):
-        raise _BeartypeUtilCallableCachedException(
+        msg = (
             f'@method_cached_arg_by_id {label_callable(func)} '
             f'variadic arguments uncacheable.'
+        )
+        raise _BeartypeUtilCallableCachedException(
+            msg
         )
     # Else, this wrappee accepts *NO* variadic arguments.
 

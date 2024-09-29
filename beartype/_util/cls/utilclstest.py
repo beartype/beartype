@@ -56,7 +56,8 @@ def die_unless_type(
         assert isinstance(exception_prefix, str), (
             'f{repr(exception_prefix)} not string.')
 
-        raise exception_cls(f'{exception_prefix}{repr(cls)} not class.')
+        msg = f'{exception_prefix}{repr(cls)} not class.'
+        raise exception_cls(msg)
     # Else, this object is a class.
 
 
@@ -130,7 +131,8 @@ def die_unless_type_or_types(
         # exception message suffices.
 
         # Raise this exception.
-        raise exception_cls(f'{exception_message}.')
+        msg = f'{exception_message}.'
+        raise exception_cls(msg)
     # Else, this object is either a class *OR* tuple of one or more classes.
 
 # ....................{ TESTERS                            }....................

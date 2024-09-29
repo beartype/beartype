@@ -225,7 +225,10 @@ def _die_of_hint_return_invalid(
     hint = func.__annotations__[ARG_NAME_RETURN]
 
     # Raise an exception of this type with a message suffixed by this suffix.
-    raise exception_cls(
+    msg = (
         f'{prefix_callable_return(func)}type hint '
         f'{repr(hint)} contextually invalid{exception_suffix}'
+    )
+    raise exception_cls(
+        msg
     )

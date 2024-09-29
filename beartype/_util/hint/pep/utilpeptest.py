@@ -96,9 +96,12 @@ def die_if_hint_pep(
             f'{repr(exception_prefix)} not string.')
 
         # Raise an exception of this class.
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} is PEP-compliant '
             f'(e.g., rather than isinstanceable class).'
+        )
+        raise exception_cls(
+            msg
         )
 
 
@@ -142,8 +145,9 @@ def die_unless_hint_pep(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
+        msg = f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.'
         raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
+            msg)
 
 # ....................{ EXCEPTIONS ~ supported             }....................
 #FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
@@ -218,10 +222,13 @@ def die_if_hint_pep_unsupported(
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:
-        raise BeartypeDecorHintPep484Exception(
+        msg = (
             f'{exception_prefix}PEP 484 type hint "{repr(hint)}" '
             f'invalid in this type hint context (i.e., '
             f'"{repr(hint)}" valid only as non-nested return annotation).'
+        )
+        raise BeartypeDecorHintPep484Exception(
+            msg
         )
     # Else, this is any PEP-compliant type hint other than "typing.NoReturn".
 
@@ -231,9 +238,12 @@ def die_if_hint_pep_unsupported(
     # be in the "HINT_SIGNS_SUPPORTED" set. Regardless of whether it is or not,
     # we raise a similar exception in either case. Ergo, there is *NO* practical
     # benefit to validating that expectation here.
-    raise BeartypeDecorHintPepUnsupportedException(
+    msg = (
         f'{exception_prefix}type hint {repr(hint)} '
         f'currently unsupported by @beartype.'
+    )
+    raise BeartypeDecorHintPepUnsupportedException(
+        msg
     )
 
 # ....................{ WARNINGS                           }....................

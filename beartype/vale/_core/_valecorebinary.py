@@ -381,15 +381,21 @@ def _validate_operands(
     # If either of these operands are *NOT* beartype validators, raise an
     # exception.
     if not isinstance(validator_operand_1, BeartypeValidator):
-        raise BeartypeValeSubscriptionException(
+        msg = (
             f'Beartype "{self._operator_symbol}" validator first operand '
             f'{represent_object(validator_operand_1)} not beartype '
             f'validator (i.e., "beartype.vale.Is*[...]" object).'
         )
-    elif not isinstance(validator_operand_2, BeartypeValidator):
         raise BeartypeValeSubscriptionException(
+            msg
+        )
+    elif not isinstance(validator_operand_2, BeartypeValidator):
+        msg = (
             f'Beartype "{self._operator_symbol}" validator second operand '
             f'{represent_object(validator_operand_2)} not beartype '
             f'validator (i.e., "beartype.vale.Is*[...]" object).'
+        )
+        raise BeartypeValeSubscriptionException(
+            msg
         )
     # Else, both of these operands are beartype validators.

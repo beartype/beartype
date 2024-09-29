@@ -95,10 +95,13 @@ def get_hint_pep484585_args(
             'child type hint' if args_len == 1 else 'child type hints')
 
         # Raise an exception.
-        raise BeartypeDecorHintPep585Exception(
+        msg = (
             f'{exception_prefix}PEP 585 type hint {repr(hint)} '
             f'not subscripted (indexed) by {args_len} {exception_noun} (i.e., '
             f'subscripted by {len(hint_args)} != {args_len} child type hints).'
+        )
+        raise BeartypeDecorHintPep585Exception(
+            msg
         )
     # Else, this hint is subscripted by the expected number of child type hints.
 

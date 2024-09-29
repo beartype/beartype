@@ -79,7 +79,7 @@ def reduce_hint_pep673(
     # their code to decorate classes rather than methods.
     if not cls_stack:
         # We didn't make crazy. We only document it.
-        raise BeartypeDecorHintPep673Exception(
+        msg = (
             f'{exception_prefix}PEP 673 type hint "{repr(hint)}" '
             f'invalid outside @beartype-decorated class. '
             f'PEP 673 type hints are valid only inside classes decorated by '
@@ -100,6 +100,9 @@ def reduce_hint_pep673(
             f'            return self\n'
             f'\n'
             f"This has been a message of the Bearhugger Broadcasting Service."
+        )
+        raise BeartypeDecorHintPep673Exception(
+            msg
         )
     # Else, a non-empty type stack was passed.
 

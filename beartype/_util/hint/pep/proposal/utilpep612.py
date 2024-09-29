@@ -459,7 +459,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # directly annotate the variadic positional and keyword parameter
     # (respectively) of a callable.
     if decor_meta is None:
-        raise BeartypeDecorHintPep612Exception(
+        msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
             f'type hint {repr(hint)} erroneously subscripts '
@@ -468,6 +468,9 @@ def _reduce_hint_pep612_args_or_kwargs(
             f'variadic {pith_name_label} parameter "{pith_name_syntax}" as a '
             f'root type hint'
             f'{_get_pep612_exception_message_suffix()}'
+        )
+        raise BeartypeDecorHintPep612Exception(
+            msg
         )
     # Else, this hint directly annotates a callable parameter or return.
 
@@ -492,13 +495,16 @@ def _reduce_hint_pep612_args_or_kwargs(
     # If this hint directly annotates a callable parameter or return that is
     # *NOT* a variadic positional or keyword parameter, raise an exception.
     if arg_kind is not arg_kind_expected:
-        raise BeartypeDecorHintPep612Exception(
+        msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
             f'type hint {repr(hint)} erroneously annotates '
             f'parameter "{pith_name}" rather than '
             f'variadic {pith_name_label} parameter "{pith_name_syntax}"'
             f'{_get_pep612_exception_message_suffix(func=func)}'
+        )
+        raise BeartypeDecorHintPep612Exception(
+            msg
         )
     # Else, this hint directly annotates a variadic positional or keyword
     # parameter.
@@ -510,7 +516,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # If that callable accepts *NO* other variadic parameter, raise an
     # exception.
     if other_arg_meta is None:
-        raise BeartypeDecorHintPep612Exception(
+        msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
             f'type hint {repr(hint)} not paired with '
@@ -520,6 +526,9 @@ def _reduce_hint_pep612_args_or_kwargs(
             f'that callable accepts no '
             f'variadic {other_pith_name_label} parameter)'
             f'{_get_pep612_exception_message_suffix(func=func)}'
+        )
+        raise BeartypeDecorHintPep612Exception(
+            msg
         )
     # Else, that callable accepts the other variadic parameter.
 
@@ -533,7 +542,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # If the other variadic parameter is unannotated, raise an exception.
     if other_arg_hint is SENTINEL:
-        raise BeartypeDecorHintPep612Exception(
+        msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
             f'type hint {repr(hint)} paired with unannotated '
@@ -544,6 +553,9 @@ def _reduce_hint_pep612_args_or_kwargs(
             f'type hint {repr(other_hint)})'
             f'{_get_pep612_exception_message_suffix(func=func)}'
         )
+        raise BeartypeDecorHintPep612Exception(
+            msg
+        )
     # Else, the other variadic parameter is annotated by a hint.
 
     # Sign uniquely identifying the hint annotating other variadic parameter.
@@ -553,7 +565,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # variadic positional or keyword parameter hint required by PEP
     # 612 to be paired with the passed hint, raise an exception.
     if other_arg_hint_sign is not other_hint_sign:
-        raise BeartypeDecorHintPep612Exception(
+        msg = (
             f'{exception_prefix}PEP 612 "ParamSpec" '
             f'variadic {pith_name_label} parameter '
             f'type hint {repr(hint)} paired with '
@@ -563,6 +575,9 @@ def _reduce_hint_pep612_args_or_kwargs(
             f'variadic {other_pith_name_label} parameter '
             f'type hint {repr(other_hint)}'
             f'{_get_pep612_exception_message_suffix(func=func)}'
+        )
+        raise BeartypeDecorHintPep612Exception(
+            msg
         )
     # Else, the type hint annotating the other variadic parameter is the
     # other variadic positional or keyword parameter type hint required by PEP

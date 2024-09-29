@@ -83,11 +83,14 @@ def format_diagnosis_line(
     # was previously implemented via a simple "assert" statement, which then
     # raised a non-human-readable assertion in an end user issue. *OH, GODS!*
     if not isinstance(is_obj_valid, NoneTypeOr[bool]):
-        raise _BeartypeValeUtilException(
+        msg = (
             f'beartype.vale._valeutiltext.format_diagnosis_line() parameter '
             f'"is_obj_valid" value {repr(is_obj_valid)} '
             f'not tri-state boolean for '
             f'validator representation: {validator_repr}'
+        )
+        raise _BeartypeValeUtilException(
+            msg
         )
     # Else, "is_obj_valid" is a tri-state boolean.
 

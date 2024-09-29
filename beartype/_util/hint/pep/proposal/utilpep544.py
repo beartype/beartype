@@ -224,10 +224,13 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # If this object is *NOT* a PEP 484-compliant "typing" IO generic,
     # raise an exception.
     if not is_hint_pep484_generic_io(hint):
-        raise BeartypeDecorHintPep544Exception(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not '
             f'PEP 484 IO generic base class '
             f'(i.e., "typing.IO", "typing.BinaryIO", or "typing.TextIO").'
+        )
+        raise BeartypeDecorHintPep544Exception(
+            msg
         )
     # Else, this object is *NOT* a PEP 484-compliant "typing" IO generic.
     #
@@ -260,10 +263,13 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         #FIXME: Unit test us up, please.
         # If this hint is unparametrized, raise an exception.
         if not hint_typevars:
-            raise BeartypeDecorHintPep544Exception(
+            msg = (
                 f'{exception_prefix}PEP 484 IO generic base class '
                 f'{repr(hint)} invalid (i.e., not subscripted (indexed) by '
                 f'either "str", "bytes", "typing.Any", or "typing.AnyStr").'
+            )
+            raise BeartypeDecorHintPep544Exception(
+                msg
             )
         # Else, this hint is parametrized and thus defines the "__origin__"
         # dunder attribute whose value is the type originating this hint.

@@ -218,10 +218,13 @@ def get_object_basename_scoped(obj: Any) -> str:
     # the "obj.__name__" or "obj.__qualname__" attributes is sufficiently
     # non-explanatory to warrant replacement by our explanatory exception.
     if object_scoped_name is None:
-        raise _BeartypeUtilObjectNameException(
+        msg = (
             f'{repr(obj)} unnamed '
             f'(i.e., declares neither "__name__" nor "__qualname__" '
             f'dunder attributes).'
+        )
+        raise _BeartypeUtilObjectNameException(
+            msg
         )
     # Else, this object is named.
 

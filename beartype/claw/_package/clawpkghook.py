@@ -322,13 +322,16 @@ def _whitelist_packages_all(conf: BeartypeConf) -> None:
     # If the caller passed a different configuration to that prior call than
     # that passed to this current call, raise an exception.
     elif conf_curr != conf:
-        raise BeartypeClawHookException(
+        msg = (
             f'beartype_all() previously passed '
             f'conflicting beartype configuration:\n'
             f'\t----------( OLD "conf" PARAMETER )----------\n'
             f'\t{repr(conf_curr)}\n'
             f'\t----------( NEW "conf" PARAMETER )----------\n'
             f'\t{repr(conf)}\n'
+        )
+        raise BeartypeClawHookException(
+            msg
         )
     # Else, the caller passed the same configuration to that prior call than
     # that passed to the current call. In this case, silently reduce to a noop.
@@ -422,7 +425,7 @@ def _whitelist_packages_some(
         # If the caller passed a different configuration to this current call
         # than that prior call, raise an exception.
         elif conf_curr != conf:
-            raise BeartypeClawHookException(
+            msg = (
                 f'Beartype import hook '
                 f'(e.g., beartype.claw.beartype_*() function) '
                 f'previously passed conflicting beartype configuration for '
@@ -431,6 +434,9 @@ def _whitelist_packages_some(
                 f'\t{repr(conf_curr)}\n'
                 f'\t----------( NEW "conf" PARAMETER )----------\n'
                 f'\t{repr(conf)}\n'
+            )
+            raise BeartypeClawHookException(
+                msg
             )
         # Else, the caller passed the same configuration to both the prior and
         # current calls. In this case, ignore this redundant request to

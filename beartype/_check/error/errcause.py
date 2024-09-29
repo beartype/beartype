@@ -439,11 +439,14 @@ class ViolationCause:
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.
             if cause_finder is None:
-                raise _BeartypeCallHintPepRaiseException(
+                msg = (
                     f'{self.exception_prefix} type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
                     f'"find_cause_"-prefixed getter function defined '
                     f'for this category of hint).'
+                )
+                raise _BeartypeCallHintPepRaiseException(
+                    msg
                 )
             # Else, a getter function has been implemented to handle this
             # attribute.
@@ -497,9 +500,12 @@ class ViolationCause:
             # If this name is *NOT* that of a parameter accepted by the
             # __init__() method, raise an exception.
             if arg_name not in self._INIT_PARAM_NAMES:
-                raise _BeartypeCallHintPepRaiseException(
+                msg = (
                     f'{self.__class__}.__init__() parameter '
                     f'{arg_name} unrecognized.'
+                )
+                raise _BeartypeCallHintPepRaiseException(
+                    msg
                 )
 
         # For the name of each parameter accepted by the __init__() method...

@@ -94,8 +94,9 @@ def make_type(
     # * An invalid Python identifier.
     # * A valid fully-qualified Python identifier.
     if not type_name.isidentifier():
+        msg = f'{exception_prefix}class name {repr(type_name)} invalid.'
         raise exception_cls(
-            f'{exception_prefix}class name {repr(type_name)} invalid.')
+            msg)
     # Else, this classname is a valid unqualified Python identifier.
 
     # Default all unpassed parameters.

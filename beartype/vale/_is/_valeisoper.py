@@ -222,8 +222,9 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
             not obj
         # Then raise an exception.
         ):
+            msg = f'{self._getitem_exception_prefix}empty tuple.'
             raise BeartypeValeSubscriptionException(
-                f'{self._getitem_exception_prefix}empty tuple.')
+                msg)
         # Else, this factory was subscripted by one or more arguments. In any
         # case, accept this object as is. See the class docstring for details.
         # print(f'_IsEqualFactory[{repr(obj)}]')

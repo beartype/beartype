@@ -102,12 +102,15 @@ def die_unless_func_args_len_flexible_equal(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}callable {repr(func)} flexible argument count '
             f'{func_args_len_flexible_actual} != {func_args_len_flexible} '
             f'(i.e., {repr(func)} accepts {func_args_len_flexible_actual} '
             f'rather than {func_args_len_flexible} positional and/or keyword '
             f'parameters).'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this callable accepts exactly this number of flexible parameters.
 

@@ -482,12 +482,15 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAUTION: Synchronize with the exception raised below, please.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                raise BeartypeValeValidationException(
+                msg = (
                     f'Validator {get_repr()} '
                     f'return value {repr(is_obj_valid)} not bool-like '
                     f'(i.e., instance of neither "bool" nor '
                     f'class defining __bool__() or __len__() dunder methods) '
                     f'for subject object:\n{represent_object(obj)}'
+                )
+                raise BeartypeValeValidationException(
+                    msg
                 )
             # Else, that object is bool-like.
 
@@ -510,12 +513,15 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAUTION: Synchronize with the exception raised above, please.
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                raise BeartypeValeValidationException(
+                msg = (
                     f'Validator {get_repr()} '
                     f'return value {repr(is_obj_valid)} erroneously bool-like '
                     f'(i.e., instance of class defining __bool__() or __len__() '
                     f'dunder methods raising unexpected exception) '
                     f'for subject object:\n{represent_object(obj)}'
+                )
+                raise BeartypeValeValidationException(
+                    msg
                 ) from exception
 
             # Return this boolean.

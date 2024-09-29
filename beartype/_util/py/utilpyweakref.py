@@ -162,9 +162,12 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     #
     # If this weak reference is *NOT* a weak reference, raise an exception.
     elif not isinstance(obj_weakref, weakref_ref):
-        raise _BeartypeUtilPythonWeakrefException(
+        msg = (
             f'Weak reference {repr(obj_weakref)} invalid '
             f'(i.e., neither weak reference, "None", nor "_WEAKREF_NONE").'
+        )
+        raise _BeartypeUtilPythonWeakrefException(
+            msg
         )
     # Else, this weak reference is a weak reference.
 

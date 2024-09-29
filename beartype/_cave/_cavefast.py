@@ -129,12 +129,14 @@ class UnavailableType:
     '''
 
     def __instancecheck__(self, obj) -> None:
+        msg = f'{self} not passable as the second parameter to isinstance().'
         raise BeartypeCallUnavailableTypeException(
-            f'{self} not passable as the second parameter to isinstance().')
+            msg)
 
     def __subclasscheck__(self, cls) -> None:
+        msg = f'{self} not passable as the second parameter to issubclass().'
         raise BeartypeCallUnavailableTypeException(
-            f'{self} not passable as the second parameter to issubclass().')
+            msg)
 
 
 # This is private, as it's unclear whether anyone requires access to this yet.

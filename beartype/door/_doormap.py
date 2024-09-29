@@ -106,9 +106,12 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
             # print(f'[type fallback] hint: {repr(hint)}; sign: {repr(hint_sign)}; wrapper: {repr(wrapper_subclass)}')
         # Else, raise an exception.
         else:
-            raise BeartypeDoorNonpepException(
+            msg = (
                 f'Type hint {repr(hint)} '
                 f'currently unsupported by "beartype.door.TypeHint".'
+            )
+            raise BeartypeDoorNonpepException(
+                msg
             )
     # Else, this hint is supported.
 

@@ -57,10 +57,13 @@ def die_unless_hint_pep593(
     if not is_hint_pep593(hint):
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not PEP 593-compliant '
             f'(e.g., "typing.Annotated[...]", '
             f'"typing_extensions.Annotated[...]").'
+        )
+        raise exception_cls(
+            msg
         )
 
 # ....................{ TESTERS                            }....................

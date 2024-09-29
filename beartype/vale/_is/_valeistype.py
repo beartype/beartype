@@ -162,8 +162,9 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
             # If this factory was subscripted by *NO* arguments, raise an
             # exception.
             if not types:
+                msg = f'{self._getitem_exception_prefix}empty tuple.'
                 raise BeartypeValeSubscriptionException(
-                    f'{self._getitem_exception_prefix}empty tuple.')
+                    msg)
             # Else, this factory was subscripted by two or more arguments.
 
             # If any such argument is *NOT* an isinstanceable type, raise an
@@ -365,8 +366,9 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
             # If this factory was subscripted by *NO* arguments, raise an
             # exception.
             if not types:
+                msg = f'{self._getitem_exception_prefix}empty tuple.'
                 raise BeartypeValeSubscriptionException(
-                    f'{self._getitem_exception_prefix}empty tuple.')
+                    msg)
             # Else, this factory was subscripted by two or more arguments.
 
             # If any such argument is *NOT* an issubclassable type, raise an

@@ -161,9 +161,12 @@ class BeartypeNodeTransformerUtilityMixin:
         # Else, an unrecognized decorator position was configured. In this case,
         # raise an exception. Note that this should *NEVER* occur.
         else:  # pragma: no cover
-            raise BeartypeClawImportConfException(
+            msg = (
                 f'Beartype configuration {repr(conf)} '
                 f'decorator position {repr(decoration_position)} unsupported.'
+            )
+            raise BeartypeClawImportConfException(
+                msg
             )
 
     # ....................{ PRIVATE ~ factories            }....................

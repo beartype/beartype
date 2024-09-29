@@ -83,9 +83,12 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
 
             # If this component is negative, raise an exception.
             if version_part < 0:
-                raise _BeartypeUtilTextVersionException(
+                msg = (
                     f'Version {repr(version)} syntactically invalid '
                     f'(i.e., version component {repr(version_substr)} negative).'
+                )
+                raise _BeartypeUtilTextVersionException(
+                    msg
                 )
             # Else, this component is non-negative.
         # If doing so raises a "ValueError", this version component is *NOT*
@@ -96,10 +99,13 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
             # component. In this case, this component is syntactically invalid.
             # Raise an exception.
             if version_substr_index != version_substr_index_last:
-                raise _BeartypeUtilTextVersionException(
+                msg = (
                     f'Version {repr(version)} syntactically invalid '
                     f'(i.e., version component {repr(version_substr)} '
                     f'not an integer).'
+                )
+                raise _BeartypeUtilTextVersionException(
+                    msg
                 ) from exception
             # Else, this is the last version component. In this case, reduce
             # this component to its non-negative integer prefix.
@@ -112,10 +118,13 @@ def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
 
             # If this component is syntactically invalid, raise an exception.
             if version_substr_match is None:
-                raise _BeartypeUtilTextVersionException(
+                msg = (
                     f'Version {repr(version)} syntactically invalid '
                     f'(i.e., version component {repr(version_substr)} '
                     f'not an integer).'
+                )
+                raise _BeartypeUtilTextVersionException(
+                    msg
                 ) from exception
             # Else, this component is syntactically valid.
 

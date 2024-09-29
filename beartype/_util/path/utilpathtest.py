@@ -62,12 +62,14 @@ def die_unless_dir(
 
         # If no path with this pathname exists, raise an appropriate exception.
         if not dirname_path.exists():
-            raise exception_cls(f'Directory "{dirname_path}" not found.')
+            msg = f'Directory "{dirname_path}" not found.'
+            raise exception_cls(msg)
         # Else, a path with this pathname exists.
 
         # By elimination, a path with this pathname exists but this path is not
         # a directory. In this case, raise an appropriate exception.
-        raise exception_cls(f'Path "{dirname_path}" not directory.')
+        msg = f'Path "{dirname_path}" not directory.'
+        raise exception_cls(msg)
     # Else, a directory with this dirname exists.
 
 # ....................{ RAISERS ~ file                     }....................
@@ -108,12 +110,14 @@ def die_unless_file(
 
         # If no path with this pathname exists, raise an appropriate exception.
         if not filename_path.exists():
-            raise exception_cls(f'File "{filename_path}" not found.')
+            msg = f'File "{filename_path}" not found.'
+            raise exception_cls(msg)
         # Else, a path with this pathname exists.
 
         # By elimination, a path with this pathname exists but this path is not
         # a file. In this case, raise an appropriate exception.
-        raise exception_cls(f'Path "{filename_path}" not file.')
+        msg = f'Path "{filename_path}" not file.'
+        raise exception_cls(msg)
     # Else, a file with this filename exists.
 
 
@@ -165,6 +169,7 @@ def die_unless_file_executable(
             f'{repr(exception_cls)} not type.')
 
         # Raise an appropriate exception.
-        raise exception_cls(f'File "{filename_str}" not executable.')
+        msg = f'File "{filename_str}" not executable.'
+        raise exception_cls(msg)
     # Else, the current user has permission to execute this file. Ergo, this
     # file is an executable file with respect to this user.

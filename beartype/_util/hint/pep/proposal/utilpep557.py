@@ -67,9 +67,12 @@ def get_hint_pep557_initvar_arg(
     if hint_sign is not HintSignPep557DataclassInitVar:
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
-        raise exception_cls(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} not '
             f'PEP 557-compliant "dataclasses.TypeVar" instance.'
+        )
+        raise exception_cls(
+            msg
         )
     # Else, this hint is such a hint.
 

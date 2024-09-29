@@ -89,11 +89,14 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:  # pyright: 
             )
 
             # Raise an exception embedding this string.
-            raise BeartypeConfShellVarException(
+            msg = (
                 f'Beartype configuration environment variable '
                 f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
                 f'value {repr(is_color_shell_var_value)} invalid '
                 f'(i.e., neither {IS_COLOR_SHELL_VAR_VALUES}).'
+            )
+            raise BeartypeConfShellVarException(
+                msg
             )
         # Else, the string value of this environment variable is recognized.
 

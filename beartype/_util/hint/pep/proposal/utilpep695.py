@@ -188,9 +188,12 @@ def get_hint_pep695_alias(
 
     # If this hint is *NOT* a PEP 695-compliant type alias, raise an exception.
     if not isinstance(hint, HintPep695Type):
-        raise BeartypeDecorHintPep695Exception(
+        msg = (
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 type alias.'
+        )
+        raise BeartypeDecorHintPep695Exception(
+            msg
         )
     # Else, this hint is a PEP 695-compliant type alias.
 
@@ -297,10 +300,13 @@ def iter_hint_pep695_forwardrefs(
             # type-checkers like mypy insist this can happen. It almost
             # certainly can't. Nonetheless, let's dot our i's and cross our t's.
             if not hint_module_name:
-                raise BeartypeDecorHintPep695Exception(
+                msg = (
                     f'{exception_prefix}PEP 695 type alias "{hint_name}" '
                     f'module undefined (i.e., "__module__" attribute '
                     f'either "None" or the empty string).'
+                )
+                raise BeartypeDecorHintPep695Exception(
+                    msg
                 ) from exception
             # Else, this alias defines a module name.
 
@@ -343,7 +349,7 @@ def iter_hint_pep695_forwardrefs(
             # have no recourse but to detect this edge case and raise a
             # human-readable exception advising the caller with recommendations.
             if hint_ref_name == hint_ref_name_prev:
-                raise BeartypeDecorHintPep695Exception(
+                msg = (
                     f'{exception_prefix}PEP 695 local type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
                     f"unsupported, due to severe deficiencies in CPython's "
@@ -365,6 +371,9 @@ def iter_hint_pep695_forwardrefs(
                     f'\n'
                     f'      # Prefer a quoted forward reference.\n'
                     f'      type {hint_name} = ... "{hint_ref_name}" ...'
+                )
+                raise BeartypeDecorHintPep695Exception(
+                    msg
                 ) from exception
             # Else, this attribute differs from that of the prior iteration of
             # this "while" loop.
@@ -374,7 +383,7 @@ def iter_hint_pep695_forwardrefs(
             #
             # Note that this should *NEVER* happen. Of course, this will happen.
             elif hasattr(hint_module, hint_ref_name):
-                raise BeartypeDecorHintPep695Exception(  # pragma: no cover
+                msg = (
                     f'{exception_prefix}PEP 695 type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
                     f'already defined in module "{hint_module_name}", '
@@ -383,6 +392,9 @@ def iter_hint_pep695_forwardrefs(
                     f'Of course, this happened. You suddenly feel the '
                     f'horrifying urge to report this grievous failure to the '
                     f'beartype issue tracker:\n\t{URL_ISSUES}'
+                )
+                raise BeartypeDecorHintPep695Exception(  # pragma: no cover
+                    msg
                 ) from exception
             # Else, that module does *NOT* yet define this attribute.
 
@@ -474,7 +486,7 @@ def reduce_hint_pep695(
         # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
 
         # Raise a human-readable exception describing this issue.
-        raise BeartypeDecorHintPep695Exception(
+        msg = (
             f'{exception_prefix}PEP 695 type alias "{hint_name}" '
             f'unquoted relative forward reference {repr(hint_ref_name)} in '
             f'module "{hint_module_name}" unsupported outside '
@@ -490,6 +502,9 @@ def reduce_hint_pep695(
             f'      # In your "this_package.__init__" submodule:\n'
             f'      from beartype.claw import beartype_this_package\n'
             f'      beartype_this_package()'
+        )
+        raise BeartypeDecorHintPep695Exception(
+            msg
         ) from exception
     # Else, doing so raised *NO* exceptions, implying this alias contains *NO*
     # forward references to undeclared attributes.

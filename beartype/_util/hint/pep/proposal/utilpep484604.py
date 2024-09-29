@@ -74,7 +74,7 @@ if IS_PYTHON_AT_LEAST_3_10:
         # If the representation of this new union is *NOT* prefixed by the
         # representation of this hint, raise an exception.
         if not hint_pep604_repr.startswith(hint_repr):
-            raise BeartypeDecorHintPep604Exception(
+            msg = (
                 f'Type hint {hint_repr} inconsistent with respect to '
                 f'repr() strings. Since @beartype requires consistency '
                 f'between type hints and repr() strings, this hint is '
@@ -88,6 +88,9 @@ if IS_PYTHON_AT_LEAST_3_10:
                 f'\t# Ideally, that output should instead resemble:\n'
                 f'\t>>> repr({hint_repr} | int)\n'
                 f'\t{hint_repr} | int  # <-- what @beartype wants!'
+            )
+            raise BeartypeDecorHintPep604Exception(
+                msg
             )
         # Else, the representation of this new union is prefixed by the
         # representation of this hint as expected.

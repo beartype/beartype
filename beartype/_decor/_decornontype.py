@@ -125,8 +125,9 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     #
     # If this object is uncallable, raise an exception.
     elif not callable(obj):
+        msg = f'Uncallable {repr(obj)} not decoratable by @beartype.'
         raise BeartypeDecorWrappeeException(
-            f'Uncallable {repr(obj)} not decoratable by @beartype.')
+            msg)
     # Else, this object is callable.
     #
     # If this object is *NOT* a pure-Python function, this object is a
@@ -524,10 +525,13 @@ def beartype_descriptor_decorator_builtin(
     # Else, this descriptor is *NOT* a static method.
 
     # Raise a fallback exception. This should *NEVER happen. This *WILL* happen.
-    raise BeartypeDecorWrappeeException(
+    msg = (
         f'Builtin method descriptor {repr(descriptor)} '
         f'not decoratable by @beartype '
         f'(i.e., neither property, class method, nor static method descriptor).'
+    )
+    raise BeartypeDecorWrappeeException(
+        msg
     )
 
 # ....................{ PRIVATE ~ decorators               }....................
@@ -660,19 +664,25 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # languages change; it's not inconceivable that Python could introduce yet
     # another kind of callable object under future versions.
     if pseudofunc_call_boundmethod is None:  # pragma: no cover
-        raise BeartypeDecorWrappeeException(
+        msg = (
             f'Callable {repr(pseudofunc)} not pseudo-callable object '
             f'(i.e., defines no bound __call__() dunder method).'
+        )
+        raise BeartypeDecorWrappeeException(
+            msg
         )
     # Else, this object is a pseudo-callable.
     #
     # If this object does *NOT* define this method, this object is *NOT* a
     # pseudo-callable. In this case, raise an exception.
     elif pseudofunc_call_type_method is None:  # pragma: no cover
-        raise BeartypeDecorWrappeeException(
+        msg = (
             f'Callable {repr(pseudofunc)} type {repr(pseudofunc.__class__)} '
             f'not pseudo-callable object type '
             f'(i.e., defines no unbound __call__() dunder method).'
+        )
+        raise BeartypeDecorWrappeeException(
+            msg
         )
     # Else, this object type is a pseudo-callable type.
     #
@@ -763,9 +773,12 @@ def beartype_pseudofunc_functools_lru_cache(
     # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
     # callable, raise an exception.
     if not is_func_functools_lru_cache(pseudofunc):
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
+        msg = (
             f'@functools.lru_cache-memoized callable {repr(pseudofunc)} not  '
             f'decorated by @functools.lru_cache.'
+        )
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            msg
         )
     # Else, this pseudo-callable is a @functools.lru_cache-memoized callable.
 
@@ -779,7 +792,7 @@ def beartype_pseudofunc_functools_lru_cache(
     # explicitly inform the caller of this edge case by raising a human-readable
     # exception providing a pragmatic workaround.
     if IS_PYTHON_3_8:
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
+        msg = (
             f'@functools.lru_cache-memoized callable {repr(func)} not '
             f'decoratable by @beartype under Python 3.8. '
             f'Consider manually decorating this callable by '
@@ -798,6 +811,9 @@ def beartype_pseudofunc_functools_lru_cache(
             f'    # Or this (if you use "beartype.claw", which you really should).\n'
             f'    @lru_cache(maxsize=42)\n'
             f'    def muh_func(...) -> ...: ...\n'
+        )
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            msg
         )
     # Else, the active Python interpreter targets Python >= 3.9.
 
