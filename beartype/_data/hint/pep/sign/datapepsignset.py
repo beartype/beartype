@@ -94,7 +94,7 @@ PEP-compliant type matching matching a frozen set of signs.
 '''
 
 # ....................{ SETS ~ deprecated                  }....................
-#FIXME: Currently unused but preserved for posterity. *shrug*
+# FIXME: Currently unused but preserved for posterity. *shrug*
 # HINT_SIGNS_DEPRECATED = frozenset((
 #     # ..................{ PEP 613                            }..................
 #     # PEP 613-compliant "typing.TypeAlias" type hint singletons have been
@@ -257,11 +257,11 @@ HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
     HintSignSet,
     HintSignValuesView,
 
-    #FIXME: Deques are actually somewhat more than merely single-argument
-    #reiterables. They provide efficient access to both the first *AND* last
-    #deque items. Ergo, both should be type-checked. The current approach only
-    #type-checkes the first deque item. That's certainly better than nothing,
-    #but we can (and should) do better. *sigh*
+    # FIXME: Deques are actually somewhat more than merely single-argument
+    # reiterables. They provide efficient access to both the first *AND* last
+    # deque items. Ergo, both should be type-checked. The current approach only
+    # type-checkes the first deque item. That's certainly better than nothing,
+    # but we can (and should) do better. *sigh*
     HintSignDeque,
 ))
 '''
@@ -535,8 +535,8 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: _FrozenSetHintSign = frozenset((
     HintSignTypeVar,
 
     # ..................{ PEP 589                            }..................
-    #FIXME: Shift into "HINT_SIGNS_SUPPORTED_DEEP" *AFTER* deeply type-checking
-    #typed dictionaries.
+    # FIXME: Shift into "HINT_SIGNS_SUPPORTED_DEEP" *AFTER* deeply type-checking
+    # typed dictionaries.
     HintSignTypedDict,
 
     # ..................{ PEP 591                            }..................
@@ -578,8 +578,8 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
         # syntactic contexts and thus intentionally omitted here. See the
         # "datapepsigns" submodule for further commentary.
 
-        #FIXME: These should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW",
-        #instead.
+        # FIXME: These should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW",
+        # instead.
         HintSignAny,
         HintSignBinaryIO,
         HintSignForwardRef,
@@ -614,7 +614,7 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
         HintSignAnnotated,
 
         # ..................{ NON-PEP ~ package : numpy      }..................
-        #FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
+        # FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
         HintSignNumpyArray,
     ))
 )
@@ -645,7 +645,7 @@ identifying PEP-compliant type hints).
 '''
 
 # ....................{ PRIVATE ~ main                     }....................
-#FIXME: Preserved for posterity. *sigh*
+# FIXME: Preserved for posterity. *sigh*
 # def _init() -> None:
 #     '''
 #     Initialize this submodule.

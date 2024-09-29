@@ -37,7 +37,7 @@ from beartype.typing import (
 )
 
 # ....................{ CONTEXTS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @contextmanager
 def warnings_ignored() -> Iterator[None]:
     '''

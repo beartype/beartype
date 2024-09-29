@@ -261,7 +261,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         # Tuple of zero or more type variables parametrizing this hint.
         hint_typevars = get_hint_pep_typevars(hint)
 
-        #FIXME: Unit test us up, please.
+        # FIXME: Unit test us up, please.
         # If this hint is unparametrized, raise an exception.
         if not hint_typevars:
             msg = (
@@ -275,7 +275,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         # Else, this hint is parametrized and thus defines the "__origin__"
         # dunder attribute whose value is the type originating this hint.
 
-        #FIXME: Attempt to actually handle this type variable, please.
+        # FIXME: Attempt to actually handle this type variable, please.
         # Reduce this parametrized hint (e.g., "typing.IO[typing.AnyStr]") to
         # the equivalent unparametrized hint (e.g., "typing.IO"), effectively
         # ignoring the type variable parametrizing this hint.
@@ -590,8 +590,8 @@ def _init() -> None:
     # opened in binary mode instead.
     _Pep544BinaryIO = _Pep544IO
 
-    #FIXME: Safely replace this with "from typing import Annotated" after
-    #dropping Python 3.8 support.
+    # FIXME: Safely replace this with "from typing import Annotated" after
+    # dropping Python 3.8 support.
     # "typing.Annotated" type hint factory safely imported from whichever of
     # the "typing" or "typing_extensions" modules declares this attribute if
     # one or more do *OR* "None" otherwise (i.e., if none do).

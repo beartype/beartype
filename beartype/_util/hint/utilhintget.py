@@ -25,7 +25,7 @@ from beartype._util.hint.pep.utilpeptest import (
 )
 
 # ....................{ TESTERS                            }....................
-#FIXME: Call this getter everywhere we currently call "repr(hint*)", please.
+# FIXME: Call this getter everywhere we currently call "repr(hint*)", please.
 @callable_cached
 def get_hint_repr(hint: object) -> str:
     '''

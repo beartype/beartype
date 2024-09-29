@@ -13,23 +13,23 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The BeartypeForwardScope.__init__() "scope_dict: LexicalScope" parameter
-#should probably instead be typed as:
-#from collections import ChainMap
-#...
+# FIXME: The BeartypeForwardScope.__init__() "scope_dict: LexicalScope" parameter
+# should probably instead be typed as:
+# from collections import ChainMap
+# ...
 #    def __init__(self, scope_dict: ChainMap, scope_name: str) -> None:
 #
-#Why? Because "ChainMap" exists to literally solve this *EXACT* problem.
-#Notably, the current approach effectively forces a "BeartypeForwardScope" to
-#take a possibly desynchronized "snapshot" of a lexical scope at a certain point
-#in time. If either the locals or globals of that scope are subsequently
-#modified by an external caller, however, that "BeartypeForwardScope" will then
-#be desynchronized from those locals and globals.
+# Why? Because "ChainMap" exists to literally solve this *EXACT* problem.
+# Notably, the current approach effectively forces a "BeartypeForwardScope" to
+# take a possibly desynchronized "snapshot" of a lexical scope at a certain point
+# in time. If either the locals or globals of that scope are subsequently
+# modified by an external caller, however, that "BeartypeForwardScope" will then
+# be desynchronized from those locals and globals.
 #
-#A "ChainMap" trivially resolves this. How? Internally, a "ChainMap" only
-#holds *REFERENCES* to external locals and globals dictionaries. External
-#updates to those external dictionaries are thus *IMMEDIATELY* reflected inside
-#the "ChainMap" itself, resolving any desynchronization woes. *facepalm*
+# A "ChainMap" trivially resolves this. How? Internally, a "ChainMap" only
+# holds *REFERENCES* to external locals and globals dictionaries. External
+# updates to those external dictionaries are thus *IMMEDIATELY* reflected inside
+# the "ChainMap" itself, resolving any desynchronization woes. *facepalm*
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference.fwdrefabc import _BeartypeForwardRefIndexableABC
@@ -42,7 +42,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Type
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeForwardScope(LexicalScope):
     '''
     **Forward scope** (i.e., dictionary mapping from the name to value of each

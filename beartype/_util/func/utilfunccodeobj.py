@@ -254,13 +254,13 @@ def get_func_codeobj_or_none(
     #
     # If this object is a call stack frame, return this frame's code object.
     elif isinstance(func, FrameType):
-        #FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for frames
-        #encapsulating pure-Python callables. For frames encapsulating C-based
-        #callables, this is likely to fail with an "AttributeError" exception.
-        #That said, we have *NO* idea how to test this short of defining our own
-        #C-based callable accepting a pure-Python callable as a callback
-        #parameter and calling that callback. Are there even C-based callables
-        #like that in the wild?
+        # FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for frames
+        # encapsulating pure-Python callables. For frames encapsulating C-based
+        # callables, this is likely to fail with an "AttributeError" exception.
+        # That said, we have *NO* idea how to test this short of defining our own
+        # C-based callable accepting a pure-Python callable as a callback
+        # parameter and calling that callback. Are there even C-based callables
+        # like that in the wild?
         func_codeobj = func.f_code
     # Else, this object is *NOT* a call stack frame. Since none of the above
     # tests matched, this object *MUST* be a C-based callable. Return "None"!
@@ -270,7 +270,7 @@ def get_func_codeobj_or_none(
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_codeobj_basename(func: Codeobjable, **kwargs) -> str:
     '''
     Unqualified basename (contextually depending on the version of the active

@@ -53,21 +53,21 @@ class TypeVarTypeHint(UnionTypeHint):
         return self._is_args_ignorable
 
     # ..................{ PRIVATE ~ properties               }..................
-    #FIXME: *HMM.* We should arguably just define the _make_args() factory
-    #method instead. That implementation would become quite a bit simpler as
-    #well as generalize to cover more use cases. By defining this method,
-    #"self._args" and "self._args_wrapped_tuple" are now desynchronized. *sigh*
+    # FIXME: *HMM.* We should arguably just define the _make_args() factory
+    # method instead. That implementation would become quite a bit simpler as
+    # well as generalize to cover more use cases. By defining this method,
+    # "self._args" and "self._args_wrapped_tuple" are now desynchronized. *sigh*
 
     @property  # type: ignore[misc]
     @property_cached
     def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
 
-        #FIXME: Support covariance and contravariance, please. We don't
-        #particularly care about either at the moment. Moreover, runtime type
-        #checkers were *NEVER* expected to support either -- although we
-        #eventually intend to do so. For now, raising a fatal exception here
-        #would seem to be extreme overkill. Doing nothing is (probably) better
-        #than doing something reckless and wild.
+        # FIXME: Support covariance and contravariance, please. We don't
+        # particularly care about either at the moment. Moreover, runtime type
+        # checkers were *NEVER* expected to support either -- although we
+        # eventually intend to do so. For now, raising a fatal exception here
+        # would seem to be extreme overkill. Doing nothing is (probably) better
+        # than doing something reckless and wild.
         # # Human-readable string describing the variance of this type variable if
         # # any *OR* "None" otherwise (i.e., if this type variable is invariant).
         # variance_str = None
@@ -104,7 +104,7 @@ class TypeVarTypeHint(UnionTypeHint):
             return tuple(TypeHint(t) for t in self._hint.__constraints__)
         # Else, this type variable is unconstrained.
 
-        #FIXME: Consider globalizing this as a private constant for efficiency.
+        # FIXME: Consider globalizing this as a private constant for efficiency.
         # Return the 1-tuple containing only the "typing.Any" catch-all. Why?
         # Because an unconstrained and unbounded type variable is semantically
         # equivalent to a type variable bounded by "typing.Any".

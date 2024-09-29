@@ -20,7 +20,7 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
     '''
     Previously imported module, package, or C extension with the passed
@@ -182,7 +182,7 @@ def get_object_module_line_number_begin(obj: object) -> int:
 
 
 # ....................{ GETTERS ~ object : name            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -226,7 +226,7 @@ def get_object_module_name(obj: object) -> str:
     return module_name
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_object_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -254,7 +254,7 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
 
 
 # ....................{ GETTERS ~ object : type : name     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -286,7 +286,7 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
 
 
 # ....................{ GETTERS ~ module : dir             }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_module_dir(module: ModuleType) -> Path:
     '''
     High-level :class:`Path` object encapsulating the absolute dirname of the
@@ -323,7 +323,7 @@ def get_module_dir(module: ModuleType) -> Path:
 
 
 # ....................{ GETTERS ~ module : file            }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_module_filename(module: ModuleType) -> str:
     '''
     Absolute filename of the passed module if this module is physically defined
@@ -370,7 +370,7 @@ def get_module_filename(module: ModuleType) -> str:
     return module_filename
 
 
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
     '''
     Absolute filename of the passed module if this module is physically defined

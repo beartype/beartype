@@ -13,23 +13,23 @@ performance improvements.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *YIKES.* Our "beartype.typing.Protocol" implementation is broken yet
-#again -- but this time for @classmethod-decorated callables. Consider this:
+# FIXME: *YIKES.* Our "beartype.typing.Protocol" implementation is broken yet
+# again -- but this time for @classmethod-decorated callables. Consider this:
 #    from beartype.typing import Protocol
 #    class BrokenProtocol(Protocol):
 #        @classmethod
 #        def broken_classmethod(cls) -> object:
 #            pass
 #
-#Now define an arbitrary class violating that protocol:
+# Now define an arbitrary class violating that protocol:
 #    class BrokenClass(object): pass
 #
-#Now attempt to demonstrate that this class violates that protocol:
+# Now attempt to demonstrate that this class violates that protocol:
 #    >>> isinstance(BrokenClass, BrokenProtocol)
 #    True  # <----- WAAAAAAAAAT
 #
-#This issue is almost certainly related to classmethods. We clearly never tested
-#that. Classmethods clearly require explicit handling and caching. *sigh*
+# This issue is almost certainly related to classmethods. We clearly never tested
+# that. Classmethods clearly require explicit handling and caching. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from typing import (  # type: ignore[attr-defined]
@@ -219,11 +219,11 @@ class _CachingProtocolMeta(_ProtocolMeta):
         # If this class is *NOT* the abstract "beartype.typing.Protocol"
         # superclass defined below...
         if name != 'Protocol':
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: Synchronize this "if" conditional against the standard
             # "typing" module, which defines the exact same logic in the
             # Protocol.__init_subclass__() class method.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # If it is unknown whether this class is an abstract protocol
             # directly subclassing the "Protocol" superclass *OR* a concrete
             # subclass of an abstract protocol, decide which applies now. Why?
@@ -296,10 +296,10 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
         # Attempt to...
         try:
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: This *MUST* remain *SUPER* tight!! Even adding a
             # mere assertion here can add ~50% to our best-case runtime.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Return a pre-cached boolean indicating whether an object of
             # the same arbitrary type as the object passed to this call
             # satisfied the same protocol in a prior call of this method.
@@ -313,13 +313,13 @@ class _CachingProtocolMeta(_ProtocolMeta):
             bases_pass_muster = True
 
             for base in self.__bases__:
-                #FIXME: This branch probably erroneously matches unrelated
-                #user-defined types whose names just happen to be "Generic"
-                #or "Protocol". Ideally, we should tighten that up to only
-                #match the actual "{beartype,}.typing.{Generic,Protocol}"
-                #superclasses. Of course, note that
-                #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
-                #we'll want to explicitly test against both.
+                # FIXME: This branch probably erroneously matches unrelated
+                # user-defined types whose names just happen to be "Generic"
+                # or "Protocol". Ideally, we should tighten that up to only
+                # match the actual "{beartype,}.typing.{Generic,Protocol}"
+                # superclasses. Of course, note that
+                # "beartype.typing.Protocol" is *NOT* "typing.Protocol', so
+                # we'll want to explicitly test against both.
                 if base is self or base.__name__ in (
                     'Protocol',
                     'Generic',
@@ -337,8 +337,8 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
 
 # ....................{ PRIVATE ~ functions                }....................
-#FIXME: Docstring us up, please.
-#FIXME: Comment us up, please.
+# FIXME: Docstring us up, please.
+# FIXME: Comment us up, please.
 def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT={}) -> bool:
 
     cls_attr_name_to_value = cls.__dict__
@@ -373,7 +373,7 @@ def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT={}) -> bool:
                 # supports this fragile, unreadable, and error-prone idiom
                 # enabling objects to leave methods "undefined." What this!?
                 (
-                    #FIXME: Unit test this up, please.
+                    # FIXME: Unit test this up, please.
                     # A callable *AND*...
                     callable(getattr(cls, cls_attr_name, None)) and
                     # The passed object nullified this method. *facepalm*
@@ -526,8 +526,8 @@ class Protocol(
         return gen_alias
 
 
-#FIXME: Ensure that the main @beartype codebase handles protocols whose
-#repr() starts with "beartype.typing" as well, please.
+# FIXME: Ensure that the main @beartype codebase handles protocols whose
+# repr() starts with "beartype.typing" as well, please.
 
 # Replace the unexpected (and thus non-compliant) fully-qualified name of
 # the module declaring this caching protocol superclass (e.g.,

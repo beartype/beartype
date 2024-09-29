@@ -195,14 +195,14 @@ def infer_hint(
     # Else, this configuration is valid.
 
     # ....................{ PEP                            }....................
-    #FIXME: Generalize to support iterable parametrized generics (e.g.,
-    #instances of "Generic[T]" subclasses); iterable parametrized generics
-    #should be subscripted by a child type hint describing the items contained
-    #by those iterables. For example, when this function is passed an instance
-    #of a "List[T]" subclass, this function should return "List[hints_child]"
-    #where "hints_child" is the union of the types of all items of this list.
+    # FIXME: Generalize to support iterable parametrized generics (e.g.,
+    # instances of "Generic[T]" subclasses); iterable parametrized generics
+    # should be subscripted by a child type hint describing the items contained
+    # by those iterables. For example, when this function is passed an instance
+    # of a "List[T]" subclass, this function should return "List[hints_child]"
+    # where "hints_child" is the union of the types of all items of this list.
     #
-    #Doing so will require explicitly detecting generics here. *sigh*
+    # Doing so will require explicitly detecting generics here. *sigh*
 
     # If this object is a PEP-compliant type hint, this object is trivially
     # satisfied by itself. Interestingly:

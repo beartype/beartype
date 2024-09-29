@@ -17,26 +17,26 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Add types for all remaining useful "collections.abc" interfaces,
-#including:
-#* "Reversible".
-#* "AsyncIterable".
-#* "AsyncIterator".
-#* "AsyncGenerator".
+# FIXME: Add types for all remaining useful "collections.abc" interfaces,
+# including:
+# * "Reversible".
+# * "AsyncIterable".
+# * "AsyncIterator".
+# * "AsyncGenerator".
 #
-#There certainly exist other "collections.abc" interfaces as well, but it's
-#unclear whether they have any practical real-world utility during type
-#checking. These include:
-#* "ByteString". (wut)
-#* Dictionary-specific views (e.g., "MappingView", "ItemsView").
+# There certainly exist other "collections.abc" interfaces as well, but it's
+# unclear whether they have any practical real-world utility during type
+# checking. These include:
+# * "ByteString". (wut)
+# * Dictionary-specific views (e.g., "MappingView", "ItemsView").
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import functools as _functools
 import numbers as _numbers
@@ -107,7 +107,7 @@ from beartype._util.py.utilpyversion import (
 from beartype.roar import BeartypeCallUnavailableTypeException
 
 # ....................{ IMPORTS ~ conditional              }....................
-#FIXME: Preserve for when we inevitably require similar logic in the future.
+# FIXME: Preserve for when we inevitably require similar logic in the future.
 
 # # Attempt to import types unavailable under Python 3.5, all of which should
 # # be passed through the intermediary _get_type_or_unavailable() helper
@@ -313,7 +313,7 @@ the ``PyInstanceMethod_Type`` C type explicitly admits that:
 '''
 
 
-#FIXME: Directly alias this to "_types.MethodWrapperType" now, please.
+# FIXME: Directly alias this to "_types.MethodWrapperType" now, please.
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.MethodWrapperType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
@@ -1398,9 +1398,9 @@ Tuple of both the module *and* string type.
 '''
 
 
-#FIXME: This is probably incorrect under Python >= 3.9, where isinstance() also
-#accepts "|"-delimited unions of types (e.g., float | int | str). What are
-#those types, exactly?
+# FIXME: This is probably incorrect under Python >= 3.9, where isinstance() also
+# accepts "|"-delimited unions of types (e.g., float | int | str). What are
+# those types, exactly?
 TestableTypes = (ClassType, tuple)
 '''
 Tuple of all **testable types** (i.e., types suitable for use as the second
@@ -1565,10 +1565,10 @@ Tuple of all callable types as well as the string type.
 '''
 
 
-#FIXME: Define a new "ClassCallableType" by copying the "BoolType" approach
-#except for the __call__() dunder method instead.
-#FIXME: Replace "ClassType" below by "ClassCallableType".
-#FIXME: Add the "ClassCallableType" type to the "CallableTypes" tuple as well.
+# FIXME: Define a new "ClassCallableType" by copying the "BoolType" approach
+# except for the __call__() dunder method instead.
+# FIXME: Replace "ClassType" below by "ClassCallableType".
+# FIXME: Add the "ClassCallableType" type to the "CallableTypes" tuple as well.
 DecoratorTypes = CallableTypes + (ClassType,)
 '''
 Tuple of all **decorator types** (i.e., both callable classes *and* the type of

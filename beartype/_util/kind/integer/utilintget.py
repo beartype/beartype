@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from random import getrandbits
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_integer_pseudorandom_signed_32bit() -> int:
     '''
     **Pseudorandom signed 32-bit integer** (i.e., integer in the inclusive range

@@ -13,35 +13,35 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
-#recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
-#* Define a new private "beartype.door._doorerror" submodule.
-#* Shift the "ViolationCause" class to
+# FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
+# recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
+# * Define a new private "beartype.door._doorerror" submodule.
+# * Shift the "ViolationCause" class to
 #  "beartype.door._doorerror._TypeHintUnbearability".
-#* Shift the _TypeHintUnbearability.find_cause() method to a new
+# * Shift the _TypeHintUnbearability.find_cause() method to a new
 #  *PRIVATE* TypeHint._find_cause() method.
-#* Preserve most of the remainder of the "_TypeHintUnbearability" class as a
+# * Preserve most of the remainder of the "_TypeHintUnbearability" class as a
 #  dataclass encapsulating metadata describing the current type-checking
 #  violation. That metadata (e.g., "cause_indent") is inappropriate for
 #  general-purpose type hints. Exceptions include:
 #  * "hint", "hint_sign", and "hint_childs" -- all of which are subsumed by the
 #    "TypeHint" dataclass and should thus be excised.
-#* Refactor the TypeHint._find_cause() method to accept an instance of
+# * Refactor the TypeHint._find_cause() method to accept an instance of
 #  the "_TypeHintUnbearability" dataclass: e.g.,
 #      class TypeHint(...):
 #          def _get_unbearability_cause_or_none(
 #              self, unbearability: _TypeHintUnbearability) -> Optional[str]:
 #              ...
-#* Refactor existing find_cause_*() getters (e.g.,
+# * Refactor existing find_cause_*() getters (e.g.,
 #  find_cause_sequence_args_1(), find_cause_union()) into
 #  _get_unbearability_cause_or_none() methods of the corresponding "TypeHint"
 #  subclasses, please.
 #
-#This all seems quite reasonable. Now, let's see whether it is. *gulp*
-#FIXME: Actually, the above comment now ties directly into feature request #235.
-#Resolving the above comment mostly suffices to resolve #235. That said, the
-#above isn't *QUITE* right. It's pretty nice -- but we can do better. See the
-#following comment at #235 for that better:
+# This all seems quite reasonable. Now, let's see whether it is. *gulp*
+# FIXME: Actually, the above comment now ties directly into feature request #235.
+# Resolving the above comment mostly suffices to resolve #235. That said, the
+# above isn't *QUITE* right. It's pretty nice -- but we can do better. See the
+# following comment at #235 for that better:
 #    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 
 # ....................{ IMPORTS                            }....................
@@ -175,10 +175,10 @@ class ViolationCause:
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Whenever adding, deleting, or renaming any parameter accepted by
     # this method, make similar changes to the "_INIT_PARAM_NAMES" set above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
 
@@ -367,15 +367,15 @@ class ViolationCause:
         # Getter function returning the desired string.
         cause_finder: Callable[[ViolationCause], ViolationCause] = None  # type: ignore[assignment]
 
-        #FIXME: Trivially simplify this method by:
-        #* Define a new find_cause_nonpep() function elsewhere whose body is
+        # FIXME: Trivially simplify this method by:
+        # * Define a new find_cause_nonpep() function elsewhere whose body is
         #  the body of this "if" conditional branch.
-        #* Register this function with HINT_SIGN_TO_GET_CAUSE_FUNC: e.g.,
+        # * Register this function with HINT_SIGN_TO_GET_CAUSE_FUNC: e.g.,
         #  HINT_SIGN_TO_GET_CAUSE_FUNC = {
         #      ...,
         #      None: find_cause_nonpep,
         #  }
-        #* Remove this "if" conditional branch.
+        # * Remove this "if" conditional branch.
 
         # If *NO* sign uniquely identifies this hint, this hint is either
         # PEP-noncompliant *OR* only contextually PEP-compliant in certain

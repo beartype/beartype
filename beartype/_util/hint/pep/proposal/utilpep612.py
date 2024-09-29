@@ -72,8 +72,8 @@ def get_hint_pep612_paramspec(
     typing.ParamSpec
         Parameter specification containing this variable.
     '''
-    #FIXME: *lol*. This assert fails when using "typing_extensions.ParamSpec"
-    #under Python < 3.10. Whatevahs! Just ignore quality assurance for now. \o/
+    # FIXME: *lol*. This assert fails when using "typing_extensions.ParamSpec"
+    # under Python < 3.10. Whatevahs! Just ignore quality assurance for now. \o/
     # assert isinstance(paramspec_var, HintPep612ParamSpecVarTypes), (
     #     f'{repr(paramspec_var)} not '
     #     f'PEP 612-compliant parameter specification variable.'
@@ -141,8 +141,8 @@ def make_hint_pep612_concatenate_list_or_none(
     # importable *OR* "None" otherwise.
     Concatenate = import_typing_attr_or_none('Concatenate')
 
-    #FIXME: When Python 3.10 support is dropped, this can and should be
-    #reduced to this elegant one-liner employing list unpacking:
+    # FIXME: When Python 3.10 support is dropped, this can and should be
+    # reduced to this elegant one-liner employing list unpacking:
     #    hint = Concatenate[*hints_child_first, hint_child_last]
 
     # If this hint factory is importable...

@@ -28,9 +28,9 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 
 
 # ....................{ TESTERS                            }....................
-#FIXME: Remove this *AFTER* properly supporting type variables. For now,
-#ignoring type variables is required ta at least shallowly support generics
-#parametrized by one or more type variables.
+# FIXME: Remove this *AFTER* properly supporting type variables. For now,
+# ignoring type variables is required ta at least shallowly support generics
+# parametrized by one or more type variables.
 def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
     '''
     :data:`True` unconditionally.

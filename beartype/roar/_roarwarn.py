@@ -11,12 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 
 # ....................{ SUPERCLASS                         }....................
@@ -140,7 +140,7 @@ class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
     '''
 
 
-#FIXME: Consider removal.
+# FIXME: Consider removal.
 # class BeartypeDecorHintPepIgnorableDeepWarning(BeartypeDecorHintPepWarning):
 #     '''
 #     **Beartype decorator deeply ignorable PEP-compliant type hint warning.**
@@ -155,7 +155,7 @@ class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
 #     pass
 
 
-#FIXME: Consider removal.
+# FIXME: Consider removal.
 # class BeartypeDecorHintPepUnsupportedWarning(BeartypeWarning):
 #     '''
 #     **Beartype decorator unsupported PEP-compliant type hint warning.**
@@ -188,9 +188,9 @@ class BeartypeDecorHintPepDeprecationWarning(
     '''
 
 
-#FIXME: This should *REALLY* have been called
-#"BeartypeDecorHintPep484DeprecationWarning". Oh well. Let's preserve backward
-#compatibility by just accepting this as is. This goes away in 2026, anyway.
+# FIXME: This should *REALLY* have been called
+# "BeartypeDecorHintPep484DeprecationWarning". Oh well. Let's preserve backward
+# compatibility by just accepting this as is. This goes away in 2026, anyway.
 class BeartypeDecorHintPep585DeprecationWarning(
     BeartypeDecorHintPepDeprecationWarning):
     '''

@@ -8,11 +8,11 @@
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: As with the parallel "beartype._cave.abc" submodule, refactor the
-#contents of this private submodule into the newly proposed public
-#"beartype.caver" submodule. To do so:
+# FIXME: As with the parallel "beartype._cave.abc" submodule, refactor the
+# contents of this private submodule into the newly proposed public
+# "beartype.caver" submodule. To do so:
 #
-#* In the "beartype.caver" submodule:
+# * In the "beartype.caver" submodule:
 #  * Define a new make_type() function copied from the
 #    betse.util.type.classes.define_class() function (but renamed, obviously).
 #  * Define a new make_type_defaultdict() function copied from the
@@ -100,8 +100,8 @@ class _NoneTypeOrType(dict):
               only strings and types.
         '''
 
-        #FIXME: Doesn't work quite right, sadly. Notably, user-defined generics
-        #(e.g., "class MuhList(List[str]): ...") are rejected as PEP-compliant.
+        # FIXME: Doesn't work quite right, sadly. Notably, user-defined generics
+        # (e.g., "class MuhList(List[str]): ...") are rejected as PEP-compliant.
         # # If this missing key is *NOT* a PEP-noncompliant type hint, raise an
         # # exception.
         # die_unless_hint_nonpep(

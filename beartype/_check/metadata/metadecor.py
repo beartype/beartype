@@ -364,12 +364,12 @@ class BeartypeDecorMeta:
             * ``cls_owner`` is neither a class *nor* :data:`None`.
         '''
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Note this method intentionally avoids creating and passing an
         # "exception_prefix" substring to callables called below. Why? Because
         # exhaustive profiling has shown that creating that substring consumes a
         # non-trivial slice of decoration time. In other words, efficiency.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # If the caller failed to pass a callable to be unwrapped, default that
         # to the callable to be type-checked.
@@ -469,12 +469,12 @@ class BeartypeDecorMeta:
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
 
-        #FIXME: Globally replace all references to "__annotations__" throughout
-        #the "beartype._decor" subpackage with references to this instead.
-        #Since doing so is a negligible optimization, this is fine... for now.
-        #FIXME: *WOOPS.* Due to PEP 649, we absolutely need to get out ahead of
-        #this before Python 3.13 and catastrophe strike. Notably:
-        #* Define a new "beartype._data.hint.datahinttyping.Hintable" type hint
+        # FIXME: Globally replace all references to "__annotations__" throughout
+        # the "beartype._decor" subpackage with references to this instead.
+        # Since doing so is a negligible optimization, this is fine... for now.
+        # FIXME: *WOOPS.* Due to PEP 649, we absolutely need to get out ahead of
+        # this before Python 3.13 and catastrophe strike. Notably:
+        # * Define a new "beartype._data.hint.datahinttyping.Hintable" type hint
         #  resembling:
         #      from beartype._cave._cavefast import (
         #          FunctionType,
@@ -493,7 +493,7 @@ class BeartypeDecorMeta:
         #      attribute as well as the ``__annotate__`` dunder callable if the
         #      active Python interpreter targets Python >= 3.13).
         #      '''
-        #* Define a new "beartype._data.cls.datacls.HintableTypes" tuple union
+        # * Define a new "beartype._data.cls.datacls.HintableTypes" tuple union
         #  resembling:
         #      from beartype._cave._cavefast import (
         #          FunctionType,
@@ -506,11 +506,11 @@ class BeartypeDecorMeta:
         #          ModuleType,  # <-- C-based *OR* pure-Python module
         #          type,        # <-- C-based *OR* pure-Python class
         #      )
-        #* Rename "HintAnnotations" to "HintableAnnotations" in that same
+        # * Rename "HintAnnotations" to "HintableAnnotations" in that same
         #  submodule.
-        #* Define a new "beartype._util.hintable" subpackage.
-        #* Define a new "beartype._util.hintable.utilhintableget" submodule.
-        #* Define a new get_hintable_hint_name_to_hint() getter in that
+        # * Define a new "beartype._util.hintable" subpackage.
+        # * Define a new "beartype._util.hintable.utilhintableget" submodule.
+        # * Define a new get_hintable_hint_name_to_hint() getter in that
         #  submodule whose signature resembles:
         #      from beartype._data.hint.datahinttyping import (
         #          Hintable,
@@ -519,8 +519,8 @@ class BeartypeDecorMeta:
         #
         #      def get_hintable_hint_name_to_hint(hintable: Hintable) -> (
         #          HintableAnnotations):
-        #* Define a new "BeartypePep649Exception" exception type, please.
-        #* Implement this getter conditionally depending on the active Python
+        # * Define a new "BeartypePep649Exception" exception type, please.
+        # * Implement this getter conditionally depending on the active Python
         #  interpreter as follows:
         #      from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
         #
@@ -579,11 +579,11 @@ class BeartypeDecorMeta:
         #          def get_hintable_hint_name_to_hint(hintable: Hintable) -> (
         #              HintableAnnotations):
         #              return hintable.__annotations__
-        #* Grep the codebase for all references to "__annotations__". All such
+        # * Grep the codebase for all references to "__annotations__". All such
         #  references *MUST* immediately be refactored as calls to
         #  get_hintable_hint_name_to_hint().
-        #FIXME: *SUPERB.* However, note that even the following might not
-        #suffice for Python >= 3.13. Why? Because, to quote PEP 649:
+        # FIXME: *SUPERB.* However, note that even the following might not
+        # suffice for Python >= 3.13. Why? Because, to quote PEP 649:
         #    Initially, inspect.get_annotations will call the object’s
         #    __annotate__ method requesting the desired format. If that raises
         #    NotImplementedError, inspect.get_annotations will construct a “fake
@@ -594,47 +594,47 @@ class BeartypeDecorMeta:
         #    “fake globals” dict to the object’s __annotate__ method, calling
         #    that requesting VALUE format, and returning the result.
         #
-        #...heh. So, our get_hintable_hint_name_to_hint() implementation needs
-        #to either:
-        #* Just defer to inspect.get_annotations(). I'm *NOT* particularly keen
+        # ...heh. So, our get_hintable_hint_name_to_hint() implementation needs
+        # to either:
+        # * Just defer to inspect.get_annotations(). I'm *NOT* particularly keen
         #  on that. That implementation is likely to be suboptimal and, more
         #  importantly, outside our control. Moreover, there's really *NO* need
         #  to defer to somebody else's implementation. Why? Because we basically
         #  already implemented the entirety of inspect.get_annotations() without
         #  knowing it as our "beartype._check.forward" subpackage. Ergo...
-        #* Derive mild inspiration from inspect.get_annotations(), but otherwise
+        # * Derive mild inspiration from inspect.get_annotations(), but otherwise
         #  substitute stock CPython stuff like "typing.ForwardRef" with
         #  equivalent functionality from our own "beartype._check.forward"
         #  subpackage.
         #
-        #Control is pivotal here. We can iterate on underlying issues
-        #significantly faster than CPython. We can also optimize and
-        #microoptimize this as we see fit to generate even better yields.
+        # Control is pivotal here. We can iterate on underlying issues
+        # significantly faster than CPython. We can also optimize and
+        # microoptimize this as we see fit to generate even better yields.
         #
-        #Note, however, that PEP 649-compliant stringizers are pretty
-        #phenomenal. It's unlikely that @beartype could or even should implement
-        #a better internal alternative. Ideally, our
-        #"beartype._check.forward.reference" API could be mildly refactored to
-        #internally support PEP 649-compliant stringizers under Python >= 3.13.
-        #Is that even feasible? Who knows. But... it's certainly desirable.
-        #FIXME: Actually... let's just defer to inspect.get_annotations(). Look.
-        #I know. I know. It's a shame. We threw a veritable ton of volunteer
-        #hours at "beartype._check.forward". But inspect.get_annotations() is
-        #strictly better than anything we've done or could reasonably do.
-        #Seriously. That train is moving on. Honestly, reproducing
-        #inspect.get_annotations() in @beartype is probably *NOT* feasible.
-        #inspect.get_annotations() does all sorts of intense and crazy stuff:
+        # Note, however, that PEP 649-compliant stringizers are pretty
+        # phenomenal. It's unlikely that @beartype could or even should implement
+        # a better internal alternative. Ideally, our
+        # "beartype._check.forward.reference" API could be mildly refactored to
+        # internally support PEP 649-compliant stringizers under Python >= 3.13.
+        # Is that even feasible? Who knows. But... it's certainly desirable.
+        # FIXME: Actually... let's just defer to inspect.get_annotations(). Look.
+        # I know. I know. It's a shame. We threw a veritable ton of volunteer
+        # hours at "beartype._check.forward". But inspect.get_annotations() is
+        # strictly better than anything we've done or could reasonably do.
+        # Seriously. That train is moving on. Honestly, reproducing
+        # inspect.get_annotations() in @beartype is probably *NOT* feasible.
+        # inspect.get_annotations() does all sorts of intense and crazy stuff:
         #    The “fake globals” environment will also have to create a fake
         #    “closure”, a tuple of ForwardRef objects pre-created with the names
         #    of the free variables referenced by the __annotate__ method.
         #
-        #There's just no way we're dynamically constructing fake closures. So,
-        #inspect.get_annotations() is it -- at least, initially. I mean, if
-        #significant issues end up arising from our usage of
-        #inspect.get_annotations()... well, that's fine. At that point, we'd
-        #obviously begin deriving our alternative heavily inspired by
-        #inspect.get_annotations(). Until then, we genuinely do need to assume
-        #that CPython devs know what they are talking about. Call that getter.
+        # There's just no way we're dynamically constructing fake closures. So,
+        # inspect.get_annotations() is it -- at least, initially. I mean, if
+        # significant issues end up arising from our usage of
+        # inspect.get_annotations()... well, that's fine. At that point, we'd
+        # obviously begin deriving our alternative heavily inspired by
+        # inspect.get_annotations(). Until then, we genuinely do need to assume
+        # that CPython devs know what they are talking about. Call that getter.
 
         # Dictionary mapping from the name of each annotated parameter accepted
         # by the unwrapped callable to the type hint annotating that parameter
@@ -773,7 +773,7 @@ class BeartypeDecorMeta:
 
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     '''
     **Beartype call metadata** (i.e., object encapsulating *all* metadata for
@@ -816,7 +816,7 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     return decor_meta
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def cull_beartype_call(decor_meta: BeartypeDecorMeta) -> None:
     '''
     Deinitialize the passed **beartype call metadata** (i.e., object

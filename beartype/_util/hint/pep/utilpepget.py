@@ -447,7 +447,7 @@ def get_hint_pep_sign(
     return hint_sign
 
 
-#FIXME: Revise us up the docstring, most of which is now obsolete.
+# FIXME: Revise us up the docstring, most of which is now obsolete.
 @callable_cached
 def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
@@ -590,10 +590,10 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Class of this hint.
     hint_type = hint.__class__
 
-    #FIXME: Is this actually the case? Do non-physical classes dynamically
-    #defined at runtime actually define *BOTH* of these dunder attributes:
-    #* "hint_type.__module__"?
-    #* "hint_type.__qualname__"?
+    # FIXME: Is this actually the case? Do non-physical classes dynamically
+    # defined at runtime actually define *BOTH* of these dunder attributes:
+    # * "hint_type.__module__"?
+    # * "hint_type.__qualname__"?
     # Dictionary mapping from the unqualified basenames of the types of all
     # PEP-compliant hints residing in the package defining this hint that are
     # uniquely identifiable by those types to their identifying signs if that
@@ -812,7 +812,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     die_if_hint_pep604_inconsistent(hint)
     # Else, this hint is consistent with respect to PEP 604-style new unions.
 
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     # If this hint is an unrecognized subscripted builtin type hint (i.e.,
     # C-based type hint instantiated by subscripting a pure-Python origin class
     # unrecognized by @beartype and thus PEP-noncompliant), return this sign.
@@ -920,15 +920,15 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
 
 # ....................{ GETTERS ~ origin : type            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep_origin_type(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
-    #FIXME: This should probably be a new "BeartypeDecorHintPepOriginException"
-    #type, instead. But it's unclear whether users will even ever see this
-    #exception. So, for now, laziness prevails. Huzzah! *sigh*
+    # FIXME: This should probably be a new "BeartypeDecorHintPepOriginException"
+    # type, instead. But it's unclear whether users will even ever see this
+    # exception. So, for now, laziness prevails. Huzzah! *sigh*
     exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
 ) -> type:
@@ -1010,7 +1010,7 @@ def get_hint_pep_origin_type(
     return hint_origin
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     '''
@@ -1080,9 +1080,9 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     return hint_origin
 
 
-#FIXME: Is this even required or desired anymore? Can't we just replace all
-#calls to this frankly non-ideal getter with calls to a dramatically superior
-#get_hint_pep_origin_type() getter? Excise us up, please.
+# FIXME: Is this even required or desired anymore? Can't we just replace all
+# calls to this frankly non-ideal getter with calls to a dramatically superior
+# get_hint_pep_origin_type() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument
@@ -1134,9 +1134,9 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     return hint_origin_type
 
 
-#FIXME: Is this even required or desired anymore? Can't we just replace all
-#calls to this frankly non-ideal getter with calls to the dramatically superior
-#get_hint_pep_origin_type_or_none() getter? Excise us up, please.
+# FIXME: Is this even required or desired anymore? Can't we just replace all
+# calls to this frankly non-ideal getter with calls to the dramatically superior
+# get_hint_pep_origin_type_or_none() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable_or_none(
     hint: Any) -> Optional[type]:
     '''

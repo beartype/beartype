@@ -245,7 +245,7 @@ def beartype_func(
     assert callable(func), f'{func!r} uncallable.'
     assert callable(wrapper), f'{wrapper!r} uncallable.'
 
-    #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
+    # FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
 
     # If this configuration enables the no-time strategy performing *NO*
@@ -600,12 +600,12 @@ def _beartype_descriptor_boundmethod(
     descriptor_new = MethodBoundInstanceOrClassType(
         func_checked, descriptor_self)  # type: ignore[return-value]
 
-    #FIXME: Actually, Python doesn't appear to support this at the moment.
-    #Attempting to do so raises this exception:
+    # FIXME: Actually, Python doesn't appear to support this at the moment.
+    # Attempting to do so raises this exception:
     #    AttributeError: attribute '__doc__' of 'method' objects is not writable
     #
-    #See also this open issue on the Python bug tracker requesting this be
-    #resolved. Sadly, Python has yet to resolve this:
+    # See also this open issue on the Python bug tracker requesting this be
+    # resolved. Sadly, Python has yet to resolve this:
     #    https://github.com/python/cpython/issues/91309
     #    https://bugs.python.org/issue47153
     # # Propagate the docstring from the prior to the new descriptor.

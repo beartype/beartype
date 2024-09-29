@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ SETTERS                            }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
     '''
     Dynamically set the **class variable** (i.e., attribute of the passed class)

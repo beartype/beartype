@@ -25,16 +25,16 @@ from beartype.typing import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: The names of *ALL* class variables declared below *MUST* be both:
 # * Prefixed by "__beartype_".
 # * Suffixed by "__".
 # If this is *NOT* done, these variables could induce a namespace conflict with
 # user-defined subpackages, submodules, and classes of the same names
 # concatenated via the BeartypeForwardRefMeta.__getattr__() dunder method.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
     '''
     Abstract base class (ABC) of all **forward reference subclasses** (i.e.,
@@ -140,7 +140,7 @@ class BeartypeForwardRefABC(metaclass=BeartypeForwardRefMeta):
 
 
 # ....................{ SUPERCLASSES ~ index               }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
@@ -175,7 +175,7 @@ class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference

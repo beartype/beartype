@@ -37,7 +37,7 @@ from sys import (
 from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
 
 # ....................{ ADDERS                             }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def add_beartype_pathhook() -> None:
     '''
     Add our **beartype import path hook singleton** (i.e., single callable
@@ -85,7 +85,7 @@ def add_beartype_pathhook() -> None:
     path_hooks.insert(0, loader_factory)
     # path_hooks.append(loader_factory)
 
-    #FIXME: Uncomment as needed to debug the contents of the "path_hooks" list.
+    # FIXME: Uncomment as needed to debug the contents of the "path_hooks" list.
     # print(f'path_hooks: {path_hooks}')
     # for path_hook in path_hooks:
     #     try:
@@ -109,7 +109,7 @@ def add_beartype_pathhook() -> None:
 
 
 # ....................{ REMOVERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def remove_beartype_pathhook() -> None:
     '''
     Remove our **beartype import path hook singleton** (i.e., single callable
@@ -163,10 +163,10 @@ _LOADERS_DETAILS = (
     # uncompiled pure-Python modules of the filetype ".py").
     (BeartypeSourceFileLoader, SOURCE_SUFFIXES),
 
-    #FIXME: Generalize this into a beartype-specific bytecode module loader.
-    #How? By leveraging the third-party "astor" package, which provides a
-    #code_to_ast() function decompiling arbitrary code objects into ASTs. See
-    #also this relevant StackOverflow answer by myself:
+    # FIXME: Generalize this into a beartype-specific bytecode module loader.
+    # How? By leveraging the third-party "astor" package, which provides a
+    # code_to_ast() function decompiling arbitrary code objects into ASTs. See
+    # also this relevant StackOverflow answer by myself:
     #    https://stackoverflow.com/a/76641537/2809027
 
     # Beartype-agnostic **bytecode module loader** (i.e., file loader loading
@@ -195,7 +195,7 @@ See Also
 
 
 # ....................{ PRIVATE ~ cachers                  }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def _clear_importlib_caches() -> None:
     '''
     Clear *all* :mod:`sys`- and :mod:`importlib`-specific caches pertaining to

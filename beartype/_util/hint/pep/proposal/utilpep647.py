@@ -19,7 +19,7 @@ from beartype.typing import (
 )
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def reduce_hint_pep647(
     hint: object,
     pith_name: Optional[str],

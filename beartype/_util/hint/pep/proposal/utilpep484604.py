@@ -30,7 +30,7 @@ if IS_PYTHON_AT_LEAST_3_10:
     )
 
     # ....................{ RAISERS                        }....................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def die_if_hint_pep604_inconsistent(hint: object) -> None:
 
         # Avoid circular import dependencies.
@@ -274,7 +274,7 @@ def is_hint_pep484604_union_ignorable(hint: object) -> bool:
 
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def make_hint_pep484604_union(hints: tuple) -> object:
     '''

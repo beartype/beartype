@@ -78,11 +78,11 @@ class BeartypeValidator:
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats the purpose.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
@@ -536,8 +536,8 @@ class BeartypeValidator:
             validator_operand_2=other,
         )
 
-    #FIXME: Fun optimization: if inverting something that's already been
-    #inverted, return the original "BeartypeValidator" object sans inversion.
+    # FIXME: Fun optimization: if inverting something that's already been
+    # inverted, return the original "BeartypeValidator" object sans inversion.
     def __invert__(self) -> 'BeartypeValidator':
         '''
         **Negation** (i.e., ``~self``), synthesizing a new

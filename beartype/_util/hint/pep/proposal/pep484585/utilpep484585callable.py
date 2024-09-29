@@ -25,9 +25,9 @@ from beartype.typing import (
 )
 
 # ....................{ HINTS                              }....................
-#FIXME: Uhh... What? Extreme overkill, thy name is this type hint. Don't bother
-#with an expanded type hint accessible only to other runtime type-checkers.
-#*WHAT* other runtime type-checkers, you know? *sigh*
+# FIXME: Uhh... What? Extreme overkill, thy name is this type hint. Don't bother
+# with an expanded type hint accessible only to other runtime type-checkers.
+# *WHAT* other runtime type-checkers, you know? *sigh*
 # If an external static type checker (e.g., "mypy") is currently subjecting
 # "beartype" to static analysis, reduce this hint to a simplistic facsimile of
 # its full form tolerated by static type checkers.

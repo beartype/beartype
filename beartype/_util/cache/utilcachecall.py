@@ -11,12 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Generalize @callable_cached to revert to the body of the
-#@beartype._util.type.decorator.decmemo.func_cached decorator when the passed
-#callable accepts *NO* parameters, which can be trivially decided by inspecting
-#the code object of this callable. Why do this? Because the @func_cached
-#decorator is *INSANELY* fast for this edge case -- substantially faster than
-#the current general-purpose @callable_cached approach.
+# FIXME: Generalize @callable_cached to revert to the body of the
+# @beartype._util.type.decorator.decmemo.func_cached decorator when the passed
+# callable accepts *NO* parameters, which can be trivially decided by inspecting
+# the code object of this callable. Why do this? Because the @func_cached
+# decorator is *INSANELY* fast for this edge case -- substantially faster than
+# the current general-purpose @callable_cached approach.
 
 # ....................{ IMPORTS                            }....................
 from functools import wraps
@@ -152,10 +152,10 @@ def callable_cached(func: CallableT) -> CallableT:
     '''
     assert callable(func), f'{func!r} not callable.'
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize against the @method_cached_arg_by_id decorator
     # below. For speed, this decorator violates DRY by duplicating logic.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
@@ -252,9 +252,9 @@ def callable_cached(func: CallableT) -> CallableT:
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.
         except TypeError:
-            #FIXME: If testing, emit a non-fatal warning or possibly even raise
-            #a fatal exception. In either case, we want our test suite to notify
-            #us about this.
+            # FIXME: If testing, emit a non-fatal warning or possibly even raise
+            # a fatal exception. In either case, we want our test suite to notify
+            # us about this.
             return func(*args)
 
         # Return this value.
@@ -378,10 +378,10 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
         )
     # Else, this wrappee accepts *NO* variadic arguments.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize against the @callable_cached decorator above. For
     # speed, this decorator violates DRY by duplicating logic.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
@@ -469,9 +469,9 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.
         except TypeError:
-            #FIXME: If testing, emit a non-fatal warning or possibly even raise
-            #a fatal exception. In either case, we want our test suite to notify
-            #us about this.
+            # FIXME: If testing, emit a non-fatal warning or possibly even raise
+            # a fatal exception. In either case, we want our test suite to notify
+            # us about this.
             return func(self_or_cls, arg)
 
         # Return this value.
@@ -671,6 +671,6 @@ Alternatives include (in order of decreasing efficiency):
 '''
 
 
-#FIXME: Uncomment to debug memoization-specific issues. *sigh*
+# FIXME: Uncomment to debug memoization-specific issues. *sigh*
 # def callable_cached(func: _CallableT) -> _CallableT: return func
 # def property_cached(func: _CallableT) -> _CallableT: return func

@@ -31,7 +31,7 @@ from beartype.typing import (
 )
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_globals(
     # Mandatory parameters.
     func: Callable,

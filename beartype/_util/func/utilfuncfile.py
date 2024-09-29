@@ -15,11 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *FILE UPSTREAM CPYTHON ISSUES.* Unfortunately, this submodule exposed a
-#number of significant issues in the CPython stdlib -- all concerning parsing
-#of lambda functions. These include:
+# FIXME: *FILE UPSTREAM CPYTHON ISSUES.* Unfortunately, this submodule exposed a
+# number of significant issues in the CPython stdlib -- all concerning parsing
+# of lambda functions. These include:
 #
-#1. The inspect.getsourcelines() function raises unexpected
+# 1. The inspect.getsourcelines() function raises unexpected
 #   "tokenize.TokenError" exceptions when passed lambda functions preceded by
 #   one or more triple-quoted strings: e.g.,
 #       >>> import inspect
@@ -30,8 +30,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #       ... )
 #       >>> inspect.getsourcelines(built_to_fail[1])}
 #       tokenize.TokenError: ('EOF in multi-line string', (323, 8))
-#FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
-#as a new answer, as this is highly non-trivial, frankly:
+# FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
+# as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
 
 # ....................{ IMPORTS                            }....................

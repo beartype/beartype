@@ -377,8 +377,8 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
         # case, clear *ALL* beartype-specific internal caches that have been
         # shown to fail when classes are redefined.
         if type_name in type_names_beartyped:
-            #FIXME: Consider emitting a logging message instead if this branch
-            #ever becomes computationally intensive, please.
+            # FIXME: Consider emitting a logging message instead if this branch
+            # ever becomes computationally intensive, please.
             # print(f'@beartyped class "{module_name}.{type_name}" redefined!')
 
             # Clear the previously accessed set of the unqualified basenames of

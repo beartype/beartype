@@ -15,7 +15,7 @@ from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
 from beartype.roar._roarexc import _BeartypeUtilTextException
 
 # ....................{ CASERS                             }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def lowercase_str_char_first(text: str) -> str:
     '''
     Lowercase *only* the first character of the passed string.

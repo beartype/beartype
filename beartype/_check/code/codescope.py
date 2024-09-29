@@ -12,9 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Hah-hah! Finally figured out how to do recursive type hints... mostly.
-#It's a two-parter consisting of:
-#* *PART I.* In the first part:
+# FIXME: Hah-hah! Finally figured out how to do recursive type hints... mostly.
+# It's a two-parter consisting of:
+# * *PART I.* In the first part:
 #  * Refactor our code generation algorithm to additionally maintain a stack of
 #    all parent type hints of the currently visited type hint. Note that we need
 #    to do this anyway to support the __beartype_hint__() protocol. See "FIXME:"
@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        stack in the returned 3-tuple
 #        "(forwardref_expr, forwardrefs_class_basename, forwardref_parent_hints)",
 #        where "forwardref_parent_hints" is that stack.
-#* *PART II.* In the second part:
+# * *PART II.* In the second part:
 #  * Refactor the beartype._decor.wrap.wrapmain._unmemoize_func_wrapper_code()
 #    function to additionally:
 #    * If the passed forward reference is relative *AND* the unqualified
@@ -44,7 +44,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        indefinitely. If doing so generates a "RecursionError", @beartype
 #        considers that the user's problem. *wink*
 #
-#Done and done. Phew!
+# Done and done. Phew!
 
 # ....................{ IMPORTS                            }....................
 from collections.abc import Set
@@ -85,7 +85,7 @@ from beartype.typing import (
 )
 
 # ....................{ ADDERS ~ type                      }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def add_func_scope_ref(
     # Mandatory parameters.
     func_scope: LexicalScope,
@@ -142,7 +142,7 @@ def add_func_scope_ref(
 
 
 # ....................{ ADDERS ~ type                      }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def add_func_scope_type_or_types(
     # Mandatory parameters.
     func_scope: LexicalScope,

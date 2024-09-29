@@ -20,7 +20,7 @@ from beartype._data.hint.datahinttyping import IterableStrs
 from beartype.typing import Iterable as typing_Iterable
 
 # ....................{ JOINERS                            }....................
-#FIXME: Unit test the "is_double_quoted" parameter, please.
+# FIXME: Unit test the "is_double_quoted" parameter, please.
 def join_delimited(
     # Mandatory parameters.
     strs: IterableStrs,
@@ -135,7 +135,7 @@ def join_delimited(
 
 
 # ....................{ JOINERS ~ conjunction              }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def join_delimited_conjunction(strs: IterableStrs, **kwargs) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas

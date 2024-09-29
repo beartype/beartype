@@ -11,7 +11,7 @@ process).
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Consider adding the following new tester:
+# FIXME: Consider adding the following new tester:
 #    def is_objects_similar(
 #        # Mandatory parameters.
 #        obj: object,
@@ -24,22 +24,22 @@ process).
 #        schema_hint = infer_hint(schema, conf=conf)
 #        return is_bearable(obj, schema_hint, conf=conf)
 #
-#This test implements a new **typing structural similarity** metric answering
-#the question: "Do these two objects have a similar structure?" This is a softer
-#metric than object equality, which is a softer metric than object identity.
-#Nonetheless, this metric is *INCREDIBLY* useful for certain use cases: e.g.,
-#data validation, where one predefined exemplar archetypal object defined by the
-#developer serves as a templating "schema" used to validate other arbitrary
-#objects defined and passed in by users.
+# This test implements a new **typing structural similarity** metric answering
+# the question: "Do these two objects have a similar structure?" This is a softer
+# metric than object equality, which is a softer metric than object identity.
+# Nonetheless, this metric is *INCREDIBLY* useful for certain use cases: e.g.,
+# data validation, where one predefined exemplar archetypal object defined by the
+# developer serves as a templating "schema" used to validate other arbitrary
+# objects defined and passed in by users.
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: This submodule intentionally does *not* import the
 # @beartype.beartype decorator. Why? Because that decorator conditionally
 # reduces to a noop under certain contexts (e.g., `python3 -O` optimization),
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._check.checkmake import (
     make_func_raiser,
     make_func_tester,

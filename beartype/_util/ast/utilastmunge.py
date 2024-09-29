@@ -19,7 +19,7 @@ from beartype.typing import (
 )
 
 # ....................{ COPIERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def copy_node_metadata(
     node_src: AST, node_trg: Union[AST, Iterable[AST]]) -> None:
     '''

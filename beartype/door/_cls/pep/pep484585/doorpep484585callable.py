@@ -253,7 +253,7 @@ class CallableTypeHint(TypeHint):
         return self.return_hint.is_ignorable
 
     # ..................{ PRIVATE ~ testers                  }..................
-    #FIXME: Internally comment us up, please.
+    # FIXME: Internally comment us up, please.
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
         # If that branch is unsubscripted (e.g., "typing.Callable"), assume that

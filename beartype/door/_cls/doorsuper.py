@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Slot "TypeHint" attributes for lookup efficiency, please.
-#FIXME: Privatize most (...or perhaps all) public instance variables, please.
+# FIXME: Slot "TypeHint" attributes for lookup efficiency, please.
+# FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
 from beartype._conf.confcls import BeartypeConf
@@ -46,8 +46,8 @@ from beartype.typing import (
 )
 
 # ....................{ SUPERCLASSES                       }....................
-#FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
-#FIXME: Document all public and private attributes of this class, please.
+# FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
+# FIXME: Document all public and private attributes of this class, please.
 class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
@@ -350,7 +350,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return self._args_wrapped_tuple[index]
 
     # ..................{ DUNDERS ~ iterable : sized         }..................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def __bool__(self) -> bool:
         '''
         :data:`True` only if the low-level parent type hint wrapped by this
@@ -360,7 +360,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # See __len__() for further commentary.
         return bool(self._args_wrapped_tuple)
 
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def __len__(self) -> int:
         '''
         Number of low-level child type hints subscripting the low-level parent
@@ -380,7 +380,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ PROPERTIES ~ read-only             }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
 
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     @property
     def args(self) -> tuple:
         '''

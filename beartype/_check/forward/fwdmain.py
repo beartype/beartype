@@ -41,7 +41,7 @@ from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
 from beartype.typing import Optional
 
 # ....................{ RESOLVERS                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def resolve_hint(
     # Mandatory parameters.
     hint: str,
@@ -297,14 +297,14 @@ def resolve_hint(
                     func_scope_names_ignore=(
                         0 if cls_stack is None else len(cls_stack)),
 
-                    #FIXME: Consider dynamically calculating exactly how many
-                    #additional @beartype-specific frames are ignorable on the
-                    #first call to this function, caching that number, and then
-                    #reusing that cached number on all subsequent calls to this
-                    #function. The current approach employed below of naively
-                    #hard-coding a number of frames to ignore was incredibly
-                    #fragile and had to be effectively disabled, which hampers
-                    #runtime efficiency.
+                    # FIXME: Consider dynamically calculating exactly how many
+                    # additional @beartype-specific frames are ignorable on the
+                    # first call to this function, caching that number, and then
+                    # reusing that cached number on all subsequent calls to this
+                    # function. The current approach employed below of naively
+                    # hard-coding a number of frames to ignore was incredibly
+                    # fragile and had to be effectively disabled, which hampers
+                    # runtime efficiency.
 
                     # Ignore additional frames on the call stack embodying:
                     # * The current call to this function.

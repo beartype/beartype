@@ -58,14 +58,14 @@ def beartype(*, conf: BeartypeConf) -> Callable[
 
 
 # ....................{ DECORATORS                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: *THE ORDER OF CONDITIONAL STATEMENTS BELOW IS SIGNIFICANT.* Notably,
 # mypy 0.940 erroneously emits this fatal error when the "TYPE_CHECKING or"
 # condition is *NOT* the first condition of this "if" statement:
 #     beartype/_decor/main.py:294: error: Condition can't be inferred, unable
 #     to merge overloads [misc]
 # See also: https://github.com/python/mypy/issues/12335#issuecomment-1065591703
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # If the active Python interpreter is either...
 if (
     # Running under an external static type checker -- in which case there is
@@ -94,10 +94,10 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Synchronize the signature of this identity decorator with the
 # non-identity decorator imported below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def beartype(  # type: ignore[no-redef]
         obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
 

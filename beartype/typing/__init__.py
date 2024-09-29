@@ -73,12 +73,12 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Fundamentally generalize this submodule to optionally backport
-#attributes from "typing_extensions" where available, resolving issue #237 at:
+# FIXME: Fundamentally generalize this submodule to optionally backport
+# attributes from "typing_extensions" where available, resolving issue #237 at:
 #    https://github.com/beartype/beartype/issues/237
 #
-#To do so, we'll basically want to discard the entire current implementation of
-#this submodule in favour of a fundamentally superior approach resembling:
+# To do so, we'll basically want to discard the entire current implementation of
+# this submodule in favour of a fundamentally superior approach resembling:
 #    # In "beartype.typing.__init__": the future of typing backports begins today.
 #    from typing import TYPE_CHECKING
 #
@@ -122,7 +122,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #        #FIXME: Repeat the above logic for *ALL* existing "typing" attributes.
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # *NOT* intended for public importation should be locally imported at module
 # scope *ONLY* under alternate private names (e.g., "import re as _re" rather
@@ -132,9 +132,9 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # import machinery rather than non-standard dynamic import shenanigans (e.g.,
 # "from typing import Annotated" rather than
 # "import_typing_attr_or_none('Annotated')").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # ....................{ IMPORTS ~ all                      }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
 # hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
 # explicitly reimported under the same names with "{exception_name} as
@@ -143,7 +143,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
 #     explicitly export attribute "BeartypeCallUnavailableTypeException";
 #     implicit reexport disabled  [attr-defined]
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Import all public attributes of the "typing" module both available under all
 # supported Python versions and *NOT* deprecated by a subsequent Python version
 # under their original names.
@@ -196,26 +196,26 @@ from beartype._util.py.utilpyversion import (
 # least some Python interpreter version *AN* not yet deprecated by a subsequent
 # Python interpreter version under their original names.
 
-#FIXME: mypy is now emitting non-fatal warnings about our failing to import from
-#"typing_extensions", which is both an overly strongly opinionated position for
-#mypy to stake out *AND* a bad opinion at that, because "typing_extensions" is
-#a third-party package. Ideally, mypy shouldn't be pushing *ANY* third-party
-#packages. These warnings resemble:
+# FIXME: mypy is now emitting non-fatal warnings about our failing to import from
+# "typing_extensions", which is both an overly strongly opinionated position for
+# mypy to stake out *AND* a bad opinion at that, because "typing_extensions" is
+# a third-party package. Ideally, mypy shouldn't be pushing *ANY* third-party
+# packages. These warnings resemble:
 #    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Final` instead
 #    beartype/typing/__init__.py:145: note: See https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-new-additions-to-the-typing-module
 #    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Literal` instead
 #
-#That's not the worst, however. mypy is erroneously ignoring our intentional
-#"# type: ignore[attr-defined]" pragmas here. It's likely that the ultimate
-#culprit is our use of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean globals.
-#Instead, mypy appears to only support hard-coded tests against the
-#"sys.version_info" tuple: e.g.,
+# That's not the worst, however. mypy is erroneously ignoring our intentional
+# "# type: ignore[attr-defined]" pragmas here. It's likely that the ultimate
+# culprit is our use of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean globals.
+# Instead, mypy appears to only support hard-coded tests against the
+# "sys.version_info" tuple: e.g.,
 #    if sys.version_info >= (3, 8):
 #
-#To resolve this, we should consider:
-#* Abandoning our usage of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean
+# To resolve this, we should consider:
+# * Abandoning our usage of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean
 #  globals for hard-coded tests against the "sys.version_info" tuple (above).
-#* Submitting an upstream issue requesting that mypy respect the
+# * Submitting an upstream issue requesting that mypy respect the
 #  "# type: ignore[attr-defined]" pragma rather than emitting warnings here.
 
 # If the active Python interpreter targets Python >= 3.10...

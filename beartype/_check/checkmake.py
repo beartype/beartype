@@ -77,11 +77,11 @@ from beartype.typing import (
 # ....................{ FACTORIES ~ func                   }....................
 @callable_cached
 def make_func_raiser(
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: All calls to this memoized factory pass parameters *POSITIONALLY*
     # rather than by keyword. Care should be taken when refactoring parameters,
     # particularly with respect to parameter position.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     hint: object,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -134,11 +134,11 @@ def make_func_raiser(
 
 @callable_cached
 def make_func_tester(
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: All calls to this memoized factory pass parameters *POSITIONALLY*
     # rather than by keyword. Care should be taken when refactoring parameters,
     # particularly with respect to parameter position.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Mandatory parameters.
     hint: object,
@@ -185,7 +185,7 @@ def make_func_tester(
 
 
 # ....................{ FACTORIES ~ code                   }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
     hint: object,
@@ -243,7 +243,7 @@ def make_code_tester_check(
 
 
 # ....................{ FACTORIES ~ code : raiser          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
     hint: object,
@@ -299,9 +299,9 @@ def make_code_raiser_func_pith_check(
         Further details.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the make_code_hint_object_check() factory.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
@@ -412,7 +412,7 @@ def make_code_raiser_func_pep484_noreturn_check(
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
     hint: object,
@@ -451,9 +451,9 @@ def make_code_raiser_hint_object_check(
         Further details.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the make_code_raiser_func_pith_check() factory.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
@@ -535,7 +535,7 @@ def _func_checker_ignorable(obj: object) -> bool:
 
 
 # ....................{ PRIVATE ~ factories : func         }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def _make_func_checker(
     # Mandatory parameters.
     hint: object,
@@ -645,39 +645,39 @@ def _make_func_checker(
                 hint_refs_type_basename,
             ) = make_code_check(hint, conf, exception_prefix)
 
-            #FIXME: Actually, nothing below is particularly significant. Users
-            #now basically require this. So, let's find a way to do this. The
-            #only genuinely significant blocker here from @beartype's
-            #perspective is *MEMOIZATION.* Currently, the parent factories
-            #(e.g., make_func_raiser()) transitively calling this factory are
-            #memoized by @callable_cached. Clearly, memoization breaks down in
-            #the face of relative forward references... *OR DOES IT!?* We now
-            #need to probably:
-            #* Figure out a way of replacing all relative forward references
+            # FIXME: Actually, nothing below is particularly significant. Users
+            # now basically require this. So, let's find a way to do this. The
+            # only genuinely significant blocker here from @beartype's
+            # perspective is *MEMOIZATION.* Currently, the parent factories
+            # (e.g., make_func_raiser()) transitively calling this factory are
+            # memoized by @callable_cached. Clearly, memoization breaks down in
+            # the face of relative forward references... *OR DOES IT!?* We now
+            # need to probably:
+            # * Figure out a way of replacing all relative forward references
             #  with corresponding "ForwardRefRelativeProxy" objects.
-            #* This is a fundamentally new type of thing we currently do *NOT*
+            # * This is a fundamentally new type of thing we currently do *NOT*
             #  have. The idea here is that these objects should dynamically
             #  introspect up the call stack for the first stack frame residing
             #  in a non-"beartype" module, which these objects then resolve each
             #  relative forward reference against.
-            #* Consider refactoring our "codemake" algorthm to unconditionally
+            # * Consider refactoring our "codemake" algorthm to unconditionally
             #  do this for *ALL* relative forward references. Doing so would
             #  (probably) be a lot faster than the current global string
             #  replacement approach... maybe. Okay, maybe not. But maybe.
             #
-            #Sounds fun! Sounds like a lot of non-trivial work, too. But that's
-            #where all the fun resides, doesn't it? *DOESN'T IT!?*
-            #FIXME: *WAIT.* That doesn't quite work. The issue, of course, is
-            #that the scope in which a callable is called may no longer have
-            #access to the scope in which a callable was defined, which is where
-            #the class referred to by relative forward references actually
-            #lives. So, we absolutely should *NOT* "Consider refactoring our..."
-            #No. Don't do that. That said, the above idea *SHOULD* still behave
-            #itself for if_bearable() and die_if_unbearable(), because these
-            #statement-level type-checkers actually do run in the same scopes
-            #that their type hints are defined in. Huh. Pretty nifty, eh? This
-            #then suggests that:
-            #* We'll need to generalize our "codemake" function to accept a new
+            # Sounds fun! Sounds like a lot of non-trivial work, too. But that's
+            # where all the fun resides, doesn't it? *DOESN'T IT!?*
+            # FIXME: *WAIT.* That doesn't quite work. The issue, of course, is
+            # that the scope in which a callable is called may no longer have
+            # access to the scope in which a callable was defined, which is where
+            # the class referred to by relative forward references actually
+            # lives. So, we absolutely should *NOT* "Consider refactoring our..."
+            # No. Don't do that. That said, the above idea *SHOULD* still behave
+            # itself for if_bearable() and die_if_unbearable(), because these
+            # statement-level type-checkers actually do run in the same scopes
+            # that their type hints are defined in. Huh. Pretty nifty, eh? This
+            # then suggests that:
+            # * We'll need to generalize our "codemake" function to accept a new
             #  optional "is_refs_relative_proxy: bool = False" parameter. When:
             #  * "True", code generation replaces all relative forward
             #    references with corresponding "ForwardRefRelativeProxy" objects
@@ -752,11 +752,11 @@ def _make_func_checker(
                 func_code=func_checker_code,
                 func_locals=func_scope,
 
-                #FIXME: Almost right but *NOT* quite right. Why? Because
-                #make_func() will append a space to "func_label", but
-                #"EXCEPTION_PLACEHOLDER" is *ALREADY* suffixed by a space. Oh,
-                #well. It's not a super-big deal. In theory, this function
-                #should *NEVER* raise exceptions, anyway. *shrug*
+                # FIXME: Almost right but *NOT* quite right. Why? Because
+                # make_func() will append a space to "func_label", but
+                # "EXCEPTION_PLACEHOLDER" is *ALREADY* suffixed by a space. Oh,
+                # well. It's not a super-big deal. In theory, this function
+                # should *NEVER* raise exceptions, anyway. *shrug*
                 func_label=EXCEPTION_PLACEHOLDER,
 
                 is_debug=conf.is_debug,

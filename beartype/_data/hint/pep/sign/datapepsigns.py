@@ -13,16 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 
 # ....................{ SIGNS ~ explicit                   }....................
 # Signs with explicit analogues in the stdlib "typing" module.
 #
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Signs defined by this module are synchronized with the "__all__"
 # list global of the "typing" module bundled with the most recent CPython
 # release. For that reason, these signs are:
@@ -50,7 +50,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 # * Preserve attributes here that have since been removed from the "typing"
 #   module in that CPython release to ensure their continued usability when
 #   running beartype against older CPython releases.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
 HintSignAnnotated = _HintSign(name='Annotated')
@@ -93,7 +93,7 @@ HintSignUnion = _HintSign(name='Union')
 # ABCs (from collections.abc).
 HintSignAbstractSet = _HintSign(name='AbstractSet')
 
-#FIXME: Permanently remove this sign *AFTER* dropping support for Python 3.15.
+# FIXME: Permanently remove this sign *AFTER* dropping support for Python 3.15.
 HintSignByteString = _HintSign(name='ByteString')
 
 HintSignContainer = _HintSign(name='Container')
@@ -225,9 +225,9 @@ module:
 '''
 
 
-#FIXME: *WOOPS.* Turns out this was an awful idea, thanks to PEP 646 (i.e.,
-#tuple type hint unpacking). Probably should have seen that coming. See the
-#"data_pep646" test submodule for clarity on what to do now. It's not pretty.
+# FIXME: *WOOPS.* Turns out this was an awful idea, thanks to PEP 646 (i.e.,
+# tuple type hint unpacking). Probably should have seen that coming. See the
+# "data_pep646" test submodule for clarity on what to do now. It's not pretty.
 HintSignTupleFixed = _HintSign(name='TupleFixed')
 '''
 Sign uniquely identifying **fixed-length tuple type hints,** including:

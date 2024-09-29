@@ -13,17 +13,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP 646] Actually implement *SUPERFICIAL* type-checking support for PEP
-#646-compliant tuple type hint unpacking:
+# FIXME: [PEP 646] Actually implement *SUPERFICIAL* type-checking support for PEP
+# 646-compliant tuple type hint unpacking:
 #    Tuple[int, *Tuple[str, ...], str] - a tuple type where the first element is
 #    guaranteed to be of type int, the last element is guaranteed to be of type
 #    str, and the elements in the middle are zero or more elements of type str..
 #
-#Interestingly, even detecting accursed objects like "*Tuple[str, ...]" at
-#runtime is highly non-trivial. They do *NOT* have a sane unambiguous type,
-#significantly complicating detection. For some utterly inane reason, their type
-#is simply the ambiguous "types.GenericAlias" type. That... wasn't what we were
-#expecting *AT ALL*. For example, under Python 3.13:
+# Interestingly, even detecting accursed objects like "*Tuple[str, ...]" at
+# runtime is highly non-trivial. They do *NOT* have a sane unambiguous type,
+# significantly complicating detection. For some utterly inane reason, their type
+# is simply the ambiguous "types.GenericAlias" type. That... wasn't what we were
+# expecting *AT ALL*. For example, under Python 3.13:
 #    # Note that Python *REQUIRES* unpacked tuple type hints to be embedded in
 #    # some larger syntactic construct. So, just throw it into a list. This is
 #    # insane, because we're only going to rip it right back out of that list.
@@ -68,9 +68,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #    >>> yim.__origin__
 #    tuple  # <-- so you lie about everything, huh?
 #
-#Basically, the above means that the only means of reliably detecting an
-#unpacked tuple type hint at runtime is as follows:
-#def is_pep646_hint_tuple_unpacked(obj: object) -> bool:
+# Basically, the above means that the only means of reliably detecting an
+# unpacked tuple type hint at runtime is as follows:
+# def is_pep646_hint_tuple_unpacked(obj: object) -> bool:
 #    return (
 #        obj.__class__ is types.GenericAlias and
 #        #FIXME: Globalize this magic constant for efficiency. *shrug*
@@ -82,15 +82,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #        )
 #    )
 #
-#That's super-inefficient *AND* fragile across Python versions, but... what you
-#gonna do, huh? PEP 646 authors *REALLY* dropped the ball on this one, sadly.
+# That's super-inefficient *AND* fragile across Python versions, but... what you
+# gonna do, huh? PEP 646 authors *REALLY* dropped the ball on this one, sadly.
 #
-#Of course, all of that only gets us to just detecting these accursed objects.
-#We then need to actually *TYPE-CHECK* their contents, somehow. A few ideas:
-#* A parent tuple hint can contain at most *ONE* unpacked child tuple hint. So,
+# Of course, all of that only gets us to just detecting these accursed objects.
+# We then need to actually *TYPE-CHECK* their contents, somehow. A few ideas:
+# * A parent tuple hint can contain at most *ONE* unpacked child tuple hint. So,
 #  we'll now need to record the number of unpacked child tuple hints that have
 #  been previously handled and raise an exception if two or more are seen. Ugh!
-#* If the child tuple hint being unpacked is variadic (i.e., it's last item is
+# * If the child tuple hint being unpacked is variadic (i.e., it's last item is
 #  "...") while the parent tuple hint containing that child tuple hint is
 #  fixed-length, we're now in trouble. This is exactly the example shown above.
 #  Supporting this requires possibly intense generalizations to our code
@@ -99,21 +99,21 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the fixed-length tuple hint code path will need to detect and handle unpacked
 #  child variadic tuple hints. Kinda madness, honestly. We sigh. *sigh*
 
-#FIXME: [PEP 692] *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]"
-#after reduction, a fixed-length tuple hint. Clearly, however,
-#"Tuple[Unpack[Ts]]" should instead be semantically equivalent to a variadic
-#tuple hint: e.g.,
+# FIXME: [PEP 692] *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]"
+# after reduction, a fixed-length tuple hint. Clearly, however,
+# "Tuple[Unpack[Ts]]" should instead be semantically equivalent to a variadic
+# tuple hint: e.g.,
 #    # This is what we want! Tuple[*Ts] == Tuple[Unpack[Ts]] ==
 #    Tuple[Any, ...]
 #
-#See commentary in "data_pep646" for how to address this. *sigh*
+# See commentary in "data_pep646" for how to address this. *sigh*
 
-#FIXME: [PEP 692] Actually implement deep type-checking support for PEP
-#692-compliant unpack type hints of the form "**kwargs:
-#typing.Unpack[UserTypedDict]". Doing so will *ALMOST CERTAINLY* necessitate a
-#new logic pathway for dynamically generating type-checking code efficiently
-#type-checking the passed variadic keyword argument dictionary "**kwargs"
-#against that user-defined "UserTypedDict". Feasible, but non-trivial. *sigh*
+# FIXME: [PEP 692] Actually implement deep type-checking support for PEP
+# 692-compliant unpack type hints of the form "**kwargs:
+# typing.Unpack[UserTypedDict]". Doing so will *ALMOST CERTAINLY* necessitate a
+# new logic pathway for dynamically generating type-checking code efficiently
+# type-checking the passed variadic keyword argument dictionary "**kwargs"
+# against that user-defined "UserTypedDict". Feasible, but non-trivial. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -134,8 +134,8 @@ from beartype.typing import (
 )
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, including:
-#* Unsubscripted "typing.Unpack" type hints, which should be unconditionally
+# FIXME: Unit test us up, including:
+# * Unsubscripted "typing.Unpack" type hints, which should be unconditionally
 #  *PROHIBITED.* They signify nothing. "typing.Unpack" should *ALWAYS* be
 #  subscripted by at least something.
 def reduce_hint_pep646692_unpack(

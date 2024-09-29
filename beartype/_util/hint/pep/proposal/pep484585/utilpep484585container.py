@@ -62,8 +62,8 @@ def reduce_hint_pep484585_itemsview(
 
     # If this hint is subscripted by one or more child type hints...
     if is_hint_pep_subscripted(hint):
-        #FIXME: Safely replace this with "from typing import Annotated" after
-        #dropping Python 3.8 support.
+        # FIXME: Safely replace this with "from typing import Annotated" after
+        # dropping Python 3.8 support.
         # "typing.Annotated" type hint factory safely imported from whichever of the
         # "typing" or "typing_extensions" modules declares this attribute if one or
         # more do *OR* "None" otherwise (i.e., if none do).

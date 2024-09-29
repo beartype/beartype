@@ -21,7 +21,7 @@ from beartype._data.hint.datahinttyping import (
 )
 
 # ....................{ REMOVERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
@@ -86,7 +86,7 @@ def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
         )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
     '''
     Permanently, silently, and possibly recursively remove *all* target files
@@ -170,9 +170,9 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
 
         # If this pathname refers to a file...
         if pathname_globbed.is_file():
-            #FIXME: Pass "missing_ok=True" *AFTER* dropping Python 3.7, as doing
-            #so will improve the robustness of this logic against race
-            #conditions.
+            # FIXME: Pass "missing_ok=True" *AFTER* dropping Python 3.7, as doing
+            # so will improve the robustness of this logic against race
+            # conditions.
 
             # Silently remove this file if feasible *OR* raise an exception.
             pathname_globbed.unlink()

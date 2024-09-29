@@ -121,10 +121,10 @@ def get_interpreter_command_words() -> CommandWords:
         Iterable of one or more shell words unambiguously running this binary.
     '''
 
-    #FIXME: Uncomment if required. Although this was certainly required a decade
-    #ago, it's unclear whether this is still required; indeed, given the
-    #increased prevalence of Apple Silicon, it seems likely that an entirely
-    #different macOS-specific prefix might be required now. Thus, I sigh. *sigh*
+    # FIXME: Uncomment if required. Although this was certainly required a decade
+    # ago, it's unclear whether this is still required; indeed, given the
+    # increased prevalence of Apple Silicon, it seems likely that an entirely
+    # different macOS-specific prefix might be required now. Thus, I sigh. *sigh*
     # # Avoid circular import dependencies.
     # from beartype._util.os.utilostest import is_os_macos
     #

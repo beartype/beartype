@@ -38,11 +38,11 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -104,10 +104,10 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         self._validator_operand_2 = validator_operand_2
 
     # ..................{ GETTERS                            }..................
-    #FIXME: Unit test us up, please.
-    #FIXME: Overly verbose for conjunctions involving three or more
-    #beartype validators. Contemplate compaction schemes, please. Specifically,
-    #we need to detect this condition here and then compact based on that:
+    # FIXME: Unit test us up, please.
+    # FIXME: Overly verbose for conjunctions involving three or more
+    # beartype validators. Contemplate compaction schemes, please. Specifically,
+    # we need to detect this condition here and then compact based on that:
     #    # If either of these validators are themselves conjunctions...
     #    if isinstance(self._validator_operand_1, BeartypeValidatorConjunction):
     #       ...

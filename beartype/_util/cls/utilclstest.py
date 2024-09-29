@@ -61,7 +61,7 @@ def die_unless_type(
     # Else, this object is a class.
 
 
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def die_unless_type_or_types(
     # Mandatory parameters.
     type_or_types: object,
@@ -327,7 +327,7 @@ def is_type_subclass(
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_type_subclass_proper(
     cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''

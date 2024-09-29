@@ -108,7 +108,7 @@ del __args_lens_index_counter
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_args_len(*args, **kwargs) -> int:
     '''
     Total number of parameters accepted by the passed pure-Python callable,
@@ -154,8 +154,8 @@ def get_func_args_len(*args, **kwargs) -> int:
     )
 
 
-#FIXME: [SPEED] Attempt to restore caching. See internal commentary. *sigh*
-#FIXME: Unit test us up, please.
+# FIXME: [SPEED] Attempt to restore caching. See internal commentary. *sigh*
+# FIXME: Unit test us up, please.
 def get_func_args_lens(
     # Mandatory parameters.
     func: Codeobjable,
@@ -266,7 +266,7 @@ def get_func_args_lens(
         bool(func_codeobj_flags & CO_VARKEYWORDS),
     )
 
-    #FIXME: Unsafe, fascinatingly. Uncommenting this induces test failure.
+    # FIXME: Unsafe, fascinatingly. Uncommenting this induces test failure.
     # If that callable is actually pure-Python, cache this metadata onto that
     # callable as this beartype-specific instance variable.
     #
@@ -418,7 +418,7 @@ def get_func_args_flexible_len(
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_args_nonvariadic_len(*args, **kwargs) -> int:
     '''
     Number of **non-variadic parameters** (i.e., parameters passable as either

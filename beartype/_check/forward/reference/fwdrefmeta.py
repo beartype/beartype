@@ -198,7 +198,7 @@ class BeartypeForwardRefMeta(type):
             f', __scope_name_beartype__={cls.__scope_name_beartype__!r}'
         )
 
-        #FIXME: Unit test this edge case, please.
+        # FIXME: Unit test this edge case, please.
         # If this is a subscripted forward reference subclass, append additional
         # metadata representing this subscription.
         #
@@ -355,11 +355,11 @@ class BeartypeForwardRefMeta(type):
             # die_unless_object_isinstanceable() validator.
             _forwardref_to_referee[cls] = referee
 
-            #FIXME: *SUPER-AWKWARD.* Slow, too. Ideally, we should instead:
-            #* Define a new is_object_isinstanceable() tester. Note that this
+            # FIXME: *SUPER-AWKWARD.* Slow, too. Ideally, we should instead:
+            # * Define a new is_object_isinstanceable() tester. Note that this
             #  will be somewhat non-trivial (well -- tedious, mostly), which is
             #  why we haven't bothered yet. *sigh*
-            #* Refactor the following "try: ... except:" logic as follows:
+            # * Refactor the following "try: ... except:" logic as follows:
             #     if not is_object_isinstanceable(referee):
             #         del _forwardref_to_referee[cls]
             #         die_unless_object_isinstanceable(

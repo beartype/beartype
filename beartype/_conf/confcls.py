@@ -14,24 +14,24 @@ callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Generalize "warning_cls_on_decorator_exception", please. Specifically:
-#* Deprecate "warning_cls_on_decorator_exception".
-#* Define a new "decoration_exception_type: Optional[TypeException] = None"
+# FIXME: Generalize "warning_cls_on_decorator_exception", please. Specifically:
+# * Deprecate "warning_cls_on_decorator_exception".
+# * Define a new "decoration_exception_type: Optional[TypeException] = None"
 #  parameter accepting *ANY* arbitrary exception rather than merely a warning.
 
-#FIXME: [DOCOS] Document all newly defined configuration parameters in our
-#reST-formatted docos, please -- including:
-#* "claw_decoration_position_funcs".
-#* "claw_decoration_position_types".
-#* "claw_is_pep526".
-#* "claw_skip_package_names".
-#* "hint_overrides".
-#* "violation_door_type".
-#* "violation_param_type".
-#* "violation_return_type".
-#* "violation_type".
-#* "violation_verbosity".
-#* "warning_cls_on_decorator_exception".
+# FIXME: [DOCOS] Document all newly defined configuration parameters in our
+# reST-formatted docos, please -- including:
+# * "claw_decoration_position_funcs".
+# * "claw_decoration_position_types".
+# * "claw_is_pep526".
+# * "claw_skip_package_names".
+# * "hint_overrides".
+# * "violation_door_type".
+# * "violation_param_type".
+# * "violation_return_type".
+# * "violation_type".
+# * "violation_verbosity".
+# * "warning_cls_on_decorator_exception".
 
 # ....................{ IMPORTS                            }....................
 from threading import Lock
@@ -201,13 +201,13 @@ class BeartypeConf:
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize this slots list with the implementations of:
     # * The __new__() dunder method.
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
@@ -742,10 +742,10 @@ class BeartypeConf:
             # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
             is_color = get_is_color(is_color)
 
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: Synchronize this tuple with the similar
             # "self._conf_kwargs" dictionary defined below.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
                 claw_decoration_position_funcs,
@@ -918,7 +918,7 @@ class BeartypeConf:
     # Read-only public properties effectively prohibiting mutation of their
     # underlying private attributes.
 
-    #FIXME: Publicly document this in our reST-formatted docos, please.
+    # FIXME: Publicly document this in our reST-formatted docos, please.
     @property
     def kwargs(self) -> DictStrToAny:
         '''

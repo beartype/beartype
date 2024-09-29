@@ -22,7 +22,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype.roar._roarexc import _BeartypeUtilAstException
 
 # ....................{ GETTERS ~ node                     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_node_repr_indented(node: AST) -> str:
     '''
     Human-readable string pretty-printing the contents of the passed abstract
@@ -54,8 +54,8 @@ def get_node_repr_indented(node: AST) -> str:
 
 
 # ....................{ GETTERS ~ node                     }....................
-#FIXME: Unit test us up, please. When we do, remove the "pragma: no cover" from
-#the body of this getter below.
+# FIXME: Unit test us up, please. When we do, remove the "pragma: no cover" from
+# the body of this getter below.
 def get_code_child_node(code: str) -> AST:
     '''
     Abstract syntax tree (AST) node parsed from the passed (presumably)

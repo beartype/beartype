@@ -101,10 +101,10 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
             return super().__getitem__(module_name)
         # If doing so fails with a low-level non-human-readable exception...
         except KeyError as exception:  # pragma: no cover
-            #FIXME: Also, consider dropping the parallel
-            #"BeartypeSourceFileLoader._main_module_name_beartype" attribute.
-            #Does this nonsense supercede that nonsense? Probably. Which leads
-            #us directly to...
+            # FIXME: Also, consider dropping the parallel
+            # "BeartypeSourceFileLoader._main_module_name_beartype" attribute.
+            # Does this nonsense supercede that nonsense? Probably. Which leads
+            # us directly to...
 
             # If the module to be inspected is the "__main__" pseudo-module
             # signifying the main entry-point into the active Python process...
@@ -205,7 +205,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
 
 
 # ....................{ CACHERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def cache_from_source_beartype(*args, **kwargs) -> str:
     '''
     Beartype-specific variant of the

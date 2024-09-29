@@ -24,7 +24,7 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 
 # ....................{ RAISERS                            }....................
-#FIXME: Excise us up. This function is no longer called anywhere. *sigh*
+# FIXME: Excise us up. This function is no longer called anywhere. *sigh*
 def die_unless_module_attr_name(
     # Mandatory parameters.
     module_attr_name: str,
@@ -167,8 +167,8 @@ def is_module(
     return module is not None
 
 
-#FIXME: Unit test us up against "setuptools", the only third-party package
-#*BASICALLY* guaranteed to be importable.
+# FIXME: Unit test us up against "setuptools", the only third-party package
+# *BASICALLY* guaranteed to be importable.
 def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     '''
     :data:`True` only if the module or C extension with the passed
@@ -224,7 +224,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 
 
 # ....................{ TESTERS ~ package                  }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_package(package_name: str, **kwargs) -> bool:
     '''
     :data:`True` only if the package with the passed fully-qualified name is

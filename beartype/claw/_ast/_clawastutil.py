@@ -44,11 +44,11 @@ from beartype.claw._clawmagic import (
 from beartype.roar import BeartypeClawImportConfException
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To improve forward compatibility with the superclass API over which
 # we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
 # and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 class BeartypeNodeTransformerUtilityMixin:
     '''
@@ -60,7 +60,7 @@ class BeartypeNodeTransformerUtilityMixin:
     '''
 
     # ....................{ PRIVATE ~ decorators           }....................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def _decorate_node_beartype(
         self, node: NodeDecoratable, conf: BeartypeConf) -> None:
         '''
@@ -171,7 +171,7 @@ class BeartypeNodeTransformerUtilityMixin:
             )
 
     # ....................{ PRIVATE ~ factories            }....................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def _make_node_keyword_conf_beartype(self, node_sibling: AST) -> keyword:
         '''
         Create and return a new **beartype configuration keyword argument node**

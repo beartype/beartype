@@ -125,16 +125,16 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     func_scope: LexicalScope = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ parameter                 }..................
-    #FIXME: Remove this *AFTER* optimizing signature generation, please.
+    # FIXME: Remove this *AFTER* optimizing signature generation, please.
     # True only if that callable possibly accepts one or more positional
     # parameters.
     is_args_positional = False
 
-    #FIXME: ******UNIT TEST US UP, PLEASE.******* Do so exhaustively until
-    #exhausted. This is super-critical. Yo!
-    #FIXME: Remove the "args_name_keywordable" local variable and associated
-    #"ARG_NAME_ARGS_NAME_KEYWORDABLE" global variable *AFTER* refactoring
-    #@beartype to generate callable-specific wrapper signatures.
+    # FIXME: ******UNIT TEST US UP, PLEASE.******* Do so exhaustively until
+    # exhausted. This is super-critical. Yo!
+    # FIXME: Remove the "args_name_keywordable" local variable and associated
+    # "ARG_NAME_ARGS_NAME_KEYWORDABLE" global variable *AFTER* refactoring
+    # @beartype to generate callable-specific wrapper signatures.
     # Either...
     args_name_keywordable: Optional[Set[str]] = (
         # If the decorated callable accepts an annotated variadic keyword
@@ -175,15 +175,15 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     hint = None
 
     # ..................{ GENERATE                           }..................
-    #FIXME: Locally remove the "arg_index" local variable (and thus avoid
-    #calling the enumerate() builtin here) *AFTER* refactoring @beartype to
-    #generate callable-specific wrapper signatures.
+    # FIXME: Locally remove the "arg_index" local variable (and thus avoid
+    # calling the enumerate() builtin here) *AFTER* refactoring @beartype to
+    # generate callable-specific wrapper signatures.
 
     # Kind and name of this parameter.
     arg_kind: ArgKind = None  # type: ignore[assignment]
     arg_name: str = None  # type: ignore[assignment]
 
-    #FIXME: Uncomment as needed, please. *sigh*
+    # FIXME: Uncomment as needed, please. *sigh*
     # # Default value of this parameter if this parameter is optional *OR* the
     # # "ArgMandatory" singleton otherwise (i.e., if this parameter is mandatory).
     # arg_default: object = None
@@ -273,15 +273,15 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     continue
                 # Else, this hint is unignorable.
 
-                #FIXME: Fundamentally unsafe and thus temporarily disabled *FOR
-                #THE MOMENT.* The issue is that our current implementation of
-                #the is_bearable() tester internally called by this function
-                #refuses to resolve relative forward references -- which is
-                #obviously awful. Ideally, that tester *ABSOLUTELY* should
-                #resolve relative forward references. Until it does, however,
-                #this is verboten dark magic that is unsafe in the general case.
-                #FIXME: Note that there exist even *MORE* edge cases, however:
-                #@dataclass fields, which violate typing semantics: e.g.,
+                # FIXME: Fundamentally unsafe and thus temporarily disabled *FOR
+                # THE MOMENT.* The issue is that our current implementation of
+                # the is_bearable() tester internally called by this function
+                # refuses to resolve relative forward references -- which is
+                # obviously awful. Ideally, that tester *ABSOLUTELY* should
+                # resolve relative forward references. Until it does, however,
+                # this is verboten dark magic that is unsafe in the general case.
+                # FIXME: Note that there exist even *MORE* edge cases, however:
+                # @dataclass fields, which violate typing semantics: e.g.,
                 #    from dataclasses import dataclass, field
                 #    from typing import Dict
                 #
@@ -291,8 +291,8 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 #    @dataclass
                 #    class A:
                 #        test_dict: Dict[str, str] = field(default_factory=dict)
-                #FIXME: Once this has been repaired, please reenable:
-                #* The "test_decor_arg_kind_flex_optional" unit test.
+                # FIXME: Once this has been repaired, please reenable:
+                # * The "test_decor_arg_kind_flex_optional" unit test.
 
                 # # If this parameter is optional *AND* the default value of this
                 # # optional parameter violates this hint, raise an exception.
@@ -408,11 +408,11 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         except Exception as exception:
             reraise_exception_placeholder(
                 exception=exception,
-                #FIXME: Embed the kind of parameter both here and above as well
-                #(e.g., "positional-only", "keyword-only", "variadic
-                #positional"), ideally by improving the existing
-                #prefix_callable_arg_name() function to introspect this kind from
-                #the callable code object.
+                # FIXME: Embed the kind of parameter both here and above as well
+                # (e.g., "positional-only", "keyword-only", "variadic
+                # positional"), ideally by improving the existing
+                # prefix_callable_arg_name() function to introspect this kind from
+                # the callable code object.
                 target_str=prefix_callable_arg_name(
                     func=decor_meta.func_wrappee,
                     arg_name=arg_name,
@@ -560,8 +560,8 @@ def _die_if_arg_default_unbearable(
     # Modifiable keyword dictionary encapsulating this beartype configuration.
     conf_kwargs = decor_meta.conf.kwargs.copy()
 
-    #FIXME: This should probably be configurable as well. For now, this is fine.
-    #We shrug noncommittally. We shrug, everyone! *shrug*
+    # FIXME: This should probably be configurable as well. For now, this is fine.
+    # We shrug noncommittally. We shrug, everyone! *shrug*
     # Set the type of violation exception raised by the subsequent call to the
     # die_if_unbearable() function to the expected type.
     conf_kwargs['violation_door_type'] = BeartypeDecorHintParamDefaultViolation

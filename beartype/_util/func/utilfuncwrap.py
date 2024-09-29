@@ -19,7 +19,7 @@ from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
 from beartype.typing import Optional
 
 # ....................{ UNWRAPPERS ~ once                  }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def unwrap_func_once(func: Callable) -> Callable:
     '''
     Immediate **wrappee** (i.e., callable wrapped by the passed wrapper
@@ -72,7 +72,7 @@ def unwrap_func_once(func: Callable) -> Callable:
 
 
 # ....................{ UNWRAPPERS ~ once : descriptor     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def unwrap_func_boundmethod_once(
     # Mandatory parameters.
     func: MethodBoundInstanceOrClassType,
@@ -278,7 +278,7 @@ def unwrap_func_all(func: Callable) -> Callable:
         * Else, the passed callable as is.
     '''
 
-    #FIXME: Not even this suffices to avoid a circular import, sadly. *sigh*
+    # FIXME: Not even this suffices to avoid a circular import, sadly. *sigh*
     # Avoid circular import dependencies.
     # from beartype._util.func.utilfunctest import is_func_wrapper
 
@@ -371,7 +371,7 @@ def unwrap_func_all_isomorphic(
         # Else, this wrappee callable is no longer a higher-level wrapper
         # callable isomorphically wrapping a lower-level wrappee callable.
 
-        #FIXME: Unneeded at the moment, but preserved for posterity. *shrug*
+        # FIXME: Unneeded at the moment, but preserved for posterity. *shrug*
         # # If this wrappee callable remains a higher-level bound method
         # # descriptor, this descriptor transparently proxies and thus (by
         # # definition) isomorphically wraps a lower-level unbound method. In this

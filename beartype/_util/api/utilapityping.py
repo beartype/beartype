@@ -28,7 +28,7 @@ from beartype.typing import (
 )
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_typing_attr(
     # Mandatory parameters.
     typing_attr_basename: str,
@@ -184,7 +184,7 @@ def import_typing_attr(
     return typing_attr
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def import_typing_attr_or_none(
     # Mandatory parameters.
     typing_attr_basename: str,
@@ -240,8 +240,8 @@ def import_typing_attr_or_none(
         typing_attr_basename, None, exception_cls)
 
 
-#FIXME: Unit test us up, please.
-#FIXME: Leverage above, please.
+# FIXME: Unit test us up, please.
+# FIXME: Leverage above, please.
 @callable_cached
 def import_typing_attr_or_fallback(
     # Mandatory parameters.
@@ -332,7 +332,7 @@ def import_typing_attr_or_fallback(
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def get_typing_attrs(typing_attr_basename: str) -> frozenset:
     '''
@@ -386,8 +386,8 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
 
 
 # ....................{ ITERATORS                          }....................
-#FIXME: Replace *ALL* calls to this by calls to get_typing_attrs(), please.
-#FIXME: Currently unused but preserved for posterity. Consider excising, please.
+# FIXME: Replace *ALL* calls to this by calls to get_typing_attrs(), please.
+# FIXME: Currently unused but preserved for posterity. Consider excising, please.
 def iter_typing_attrs(
     # Mandatory parameters.
     typing_attr_basenames: Union[str, Iterable[str]],

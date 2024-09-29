@@ -24,7 +24,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype.typing import TYPE_CHECKING
 
 # ....................{ CLASSES                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeCheckMeta:
     '''
     **Beartype type-check call metadata** (i.e., object encapsulating *all*

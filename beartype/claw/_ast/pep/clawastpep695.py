@@ -13,20 +13,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: CPython's current implementation of PEP 695 type aliases is
-#fundamentally broken with respect to unquoted relative forward references.
-#Please submit an upstream issue describing this patent failure. On doing so,
-#please also publicly declare that PEP 695 appears to have been poorly tested.
-#As evidence, note that PEP 695 itself advises use of the following idiom:
+# FIXME: CPython's current implementation of PEP 695 type aliases is
+# fundamentally broken with respect to unquoted relative forward references.
+# Please submit an upstream issue describing this patent failure. On doing so,
+# please also publicly declare that PEP 695 appears to have been poorly tested.
+# As evidence, note that PEP 695 itself advises use of the following idiom:
 #    # A type alias that includes a forward reference
 #    type AnimalOrVegetable = Animal | "Vegetable"
 #
-#*THAT DOES NOT ACTUALLY WORK AT RUNTIME.* Nobody tested that. This is why I
-#facepalm. Notably, PEP 604-compliant new-style unions prohibit strings. They
-#probably shouldn't, but they've *ALWAYS* behaved that way, and nobody's updated
-#them to behave more intelligently -- probably because doing so would require
-#updating the isinstance() builtin (which also accepts PEP 604-compliant
-#new-style unions) to behave more intelligently and ain't nobody goin' there:
+# *THAT DOES NOT ACTUALLY WORK AT RUNTIME.* Nobody tested that. This is why I
+# facepalm. Notably, PEP 604-compliant new-style unions prohibit strings. They
+# probably shouldn't, but they've *ALWAYS* behaved that way, and nobody's updated
+# them to behave more intelligently -- probably because doing so would require
+# updating the isinstance() builtin (which also accepts PEP 604-compliant
+# new-style unions) to behave more intelligently and ain't nobody goin' there:
 #    $ python3.12
 #    >>> type AnimalOrVegetable = "Animal" | "Vegetable"
 #    >>> AnimalOrVegetable.__value__
@@ -37,10 +37,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #        type AnimalOrVegetable = "Animal" | "Vegetable"
 #    TypeError: unsupported operand type(s) for |: 'str' and 'str'
 #
-#However, even ignoring that obvious syntactic issue, PEP 695 still fails to
-#actually support forward references -- because exceptions are *NOT* forward
-#references. Forward references are proxy objects that refer to other objects
-#that have yet to be defined at runtime. Notably:
+# However, even ignoring that obvious syntactic issue, PEP 695 still fails to
+# actually support forward references -- because exceptions are *NOT* forward
+# references. Forward references are proxy objects that refer to other objects
+# that have yet to be defined at runtime. Notably:
 #    $ python3.12
 #    # This is a forward reference.
 #    >>> type VegetableRef = 'Vegetable'
@@ -63,36 +63,36 @@ This private submodule is *not* intended for importation by downstream callers.
 #        type AnimalRef = Animal
 #    NameError: name 'Animal' is not defined
 #
-#*FACEPALM*
-#FIXME: *BIG YIKES.* CPython's low-level C-based implementation of PEP
-#695-compliant type aliases currently fails to properly resolve unquoted
-#relative forward references defined in a local rather than global scope. I
-#tried literally everything to get this to work via AST transformations -- but
-#whatever arcane type alias machinery it is that they've implemented simply does
-#*NOT* behave as expected at local scope. That said, we've verified this
-#*SHOULD* work via this simple snippet:
+# *FACEPALM*
+# FIXME: *BIG YIKES.* CPython's low-level C-based implementation of PEP
+# 695-compliant type aliases currently fails to properly resolve unquoted
+# relative forward references defined in a local rather than global scope. I
+# tried literally everything to get this to work via AST transformations -- but
+# whatever arcane type alias machinery it is that they've implemented simply does
+# *NOT* behave as expected at local scope. That said, we've verified this
+# *SHOULD* work via this simple snippet:
 #    def foo():
 #        type bar = wut
 #        globals()['wut'] = str
 #        print(bar.__value__)
 #    foo()
 #
-#That behaves as expected -- until you actually then define the expected class
-#at local scope:
+# That behaves as expected -- until you actually then define the expected class
+# at local scope:
 #    def foo():
 #        type bar = wut
 #        globals()['wut'] = str
 #        print(bar.__value__)
 #        class wut(object): pass  # <-- this causes madness; WTF!?!?!?
 #
-#The above print() statement now raises non-human readable exceptions
-#resembling:
+# The above print() statement now raises non-human readable exceptions
+# resembling:
 #    NameError: cannot access free variable 'wut' where it is not associated
 #    with a value in enclosing scope
 #
-#Clearly, this is madness. At the point at which the print() statement is run,
-#the "wut" class has yet to be redefined as a class. This constitutes a profound
-#CPython bug. Please submit us up the F-F-F-bomb.
+# Clearly, this is madness. At the point at which the print() statement is run,
+# the "wut" class has yet to be redefined as a class. This constitutes a profound
+# CPython bug. Please submit us up the F-F-F-bomb.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
@@ -119,11 +119,11 @@ from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype.claw._clawmagic import BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To improve forward compatibility with the superclass API over which
 # we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
 # and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 class BeartypeNodeTransformerPep695Mixin:
     '''

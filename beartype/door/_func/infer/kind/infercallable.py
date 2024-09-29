@@ -10,13 +10,13 @@ hints describing callable objects).
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: We can and should do better. Currently, infer_hint_callable() reduces
-#all unannotated variadic positional arguments (e.g., "*args") and annotated
-#variadic positional arguments (e.g., "*args: int") to simply
-#"Concatenate[...]", basically. Previously, we thought that was the best we
-#could do. However, it turns out that PEP 646 under Python >= 3.11 provides an
-#obscure means of representing variadic positional arguments with *UNPACKED
-#TUPLE TYPE HINTS*. Notably:
+# FIXME: We can and should do better. Currently, infer_hint_callable() reduces
+# all unannotated variadic positional arguments (e.g., "*args") and annotated
+# variadic positional arguments (e.g., "*args: int") to simply
+# "Concatenate[...]", basically. Previously, we thought that was the best we
+# could do. However, it turns out that PEP 646 under Python >= 3.11 provides an
+# obscure means of representing variadic positional arguments with *UNPACKED
+# TUPLE TYPE HINTS*. Notably:
 #    The behavior of a Callable containing an unpacked item, whether the item is
 #    a TypeVarTuple or a tuple type, is to treat the elements as if they were
 #    the type for *args. So, Callable[[*Ts], None] is treated as the type of the
@@ -27,18 +27,18 @@ hints describing callable objects).
 #    function:
 #        def foo(*args: *Tuple[int, *Ts, T]) -> Tuple[T, *Ts]: ...
 #
-#Given the above, it *SHOULD* theoretically follow that the type hint inferred
-#from a callable with signature:
+# Given the above, it *SHOULD* theoretically follow that the type hint inferred
+# from a callable with signature:
 #    def muh_func(*args: int) -> None:
 #
-#...is this "Callable[...]" type hint:
+# ...is this "Callable[...]" type hint:
 #    Callable[[*Tuple[int]], None]
 #
-#We know. Looks weird, but that's what a casual reading of the above section
-#explicitly suggests. Let's test that theory against mypy, please.
-#FIXME: *HMM.* Looks like mypy currently fails to type-check this properly. mypy
-#assorts that the following code snippet passes. Surely that isn't right,
-#though?
+# We know. Looks weird, but that's what a casual reading of the above section
+# explicitly suggests. Let's test that theory against mypy, please.
+# FIXME: *HMM.* Looks like mypy currently fails to type-check this properly. mypy
+# assorts that the following code snippet passes. Surely that isn't right,
+# though?
 #    from collections.abc import Callable
 #
 #    def muh_func(*args: int) -> None: pass
@@ -48,12 +48,12 @@ hints describing callable objects).
 #    ugh(muh_func)  # <-- this passes. GOOD!
 #    ugh(moo_func)  # <-- this passes, too. BAD!
 #
-#Why does mypy pass both? Is mypy bugged? Is our reading of PEP 646 bugged? Does
-#mypy simply fail to fully support PEP 646? That would kinda explain why nobody
-#has bothered @beartype about supporting PEP 646, frankly. We're currently
-#inclined to believe that mypy has yet to implement this. Surely mypy should be
-#saying *SOMETHING* about that case, even if that something is to just notify us
-#of how "creative" we are. Let's check back sometime in 2025, please.
+# Why does mypy pass both? Is mypy bugged? Is our reading of PEP 646 bugged? Does
+# mypy simply fail to fully support PEP 646? That would kinda explain why nobody
+# has bothered @beartype about supporting PEP 646, frankly. We're currently
+# inclined to believe that mypy has yet to implement this. Surely mypy should be
+# saying *SOMETHING* about that case, even if that something is to just notify us
+# of how "creative" we are. Let's check back sometime in 2025, please.
 
 #    >>> from beartype.door import infer_hint
 #
@@ -100,8 +100,8 @@ from beartype.typing import (
 )
 
 # ....................{ INFERERS                           }....................
-#FIXME: Unit test us up, please.
-#FIXME: Revise docstring up, please.
+# FIXME: Unit test us up, please.
+# FIXME: Revise docstring up, please.
 @callable_cached
 def infer_hint_callable(func: CallableABC) -> object:
     '''
@@ -226,18 +226,18 @@ def infer_hint_callable(func: CallableABC) -> object:
     # *ONLY* "*args, **kwargs" parameters), reduce the former to the latter.
     func = unwrap_func_all_isomorphic(func_wrapper)
 
-    #FIXME: *HANDLE THIS.* Do so in a similar manner to that of the
-    #beartype._decor.decornontype.beartype_pseudofunc() function, please.
-    #Namely, attempt to see whether the "func.__call__" instance variable exists
-    #and is a pure-Python callable. If so, replace "func" with that: e.g.,
+    # FIXME: *HANDLE THIS.* Do so in a similar manner to that of the
+    # beartype._decor.decornontype.beartype_pseudofunc() function, please.
+    # Namely, attempt to see whether the "func.__call__" instance variable exists
+    # and is a pure-Python callable. If so, replace "func" with that: e.g.,
     #    func = getattr(func, '__call__', None)
     #    if func is None:
     #        return obj.__class__  # <-- don't return "Callable" here, because.
     #
-    #Even then, we should embed this "Callable[...]" type hint inside an
-    #"Annotated[...]" parent type hint ensuring that only objects of the passed
-    #object's type are matched. See similar logic in the "infercollectionsabc"
-    #submodule: e.g.,
+    # Even then, we should embed this "Callable[...]" type hint inside an
+    # "Annotated[...]" parent type hint ensuring that only objects of the passed
+    # object's type are matched. See similar logic in the "infercollectionsabc"
+    # submodule: e.g.,
     #    return Annotated[hint, IsInstance[obj.__class__]]
 
     # If this unwrapped callable is *NOT* pure-Python, this is a pseudo-callable

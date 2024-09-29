@@ -15,11 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *FILE UPSTREAM CPYTHON ISSUES.* Unfortunately, this submodule exposed a
-#number of significant issues in the CPython stdlib -- all concerning parsing
-#of lambda functions. These include:
+# FIXME: *FILE UPSTREAM CPYTHON ISSUES.* Unfortunately, this submodule exposed a
+# number of significant issues in the CPython stdlib -- all concerning parsing
+# of lambda functions. These include:
 #
-#1. The inspect.getsourcelines() function raises unexpected
+# 1. The inspect.getsourcelines() function raises unexpected
 #   "tokenize.TokenError" exceptions when passed lambda functions preceded by
 #   one or more triple-quoted strings: e.g.,
 #       >>> import inspect
@@ -30,7 +30,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #       ... )
 #       >>> inspect.getsourcelines(built_to_fail[1])}
 #       tokenize.TokenError: ('EOF in multi-line string', (323, 8))
-#2. The "func.__code__.co_firstlineno" attribute is incorrect for syntactic
+# 2. The "func.__code__.co_firstlineno" attribute is incorrect for syntactic
 #   constructs resembling:
 #       assert is_hint_pep593_beartype(Annotated[        # <--- line 1
 #           str, Is[lambda text: bool(text)]]) is True   # <--- line 2
@@ -41,14 +41,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #   this causes the inspect.findsource() function to either raise an unexpected
 #   "OSError" *OR* return incorrect source when passed a file containing the
 #   above snippet. In either case, that is bad. *sigh*
-#3. Introspecting the source code for two or more lambdas defined on the same
+# 3. Introspecting the source code for two or more lambdas defined on the same
 #   line is infeasible, because code objects only record line numbers rather
 #   than both line and column numbers. Well, that's unfortunate.
 #   ^--- Actually, we're *PRETTY* sure that Python 3.11 has finally resolved
 #        this by now recording column numbers with code objects. So, let's
 #        improve the logic below to handle this edge case under Python >= 3.11.
-#FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
-#as a new answer, as this is highly non-trivial, frankly:
+# FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
+# as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
 
 # ....................{ IMPORTS                           }....................
@@ -74,7 +74,7 @@ from beartype.typing import (
 )
 
 # ....................{ GETTERS ~ code : lines             }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_func_code_lines_or_none(
     # Mandatory parameters.
     func: Callable,
@@ -154,7 +154,7 @@ def get_func_code_lines_or_none(
     return None
 
 
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_func_file_code_lines_or_none(
     # Mandatory parameters.
     func: Callable,
@@ -493,9 +493,9 @@ if IS_PYTHON_AT_LEAST_3_9:
             # the current lambda node.
             elif node.lineno < self._lambda_lineno:
                 self.generic_visit(node)
-            #FIXME: Consider raising an exception here instead like
-            #"StopException" to force a premature halt to this recursion. Of
-            #course, handling exceptions also incurs a performance cost, so...
+            # FIXME: Consider raising an exception here instead like
+            # "StopException" to force a premature halt to this recursion. Of
+            # course, handling exceptions also incurs a performance cost, so...
             # Else, the desired lambda starts on an earlier line number than
             # the current line number, the current lambda *CANNOT* be the
             # desired lambda and is thus ignorable. In this case, avoid
@@ -593,7 +593,7 @@ https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a
 '''
 
 # ....................{ GETTERS ~ label                    }....................
-#FIXME: This getter no longer has a sane reason to exist. Consider excising.
+# FIXME: This getter no longer has a sane reason to exist. Consider excising.
 # from beartype.roar._roarexc import _BeartypeUtilCallableException
 # from beartype._cave._cavefast import CallableTypes
 # from sys import modules

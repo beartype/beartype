@@ -32,8 +32,8 @@ Human-readable substring describing the current root type hint generically
 exception messages.
 '''
 
-#FIXME: Preserved for documentation purposes. When time permits, centralized
-#this documentation into the docstring of a new "HintMeta" dataclass, please.
+# FIXME: Preserved for documentation purposes. When time permits, centralized
+# this documentation into the docstring of a new "HintMeta" dataclass, please.
 # # ....................{ HINT ~ meta                        }....................
 # # Iterator yielding the next integer incrementation starting at 0, to be safely
 # # deleted *AFTER* defining the following 0-based indices via this iterator.

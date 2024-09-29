@@ -34,11 +34,11 @@ from beartype._util.text.utiltextansi import color_attr_name
 from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To improve forward compatibility with the superclass API over which
 # we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
 # and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 class BeartypeNodeTransformerPep526Mixin:
     '''
@@ -234,12 +234,12 @@ class BeartypeNodeTransformerPep526Mixin:
         #
         # If this target variable is an instance or class variable...
         elif isinstance(node_target, Attribute):
-            #FIXME: Insufficient. Attributes can contain arbitrary nested child
-            #nodes, including other attributes and/or names. Thankfully, the
-            #only reason to even bother attempting to do this is to rigorously
-            #sanitize line and column numbers -- which doesn't appear to be
-            #particularly necessary or even desirable for dynamically generated
-            #code. For now, we simply shallowly reuse the existing "value" node.
+            # FIXME: Insufficient. Attributes can contain arbitrary nested child
+            # nodes, including other attributes and/or names. Thankfully, the
+            # only reason to even bother attempting to do this is to rigorously
+            # sanitize line and column numbers -- which doesn't appear to be
+            # particularly necessary or even desirable for dynamically generated
+            # code. For now, we simply shallowly reuse the existing "value" node.
             # # Child node referencing the object containing this instance or
             # # class variable (e.g., the "self" in "self.attr: str = 'Attr!'").
             # node_func_arg_pith_obj = Name(

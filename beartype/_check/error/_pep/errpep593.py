@@ -88,7 +88,7 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
         # If this pith fails to satisfy this validator and is thus the cause of
         # this failure...
         if not hint_validator.is_valid(cause_deep.pith):
-            #FIXME: Unit test this up, please.
+            # FIXME: Unit test this up, please.
             # Human-readable string diagnosing this failure.
             hint_diagnosis = hint_validator.get_diagnosis(
                 obj=cause_deep.pith,

@@ -26,7 +26,7 @@ from beartype._util.text.utiltextlabel import (
 )
 
 # ....................{ PREFIXERS ~ beartypeable           }....................
-#FIXME: Unit test this function with respect to classes, please.
+# FIXME: Unit test this function with respect to classes, please.
 def prefix_beartypeable(
     # Mandatory parameters.
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]

@@ -13,16 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP] Replace "TypeGuard" with "TypeIs" everywhere across the @beartype
-#codebase, please. "TypeIs" entirely obsoletes "TypeGuard" for all practical
-#intents and purposes (including ours). See also:
+# FIXME: [PEP] Replace "TypeGuard" with "TypeIs" everywhere across the @beartype
+# codebase, please. "TypeIs" entirely obsoletes "TypeGuard" for all practical
+# intents and purposes (including ours). See also:
 #    https://peps.python.org/pep-0742
 
-#FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
-#full-blown "beartype.typing" subpackage (or perhaps even separate "beartyping"
-#package) extending this core concept to *ALL* type hint factories, enabling
-#users to trivially annotate with any type hint factory regardless of the
-#current version of Python or whether "typing_extensions" is installed or not.
+# FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
+# full-blown "beartype.typing" subpackage (or perhaps even separate "beartyping"
+# package) extending this core concept to *ALL* type hint factories, enabling
+# users to trivially annotate with any type hint factory regardless of the
+# current version of Python or whether "typing_extensions" is installed or not.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.api.utilapityping import import_typing_attr_or_fallback

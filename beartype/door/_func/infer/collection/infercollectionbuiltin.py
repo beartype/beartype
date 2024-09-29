@@ -221,8 +221,8 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
 
 
 # ....................{ PRIVATE ~ mappings                 }....................
-#FIXME: Also add:
-#* "ItemsView". Actually, "ItemsView" support will probably have to be
+# FIXME: Also add:
+# * "ItemsView". Actually, "ItemsView" support will probably have to be
 #  implemented manually. "ItemsViews" are really just iterables over 2-tuples.
 
 # Note that key-value pairs are intentionally defined in decreasing order of

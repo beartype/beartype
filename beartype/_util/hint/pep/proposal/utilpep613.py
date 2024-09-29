@@ -51,17 +51,17 @@ def reduce_hint_pep613(
         :pep:`695`-compliant type aliases.
     '''
 
-    #FIXME: Improve this advice, please. When we wrote this a literal lifetime
-    #ago, we didn't realize that "typing_extensions" astonishingly provides a
-    #backport of the low-level C-based "typing.TypeAliasType" type available in
-    #Python >= 3.12 as a high-level pure-Python
-    #"typing_extensions.TypeAliasType" class available across all Python
-    #versions. It's... pretty astonishing, actually! Instantiating the
-    #"typing_extensions.TypeAliasType" class allows users to *MUCH* more
-    #conveniently define PEP 612-compliant type aliases in older Python
-    #versions. PEP 612 *DEFINITELY* should have at least mentioned this, as this
-    #is essential information that makes PEP 612 *MUCH* more amenable. The
-    #syntax is a bit wonky, but that's understandable:
+    # FIXME: Improve this advice, please. When we wrote this a literal lifetime
+    # ago, we didn't realize that "typing_extensions" astonishingly provides a
+    # backport of the low-level C-based "typing.TypeAliasType" type available in
+    # Python >= 3.12 as a high-level pure-Python
+    # "typing_extensions.TypeAliasType" class available across all Python
+    # versions. It's... pretty astonishing, actually! Instantiating the
+    # "typing_extensions.TypeAliasType" class allows users to *MUCH* more
+    # conveniently define PEP 612-compliant type aliases in older Python
+    # versions. PEP 612 *DEFINITELY* should have at least mentioned this, as this
+    # is essential information that makes PEP 612 *MUCH* more amenable. The
+    # syntax is a bit wonky, but that's understandable:
     #    # This Python >= 3.12-specific logic...
     #    type ListOrSet[T] = list[T] | set[T]
     #    # ...is equivalent to this version-agnostic logic:

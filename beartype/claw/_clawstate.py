@@ -75,11 +75,11 @@ class BeartypeClawState:
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
@@ -133,7 +133,7 @@ class BeartypeClawState:
         #   method docstring for further commentary.
         # self.packages_trie_blacklist = PackagesTrieBlacklist()
 
-        #FIXME: Restore this in favour of the above, please. *sigh*
+        # FIXME: Restore this in favour of the above, please. *sigh*
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie={'beartype': PackagesTrieBlacklisted})
 

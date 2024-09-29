@@ -12,28 +12,28 @@ standardized by the :mod:`typing` module.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Create one unique "TypeHint" subclass *FOR EACH UNIQUE KIND OF TYPE
-#HINT.* We're currently simply reusing the same
-#"_TypeHintOriginIsinstanceableArgs*" family of concrete subclasses to
-#transparently handle these unique kinds of type hints. That's fine as an
-#internal implementation convenience. Sadly, that's *NOT* fine for users
-#actually trying to introspect types. That's the great disadvantage of standard
-#"typing" types, after all; they're *NOT* introspectable by type. Ergo, we need
-#to explicitly define subclasses like:
-#* "beartype.door.ListTypeHint".
-#* "beartype.door.MappingTypeHint".
-#* "beartype.door.SequenceTypeHint".
+# FIXME: Create one unique "TypeHint" subclass *FOR EACH UNIQUE KIND OF TYPE
+# HINT.* We're currently simply reusing the same
+# "_TypeHintOriginIsinstanceableArgs*" family of concrete subclasses to
+# transparently handle these unique kinds of type hints. That's fine as an
+# internal implementation convenience. Sadly, that's *NOT* fine for users
+# actually trying to introspect types. That's the great disadvantage of standard
+# "typing" types, after all; they're *NOT* introspectable by type. Ergo, we need
+# to explicitly define subclasses like:
+# * "beartype.door.ListTypeHint".
+# * "beartype.door.MappingTypeHint".
+# * "beartype.door.SequenceTypeHint".
 #
-#And so on. There are a plethora, but ultimately a finite plethora, which is all
-#that matters. Do this for our wonderful userbase, please.
+# And so on. There are a plethora, but ultimately a finite plethora, which is all
+# that matters. Do this for our wonderful userbase, please.
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.door._cls.doorsuper import TypeHint as TypeHint
 from beartype.door._cls.pep.doorpep586 import LiteralTypeHint as LiteralTypeHint
 from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint as AnnotatedTypeHint

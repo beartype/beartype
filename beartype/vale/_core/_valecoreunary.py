@@ -36,11 +36,11 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -85,7 +85,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
         self._validator_operand = validator_operand
 
     # ..................{ GETTERS                            }..................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def get_diagnosis(
         self,
         *,
@@ -203,7 +203,7 @@ def _validate_operand(
         If this operand is *not* a beartype validator.
     '''
 
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     # If this operand is *NOT* a beartype validator, raise an exception.
     if not isinstance(validator_operand, BeartypeValidator):
         msg = (

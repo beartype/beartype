@@ -11,8 +11,8 @@ boolean expressions type-checking arbitrary objects against various type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-#FIXME: Refactor the gutted remainder of this submodule into new submodules
-#residing in the new "beartype._data.code.pep" subpackage, please. *sigh*
+# FIXME: Refactor the gutted remainder of this submodule into new submodules
+# residing in the new "beartype._data.code.pep" subpackage, please. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.datahinttyping import CallableStrFormat
@@ -65,7 +65,7 @@ Python expression.
 '''
 
 
-#FIXME: Preserved for posterity in the likelihood we'll need this again. *sigh*
+# FIXME: Preserved for posterity in the likelihood we'll need this again. *sigh*
 # CODE_PEP572_PITH_ASSIGN_AND = '''
 # {indent_curr}    # Localize this pith as a stupidly fast assignment expression.
 # {indent_curr}    ({pith_curr_assign_expr}) is {pith_curr_var_name} and'''

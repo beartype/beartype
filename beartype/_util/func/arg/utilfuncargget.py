@@ -31,21 +31,21 @@ from beartype.typing import (
 )
 
 # ....................{ GETTERS ~ meta                     }....................
-#FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
-#Although extremely non-trivial, doing so *SHOULD* be feasible based on the
-#current internal implementation of the iter_func_args() generator
-#comprehension. Basically, we'll need to:
-#* Augment get_func_args_lens() to additionally cache and return *ALL* of
+# FIXME: [SPEED] Consider refactoring this O(n) iteration into an O(1) lookup.
+# Although extremely non-trivial, doing so *SHOULD* be feasible based on the
+# current internal implementation of the iter_func_args() generator
+# comprehension. Basically, we'll need to:
+# * Augment get_func_args_lens() to additionally cache and return *ALL* of
 #  the remaining "sub-lengths" internally computed by iter_func_args().
 #  *ALL*. And there are quite a few, indeed.
-#* Call get_func_args_lens() here.
-#* Get the name of the variadic positional parameter by simply indexing:
+# * Call get_func_args_lens() here.
+# * Get the name of the variadic positional parameter by simply indexing:
 #      func_args_len = get_func_args_len(*args, **kwargs)
 #      func_codeobj.co_varnames[func_args_len + hur_der_hur_something]
 #  ...where "hur_der_hur_something" is the index of the variadic positional
 #  parameter in the "co_varnames" list, computed by adding all requisite
 #  "sub-lengths" together. We shrug.
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_arg_meta_variadic_positional_or_none(
     *args, **kwargs) -> Optional[ArgMeta]:
     '''
@@ -114,7 +114,7 @@ def get_func_arg_meta_variadic_positional_or_none(
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_func_arg_meta_variadic_keyword_or_none(
     *args, **kwargs) -> Optional[ArgMeta]:
     '''

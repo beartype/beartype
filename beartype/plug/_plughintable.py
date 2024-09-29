@@ -86,9 +86,9 @@ class BeartypeHintable:
 
 
 # ....................{ TESTERS                            }....................
-#FIXME: Document us up, please.
-#FIXME: Unit test us up, please.
-#FIXME: Call us elsewhere, please.
+# FIXME: Document us up, please.
+# FIXME: Unit test us up, please.
+# FIXME: Call us elsewhere, please.
 @callable_cached
 def is_hint_beartypehintable(hint: object) -> bool:
 
@@ -98,18 +98,18 @@ def is_hint_beartypehintable(hint: object) -> bool:
 
 # ....................{ TRANSFORMERS ~ more than meets the }....................
 # ....................{                                eye }....................
-#FIXME: Document us up, please.
-#FIXME: Unit test us up, please.
-#FIXME: Significant complications exist suggesting that we should immediately
-#release beartype 0.12.0 and contemplate implementing this later:
-#* The "beartype._check.error" subpackage will need to implement a comparable
+# FIXME: Document us up, please.
+# FIXME: Unit test us up, please.
+# FIXME: Significant complications exist suggesting that we should immediately
+# release beartype 0.12.0 and contemplate implementing this later:
+# * The "beartype._check.error" subpackage will need to implement a comparable
 #  mechanism as the "beartype._check.code" subpackage for detecting and avoiding
 #  recursion in this reduction. Curiously, "beartype._check.error" only ever
 #  calls the sanify_hint_child() sanifier in a single place. That simplifies
 #  things a bit. Still, we'll need to add a similar "set" somewhere in that
 #  subpackage tracking which "BeartypeHintable" objects have already been
 #  reduced.
-#* Even ignoring that, detecting and avoiding recursion in
+# * Even ignoring that, detecting and avoiding recursion in
 #  "beartype._check.code" alone will be non-trivial. We can't pass the original
 #  presanified type hint to the make_check_expr() factory, because that hint has
 #  *NOT* been coerced into a memoizable singleton (e.g., think PEP 585). That
@@ -126,16 +126,16 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #  "BeartypeHintable" hints across those three different places. Is this
 #  something we *REALLY* want to do? Is there truly no better way?
 #
-#Examining the code calling sanify_*_root() functions, it superficially looks
-#like we might want to consider *NO LONGER DEFINING OR CALLING* sanify_*_root()
-#functions. Like, seriously. The logic performed by those functions has become
-#trivial. They're practically one-liners. That said, sanify_hint_child() is
-#still extremely useful and should be preserved exactly as is. Consider:
-#* High-level functions calling sanify_*_root() functions should instead just
+# Examining the code calling sanify_*_root() functions, it superficially looks
+# like we might want to consider *NO LONGER DEFINING OR CALLING* sanify_*_root()
+# functions. Like, seriously. The logic performed by those functions has become
+# trivial. They're practically one-liners. That said, sanify_hint_child() is
+# still extremely useful and should be preserved exactly as is. Consider:
+# * High-level functions calling sanify_*_root() functions should instead just
 #  call either coerce_func_hint_root() or coerce_hint_root() based on context.
 #  Those functions should *NOT* call reduce_hint() anymore.
-#* Excise up all sanify_*_root() functions.
-#* The make_check_expr() function should now call:
+# * Excise up all sanify_*_root() functions.
+# * The make_check_expr() function should now call:
 #  * On the passed root type hint:
 #       if is_hint_beartypehintable(hint_root):
 #           hint_parent_beartypehintables = {hint_root,}
@@ -162,29 +162,29 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #           hint_child = transform_hint_beartypehintable(hint_child)
 #
 #       hint_child = sanify_hint_child(hint_root)
-#FIXME: Wow. What a fascinatingly non-trivial issue. The above doesn't work,
-#either. Why? Two reasons:
-#* sanify_*_root() functions *MUST* continue to perform reduction -- including
+# FIXME: Wow. What a fascinatingly non-trivial issue. The above doesn't work,
+# either. Why? Two reasons:
+# * sanify_*_root() functions *MUST* continue to perform reduction -- including
 #  calling both reduce_hint() and transform_hint_beartypehintable(). Why? Because
 #  reduction *MUST* be performed before deciding "is_hint_ignorable", which
 #  *MUST* be decided before generating code. This is non-optional.
-#* transform_hint_beartypehintable() *CANNOT* be performed in either:
+# * transform_hint_beartypehintable() *CANNOT* be performed in either:
 #  * reduce_hint(), because reduce_hint() is memoized but
 #    transform_hint_beartypehintable() is non-memoizable by definition.
 #  * coerce_*_hint(), because coerce_*_hint() is permanently applied to
 #    "__annotations__" but transform_hint_beartypehintable() should *NEVER* be.
 #
-#Altogether, this suggests that:
-#* All sanify_*() functions *MUST* call transform_hint_beartypehintable()
+# Altogether, this suggests that:
+# * All sanify_*() functions *MUST* call transform_hint_beartypehintable()
 #  directly, outside of calls to either reduce_hint() and coerce_*_hint().
-#* Frozensets should be used. Doing so enables memoization, if we wanted.
-#* Call transform_hint_beartypehintable() from sanify_hint_child(), whose
+# * Frozensets should be used. Doing so enables memoization, if we wanted.
+# * Call transform_hint_beartypehintable() from sanify_hint_child(), whose
 #  signature *MUST* be augmented accordingly (i.e., to both accept and return
 #  "hints_parent_beartypehintable: Optional[frozenset]").
-#* Call transform_hint_beartypehintable() from sanify_*hint_root(), whose
+# * Call transform_hint_beartypehintable() from sanify_*hint_root(), whose
 #  signatures *MUST* be augmented accordingly (i.e., to additionally return
 #  "Optional[frozenset]").
-#* Augment make_check_expr() to:
+# * Augment make_check_expr() to:
 #  * Accept an additional
 #    "hints_parent_beartypehintable: Optional[frozenset]," parameter.
 #  * Add yet another new entry to each "hint_meta" FixedList as follows:
@@ -192,13 +192,13 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #    * For the root "hint_meta", initialize the value of:
 #          hint_root_meta[HINT_META_INDEX_HINTS_PARENT_BEARTYPEHINTABLE] = (
 #              hints_parent_beartypehintable)
-#* Restore unit testing in "_data_nonpepbeartype", please.
+# * Restore unit testing in "_data_nonpepbeartype", please.
 #
-#That should more or less do it, folks. Phew! It's still sufficiently
-#non-trivial that we want to defer this until *AFTER* beartype 0.12.0, though.
+# That should more or less do it, folks. Phew! It's still sufficiently
+# non-trivial that we want to defer this until *AFTER* beartype 0.12.0, though.
 
-#FIXME: Unit test us up, please.
-#FIXME: Document us up, please.
+# FIXME: Unit test us up, please.
+# FIXME: Document us up, please.
 @callable_cached
 def transform_hint_beartypehintable(
     hint: object,
@@ -257,7 +257,7 @@ def transform_hint_beartypehintable(
         return (hint, hints_parent_beartypehintable)
     # Else, this hint defines the "__beartype_hint__" attribute.
 
-    #FIXME: Define a new private exception type, please.
+    # FIXME: Define a new private exception type, please.
     # # If this attribute is *NOT* callable, raise an exception.
     # if not callable(beartypehintable_reducer):
     #     raise SomeExceptiot(...)
@@ -269,7 +269,7 @@ def transform_hint_beartypehintable(
     if hints_parent_beartypehintable is None:
         hints_parent_beartypehintable = frozenset((hint,))
     else:
-        #FIXME: Unsure if this works for frozensets. Probably not. *sigh*
+        # FIXME: Unsure if this works for frozensets. Probably not. *sigh*
         hints_parent_beartypehintable |= {hint}
 
     # Return this transformed hint.

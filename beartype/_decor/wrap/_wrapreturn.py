@@ -187,15 +187,15 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                         hint_refs_type_basename=hint_refs_type_basename,
                     )
 
-                    #FIXME: [SPEED] Optimize the following two string munging
-                    #operations into a single string-munging operation resembling:
+                    # FIXME: [SPEED] Optimize the following two string munging
+                    # operations into a single string-munging operation resembling:
                     #    func_wrapper_code = CODE_RETURN_CHECK.format(
                     #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
                     #        check_expr=code_return_check_pith_unmemoized,
                     #    )
                     #
-                    #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
-                    #resemble:
+                    # Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
+                    # resemble:
                     #    CODE_RETURN_CHECK = (
                     #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
                     #        f'{CODE_RETURN_CHECK_SUFFIX}'

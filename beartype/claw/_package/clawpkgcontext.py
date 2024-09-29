@@ -32,7 +32,7 @@ from beartype.typing import (
 )
 
 # ....................{ CONTEXTS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @contextmanager
 def beartyping(
     # Optional keyword-only parameters.
@@ -129,7 +129,7 @@ def beartyping(
             # configuration as is.
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @contextmanager
 def packages_trie_cleared() -> Iterator[None]:
     '''

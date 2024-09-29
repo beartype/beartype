@@ -41,7 +41,7 @@ from beartype.typing import (
 )
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_importfrom(
     # Mandatory parameters.
     module_name: str,
@@ -118,7 +118,7 @@ def make_node_importfrom(
 
 
 # ....................{ FACTORIES ~ attribute              }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_object_attr_load(
     # Mandatory parameters.
     attr_name: str,
@@ -225,7 +225,7 @@ def make_node_object_attr_load(
 
 
 # ....................{ FACTORIES ~ call                   }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_call_expr(*args, node_sibling: AST, **kwargs) -> Expr:
     '''
     Create and return a new **callable call expression abstract syntax tree
@@ -260,7 +260,7 @@ def make_node_call_expr(*args, node_sibling: AST, **kwargs) -> Expr:
     return node_func
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_call(
     # Mandatory parameters.
     func_name: str,
@@ -324,7 +324,7 @@ def make_node_call(
 
 
 # ....................{ FACTORIES ~ call : arg             }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_kwarg(
     kwarg_name: str, kwarg_value: expr, node_sibling: AST) -> keyword:
     '''
@@ -362,7 +362,7 @@ def make_node_kwarg(
 
 
 # ....................{ FACTORIES ~ literal : string       }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_str(text: str, node_sibling: AST) -> Constant:
     '''
     Create and return a new **string literal abstract syntax tree
@@ -393,7 +393,7 @@ def make_node_str(text: str, node_sibling: AST) -> Constant:
 
 
 # ....................{ FACTORIES ~ literal : f-string     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
     '''
     Create and return a new **f-string formatting field abstract syntax tree
@@ -440,7 +440,7 @@ def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
 
 
 # ....................{ FACTORIES ~ name                   }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def make_node_name_load(name: str, node_sibling: AST) -> Name:
     '''
     Create and return a new **attribute access abstract syntax tree (AST) node**
@@ -471,7 +471,7 @@ def make_node_name_load(name: str, node_sibling: AST) -> Name:
     return node_name
 
 
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def make_node_name_store(name: str, node_sibling: AST) -> Name:
     '''
     Create and return a new **attribute assignment abstract syntax tree (AST)

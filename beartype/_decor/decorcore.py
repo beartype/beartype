@@ -139,7 +139,7 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def _beartype_object_nonfatal(
     # Mandatory parameters.
     obj: BeartypeableT,
@@ -226,9 +226,9 @@ def _beartype_object_nonfatal(
         # warning message to be emitted below.
         error_message = format_exc()
 
-        #FIXME: Once, we thought this truncation was useful. Having actually
-        #*USED* @beartype in the real world, however, we now regard this
-        #truncation is the ultimate horror that prevents debugging. Lessons!
+        # FIXME: Once, we thought this truncation was useful. Having actually
+        # *USED* @beartype in the real world, however, we now regard this
+        # truncation is the ultimate horror that prevents debugging. Lessons!
         # # Original lower-level error message to be embedded in the higher-level
         # # warning message to be emitted below, defined as either...
         # error_message = (

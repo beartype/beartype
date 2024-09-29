@@ -381,7 +381,7 @@ def make_func(
     return func
 
 # ....................{ COPIERS                            }....................
-#FIXME: Consider excising. Although awesome, this is no longer needed.
+# FIXME: Consider excising. Although awesome, this is no longer needed.
 # from beartype._util.func.utilfunctest import die_unless_func_python
 # from types import FunctionType
 # def copy_func_shallow(

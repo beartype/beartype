@@ -155,10 +155,10 @@ def die_unless_hint_pep(
 
 
 # ....................{ EXCEPTIONS ~ supported             }....................
-#FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
-#all or most calls to this function into calls to the
-#warn_if_hint_pep_unsupported() function; then, consider excising this as well
-#as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
+# FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
+# all or most calls to this function into calls to the
+# warn_if_hint_pep_unsupported() function; then, consider excising this as well
+# as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
 def die_if_hint_pep_unsupported(
     # Mandatory parameters.
     hint: object,
@@ -253,10 +253,10 @@ def die_if_hint_pep_unsupported(
 
 
 # ....................{ WARNINGS                           }....................
-#FIXME: Unit test us up.
-#FIXME: Actually use us in place of die_if_hint_pep_unsupported().
-#FIXME: Actually, it's unclear whether we still require or desire this. See
-#"_pephint" commentary for further details.
+# FIXME: Unit test us up.
+# FIXME: Actually use us in place of die_if_hint_pep_unsupported().
+# FIXME: Actually, it's unclear whether we still require or desire this. See
+# "_pephint" commentary for further details.
 # def warn_if_hint_pep_unsupported(
 #     # Mandatory parameters.
 #     hint: object,
@@ -377,7 +377,7 @@ def is_hint_pep(hint: object) -> bool:
     return hint_sign is not None
 
 
-#FIXME: Currently unused but preserved for posterity. *shrug*
+# FIXME: Currently unused but preserved for posterity. *shrug*
 # def is_hint_pep_deprecated(hint: object) -> bool:
 #     '''
 #     :data:`True` only if the passed PEP-compliant type hint is **deprecated**
@@ -479,7 +479,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_hint_pep_subscripted(hint: object) -> bool:
     '''
     :data:`True` only if the passed PEP-compliant type hint is **subscripted**
@@ -556,11 +556,11 @@ def is_hint_pep_supported(hint: object) -> bool:
 
 
 # ....................{ TESTERS ~ typing                   }....................
-#FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
-#access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
-#* beartype._util.hint.pep.proposal.pep484.utilpep484.py
-#Thankfully, nobody really cares about generalizing this one edge case to
-#"testing_extensions", so it's mostly fine for various definitions of fine.
+# FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
+# access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
+# * beartype._util.hint.pep.proposal.pep484.utilpep484.py
+# Thankfully, nobody really cares about generalizing this one edge case to
+# "testing_extensions", so it's mostly fine for various definitions of fine.
 @callable_cached
 def is_hint_pep_typing(hint: object) -> bool:
     '''

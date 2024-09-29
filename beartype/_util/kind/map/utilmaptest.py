@@ -144,7 +144,7 @@ def die_if_mappings_two_items_collide(
 
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_mapping_keys_all(
     mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
     '''
@@ -176,7 +176,7 @@ def is_mapping_keys_all(
     return keys <= mapping.keys()
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_mapping_keys_any(
     mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
     '''

@@ -39,12 +39,12 @@ from beartype.typing import (
 )
 
 # ....................{ VALIDATORS                         }....................
-#FIXME: Validate that this forward reference string is *NOT* the empty string.
-#FIXME: Validate that this forward reference string is a syntactically valid
-#"."-delimited concatenation of Python identifiers. We already have logic
-#performing that validation somewhere, so let's reuse that here, please.
-#Right. So, we already have an is_identifier() tester; now, we just need to
-#define a new die_unless_identifier() validator.
+# FIXME: Validate that this forward reference string is *NOT* the empty string.
+# FIXME: Validate that this forward reference string is a syntactically valid
+# "."-delimited concatenation of Python identifiers. We already have logic
+# performing that validation somewhere, so let's reuse that here, please.
+# Right. So, we already have an is_identifier() tester; now, we just need to
+# define a new die_unless_identifier() validator.
 def die_unless_hint_pep484585_ref(
     # Mandatory parameters.
     hint: object,
@@ -103,7 +103,7 @@ def die_unless_hint_pep484585_ref(
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep484585_ref_names(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
@@ -562,7 +562,7 @@ def get_hint_pep484585_ref_names_relative_to(
 
 
 # ....................{ IMPORTERS                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def import_pep484585_ref_type(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,

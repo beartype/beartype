@@ -11,12 +11,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 
 # ....................{ PRIVATE ~ mixins                   }....................
@@ -630,7 +630,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         #     https://stackoverflow.com/a/28335286/2809027
         super().__init__(message, culprits, *args, **kwargs)
 
-        #FIXME: Unit test us up, please.
+        # FIXME: Unit test us up, please.
         # If the culprits are *NOT* a tuple, raise an exception.
         if not isinstance(culprits, tuple):
             msg = f'Culprits {culprits!r} not tuple.'
@@ -807,7 +807,7 @@ class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
     '''
 
 
-#FIXME: Unsure what this is about. We no longer raise this anywhere. *sigh*
+# FIXME: Unsure what this is about. We no longer raise this anywhere. *sigh*
 # class BeartypeCaveNoneTypeOrMutabilityException(
 #     BeartypeCaveNoneTypeOrException):
 #     '''

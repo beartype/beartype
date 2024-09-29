@@ -15,17 +15,17 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Excise this submodule away, please. This submodule was a horrendous idea
-#and has plagued the entire "beartype.cave" subpackage with unnecessary slowdown
-#at import time. It's simply time for this to go, please.
+# FIXME: Excise this submodule away, please. This submodule was a horrendous idea
+# and has plagued the entire "beartype.cave" subpackage with unnecessary slowdown
+# at import time. It's simply time for this to go, please.
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from argparse import (
     ArgumentParser,

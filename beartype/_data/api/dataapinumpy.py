@@ -23,7 +23,7 @@ importable under the active Python interpreter: e.g.,
        ...
 '''
 
-#FIXME: Currently unused, but preserved for posterity. What can you do? *shrug*
+# FIXME: Currently unused, but preserved for posterity. What can you do? *shrug*
 # # ....................{ IMPORTS                            }....................
 # from numpy import (
 #     bool_,

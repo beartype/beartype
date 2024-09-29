@@ -21,7 +21,7 @@ from beartype.typing import Optional
 # from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def get_type_filename_or_none(cls: type) -> Optional[str]:
     '''
     Absolute filename of the file on the local filesystem containing the
@@ -79,7 +79,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
     return None
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_type_locals(
     # Mandatory parameters.
     cls: type,

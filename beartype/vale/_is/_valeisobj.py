@@ -308,27 +308,27 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
                 mapping_src=attr_validator._is_valid_code_locals,
             )
 
-            #FIXME: Unfortunately, "local_name_attr_value" still isn't a
-            #sufficiently unique name below, because "IsAttr['name',
-            #IsAttr['name', IsEqual[True]]]" is a trivial counter-example where
-            #the current approach breaks down. For true uniquification here,
-            #we're going to need to instead:
-            #* Define a global private counter:
+            # FIXME: Unfortunately, "local_name_attr_value" still isn't a
+            # sufficiently unique name below, because "IsAttr['name',
+            # IsAttr['name', IsEqual[True]]]" is a trivial counter-example where
+            # the current approach breaks down. For true uniquification here,
+            # we're going to need to instead:
+            # * Define a global private counter:
             #  _local_name_obj_attr_value_counter = Counter(0)
-            #* Replace the assignment below with:
+            # * Replace the assignment below with:
             #  local_name_obj_attr_value = (
             #      f'{{obj}}_isattr_'
             #      f'{next(_local_name_obj_attr_value_counter)}'
             #  )
             #
-            #Of course, this assumes "Counter" objects are thread-safe. If
-            #they're not, we'll need to further obfuscate all this behind a
-            #[R]Lock of some sort. *sigh*
-            #FIXME: Oh, right. We mixed up "collections.Counter" with
-            #"itertools.count". The former is orthogonal to our interests here;
-            #the latter is of interest but *NOT* thread-safe. The solution is
-            #for us to implement a new "FastWriteCounter" class resembling that
-            #published in this extremely clever (and thus awesome) article:
+            # Of course, this assumes "Counter" objects are thread-safe. If
+            # they're not, we'll need to further obfuscate all this behind a
+            # [R]Lock of some sort. *sigh*
+            # FIXME: Oh, right. We mixed up "collections.Counter" with
+            # "itertools.count". The former is orthogonal to our interests here;
+            # the latter is of interest but *NOT* thread-safe. The solution is
+            # for us to implement a new "FastWriteCounter" class resembling that
+            # published in this extremely clever (and thus awesome) article:
             #    https://julien.danjou.info/atomic-lock-free-counters-in-python
 
             # Name of a local variable in this code whose:
@@ -338,23 +338,23 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
             #   being validated by this code.
             local_name_attr_value = f'{{obj}}_isattr_{attr_name}'
 
-            #FIXME: *OVERKILL.* The "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
-            #"VALE_CODE_CHECK_ISATTR_TEST" globals are *ONLY* ever accessed in
-            #this specific method. Refactor as follows, please:
-            #* Merge the entirety of the lower-level
+            # FIXME: *OVERKILL.* The "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
+            # "VALE_CODE_CHECK_ISATTR_TEST" globals are *ONLY* ever accessed in
+            # this specific method. Refactor as follows, please:
+            # * Merge the entirety of the lower-level
             #  "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" substring into the parent
             #  "VALE_CODE_CHECK_ISATTR_TEST" substring.
-            #* Remove the "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
+            # * Remove the "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" and
             #  "_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW" globals entirely.
 
             # Python expression expanding to the value of this attribute,
             # efficiently optimized under Python >= 3.8 with an assignment
             # expression to avoid inefficient access of this value.
             attr_value_expr = VALE_CODE_CHECK_ISATTR_VALUE_EXPR_format(
-                #FIXME: Inefficient and unnecessary. Since "attr_name" is
-                #guaranteed to be a valid Python identifier, the
-                #"VALE_CODE_CHECK_ISATTR_VALUE_EXPR" template should just
-                #forcefully embed "{attr_name_expr}" inside single quotes.
+                # FIXME: Inefficient and unnecessary. Since "attr_name" is
+                # guaranteed to be a valid Python identifier, the
+                # "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" template should just
+                # forcefully embed "{attr_name_expr}" inside single quotes.
                 attr_name_expr=repr(attr_name),
                 local_name_attr_value=local_name_attr_value,
                 local_name_sentinel=local_name_sentinel,
@@ -385,8 +385,8 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # Else, this attribute name is qualified (i.e., contains one or more
         # "." delimiters), fallback to a general solution performing iteration.
         else:
-            #FIXME: Implement us up when we find the time, please. We currently
-            #raise an exception simply because we ran out of time for this. :{
+            # FIXME: Implement us up when we find the time, please. We currently
+            # raise an exception simply because we ran out of time for this. :{
             msg = (
                 f'{get_repr()} first argument '
                 f'{attr_name!r} not unqualified Python identifier '

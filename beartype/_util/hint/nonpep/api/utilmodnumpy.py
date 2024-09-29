@@ -11,13 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: The top-level of this module should avoid importing from third-party
 # optional libraries, both because those libraries cannot be guaranteed to be
 # either installed or importable here *AND* because those imports are likely to
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.api.utilapinumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
@@ -33,9 +33,9 @@ from beartype.roar import (
 from beartype.typing import Any
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
-#By splitting this function up into smaller functions -- each of which is
-#actually cached by @callable_cached and thus called with positional arguments.
+# FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
+# By splitting this function up into smaller functions -- each of which is
+# actually cached by @callable_cached and thus called with positional arguments.
 def reduce_hint_numpy_ndarray(
     hint: Any,
     exception_prefix: str,
@@ -117,8 +117,8 @@ def reduce_hint_numpy_ndarray(
         IsSubclass,
     )
 
-    #FIXME: Consider submitting an upstream issue about this. We don't
-    #particularly feel like arguing tonight, because that's a lonely hill.
+    # FIXME: Consider submitting an upstream issue about this. We don't
+    # particularly feel like arguing tonight, because that's a lonely hill.
 
     # If this hint is the unsubscripted "NDArray" type hint, this hint
     # permissively matches *ALL* NumPy arrays rather than strictly matching
@@ -206,8 +206,8 @@ def reduce_hint_numpy_ndarray(
         return ndarray
 
     # ..................{ REDUCTION                          }..................
-    #FIXME: Safely replace this with "from typing import Annotated" after
-    #dropping Python 3.8 support.
+    # FIXME: Safely replace this with "from typing import Annotated" after
+    # dropping Python 3.8 support.
     # "typing.Annotated" type hint factory safely imported from whichever of
     # the "typing" or "typing_extensions" modules declares this attribute if
     # one or more do *OR* "None" otherwise (i.e., if none do).

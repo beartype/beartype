@@ -22,7 +22,7 @@ from beartype.typing import (
 )
 
 # ....................{ CLASSES                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class FrozenDict(dict):
     '''
     **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`

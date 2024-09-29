@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 
 # ....................{ INFERERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def infer_hint_thirdparty(obj: object, **kwargs) -> Optional[object]:
     '''
     **Third-party type hint** (i.e., possibly subscripted type hint factory

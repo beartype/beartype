@@ -127,7 +127,7 @@ def get_hint_pep484_typevar_bound_or_none(
 
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Remove this function *AFTER* deeply type-checking type variables.
+# FIXME: Remove this function *AFTER* deeply type-checking type variables.
 def reduce_hint_pep484_typevar(
     hint: TypeVar, exception_prefix: str, *args, **kwargs) -> object:
     '''

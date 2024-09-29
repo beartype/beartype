@@ -12,19 +12,19 @@ constants are commonly inspected (and thus expected) by external automation.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Consider significantly expanding the above module docstring, assuming
-#Sphinx presents this module in its generated frontmatter.
+# FIXME: Consider significantly expanding the above module docstring, assuming
+# Sphinx presents this module in its generated frontmatter.
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Explicitly list *ALL* public attributes imported below in the
 # "__all__" list global declared below to avoid linter complaints.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ GLOBALS                            }....................
 # Initialized below by the _init() function. As a temporary fallback, this
@@ -257,20 +257,20 @@ def __getattr__(attr_name: str) -> object:
         from beartype import door
         attr_nondeprecated_name_to_value = {'door': door}
         attr_nondeprecated_name_to_value.update(globals())
-    #FIXME: To support attribute-based deferred importation ala "lazy loading"
-    #of heavyweight subpackages like "beartype.door" and "beartype.vale", it
-    #looks like we'll need to manually add support here for that: e.g.,
+    # FIXME: To support attribute-based deferred importation ala "lazy loading"
+    # of heavyweight subpackages like "beartype.door" and "beartype.vale", it
+    # looks like we'll need to manually add support here for that: e.g.,
     #    elif attr_name in {'cave', 'claw', 'door', 'vale',}:
     #        #FIXME: Dynamically import this attribute here... somehow. Certainly, if
     #        #such functionality does *NOT* exist, add it to the existing
     #        #"utilmodimport" submodule: e.g.,
     #        attr_value = import_module_attr(f'beartype.{attr_name}')
     #        attr_nondeprecated_name_to_value = {attr_name: attr_value}
-    #FIXME: Revise docstring accordingly, please.
-    #FIXME: Exhaustively test this, please. Because we'll never manage to keep
-    #this in sync, we *ABSOLUTELY* should author a unit test that:
-    #* Decides the set of all public subpackages of "beartype".
-    #* Validates that each subpackage in this set is accessible as a
+    # FIXME: Revise docstring accordingly, please.
+    # FIXME: Exhaustively test this, please. Because we'll never manage to keep
+    # this in sync, we *ABSOLUTELY* should author a unit test that:
+    # * Decides the set of all public subpackages of "beartype".
+    # * Validates that each subpackage in this set is accessible as a
     #  "beartype.{subpackage_name}" attribute.
 
     # Else, this deprecated attribute is any other attribute.

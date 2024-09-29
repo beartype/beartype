@@ -72,29 +72,29 @@ class ClassTypeHint(TypeHint):
         # print(f'{repr(self)}._is_args_ignorable: {self._is_args_ignorable}')
         # print(f'{repr(branch)}._is_args_ignorable: {branch._is_args_ignorable}')
 
-        #FIXME: *UGH.* This is redundant. Ideally:
-        #* There should exist a concrete TypeHint._is_subhint_branch()
+        # FIXME: *UGH.* This is redundant. Ideally:
+        # * There should exist a concrete TypeHint._is_subhint_branch()
         #  implementation performing this logic on behalf of *EVERY* subclass.
-        #* TypeHint._is_subhint_branch() should then call a subclass-specific
+        # * TypeHint._is_subhint_branch() should then call a subclass-specific
         #  abstract TypeHint._is_subhint_branch_override() method.
-        #FIXME: Actually, TypeHint._is_subhint_branch() is only called in
-        #exactly one place: by TypeHint._is_subhint(). So, the simpler solution
-        #would be to simply implement the following tests there, please.
+        # FIXME: Actually, TypeHint._is_subhint_branch() is only called in
+        # exactly one place: by TypeHint._is_subhint(). So, the simpler solution
+        # would be to simply implement the following tests there, please.
 
         # Everything is a subclass of "Any".
         if branch._hint is Any:
             return True
 
-        #FIXME: *UHM.* Wat? Do we really currently wrap "typing.Any" with an
-        #instance of this class? Why? That makes *NO* sense. "typing.Any" should
-        #be wrapped by its own "TypeHintAny" subclass, please. *sigh*
+        # FIXME: *UHM.* Wat? Do we really currently wrap "typing.Any" with an
+        # instance of this class? Why? That makes *NO* sense. "typing.Any" should
+        # be wrapped by its own "TypeHintAny" subclass, please. *sigh*
         # "Any" is only a subclass of "Any".
         if self._hint is Any:
             return False
 
-        #FIXME: Actually, let's avoid the implicit numeric tower for now.
-        #Explicit is better than implicit and we really strongly disagree with
-        #this subsection of PEP 484, which does more real-world harm than good.
+        # FIXME: Actually, let's avoid the implicit numeric tower for now.
+        # Explicit is better than implicit and we really strongly disagree with
+        # this subsection of PEP 484, which does more real-world harm than good.
         # # Numeric tower:
         # # https://peps.python.org/pep-0484/#the-numeric-tower
         # if self._origin is float and branch._origin in {float, int}:
@@ -102,17 +102,17 @@ class ClassTypeHint(TypeHint):
         # if self._origin is complex and branch._origin in {complex, float, int}:
         #     return True
 
-        #FIXME: This simplistic logic fails to account for parametrized
-        #generics. To do so, we'll probably want to:
-        #* Define a new "beartype.door._cls._pep.pep484585.doorpep484585generic"
+        # FIXME: This simplistic logic fails to account for parametrized
+        # generics. To do so, we'll probably want to:
+        # * Define a new "beartype.door._cls._pep.pep484585.doorpep484585generic"
         #  submodule.
-        #* In that submodule:
+        # * In that submodule:
         #  * Define a new "GenericTypeHint" subclass initially simply
         #    copy-pasted from this subclass.
-        #* Incorporate that subclass into the "beartype.door._doormap"
+        # * Incorporate that subclass into the "beartype.door._doormap"
         #  submodule.
-        #* Validate that tests still pass.
-        #* Begin implementing custom generic-specific logic in the
+        # * Validate that tests still pass.
+        # * Begin implementing custom generic-specific logic in the
         #  "GenericTypeHint" subclass. Notably, this tester should be refactored
         #  as follows:
         #  # If this generic is *NOT* a subclass of that generic, then this generic

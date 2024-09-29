@@ -18,12 +18,12 @@ insufficient.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
 from importlib.metadata import metadata as _get_package_metadata
@@ -291,22 +291,22 @@ URL of this project's release list.
 '''
 
 # ....................{ METADATA ~ dependency : names      }....................
-#FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great. However,
-#there are numerous obvious eccentricities in "pydata-sphinx-theme" that we
-#strongly disagree with -- especially that theme's oddball division in TOC
-#heading levels between the top and left sidebars.
+# FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great. However,
+# there are numerous obvious eccentricities in "pydata-sphinx-theme" that we
+# strongly disagree with -- especially that theme's oddball division in TOC
+# heading levels between the top and left sidebars.
 #
-#Enter "sphinx-book-theme", stage left. "sphinx-book-theme" is based on
-#"pydata-sphinx-theme", but entirely dispenses with all of the obvious
-#eccentricities that hamper usage of "pydata-sphinx-theme". We no longer have
-#adequate time to maintain custom documentation CSS against the moving target
-#that is "pydata-sphinx-theme". Ergo, we should instead let "sphinx-book-theme"
-#do all of that heavy lifting for us. Doing so will enable us to:
-#* Lift the horrifying constraint above on a maximum Sphinx version. *gulp*
-#* Substantially simplify our Sphinx configuration. Notably, the entire fragile
+# Enter "sphinx-book-theme", stage left. "sphinx-book-theme" is based on
+# "pydata-sphinx-theme", but entirely dispenses with all of the obvious
+# eccentricities that hamper usage of "pydata-sphinx-theme". We no longer have
+# adequate time to maintain custom documentation CSS against the moving target
+# that is "pydata-sphinx-theme". Ergo, we should instead let "sphinx-book-theme"
+# do all of that heavy lifting for us. Doing so will enable us to:
+# * Lift the horrifying constraint above on a maximum Sphinx version. *gulp*
+# * Substantially simplify our Sphinx configuration. Notably, the entire fragile
 #  "doc/src/_templates/" subdirectory should be *ENTIRELY* excised away.
 #
-#Please transition to "sphinx-book-theme" as time permits.
+# Please transition to "sphinx-book-theme" as time permits.
 
 # Note that documentation-time functionality in the Sphinx-specific
 # "doc/src/conf.py" script imports this private string global. *shrug*

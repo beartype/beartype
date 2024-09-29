@@ -16,7 +16,7 @@ from beartype._data.hint.datahinttyping import TypeStack
 from beartype.roar import BeartypeDecorHintPep673Exception
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def reduce_hint_pep673(
     hint: object,
     cls_stack: TypeStack,

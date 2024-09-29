@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 
 # ....................{ RAISERS                            }....................
-#FIXME: Pass "exception_prefix" to all calls of this validator.
+# FIXME: Pass "exception_prefix" to all calls of this validator.
 def die_unless_hint_pep593(
     # Mandatory parameters.
     hint: object,
@@ -68,7 +68,7 @@ def die_unless_hint_pep593(
 
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def is_hint_pep593(hint: Any) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`593`-compliant **type
@@ -187,7 +187,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep593_metadata(
     hint: Any, exception_prefix: str = '') -> Tuple[Any, ...]:
     '''
@@ -240,7 +240,7 @@ def get_hint_pep593_metadata(
     return hint.__metadata__
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
     '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type

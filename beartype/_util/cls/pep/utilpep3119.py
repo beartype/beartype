@@ -268,9 +268,9 @@ def die_unless_type_isinstanceable(
     # human-readable exception embedding the original (typically unreadable)
     # "TypeError" exception implicitly raised by the metaclass of this class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_isinstanceable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to isinstance().
     try:
         isinstance(None, cls)  # type: ignore[arg-type]
@@ -297,11 +297,11 @@ def die_unless_type_isinstanceable(
         # Else, this exception fails to human-readably describe this
         # non-isinstanceability.
 
-        #FIXME: Uncomment after we uncover why doing so triggers an
-        #infinite circular exception chain when "hint" is a "GenericAlias".
-        #It's clearly the is_hint_pep544_protocol() call, but why? In any
-        #case, the simplest workaround would just be to inline the logic of
-        #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
+        # FIXME: Uncomment after we uncover why doing so triggers an
+        # infinite circular exception chain when "hint" is a "GenericAlias".
+        # It's clearly the is_hint_pep544_protocol() call, but why? In any
+        # case, the simplest workaround would just be to inline the logic of
+        # is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
 
         # # Human-readable exception message to be raised as either...
         # exception_message = (
@@ -500,9 +500,9 @@ def die_unless_type_issubclassable(
     # human-readable exception embedding the original (typically unreadable)
     # "TypeError" exception implicitly raised by the metaclass of this class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_issubclassable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to issubclass().
     try:
         issubclass(type, cls)  # type: ignore[arg-type]
@@ -543,9 +543,9 @@ def die_unless_type_issubclassable(
 
 
 # ....................{ TESTERS ~ isinstanceable           }....................
-#FIXME: Define is_object_isinstanceable() similar to as done below, please.
+# FIXME: Define is_object_isinstanceable() similar to as done below, please.
 
-#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
+# FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
 def is_type_isinstanceable(
     # Mandatory parameters.
@@ -631,9 +631,9 @@ def is_type_isinstanceable(
     # class is not a forward reference proxy type.
     # print('Going!')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_isinstanceable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to the isinstance()
     # builtin to decide whether or not this class is safely usable as a
     # standard class or not.
@@ -661,7 +661,7 @@ def is_type_isinstanceable(
 
 
 # ....................{ TESTERS ~ issubclassable           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def is_object_issubclassable(
     # Mandatory parameters.
@@ -739,13 +739,13 @@ def is_object_issubclassable(
     # Else, this object *COULD* be runtime-checkable. To decide whether this
     # object is runtime-checkable, further handling is warranted.
 
-    #FIXME: *UGH*. DRY violation between this tester and the
-    #is_type_issubclassable(). Consider refactoring out into a new private
-    #_is_object_issubclassable_slow() tester, please. *sigh*
+    # FIXME: *UGH*. DRY violation between this tester and the
+    # is_type_issubclassable(). Consider refactoring out into a new private
+    # _is_object_issubclassable_slow() tester, please. *sigh*
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_issubclassable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this object as the second parameter to the issubclass()
     # builtin to decide whether or not this object is safely usable as a
     # standard class or not.
@@ -772,7 +772,7 @@ def is_object_issubclassable(
     return True
 
 
-#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
+# FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
 def is_type_issubclassable(
     # Mandatory parameters.
@@ -846,13 +846,13 @@ def is_type_issubclassable(
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.
 
-    #FIXME: *UGH*. DRY violation between this tester and the
-    #is_object_issubclassable(). Consider refactoring out into a new private
-    #_is_object_issubclassable_slow() tester, please. *sigh*
+    # FIXME: *UGH*. DRY violation between this tester and the
+    # is_object_issubclassable(). Consider refactoring out into a new private
+    # _is_object_issubclassable_slow() tester, please. *sigh*
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_issubclassable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to the issubclass()
     # builtin to decide whether or not this class is safely usable as a
     # standard class or not.
@@ -1045,7 +1045,7 @@ def _die_if_object_uncheckable(
 
 
 # ....................{ PRIVATE ~ testers                  }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def _is_exception_ambiguous(exception: Exception) -> bool:
     '''
     :data:`True` only if the passed exception is **ambiguous** (i.e., an

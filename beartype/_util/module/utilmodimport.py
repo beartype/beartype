@@ -28,8 +28,8 @@ from beartype.typing import (
 )
 
 # ....................{ IMPORTERS                          }....................
-#FIXME: Preserved until requisite, which shouldn't be long.
-#FIXME: Unit test us up, please.
+# FIXME: Preserved until requisite, which shouldn't be long.
+# FIXME: Unit test us up, please.
 # def import_module(
 #     # Mandatory parameters.
 #     module_name: str,
@@ -300,7 +300,7 @@ def import_module_attr(
     return module_attr
 
 
-#FIXME: Fix up all tests of this function, please.
+# FIXME: Fix up all tests of this function, please.
 def import_module_attr_or_sentinel(
     # Mandatory parameters.
     attr_name: str,

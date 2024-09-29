@@ -39,7 +39,7 @@ from beartype.typing import (
 )
 
 # ....................{ CONSTANTS                          }....................
-#FIXME: Shift into the "beartype._data.func.datafunc" submodule, please.
+# FIXME: Shift into the "beartype._data.func.datafunc" submodule, please.
 FUNC_NAME_LAMBDA = '<lambda>'
 '''
 Default name of all **pure-Python lambda functions** (i.e., function declared
@@ -125,7 +125,7 @@ def die_unless_func_python(
 
 
 # ....................{ RAISERS ~ descriptors              }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def die_unless_func_boundmethod(
     # Mandatory parameters.
     func: Any,
@@ -417,7 +417,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
 
 
 # ....................{ TESTERS ~ descriptor               }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_func_boundmethod(func: Any) -> TypeGuard[MethodBoundInstanceOrClassType]:
     '''
     :data:`True` only if the passed object is a **C-based bound instance method

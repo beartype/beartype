@@ -26,8 +26,8 @@ from beartype._util.py.utilpyversion import (
 from beartype.typing import Tuple
 
 # ....................{ GETTERS                            }....................
-#FIXME: Docstring us up, please.
-#FIXME: Unit test us up, please.
+# FIXME: Docstring us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep484585_sign_tuplefixed_or_same(
     hint: object, hint_sign: HintSign) -> HintSign:
     '''
@@ -165,7 +165,7 @@ def is_hint_pep484585_tuple_empty(hint: object) -> bool:
 
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_hint_pep484585_tuple_fixed_hint(hints: tuple) -> object:
     '''
     :pep:`484`- or :pep:`585`-compliant **fixed-length tuple type hint** of the
@@ -187,8 +187,8 @@ def make_hint_pep484585_tuple_fixed_hint(hints: tuple) -> object:
     # Return a fixed-length tuple type hint subscripted by these child type
     # hints, defined as either...
     return (
-        #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
-        #"SyntaxError" if we even try doing this. *SADNESS*
+        # FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
+        # "SyntaxError" if we even try doing this. *SADNESS*
         # # If the active Python interpreter targets Python >= 3.11 and thus
         # # supports list unpacking in arbitrary expressions, prefer an efficient
         # # expression leveraging a list unpacking;

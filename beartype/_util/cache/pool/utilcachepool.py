@@ -12,14 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Conditionally pass "is_debug=True" to the KeyPool.{acquire,release}()
-#methods defined below when the "BeartypeConfig.is_debug" parameter is "True"
-#for the current call to the @beartype decorator, please.
+# FIXME: Conditionally pass "is_debug=True" to the KeyPool.{acquire,release}()
+# methods defined below when the "BeartypeConfig.is_debug" parameter is "True"
+# for the current call to the @beartype decorator, please.
 
-#FIXME: Optimize the KeyPool.{acquire,release}() methods defined below. Rather
-#than unconditionally wrapping the bodies of each in a thread-safe
-#"self._thread_lock" context manager, we might be able to leverage the GIL by
-#only doing so "if threading.active_count():". Profile us up, please.
+# FIXME: Optimize the KeyPool.{acquire,release}() methods defined below. Rather
+# than unconditionally wrapping the bodies of each in a thread-safe
+# "self._thread_lock" context manager, we might be able to leverage the GIL by
+# only doing so "if threading.active_count():". Profile us up, please.
 
 # ....................{ IMPORTS                            }....................
 from collections import defaultdict
@@ -181,7 +181,7 @@ class KeyPool:
 
         # In a thread-safe manner...
         with self._thread_lock:
-            #FIXME: This logic can *PROBABLY* be optimized into:
+            # FIXME: This logic can *PROBABLY* be optimized into:
             #    if not is_debug:
             #        try:
             #            return self._key_to_pool[key].pop()
@@ -198,9 +198,9 @@ class KeyPool:
             #
             #        return pool_item
             #
-            #That said, this introduces additional complexity that will require
-            #unit testing. So, only do so if the above is actually profiled as
-            #being faster. It almost certainly is, but let's be certain please.
+            # That said, this introduces additional complexity that will require
+            # unit testing. So, only do so if the above is actually profiled as
+            # being faster. It almost certainly is, but let's be certain please.
 
             # List associated with this key.
             #

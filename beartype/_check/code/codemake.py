@@ -619,17 +619,17 @@ def make_check_expr(
             f'index {hints_meta_index_curr} not tuple.'
         )
 
-        #FIXME: ...heh. It's time, people. Sadly, it turns out that redefining
-        #the _enqueue_hint() closure on *EVERY* call to this function is a huge
-        #time sink -- far huger than anything else, actually. Therefore:
-        #* Define a new "HintMeta" dataclass defining one slotted field for each
+        # FIXME: ...heh. It's time, people. Sadly, it turns out that redefining
+        # the _enqueue_hint() closure on *EVERY* call to this function is a huge
+        # time sink -- far huger than anything else, actually. Therefore:
+        # * Define a new "HintMeta" dataclass defining one slotted field for each
         #  of these metadata.
-        #* Refactor the _enqueue_hint() closure into a HintMeta.enqueue_hint()
+        # * Refactor the _enqueue_hint() closure into a HintMeta.enqueue_hint()
         #  method.
-        #* Replace all calls to the _enqueue_hint() closure with calls to the
+        # * Replace all calls to the _enqueue_hint() closure with calls to the
         #  HintMeta.enqueue_hint() method.
-        #* Remove the _enqueue_hint() closure.
-        #* Remove all of the following locals from this function in favour of
+        # * Remove the _enqueue_hint() closure.
+        # * Remove all of the following locals from this function in favour of
         #  the "HintMeta" slotted fields of the same names:
         #  * hint_curr.
         #  * hint_curr_placeholder.
@@ -651,9 +651,9 @@ def make_check_expr(
         ) = hint_curr_meta
         # print(f'Visiting type hint {repr(hint_curr)}...')
 
-        #FIXME: Comment this sanity check out after we're sufficiently
-        #convinced this algorithm behaves as expected. While useful, this check
-        #requires a linear search over the entire code and is thus costly.
+        # FIXME: Comment this sanity check out after we're sufficiently
+        # convinced this algorithm behaves as expected. While useful, this check
+        # requires a linear search over the entire code and is thus costly.
         # assert hint_curr_placeholder in func_wrapper_code, (
         #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
         #         hint_curr_exception_prefix, hint, hint_curr_placeholder, func_wrapper_code))
@@ -667,20 +667,20 @@ def make_check_expr(
         # ................{ PEP                                }................
         # If this hint is PEP-compliant...
         if is_hint_pep(hint_curr):
-            #FIXME: Refactor to call warn_if_hint_pep_unsupported() instead.
-            #Actually...wait. This is probably still a valid test here. We'll
-            #need to instead augment the is_hint_ignorable() function to
-            #additionally test whether the passed hint is unsupported, in which
-            #case that function should return false as well as emit a non-fatal
-            #warning ala the new warn_if_hint_pep_unsupported() function --
-            #which should probably simply be removed now. *sigh*
-            #FIXME: Actually, in that case, we can simply reduce the following
-            #two calls to simply:
+            # FIXME: Refactor to call warn_if_hint_pep_unsupported() instead.
+            # Actually...wait. This is probably still a valid test here. We'll
+            # need to instead augment the is_hint_ignorable() function to
+            # additionally test whether the passed hint is unsupported, in which
+            # case that function should return false as well as emit a non-fatal
+            # warning ala the new warn_if_hint_pep_unsupported() function --
+            # which should probably simply be removed now. *sigh*
+            # FIXME: Actually, in that case, we can simply reduce the following
+            # two calls to simply:
             #    die_if_hint_pep_ignorable(
             #        hint=hint_curr, exception_prefix=hint_curr_exception_prefix)
-            #Of course, this implies we want to refactor the
-            #die_if_hint_pep_unsupported() function into
-            #die_if_hint_pep_ignorable()... probably.
+            # Of course, this implies we want to refactor the
+            # die_if_hint_pep_unsupported() function into
+            # die_if_hint_pep_ignorable()... probably.
 
             # If this hint is currently unsupported, raise an exception.
             #
@@ -708,7 +708,7 @@ def make_check_expr(
             hint_curr_sign = get_hint_pep_sign(hint_curr)
             # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
@@ -717,18 +717,18 @@ def make_check_expr(
             # * "beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all signs for which this function generates deeply
             #   type-checking code.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            #FIXME: Python 3.10 provides proper syntactic support for "case"
-            #statements, which should allow us to dramatically optimize this
-            #"if" logic into equivalent "case" logic *AFTER* we drop support
-            #for Python 3.9. Of course, that will be basically never, so we'll
-            #have to preserve this for basically forever. What you gonna do?
-            #FIXME: Actually, we should probably just leverage a hypothetical
-            #"beartype.vale.IsInline[...]" validator to coerce this slow O(n)
-            #procedural logic into fast O(1) object-oriented logic. Of course,
-            #object-oriented logic is itself slow -- so we only do this if we
-            #can sufficiently memoize that logic. Consideration!
+            # FIXME: Python 3.10 provides proper syntactic support for "case"
+            # statements, which should allow us to dramatically optimize this
+            # "if" logic into equivalent "case" logic *AFTER* we drop support
+            # for Python 3.9. Of course, that will be basically never, so we'll
+            # have to preserve this for basically forever. What you gonna do?
+            # FIXME: Actually, we should probably just leverage a hypothetical
+            # "beartype.vale.IsInline[...]" validator to coerce this slow O(n)
+            # procedural logic into fast O(1) object-oriented logic. Of course,
+            # object-oriented logic is itself slow -- so we only do this if we
+            # can sufficiently memoize that logic. Consideration!
 
             # Switch on (as in, pretend Python provides a "case" statement)
             # the sign identifying this hint to decide which type of code to
@@ -875,9 +875,9 @@ def make_check_expr(
                 indent_level_child = indent_level_curr + 1
 
                 # ............{ DEEP ~ expression                  }............
-                #FIXME: Unit test that this is behaving as expected. Doing so
-                #will require further generalizations, including:
-                #* In the "beartype._decor.decormain" submodule:
+                # FIXME: Unit test that this is behaving as expected. Doing so
+                # will require further generalizations, including:
+                # * In the "beartype._decor.decormain" submodule:
                 #  * Detect when running under tests.
                 #  * When running under tests, define a new
                 #    "func_wrapper.__beartype_wrapper_code" attribute added to
@@ -889,7 +889,7 @@ def make_check_expr(
                 #    cache the source code for non-file-based modules) and possibly
                 #    even go so far as to define a PEP 302-compatible beartype
                 #    module loader. That's out of scope, so this suffices for now.
-                #* In the "beartype_test.a00_unit.data._data_hint_pep" submodule:
+                # * In the "beartype_test.a00_unit.data._data_hint_pep" submodule:
                 #  * Add a new "_PepHintMetadata.code_str_match_regexes" field,
                 #    defined as an iterable of regular expressions matching
                 #    substrings of the "func_wrapper.__beartype_wrapper_code"
@@ -899,18 +899,18 @@ def make_check_expr(
                 #  * For deeply nested "HINTS_PEP_META" entries, define this
                 #    field as follows:
                 #        code_str_match_regexes=(r'\s+:=\s+',)
-                #* In the "beartype_test.a00_unit.pep.p484.test_p484" submodule:
+                # * In the "beartype_test.a00_unit.pep.p484.test_p484" submodule:
                 #  * Match the "pep_hinted.__beartype_wrapper_code" string against
                 #    all regular expressions in the "code_str_match_regexes"
                 #    iterable for the currently iterated "pep_hint_meta".
                 #
-                #This is fairly important, as we have no other reusable means of
-                #ascertaining whether this is actually being applied in general.
-                #FIXME: That's all great, except for the
-                #"func_wrapper.__beartype_wrapper_code" part. Don't do that,
-                #please. We really do just want to do this right the first time. As
-                #expected, the key to doing so is the linecache.lazycache()
-                #function, whose implementation under Python 3.7 reads:
+                # This is fairly important, as we have no other reusable means of
+                # ascertaining whether this is actually being applied in general.
+                # FIXME: That's all great, except for the
+                # "func_wrapper.__beartype_wrapper_code" part. Don't do that,
+                # please. We really do just want to do this right the first time. As
+                # expected, the key to doing so is the linecache.lazycache()
+                # function, whose implementation under Python 3.7 reads:
                 #
                 #    def lazycache(filename, module_globals):
                 #        """Seed the cache for filename with module_globals.
@@ -944,8 +944,8 @@ def make_check_expr(
                 #                return True
                 #        return False
                 #
-                #Given that, what we need to do is:
-                #* Define a new "beartype._decor._pep302" submodule implementing a
+                # Given that, what we need to do is:
+                # * Define a new "beartype._decor._pep302" submodule implementing a
                 #  PEP 302-compatible loader for @beartype-generated wrapper
                 #  functions, enabling external callers (including the stdlib
                 #  "linecache" module) to obtain the source for these functions.
@@ -983,7 +983,7 @@ def make_check_expr(
                 #    * Else, compress the passed uncompressed source string and
                 #      register that compressed string under that module name with
                 #      that dictionary.
-                #* In the "beartype._decor.decormain" submodule:
+                # * In the "beartype._decor.decormain" submodule:
                 #  * Do... something? Oh, boy. Why didn't we finish this comment?
 
                 # If the expression yielding the current pith is neither...
@@ -1241,8 +1241,8 @@ def make_check_expr(
 
                     # For each subscripted argument of this union...
                     for hint_child in hint_childs:
-                        #FIXME: Uncomment as desired for debugging. This test is
-                        #currently a bit too costly to warrant uncommenting.
+                        # FIXME: Uncomment as desired for debugging. This test is
+                        # currently a bit too costly to warrant uncommenting.
                         # Assert that this child hint is *NOT* shallowly ignorable.
                         # Why? Because any union containing one or more shallowly
                         # ignorable child hints is deeply ignorable and should thus
@@ -1621,15 +1621,15 @@ def make_check_expr(
                     # value hints subscripting this mapping hint, defined as
                     # either...
                     hint_childs = (
-                        #FIXME: Note that a similar effect can also be achieved
-                        #through a reduction from type hints the form
-                        #"{collections,typing}.Counter[{hint_child}]" to:
+                        # FIXME: Note that a similar effect can also be achieved
+                        # through a reduction from type hints the form
+                        # "{collections,typing}.Counter[{hint_child}]" to:
                         #    typing.Annotated[
                         #        collections.abc.MutableMapping[{hint_child}, int],
                         #        beartype.vale.IsInstance[collections.Counter]
                         #    ]
-                        #However, the current approach is even *MORE* trivial
-                        #than that reduction. So, we currently prefer this.
+                        # However, the current approach is even *MORE* trivial
+                        # than that reduction. So, we currently prefer this.
                         # If this hint describes a "collections.Counter"
                         # dictionary subclass:
                         # * The "typing.Counter[...]" type hint factory is
@@ -1681,12 +1681,12 @@ def make_check_expr(
                         )
                     )
 
-                    #FIXME: Consider also contextually considering child key
-                    #hints that reduce to "Hashable" to be ignorable. This
-                    #includes complex type hints like "Union[Hashable, str]",
-                    #which reduces to "Hashable". We can't particularly be
-                    #bothered at the moment. This is a microoptimization and
-                    #will probably require a non-trivial amount of work. *sigh*
+                    # FIXME: Consider also contextually considering child key
+                    # hints that reduce to "Hashable" to be ignorable. This
+                    # includes complex type hints like "Union[Hashable, str]",
+                    # which reduces to "Hashable". We can't particularly be
+                    # bothered at the moment. This is a microoptimization and
+                    # will probably require a non-trivial amount of work. *sigh*
                     # Unignorable sane child key and value hints sanified from
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
@@ -2089,17 +2089,17 @@ def make_check_expr(
                 #
                 # ...then this hint is a PEP-compliant generic. In this case...
                 elif hint_curr_sign is HintSignGeneric:
-                    #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
-                    #*ALL* child type hints subscripting a generic up to *ALL*
-                    #pseudo-superclasses of that generic (e.g., the "int" child
-                    #hint subscripting a parent hint "MuhGeneric[int]" of type
-                    #"class MuhGeneric(list[T]): pass" up to its "list[T]"
-                    #pseudo-superclass).
+                    # FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
+                    # *ALL* child type hints subscripting a generic up to *ALL*
+                    # pseudo-superclasses of that generic (e.g., the "int" child
+                    # hint subscripting a parent hint "MuhGeneric[int]" of type
+                    # "class MuhGeneric(list[T]): pass" up to its "list[T]"
+                    # pseudo-superclass).
                     #
-                    #For now, we just strip *ALL* child type hints subscripting
-                    #a generic with the following call. This suffices, because
-                    #we just need this to work. So it goes, uneasy code
-                    #bedfellows.
+                    # For now, we just strip *ALL* child type hints subscripting
+                    # a generic with the following call. This suffices, because
+                    # we just need this to work. So it goes, uneasy code
+                    # bedfellows.
 
                     # Reduce this hint to the object originating this generic
                     # (if any) by stripping all child type hints subscripting
@@ -2192,12 +2192,12 @@ def make_check_expr(
                     func_curr_code = CODE_PEP586_PREFIX_format(
                         pith_curr_assign_expr=pith_curr_assign_expr,
 
-                        #FIXME: If "typing.Literal" is ever extended to support
-                        #substantially more types (and thus actually becomes
-                        #useful), optimize the construction of the "types" set
-                        #below to instead leverage a similar
-                        #"acquire_object_typed(set)" caching solution as that
-                        #currently employed for unions. For now, we only shrug.
+                        # FIXME: If "typing.Literal" is ever extended to support
+                        # substantially more types (and thus actually becomes
+                        # useful), optimize the construction of the "types" set
+                        # below to instead leverage a similar
+                        # "acquire_object_typed(set)" caching solution as that
+                        # currently employed for unions. For now, we only shrug.
 
                         # Python expression evaluating to a tuple of the unique
                         # types of all literal objects subscripting this hint.

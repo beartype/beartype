@@ -11,10 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Validate strings to be syntactically valid classnames via a globally
-#scoped compiled regular expression. Raising early exceptions at decoration
-#time is preferable to raising late exceptions at call time.
-#FIXME: Indeed, we now provide such a callable:
+# FIXME: Validate strings to be syntactically valid classnames via a globally
+# scoped compiled regular expression. Raising early exceptions at decoration
+# time is preferable to raising late exceptions at call time.
+# FIXME: Indeed, we now provide such a callable:
 #    from beartype._util.module.utilmodget import die_unless_module_attr_name
 
 # ....................{ IMPORTS                            }....................
@@ -28,7 +28,7 @@ from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 
 # ....................{ VALIDATORS                         }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def die_if_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -106,7 +106,7 @@ def die_if_hint_nonpep(
     # Else, this object is *NOT* a PEP-noncompliant type hint.
 
 
-#FIXME: Unit test this function with respect to non-isinstanceable classes.
+# FIXME: Unit test this function with respect to non-isinstanceable classes.
 def die_unless_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -166,9 +166,9 @@ def die_unless_hint_nonpep(
     # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     assert isinstance(exception_cls, type), (
         f'{exception_cls!r} not type.')
     assert isinstance(exception_prefix, str), (
@@ -215,7 +215,7 @@ def die_unless_hint_nonpep(
 
 
 # ....................{ VALIDATORS ~ kind                  }....................
-#FIXME: Unit test us up.
+# FIXME: Unit test us up.
 def die_unless_hint_nonpep_type(
     # Mandatory parameters.
     hint: type,
@@ -284,27 +284,27 @@ def die_unless_hint_nonpep_type(
     # If this object is an isinstanceable class.
 
 
-#FIXME: Unit test this function with respect to tuples containing
-#non-isinstanceable classes.
-#FIXME: Optimize both this and the related _is_hint_nonpep_tuple() tester
-#defined below. The key realization here is that EAFP is *MUCH* faster in this
-#specific case than iteration. Why? Because iteration is guaranteed to
-#internally raise a stop iteration exception, whereas EAFP only raises an
-#exception if this tuple is invalid, in which case efficiency is no longer a
-#concern. So, what do we do instead? Simple. We internally refactor:
-#* If "is_forwardref_valid" is True, we continue to perform the existing
+# FIXME: Unit test this function with respect to tuples containing
+# non-isinstanceable classes.
+# FIXME: Optimize both this and the related _is_hint_nonpep_tuple() tester
+# defined below. The key realization here is that EAFP is *MUCH* faster in this
+# specific case than iteration. Why? Because iteration is guaranteed to
+# internally raise a stop iteration exception, whereas EAFP only raises an
+# exception if this tuple is invalid, in which case efficiency is no longer a
+# concern. So, what do we do instead? Simple. We internally refactor:
+# * If "is_forwardref_valid" is True, we continue to perform the existing
 #  implementation of both functions. *shrug*
-#* Else, we:
+# * Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
 #    performed by die_unless_type_isinstanceable().
 #  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
-#Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
-#real-world use cases) that this mild inefficiency probably no longer matters.
-#FIXME: Indeed! Now that we have the die_unless_object_isinstanceable()
-#validator, this validator should reduce to efficiently calling
-#die_unless_object_isinstanceable() directly if "is_forwardref_valid" is False.
-#die_unless_object_isinstanceable() performs the desired EAFP-style
-#isinstance() check in an optimally efficient manner.
+# Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
+# real-world use cases) that this mild inefficiency probably no longer matters.
+# FIXME: Indeed! Now that we have the die_unless_object_isinstanceable()
+# validator, this validator should reduce to efficiently calling
+# die_unless_object_isinstanceable() directly if "is_forwardref_valid" is False.
+# die_unless_object_isinstanceable() performs the desired EAFP-style
+# isinstance() check in an optimally efficient manner.
 def die_unless_hint_nonpep_tuple(
     # Mandatory parameters.
     hint: object,
@@ -373,9 +373,9 @@ def die_unless_hint_nonpep_tuple(
     assert isinstance(exception_prefix, str), (
         f'{exception_prefix!r} not string.')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the _is_hint_nonpep_tuple() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
@@ -483,9 +483,9 @@ def is_hint_nonpep(
     assert isinstance(is_forwardref_valid, bool), (
         f'{is_forwardref_valid!r} not bool.')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Return true only if either...
     return (
@@ -539,9 +539,9 @@ def _is_hint_nonpep_tuple(
     assert isinstance(is_forwardref_valid, bool), (
         f'{is_forwardref_valid!r} not bool.')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # If it is *NOT* the case that this object is...
     if not (
         # A tuple *AND*...
@@ -586,7 +586,7 @@ def _is_hint_nonpep_tuple(
     return True
 
 
-#FIXME: Unit test up the new "is_forwardref_valid" parameter, please.
+# FIXME: Unit test up the new "is_forwardref_valid" parameter, please.
 def _is_hint_nonpep_type(
     hint: object, is_forwardref_valid: bool) -> bool:
     '''
@@ -619,9 +619,9 @@ def _is_hint_nonpep_type(
         :data:`True` only if this object is a PEP-noncompliant type.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep

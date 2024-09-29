@@ -52,7 +52,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         is_func_sync_generator,
     )
 
-    #FIXME: Globalize magic strings for efficiency, please.
+    # FIXME: Globalize magic strings for efficiency, please.
 
     # If this object is a pure-Python class, return an appropriate string.
     if isinstance(obj, type):
@@ -145,7 +145,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
 
 
 # ....................{ LABELLERS ~ callable               }....................
-#FIXME: Unit test up the "is_context" parameter, which is currently untested.
+# FIXME: Unit test up the "is_context" parameter, which is currently untested.
 def label_callable(
     # Mandatory parameters.
     func: Callable,
@@ -211,9 +211,9 @@ def label_callable(
     # that callable with respect to its on-disk code module file.
     func_label_suffix = ''
 
-    #FIXME: *HMM.* This branch should almost certainly be folded into the
-    #existing label_beartypeable_kind() function, which would then dramatically
-    #simplify this logic here. Let's do this, yo!
+    # FIXME: *HMM.* This branch should almost certainly be folded into the
+    # existing label_beartypeable_kind() function, which would then dramatically
+    # simplify this logic here. Let's do this, yo!
     # If the passed callable is a pure-Python lambda function, that callable
     # has *NO* unique fully-qualified name. In this case, return a string
     # uniquely identifying this lambda from various code object metadata.
@@ -278,7 +278,7 @@ def label_exception(exception: Exception) -> str:
 
 
 # ....................{ LABELLERS ~ context                }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def label_object_context(obj: object) -> str:
     '''
     Human-readable label describing the **context** (i.e., absolute filename of

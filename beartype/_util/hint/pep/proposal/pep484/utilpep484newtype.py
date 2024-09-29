@@ -153,7 +153,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def get_hint_pep484_newtype_alias(
     hint: Any, exception_prefix: str = '') -> object:

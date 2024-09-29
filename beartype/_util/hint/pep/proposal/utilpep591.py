@@ -16,9 +16,9 @@ from beartype.roar import BeartypeDecorHintPep591Exception
 # from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
-#shallowly type-checking such hints by reduction to their subscripted arguments
-#remains the sanest temporary work-around.
+# FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
+# shallowly type-checking such hints by reduction to their subscripted arguments
+# remains the sanest temporary work-around.
 def reduce_hint_pep591(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''

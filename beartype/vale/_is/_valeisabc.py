@@ -40,10 +40,10 @@ class _BeartypeValidatorFactoryABCMeta(ABCMeta):
 
 
 # ....................{ SUPERCLASSES                       }....................
-#FIXME: Pyright appears to be extremely confused. It thinks that the
-#"_BeartypeValidatorFactoryABCMeta" metaclass is a "generic" (i.e., subclasses
-#"typing.Generic"), when in fact that metaclass merely subclasses the standard
-#"abc.ABCMeta" metaclass. Consider submitting an upstream pyright issue, please.
+# FIXME: Pyright appears to be extremely confused. It thinks that the
+# "_BeartypeValidatorFactoryABCMeta" metaclass is a "generic" (i.e., subclasses
+# "typing.Generic"), when in fact that metaclass merely subclasses the standard
+# "abc.ABCMeta" metaclass. Consider submitting an upstream pyright issue, please.
 class _BeartypeValidatorFactoryABC(
     metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore
     '''
@@ -111,7 +111,7 @@ class _BeartypeValidatorFactoryABC(
         '''
 
     # ..................{ PRIVATE ~ validator                }..................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def _die_unless_getitem_args_1(self, args: Any) -> None:
         '''
         Raise an exception unless this beartype validator factory was

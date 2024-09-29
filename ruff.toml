@@ -14,7 +14,6 @@ ignore = [
     "D200", # [*] fits-on-one-line
     "D203", # [*] one-blank-line-before-class
     "D211", # no-blank-line-before-class
-    "E265", # [*] no-space-after-block-comment
     "Q000", # [*] bad-quotes-inline-string
     # Will/can be (semy)manually fixed:
     "ANN002", # [] missing-type-args

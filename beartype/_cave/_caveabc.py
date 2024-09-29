@@ -8,12 +8,12 @@
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Refactor this private submodule into a new public "beartype.caver"
-#submodule, so-named as it enables users to externally create new ad-hoc
-#protocols implementing structural subtyping resembling those predefined by
-#"beartype.cave". To do so:
+# FIXME: Refactor this private submodule into a new public "beartype.caver"
+# submodule, so-named as it enables users to externally create new ad-hoc
+# protocols implementing structural subtyping resembling those predefined by
+# "beartype.cave". To do so:
 #
-#* In the "beartype.caver" submodule:
+# * In the "beartype.caver" submodule:
 #  * Define a new make_type_structural() function with signature resembling:
 #    def make_type_structural(name: str, method_names: Iterable) -> type:
 #  * Implement this function to dynamically create a new type with the passed
@@ -30,19 +30,19 @@
 #  * *WAIT!* There's no need to call the type() constructor directly. Instead,
 #    define a new make_type() function in this new submodule copied from the
 #    betse.util.type.classes.define_class() function (but renamed, obviously).
-#* Replace the current manual definition of "_BoolType" below with an in-place
+# * Replace the current manual definition of "_BoolType" below with an in-place
 #  call to that method from the "beartype.cave" submodule: e.g.,
 #    BoolType = _make_type_structural(
 #        name='BoolType', method_names=('__bool__',))
 #
-#Dis goin' be good.
-#FIXME: Actually, don't do any of the above. That would simply be reinventing
-#the wheel, as the "typing.Protocol" superclass already exists and is more than
-#up to the task. In fact, once we drop support for Python < 3.7, we should:
-#* Redefine the "_BoolType" class declared below should in terms of the
+# Dis goin' be good.
+# FIXME: Actually, don't do any of the above. That would simply be reinventing
+# the wheel, as the "typing.Protocol" superclass already exists and is more than
+# up to the task. In fact, once we drop support for Python < 3.7, we should:
+# * Redefine the "_BoolType" class declared below should in terms of the
 #  "typing.Protocol" superclass.
-#* Shift the "_BoolType" class directly into the "beartype.cave" submodule.
-#* Refactor away this entire submodule.
+# * Shift the "_BoolType" class directly into the "beartype.cave" submodule.
+# * Refactor away this entire submodule.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod

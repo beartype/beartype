@@ -13,33 +13,33 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should)
-#directly embed the values of builtins when comparing against builtins (e.g.,
-#integers, strings). Specifically, we should only conditionally perform this
-#line below:
+# FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should)
+# directly embed the values of builtins when comparing against builtins (e.g.,
+# integers, strings). Specifically, we should only conditionally perform this
+# line below:
 #       param_name_obj_value = add_func_scope_attr(
 #           attr=obj, func_scope=is_valid_code_locals)
-#...when we absolutely must. So when mustn't we? We see two simple approaches
-#to detecting builtin objects:
-#* Detect the types of those objects. While obvious, this presents several
+# ...when we absolutely must. So when mustn't we? We see two simple approaches
+# to detecting builtin objects:
+# * Detect the types of those objects. While obvious, this presents several
 #  subtleties:
 #  * Fake builtin objects, which would naturally need to be excluded.
 #  * Subclasses of builtin objects, which would *ALSO* need to be excluded.
 #  In short, "isinstance(param_name_obj_value, TUPLE_OF_TRUE_BUILTIN_TYPES)"
 #  fails to suffice -- although something more brute-force like
 #  "type(param_name_obj_value) in SET_OF_TRUE_BUILTIN_TYPES" might suffice.
-#* Detect the first character of their repr() strings as belonging to the set:
+# * Detect the first character of their repr() strings as belonging to the set:
 #      BUILTIN_OBJ_REPR_CHARS_FIRST = {
 #          "'", '"', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 #      repr(param_name_obj_value) in BUILTIN_OBJ_REPR_CHARS_FIRST
-#We like the latter quite a bit more, as it has *NO* obvious edge cases,
-#requires *NO* hard-coding of types, and appears to scale gracefully. The only
-#downside is that it assumes third-party repr() strings to be sane, but... if
-#that *ISN'T* the case, that is a bug in those third-parties. *shrug*
+# We like the latter quite a bit more, as it has *NO* obvious edge cases,
+# requires *NO* hard-coding of types, and appears to scale gracefully. The only
+# downside is that it assumes third-party repr() strings to be sane, but... if
+# that *ISN'T* the case, that is a bug in those third-parties. *shrug*
 
-#FIXME: Generalize to support arbitrary binary operators by:
-#* Define a new "_IsOperatorBinaryABC(_BeartypeValidatorFactoryABC, metaclass=ABCMeta)" superclass.
-#* In that superclass:
+# FIXME: Generalize to support arbitrary binary operators by:
+# * Define a new "_IsOperatorBinaryABC(_BeartypeValidatorFactoryABC, metaclass=ABCMeta)" superclass.
+# * In that superclass:
 #  * Define a stock __class_getitem__() method whose implementation is
 #    sufficiently generic so as to be applicable to all subclasses. To do so,
 #    this method should access class variables defined by those subclasses.
@@ -47,7 +47,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    methods forcing subclasses to define various metadata, for the unfortunate
 #    reason that abstract class methods do *NOT* actually enforce subclasses
 #    that aren't instantiable anyway to implement those methods. *sigh*
-#* Refactor "_IsEqualFactory" to:
+# * Refactor "_IsEqualFactory" to:
 #  * Subclass that superclass.
 #  * Define the following class variables, which the superclass
 #    __class_getitem__() method will internally access to implement itself:
@@ -57,7 +57,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        _operator = __eq__
 #        _operator_code = '=='
 #
-#Ridiculously sweet, eh? We know.
+# Ridiculously sweet, eh? We know.
 
 # ....................{ IMPORTS                           }....................
 from beartype._data.hint.datahinttyping import LexicalScope

@@ -22,16 +22,16 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 # from types import FunctionType
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
-#FIXME: Actually call this tester in the get_hint_pep_sign_or_none() getter to
-#map "typing.NamedTuple" subclasses to the "HintSignNamedTuple" sign, please.
-#FIXME: Actually type-check type hints identified by the "HintSignNamedTuple"
-#sign. Specifically, for each "typing.NamedTuple" subclass identified by that
-#sign, type-check that subclass as follows:
-#* If that subclass is decorated by @beartype, reduce to the standard trivial
+# FIXME: Unit test us up, please.
+# FIXME: Actually call this tester in the get_hint_pep_sign_or_none() getter to
+# map "typing.NamedTuple" subclasses to the "HintSignNamedTuple" sign, please.
+# FIXME: Actually type-check type hints identified by the "HintSignNamedTuple"
+# sign. Specifically, for each "typing.NamedTuple" subclass identified by that
+# sign, type-check that subclass as follows:
+# * If that subclass is decorated by @beartype, reduce to the standard trivial
 #  isinstance() check. Since @beartype already type-checks instances of that
 #  subclass on instantiation, *NO* further type-checking is required or desired.
-#* Else, that subclass is *NOT* decorated by @beartype. In this case, matters
+# * Else, that subclass is *NOT* decorated by @beartype. In this case, matters
 #  become considerably non-trivial. Why? Because:
 #  * This situation commonly arises when type-checking "typing.NamedTuple"
 #    subclasses *NOT* under user control (e.g., defined by upstream third-party
@@ -63,11 +63,11 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #          class YetAnotherNamedTuple(NamedTuple):
 #              ohboy: IndirectlyRecursiveNamedTuple
 #
-#Guarding against both combinatorial explosion *AND* recursion is imperative. To
-#do so, we'll need to fundamentally refactor our existing breadth-first search
-#(BFS) over type hints into a new depth-first search (DFS) over type hints.
-#We've extensively documented this in the "beartype._check.code.__init__"
-#submodule. Simply know that this will be non-trivial, albeit fun and needed!
+# Guarding against both combinatorial explosion *AND* recursion is imperative. To
+# do so, we'll need to fundamentally refactor our existing breadth-first search
+# (BFS) over type hints into a new depth-first search (DFS) over type hints.
+# We've extensively documented this in the "beartype._check.code.__init__"
+# submodule. Simply know that this will be non-trivial, albeit fun and needed!
 def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **named tuple
@@ -100,9 +100,9 @@ def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
         # This hint is a proper tuple subclass (i.e., subclass of the builtin
         # "tuple" type but *NOT* that type itself) *AND*...
         is_type_subclass_proper(hint, tuple) and
-        #FIXME: Implement us up, please. To do so efficiently, we'll probably
-        #want to:
-        #* Declare a private global frozenset of the names of all uniquely
+        # FIXME: Implement us up, please. To do so efficiently, we'll probably
+        # want to:
+        # * Declare a private global frozenset of the names of all uniquely
         #  identifying "typing.NamedTuple" attributes: e.g.,
         #  _NAMEDTUPLE_UNIQUE_ATTR_NAMES = frozenset((
         #      # "typing.NamedTuple"-specific quasi-public attributes.
@@ -115,17 +115,17 @@ def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
         #      '_make',
         #      '_replace',
         #  ))
-        #* Efficiently take the set intersection of that frozenset and
+        # * Efficiently take the set intersection of that frozenset and
         #  "dir(tuple)". If that intersection is non-empty, then this type is
         #  *PROBABLY* a "typing.NamedTuple" subclass.
         #
-        #Note that there does exist an alternative. Sadly, that alternative
-        #requires an O(n) test and is thus non-ideal. Nonetheless:
+        # Note that there does exist an alternative. Sadly, that alternative
+        # requires an O(n) test and is thus non-ideal. Nonetheless:
         #    typing.NamedTuple in getattr(hint, '__orig_bases__', ())
         #
-        #That *DOES* have the advantage of being deterministic. But the above
-        #set intersection test is mostly deterministic and considerably
-        #faster... we think. Actually, is it? We have *NO* idea. Perhaps we
-        #should simply opt for the simplistic and deterministic O(n) approach.
+        # That *DOES* have the advantage of being deterministic. But the above
+        # set intersection test is mostly deterministic and considerably
+        # faster... we think. Actually, is it? We have *NO* idea. Perhaps we
+        # should simply opt for the simplistic and deterministic O(n) approach.
         True
     )

@@ -142,9 +142,9 @@ def is_hint_pep589(hint: object) -> bool:
 
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
-#shallowly type-checking such hints by reduction to untyped dictionaries
-#remains the sanest temporary work-around.
+# FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+# shallowly type-checking such hints by reduction to untyped dictionaries
+# remains the sanest temporary work-around.
 def reduce_hint_pep589(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''

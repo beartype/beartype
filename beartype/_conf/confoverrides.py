@@ -27,7 +27,7 @@ from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeHintOverridesException
 
 # ....................{ CLASSES                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeHintOverrides(FrozenDict):
     '''
     Beartype **hint overrides** (i.e., immutable mapping intended to be passed

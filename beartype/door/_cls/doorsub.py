@@ -66,8 +66,8 @@ class _TypeHintOriginIsinstanceable(TypeHint):
                 msg)
         # Else, this factory has been associated with such a range.
 
-        #FIXME: Consider actually testing this. This *IS* technically
-        #testable and should thus *NOT* be marked as "pragma: no cover".
+        # FIXME: Consider actually testing this. This *IS* technically
+        # testable and should thus *NOT* be marked as "pragma: no cover".
 
         # If this hint was subscripted by an unexpected number of child hints...
         #
@@ -77,8 +77,8 @@ class _TypeHintOriginIsinstanceable(TypeHint):
         #     >>> list[str, int]
         #     list[str, int]  # <-- wat
         if len(args) not in args_len_range:  # pragma: no cover
-            #FIXME: This seems sensible, but currently provokes test failures.
-            #Let's investigate further at a later time, please.
+            # FIXME: This seems sensible, but currently provokes test failures.
+            # Let's investigate further at a later time, please.
             # # If this hint was subscripted by *NO* parameters, comply with PEP
             # # 484 standards by silently pretending this hint was subscripted by
             # # the "typing.Any" fallback for all missing parameters.
@@ -161,7 +161,7 @@ class _TypeHintOriginIsinstanceable(TypeHint):
         # Return true only if all child type hints of these hints are equal.
         return all(
             this_child == that_child
-            #FIXME: Probably more efficient and maintainable to write this as:
+            # FIXME: Probably more efficient and maintainable to write this as:
             #    for this_child in self
             #    for that_child in other
             for this_child, that_child in zip(

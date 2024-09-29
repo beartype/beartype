@@ -23,8 +23,8 @@ from beartype.typing import (
 )
 
 # ....................{ GETTERS ~ descriptors              }....................
-#FIXME: Unit test us up, please.
-#FIXME: Docstring us up, please.
+# FIXME: Unit test us up, please.
+# FIXME: Docstring us up, please.
 def get_func_boundmethod_self(
     # Mandatory parameters.
     func: MethodBoundInstanceOrClassType,
@@ -85,11 +85,11 @@ def get_func_boundmethod_self(
 
 
 # ....................{ GETTERS ~ hints                    }....................
-#FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
-#attribute to instead call this high-level getter, please.
-#FIXME: See "FIXME:" comments in the "beartype._check.metadata.metadecor" submodule for
-#how this needs to be refactored to support Python >= 3.13, please.
-#FIXME: Unit test us up, please.
+# FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
+# attribute to instead call this high-level getter, please.
+# FIXME: See "FIXME:" comments in the "beartype._check.metadata.metadecor" submodule for
+# how this needs to be refactored to support Python >= 3.13, please.
+# FIXME: Unit test us up, please.
 def get_func_annotations(
     # Mandatory parameters.
     func: Callable,
@@ -174,9 +174,9 @@ def get_func_annotations(
     return hint_annotations
 
 
-#FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
-#attribute to instead call this high-level getter, please.
-#FIXME: Unit test us up, please.
+# FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
+# attribute to instead call this high-level getter, please.
+# FIXME: Unit test us up, please.
 def get_func_annotations_or_none(func: Callable) -> Optional[HintAnnotations]:
     '''
     **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary

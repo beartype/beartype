@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype.roar._roarexc import _BeartypeUtilTextException
 
 # ....................{ GETTERS                            }....................
-#FIXME: Uncomment if ever needed.
+# FIXME: Uncomment if ever needed.
 # def get_str_prefix_greedy(text: str, anchor: str) -> str:
 #     '''
 #     **Greedily anchored prefix** (i.e., substring ranging from the first
@@ -58,7 +58,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #     return text_prefix_greedy
 
 
-#FIXME: Uncomment if ever needed.
+# FIXME: Uncomment if ever needed.
 # def get_str_prefix_greedy_or_none(text: str, anchor: str) -> 'Optional[str]':
 #     '''
 #     **Greedily anchored prefix** (i.e., substring ranging from the first

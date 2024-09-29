@@ -112,9 +112,9 @@ def callable_cached_minimal(func: Callable) -> Callable:
 
         # Attempt to...
         try:
-            #FIXME: Optimize the params_flat_to_exception_get() case, please.
-            #Since "None" is *NOT* a valid exception, we shouldn't need a
-            #sentinel for safety here. Instead, this should suffice:
+            # FIXME: Optimize the params_flat_to_exception_get() case, please.
+            # Since "None" is *NOT* a valid exception, we shouldn't need a
+            # sentinel for safety here. Instead, this should suffice:
             #    exception = params_flat_to_exception_get(params_flat)
 
             #    # If this callable previously raised an exception when called with

@@ -25,7 +25,7 @@ from beartype.roar import (
 from beartype.typing import Optional
 
 # ....................{ PRIVATE ~ factories                }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
     '''
     New **hookable beartype configuration** (i.e., beartype configuration
@@ -89,7 +89,7 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
     return conf
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_package_names_from_args(
     # Keyword-only arguments.
     *,

@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import sys
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_stdout_terminal() -> bool:
     '''
     :data:`True` only if standard output is currently attached to a **TTY**

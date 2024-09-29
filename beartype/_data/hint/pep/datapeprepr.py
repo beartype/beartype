@@ -107,9 +107,9 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
     # break and complicate dynamic code generation for no benefit whatsoever.
     'None': HintSignNone,
 
-    #FIXME: Almost certain that these should be detected instead via the
-    #slightly more efficient and elegant "HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN"
-    #global below.
+    # FIXME: Almost certain that these should be detected instead via the
+    # slightly more efficient and elegant "HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN"
+    # global below.
     # PEP 484-compliant abstract base classes (ABCs) requiring non-standard and
     # non-trivial type-checking. Although most types are trivially type-checked
     # by the isinstance() builtin, these types break the mold in various ways.
@@ -339,11 +339,11 @@ subscriptable classes).
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
 HINTS_REPR_IGNORABLE_SHALLOW: FrozenSetStrs = {  # type: ignore[assignment]
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize changes to this set with the corresponding
     # testing-specific set
     # "beartype_test.a00_unit.data.hint.pep.data_pep.HINTS_PEP_IGNORABLE_SHALLOW".
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # ..................{ NON-PEP                            }..................
     # The PEP-noncompliant builtin "object" type is the transitive superclass
@@ -496,7 +496,7 @@ def _init() -> None:
         # same class.
         'TypeVar': HintSignTypeVar,
 
-        #FIXME: "Generic" is ignorable when unsubscripted. Excise this up!
+        # FIXME: "Generic" is ignorable when unsubscripted. Excise this up!
         # The unsubscripted PEP 484-compliant "Generic" superclass is
         # explicitly equivalent under PEP 484 to the "Generic[Any]"
         # subscription and thus slightly conveys meaningful semantics.
@@ -700,13 +700,13 @@ def _init() -> None:
             hint_repr_prefix = _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.get(
                 typing_attr_name, typing_attr_name)
 
-            #FIXME: It'd be great to eventually generalize this to support
-            #aliases from one unwanted sign to another wanted sign. Perhaps
-            #something resembling:
+            # FIXME: It'd be great to eventually generalize this to support
+            # aliases from one unwanted sign to another wanted sign. Perhaps
+            # something resembling:
             # In global scope above:
-            #_HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
+            # _HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
             #    HintSignProtocol: HintSignGeneric,
-            #}
+            # }
             #
             #    # In this iteration here:
             #    ...

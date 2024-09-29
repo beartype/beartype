@@ -289,7 +289,7 @@ def color_arg_name(
 
 
 # ....................{ STRIPPERS                          }....................
-#FIXME: Unit test up the "is_color" parameter.
+# FIXME: Unit test up the "is_color" parameter.
 def strip_str_ansi(
     # Mandatory parameters.
     text: str,

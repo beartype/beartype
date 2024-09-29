@@ -188,7 +188,7 @@ BeartypeableT = TypeVar(
         # unbound function decorated by the builtin @staticmethod decorator).
         MethodDecoratorStaticType,
 
-        #FIXME: Currently unused, but preserved for posterity.
+        # FIXME: Currently unused, but preserved for posterity.
         # # A C-based bound method descriptor (i.e., a pure-Python unbound
         # # function bound to an object instance on Python's instantiation of that
         # # object) *OR*...
@@ -486,8 +486,8 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-#FIXME: *INSUFFICIENT.* Generalize this to additionally accept the types of PEP
-#604-compliant new unions (e.g., "int | str").
+# FIXME: *INSUFFICIENT.* Generalize this to additionally accept the types of PEP
+# 604-compliant new unions (e.g., "int | str").
 TypeOrTupleTypes = Union[type, TupleTypes]
 '''
 PEP-compliant type hint matching either a single class *or* a tuple of zero or

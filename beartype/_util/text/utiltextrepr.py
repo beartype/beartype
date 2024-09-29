@@ -88,23 +88,23 @@ def represent_object(
     '''
     assert isinstance(max_len, int), f'{max_len!r} not integer.'
 
-    #FIXME: Render this safe against infinitely recursive data structures.
-    #Unfortunately, we *CANNOT* call the standard pprint.saferepr() function to
-    #do so, as that function is *OUTRAGEOUSLY* slow on worst-case edge cases.
-    #Instead, we'll need to implement our own performant saferepr()
-    #alternative. Fortunately, note that someone's already done so: the popular
-    #BSD-licensed Celerity project, whose celerity.utils.saferepr.saferepr()
-    #function claims to actually be faster than the repr() builtin under
-    #certain circumstances. While impressive, repurposing Celerity's saferepr()
-    #implementation for @beartype will be non-trivial; that function internally
-    #leverages a number of non-trivial internal functions, including a
-    #streaming iterator that appears to be performing some sort of ad-hoc
-    #tokenization (!) on the input object's string representation. Although
-    #that submodule is less than 300 lines, that's 300 *INTENSE* lines.
-    #Nonetheless, we'll need to do this sooner or later. Currently, later. By
-    #the time you read this next, probably sooner. Until someone pounds their
-    #fists on our issue tracker, let's pretend this isn't a compelling concern.
-    #See also:
+    # FIXME: Render this safe against infinitely recursive data structures.
+    # Unfortunately, we *CANNOT* call the standard pprint.saferepr() function to
+    # do so, as that function is *OUTRAGEOUSLY* slow on worst-case edge cases.
+    # Instead, we'll need to implement our own performant saferepr()
+    # alternative. Fortunately, note that someone's already done so: the popular
+    # BSD-licensed Celerity project, whose celerity.utils.saferepr.saferepr()
+    # function claims to actually be faster than the repr() builtin under
+    # certain circumstances. While impressive, repurposing Celerity's saferepr()
+    # implementation for @beartype will be non-trivial; that function internally
+    # leverages a number of non-trivial internal functions, including a
+    # streaming iterator that appears to be performing some sort of ad-hoc
+    # tokenization (!) on the input object's string representation. Although
+    # that submodule is less than 300 lines, that's 300 *INTENSE* lines.
+    # Nonetheless, we'll need to do this sooner or later. Currently, later. By
+    # the time you read this next, probably sooner. Until someone pounds their
+    # fists on our issue tracker, let's pretend this isn't a compelling concern.
+    # See also:
     #   https://github.com/celery/celery/blob/master/celery/utils/saferepr.py
 
     # For efficiency, initially attempt to *NON-RECURSIVELY* introspect the
@@ -221,10 +221,10 @@ def represent_func(
         )
     # Else, that callable is *NOT* a pure-Python lambda function.
 
-    #FIXME: Actually, we should be calling a new get_object_name_or_none()
-    #function instead -- but that function currently doesn't exist and we're
-    #lazy. The issue with get_object_basename_scoped_or_none() is that this
-    #getter fails to return the module name of this function. *shrug*
+    # FIXME: Actually, we should be calling a new get_object_name_or_none()
+    # function instead -- but that function currently doesn't exist and we're
+    # lazy. The issue with get_object_basename_scoped_or_none() is that this
+    # getter fails to return the module name of this function. *shrug*
     func_basename_scoped = get_object_basename_scoped_or_none(func)
 
     # If that callable is named, return this name.

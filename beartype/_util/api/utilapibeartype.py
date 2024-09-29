@@ -20,7 +20,7 @@ from beartype._util.func.utilfuncget import get_func_annotations_or_none
 from beartype._util.py.utilpyinterpreter import is_python_optimized
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_func_unbeartypeable(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **unbeartypeable** (i.e., if the

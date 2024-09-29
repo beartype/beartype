@@ -34,13 +34,13 @@ from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
 
 # ....................{ CLASSES                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To improve forward compatibility with the superclass API over which
 # we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
 # and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeSourceFileLoader(SourceFileLoader):
     '''
     **Beartype source file loader** implementing :mod:`importlib` machinery
@@ -316,14 +316,14 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         from beartype.claw._clawstate import claw_state
         from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
 
-        #FIXME: Restore this, please. The more elongated expression given below
-        #should no longer be required. *sigh*
+        # FIXME: Restore this, please. The more elongated expression given below
+        # should no longer be required. *sigh*
         # # Beartype configuration with which to type-check that module if that
         # # module is hooked under its fully-qualified name *OR* "None" otherwise
         # # (i.e., if that module is unhooked).
         conf = get_package_conf_or_none(fullname)
 
-        #FIXME: Preserved because the above will inevitably break. *sigh*
+        # FIXME: Preserved because the above will inevitably break. *sigh*
         # # Beartype configuration with which to type-check that module if that
         # # module is hooked *OR* "None" otherwise (i.e., if that module is
         # # unhooked), defined as either...
@@ -474,10 +474,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)
 
-        #FIXME: Conditionally perform this logic if "conf.is_debug", please.
-        #Note that printing to "stderr" is pivotal. For some reason, Python
-        #fails to forward printing to "stdout" across subprocesses even when we
-        #explicitly tell it to. Look. I don't even know. Just roll with it!
+        # FIXME: Conditionally perform this logic if "conf.is_debug", please.
+        # Note that printing to "stderr" is pivotal. For some reason, Python
+        # fails to forward printing to "stdout" across subprocesses even when we
+        # explicitly tell it to. Look. I don't even know. Just roll with it!
         # from sys import stderr
         # print(
         #     (

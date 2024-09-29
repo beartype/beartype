@@ -11,10 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Consider generalizing @beartype's PEP 695 implementation to additionally
-#support local type aliases (i.e., defined in the local scope of a callable
-#rather than at global scope) containing one or more unquoted forward
-#references. Currently, @beartype intentionally fails to support this: e.g.,
+# FIXME: Consider generalizing @beartype's PEP 695 implementation to additionally
+# support local type aliases (i.e., defined in the local scope of a callable
+# rather than at global scope) containing one or more unquoted forward
+# references. Currently, @beartype intentionally fails to support this: e.g.,
 #    type global_alias = ...
 #    die_if_unbearable('lolwut', global_alias)  # <-- this is fine
 #
@@ -22,21 +22,21 @@ This private submodule is *not* intended for importation by downstream callers.
 #        type local_alias = ...
 #        die_if_unbearable('lolwut', local_alias)  # <-- raises an exception
 #
-#The reasons are obscure. Very well. CPython's current implementation of local
-#type aliases is probably very buggy. An upstream issue describing this
-#bugginess should be submitted. When doing so, please publicly declare that PEP
-#695 appears to have been poorly tested. As evidence, note that PEP 695 itself
-#advises use of the following idiom:
+# The reasons are obscure. Very well. CPython's current implementation of local
+# type aliases is probably very buggy. An upstream issue describing this
+# bugginess should be submitted. When doing so, please publicly declare that PEP
+# 695 appears to have been poorly tested. As evidence, note that PEP 695 itself
+# advises use of the following idiom:
 #    # A type alias that includes a forward reference
 #    type AnimalOrVegetable = Animal | "Vegetable"
 #
-#*THAT DOES NOT ACTUALLY WORK AT RUNTIME.* Nobody tested that. This is why I
-#facepalm. Notably, PEP 604-compliant new-style unions prohibit strings. They
-#probably shouldn't, but they've *ALWAYS* behaved that way, and nobody's updated
-#them to behave more intelligently -- probably because doing so would require
-#updating the isinstance() builtin (which also accepts PEP 604-compliant
-#new-style unions) to behave more intelligiently and ain't nobody goin' there:
-#e.g.,
+# *THAT DOES NOT ACTUALLY WORK AT RUNTIME.* Nobody tested that. This is why I
+# facepalm. Notably, PEP 604-compliant new-style unions prohibit strings. They
+# probably shouldn't, but they've *ALWAYS* behaved that way, and nobody's updated
+# them to behave more intelligently -- probably because doing so would require
+# updating the isinstance() builtin (which also accepts PEP 604-compliant
+# new-style unions) to behave more intelligiently and ain't nobody goin' there:
+# e.g.,
 #
 #    $ python3.12
 #    >>> type AnimalOrVegetable = "Animal" | "Vegetable"
@@ -48,15 +48,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #        type AnimalOrVegetable = "Animal" | "Vegetable"
 #    TypeError: unsupported operand type(s) for |: 'str' and 'str'
 #
-#For further details, see the comment below prefixed by:
+# For further details, see the comment below prefixed by:
 #           # If that module fails to define this alias as a global variable,
 #
-#Since CPython is unlikely to resolve its bugginess anytime soon, it inevitably
-#falls to @beartype to resolve this. Thankfully, @beartype *CAN* resolve this.
-#Unthankfully, doing so will require @beartype to implement a new PEP
-#695-specific AST transform from the "beartype.claw" subpackage augmenting *ALL*
-#PEP 695-compliant local type aliases (so, probably *ALL* type aliases
-#regardless of scope for simplicity) as follows:
+# Since CPython is unlikely to resolve its bugginess anytime soon, it inevitably
+# falls to @beartype to resolve this. Thankfully, @beartype *CAN* resolve this.
+# Unthankfully, doing so will require @beartype to implement a new PEP
+# 695-specific AST transform from the "beartype.claw" subpackage augmenting *ALL*
+# PEP 695-compliant local type aliases (so, probably *ALL* type aliases
+# regardless of scope for simplicity) as follows:
 #    # "beartype.claw" should transform this...
 #    type {alias_name} = {alias_value}
 #
@@ -98,8 +98,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # Our only recourse is to repetitiously redefine this alias.
 #    type {alias_name} = {alias_value}
 #
-#We're currently unclear whether anyone actually cares about this. Ergo, we
-#adopted the quick-and-dirty approach of raising exceptions instead. Yikes!
+# We're currently unclear whether anyone actually cares about this. Ergo, we
+# adopted the quick-and-dirty approach of raising exceptions instead. Yikes!
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import HintPep695Type
@@ -150,7 +150,7 @@ def is_hint_pep695_ignorable(hint: HintPep695Type) -> bool:
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep695_alias(
     hint: HintPep695Type, exception_prefix: str = '') -> object:
     '''

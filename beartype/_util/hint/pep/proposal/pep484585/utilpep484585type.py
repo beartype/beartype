@@ -21,10 +21,10 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
 )
 
 # ....................{ REDUCERS                           }....................
-#FIXME: *PRETTY SURE THIS IS ABSOLUTE TRASH.* Seriously. Unsure what we on about
-#when we originally authored this, but *NONE* of this parses as sane at all.
-#Let's quietly unwind this, please. *facepalm*
-#FIXME: *OH, HO, HO.* This might be essential after all. We note elsewhere:
+# FIXME: *PRETTY SURE THIS IS ABSOLUTE TRASH.* Seriously. Unsure what we on about
+# when we originally authored this, but *NONE* of this parses as sane at all.
+# Let's quietly unwind this, please. *facepalm*
+# FIXME: *OH, HO, HO.* This might be essential after all. We note elsewhere:
 #     "Note that:
 #      * This reduction could be performed elsewhere, but remains here as doing
 #        so here dramatically simplifies matters elsewhere.
@@ -32,7 +32,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
 #        as subclass type hints subscripted by ignorable child type hints are
 #        *NOT* ignorable; they're reducible to the "type" superclass."
 #
-#Clearly, we should have documented that here as well. Examine closer, please.
+# Clearly, we should have documented that here as well. Examine closer, please.
 def reduce_hint_pep484585_type(
     hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
@@ -97,11 +97,11 @@ def reduce_hint_pep484585_type(
         # An ignorable type hint (e.g., "object", "typing.Any") *OR*...
         is_hint_ignorable(hint_superclass) or
 
-        #FIXME: *UHM.* What? This isn't the case *AT ALL*, is it? I mean, aren't
-        #the only classes that subclass the "type" superclass metaclasses? Don't
-        #normal classes just subclass "object"? Aren't normal classes just
-        #*INSTANCES* of "type" rather than *SUBCLASSES* of "type"? Pretty sure
-        #we were extremely confused when we authored this. *sigh*
+        # FIXME: *UHM.* What? This isn't the case *AT ALL*, is it? I mean, aren't
+        # the only classes that subclass the "type" superclass metaclasses? Don't
+        # normal classes just subclass "object"? Aren't normal classes just
+        # *INSTANCES* of "type" rather than *SUBCLASSES* of "type"? Pretty sure
+        # we were extremely confused when we authored this. *sigh*
         # The "type" superclass, which is effectively ignorable in this
         # context of subclasses, as *ALL* classes necessarily subclass
         # that superclass.

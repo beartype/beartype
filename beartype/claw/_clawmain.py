@@ -15,9 +15,9 @@ this private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Improve the beartype_package() and beartype_packages() functions to emit
-#non-fatal warnings when the passed package or packages have already been
-#imported (i.e., are in the "sys.modules" list).
+# FIXME: Improve the beartype_package() and beartype_packages() functions to emit
+# non-fatal warnings when the passed package or packages have already been
+# imported (i.e., are in the "sys.modules" list).
 
 # ....................{ IMPORTS                            }....................
 from pathlib import PurePath
@@ -189,7 +189,7 @@ def beartype_this_package(
     # print(f'beartype_this_package: {frame_caller_package_name}')
     # print(f'beartype_this_package: {repr(frame_caller)}')
 
-    #FIXME: Is "pragma: no cover" accurate here? Is this condition untestable?
+    # FIXME: Is "pragma: no cover" accurate here? Is this condition untestable?
     # If that module has *NO* parent package, raise an exception. Why? Because
     # this function uselessly (but silently) reduces to a noop when called from
     # a top-level module or script residing outside any package. Why? Because
@@ -309,8 +309,8 @@ def beartype_this_package(
     )
 
 
-#FIXME: Add a "Usage" docstring section resembling that of the docstring for the
-#beartype_this_package() function.
+# FIXME: Add a "Usage" docstring section resembling that of the docstring for the
+# beartype_this_package() function.
 def beartype_package(
     # Mandatory parameters.
     package_name: str,
@@ -361,8 +361,8 @@ def beartype_package(
     )
 
 
-#FIXME: Add a "Usage" docstring section resembling that of the docstring for the
-#beartype_this_package() function.
+# FIXME: Add a "Usage" docstring section resembling that of the docstring for the
+# beartype_this_package() function.
 def beartype_packages(
     # Mandatory parameters.
     package_names: Iterable[str],

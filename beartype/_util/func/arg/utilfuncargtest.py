@@ -115,7 +115,7 @@ def die_unless_func_args_len_flexible_equal(
     # Else, this callable accepts exactly this number of flexible parameters.
 
 
-#FIXME: Uncomment as needed.
+# FIXME: Uncomment as needed.
 # def die_unless_func_argless(
 #     # Mandatory parameters.
 #     func: Codeobjable,
@@ -215,7 +215,7 @@ def is_func_argless(
 
 
 # ....................{ TESTERS ~ kind : non-variadic      }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_func_arg_nonvariadic(*args, **kwargs) -> bool:
     '''
     :data:`True` only if the passed pure-Python callable accepts any

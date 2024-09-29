@@ -231,11 +231,11 @@ def get_hint_pep484_generic_bases_unerased(
         Further details.
     '''
 
-    #FIXME: This tuple appears to be implemented erroneously -- at least under
-    #Python 3.7, anyway. Although this tuple is implemented correctly for the
-    #common case of user-defined types directly subclassing "typing" types,
-    #this tuple probably is *NOT* implemented correctly for the edge case of
-    #user-defined types indirectly subclassing "typing" types: e.g.,
+    # FIXME: This tuple appears to be implemented erroneously -- at least under
+    # Python 3.7, anyway. Although this tuple is implemented correctly for the
+    # common case of user-defined types directly subclassing "typing" types,
+    # this tuple probably is *NOT* implemented correctly for the edge case of
+    # user-defined types indirectly subclassing "typing" types: e.g.,
     #
     #    >>> import collections.abc, typing
     #    >>> T = typing.TypeVar('T')
@@ -246,15 +246,15 @@ def get_hint_pep484_generic_bases_unerased(
     #    >>> Indirect.__orig_bases__
     #    (collections.abc.Sized, typing.Generic[~T])
     #
-    #*THAT'S COMPLETELY INSANE.* Clearly, their naive implementation failed to
-    #account for actual real-world use cases.
+    # *THAT'S COMPLETELY INSANE.* Clearly, their naive implementation failed to
+    # account for actual real-world use cases.
     #
-    #On the bright side, the current implementation prevents us from actually
-    #having to perform a breadth-first traversal of all original superclasses
-    #of this class in method resolution order (MRO). On the dark side, it's
-    #pants-on-fire balls -- but there's not much we can do about that. *sigh*
+    # On the bright side, the current implementation prevents us from actually
+    # having to perform a breadth-first traversal of all original superclasses
+    # of this class in method resolution order (MRO). On the dark side, it's
+    # pants-on-fire balls -- but there's not much we can do about that. *sigh*
     #
-    #If we ever need to perform that breadth-first traversal, resurrect this:
+    # If we ever need to perform that breadth-first traversal, resurrect this:
     #
     #    # If this class was *NOT* subject to type erasure, reduce to a noop.
     #    if not hint_bases:
@@ -324,7 +324,7 @@ def get_hint_pep484_generic_bases_unerased(
     #    # Return this tuple as is.
     #    return superattrs_tuple
     #
-    #Also resurrect this docstring snippet:
+    # Also resurrect this docstring snippet:
     #
     #    Raises
     #    ----------
@@ -333,7 +333,7 @@ def get_hint_pep484_generic_bases_unerased(
     #        attribute transitively lists :data:`FIXED_LIST_SIZE_MEDIUM` or more :mod:`typing`
     #        attributes.
     #
-    #Specifically:
+    # Specifically:
     #  * Acquire a fixed list of sufficient size (e.g., 64). We probably want
     #    to make this a constant in "utilcachelistfixedpool" for reuse
     #    everywhere, as this is clearly becoming a common idiom.

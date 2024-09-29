@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Consider submitting the "FixedList" type as a relevant StackOverflow
-#answer here:
+# FIXME: Consider submitting the "FixedList" type as a relevant StackOverflow
+# answer here:
 #    https://stackoverflow.com/questions/10617045/how-to-create-a-fix-size-list-in-python
 #    https://stackoverflow.com/questions/51558015/implementing-efficient-fixed-size-fifo-in-python
 
@@ -147,15 +147,15 @@ class FixedList(list):
             msg)
 
     # ..................{ BAD ~ dunders : setitem            }..................
-    #FIXME: Great idea, if efficiency didn't particularly matter. Since
-    #efficiency is the entire raison d'etre of this class, however, this method
-    #has been temporarily and probably permanently disabled. Extensive
-    #profiling has shown this single method to substantially cost us elsewhere.
-    #Moreover, this method is only relevant in the context of preventing
-    #external callers who are *NOT* us from violating class constraints. No
-    #external callers exist, though! We are it. Since we know better, we won't
-    #violate class constraints by changing fixed list length with slicing.
-    #Moreover, it's unlikely we ever even assign list slices anywhere. *sigh*
+    # FIXME: Great idea, if efficiency didn't particularly matter. Since
+    # efficiency is the entire raison d'etre of this class, however, this method
+    # has been temporarily and probably permanently disabled. Extensive
+    # profiling has shown this single method to substantially cost us elsewhere.
+    # Moreover, this method is only relevant in the context of preventing
+    # external callers who are *NOT* us from violating class constraints. No
+    # external callers exist, though! We are it. Since we know better, we won't
+    # violate class constraints by changing fixed list length with slicing.
+    # Moreover, it's unlikely we ever even assign list slices anywhere. *sigh*
 
     # def __setitem__(self, index, value):
     #
@@ -177,7 +177,7 @@ class FixedList(list):
     #     # operation preserves the length of this list and is thus acceptable.
     #     return super().__setitem__(index, value)
 
-    #FIXME: Disabled as currently only called by __setitem__(). *sigh*
+    # FIXME: Disabled as currently only called by __setitem__(). *sigh*
     # def _die_if_slice_len_ne_value_len(self, index, value) -> None:
     #     '''
     #     Raise an exception only if the passed parameters when passed to the

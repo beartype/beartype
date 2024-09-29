@@ -319,7 +319,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         )
 
         # ..................{ CLOSURE                        }..................
-        #FIXME: Unit test edge cases extensively, please.
+        # FIXME: Unit test edge cases extensively, please.
         def _is_valid_bool(obj: object) -> bool:
             '''
             :data:`True` only if the passed object satisfies the caller-defined
@@ -479,9 +479,9 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
             # If that object is *NOT* bool-like, raise an exception.
             if not is_obj_valid_boollike:
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAUTION: Synchronize with the exception raised below, please.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 msg = (
                     f'Validator {get_repr()} '
                     f'return value {is_obj_valid!r} not bool-like '
@@ -510,9 +510,9 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             # particular, the Pandas "DataFrame" type defines a __bool__()
             # dunder method that unconditionally raises an exception. *facepalm*
             except Exception as exception:
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAUTION: Synchronize with the exception raised above, please.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 msg = (
                     f'Validator {get_repr()} '
                     f'return value {is_obj_valid!r} erroneously bool-like '

@@ -26,7 +26,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype.roar._roarexc import _BeartypeUtilPathException
 
 # ....................{ RAISERS ~ dir                      }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def die_unless_dir(
     # Mandatory parameters.
     dirname: PathnameLike,
@@ -75,7 +75,7 @@ def die_unless_dir(
 
 
 # ....................{ RAISERS ~ file                     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def die_unless_file(
     # Mandatory parameters.
     filename: PathnameLike,
@@ -123,7 +123,7 @@ def die_unless_file(
     # Else, a file with this filename exists.
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def die_unless_file_executable(
     # Mandatory parameters.
     filename: PathnameLike,

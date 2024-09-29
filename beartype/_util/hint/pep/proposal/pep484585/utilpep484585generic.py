@@ -108,7 +108,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     )
 
 
-#FIXME: Shift into a more appropriate submodule, please.
+# FIXME: Shift into a more appropriate submodule, please.
 def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     '''
     :data:`True` only if the passed :pep:`484`- or :pep:`585`-compliant generic
@@ -167,7 +167,7 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     # Ergo, this generic could still be an ignorable protocol.
     # print(f'Testing generic hint {repr(hint)} deep ignorability... False')
 
-    #FIXME: Probably insufficient. *shrug*
+    # FIXME: Probably insufficient. *shrug*
     return False
 
 
@@ -399,7 +399,7 @@ def get_hint_pep484585_generic_bases_unerased(
 
 
 # ....................{ GETTERS ~ type                     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep484585_generic_type(
     # Mandatory parameters.
     hint: object,
@@ -712,7 +712,7 @@ def find_hint_pep484585_generic_module_base_first(
 
 
 # ....................{ ITERATORS                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def iter_hint_pep484585_generic_bases_unerased_tree(
     # Mandatory parameters.
     hint: object,
@@ -889,7 +889,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         hint_base = sanify_hint_child_if_unignorable_or_none(
             hint=hint_bases[hint_bases_index_curr],
             conf=conf,
-            #FIXME: Possibly also pass this, please. Ignorable for now. *shrug*
+            # FIXME: Possibly also pass this, please. Ignorable for now. *shrug*
             # cls_stack=cls_stack,
             exception_prefix=exception_prefix,
         )
@@ -900,7 +900,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
             # Sign identifying this pseudo-superclass if any *OR* "None".
             hint_base_sign = get_hint_pep_sign_or_none(hint_base)
 
-            #FIXME: Unit test up this branch, please.
+            # FIXME: Unit test up this branch, please.
             # If this pseudo-superclass is...
             if (
                 # A PEP-compliant generic *AND*...

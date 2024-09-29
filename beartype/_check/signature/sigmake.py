@@ -27,7 +27,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ MAKERS ~ signature                 }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_func_signature(
     # Mandatory parameters.
     func_name: str,
@@ -113,13 +113,13 @@ def make_func_signature(
         code_signature_scope_args += CODE_SIGNATURE_SCOPE_ARG_format(
             arg_name=arg_name, arg_comment=arg_comment)
 
-    #FIXME: *YIKES.* We need to pass a unique tester function signature here
-    #resembling:
+    # FIXME: *YIKES.* We need to pass a unique tester function signature here
+    # resembling:
     #    def {{func_name}}(obj: object) -> bool:
-    #To do so sanely, let's generalize this factory to accept an additional
-    #mandatory "func_signature" parameter, please. We'll need to note in the
-    #docstring exactly what format variables that parameter is expected to
-    #contain, of course.
+    # To do so sanely, let's generalize this factory to accept an additional
+    # mandatory "func_signature" parameter, please. We'll need to note in the
+    # docstring exactly what format variables that parameter is expected to
+    # contain, of course.
 
     # Python code snippet declaring the signature of this wrapper.
     code_signature = code_signature_format.format(

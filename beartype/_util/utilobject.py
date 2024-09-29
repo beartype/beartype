@@ -237,7 +237,7 @@ def get_object_basename_scoped(obj: Any) -> str:
     return object_scoped_name.replace('<locals>.', '')
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
     '''
     **Lexically scoped name** (i.e., ``.``-delimited string unambiguously

@@ -58,12 +58,12 @@ sub-subpackages of that subpackage).
 '''
 
 # ....................{ SUBCLASSES ~ blacklist             }....................
-#FIXME: Unit test us up, please.
-#FIXME: [SAFETY] Consider overriding the __setitem__() dunder method to ensure:
-#* The passed key is a non-empty string.
-#* The passed value is either "None" or another "PackagesTrieWhitelist" object.
+# FIXME: Unit test us up, please.
+# FIXME: [SAFETY] Consider overriding the __setitem__() dunder method to ensure:
+# * The passed key is a non-empty string.
+# * The passed value is either "None" or another "PackagesTrieWhitelist" object.
 #
-#See the __init__() dunder method for similar validation logic, please.
+# See the __init__() dunder method for similar validation logic, please.
 
 
 class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
@@ -102,11 +102,11 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
@@ -306,11 +306,11 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
@@ -422,7 +422,7 @@ def die_if_packages_trie() -> None:
 
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_packages_trie() -> bool:
     '''
     :data:`True` only if one or more packages have been registered by a prior
@@ -448,7 +448,7 @@ def is_packages_trie() -> bool:
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
     '''
     :data:`True` only if the package with the passed name has been
@@ -542,7 +542,7 @@ def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
     '''
     Beartype configuration with which to type-check the package with the passed
@@ -646,7 +646,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
 
 
 # ....................{ ITERATORS                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def iter_packages_trie(
     package_basenames: CollectionStrs) -> Iterable[PackagesTrieWhitelist]:
     '''
@@ -724,7 +724,7 @@ def iter_packages_trie(
 
 
 # ....................{ REMOVERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def remove_beartype_pathhook_unless_packages_trie() -> None:
     '''
     Remove our **beartype import path hook singleton** (i.e., single callable

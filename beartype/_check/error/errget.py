@@ -12,14 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [ACCESS] Generalizing the "random_int" concept (i.e., the optional
-#"random_int" parameter accepted by the get_func_pith_violation() function) that
-#enables O(1) exception handling to containers that do *NOT* provide efficient
-#random access like mappings and sets will be highly non-trivial. While there
-#exist a number of alternative means of implementing that generalization, the
-#most reasonable *BY FAR* is probably to:
+# FIXME: [ACCESS] Generalizing the "random_int" concept (i.e., the optional
+# "random_int" parameter accepted by the get_func_pith_violation() function) that
+# enables O(1) exception handling to containers that do *NOT* provide efficient
+# random access like mappings and sets will be highly non-trivial. While there
+# exist a number of alternative means of implementing that generalization, the
+# most reasonable *BY FAR* is probably to:
 #
-#* Embed additional assignment expressions in the type-checking tests generated
+# * Embed additional assignment expressions in the type-checking tests generated
 #  by the make_func_pith_code() function that uniquely store the value of
 #  each item, key, or value returned by each access of a non-indexable container
 #  iterator into a new unique local variable. Note this unavoidably requires:
@@ -48,7 +48,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    bit easier than we'd initially thought, which is always nice. Oi!
 #  * Python >= 3.8, but that's largely fine. Python 3.6 and 3.7 are
 #    increasingly obsolete in 2021.
-#* Add a new optional "iterators_nonsequence" parameter to the
+# * Add a new optional "iterators_nonsequence" parameter to the
 #  get_func_pith_violation() function, accepting either:
 #  * If the current parameter or return of the parent wrapper function was
 #    annotated with one or more non-indexable container type hints, a *LIST* of
@@ -58,27 +58,27 @@ This private submodule is *not* intended for importation by downstream callers.
 #    handlers to efficiently treat this list like a FIFO stack (e.g., with the
 #    list.pop() method), this list should be sorted in the reverse order that
 #    these assignment expressions are defined in.
-#* Refactor exception handlers to then preferentially retrieve non-indexable
+# * Refactor exception handlers to then preferentially retrieve non-indexable
 #  container items in O(1) time from this stack rather than simply iterating
 #  over all container items in O(n) brute-force time. Obviously, extreme care
 #  must be taken here to ensure that this exception handling algorithm visits
 #  containers in the exact same order as visited by our testing algorithm.
-#FIXME: *UHH.* I honestly have *NO* idea what any of the above is on about. It's
-#likely we overthought the above commentary to extreme overkill. Notably,
-#@beartype does (in fact) now deeply type-check both maps and sets. Works great,
-#actually. No need for any of the above insanity, either. Let's re-read this
-#and, if bollocks, excise all of the above. Overkill, thy name is that "FIXME:".
+# FIXME: *UHH.* I honestly have *NO* idea what any of the above is on about. It's
+# likely we overthought the above commentary to extreme overkill. Notably,
+# @beartype does (in fact) now deeply type-check both maps and sets. Works great,
+# actually. No need for any of the above insanity, either. Let's re-read this
+# and, if bollocks, excise all of the above. Overkill, thy name is that "FIXME:".
 
-#FIXME: [COLOR] The call to the strip_text_ansi() function below is inefficient
-#and thus non-ideal. Since efficiency isn't a pressing concern in an exception
-#raiser, this is more a matter of design purity than anything. Still, it would
-#be preferable to avoid embedding ANSI escape sequences when the user requests
-#that rather than forcibly stripping those sequences out after the fact via an
-#inefficient regex. To do so, we'll want to:
-#* Augment the color_*() family of functions with a mandatory "conf:
+# FIXME: [COLOR] The call to the strip_text_ansi() function below is inefficient
+# and thus non-ideal. Since efficiency isn't a pressing concern in an exception
+# raiser, this is more a matter of design purity than anything. Still, it would
+# be preferable to avoid embedding ANSI escape sequences when the user requests
+# that rather than forcibly stripping those sequences out after the fact via an
+# inefficient regex. To do so, we'll want to:
+# * Augment the color_*() family of functions with a mandatory "conf:
 #  BeartypeConf" parameter.
-#* Pass that parameter to *EVERY* call to one of those functions.
-#* Refactor those functions to respect that parameter. The ideal means of
+# * Pass that parameter to *EVERY* call to one of those functions.
+# * Refactor those functions to respect that parameter. The ideal means of
 #  doing so would probably be define in the
 #  "beartype._util.text.utiltextansi" submodule:
 #  * A new "_BeartypeTheme" dataclass mapping from style names to format
@@ -572,14 +572,14 @@ def get_hint_object_violation(
         f'{VIOLATION_VERBOSITY_TO_SUFFIX[violation_verbosity]}'
     )
 
-    #FIXME: In theory, this should no longer be needed. Consider:
-    #* Refactoring all instances of "is_color=True" throughout this subpackage
+    # FIXME: In theory, this should no longer be needed. Consider:
+    # * Refactoring all instances of "is_color=True" throughout this subpackage
     #  to instead read "is_color=cause.conf.is_color".
-    #* Refactoring all calls to the represent_pith() function throughout this
+    # * Refactoring all calls to the represent_pith() function throughout this
     #  subpackage to additionally pass a new optional
     #  "is_color=cause.conf.is_color" parameter.
-    #* Refactoring this call away.
-    #* Validating with unit tests that violation messages contain *NO* ANSI when
+    # * Refactoring this call away.
+    # * Validating with unit tests that violation messages contain *NO* ANSI when
     #  configured such that "BeartypeConf(is_color=False)".
     # Strip all ANSI escape sequences from this message if requested by this
     # external user-defined configuration.

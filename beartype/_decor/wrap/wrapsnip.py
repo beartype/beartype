@@ -114,9 +114,9 @@ ARG_KIND_TO_CODE_LOCALIZE = {
     # If this parameter was passed...
     if {VAR_NAME_PITH_ROOT} is not {ARG_NAME_GET_VIOLATION}:''',
 
-    #FIXME: [SPEED] Are "while" loops actually faster than "for" loops in
-    #Python? Probably. We suspect that "while" loops internally raise *NO*
-    #"StopException" whereas "for" loops do. Profile us up, please.
+    # FIXME: [SPEED] Are "while" loops actually faster than "for" loops in
+    # Python? Probably. We suspect that "while" loops internally raise *NO*
+    # "StopException" whereas "for" loops do. Profile us up, please.
 
     # Snippet iteratively localizing all variadic positional parameters.
     ArgKind.VARIADIC_POSITIONAL: f'''
@@ -175,18 +175,18 @@ value returned from the decorated callable.
 '''
 
 # ....................{ CODE ~ return ~ check ~ noreturn   }....................
-#FIXME: *FALSE.* The following comment is entirely wrong, sadly. Although that
-#comment does, in fact, apply to asynchronous generators, that comment does
-#*NOT* apply to coroutines. PEP 484 stipulates that the returns of coroutines
-#are annotated in the exact same standard way as the returns of synchronous
-#callables are annotated: e.g.,
+# FIXME: *FALSE.* The following comment is entirely wrong, sadly. Although that
+# comment does, in fact, apply to asynchronous generators, that comment does
+# *NOT* apply to coroutines. PEP 484 stipulates that the returns of coroutines
+# are annotated in the exact same standard way as the returns of synchronous
+# callables are annotated: e.g.,
 #   # This is valid, but @beartype currently fails to support this.
 #   async def muh_coroutine() -> typing.NoReturn:
 #       await asyncio.sleep(0)
 #       raise ValueError('Dude, who stole my standards compliance?')
 #
-#Generalize this snippet to contain a "{{func_call_prefix}}" substring prefixing
-#the "{ARG_NAME_FUNC}(*args, **kwargs)" call, please.
+# Generalize this snippet to contain a "{{func_call_prefix}}" substring prefixing
+# the "{ARG_NAME_FUNC}(*args, **kwargs)" call, please.
 
 # Unlike above, this snippet intentionally omits the "{{func_call_prefix}}"
 # substring prefixing the "{ARG_NAME_FUNC}(*args, **kwargs)" call. Why? Because

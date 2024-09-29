@@ -36,7 +36,7 @@ from beartype.typing import (
 )
 
 # ....................{ SANIFIERS ~ root                   }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def sanify_hint_root_func(
     # Mandatory parameters.
     decor_meta: BeartypeDecorMeta,
@@ -128,12 +128,12 @@ def sanify_hint_root_func(
     assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
         f'{arg_kind!r} neither argument kind nor "None".')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    #FIXME: This attempt at mutating the "__annotations__" dunder dictionary is
-    #likely to fail under Python >= 3.13. Contemplate alternatives, please.
+    # FIXME: This attempt at mutating the "__annotations__" dunder dictionary is
+    # likely to fail under Python >= 3.13. Contemplate alternatives, please.
     # PEP-compliant type hint coerced from this possibly (i.e., permanently
     # converted in the annotations dunder dictionary of the passed callable)
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
@@ -201,7 +201,7 @@ def sanify_hint_root_func(
     )
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def sanify_hint_root_statement(
     hint: object,
     conf: BeartypeConf,
@@ -259,9 +259,9 @@ def sanify_hint_root_statement(
         Further details.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the sanify_hint_root_func() sanitizer, please.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # PEP-compliant type hint coerced from this possibly PEP-noncompliant type
     # hint if this hint is coercible *OR* this hint as is otherwise. Since the
@@ -276,7 +276,7 @@ def sanify_hint_root_statement(
 
 
 # ....................{ SANIFIERS ~ any                    }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child

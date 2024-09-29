@@ -22,7 +22,7 @@ from beartype._util.hint.utilhinttest import is_hint_uncached
 from beartype.typing import Any
 
 # ....................{ METACLASSES                        }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class _TypeHintMeta(ABCMeta):
     '''
     **Singleton abstract base class (ABC) metaclass** (i.e., the standard

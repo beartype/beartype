@@ -11,13 +11,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: The top-level of this module should avoid importing from third-party
 # optional libraries, both because those libraries cannot be guaranteed to be
 # either installed or importable here *AND* because those imports are likely to
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from string import digits
 
 from beartype._data.hint.datahinttyping import (
@@ -29,9 +29,9 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype.roar import BeartypeLibraryNumpyException
 
 # ....................{ PRIVATE ~ getter                   }....................
-#FIXME: File an upstream NumPy issue politely requesting they publicize either:
-#* An equivalent container listing these types.
-#* Documentation officially listing these types.
+# FIXME: File an upstream NumPy issue politely requesting they publicize either:
+# * An equivalent container listing these types.
+# * Documentation officially listing these types.
 @callable_cached
 def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
     '''
@@ -81,7 +81,7 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
     ))
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 @callable_cached
 def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
     '''
@@ -122,7 +122,7 @@ def get_numpy_dtype_name_sanitized_to_type_reduced() -> DictStrToType:
 
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def reduce_numpy_dtype(
     # Mandatory parameters.
     dtype: object,
@@ -189,7 +189,7 @@ def reduce_numpy_dtype(
 
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def make_numpy_dtype(
     # Mandatory parameters.
     dtype: object,

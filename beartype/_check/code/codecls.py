@@ -16,15 +16,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: This refactoring has yet another profound benefit. What? We can
-#precompute the values of "pith_curr_var_name" at "HintMeta" instantiation time.
-#Since that string *NEVER* changes, just assign each ""pith_curr_var_name"
-#according to its index. Indeed, this suggests we probably no longer need
-#either:
-#* "pith_curr_var_name_index".
-#* The entire "codesnipcls" submodule.
+# FIXME: This refactoring has yet another profound benefit. What? We can
+# precompute the values of "pith_curr_var_name" at "HintMeta" instantiation time.
+# Since that string *NEVER* changes, just assign each ""pith_curr_var_name"
+# according to its index. Indeed, this suggests we probably no longer need
+# either:
+# * "pith_curr_var_name_index".
+# * The entire "codesnipcls" submodule.
 #
-#Well, isn't this turning out to be a significant facepalm.
+# Well, isn't this turning out to be a significant facepalm.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.snip.codesnipstr import (
@@ -41,7 +41,7 @@ from beartype.typing import (
 )
 
 # ....................{ DATACLASSES                        }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class HintMeta:
     '''
     **Type hint type-checking metadata** (i.e., low-level dataclass storing
@@ -209,7 +209,7 @@ class HintMeta:
 
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class HintsMeta(FixedList):
     '''
     **Type hint type-checking metadata queue** (i.e., low-level fixed list of

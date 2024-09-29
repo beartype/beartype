@@ -17,24 +17,24 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
-#FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
-#"Literal[[]]"). The one notable place where this *IS* feasible is with PEP
-#585-compliant type hints subscripted by unhashable rather than hashable
-#iterables, which can *ALWAYS* be safely rewritten to be hashable (e.g.,
-#coercing "callable[[], None]" to "callable[(), None]").
+# FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
+# FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
+# "Literal[[]]"). The one notable place where this *IS* feasible is with PEP
+# 585-compliant type hints subscripted by unhashable rather than hashable
+# iterables, which can *ALWAYS* be safely rewritten to be hashable (e.g.,
+# coercing "callable[[], None]" to "callable[(), None]").
 
-#FIXME: [PEP 544] coerce_hint() should also coerce PEP 544-compatible protocols
-#*NOT* decorated by @typing.runtime_checkable to be decorated by that decorator,
-#as such protocols are unusable at runtime. Yes, we should always try something
-#*REALLY* sneaky and clever.
+# FIXME: [PEP 544] coerce_hint() should also coerce PEP 544-compatible protocols
+# *NOT* decorated by @typing.runtime_checkable to be decorated by that decorator,
+# as such protocols are unusable at runtime. Yes, we should always try something
+# *REALLY* sneaky and clever.
 #
-#Specifically, rather than accept "typing" nonsense verbatim, we could instead:
-#* Detect PEP 544-compatible protocol type hints *NOT* decorated by
+# Specifically, rather than accept "typing" nonsense verbatim, we could instead:
+# * Detect PEP 544-compatible protocol type hints *NOT* decorated by
 #  @typing.runtime_checkable. The existing is_type_isinstanceable() tester now
 #  detects whether arbitrary classes are isinstanceable, so just call that.
-#* Emit a non-fatal warning advising the end user to resolve this on their end.
-#* Meanwhile, beartype can simply:
+# * Emit a non-fatal warning advising the end user to resolve this on their end.
+# * Meanwhile, beartype can simply:
 #  * Dynamically fabricate a new PEP 544-compatible protocol decorated by
 #    @typing.runtime_checkable using the body of the undecorated user-defined
 #    protocol as its base. Indeed, simply subclassing a new subclass decorated
@@ -51,7 +51,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            protocol_uncheckable: object) -> Protocol:
 #            ...
 #
-#Checkmate, "typing". Checkmate.
+# Checkmate, "typing". Checkmate.
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import NotImplementedType
@@ -73,7 +73,7 @@ from beartype.typing import (
 )
 
 # ....................{ COERCERS ~ root                    }....................
-#FIXME: Document mypy-specific coercion in the docstring as well, please.
+# FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: object,
     decor_meta: BeartypeDecorMeta,

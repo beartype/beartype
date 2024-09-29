@@ -92,10 +92,10 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
             # This hint is a PEP-noncompliant isinstanceable class *OR*...
             isinstance(hint, type) or
 
-            #FIXME: This condition is kinda intense. Should we really be
-            #conflating typing attributes that aren't types with objects that
-            #are types? Let's investigate exactly which kinds of type hints
-            #require this and contemplate something considerably more elegant.
+            # FIXME: This condition is kinda intense. Should we really be
+            # conflating typing attributes that aren't types with objects that
+            # are types? Let's investigate exactly which kinds of type hints
+            # require this and contemplate something considerably more elegant.
             # An unsupported kind of PEP-compliant type hint (e.g.,
             # "typing.TypedDict" instance)...
             is_hint_pep_typing(hint)
@@ -114,27 +114,27 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
             )
     # Else, this hint is supported.
 
-    #FIXME: Alternately, it might be preferable to refactor this to resemble:
+    # FIXME: Alternately, it might be preferable to refactor this to resemble:
     #    if (
     #       not get_hint_pep_args(hint) and
     #       get_hint_pep_origin_type_or_none(hint) is not None
     #    ):
     #        wrapper_subclass = ClassTypeHint
     #
-    #That's possibly simpler and cleaner, as it seamlessly conveys the exact
-    #condition we're going for -- assuming it works, of course. *sigh*
-    #FIXME: While sensible, the above approach induces non-trivial test
-    #failures. Let's investigate this further at a later time, please.
+    # That's possibly simpler and cleaner, as it seamlessly conveys the exact
+    # condition we're going for -- assuming it works, of course. *sigh*
+    # FIXME: While sensible, the above approach induces non-trivial test
+    # failures. Let's investigate this further at a later time, please.
 
-    #FIXME: Push the "not" up to the top level of this conditional, please.
+    # FIXME: Push the "not" up to the top level of this conditional, please.
     # If this hint is unsubscripted a subscriptable type has no args, all we care about is the origin.
     elif (
         # Unsubscripted (i.e., indexed by *NO* child type hints) *AND*...
         not get_hint_pep_args(hint) and
-        #FIXME: No idea, bro. This is pretty weird. For one,
-        #"_HINT_SIGNS_ORIGINLESS" doesn't even contain all the signs it should
-        #(e.g., "HintSignLiteral", "HintSignUnion"). For another we should just
-        #be calling this instead:
+        # FIXME: No idea, bro. This is pretty weird. For one,
+        # "_HINT_SIGNS_ORIGINLESS" doesn't even contain all the signs it should
+        # (e.g., "HintSignLiteral", "HintSignUnion"). For another we should just
+        # be calling this instead:
         #    get_hint_pep_origin_type_or_none(hint) is not None
         hint_sign not in _HINT_SIGNS_ORIGINLESS
     ):
@@ -163,7 +163,7 @@ to the :class:`TypeHint` subclass handling those hints.
 '''
 
 
-#FIXME: Consider shifting into "datapepsignset" if still required.
+# FIXME: Consider shifting into "datapepsignset" if still required.
 _HINT_SIGNS_ORIGINLESS = frozenset((
     HintSignNewType,
     HintSignTypeVar,

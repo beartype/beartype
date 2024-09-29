@@ -24,8 +24,8 @@ from beartype.typing import (
 )
 
 # ....................{ GETTERS                            }....................
-#FIXME: Mypy insists this getter can return "None" in certain edge cases. But...
-#what are those? Official documentation is seemingly silent on the issue. *sigh*
+# FIXME: Mypy insists this getter can return "None" in certain edge cases. But...
+# what are those? Official documentation is seemingly silent on the issue. *sigh*
 get_frame: Optional[Callable[[int], Optional[CallableFrameType]]] = getattr(
     sys, '_getframe', None)
 '''
@@ -80,17 +80,17 @@ ValueError
 '''
 
 
-#FIXME: Preserve until we inevitably require this getter, please.
-#def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
+# FIXME: Preserve until we inevitably require this getter, please.
+# def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
 #    try:
 #        return get_frame(ignore_frames + 1)
 #    except ValueError:
 #        return None
-#def get_frame_caller_or_none() -> Optional[FrameType]:
+# def get_frame_caller_or_none() -> Optional[FrameType]:
 #    return get_frame_or_none(ignore_frames=2)
 
 # ....................{ GETTERS ~ name                     }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_frame_package_name(
     # Mandatory parameters.
     frame: CallableFrameType,
@@ -144,7 +144,7 @@ def get_frame_package_name(
     return frame.f_globals.get('__package__')
 
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_frame_module_name(
     # Mandatory parameters.
     frame: CallableFrameType,
@@ -185,7 +185,7 @@ def get_frame_module_name(
     return frame.f_globals.get('__name__')
 
 
-#FIXME: Preserved for posterity. Currently unused, but potentially useful.
+# FIXME: Preserved for posterity. Currently unused, but potentially useful.
 # from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 # #FIXME: Unit test us up, please.
 # def get_frame_name(

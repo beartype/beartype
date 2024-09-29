@@ -13,11 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [DOCOS] Officially document both this and the public "beartype.peps"
-#submodule, please.
+# FIXME: [DOCOS] Officially document both this and the public "beartype.peps"
+# submodule, please.
 
-#FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
-#Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
+# FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
+# Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 
 # ....................{ IMPORTS                            }....................
 from collections.abc import Callable
@@ -329,7 +329,7 @@ def resolve_pep563(
     # )
 
 # ....................{ PRIVATE ~ resolvers                }....................
-#FIXME: We currently no longer require this. See above for further commentary.
+# FIXME: We currently no longer require this. See above for further commentary.
 # from beartype.roar import BeartypeDecorHintPepException
 # from beartype._util.cache.pool.utilcachepoollistfixed import FIXED_LIST_SIZE_MEDIUM
 #

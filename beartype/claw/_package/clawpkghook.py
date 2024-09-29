@@ -38,7 +38,7 @@ from beartype.roar import BeartypeClawHookException
 from beartype.typing import Optional
 
 # ....................{ HOOKERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def hook_packages(
     # Keyword-only arguments.
     *,
@@ -165,7 +165,7 @@ def hook_packages(
 
 
 # ....................{ PRIVATE ~ blacklisters             }....................
-#FIXME: Docstring us up, please.
+# FIXME: Docstring us up, please.
 def _blacklist_packages(package_names: IterableStrs) -> None:
     '''
     Recursively **blacklist** (i.e., prevent import hooks from implicitly
@@ -446,13 +446,13 @@ def _whitelist_packages_some(
         # rewhitelist this package.
 
 # ....................{ UNHOOKERS                          }....................
-#FIXME: Preserved in perpetuity. Who knows what was going on here? Unhooking is
-#almost certainly useful -- but this is useless until (A) someone actually
-#requests this functionality and (B) we actually test this extensively. *sigh*
-#FIXME: [WAT] *UHM.* This is great, *BUT NEVER ACTUALLY EXPOSED TO USERS OR
-#INTERNALLY CALLED ANYWHERE.* Seriously. What was the original game plan here?
-#No idea. Never documented it. Consider:
-#* For each permanent public "beartype.claw" import hook (e.g., beartype_all()),
+# FIXME: Preserved in perpetuity. Who knows what was going on here? Unhooking is
+# almost certainly useful -- but this is useless until (A) someone actually
+# requests this functionality and (B) we actually test this extensively. *sigh*
+# FIXME: [WAT] *UHM.* This is great, *BUT NEVER ACTUALLY EXPOSED TO USERS OR
+# INTERNALLY CALLED ANYWHERE.* Seriously. What was the original game plan here?
+# No idea. Never documented it. Consider:
+# * For each permanent public "beartype.claw" import hook (e.g., beartype_all()),
 #  define a corresponding temporary public "beartype.claw" import hook
 #  internally deferring to this unhook_packages() function: e.g.,
 #      @contextmanager
@@ -466,8 +466,8 @@ def _whitelist_packages_some(
 #              #here? Probably not. We should probably just be snapshotting the
 #              #existing "claw_state" or something. Shaking my head, fam.
 #              unhook_packages(*args, **kwargs)
-#FIXME: Unit test us up, please. Since this is never internally called anywhere,
-#this is currently completely untested (and probably totally broken). Yikes.
+# FIXME: Unit test us up, please. Since this is never internally called anywhere,
+# this is currently completely untested (and probably totally broken). Yikes.
 # def unhook_packages(
 #     # Keyword-only arguments.
 #     *,

@@ -36,13 +36,13 @@ class NewTypeTypeHint(ClassTypeHint):
 
         # If this non-new type hint is a class...
         if isinstance(hint_embedded, type):
-            #FIXME: Define a new get_hint_pep484_newtype_name() getter ala:
+            # FIXME: Define a new get_hint_pep484_newtype_name() getter ala:
             #    def get_hint_pep484_newtype_name(
             #        hint: Any, exception_prefix: str = '') -> type:
             #        #FIXME: Does this suffice? Does "NewType" guarantee the
             #        #"__name__" instance variable to exist? No idea. *sigh*
             #        return getattr(hint, '__name__')
-            #Then, call that below in lieu of the "name = getattr(...)" call.
+            # Then, call that below in lieu of the "name = getattr(...)" call.
             # Unqualified basename of the new subclass of this class to be
             # created below.
             hint_name = getattr(hint, '__name__', str(hint))
@@ -65,6 +65,6 @@ class NewTypeTypeHint(ClassTypeHint):
         # Else, this non-new type hint is a non-class (e.g., "Any"). In this
         # case, preserve this non-class as is.
         else:
-            #FIXME: This can't be right. Isn't "self._origin" supposed to *ONLY*
-            #be a class? Mypy complaints are probably justified here, frankly.
+            # FIXME: This can't be right. Isn't "self._origin" supposed to *ONLY*
+            # be a class? Mypy complaints are probably justified here, frankly.
             self._origin = hint_embedded  # type: ignore[assignment]

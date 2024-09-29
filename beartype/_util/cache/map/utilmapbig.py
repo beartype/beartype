@@ -22,7 +22,7 @@ from beartype.typing import (
 )
 
 # ....................{ CLASSES                            }....................
-#FIXME: Submit back to StackOverflow, preferably under this question:
+# FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
 class CacheUnboundedStrong:
     '''
@@ -165,9 +165,9 @@ class CacheUnboundedStrong:
             # Return this value.
             return value
 
-    #FIXME: Unit test us up.
-    #FIXME: Generalize to accept a new mandatory "arg: object" parameter and
-    #then pass rather than forcefully passing the passed key. \o/
+    # FIXME: Unit test us up.
+    # FIXME: Generalize to accept a new mandatory "arg: object" parameter and
+    # then pass rather than forcefully passing the passed key. \o/
     def cache_or_get_cached_func_return_passed_arg(
         self,
 
@@ -237,7 +237,7 @@ class CacheUnboundedStrong:
             return value
 
     # ..................{ CLEARERS                           }..................
-    #FIXME: Unit test us up, please.
+    # FIXME: Unit test us up, please.
     def clear(self) -> None:
         '''
         Clear (i.e., empty) this cache.

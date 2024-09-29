@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def is_forwardref(obj: object) -> bool:
     '''
     :data:`True` only if the passed object is a **forward reference subclass**

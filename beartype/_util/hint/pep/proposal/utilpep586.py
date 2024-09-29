@@ -156,7 +156,7 @@ def die_unless_hint_pep586(
 
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 def get_hint_pep586_literals(
     # Mandatory parameters.
     hint: Any,

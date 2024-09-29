@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To prevent this project from accidentally requiring third-party
 # packages as mandatory runtime dependencies, avoid importing from *ANY* such
 # package via a module-scoped import. These imports should be isolated to the
 # bodies of callables declared below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from sys import modules as module_imported_names
 
 from beartype._util.func.utilfuncframe import iter_frames
@@ -49,9 +49,9 @@ def is_sphinx_autodocing() -> bool:
     # originating from the "autodoc" extension. If we find such a stack frame,
     # Sphinx is currently autogenerating documentation; else, Sphinx is not.
 
-    #FIXME: Refactor this to leverage a genuinely valid working solution
-    #hopefully provided out-of-the-box by some hypothetical new bleeding-edge
-    #version of Sphinx *AFTER* they resolve our feature request for this:
+    # FIXME: Refactor this to leverage a genuinely valid working solution
+    # hopefully provided out-of-the-box by some hypothetical new bleeding-edge
+    # version of Sphinx *AFTER* they resolve our feature request for this:
     #    https://github.com/sphinx-doc/sphinx/issues/9805
 
     # For each stack frame on the call stack, ignoring the stack frame

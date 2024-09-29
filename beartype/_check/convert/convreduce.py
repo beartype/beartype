@@ -504,7 +504,7 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # "return" statement and thus absurdly common.
     HintSignNone: reduce_hint_pep484_none,
 
-    #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
+    # FIXME: Remove this branch *AFTER* deeply type-checking type variables.
     # If this type variable was parametrized by one or more bounded
     # constraints, reduce this hint to these constraints.
     HintSignTypeVar: reduce_hint_pep484_typevar,
@@ -534,28 +534,28 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignPep557DataclassInitVar: reduce_hint_pep557_initvar,
 
     # ..................{ PEP 585                            }..................
-    #FIXME: *NON-IDEAL.* Some hints superficially identified as
-    #"HintSignPep585BuiltinSubscriptedUnknown" are actually deeply
-    #type-checkable as is. This is the case for *ALL* builtin collection type
-    #subclasses, for example -- hardly an uncommon edge case: e.g.,
+    # FIXME: *NON-IDEAL.* Some hints superficially identified as
+    # "HintSignPep585BuiltinSubscriptedUnknown" are actually deeply
+    # type-checkable as is. This is the case for *ALL* builtin collection type
+    # subclasses, for example -- hardly an uncommon edge case: e.g.,
     #    >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     #    >>> class UserList(list): pass
     #    >>> get_hint_pep_sign(UserList[str])
     #    HintSignPep585BuiltinSubscriptedUnknown
     #
-    #Although "UserList[str]" is identified as unknown, "UserList[str]" is
-    #deeply type-checkable as a PEP 593-compliant type hint resembling:
+    # Although "UserList[str]" is identified as unknown, "UserList[str]" is
+    # deeply type-checkable as a PEP 593-compliant type hint resembling:
     #    Annotated[List[str], IsInstance[UserList]]
     #
-    #That is to say, "UserList[str]" should be deeply type-checked as
-    #semantically equivalent to "List[str]" that just happens to be an instance
-    #of "UserList" rather than "list".
+    # That is to say, "UserList[str]" should be deeply type-checked as
+    # semantically equivalent to "List[str]" that just happens to be an instance
+    # of "UserList" rather than "list".
     #
-    #Thankfully, this isn't terribly arduous to support. Generalize
-    #reduce_hint_pep585_builtin_subscripted_unknown() as follows. The basic idea
-    #is to just defer to the existing
-    #_infer_hint_factory_collection_builtin() function, which interestingly does
-    #a great deal of what we already need:
+    # Thankfully, this isn't terribly arduous to support. Generalize
+    # reduce_hint_pep585_builtin_subscripted_unknown() as follows. The basic idea
+    # is to just defer to the existing
+    # _infer_hint_factory_collection_builtin() function, which interestingly does
+    # a great deal of what we already need:
     #    def reduce_hint_pep585_builtin_subscripted_unknown(
     #        hint: object, *args, **kwargs) -> type:
     #
@@ -599,12 +599,12 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #        # Return this hint.
     #        return hint
     #
-    #Since the _infer_hint_factory_collection_builtin() function appears to be
-    #of public relevance, let's at least rename that
-    #infer_hint_factory_collection_builtin().
+    # Since the _infer_hint_factory_collection_builtin() function appears to be
+    # of public relevance, let's at least rename that
+    # infer_hint_factory_collection_builtin().
     #
-    #Pretty cool, eh? Fairly trivial and *SHOULD* definitely work. Let's give
-    #this a go as time permits, please.
+    # Pretty cool, eh? Fairly trivial and *SHOULD* definitely work. Let's give
+    # this a go as time permits, please.
 
     # If this hint is a PEP 585-compliant unrecognized subscripted builtin type
     # hint (i.e., C-based type hint that is *NOT* an isinstanceable type,
@@ -618,9 +618,9 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
         reduce_hint_pep585_builtin_subscripted_unknown),
 
     # ..................{ PEP 589                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
-    #shallowly type-checking such hints by reduction to untyped dictionaries
-    #remains the sanest temporary work-around.
+    # FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+    # shallowly type-checking such hints by reduction to untyped dictionaries
+    # remains the sanest temporary work-around.
 
     # If this hint is a PEP 589-compliant typed dictionary (i.e.,
     # "typing.TypedDict" or "typing_extensions.TypedDict" subclass), silently
@@ -634,7 +634,7 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignTypedDict: reduce_hint_pep589,
 
     # ..................{ PEP 591                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking final type hints.
+    # FIXME: Remove *AFTER* deeply type-checking final type hints.
 
     # If this hint is a PEP 591-compliant "typing.Final[...]" type hint,
     # silently reduce this hint to its subscripted argument (e.g., from
@@ -648,13 +648,13 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignAnnotated: reduce_hint_pep593,
 
     # ..................{ PEP 675                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking literal strings. Note that doing
-    #so will prove extremely non-trivial or possibly even infeasible, suggesting
-    #we will probably *NEVER* deeply type-check literal strings. It's *NOT*
-    #simply a matter of efficiently parsing ASTs at runtime; it's that as well
-    #as correctly transitively inferring literal strings across operations and
-    #calls, which effectively requires parsing the entire codebase and
-    #constructing an in-memory graph of all type relations. See also:
+    # FIXME: Remove *AFTER* deeply type-checking literal strings. Note that doing
+    # so will prove extremely non-trivial or possibly even infeasible, suggesting
+    # we will probably *NEVER* deeply type-check literal strings. It's *NOT*
+    # simply a matter of efficiently parsing ASTs at runtime; it's that as well
+    # as correctly transitively inferring literal strings across operations and
+    # calls, which effectively requires parsing the entire codebase and
+    # constructing an in-memory graph of all type relations. See also:
     #    https://peps.python.org/pep-0675/#inferring-literalstring
 
     # If this hint is a PEP 675-compliant "typing.LiteralString" type hint,
@@ -766,13 +766,13 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignValuesView: reduce_hint_pep484_deprecated,
 
     # ..................{ PEP 612                            }..................
-    #FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and
-    #"**kwargs: P.kwargs" would be runtime-checkable. However, it's unclear
-    #whether these hints even *CAN* be runtime type-checked in theory -- let
-    #alone practice. For the moment, shallowly ignoring them is the best that
-    #@beartype can do. Let's readdress this if and when @beartype begins deeply
-    #type-checking type variables (i.e., "typing.TypeVar" objects), which share
-    #a vague similarity with PEP 612-compliant "typing.ParamSpec" objects.
+    # FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and
+    # "**kwargs: P.kwargs" would be runtime-checkable. However, it's unclear
+    # whether these hints even *CAN* be runtime type-checked in theory -- let
+    # alone practice. For the moment, shallowly ignoring them is the best that
+    # @beartype can do. Let's readdress this if and when @beartype begins deeply
+    # type-checking type variables (i.e., "typing.TypeVar" objects), which share
+    # a vague similarity with PEP 612-compliant "typing.ParamSpec" objects.
 
     # Reduce PEP 612-compliant type hints that are instances of the low-level
     # C-based "typing.ParamSpecArgs" or "typing.ParamSpecKwargs" types when

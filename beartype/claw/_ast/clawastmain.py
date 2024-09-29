@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP 484] Additionally define:
-#* Generator transformers. The idea here is that @beartype *CAN* actually
+# FIXME: [PEP 484] Additionally define:
+# * Generator transformers. The idea here is that @beartype *CAN* actually
 #  automatically type-check generator yields, sends, and returns at runtime.
 #  How? By automatically injecting appropriate die_if_unbearable() calls
 #  type-checking the values to be yielded, sent, and returned against the
@@ -22,26 +22,26 @@ This private submodule is *not* intended for importation by downstream callers.
 #  -- which is all manner of impressive. See the
 #  TypeguardTransformer._use_memo() context manager for working code. Wow!
 #
-#See also:
+# See also:
 #    https://github.com/agronholm/typeguard/blob/master/src/typeguard/_transformer.py
 
-#FIXME: [SPEED] Consider generalizing the BeartypeNodeTransformer.__new__()
-#class method to internally cache and return "BeartypeNodeTransformer" instances
-#depending on the passed "conf_beartype" parameter. In general, most codebases
-#will only leverage a single @beartype configuration (if any @beartype
-#configuration at all); ergo, caching improves everything by enabling us to
-#reuse the same "BeartypeNodeTransformer" instance for every hooked module.
-#Score @beartype!
+# FIXME: [SPEED] Consider generalizing the BeartypeNodeTransformer.__new__()
+# class method to internally cache and return "BeartypeNodeTransformer" instances
+# depending on the passed "conf_beartype" parameter. In general, most codebases
+# will only leverage a single @beartype configuration (if any @beartype
+# configuration at all); ergo, caching improves everything by enabling us to
+# reuse the same "BeartypeNodeTransformer" instance for every hooked module.
+# Score @beartype!
 #
-#See the BeartypeConf.__new__() method for relevant logic. \o/
-#FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
-#defining a comparable reinit() method as we do for "BeartypeDecorMeta". After
-#retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
-#immediately call BeartypeNodeTransformer.reinit() to reinitialize that
-#instance.
+# See the BeartypeConf.__new__() method for relevant logic. \o/
+# FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
+# defining a comparable reinit() method as we do for "BeartypeDecorMeta". After
+# retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
+# immediately call BeartypeNodeTransformer.reinit() to reinitialize that
+# instance.
 #
-#This is all feasible, of course -- but let's just roll with the naive
-#implementation for now, please.
+# This is all feasible, of course -- but let's just roll with the naive
+# implementation for now, please.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
@@ -72,13 +72,13 @@ from beartype.typing import (
 )
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To improve forward compatibility with the superclass API over which
 # we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
 # and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#FIXME: Unit test us up, please.
+# FIXME: Unit test us up, please.
 class BeartypeNodeTransformer(
     # PEP-agnostic superclass defining "core" AST node transformation logic.
     NodeTransformer,
@@ -176,11 +176,11 @@ class BeartypeNodeTransformer(
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats the purpose.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
@@ -462,7 +462,7 @@ class BeartypeNodeTransformer(
         return self.generic_visit(node)
 
     # ..................{ VISITORS ~ class                   }..................
-    #FIXME: Implement us up, please.
+    # FIXME: Implement us up, please.
     def visit_ClassDef(self, node: ClassDef) -> Optional[ClassDef]:
         '''
         Add a new child node to the passed **class node** (i.e., node
