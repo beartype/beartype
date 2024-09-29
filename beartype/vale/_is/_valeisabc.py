@@ -148,8 +148,7 @@ class _BeartypeValidatorFactoryABC(
                 )
             # Else, this object was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
-            else:
-                msg = f'{self._getitem_exception_prefix}empty tuple.'
-                raise BeartypeValeSubscriptionException(
-                    msg)
+            msg = f'{self._getitem_exception_prefix}empty tuple.'
+            raise BeartypeValeSubscriptionException(
+                msg)
         # Else, this object was subscripted by exactly one argument.

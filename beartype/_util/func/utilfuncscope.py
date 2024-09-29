@@ -331,7 +331,7 @@ def get_func_locals(
     # containing the passed callable is *NOT* that callable itself, the caller
     # maliciously renamed one but *NOT* both of "__qualname__" and "__name__".
     # In this case, raise an exception. Again, Python permits this. *sigh*
-    elif func_scope_names[-1] != func_name_unqualified:
+    if func_scope_names[-1] != func_name_unqualified:
         msg = (
             f'{func_name_unqualified}() fully-qualified name '
             f'{func.__qualname__}() invalid (i.e., last lexical scope '
@@ -486,7 +486,7 @@ def get_func_locals(
         # Else, that scope is *NOT* a module.
         #
         # If...
-        elif (
+        if (
             # That callable's name is that of the current lexical scope to be
             # found *AND*...
             func_frame_name == func_scope_name and

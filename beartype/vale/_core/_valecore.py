@@ -187,14 +187,14 @@ class BeartypeValidator:
         # Else, this code is a string.
         #
         # If this code is the empty string, raise an exception.
-        elif not is_valid_code:
+        if not is_valid_code:
             msg = 'Validator code empty.'
             raise BeartypeValeSubscriptionException(msg)
         # Else, this code is a non-empty string.
         #
         # If this code does *NOT* contain the test subject substring
         # "{obj}" and is invalid, raise an exception.
-        elif '{obj}' not in is_valid_code:
+        if '{obj}' not in is_valid_code:
             msg = (
                 f'Validator code invalid '
                 f'(i.e., test subject substring "{{obj}}" not found):\n'
@@ -208,7 +208,7 @@ class BeartypeValidator:
         # If this code is *NOT* explicitly prefixed by "(" and suffixed by
         # ")", do so to ensure this code remains safely evaluable when
         # embedded in parent expressions.
-        elif not (
+        if not (
             is_valid_code[0] == '(' and
             is_valid_code[-1] == ')'
         ):

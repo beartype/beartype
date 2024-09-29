@@ -155,7 +155,7 @@ def make_package_names_from_args(
         #
         # If the caller improperly passed multiple package names despite
         # requesting all-packages coverage, raise an exception.
-        elif package_names is not None:
+        if package_names is not None:
             msg = (
                 f'Coverage {repr(BeartypeClawCoverage.PACKAGES_ALL)} '
                 f'but package names {repr(package_names)} passed.'
@@ -199,7 +199,7 @@ def make_package_names_from_args(
         # Else, this package names is iterable.
         #
         # If *NO* package names were passed, raise an exception.
-        elif not package_names:
+        if not package_names:
             msg = 'beartype_packages() package names empty.'
             raise BeartypeClawHookException(
                 msg)
@@ -216,12 +216,11 @@ def make_package_names_from_args(
             #
             # If this package name is *NOT* a valid Python identifier, raise an
             # exception.
-            else:
-                die_unless_identifier(
-                    text=package_name,
-                    exception_cls=BeartypeClawHookException,
-                    exception_prefix='Package name ',
-                )
+            die_unless_identifier(
+                text=package_name,
+                exception_cls=BeartypeClawHookException,
+                exception_prefix='Package name ',
+            )
             # Else, this package name is a valid Python identifier.
 
     # Return the iterable of the fully-qualified names of one or more packages

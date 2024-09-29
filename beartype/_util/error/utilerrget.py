@@ -124,7 +124,7 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     # If this basename is *NOT* a Python identifier, raise an exception.
     #
     # Note that this should *NEVER* occur. Of course, this will occur.
-    elif not attr_name.isidentifier():
+    if not attr_name.isidentifier():
         msg = (
             f'Non-standard "{label_exception(name_error)}" unrecognized '
             f"(i.e., single-quoted substring '{attr_name}' found but not a "

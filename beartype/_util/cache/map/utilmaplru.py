@@ -113,7 +113,7 @@ class CacheLruStrong(dict):
             msg = f'LRU cache capacity {repr(size)} not integer.'
             raise _BeartypeUtilCacheLruException(
                 msg)
-        elif size < 1:
+        if size < 1:
             msg = f'LRU cache capacity {size} not positive.'
             raise _BeartypeUtilCacheLruException(
                 msg)

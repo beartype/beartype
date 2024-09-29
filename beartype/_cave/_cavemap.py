@@ -134,7 +134,7 @@ class _NoneTypeOrType(dict):
             #
             # If this tuple contains one or more items that are *NOT* types,
             # raise an exception.
-            elif not all(isinstance(cls, type) for cls in hint):
+            if not all(isinstance(cls, type) for cls in hint):
                 msg = (
                     f'"NoneTypeOr" key {repr(hint)} tuple invalid '
                     f'(i.e., tuple contains one or more non-class items).'
@@ -145,7 +145,7 @@ class _NoneTypeOrType(dict):
             # Else, this tuple contains only types.
             #
             # If "NoneType" is already in this tuple, reuse this tuple as is.
-            elif _NoneType in hint:
+            if _NoneType in hint:
                 hint_or_none = hint
             # Else, "NoneType" is *NOT* already in this tuple. In this case,
             # instantiate a new tuple of types concatenating this tuple with

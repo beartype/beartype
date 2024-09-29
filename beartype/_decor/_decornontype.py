@@ -138,7 +138,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # bound method descriptor of the type of this object implementing the
     # __call__() dunder method with a comparable descriptor calling a
     # @beartype-generated runtime type-checking wrapper function. Go with it.
-    elif not is_func_python(obj):
+    if not is_func_python(obj):
         return beartype_pseudofunc(obj, **kwargs)  # type: ignore[return-value]
     # Else, this object is a pure-Python function.
     #
@@ -180,7 +180,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     #     @contextmanager
     #     @beartype
     #     def muh_contextmanager(cls) -> Iterator[None]: yield
-    elif is_func_contextlib_contextmanager(obj):
+    if is_func_contextlib_contextmanager(obj):
         return beartype_func_contextlib_contextmanager(obj, **kwargs)  # type: ignore[return-value]
     # Else, this function is *NOT* a @contextlib.contextmanager-based isomorphic
     # decorator closure.
@@ -675,7 +675,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #
     # If this object does *NOT* define this method, this object is *NOT* a
     # pseudo-callable. In this case, raise an exception.
-    elif pseudofunc_call_type_method is None:  # pragma: no cover
+    if pseudofunc_call_type_method is None:  # pragma: no cover
         msg = (
             f'Callable {repr(pseudofunc)} type {repr(pseudofunc.__class__)} '
             f'not pseudo-callable object type '
@@ -707,14 +707,14 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #     @lru_cache
     #     @beartype
     #     def muh_lru_cache() -> None: pass
-    elif is_func_functools_lru_cache(pseudofunc):
+    if is_func_functools_lru_cache(pseudofunc):
         # Return a new callable decorating that callable with type-checking.
         return beartype_pseudofunc_functools_lru_cache(  # type: ignore
             pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
     # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
     #
     # If...
-    elif (
+    if (
         # This pseudo-callable object is a wrapper *AND*...
         is_func_wrapper(pseudofunc) and
         # This unbound __call__() dunder method is *NOT* a wrapper...

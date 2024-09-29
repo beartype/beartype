@@ -241,7 +241,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # Why? Because this initialization performs somewhat space- and
     # time-intensive work -- including importation of the "beartype.vale"
     # subpackage, which we strictly prohibit importing from global scope.
-    elif not _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL:
+    if not _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL:
         _init()
     # In any case, this dictionary is now initialized.
 

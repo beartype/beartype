@@ -122,7 +122,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     #
     # If "claw_decoration_position_types" is *NOT* an enumeration member, raise
     # an exception.
-    elif not isinstance(
+    if not isinstance(
         conf_kwargs['claw_decoration_position_types'],
         BeartypeDecorationPosition
     ):
@@ -137,7 +137,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "claw_decoration_position_types" is an enumeration member.
     #
     # If "claw_is_pep526" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['claw_is_pep526'], bool):
+    if not isinstance(conf_kwargs['claw_is_pep526'], bool):
         msg = (
             f'Beartype configuration parameter "claw_is_pep526" '
             f'value {repr(conf_kwargs["claw_is_pep526"])} not boolean.'
@@ -149,7 +149,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     #
     # If "claw_skip_package_names" is *NOT* an iterable of non-empty strings,
     # raise an exception. Specifically, if the value of this parameter is not...
-    elif not (
+    if not (
         # A collection *AND*...
         isinstance(conf_kwargs['claw_skip_package_names'], CollectionABC) and
         all(
@@ -174,7 +174,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "claw_skip_package_names" is an iterable of non-empty strings.
     #
     # If "hint_overrides" is *NOT* a frozen dict, raise an exception.
-    elif not isinstance(conf_kwargs['hint_overrides'], BeartypeHintOverrides):
+    if not isinstance(conf_kwargs['hint_overrides'], BeartypeHintOverrides):
         msg = (
             f'Beartype configuration parameter "hint_overrides" '
             f'value {repr(conf_kwargs["hint_overrides"])} not '
@@ -187,7 +187,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "hint_overrides" is a frozen dict.
     #
     # If "is_color" is *NOT* a tri-state boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
+    if not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
         msg = (
             f'Beartype configuration parameter "is_color" '
             f'value {repr(conf_kwargs["is_color"])} not tri-state boolean '
@@ -199,7 +199,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "is_color" is a tri-state boolean.
     #
     # If "is_debug" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_debug'], bool):
+    if not isinstance(conf_kwargs['is_debug'], bool):
         msg = (
             f'Beartype configuration parameter "is_debug" '
             f'value {repr(conf_kwargs["is_debug"])} not boolean.'
@@ -210,7 +210,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "is_debug" is a boolean.
     #
     # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_pep484_tower'], bool):
+    if not isinstance(conf_kwargs['is_pep484_tower'], bool):
         msg = (
             f'Beartype configuration parameter "is_pep484_tower" '
             f'value {repr(conf_kwargs["is_debug"])} not boolean.'
@@ -221,7 +221,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "is_pep484_tower" is a boolean.
     #
     # If "strategy" is *NOT* an enumeration member, raise an exception.
-    elif not isinstance(conf_kwargs['strategy'], BeartypeStrategy):
+    if not isinstance(conf_kwargs['strategy'], BeartypeStrategy):
         msg = (
             f'Beartype configuration parameter "strategy" '
             f'value {repr(conf_kwargs["strategy"])} not '
@@ -234,7 +234,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     #
     # If "violation_verbosity" is *NOT* an enumeration member, raise an
     # exception.
-    elif not isinstance(
+    if not isinstance(
         conf_kwargs['violation_verbosity'], BeartypeViolationVerbosity):
         msg = (
             f'Beartype configuration parameter "violation_verbosity" '
@@ -248,7 +248,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     #
     # If "warning_cls_on_decorator_exception" is neither "None" *NOR* a
     # warning category, raise an exception.
-    elif not (
+    if not (
         conf_kwargs['warning_cls_on_decorator_exception'] is None or
         is_type_subclass(
             conf_kwargs['warning_cls_on_decorator_exception'], Warning)

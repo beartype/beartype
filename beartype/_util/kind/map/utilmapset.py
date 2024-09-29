@@ -189,10 +189,9 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
             raise _BeartypeUtilMappingException(
                 msg)
         # Else, no mappings are passed. Raise an appropriate exception.
-        else:
-            msg = 'Two or more mappings expected, but no mappings passed.'
-            raise _BeartypeUtilMappingException(
-                msg)
+        msg = 'Two or more mappings expected, but no mappings passed.'
+        raise _BeartypeUtilMappingException(
+            msg)
     # Else, two or more mappings are passed.
     assert isinstance(mappings[0], Mapping), (
         f'First mapping {repr(mappings[0])} not mapping.')

@@ -385,13 +385,13 @@ class BeartypeDecorMeta:
         # Else, that callable is callable.
         #
         # If the callable to be unwrapped is uncallable, raise an exception.
-        elif not callable(wrapper):
+        if not callable(wrapper):
             msg = f'{repr(wrapper)} uncallable.'
             raise BeartypeDecorWrappeeException(msg)
         # Else, that callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
-        elif not isinstance(conf, BeartypeConf):
+        if not isinstance(conf, BeartypeConf):
             msg = f'"conf" {repr(conf)} not beartype configuration.'
             raise BeartypeDecorWrappeeException(
                 msg)
@@ -399,7 +399,7 @@ class BeartypeDecorMeta:
         #
         # If this class stack is neither a tuple *NOR* "None", raise an
         # exception.
-        elif not isinstance(cls_stack, NoneTypeOr[tuple]):
+        if not isinstance(cls_stack, NoneTypeOr[tuple]):
             msg = f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".'
             raise BeartypeDecorWrappeeException(
                 msg)

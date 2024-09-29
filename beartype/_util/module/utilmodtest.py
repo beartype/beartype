@@ -83,7 +83,7 @@ def die_unless_module_attr_name(
     #
     # If this string contains *NO* "." characters and thus either is relative to
     # the calling subpackage or refers to a builtin object, raise an exception.
-    elif '.' not in module_attr_name:
+    if '.' not in module_attr_name:
         msg = (
             f'{exception_prefix}"{module_attr_name}" '
             f'relative or refers to builtin object '
@@ -97,12 +97,11 @@ def die_unless_module_attr_name(
     #
     # If this string is syntactically invalid as a fully-qualified module
     # attribute name, raise an exception.
-    else:
-        die_unless_identifier(
-            text=module_attr_name,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
+    die_unless_identifier(
+        text=module_attr_name,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 

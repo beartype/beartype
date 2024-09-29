@@ -98,7 +98,7 @@ class FixedList(list):
         # Else, this length is an integer.
         #
         # If this length is non-positive, raise an exception.
-        elif size <= 0:
+        if size <= 0:
             msg = f'Fixed list length {size} <= 0.'
             raise _BeartypeUtilCachedFixedListException(
                 msg)

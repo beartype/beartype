@@ -384,7 +384,7 @@ def die_unless_hint_nonpep_tuple(
     # Else, this object is a tuple.
     #
     # If this tuple is empty, raise an exception.
-    elif not hint:
+    if not hint:
         msg = f'{exception_prefix}tuple type hint empty.'
         raise exception_cls(msg)
     # Else, this tuple is non-empty.

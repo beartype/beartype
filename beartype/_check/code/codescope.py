@@ -376,13 +376,13 @@ def add_func_scope_types(
     # Else, this container is either a set or tuple.
     #
     # If this container is empty, raise an exception.
-    elif not types:
+    if not types:
         msg = f'{exception_prefix}empty.'
         raise BeartypeDecorHintNonpepException(msg)
     # Else, this container is non-empty.
     #
     # If this container only contains one type, register only this type.
-    elif len(types) == 1:
+    if len(types) == 1:
         return add_func_scope_type(
             # The first and only item of this container, accessed as either:
             # * If this container is a tuple, that item with fast indexing.

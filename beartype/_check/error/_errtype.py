@@ -149,7 +149,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
             # Else, this string is actually a string.
             #
             # If this string is empty, raise an exception.
-            elif not cause_str_or_none:
+            if not cause_str_or_none:
                 msg = f'{EXCEPTION_PREFIX}return string empty.'
                 raise BeartypePlugInstancecheckStrException(
                     msg)

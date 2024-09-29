@@ -406,7 +406,7 @@ def get_hint_pep484_generic_bases_unerased(
     #
     # If any class listed by this MRO fails to comply with the above
     # expectations, raise an exception.
-    elif hint_bases[0] is not hint:
+    if hint_bases[0] is not hint:
         msg = (
             f'{exception_prefix}PEP 484 generic {repr(hint)} '
             f'first superclass {repr(hint_bases[0])} != {repr(hint)}.'
@@ -414,7 +414,7 @@ def get_hint_pep484_generic_bases_unerased(
         raise exception_cls(
             msg
         )
-    elif hint_bases[-1] is not object:
+    if hint_bases[-1] is not object:
         msg = (
             f'{exception_prefix}PEP 484 generic {repr(hint)} '
             f'last superclass {repr(hint_bases[-1])} != {repr(object)}.'

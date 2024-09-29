@@ -1937,7 +1937,7 @@ def make_check_expr(
                         #   Avoid inefficiently re-performing this assignment
                         #   expression for each additional beartype validator by
                         #   efficiently reusing the previously assigned local.
-                        elif hint_child_index:
+                        if hint_child_index:
                             hint_curr_expr = pith_curr_var_name
                         # Else, this is the first beartype validator. See above.
 

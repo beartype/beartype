@@ -189,7 +189,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # arguments (contained in this tuple).
         #
         # If this class was *NOT* subscripted by two arguments...
-        elif len(args) != 2:
+        if len(args) != 2:
             # If this class was subscripted by one or more arguments, then by
             # deduction this class was subscripted by three or more arguments.
             # In this case, raise a human-readable exception.
@@ -203,10 +203,9 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
                 )
             # Else, this class was subscripted by *NO* arguments. In this case,
             # raise a human-readable exception.
-            else:
-                msg = f'{self._getitem_exception_prefix}empty tuple.'
-                raise BeartypeValeSubscriptionException(
-                    msg)
+            msg = f'{self._getitem_exception_prefix}empty tuple.'
+            raise BeartypeValeSubscriptionException(
+                msg)
         # Else, this class was subscripted by exactly two arguments.
 
         # Localize these arguments to human-readable local variables.
@@ -233,7 +232,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         # Else, this name is a string.
         #
         # If this name is the empty string, raise an exception.
-        elif not attr_name:
+        if not attr_name:
             msg = f'{get_repr()} first argument is empty string.'
             raise BeartypeValeSubscriptionException(
                 msg)

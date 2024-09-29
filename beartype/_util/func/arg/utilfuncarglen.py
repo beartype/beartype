@@ -371,7 +371,7 @@ def get_func_args_flexible_len(
     # total number of flexible parameters accepted by the pure-Python wrappee
     # callable wrapped by this partial minus the number of flexible parameters
     # passed by this partial to this wrappee.
-    elif is_unwrap and is_func_functools_partial(func):
+    if is_unwrap and is_func_functools_partial(func):
         return get_func_functools_partial_args_flexible_len(
             func=func,
             is_unwrap=is_unwrap,

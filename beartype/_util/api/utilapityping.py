@@ -168,15 +168,14 @@ def import_typing_attr(
             )
         # Else, the "typing_extensions" module is unimportable. In this
         # case, raise an appropriate exception.
-        else:
-            msg = (
-                f'{EXCEPTION_PREFIX} Please either '
-                f'(A) install the "typing_extensions" package or '
-                f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
-            )
-            raise exception_cls(
-                msg
-            )
+        msg = (
+            f'{EXCEPTION_PREFIX} Please either '
+            f'(A) install the "typing_extensions" package or '
+            f'(B) update to a newer Python version. {EXCEPTION_SUFFIX}'
+        )
+        raise exception_cls(
+            msg
+        )
     # Else, one or more of these modules declare this attribute.
 
     # Return this attribute.

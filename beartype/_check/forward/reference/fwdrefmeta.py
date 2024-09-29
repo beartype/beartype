@@ -325,7 +325,7 @@ class BeartypeForwardRefMeta(type):
             # If this referee is a subscripted generic (e.g.,
             # "MuhGeneric[int]"), reduce this referee to the class subscripting
             # this generic (e.g., "int").
-            elif is_hint_pep484585_generic(referee):
+            if is_hint_pep484585_generic(referee):
                 referee = get_hint_pep484585_generic_type(
                     hint=referee,
                     exception_cls=EXCEPTION_CLS,

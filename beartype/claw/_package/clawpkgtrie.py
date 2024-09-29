@@ -406,16 +406,15 @@ def die_if_packages_trie() -> None:
         # Else, or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions. In this case,
         # raise another exception.
-        else:
-            msg = (
-                f'Prior call to package-specific import hook '
-                f'beartype.claw.beartype_*() already registered some packages '
-                f'for type-checking under beartype configurations:\n\t'
-                f'{repr(claw_state.packages_trie_whitelist)}'
-            )
-            raise BeartypeClawHookException(
-                msg
-            )
+        msg = (
+            f'Prior call to package-specific import hook '
+            f'beartype.claw.beartype_*() already registered some packages '
+            f'for type-checking under beartype configurations:\n\t'
+            f'{repr(claw_state.packages_trie_whitelist)}'
+        )
+        raise BeartypeClawHookException(
+            msg
+        )
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.

@@ -333,7 +333,7 @@ def make_hint_pep484604_union(hints: tuple) -> object:
     # Else, this tuple contains one or more child type hints.
     #
     # If this tuple contains only one child type hint, return this hint as is.
-    elif len(hints) == 1:
+    if len(hints) == 1:
         return hints[0]
     # Else, this tuple contains two or more child type hints.
 

@@ -327,7 +327,7 @@ def make_func(
     #
     # If that function is a wrapper wrapping a wrappee callable, propagate
     # dunder attributes from that wrappee onto this wrapper.
-    elif func_wrapped is not None:
+    if func_wrapped is not None:
         assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
     # Else, that function is *NOT* such a wrapper.
