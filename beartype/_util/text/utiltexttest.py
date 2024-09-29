@@ -43,4 +43,4 @@ def is_str_float_or_int(text: str) -> bool:
     # Return true only if this text represents a finite number. See also:
     #     s.lstrip('-').replace('.','',1).replace('e-','',1).replace('e','',1).isdigit()
     return text.lstrip(
-        '-').replace('.','',1).replace('e-','',1).replace('e','',1).isdigit()
+        '-').replace('.', '', 1).replace('e-', '', 1).replace('e', '', 1).isdigit()

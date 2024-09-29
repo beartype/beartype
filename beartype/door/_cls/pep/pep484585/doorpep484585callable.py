@@ -266,7 +266,7 @@ class CallableTypeHint(TypeHint):
         elif not issubclass(self._origin, branch._origin):
             return False
         elif not branch.is_params_ignorable and (
-            (
+
                 self.is_params_ignorable or
                 len(self.param_hints) != len(branch.param_hints) or
                 any(
@@ -274,7 +274,7 @@ class CallableTypeHint(TypeHint):
                     for self_arg, branch_arg in zip(
                         self.param_hints, branch.param_hints)
                 )
-            )
+
         ):
             return False
 

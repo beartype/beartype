@@ -212,8 +212,8 @@ class BeartypeDecorMeta(object):
         'func_wrappee_wrappee_codeobj',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_signature_prefix',
-        'func_wrapper_scope',
         'func_wrapper_name',
+        'func_wrapper_scope',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:

@@ -197,7 +197,7 @@ class BeartypeNodeTransformer(
 
         # Mandatory keyword-only parameters.
         *,
-        module_name_beartype : str,
+        module_name_beartype: str,
         conf_beartype: BeartypeConf,
     ) -> None:
         '''

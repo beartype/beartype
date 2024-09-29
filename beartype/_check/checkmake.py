@@ -187,7 +187,7 @@ def make_func_tester(
 def make_code_tester_check(
     hint: object,
     conf: BeartypeConf,
-    exception_prefix : str,
+    exception_prefix: str,
 ) -> CodeGenerated:
     '''
     Pure-Python code snippet of a type-checking tester function type-checking an

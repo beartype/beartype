@@ -489,7 +489,7 @@ def _init() -> None:
         # ....................{ PEP 484                    }....................
         # All PEP 484-compliant forward references are necessarily instances of
         # the same class.
-        'ForwardRef' : HintSignForwardRef,
+        'ForwardRef': HintSignForwardRef,
 
         # All PEP 484-compliant type variables are necessarily instances of the
         # same class.

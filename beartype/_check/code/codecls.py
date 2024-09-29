@@ -50,7 +50,7 @@ class HintMeta(object):
     pure-Python type-checking code snippets in the
     :func:`beartype._check.code.codemake.make_check_expr` factory).
 
-    Attributes
+    Attributes:
     ----------
     hint : object
         Type hint currently visited by this BFS.
@@ -84,7 +84,7 @@ class HintMeta(object):
           overlap with the subsequent substring ``"10"``, which would then
           produce catastrophically erroneous and undebuggable Python code.
 
-    Example
+    Example:
     ------
         For example, the
         :func:`beartype._check.code.codemake.make_check_expr` factory might
@@ -162,9 +162,9 @@ class HintMeta(object):
     __slots__ = (
         'hint',
         'hint_placeholder',
+        'indent_level',
         'pith_expr',
         'pith_var_name_index',
-        'indent_level',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:

@@ -60,7 +60,7 @@ def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_deprecated(
-    hint: object, exception_prefix : str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Preserve the passed :pep:`484`-compliant type hint as is while emitting one
     non-fatal deprecation warning for this type hint if **deprecated** (i.e.,

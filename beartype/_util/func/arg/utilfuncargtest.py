@@ -415,7 +415,7 @@ def is_func_arg_name_variadic_positional(
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.
-    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs): # type: ignore[misc]
+    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs):  # type: ignore[misc]
         return False
     # Else, that callable accepts a parameter with the passed name. In this
     # case, further testing is warranted.
@@ -474,7 +474,7 @@ def is_func_arg_name_variadic_keyword(
 
     # If the passed callable accepts *NO* parameter with the passed name,
     # immediately return false.
-    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs): # type: ignore[misc]
+    if not is_func_arg_name(*args, arg_name=arg_name, **kwargs):  # type: ignore[misc]
         return False
     # Else, that callable accepts a parameter with the passed name. In this
     # case, further testing is warranted.

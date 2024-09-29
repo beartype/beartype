@@ -142,7 +142,7 @@ def make_func(
     assert func_name, 'Parameter "func_name" empty.'
     assert func_code, 'Parameter "func_code" empty.'
     assert func_label is None or func_labeller is None, (
-        f'Parameters "func_label" and "func_labeller" both non-"None".')
+        'Parameters "func_label" and "func_labeller" both non-"None".')
 
     # Default all unpassed parameters.
     if func_globals is None:

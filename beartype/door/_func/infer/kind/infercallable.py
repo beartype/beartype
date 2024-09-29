@@ -346,7 +346,7 @@ def infer_hint_callable(func: CallableABC) -> object:
         # Else, this is *NOT* a keyword-only parameter.
         #
         # If this is a variadic positional parameter...
-        elif arg_kind is ArgKind.VARIADIC_POSITIONAL:
+        if arg_kind is ArgKind.VARIADIC_POSITIONAL:
             # If this parameter is annotated...
             if hint_param is not object:
                 # Sign uniquely identifying this hint if this hint is
@@ -373,7 +373,7 @@ def infer_hint_callable(func: CallableABC) -> object:
         # Else, this is *NOT* a variadic positional parameter.
         #
         # If this is a variadic keyword parameter...
-        elif arg_kind is ArgKind.VARIADIC_KEYWORD:
+        if arg_kind is ArgKind.VARIADIC_KEYWORD:
             # If this parameter is annotated...
             if hint_param is not object:
                 # Sign uniquely identifying this hint if this hint is
@@ -434,14 +434,13 @@ def infer_hint_callable(func: CallableABC) -> object:
         # If this is an optional positional-only or flexible parameter, this
         # parameter is unsupported by any existing PEP standard. Record this and
         # halt iteration.
-        elif arg_default is not ArgMandatory:
+        if arg_default is not ArgMandatory:
             is_param_unhintable = True
             break
         # Else, this is a mandatory positional-only or flexible parameter. In
         # this case, append the child hint annotating this parameter to the list
         # of all child parameter hints.
-        else:
-            hint_params.append(hint_param)  # type: ignore[attr-defined]
+        hint_params.append(hint_param)  # type: ignore[attr-defined]
 
     # If...
     if (

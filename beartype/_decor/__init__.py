@@ -13,9 +13,9 @@
 #way to explain this madness. Witness!
 #    from beartype import beartype
 #    from typing import Iterable
-#    
+#
 #    T = TypeVar('T', bound=Iterable)
-#    
+#
 #    @beartype
 #    def stringify_iterable_items(arg: T[int]) -> T[str]:
 #        return type(arg)(str(item) for item in arg)
@@ -52,7 +52,7 @@
 #improve @beartype to:
 #
 #* Detect parametrized generic hints that are otherwise unrecognized (e.g.,
-#  "asyncio.Task[~T]"). 
+#  "asyncio.Task[~T]").
 #* Introspect the origin (i.e., "__origin__" dunder attribute) from these hints.
 #* Internally replace each such parametrized generic hint with its origin when
 #  generating type-checking code. Voila!

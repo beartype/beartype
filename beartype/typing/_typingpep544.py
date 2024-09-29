@@ -545,6 +545,7 @@ class SupportsAbs(_SupportsAbsSlow[_T_co], Protocol, Generic[_T_co]):
     '''
     Caching variant of :class:`typing.SupportsAbs`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -553,6 +554,7 @@ class SupportsBytes(_SupportsBytesSlow, Protocol):
     '''
     Caching variant of :class:`typing.SupportsBytes`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -561,6 +563,7 @@ class SupportsComplex(_SupportsComplexSlow, Protocol):
     '''
     Caching variant of :class:`typing.SupportsComplex`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -569,6 +572,7 @@ class SupportsFloat(_SupportsFloatSlow, Protocol):
     '''
     Caching variant of :class:`typing.SupportsFloat`."
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -577,6 +581,7 @@ class SupportsInt(_SupportsIntSlow, Protocol):
     '''
     Caching variant of :class:`typing.SupportsInt`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -585,6 +590,7 @@ class SupportsIndex(_SupportsIndexSlow, Protocol):
     '''
     Caching variant of :class:`typing.SupportsIndex`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 
@@ -593,6 +599,7 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
     '''
     Caching variant of :class:`typing.SupportsRound`.
     '''
+
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
 

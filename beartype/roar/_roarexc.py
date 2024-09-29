@@ -1355,6 +1355,7 @@ class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
+
     pass
 
 

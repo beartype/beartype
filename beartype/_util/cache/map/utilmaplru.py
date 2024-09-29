@@ -85,8 +85,8 @@ class CacheLruStrong(dict):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        '_size',
         '_lock',
+        '_size',
     )
 
     # ..................{ DUNDERS                            }..................

@@ -308,7 +308,7 @@ class BeartypeValidator(object):
 
         This function is memoized for efficiency.
 
-        Warns
+        Warns:
         -----
         BeartypeValeLambdaWarning
             If this validator is implemented as a pure-Python lambda function

@@ -518,7 +518,7 @@ def beartype_descriptor_decorator_builtin(
         descriptor_wrappee = unwrap_func_staticmethod_once(descriptor)  # type: ignore[arg-type]
 
         # Pure-Python unbound function type-checking this static method.
-        func_checked = beartype_func(descriptor_wrappee, **kwargs) # type: ignore[union-attr]
+        func_checked = beartype_func(descriptor_wrappee, **kwargs)  # type: ignore[union-attr]
 
         # Return a new static method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,

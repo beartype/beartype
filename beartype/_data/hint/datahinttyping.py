@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype # <-- satisfy mypy [note to self: i can't stand you, mypy]
+import beartype  # <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
     AST,
     AsyncFunctionDef,

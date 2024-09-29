@@ -213,7 +213,7 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
             f'{self.__class__.__name__}(',
             f'    package_basename={repr(self.package_basename)},',
             f'    dict={super().__repr__()},',
-            f')',
+            ')',
         ))
 
 
@@ -367,7 +367,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
             f'    package_basename={repr(self.package_basename)},',
             f'    conf_if_hooked={repr(self.conf_if_hooked)},',
             f'    dict={super().__repr__()},',
-            f')',
+            ')',
         ))
 
 # ....................{ RAISERS                            }....................
@@ -513,7 +513,7 @@ def is_package_blacklisted(package_basenames: CollectionStrs) -> bool:
         # itself?" Simple. In the same set theoretic sense that all classes are
         # subclasses of themselves and all sets are subsets of themselves, all
         # packages are subpackages of themselves. \o/
-        elif subpackages_trie_blacklist is PackagesTrieBlacklisted:
+        if subpackages_trie_blacklist is PackagesTrieBlacklisted:
             # print(f'Skipping blacklisted package "{package_basename}"...')
             is_blacklisted = True
             break

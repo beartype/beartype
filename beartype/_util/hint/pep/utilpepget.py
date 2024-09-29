@@ -712,7 +712,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         #
         # If this trie is actually a target sign, this module maps to this sign.
         # In this case, return this sign.
-        elif hint_repr_module_name_trie.__class__ is HintSign:
+        if hint_repr_module_name_trie.__class__ is HintSign:
             return hint_repr_module_name_trie  # type: ignore[return-value]
         # Else, this trie is another nested trie. In this case, continue
         # iterating deeper into this trie.

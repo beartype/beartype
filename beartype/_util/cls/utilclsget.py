@@ -74,7 +74,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
     # Else, *NO* modules defines this type.
 
     # If all else fails, this type was probably declared in-memory rather than
-    # on-disk. In this case, fallback to merely returning "None". 
+    # on-disk. In this case, fallback to merely returning "None".
     return None
 
 

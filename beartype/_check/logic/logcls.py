@@ -103,8 +103,8 @@ class HintSignLogicABC(object, metaclass=ABCMeta):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        code_format : CallableStrFormat
-        is_var_random_int_needed : bool
+        code_format: CallableStrFormat
+        is_var_random_int_needed: bool
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(

@@ -103,7 +103,7 @@ def number_str_lines(text: str) -> str:
         # Note that a format() call rather than f-string is intentionally
         # applied here, as the former affords more functionality for string
         # munging than the latter.
-        '(line {:0>4d}) {}'.format(text_line_number, text_line)
+        f'(line {text_line_number:0>4d}) {text_line}'
         for text_line_number, text_line in enumerate(text.splitlines(), start=1)
     )
 

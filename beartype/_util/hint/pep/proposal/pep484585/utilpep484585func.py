@@ -41,7 +41,7 @@ from collections.abc import (
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
     func: Callable,
-    func_arg_name_to_hint : DictStrToAny,
+    func_arg_name_to_hint: DictStrToAny,
     exception_prefix: str,
 ) -> object:
     '''
