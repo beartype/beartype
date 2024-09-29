@@ -156,7 +156,7 @@ def is_bearable(
 # * *NOT* decorated by the standard @overload decorator.
 # * *NOT* annotated by type hints. By PEP 484, only the signatures of
 #   @overload-decorated callables are annotated by type hints.
-def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
+def is_bearable(obj, hint, *, conf=BEARTYPE_CONF_DEFAULT):  # pyright: ignore
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
     type hint under the passed beartype configuration.

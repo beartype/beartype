@@ -336,7 +336,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
 # ....................{ PRIVATE ~ functions                }....................
 #FIXME: Docstring us up, please.
 #FIXME: Comment us up, please.
-def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT = {}) -> bool:
+def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT={}) -> bool:
 
     cls_attr_name_to_value = cls.__dict__
     cls_attr_name_to_hint = cls_attr_name_to_value.get(

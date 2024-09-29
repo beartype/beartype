@@ -126,10 +126,10 @@ class CacheLruStrong(dict):
         key: Hashable,
 
         # Superclass methods efficiently localized as default parameters.
-        __contains = dict.__contains__,  # pyright: ignore
-        __getitem = dict.__getitem__,  # pyright: ignore
-        __delitem = dict.__delitem__,  # pyright: ignore
-        __pushitem = dict.__setitem__,  # pyright: ignore
+        __contains=dict.__contains__,  # pyright: ignore
+        __getitem=dict.__getitem__,  # pyright: ignore
+        __delitem=dict.__delitem__,  # pyright: ignore
+        __pushitem=dict.__setitem__,  # pyright: ignore
     ) -> object:
         '''
         Return an item previously cached under the passed key *or* raise an
@@ -174,11 +174,11 @@ class CacheLruStrong(dict):
         value: object,
 
         # Superclass methods efficiently localized as default parameters.
-        __contains = dict.__contains__,  # pyright: ignore
-        __delitem = dict.__delitem__,  # pyright: ignore
-        __pushitem = dict.__setitem__,  # pyright: ignore
-        __iter = dict.__iter__,  # pyright: ignore
-        __len = dict.__len__,  # pyright: ignore
+        __contains=dict.__contains__,  # pyright: ignore
+        __delitem=dict.__delitem__,  # pyright: ignore
+        __pushitem=dict.__setitem__,  # pyright: ignore
+        __iter=dict.__iter__,  # pyright: ignore
+        __len=dict.__len__,  # pyright: ignore
     ) -> None:
         '''
         Cache this key-value pair while preserving size constraints.
@@ -210,10 +210,10 @@ class CacheLruStrong(dict):
         key: Hashable,
 
         # Superclass methods efficiently localized as default parameters.
-        __contains = dict.__contains__,  # pyright: ignore
-        __getitem = dict.__getitem__,  # pyright: ignore
-        __delitem = dict.__delitem__,  # pyright: ignore
-        __pushitem = dict.__setitem__,  # pyright: ignore
+        __contains=dict.__contains__,  # pyright: ignore
+        __getitem=dict.__getitem__,  # pyright: ignore
+        __delitem=dict.__delitem__,  # pyright: ignore
+        __pushitem=dict.__setitem__,  # pyright: ignore
      ) -> bool:
         '''
         Return a boolean indicating whether this key is cached.

@@ -199,7 +199,7 @@ class FrozenDict(dict):
         raise BeartypeKindFrozenDictException(
             msg)
 
-    def pop(self, key, default = None) -> NoReturn:
+    def pop(self, key, default=None) -> NoReturn:
         msg = (
             f'Immutable dictionary {repr(self)} '
             f'key {repr(key)} with default {repr(default)} not poppable.'
@@ -213,7 +213,7 @@ class FrozenDict(dict):
         raise BeartypeKindFrozenDictException(
             msg)
 
-    def setdefault(self, key, default = None) -> NoReturn:
+    def setdefault(self, key, default=None) -> NoReturn:
         msg = (
             f'Immutable dictionary {repr(self)} '
             f'key {repr(key)} with default {repr(default)} not settable.'
