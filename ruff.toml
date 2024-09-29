@@ -34,14 +34,10 @@ ignore = [
     "EM102", # [*] f-string-in-exception
     "EM103", # [*] dot-format-in-exception
     "F541", # [*] f-string-missing-placeholders
-    "F841", # [*] unused-variable
     "I001", # [*] unsorted-imports
-    "N804", # [*] invalid-first-argument-name-for-class-method
-    "N805", # [*] invalid-first-argument-name-for-method
     "PIE790", # [*] unnecessary-placeholder
     "PIE808", # [*] unnecessary-range-start
     "PIE810", # [*] multiple-starts-ends-with
-    "PLR0402", # [*] manual-from-import
     "Q000", # [*] bad-quotes-inline-string
     "RET504", # [*] unnecessary-assign
     "RET505", # [*] superfluous-else-return

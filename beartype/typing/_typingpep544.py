@@ -204,7 +204,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
     # ................{ DUNDERS                                }................
     def __new__(
-        mcls: Type[_TT],  # pyright: ignore
+        mcls: Type[_TT],  # pyright: ignore # noqa: N804 invalid-first-argument-name-for-class-method
         name: str,
         bases: Tuple[type, ...],  # pyright: ignore
         namespace: Dict[str, Any],  # pyright: ignore
@@ -275,7 +275,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
         return cls
 
 
-    def __instancecheck__(cls, inst: Any) -> bool:
+    def __instancecheck__(self, inst: Any) -> bool:
         '''
         :data:`True` only if the passed object is a **structural subtype**
         (i.e., satisfies the protocol defined by) the passed protocol.
@@ -302,7 +302,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             # Return a pre-cached boolean indicating whether an object of
             # the same arbitrary type as the object passed to this call
             # satisfied the same protocol in a prior call of this method.
-            return cls._abc_inst_check_cache[type(inst)]
+            return self._abc_inst_check_cache[type(inst)]
         # If this method has yet to be passed the same protocol *AND* an
         # object of the same type as the object passed to this call...
         except KeyError:
@@ -311,7 +311,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             inst_t = type(inst)
             bases_pass_muster = True
 
-            for base in cls.__bases__:
+            for base in self.__bases__:
                 #FIXME: This branch probably erroneously matches unrelated
                 #user-defined types whose names just happen to be "Generic"
                 #or "Protocol". Ideally, we should tighten that up to only
@@ -319,7 +319,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
                 #superclasses. Of course, note that
                 #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
                 #we'll want to explicitly test against both.
-                if base is cls or base.__name__ in (
+                if base is self or base.__name__ in (
                     'Protocol',
                     'Generic',
                     'object',
@@ -329,10 +329,10 @@ class _CachingProtocolMeta(_ProtocolMeta):
                     bases_pass_muster = False
                     break
 
-            cls._abc_inst_check_cache[inst_t] = bases_pass_muster and (
-                _check_only_my_attrs(cls, inst))
+            self._abc_inst_check_cache[inst_t] = bases_pass_muster and (
+                _check_only_my_attrs(self, inst))
 
-            return cls._abc_inst_check_cache[inst_t]
+            return self._abc_inst_check_cache[inst_t]
 
 # ....................{ PRIVATE ~ functions                }....................
 #FIXME: Docstring us up, please.

@@ -214,7 +214,7 @@ def _beartype_object_nonfatal(
         return _beartype_object_fatal(obj, conf=conf, **kwargs)
     # If doing so unexpectedly raises an exception, coerce that fatal exception
     # into a non-fatal warning for nebulous safety.
-    except Exception as exception:
+    except Exception:
         # Category of warning to be emitted.
         warning_category: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
         assert is_type_subclass(warning_category, Warning), (

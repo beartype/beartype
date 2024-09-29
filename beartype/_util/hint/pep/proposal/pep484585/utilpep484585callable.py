@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype.typing as typing
+from beartype import typing
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
     TYPE_CHECKING,
