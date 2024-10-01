@@ -174,7 +174,7 @@ def reduce_numpy_dtype(
     # Sanitized name of this dtype, efficiently truncating *ALL* digits and
     # underscores from this name (e.g., sanitizing "complex128" to "complex").
     dtype_name_sanitized = dtype.name.translate(  # type: ignore[attr-defined]
-        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER) 
+        _TRANSLATION_TABLE_DTYPE_NAME_SANITIZER)
 
     # Dictionary mapping from each sanitized NumPy data type name to the
     # corresponding reduced type (e.g., from the string "complex" to the

@@ -11,7 +11,11 @@ include = [
 exclude = []
 
 [lint]
-select = ["UP", 'F']
+select = [
+    "W",
+    "F",
+    "UP",
+]
 ignore = [
     "F401", # imported but unused
     "F811", # Redefinition of unused

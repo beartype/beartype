@@ -54,7 +54,7 @@ def get_hint_pep557_initvar_arg(
         If this object is *not* a dataclass initialization-only instance
         variable type hint.
     '''
-    
+
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
