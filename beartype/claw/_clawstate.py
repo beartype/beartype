@@ -171,7 +171,7 @@ class BeartypeClawState:
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
             f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',
             f'    packages_trie_whitelist={repr(self.packages_trie_whitelist)},\n',
-            f')',
+            ')',
         ))
 
 # ....................{ GLOBALS                            }....................

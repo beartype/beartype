@@ -11,9 +11,13 @@ include = [
 exclude = []
 
 [lint]
-select = ["UP"]
+select = ["UP", 'F']
+ignore = [
+    "F401", # imported but unused
+    "F811", # Redefinition of unused
+]
+
 extend-safe-fixes = [
-    "TCH", # flake8-type-checking. TYPE_CHECKING support
     "UP",  # pyupgrade
 ]
 extend-unsafe-fixes = [

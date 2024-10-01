@@ -580,7 +580,7 @@ class _FiniteStateMachineNode:
             f'    hint_factory={repr(self.hint_factory)},',
             f'    nodes_next_method_names={repr(self.nodes_next_method_names)},',
             f'    nodes_next={repr(self.nodes_next)},',
-            f')',
+            ')',
         ))
 
 # ....................{ PRIVATE ~ getters                  }....................

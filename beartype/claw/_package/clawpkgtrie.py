@@ -213,7 +213,7 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
             f'{self.__class__.__name__}(',
             f'    package_basename={repr(self.package_basename)},',
             f'    dict={super().__repr__()},',
-            f')',
+            ')',
         ))
 
 
@@ -367,7 +367,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
             f'    package_basename={repr(self.package_basename)},',
             f'    conf_if_hooked={repr(self.conf_if_hooked)},',
             f'    dict={super().__repr__()},',
-            f')',
+            ')',
         ))
 
 # ....................{ RAISERS                            }....................

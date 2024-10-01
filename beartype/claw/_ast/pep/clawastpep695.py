@@ -95,6 +95,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #CPython bug. Please submit us up the F-F-F-bomb.
 
 # ....................{ IMPORTS                            }....................
+import ast
 from ast import (
     AST,
     Assign,
