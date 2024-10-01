@@ -448,7 +448,7 @@ PEP-compliant type hint matching a :mod:`collections.abc` **fine state machine
 '''
 
 # ....................{ PRIVATE ~ classes                  }....................
-class _FiniteStateMachineNode(object):
+class _FiniteStateMachineNode:
     '''
     :mod:`collections.abc` **finite state machine (FSM) node** (i.e., node of a
     FSM whose transitions infer the narrowest :mod:`collections.abc` ABC

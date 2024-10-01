@@ -45,7 +45,7 @@ from beartype._util.func.utilfunctest import (
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
 # ....................{ CLASSES                            }....................
-class BeartypeDecorMeta(object):
+class BeartypeDecorMeta:
     '''
     **Beartype decorator call metadata** (i.e., object encapsulating *all*
     metadata for the callable currently being decorated by the

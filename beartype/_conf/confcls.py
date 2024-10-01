@@ -68,7 +68,7 @@ from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
 # ....................{ DATACLASSES                        }....................
-class BeartypeConf(object):
+class BeartypeConf:
     '''
     **Beartype configuration** (i.e., self-caching dataclass encapsulating all
     flags, options, settings, and other metadata configuring each type-checking

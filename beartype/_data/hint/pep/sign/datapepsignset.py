@@ -631,14 +631,14 @@ type hint annotated by a subscription of that attribute.
 '''
 
 
-HINT_SIGNS_SUPPORTED: _FrozenSetHintSign = frozenset((
+HINT_SIGNS_SUPPORTED: _FrozenSetHintSign = frozenset(
     # Set of all deeply supported signs.
     HINT_SIGNS_SUPPORTED_DEEP |
     # Set of all shallowly supported signs *NOT* originating from a class.
     _HINT_SIGNS_SUPPORTED_SHALLOW |
     # Set of all shallowly supported signs originating from a class.
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE
-))
+)
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints).

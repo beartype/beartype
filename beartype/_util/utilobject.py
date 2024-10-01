@@ -20,7 +20,7 @@ from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
 from contextlib import AbstractContextManager
 
 # ....................{ CLASSES                            }....................
-class Iota(object):
+class Iota:
     '''
     **Iota** (i.e., object minimizing space consumption by guaranteeably
     containing *no* attributes).

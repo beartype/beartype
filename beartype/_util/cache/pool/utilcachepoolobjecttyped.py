@@ -77,12 +77,12 @@ def acquire_object_typed(cls: type) -> Any:
     # If this type is *NOT* actually a type, raise an exception.
     if not isinstance(cls, type):
         raise _BeartypeUtilCachedObjectTypedException(
-            '{!r} not a class.'.format(cls))
+            f'{cls!r} not a class.')
 
     # Thread-safely acquire an object of this type.
     object_typed = _object_typed_pool.acquire(cls)
     assert isinstance(object_typed, cls), (
-        '{!r} not a {!r}.'.format(object_typed, cls))
+        f'{object_typed!r} not a {cls!r}.')
 
     # Return this object.
     return object_typed

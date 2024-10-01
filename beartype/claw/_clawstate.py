@@ -27,7 +27,7 @@ from beartype._data.hint.datahinttyping import ImportPathHook
 from threading import RLock
 
 # ....................{ CLASSES                            }....................
-class BeartypeClawState(object):
+class BeartypeClawState:
     '''
     **Beartype import hook state** (i.e., non-thread-safe singleton safely
     centralizing global state maintained by beartype import hooks, enabling each

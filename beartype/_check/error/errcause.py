@@ -68,7 +68,7 @@ from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 
 # ....................{ CLASSES                            }....................
-class ViolationCause(object):
+class ViolationCause:
     '''
     **Type-checking violation cause finder** (i.e., object recursively
     fabricating the human-readable string describing the failure of the pith

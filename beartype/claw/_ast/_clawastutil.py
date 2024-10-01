@@ -49,7 +49,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 # and public attributes of this subclass by "_beartype".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-class BeartypeNodeTransformerUtilityMixin(object):
+class BeartypeNodeTransformerUtilityMixin:
     '''
     **Beartype abstract syntax tree (AST) node utility transformer** (i.e.,
     low-level mixin of the high-level

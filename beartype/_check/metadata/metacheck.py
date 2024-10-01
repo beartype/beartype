@@ -24,7 +24,7 @@ from collections.abc import Callable
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
-class BeartypeCheckMeta(object):
+class BeartypeCheckMeta:
     '''
     **Beartype type-check call metadata** (i.e., object encapsulating *all*
     metadata required by each call to the wrapper function type-checking the
