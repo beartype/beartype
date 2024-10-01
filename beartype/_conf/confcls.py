@@ -109,7 +109,7 @@ class BeartypeConf(object):
     _hash : int
         Precomputed configuration hash returned by the :meth:`__hash__` dunder
         method for efficiency.
-    _hint_overrides : Dict
+    _hint_overrides : BeartypeHintOverrides
         **Type hint overrides** (i.e., frozen dictionary mapping from arbitrary
         source to target type hints), enabling callers to lie to both their
         users and all other packages other than :mod:`beartype`. This dictionary
