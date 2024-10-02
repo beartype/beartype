@@ -623,12 +623,9 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
     Attributes
     ----------
     _culprits_weakref_and_repr : Tuple[(object, str), ...]
-        Tuple of 2-tuples (``culprit_weakref``, ``culprit_repr``) weakly
-        referring to all of the culprits previously passed to the
-        :meth:`__init__` method, where:
+        Tuple of 2-tuples ``(culprit_weakref, culprit_repr)`` weakly referring
+        to culprits previously passed to the :meth:`__init__` method, where:
 
-        * ``culprits_repr`` is the machine-readable string representation of the
-          culprit weakly referred to by the ``culprit_weakref`` reference.
         * ``culprits_weakref`` is a weak reference to that culprit, defined as
             either:
 
@@ -641,6 +638,9 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
               attribute intentionally substitutes ``None`` for this placeholder.
             * If that culprit *cannot* be weakly referenced (e.g., due to being
               an instance of a builtin variable-sized C-based type), ``None``.
+
+        * ``culprits_repr`` is the machine-readable string representation of the
+          culprit weakly referred to by the ``culprit_weakref`` reference.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -707,6 +707,105 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
             make_obj_weakref_and_repr(culprit)
             for culprit in culprits
         )
+
+    # ..................{ DUNDERS                            }..................
+    #FIXME: Unit test us up, please.
+    def __reduce__(self):
+        '''
+        **Pickled object reduction** (i.e., 3-tuple ``(exception_factory,
+        exception_args, exception_state)`` precisely describing how to pickle
+        this exception).
+
+        Ideally, overriding *only* the :meth:`__getstate__` dunder method would
+        suffice. Sadly, the :meth:`BaseException.__reduce__` exception root
+        superclass method fails to explicitly call that dunder method. We have
+        *no* recourse but to override the former with a more extensible
+        implementation that explicitly calls the latter. Welcome to Pickle Hell.
+
+        Returns
+        -------
+        tuple[callable, tuple, dict[str, object]]
+            3-tuple ``(exception_factory, exception_args, exception_state)``
+            such that:
+
+            * ``exception_factory`` is the :meth:`__new__` method possibly
+              unique to the type of this exception.
+            * ``exception_args`` is the 1-tuple ``(exception_type,)``, where
+              ``exception_type`` is the type of this exception. *sigh*
+            * ``exception_state`` is the pickleable object state created and
+              returned by the :meth:`__getstate__` dunder method.
+
+        See Also
+        --------
+        https://docs.python.org/3/library/pickle.html#object.__reduce__
+            Official documentation for this protocol, which is stupidly complex.
+        '''
+
+        # Concrete exception subclass of the currently reduced exception.
+        exception_type = type(self)
+
+        # Tuple of all positional arguments to be passed to the __new__()
+        # exception factory method unique to this exception subclass.
+        exception_args = (exception_type,)
+
+        # Pickleable object state for this exception.
+        exception_state = self.__getstate__()
+
+        # Pickled object reduction describing how to pickle this exception.
+        return (
+            exception_type.__new__,
+            exception_args,
+            exception_state,
+        )
+
+
+    def __getstate__(self):
+        '''
+        **Pickleable object state** (i.e., the :attr:`__dict__` dunder
+        dictionary mapping from the names of all instance variables bound this
+        object that may be safely pickled by the standard :func:`pickle.dumps`
+        function to the values of those variables).
+
+        Caveats
+        -------
+        **Python fails to explicitly call this dunder method.** Why? In all
+        likelihood, the :meth:`BaseException.__reduce__` exception root
+        superclass method fails to explicitly call this dunder method. Ergo,
+        this exception subclass overrides the :meth:`__reduce__` method so as to
+        explicitly call this dunder method. Welcome to Pickle Exception Hell.
+
+        Returns
+        -------
+        dict[str, object]
+            Pickleable object state as described above.
+        '''
+
+        # Tuple of 2-tuples "(None, culprit_repr)" providing *ONLY* the
+        # machine-readable string representations of the one or more culprits
+        # previously passed to the __init__() method. This tuple intentionally
+        # omits the first "culprit_weakref" item of the
+        # "self._culprits_weakref_and_repr" tuple from pickling, as the value of
+        # that item is an unpickleable weak reference (i.e.,
+        # "weakref.ReferenceType" object). The standard pickle.dumps() function
+        # raises exceptions when attempting to pickle weak references: e.g.,
+        #     TypeError: cannot pickle 'weakref.ReferenceType' object
+        culprits_weakref_and_repr_pickleable = tuple(
+            (None, culprit_repr)
+            for _, culprit_repr in self._culprits_weakref_and_repr
+        )
+
+        # Pickleable object state to be returned, copied to avoid destroying
+        # the current contents of this exception.
+        exception_state = self.__dict__.copy()
+
+        # Replace the unpickleable "_culprits_weakref_and_repr" instance
+        # variable in this state with the pickleable variant defined above.
+        exception_state['_culprits_weakref_and_repr'] = (
+            culprits_weakref_and_repr_pickleable)
+        # print('pickling!')
+
+        # Return this state.
+        return exception_state
 
     # ..................{ PROPERTIES                         }..................
     # Read-only properties intentionally providing no corresponding setters.

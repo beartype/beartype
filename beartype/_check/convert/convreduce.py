@@ -403,6 +403,7 @@ def _reduce_hint_cached(
         #
         # Note that this one-liner looks ridiculous, but actually works. More
         # importantly, this is the fastest way to accomplish this. Flex!
+        # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
         hint = conf.hint_overrides.get(hint, hint)
     # If doing so raises a "TypeError", this source hint is unhashable and thus
     # inapplicable for hint overriding. In this case, silently ignore this hint.

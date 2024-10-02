@@ -67,7 +67,7 @@ class BeartypeHintOverrides(FrozenDict):
                     )
                 )
             ):
-                break
+                continue
 
             # Avoid circular import dependencies.
             #

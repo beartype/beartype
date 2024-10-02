@@ -128,6 +128,66 @@ def test_decor_violation_culprits() -> None:
     assert leaf_culprit == repr(YOU_WENT_THERE_SPIRIT_BEAR)
 
 
+def test_decor_violation_pickle() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator with respect to **type-checking
+    violation pickling** (i.e., (de)serializing
+    :exc:`beartype.roar.BeartypeCallHintViolation` exceptions raised by
+    callables decorated by that decorator via the :mod:`pickle` module).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from pickle import dumps, loads
+    from beartype.door import die_if_unbearable
+    from beartype.roar import BeartypeDoorHintViolation
+
+    # ....................{ CLASSES                        }....................
+    class TheHorridTruth(object):
+        '''
+        Arbitrary user-defined type.
+
+        Note that this unit test is deterministic *only* when the
+        :func:`.die_if_unbearable` function is passed an instance of a
+        user-defined types. When that function is instead passed a builtin
+        scalar (e.g., string, integer), this unit test becomes
+        non-deterministic. Why? Object interning, probably. For efficiency,
+        Python **interns** (i.e., internalizes as globally cached objects)
+        simple primitives like builtin scalars. How and when Python does so
+        probably varies depending on contextual runtime features like the
+        current platform, CPython compiler options and *whatevahs*.
+        '''
+
+        pass
+
+    # Arbitrary instance of this type.
+    the_awful_facts = TheHorridTruth()
+
+    # ....................{ ASSERTS                        }....................
+    # Trivially raise a type-checking violation.
+    try:
+        die_if_unbearable(the_awful_facts, int)
+    except BeartypeDoorHintViolation as exception:
+        # Pickled string embodying this exception's state.
+        exception_dumped = dumps(exception)
+
+        # Unpickled exception resembling the original exception.
+        exception_loaded = loads(exception_dumped)
+
+        # Assert that this unpickled exception is of the same type.
+        assert isinstance(exception_loaded, BeartypeDoorHintViolation)
+
+        # Assert that both the original *AND* unpickled exception provide the
+        # expected number of culprits.
+        assert len(exception.culprits) == 1
+        assert len(exception_loaded.culprits) == 1
+
+        # Assert that the unpickled exception stores *ONLY* the machine-readable 
+        # representation of this culprit. Why? Because the weak reference to the
+        # culprit stored by the original exception is *NOT* pickleable.
+        assert repr(exception.culprits[0]) == exception_loaded.culprits[0]
+
+
 def test_decor_violation_types() -> None:
     '''
     Test the
