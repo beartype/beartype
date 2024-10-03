@@ -363,6 +363,9 @@ test-tox = [
     "pandera",
     # "pyarrow",
 
+    # Required by optional xarray-specific integration tests.
+    "xarray",
+
     # ....................{ SCIENCE ~ data : ml            }....................
     # Machine learning-centric optional test-time dependencies. These
     # dependencies are well-known to be extremely non-trivial to install,
