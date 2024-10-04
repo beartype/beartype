@@ -34,6 +34,8 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
+from beartype._util.module.utilmodtest import (
+    is_object_module_thirdparty_blacklisted)
 from collections.abc import Iterable
 
 # Intentionally import PEP 484-compliant "typing" type hint factories rather
@@ -95,16 +97,53 @@ def is_hint_pep484585_generic(hint: object) -> bool:
         Commentary on the relation between generics and parametrized hints.
     '''
 
-    # Return true only if this hint is...
-    return (
-        # A PEP 484-compliant generic. Note this test trivially reduces to
-        # an O(1) operation and is thus tested first.
+    # True only if this hint is either a...
+    is_hint_generic = (
+        # PEP 484-compliant generic. Note this test trivially reduces to a fast
+        # O(1) operation and is thus tested first.
         is_hint_pep484_generic(hint) or
-        # A PEP 585-compliant generic. Note this test is O(n) in n the
-        # number of pseudo-superclasses originally subclassed by this
-        # generic and is thus tested last.
+        # PEP 585-compliant generic. Note this test is O(n) for n the number of
+        # pseudo-superclasses originally subclassed by this generic and is thus
+        # tested last.
         is_hint_pep585_generic(hint)
     )
+
+    # If this hint is a PEP 484- or 585-compliant generic...
+    if is_hint_generic:
+        # Either:
+        # * If this generic is already unsubscripted, this generic as is.
+        # * Else, this generic is subscripted. In this case, the unsubscripted
+        #   generic underlying this subscripted generic.
+        hint_type = get_hint_pep484585_generic_type(hint)
+
+        # For each possibly erased superclass of this generic, arbitrarily
+        # iterated according to the method resolution order (MRO) for this
+        # generic...
+        for hint_base in hint_type.__mro__:
+            # If this superclass is beartype-blacklisted (i.e., defined in a
+            # third-party package or module that is hostile to runtime
+            # type-checking), extend this blacklist to this entire generic by
+            # immediately returning false.
+            #
+            # By default, beartype deeply type-checks a non-blacklisted generic
+            # by iteratively type-checking all unerased superclasses of that
+            # generic. Contrariwise, beartype only shallowly type-checks a
+            # blacklisted generic by reducing that generic to a PEP-noncompliant
+            # class effectively stripped of all PEP-compliant annotations.
+            # Beartype-blacklisted generics are PEP-noncompliant and thus
+            # fundamentally unsafe. For safety, we "strip" their genericity.
+            if is_object_module_thirdparty_blacklisted(hint_base):
+                return False
+            # Else, this superclass is *NOT* beartype-blacklisted. In this case,
+            # continue to the next such superclass of this generic.
+        # Else, all superclasses of this generic are *NOT* beartype-blacklisted.
+
+        # Return true in this case.
+        return True
+    # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
+
+    # Return false in this case.
+    return False
 
 
 #FIXME: Shift into a more appropriate submodule, please.
@@ -458,9 +497,9 @@ def get_hint_pep484585_generic_type(
         Further details.
     '''
 
-    # Either this hint if this hint is an unsubscripted generic, the
-    # unsubscripted generic underlying this hint if this hint is a subscripted
-    # generic, *OR* "None" if this hint is not a generic.
+    # This hint if this hint is an unsubscripted generic, the unsubscripted
+    # generic underlying this hint if this hint is a subscripted generic, *OR*
+    # "None" if this hint is not a generic.
     hint_generic_type = get_hint_pep484585_generic_type_or_none(hint)
 
     # If this hint is *NOT* a generic, raise an exception.

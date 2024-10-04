@@ -263,10 +263,7 @@ def beartype_type(
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
             attr_value_beartyped = beartype_object(
-                obj=attr_value,
-                conf=conf,
-                cls_stack=cls_stack,
-            )
+                obj=attr_value, conf=conf, cls_stack=cls_stack)
 
             # Replace this undecorated attribute with this decorated attribute.
             set_type_attr(cls, attr_name, attr_value_beartyped)

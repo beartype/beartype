@@ -235,6 +235,11 @@ def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
     -------
     bool
         :data:`True` only if this object is beartype-blacklisted.
+
+    See Also
+    --------
+    :data:`.THIRDPARTY_PACKAGE_NAMES_BLACKLIST`
+        Detailed discussion of beartype-blacklisting. 
     '''
 
     # Avoid circular import dependencies.

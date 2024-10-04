@@ -378,16 +378,25 @@ def get_hint_pep484_generic_bases_unerased(
 
     # If this MRO lists strictly less than four classes, raise an exception.
     # The MRO for any unerased generic should list at least four classes:
-    # * This class itself.
-    # * The one or more "typing" objects directly subclassed by this generic.
-    # * The "typing.Generic" superclass. Note that this superclass is typically
-    #   but *NOT* necessarily the second-to-last superclass. Since this ad-hoc
-    #   heuristic is *NOT* an actual constraint, we intentionally avoid
-    #   asserting this to be the case. An example in which "typing.Generic" is
-    #   *NOT* the second-to-last superclass is:
-    #       class ProtocolCustomSuperclass(Protocol): pass
-    #       class ProtocolCustomABC(ProtocolCustomSuperclass, ABC): pass
-    # * The "object" root superclass.
+    # 1. This class itself.
+    # 2. The one or more "typing" objects directly subclassed by this generic.
+    # 3. The "typing.Generic" superclass. Note that this superclass is typically
+    #    but *NOT* necessarily the second-to-last superclass. Since this ad-hoc
+    #    heuristic is *NOT* an actual constraint, we intentionally avoid
+    #    asserting this to be the case. An example in which "typing.Generic" is
+    #    *NOT* the second-to-last superclass is:
+    #        >>> from abc import ABC
+    #        >>> from typing import Protocol
+    #        >>> class ProtocolCustomSuperclass(Protocol): pass
+    #        >>> class ProtocolCustomABC(ProtocolCustomSuperclass, ABC): pass
+    #        >>> print(ProtocolCustomABC.__mro__)
+    #        (<class '__main__.ProtocolCustomABC'>,
+    #         <class '__main__.ProtocolCustomSuperclass'>,
+    #         <class 'typing.Protocol'>,
+    #         <class 'typing.Generic'>,
+    #         <class 'abc.ABC'>,
+    #         <class 'object'>)
+    # 4. The "object" root superclass.
     if len(hint_bases) < 4:
         raise exception_cls(
             f'{exception_prefix}PEP 484 generic {repr(hint)} '

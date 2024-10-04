@@ -331,6 +331,8 @@
    https://operatingops.org/2020/10/24/tox-testing-multiple-python-versions-with-pyenv
 .. _typing_extensions:
    https://pypi.org/project/typing-extensions
+.. _xarray:
+   https://docs.xarray.dev
 
 .. # ------------------( LINKS ~ py : package : boto3        )------------------
 .. _Boto3:
@@ -401,6 +403,12 @@
 .. _pandera.typing.DataFrame:
    https://pandera.readthedocs.io/en/stable/dataframe_models.html
 
+.. # ------------------( LINKS ~ py : package : pydantic     )------------------
+.. _Pydantic:
+   https://docs.pydantic.dev
+.. _LangChain:
+   https://www.langchain.com
+   
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
    https://www.sphinx-doc.org

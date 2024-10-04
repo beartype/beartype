@@ -374,6 +374,9 @@ test-tox = [
     # improve the likelihood of success on both local and remote workflows,
     # these dependencies are intentionally confined to Linux.
 
+    # ....................{ SCIENCE ~ data : ml : jax      }....................
+    # JAX-specific optional test-time dependencies.
+
     # Required by optional Equinox-specific integration tests. Note that Equinox
     # requires JAX.
     "equinox; sys_platform == 'linux'",
@@ -399,6 +402,13 @@ test-tox = [
     #
     # Note that PyTorch has yet to release a Python >= 3.12-compatible version.
     # 'torch; python_version < "3.12.0"',
+
+    # ....................{ SCIENCE ~ data : ml : pydantic }....................
+    # Pydantic-specific optional test-time dependencies.
+
+    # Required by optional LangChain-specific integration tests. Note that
+    # LangChain requires Pydantic.
+    "langchain",
 
     # ....................{ TYPING                         }....................
     # Typing-centric optional test-time dependencies.

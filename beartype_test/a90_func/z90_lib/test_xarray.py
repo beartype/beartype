@@ -21,14 +21,16 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 @skip_unless_package('xarray')
 def test_xarray_dataset() -> None:
     '''
-    Functional test validating that the :mod:`beartype` package raises *no*
+    Integration test validating that the :mod:`beartype` package raises *no*
     unexpected exceptions when type-checking instances of the third-party
     :class:`xarray.Dataset` class known to be hostile to runtime type-checking.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.door import die_if_unbearable
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
     from xarray import Dataset
 
     # ....................{ LOCALS                         }....................
@@ -42,7 +44,24 @@ def test_xarray_dataset() -> None:
         ),
     })
 
-    # ....................{ ASSERTS                        }....................
-    # Implicitly assert that @beartype accepts this dataset *WITHOUT* raising
-    # unexpected exceptions.
-    die_if_unbearable(xarray_dataset, Dataset)
+    # ....................{ CALLABLES                      }....................
+    @beartype
+    def crunch_data(data: Dataset) -> Dataset:
+        '''
+        Arbitrary callable both accepting and returning a
+        :class:`xarray.Dataset` object.
+        '''
+
+        # Do it, @beartype. Do it for @leycec!
+        return data
+
+    # ....................{ PASS                           }....................
+    # Implicitly assert that a @beartype-decorated callable accepts this dataset
+    # *WITHOUT* raising unexpected exceptions.
+    crunch_data(xarray_dataset)
+
+    # ....................{ FAIL                           }....................
+    # Assert that a @beartype-decorated callable raises the expected exception
+    # when passed a non-dataset.
+    with raises(BeartypeCallHintParamViolation):
+        crunch_data("It's 110°F and I can feel my face peeling off my face.")

@@ -176,14 +176,15 @@ def is_hint_ignorable(hint: object) -> bool:
     # increasingly non-trivial tests. For efficiency, tests are intentionally
     # ordered from most to least efficient.
 
-    # ....................{ TESTS ~ blacklist              }....................
-    # If this hint is beartype-blacklisted (i.e., defined in a third-party
-    # package or module that is hostile to runtime type-checking), return true.
-    # print(f'Testing hint {repr(hint)} third-party blacklisting...')
-    if is_object_module_thirdparty_blacklisted(hint):
-        # print('Blacklisted!')
-        return True
-    # Else, this hint is *NOT* beartype-blacklisted.
+    #FIXME: Preserved for posterity, as this seems generically useful. *sigh*
+    # # ....................{ TESTS ~ blacklist              }....................
+    # # If this hint is beartype-blacklisted (i.e., defined in a third-party
+    # # package or module that is hostile to runtime type-checking), return true.
+    # # print(f'Testing hint {repr(hint)} third-party blacklisting...')
+    # if is_object_module_thirdparty_blacklisted(hint):
+    #     # print('Blacklisted!')
+    #     return True
+    # # Else, this hint is *NOT* beartype-blacklisted.
 
     # ....................{ TESTS ~ shallow                }....................
     # Machine-readable representation of this hint.
