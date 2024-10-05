@@ -149,7 +149,7 @@ get_hint_pep_args.__doc__ = '''
 
     **This getter lies rarely due to subscription erasure** (i.e., the malicious
     destruction of child type hints by parent type hint factories at
-    subscription time). Callers should not assume that the objects originally
+    subscription time). Callers should *not* assume that the objects originally
     subscripting this hint are still accessible. Although *most* hints preserve
     their subscripted objects over their lifetimes, a small subset of edge-case
     hints erase those objects at subscription time. This includes:
@@ -161,8 +161,8 @@ get_hint_pep_args.__doc__ = '''
       preserve that subscripted empty tuple.
 
     **This getter lies less than the comparable**
-    :func:`get_hint_pep_typevars` **getter.** Whereas
-    :func:`get_hint_pep_typevars` synthetically propagates type variables from
+    :func:`.get_hint_pep_typevars` **getter.** Whereas
+    :func:`.get_hint_pep_typevars` synthetically propagates type variables from
     child to parent type hints (rather than preserving the literal type
     variables subscripting this type hint), this getter preserves the literal
     arguments subscripting this type hint if any. Notable cases where the two

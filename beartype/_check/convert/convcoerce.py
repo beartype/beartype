@@ -66,7 +66,7 @@ from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdmain import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.utilhinttest import is_hint_uncached
+from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
 
@@ -404,7 +404,7 @@ def coerce_hint_any(hint: object) -> Any:
     # * Else, one or more prior copies of this hint have already been passed to
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
-    if is_hint_uncached(hint):
+    if is_hint_cacheworthy(hint):
         # print(f'Self-caching type hint {repr(hint)}...')
         return _hint_repr_to_hint.cache_or_get_cached_value(
             key=repr(hint), value=hint)

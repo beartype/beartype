@@ -17,7 +17,7 @@ from abc import ABCMeta
 from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.utilhinttest import is_hint_uncached
+from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from threading import RLock
 
 # ....................{ METACLASSES                        }....................
@@ -132,7 +132,7 @@ class _TypeHintMeta(ABCMeta):
             # * "typing.ParamSpec".
             # * "typing.TypeVar".
             repr(hint)
-            if is_hint_uncached(hint) else
+            if is_hint_cacheworthy(hint) else
             # Else, this hint is self-caching and thus already reduced to a
             # singleton object. In this case, the identifier identifying this
             # singleton object.

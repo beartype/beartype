@@ -18,13 +18,17 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
     is_hint_nonpep,
 )
+from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.module.utilmodtest import (
-    is_object_module_thirdparty_blacklisted)
+from beartype._util.hint.pep.proposal.utilpep585 import (
+    is_hint_pep585_builtin_subscripted)
+from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
+# from beartype._util.module.utilmodtest import (
+#     is_object_module_thirdparty_blacklisted)
 
 # ....................{ RAISERS                            }....................
 def die_unless_hint(
@@ -214,10 +218,54 @@ def is_hint_ignorable(hint: object) -> bool:
 
 
 #FIXME: Unit test us up, please.
-def is_hint_uncached(hint: object) -> bool:
+def is_hint_cacheworthy(hint: object) -> bool:
     '''
-    :data:`True` only if the passed type hint is **uncached** (i.e., hint *not*
-    already internally cached by its parent class or module).
+    :data:`True` only if the passed type hint is **cache-worthy.**
+
+    A hint is cache-worthy if *all* of the following constraints hold:
+
+    * This hint is *not* already **self-cached** (i.e., internally memoized) by
+      its owner class or module. Although most hints *used* to self-cache, most
+      modern hints no longer self-cache. Why? No idea. It's probably an
+      accidental oversight in PEP implementations across different CPython
+      developers that nobody ever bothered to report: e.g.,
+
+      .. code-block::
+
+         # PEP 585 type hints do *NOT* self-cache and are thus cache-worthy.
+         >>> list[int] is list[int]
+         False  # <-- horrible! pep 585, you are horrible!
+
+         # PEP 484 type hints do self-cache and are thus *NOT* cache-worthy.
+         >>> import typing
+         >>> typing.List[int] is typing.List[int]
+         True  # <-- wonderful. pep 484, you are wonderful.
+
+    * The **machine-readable representation** (i.e., string returned by passing
+      this hint to the :func:`repr` builtin) of this hint is **unambiguous**
+      (i.e., there exists a one-to-one mapping between this representation and
+      the contents of this representation such that only equal hints have equal
+      representations). Although most hints have unambiguous representations,
+      some hints have ambiguous representations -- including:
+
+      * Type hints transitively parametrized by one or more **type variables**
+        (i.e., :obj:`typing.TypeVar` objects) have ambiguous representations and
+        are thus *not* cache-worthy. Note that the existence of even a single
+        type variable parametrizing a single child type hint subscripting a
+        parent type hint sadly renders the *entire* representation of that
+        parent type hint ambiguous: e.g.,
+
+        .. code-block::
+
+           >>> from typing import TypeVar
+           >>> T_int = TypeVar('T', bound=int)
+           >>> T_str = TypeVar('T', bound=str)
+           >>> repr(list[T_int])
+           list[T]  # <-- ...ok
+           >>> repr(list[T_str])
+           list[T]  # <-- WUT U SAY!?
+           >>> repr(list[T_int]) == repr(list[T_str])
+           True  # <-- horrible! "TypeVar", you are horrible!
 
     Caveats
     -------
@@ -239,15 +287,10 @@ def is_hint_uncached(hint: object) -> bool:
         :data:`True` only if this type hint is uncached.
 
     See Also
-    ----------
+    --------
     :func:`beartype._check.convert.convcoerce.coerce_hint_any`
         Further details.
     '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin_subscripted)
-    from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Avoid detecting the kind of this hint by calling any of the
@@ -257,24 +300,35 @@ def is_hint_uncached(hint: object) -> bool:
     # functionally useless to cache against.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Return true only if this hint is either...
+    # Return true only if this hint is...
     return (
-        # PEP 585-compliant (e.g., "list[str]"), this hint is *NOT* self-caching
-        # (e.g., "list[str] is not list[str]").
-        #
-        # Note that this additionally includes all third-party type hints that
-        # derive from the "types.GenericAlias" superclass, including:
-        # * "numpy.typing.NDArray[...]" type hints.
-        is_hint_pep585_builtin_subscripted(hint) or
-        # PEP 604-compliant (e.g., "int | str"), this hint is *NOT* self-caching
-        # (e.g., "int | str is not int | str").
-        #
-        # Note that this hint could also be implicitly cached by coercing this
-        # non-self-caching PEP 604-compliant union into a self-caching PEP
-        # 484-compliant union (e.g., from "int | str" to "Union[int, str]").
-        # Since doing so would consume substantially more time for *NO* tangible
-        # gain, we strongly prefer the current trivial and efficient approach.
-        is_hint_pep604(hint)
+        # *NOT* transitively parametrized by one or type variables (e.g.,
+        # "list[tuple[T]]"). All first-party hints (i.e., hints defined by
+        # CPython's standard library) and all third-party hints supported by
+        # @beartype have unambiguous representations *EXCEPT* for hints
+        # transitively parametrized by one or type variables, as type variables
+        # themselves have ambiguous representations.
+        not get_hint_pep_typevars(hint) and
+        # Either...
+        (
+            # PEP 585-compliant (e.g., "list[str]"). This hint is *NOT*
+            # self-caching (e.g., "list[str] is not list[str]").
+            #
+            # Note that this additionally includes all third-party type hints
+            # that derive from the "types.GenericAlias" superclass, including:
+            # * "numpy.typing.NDArray[...]" type hints.
+            is_hint_pep585_builtin_subscripted(hint) or
+            # PEP 604-compliant (e.g., "int | str"). This hint is *NOT*
+            # self-caching (e.g., "int | str is not int | str").
+            #
+            # Note that this hint could also be implicitly cached by coercing
+            # this non-self-caching PEP 604-compliant union into a self-caching
+            # PEP 484-compliant union (e.g., from "int | str" to "Union[int,
+            # str]"). Since doing so would consume substantially more time for
+            # *NO* tangible gain, we strongly prefer the current trivial and
+            # efficient approach.
+            is_hint_pep604(hint)
+        )
     )
 
 # ....................{ TESTERS ~ needs                    }....................
