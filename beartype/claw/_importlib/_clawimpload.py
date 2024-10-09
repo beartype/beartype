@@ -315,11 +315,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         from beartype.claw._clawstate import claw_state
         from beartype.claw._package.clawpkgtrie import get_package_conf_or_none
 
-        #FIXME: Restore this, please. The more elongated expression given below
-        #should no longer be required. *sigh*
-        # # Beartype configuration with which to type-check that module if that
-        # # module is hooked under its fully-qualified name *OR* "None" otherwise
-        # # (i.e., if that module is unhooked).
+        # Beartype configuration with which to type-check that module if that
+        # module is hooked under its fully-qualified name *OR* "None" otherwise
+        # (i.e., if that module is unhooked).
         conf = get_package_conf_or_none(fullname)
 
         #FIXME: Preserved because the above will inevitably break. *sigh*

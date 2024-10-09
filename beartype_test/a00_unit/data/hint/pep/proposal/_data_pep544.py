@@ -139,7 +139,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         @runtime_checkable
         class ProtocolCustomUntypevared(Protocol):
             '''
-            User-defined protocol parametrized by *NO* type variables declaring
+            User-defined protocol parametrized by *no* type variables declaring
             arbitrary concrete and abstract methods.
             '''
 

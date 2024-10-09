@@ -133,9 +133,9 @@ def beartyping(
 def packages_trie_cleared() -> Iterator[None]:
     '''
     Test-specific context manager reverting (i.e., clearing, resetting) the
-    :data:`beartype.claw._package.clawpkgtrie.packages_trie_whitelist` global back to its
-    initial state *after* running the body of the caller-defined ``with
-    beartyping(...):`` block.
+    :data:`beartype.claw._package.clawpkgtrie.packages_trie_whitelist` global
+    back to its initial state *after* running the body of the caller-defined
+    ``with beartyping(...):`` block.
 
     This context manager is thread-safe.
 

@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeException
+# from beartype.roar import BeartypeException
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
@@ -28,16 +28,16 @@ from beartype._decor._decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextlabel import (
-    label_exception,
+    # label_exception,
     label_object_context,
 )
 from beartype._util.text.utiltextmunge import (
-    truncate_str,
+    # truncate_str,
     uppercase_str_char_first,
 )
 from beartype._util.text.utiltextprefix import prefix_beartypeable
 from traceback import format_exc
-from warnings import warn
+# from warnings import warn
 
 # ....................{ DECORATORS                         }....................
 def beartype_object(
@@ -66,7 +66,7 @@ def beartype_object(
     decorator this higher-level decorator calls on the passed beartypeable.
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 
@@ -76,7 +76,7 @@ def beartype_object(
           callable with dynamically generated type-checking.
 
     See Also
-    ----------
+    --------
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
@@ -111,7 +111,7 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     defined by this submodule (e.g., :func:`.beartype_func`).
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 
@@ -121,10 +121,11 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
           callable with dynamically generated type-checking.
 
     See Also
-    ----------
+    --------
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
+    # print(f'Decorating object {repr(obj)} with type-checking...')
 
     # Return either...
     return (
@@ -188,7 +189,7 @@ def _beartype_object_nonfatal(
     higher-level decorator on the passed beartypeable.
 
     Returns
-    ----------
+    -------
     BeartypeableT
         Either:
 
@@ -202,7 +203,7 @@ def _beartype_object_nonfatal(
             callable with dynamically generated type-checking.
 
     Warns
-    ----------
+    -----
     warning_category
         If :func:`.beartype_object_fatal` fails to generate a type-checking
         wrapper for this callable or class by raising a fatal exception, this
@@ -214,7 +215,7 @@ def _beartype_object_nonfatal(
         return _beartype_object_fatal(obj, conf=conf, **kwargs)
     # If doing so unexpectedly raises an exception, coerce that fatal exception
     # into a non-fatal warning for nebulous safety.
-    except Exception as exception:
+    except Exception:
         # Category of warning to be emitted.
         warning_category: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
         assert is_type_subclass(warning_category, Warning), (

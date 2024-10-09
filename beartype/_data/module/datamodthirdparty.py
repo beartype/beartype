@@ -19,8 +19,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #  a new beartype._util.api.utilapibeartype.is_func_thirdparty_blacklisted()
 #  tester returning True *ONLY* if the passed callable has a "__module__" dunder
 #  attribute whose value is a string residing in this frozenset.
-#* "beartype.claw" import hooks. *ALL* module names in this blacklist should be
-#  automatically exempt from inspection by beartype_all() in particular.
 THIRDPARTY_PACKAGE_NAMES_BLACKLIST = frozenset((
     # ....................{ ANTIPATTERN ~ forward ref      }....................
     # These third-party packages and modules widely employ the forward reference

@@ -18,7 +18,10 @@ from beartype.claw._package.clawpkgtrie import (
     PackagesTrieBlacklist,
     PackagesTrieBlacklisted,
     PackagesTrieWhitelist,
+    PackageBasenameToTrieBlacklist,
 )
+from beartype._data.module.datamodthirdparty import (
+    THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
@@ -124,18 +127,11 @@ class BeartypeClawState(object):
         # One one-liner to reinitialize them all.
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
         self.packages_trie_whitelist = PackagesTrieWhitelist()
-
-        # Default the packages trie blacklist to the fully-qualified names of:
-        # * The root "beartype" package. Doing so effectively silently ignores
-        #   dangerous attempts to recursively type-check the "beartype" package
-        #   by the @beartype.beartype decorator. See the
-        #   beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
-        #   method docstring for further commentary.
-        # self.packages_trie_blacklist = PackagesTrieBlacklist()
-
-        #FIXME: Restore this in favour of the above, please. *sigh*
         self.packages_trie_blacklist = PackagesTrieBlacklist(
-            subpackage_basename_to_trie={'beartype': PackagesTrieBlacklisted})
+            subpackage_basename_to_trie=_PACKAGE_NAME_TO_TRIE_BLACKLISTED)
+
+        #FIXME: Preserved because the above will inevitably break. *sigh*
+        # self.packages_trie_blacklist = PackagesTrieBlacklist()
 
 
     def reinit(self) -> None:
@@ -174,7 +170,65 @@ class BeartypeClawState(object):
             f')',
         ))
 
+# ....................{ PRIVATE ~ constants                }....................
+# Fully initialized by the _init() function called below.
+_PACKAGE_NAME_TO_TRIE_BLACKLISTED: PackageBasenameToTrieBlacklist = {}
+'''
+Dictionary mapping from the unqualified basename of each top-level package to be
+blacklisted (i.e., prevented from being runtime type-checked on the first
+importation of that package) to the :data:`.PackagesTrieBlacklisted` object
+similarly blacklisting the subpackages of that package if any.
+'''
+
+# ....................{ PRIVATE ~ initializers             }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Set of the names of all top-level packages to be blacklisted with respect
+    # to "beartype.claw" import hooks -- defined as the union of:
+    # * The frozen set of the names all third-party packages to be unilaterally
+    #   blacklisted across this entire codebase.
+    # * The root "beartype" package. Doing so effectively silently ignores
+    #   dangerous attempts to recursively type-check the "beartype" package by
+    #   the @beartype.beartype decorator. See the
+    #   beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader.get_code()
+    #   method docstring for further commentary.
+    #
+    # Note that "beartype" is intentionally *OMITTED* from the global
+    # "THIRDPARTY_PACKAGE_NAMES_BLACKLIST" frozen set iterated over below. Why?
+    # Because "beartype" should *ONLY* be blacklisted with respect to
+    # "beartype.claw" import hooks. "beartype" should *NOT* be unilaterally
+    # blacklisted across the entirety of this codebase, as doing so would
+    # erroneously destroy our ability to (in no particular order):
+    # * Define deeply type-checkable PEP 484- and 585-compliant generics.
+    package_names_blacklist = THIRDPARTY_PACKAGE_NAMES_BLACKLIST | {
+        'beartype',
+    }
+
+    # For the name of each top-level package to be blacklisted with respect to
+    # "beartype.claw" import hooks...
+    for package_name_blacklist in package_names_blacklist:
+        # Validate this package to actually be top-level.
+        assert '.' not in package_name_blacklist, (
+            f'{repr(package_name_blacklist)} not top-level package name '
+            f'(i.e., contains one or more "." delimiters).'
+        )
+
+        # Map this package name to the "PackagesTrieBlacklist" singleton
+        # implying this package to be blacklisted.
+        _PACKAGE_NAME_TO_TRIE_BLACKLISTED[package_name_blacklist] = (
+            PackagesTrieBlacklisted)
+
+
+# Initialize this submodule.
+_init()
+
 # ....................{ GLOBALS                            }....................
+# These globals require this submodule to be fully initialized and are thus
+# intentionally defined *AFTER* all other code above. We sigh, fam. *sigh*
+
 claw_lock = RLock()
 '''
 Reentrant reusable thread-safe context manager gating access to the otherwise

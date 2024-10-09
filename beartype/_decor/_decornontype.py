@@ -86,7 +86,13 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
 
     # Validate that the passed object is *NOT* a class.
     assert not isinstance(obj, type), f'{repr(obj)} is class.'
-    # print(f'Decorating non-type {repr(obj)}...')
+    # print(f'Decorating non-type {repr(obj)} with type-checking...')
+    # print(f'Non-type contents: {dir(obj)}')
+    # print(f'{dir(obj.__code__)}')
+    # print(f'{obj.__code__.co_filename}')
+    # print(f'{obj.__code__.co_name}')
+    # print(f'{obj.__code__.co_names}')
+    # print(f'{obj.__code__.co_qualname}')
 
     # Type of this object.
     obj_type = type(obj)
