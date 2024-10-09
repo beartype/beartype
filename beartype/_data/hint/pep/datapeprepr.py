@@ -270,6 +270,14 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: Dict[str, DictStrToHintSign] = {
         'str': HintSignForwardRef,
     },
 
+    # ..................{ ANNOTATIONLIB                      }..................
+    # annotation support in Python 3.14+.
+    'annotationlib': {
+        # ..................{ PEP 649/649                    }..................
+        # typing.ForwardRef was moved to annotationlib.
+        'ForwardRef': HintSignForwardRef,
+    },
+
     # ..................{ DATACLASSES                        }..................
     # Standard PEP 557-compliant dataclass module.
     'dataclasses': {
