@@ -342,6 +342,10 @@
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
 
+.. # ------------------( LINKS ~ py : package : click        )------------------
+.. _click:
+   https://click.palletsprojects.com
+
 .. # ------------------( LINKS ~ py : package : equinox      )------------------
 .. _equinox:
    https://docs.kidger.site/equinox
