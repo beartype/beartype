@@ -56,8 +56,8 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintSignNumpyArray,
         HintSignTupleFixed,
     )
-    from beartype._util.api.utilapityping import import_typing_attr
-    # from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import import_typing_attr
+    # from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,

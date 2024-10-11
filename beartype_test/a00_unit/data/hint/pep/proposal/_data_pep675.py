@@ -21,7 +21,7 @@ def hints_pep675_meta() -> 'List[HintPepMetadata]':
     # Defer fixture-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignLiteralString)
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,

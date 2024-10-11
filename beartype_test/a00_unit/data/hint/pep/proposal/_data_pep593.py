@@ -37,7 +37,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         HintSignList,
         HintSignUnion,
     )
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -739,7 +739,7 @@ def hints_pep593_ignorable_deep() -> list:
         Optional,
         Union,
     )
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific deeply ignorable type hints to be returned.

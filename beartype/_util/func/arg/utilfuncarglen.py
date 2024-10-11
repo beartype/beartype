@@ -338,7 +338,7 @@ def get_func_args_flexible_len(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.api.utilapifunctools import (
+    from beartype._util.api.standard.utilfunctools import (
         get_func_functools_partial_args_flexible_len,
         is_func_functools_partial,
     )

@@ -168,7 +168,7 @@ def test_door_infer_hint_numpy(
         IsAttr,
         IsEqual,
     )
-    from beartype._util.api.utilapityping import import_typing_attr_or_none
+    from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
     from numpy import unsignedinteger
     from numpy.typing import NDArray
 

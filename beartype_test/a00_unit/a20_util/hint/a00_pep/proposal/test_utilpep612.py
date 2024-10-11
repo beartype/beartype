@@ -26,7 +26,7 @@ def test_get_hint_pep612_paramspec() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.api.utilapityping import import_typing_attr_or_none
+    from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
     from beartype._util.hint.pep.proposal.utilpep612 import (
         get_hint_pep612_paramspec)
 
@@ -59,7 +59,7 @@ def test_make_hint_pep612_concatenate_list_or_none() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.api.utilapityping import (
+    from beartype._util.api.standard.utiltyping import (
         import_typing_attr,
         import_typing_attr_or_none,
     )

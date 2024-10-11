@@ -16,8 +16,8 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._util.api.utilapinumpy import reduce_numpy_dtype
-from beartype._util.api.utilapityping import import_typing_attr_or_none
+from beartype._util.api.external.utilnumpy import reduce_numpy_dtype
+from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 
 # ....................{ INFERERS                           }....................

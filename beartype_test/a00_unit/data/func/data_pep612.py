@@ -21,7 +21,7 @@ submodule raises an :exc:`beartype.roar._BeartypeUtilModuleException` exception.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.api.utilapityping import import_typing_attr
+from beartype._util.api.standard.utiltyping import import_typing_attr
 
 ParamSpec = import_typing_attr('ParamSpec')
 '''

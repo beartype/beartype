@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorWrappeeException
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
     Any,
@@ -22,10 +23,12 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import (
+    BeartypeableT,
     DictStrToAny,
     TypeException,
 )
 from collections.abc import Callable
+from functools import lru_cache
 
 # ....................{ TESTERS                            }....................
 def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
@@ -247,3 +250,100 @@ def unwrap_func_functools_partial_once(
 
     # Return the public "func" instance variable of this partial wrapper as is.
     return func.func
+
+# ....................{ DECORATORS                         }....................
+def beartype_functools_lru_cache(
+    pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Monkey-patch the passed :func:`functools.lru_cache`-memoized
+    **pseudo-callable** (i.e., low-level C-based callable object both created
+    and returned by the standard :func:`functools.lru_cache` decorator) with
+    dynamically generated type-checking.
+
+    Parameters
+    ----------
+    pseudofunc : BeartypeableT
+        Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    -------
+    BeartypeableT
+        New pseudo-callable monkey-patched by :func:`beartype.beartype`.
+    '''
+
+    # Avoid circular and third-party import dependencies.
+    from beartype._decor._decornontype import beartype_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_once
+    from beartype._util.py.utilpyversion import IS_PYTHON_3_8
+
+    # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
+    # callable, raise an exception.
+    if not is_func_functools_lru_cache(pseudofunc):
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'@functools.lru_cache-memoized callable {repr(pseudofunc)} not  '
+            f'decorated by @functools.lru_cache.'
+        )
+    # Else, this pseudo-callable is a @functools.lru_cache-memoized callable.
+
+    # Original pure-Python callable decorated by @functools.lru_cache.
+    func = unwrap_func_once(pseudofunc)
+
+    # If the active Python interpreter targets Python 3.8, then this
+    # pseudo-callable fails to declare the cache_parameters() lambda function
+    # called below to recover the keyword parameters originally passed by the
+    # caller to that decorator. In this case, we have *NO* recourse but to
+    # explicitly inform the caller of this edge case by raising a human-readable
+    # exception providing a pragmatic workaround.
+    if IS_PYTHON_3_8:
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'@functools.lru_cache-memoized callable {repr(func)} not '
+            f'decoratable by @beartype under Python 3.8. '
+            f'Consider manually decorating this callable by '
+            f'@beartype first and then by @functools.lru_cache to preserve '
+            f'Python 3.8 compatibility: e.g.,\n'
+            f'    # Do this...\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    @beartype\n'
+            f'    def muh_func(...) -> ...: ...\n'
+            f'\n'
+            f'    # Rather than either this...\n'
+            f'    @beartype\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    def muh_func(...) -> ...: ...\n'
+            f'\n'
+            f'    # Or this (if you use "beartype.claw", which you really should).\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    def muh_func(...) -> ...: ...\n'
+        )
+    # Else, the active Python interpreter targets Python >= 3.9.
+
+    # Decorate that callable with type-checking.
+    func_checked = beartype_func(func=func, **kwargs)
+
+    # Dictionary mapping from the names of all keyword parameters originally
+    # passed by the caller to that decorator, enabling the re-decoration of that
+    # callable. Thankfully, that decorator preserves these parameters via the
+    # decorator-specific "cache_parameters" instance variable whose value is a
+    # bizarre argumentless lambda function (...for unknown reasons that are
+    # probably indefensible) creating and returning this dictionary: e.g.,
+    #     >>> from functools import lru_cache
+    #     >>> @lru_cache(maxsize=3)
+    #     ... def plus_one(n: int) -> int: return n +1
+    #     >>> plus_one.cache_parameters()
+    #     {'maxsize': 3, 'typed': False}
+    lru_cache_kwargs = pseudofunc.cache_parameters()  # type: ignore[attr-defined]
+
+    # Closure defined and returned by the @functools.lru_cache decorator when
+    # passed these keyword parameters.
+    lru_cache_configured = lru_cache(**lru_cache_kwargs)
+
+    # Re-decorate that callable by @functools.lru_cache by the same parameters
+    # originally passed by the caller to that decorator.
+    pseudofunc_checked = lru_cache_configured(func_checked)
+
+    # Return that new pseudo-callable.
+    return pseudofunc_checked

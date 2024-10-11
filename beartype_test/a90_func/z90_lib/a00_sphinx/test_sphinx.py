@@ -40,7 +40,7 @@ def test_sphinx_docs_other(tmp_path) -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    # from beartype._util.api.utilapisphinx import (
+    # from beartype._util.api.external.utilsphinx import (
     #     _SPHINX_AUTODOC_SUBPACKAGE_NAME)
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)

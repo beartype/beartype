@@ -34,7 +34,7 @@ def is_package_beartype_vale_usable() -> bool:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapityping import is_typing_attr
+    from beartype._util.api.standard.utiltyping import is_typing_attr
 
     # Return true only if the "Annotated" type hint is importable from either
     # the official "typing" or third-party "typing_extensions" modules.

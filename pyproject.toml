@@ -292,6 +292,12 @@ test-tox = [
     # old by now. I feel depressed just reading comments like this...
     "pytest >=4.0.0",
 
+    # ....................{ APP ~ cli                      }....................
+    # Command line interface (CLI)-centric optional test-time dependencies.
+
+    # Required by optional Click-specific integration tests.
+    "click",
+
     # ....................{ DOCOS                          }....................
     # Documentation-centric optional test-time dependencies.
 

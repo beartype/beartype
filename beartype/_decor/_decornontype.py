@@ -38,13 +38,17 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
 )
 from beartype._decor.wrap.wrapmain import generate_code
-from beartype._util.api.utilapibeartype import (
+from beartype._util.api.utilbeartype import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
-from beartype._util.api.utilapicontextlib import (
+from beartype._util.api.external.utilclick import beartype_click_command
+from beartype._util.api.standard.utilcontextlib import (
     is_func_contextlib_contextmanager)
-from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
+from beartype._util.api.standard.utilfunctools import (
+    beartype_functools_lru_cache,
+    is_func_functools_lru_cache,
+)
 from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfunctest import (
@@ -59,12 +63,10 @@ from beartype._util.func.utilfuncwrap import (
     unwrap_func_staticmethod_once,
 )
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 from collections.abc import Callable
 from contextlib import contextmanager
-from functools import lru_cache
 
-# ....................{ DECORATORS ~ non-func              }....................
+# ....................{ DECORATORS                         }....................
 def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **non-class beartypeable** (i.e., caller-defined object
@@ -77,7 +79,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
         Non-class beartypeable to be decorated.
 
     All remaining keyword parameters are passed as is to a lower-level decorator
-    defined by this submodule (e.g., :func:`._beartype_func`).
+    defined by this submodule (e.g., :func:`.beartype_func`).
 
     Returns
     -------
@@ -152,7 +154,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
             # Decorator decorating this object with dynamically generated
             # type-checking if any *OR* "None" (i.e., if this type is *NOT* a
             # well-known type defined by this module).
-            beartype_decorator = type_name_to_beartype_decorator.get(
+            beartype_decorator = type_name_to_beartype_decorator.get(  # type: ignore[attr-defined]
                 obj_type.__name__)
 
             # If this type is dispatchable, trivially do so.
@@ -234,294 +236,10 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # decorator closure.
 
     # Return a new callable decorating that callable with type-checking.
-    return _beartype_func(obj, **kwargs)  # type: ignore[return-value]
-
-# ....................{ PRIVATE ~ decorators : descriptor  }....................
-def _beartype_descriptor_boundmethod(
-    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Decorate the passed **builtin bound method object** (i.e., C-based bound
-    method descriptor produced by Python on instantiation for each instance and
-    class method defined by the class being instantiated) with dynamically
-    generated type-checking.
-
-    Parameters
-    ----------
-    descriptor : BeartypeableT
-        Descriptor to be decorated by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    -------
-    BeartypeableT
-        New pure-Python callable wrapping this descriptor with type-checking.
-    '''
-    assert is_func_boundmethod(descriptor), (
-        f'{repr(descriptor)} not builtin bound method descriptor.')
-
-    # Possibly C-based callable wrappee object encapsulated by this descriptor.
-    descriptor_wrappee = unwrap_func_boundmethod_once(descriptor)
-
-    # Instance object to which this descriptor was bound at instantiation time.
-    descriptor_self = get_func_boundmethod_self(descriptor)
-
-    # Pure-Python unbound function decorating the similarly pure-Python unbound
-    # function encapsulated by this descriptor with type-checking.
-    #
-    # Note that doing so:
-    # * Implicitly propagates dunder attributes (e.g., "__annotations__",
-    #   "__doc__") from the original function onto this new function. Good.
-    # * Does *NOT* implicitly propagate the same dunder attributes from the
-    #   original descriptor encapsulating the original function to the new
-    #   descriptor (created below) encapsulating this wrapper function. Bad!
-    #   Thankfully, only one such attribute exists as of this time: "__doc__".
-    #   We propagate this attribute manually below.
-    func_checked = _beartype_func(func=descriptor_wrappee, **kwargs)  # pyright: ignore
-
-    # New instance method descriptor rebinding this function to the instance of
-    # the class bound to the prior descriptor.
-    #
-    # Note that:
-    # * This is required, as the "__func__" attribute of method descriptors is
-    #   read-only. Attempting to do so raises this non-human-readable exception:
-    #     AttributeError: readonly attribute
-    #   This implies that the passed descriptor *CANNOT* be meaningfully
-    #   modified. Our only recourse is to define an entirely new descriptor,
-    #   effectively discarding the passed descriptor, which will then be
-    #   subsequently garbage-collected. This is wasteful. This is Python.
-    # * This can also be implemented by abusing the descriptor protocol:
-    #       descriptor_new = descriptor_func_new.__get__(descriptor.__self__)
-    #   That said, there exist *NO* benefits to doing so. Indeed, doing so only
-    #   reduces the legibility and maintainability of this operation.
-    descriptor_new = MethodBoundInstanceOrClassType(
-        func_checked, descriptor_self)  # type: ignore[return-value]
-
-    #FIXME: Actually, Python doesn't appear to support this at the moment.
-    #Attempting to do so raises this exception:
-    #    AttributeError: attribute '__doc__' of 'method' objects is not writable
-    #
-    #See also this open issue on the Python bug tracker requesting this be
-    #resolved. Sadly, Python has yet to resolve this:
-    #    https://bugs.python.org/issue47153
-    # # Propagate the docstring from the prior to the new descriptor.
-    # #
-    # # Note that Python guarantees this attribute to exist. If the original
-    # # function had a docstring, this attribute is non-"None"; else, this
-    # # attribute is "None". In either case, this attribute exists. Ergo,
-    # # additional validation is neither required nor desired.
-    # descriptor_new.__doc__ = descriptor.__doc__
-
-    # Return this new descriptor, implicitly destroying the prior descriptor.
-    return descriptor_new  # type: ignore[return-value]
+    return beartype_func(obj, **kwargs)  # type: ignore[return-value]
 
 
-def _beartype_descriptor_decorator_builtin_property(
-    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Decorate the passed **builtin property decorator object** (i.e., C-based
-    unbound method descriptor instantiated by the builtin :class:`property`
-    decorator type) with dynamically generated type-checking.
-
-    Parameters
-    ----------
-    descriptor : BeartypeableT
-        Property descriptor to be decorated by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    -------
-    BeartypeableT
-        New pure-Python callable wrapping this descriptor with type-checking.
-    '''
-    assert isinstance(descriptor, MethodDecoratorPropertyType), (
-        f'{repr(descriptor)} not builtin @property method descriptor.')
-
-    # Pure-Python unbound getter, setter, and deleter functions wrapped by
-    # this descriptor if any *OR* "None" otherwise (i.e., for each such
-    # function currently unwrapped by this descriptor).
-    descriptor_getter  = descriptor.fget  # type: ignore[assignment,union-attr]
-    descriptor_setter  = descriptor.fset  # type: ignore[assignment,union-attr]
-    descriptor_deleter = descriptor.fdel  # type: ignore[assignment,union-attr]
-
-    # Decorate this getter function with type-checking.
-    #
-    # Note that *ALL* property method descriptors wrap at least a getter
-    # function (but *NOT* necessarily a setter or deleter function). This
-    # function is thus guaranteed to be non-"None".
-    descriptor_getter = _beartype_func(  # type: ignore[type-var]
-        func=descriptor_getter,  # pyright: ignore
-        **kwargs
-    )
-
-    # If this property method descriptor additionally wraps a setter and/or
-    # deleter function, type-check those functions as well.
-    if descriptor_setter is not None:
-        descriptor_setter = _beartype_func(descriptor_setter, **kwargs)
-    if descriptor_deleter is not None:
-        descriptor_deleter = _beartype_func(descriptor_deleter, **kwargs)
-
-    # Return a new property method descriptor decorating all of these functions,
-    # implicitly destroying the prior descriptor.
-    #
-    # Note that the "property" class interestingly has this signature:
-    #     class property(fget=None, fset=None, fdel=None, doc=None): ...
-    return property(  # type: ignore[return-value]
-        fget=descriptor_getter,
-        fset=descriptor_setter,
-        fdel=descriptor_deleter,
-        doc=descriptor.__doc__,
-    )
-
-
-def _beartype_descriptor_decorator_builtin_classmethod(
-    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Decorate the passed **builtin class method decorator object** (i.e., C-based
-    unbound method descriptor instantiated by the builtin :class:`classmethod`
-    decorator type) with dynamically generated type-checking.
-
-    Parameters
-    ----------
-    descriptor : BeartypeableT
-        Class method descriptor to be decorated by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    -------
-    BeartypeableT
-        New pure-Python callable wrapping this descriptor with type-checking.
-    '''
-    assert isinstance(descriptor, MethodDecoratorClassType), (
-        f'{repr(descriptor)} not builtin @classmethod descriptor.')
-
-    # Possibly C-based callable wrappee object decorated by this descriptor.
-    #
-    # Note that this wrappee is typically but *NOT* necessarily a pure-Python
-    # unbound function. This descriptor explicitly permits the decorated object
-    # to be a callable C-based type (i.e., defining the __call__() dunder
-    # method), which numerous standard and third-party pure-Python classes then
-    # leverage to augment those classes into subscriptable type hint factories
-    # via a simple one-liner: e.g.,
-    #     from abc import ABCMeta
-    #     from beartype import beartype
-    #     from types import GenericAlias
-    #
-    #     @beartype
-    #     class MuhTypeHintFactory(metaclass=ABCMeta):
-    #         # This exact one liner appears verbatim throughout the
-    #         # standard library (as well as third-party packages).
-    #         __class_getitem__ = classmethod(GenericAlias)
-    #
-    # Ergo, the name "__func__" of this dunder attribute is disingenuous. This
-    # descriptor does *NOT* merely decorate functions; this descriptor
-    # permissively decorates all callable objects.
-    descriptor_wrappee = unwrap_func_classmethod_once(descriptor)  # type: ignore[arg-type]
-
-    # If this wrappee is *NOT* a pure-Python unbound function, this wrappee is
-    # C-based and/or a type. In either case, avoid type-checking this wrappee by
-    # silently preserving this descriptor as is. Why? If this wrappee is:
-    # * C-based, this wrappee *CANNOT* be decorated with type-checking.
-    # * A type, this wrappee *COULD* be effectively decorated with type-checking
-    #   by decorating its __call__() dunder method. However, this type may *NOT*
-    #   have been intended to be decorated by @beartype. Indeed, this type may
-    #   *NOT* even reside within the same package. That the current class
-    #   references this type is an insufficient reason to transitively decorate
-    #   external types without user consent.
-    if not is_func_python(descriptor_wrappee):
-        return descriptor  # type: ignore[return-value]
-    # Else, this wrappee is a pure-Python unbound function.
-
-    # Pure-Python unbound function type-checking this class method. Note that:
-    # * Python 3.8, 3.9, and 3.10 explicitly permit the @classmethod decorator
-    #   to be chained into the @property decorator: e.g.,
-    #       class MuhClass(object):
-    #           @classmethod  # <-- this is fine under Python < 3.11
-    #           @property
-    #           def muh_property(self) -> ...: ...
-    # * Python ≥ 3.11 explicitly prohibits that by emitting a non-fatal
-    #   "DeprecationWarning" on each attempt to do so. Under Python ≥ 3.11,
-    #   users *MUST* instead refactor the above simplistic decorator chaining
-    #   use case as follows:
-    #   * Define a metaclass for each class requiring a class property.
-    #   * Define each class property on that metaclass rather than on that class
-    #     instead.
-    #
-    #   In other words:
-    #       class MuhClassMeta(type):  # <-- Python ≥ 3.11 demands sacrifice
-    #          '''
-    #          Metaclass of the :class`.MuhClass` class, defining class
-    #          properties for that class.
-    #          '''
-    #
-    #          @property
-    #          def muh_property(cls) -> ...: ...
-    #
-    #      class MuhClass(object, metaclass=MuhClassMeta):
-    #          pass
-    # * Technically, all Python versions currently supported by @beartype permit
-    #   this. Ergo, @beartype currently defers to:
-    #   * The high-level beartype_nontype() decorator (which permits the passed
-    #     object to be the descriptor created and returned by the @property
-    #     decorator and thus implicitly allows @classmethod to be chained into
-    #     @property) rather than...
-    #   * The low-level _beartype_func() decorator (which requires the passed
-    #     object to be callable, which the descriptor created and returned by
-    #     the @property decorator is *NOT*).
-    func_checked = beartype_nontype(descriptor_wrappee,  **kwargs)
-
-    # Return a new class method descriptor decorating the pure-Python unbound
-    # function wrapped by this descriptor with type-checking, implicitly
-    # destroying the prior descriptor.
-    return classmethod(func_checked)  # type: ignore[return-value]
-
-
-def _beartype_descriptor_decorator_builtin_staticmethod(
-    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Decorate the passed **builtin static method decorator object** (i.e.,
-    C-based unbound method descriptor instantiated by the builtin
-    :class:`staticmethod` decorator type) with dynamically generated
-    type-checking.
-
-    Parameters
-    ----------
-    descriptor : BeartypeableT
-        Static method descriptor to be decorated by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    -------
-    BeartypeableT
-        New pure-Python callable wrapping this descriptor with type-checking.
-    '''
-    assert isinstance(descriptor, MethodDecoratorStaticType), (
-        f'{repr(descriptor)} not builtin @staticmethod descriptor.')
-
-    # Possibly C-based callable wrappee object decorated by this descriptor.
-    descriptor_wrappee = unwrap_func_staticmethod_once(descriptor)  # type: ignore[arg-type]
-
-    # Pure-Python unbound function type-checking this static method.
-    func_checked = _beartype_func(descriptor_wrappee, **kwargs) # type: ignore[union-attr]
-
-    # Return a new static method descriptor decorating the pure-Python
-    # unbound function wrapped by this descriptor with type-checking,
-    # implicitly destroying the prior descriptor.
-    return staticmethod(func_checked)  # type: ignore[return-value]
-
-# ....................{ PRIVATE ~ decorators : pure-python }....................
-def _beartype_func(
+def beartype_func(
     # Mandatory parameters.
     func: BeartypeableT,
     conf: BeartypeConf,
@@ -641,7 +359,291 @@ def _beartype_func(
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
 
+# ....................{ PRIVATE ~ decorators : descriptor  }....................
+def _beartype_descriptor_boundmethod(
+    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Decorate the passed **builtin bound method object** (i.e., C-based bound
+    method descriptor produced by Python on instantiation for each instance and
+    class method defined by the class being instantiated) with dynamically
+    generated type-checking.
 
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Descriptor to be decorated by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    -------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+    '''
+    assert is_func_boundmethod(descriptor), (
+        f'{repr(descriptor)} not builtin bound method descriptor.')
+
+    # Possibly C-based callable wrappee object encapsulated by this descriptor.
+    descriptor_wrappee = unwrap_func_boundmethod_once(descriptor)
+
+    # Instance object to which this descriptor was bound at instantiation time.
+    descriptor_self = get_func_boundmethod_self(descriptor)
+
+    # Pure-Python unbound function decorating the similarly pure-Python unbound
+    # function encapsulated by this descriptor with type-checking.
+    #
+    # Note that doing so:
+    # * Implicitly propagates dunder attributes (e.g., "__annotations__",
+    #   "__doc__") from the original function onto this new function. Good.
+    # * Does *NOT* implicitly propagate the same dunder attributes from the
+    #   original descriptor encapsulating the original function to the new
+    #   descriptor (created below) encapsulating this wrapper function. Bad!
+    #   Thankfully, only one such attribute exists as of this time: "__doc__".
+    #   We propagate this attribute manually below.
+    func_checked = beartype_func(func=descriptor_wrappee, **kwargs)  # pyright: ignore
+
+    # New instance method descriptor rebinding this function to the instance of
+    # the class bound to the prior descriptor.
+    #
+    # Note that:
+    # * This is required, as the "__func__" attribute of method descriptors is
+    #   read-only. Attempting to do so raises this non-human-readable exception:
+    #     AttributeError: readonly attribute
+    #   This implies that the passed descriptor *CANNOT* be meaningfully
+    #   modified. Our only recourse is to define an entirely new descriptor,
+    #   effectively discarding the passed descriptor, which will then be
+    #   subsequently garbage-collected. This is wasteful. This is Python.
+    # * This can also be implemented by abusing the descriptor protocol:
+    #       descriptor_new = descriptor_func_new.__get__(descriptor.__self__)
+    #   That said, there exist *NO* benefits to doing so. Indeed, doing so only
+    #   reduces the legibility and maintainability of this operation.
+    descriptor_new = MethodBoundInstanceOrClassType(
+        func_checked, descriptor_self)  # type: ignore[return-value]
+
+    #FIXME: Actually, Python doesn't appear to support this at the moment.
+    #Attempting to do so raises this exception:
+    #    AttributeError: attribute '__doc__' of 'method' objects is not writable
+    #
+    #See also this open issue on the Python bug tracker requesting this be
+    #resolved. Sadly, Python has yet to resolve this:
+    #    https://bugs.python.org/issue47153
+    # # Propagate the docstring from the prior to the new descriptor.
+    # #
+    # # Note that Python guarantees this attribute to exist. If the original
+    # # function had a docstring, this attribute is non-"None"; else, this
+    # # attribute is "None". In either case, this attribute exists. Ergo,
+    # # additional validation is neither required nor desired.
+    # descriptor_new.__doc__ = descriptor.__doc__
+
+    # Return this new descriptor, implicitly destroying the prior descriptor.
+    return descriptor_new  # type: ignore[return-value]
+
+
+def _beartype_descriptor_decorator_builtin_property(
+    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Decorate the passed **builtin property decorator object** (i.e., C-based
+    unbound method descriptor instantiated by the builtin :class:`property`
+    decorator type) with dynamically generated type-checking.
+
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Property descriptor to be decorated by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    -------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+    '''
+    assert isinstance(descriptor, MethodDecoratorPropertyType), (
+        f'{repr(descriptor)} not builtin @property method descriptor.')
+
+    # Pure-Python unbound getter, setter, and deleter functions wrapped by
+    # this descriptor if any *OR* "None" otherwise (i.e., for each such
+    # function currently unwrapped by this descriptor).
+    descriptor_getter  = descriptor.fget  # type: ignore[assignment,union-attr]
+    descriptor_setter  = descriptor.fset  # type: ignore[assignment,union-attr]
+    descriptor_deleter = descriptor.fdel  # type: ignore[assignment,union-attr]
+
+    # Decorate this getter function with type-checking.
+    #
+    # Note that *ALL* property method descriptors wrap at least a getter
+    # function (but *NOT* necessarily a setter or deleter function). This
+    # function is thus guaranteed to be non-"None".
+    descriptor_getter = beartype_func(  # type: ignore[type-var]
+        func=descriptor_getter,  # pyright: ignore
+        **kwargs
+    )
+
+    # If this property method descriptor additionally wraps a setter and/or
+    # deleter function, type-check those functions as well.
+    if descriptor_setter is not None:
+        descriptor_setter = beartype_func(descriptor_setter, **kwargs)
+    if descriptor_deleter is not None:
+        descriptor_deleter = beartype_func(descriptor_deleter, **kwargs)
+
+    # Return a new property method descriptor decorating all of these functions,
+    # implicitly destroying the prior descriptor.
+    #
+    # Note that the "property" class interestingly has this signature:
+    #     class property(fget=None, fset=None, fdel=None, doc=None): ...
+    return property(  # type: ignore[return-value]
+        fget=descriptor_getter,
+        fset=descriptor_setter,
+        fdel=descriptor_deleter,
+        doc=descriptor.__doc__,
+    )
+
+
+def _beartype_descriptor_decorator_builtin_classmethod(
+    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Decorate the passed **builtin class method decorator object** (i.e., C-based
+    unbound method descriptor instantiated by the builtin :class:`classmethod`
+    decorator type) with dynamically generated type-checking.
+
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Class method descriptor to be decorated by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    -------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+    '''
+    assert isinstance(descriptor, MethodDecoratorClassType), (
+        f'{repr(descriptor)} not builtin @classmethod descriptor.')
+
+    # Possibly C-based callable wrappee object decorated by this descriptor.
+    #
+    # Note that this wrappee is typically but *NOT* necessarily a pure-Python
+    # unbound function. This descriptor explicitly permits the decorated object
+    # to be a callable C-based type (i.e., defining the __call__() dunder
+    # method), which numerous standard and third-party pure-Python classes then
+    # leverage to augment those classes into subscriptable type hint factories
+    # via a simple one-liner: e.g.,
+    #     from abc import ABCMeta
+    #     from beartype import beartype
+    #     from types import GenericAlias
+    #
+    #     @beartype
+    #     class MuhTypeHintFactory(metaclass=ABCMeta):
+    #         # This exact one liner appears verbatim throughout the
+    #         # standard library (as well as third-party packages).
+    #         __class_getitem__ = classmethod(GenericAlias)
+    #
+    # Ergo, the name "__func__" of this dunder attribute is disingenuous. This
+    # descriptor does *NOT* merely decorate functions; this descriptor
+    # permissively decorates all callable objects.
+    descriptor_wrappee = unwrap_func_classmethod_once(descriptor)  # type: ignore[arg-type]
+
+    # If this wrappee is *NOT* a pure-Python unbound function, this wrappee is
+    # C-based and/or a type. In either case, avoid type-checking this wrappee by
+    # silently preserving this descriptor as is. Why? If this wrappee is:
+    # * C-based, this wrappee *CANNOT* be decorated with type-checking.
+    # * A type, this wrappee *COULD* be effectively decorated with type-checking
+    #   by decorating its __call__() dunder method. However, this type may *NOT*
+    #   have been intended to be decorated by @beartype. Indeed, this type may
+    #   *NOT* even reside within the same package. That the current class
+    #   references this type is an insufficient reason to transitively decorate
+    #   external types without user consent.
+    if not is_func_python(descriptor_wrappee):
+        return descriptor  # type: ignore[return-value]
+    # Else, this wrappee is a pure-Python unbound function.
+
+    # Pure-Python unbound function type-checking this class method. Note that:
+    # * Python 3.8, 3.9, and 3.10 explicitly permit the @classmethod decorator
+    #   to be chained into the @property decorator: e.g.,
+    #       class MuhClass(object):
+    #           @classmethod  # <-- this is fine under Python < 3.11
+    #           @property
+    #           def muh_property(self) -> ...: ...
+    # * Python ≥ 3.11 explicitly prohibits that by emitting a non-fatal
+    #   "DeprecationWarning" on each attempt to do so. Under Python ≥ 3.11,
+    #   users *MUST* instead refactor the above simplistic decorator chaining
+    #   use case as follows:
+    #   * Define a metaclass for each class requiring a class property.
+    #   * Define each class property on that metaclass rather than on that class
+    #     instead.
+    #
+    #   In other words:
+    #       class MuhClassMeta(type):  # <-- Python ≥ 3.11 demands sacrifice
+    #          '''
+    #          Metaclass of the :class`.MuhClass` class, defining class
+    #          properties for that class.
+    #          '''
+    #
+    #          @property
+    #          def muh_property(cls) -> ...: ...
+    #
+    #      class MuhClass(object, metaclass=MuhClassMeta):
+    #          pass
+    # * Technically, all Python versions currently supported by @beartype permit
+    #   this. Ergo, @beartype currently defers to:
+    #   * The high-level beartype_nontype() decorator (which permits the passed
+    #     object to be the descriptor created and returned by the @property
+    #     decorator and thus implicitly allows @classmethod to be chained into
+    #     @property) rather than...
+    #   * The low-level beartype_func() decorator (which requires the passed
+    #     object to be callable, which the descriptor created and returned by
+    #     the @property decorator is *NOT*).
+    func_checked = beartype_nontype(descriptor_wrappee,  **kwargs)
+
+    # Return a new class method descriptor decorating the pure-Python unbound
+    # function wrapped by this descriptor with type-checking, implicitly
+    # destroying the prior descriptor.
+    return classmethod(func_checked)  # type: ignore[return-value]
+
+
+def _beartype_descriptor_decorator_builtin_staticmethod(
+    descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Decorate the passed **builtin static method decorator object** (i.e.,
+    C-based unbound method descriptor instantiated by the builtin
+    :class:`staticmethod` decorator type) with dynamically generated
+    type-checking.
+
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Static method descriptor to be decorated by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    -------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+    '''
+    assert isinstance(descriptor, MethodDecoratorStaticType), (
+        f'{repr(descriptor)} not builtin @staticmethod descriptor.')
+
+    # Possibly C-based callable wrappee object decorated by this descriptor.
+    descriptor_wrappee = unwrap_func_staticmethod_once(descriptor)  # type: ignore[arg-type]
+
+    # Pure-Python unbound function type-checking this static method.
+    func_checked = beartype_func(descriptor_wrappee, **kwargs) # type: ignore[union-attr]
+
+    # Return a new static method descriptor decorating the pure-Python
+    # unbound function wrapped by this descriptor with type-checking,
+    # implicitly destroying the prior descriptor.
+    return staticmethod(func_checked)  # type: ignore[return-value]
+
+# ....................{ PRIVATE ~ decorators : pure-python }....................
 def _beartype_func_contextlib_contextmanager(
     func: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
@@ -658,7 +660,7 @@ def _beartype_func_contextlib_contextmanager(
         Context manager to be decorated by :func:`beartype.beartype`.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
+    :func:`.beartype_func` decorator internally called by this higher-level
     decorator on the pure-Python function encapsulated in this descriptor.
 
     Returns
@@ -673,7 +675,7 @@ def _beartype_func_contextlib_contextmanager(
     generator = unwrap_func_once(func)  # type: ignore[arg-type]
 
     # Decorate this generator factory function with type-checking.
-    generator_checked = _beartype_func(func=generator, **kwargs)
+    generator_checked = beartype_func(func=generator, **kwargs)
 
     # Re-decorate this generator factory function by @contextlib.contextmanager.
     generator_checked_contextmanager = contextmanager(generator_checked)
@@ -700,7 +702,7 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
+    :func:`.beartype_func` decorator internally called by this higher-level
     decorator on the pure-Python function encapsulated in this descriptor.
 
     Returns
@@ -767,7 +769,7 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #     def muh_lru_cache() -> None: pass
     elif is_func_functools_lru_cache(pseudofunc):
         # Return a new callable decorating that callable with type-checking.
-        return beartype_pseudofunc_functools_lru_cache(  # type: ignore
+        return beartype_functools_lru_cache(  # type: ignore
             pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
     # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
     #
@@ -801,101 +803,9 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
 
     # Unbound __call__() dunder method runtime type-checking the original bound
     # __call__() dunder method of the passed pseudo-callable object.
-    pseudofunc_call_type_method_checked = _beartype_func(
+    pseudofunc_call_type_method_checked = beartype_func(
         func=pseudofunc_call_boundmethod, **kwargs)
     return pseudofunc_call_type_method_checked
-
-
-def beartype_pseudofunc_functools_lru_cache(
-    pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Monkey-patch the passed :func:`functools.lru_cache`-memoized
-    **pseudo-callable** (i.e., low-level C-based callable object both created
-    and returned by the standard :func:`functools.lru_cache` decorator) with
-    dynamically generated type-checking.
-
-    Parameters
-    ----------
-    pseudofunc : BeartypeableT
-        Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`._beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    -------
-    BeartypeableT
-        New pseudo-callable monkey-patched by :func:`beartype.beartype`.
-    '''
-
-    # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
-    # callable, raise an exception.
-    if not is_func_functools_lru_cache(pseudofunc):
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'@functools.lru_cache-memoized callable {repr(pseudofunc)} not  '
-            f'decorated by @functools.lru_cache.'
-        )
-    # Else, this pseudo-callable is a @functools.lru_cache-memoized callable.
-
-    # Original pure-Python callable decorated by @functools.lru_cache.
-    func = unwrap_func_once(pseudofunc)
-
-    # If the active Python interpreter targets Python 3.8, then this
-    # pseudo-callable fails to declare the cache_parameters() lambda function
-    # called below to recover the keyword parameters originally passed by the
-    # caller to that decorator. In this case, we have *NO* recourse but to
-    # explicitly inform the caller of this edge case by raising a human-readable
-    # exception providing a pragmatic workaround.
-    if IS_PYTHON_3_8:
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'@functools.lru_cache-memoized callable {repr(func)} not '
-            f'decoratable by @beartype under Python 3.8. '
-            f'Consider manually decorating this callable by '
-            f'@beartype first and then by @functools.lru_cache to preserve '
-            f'Python 3.8 compatibility: e.g.,\n'
-            f'    # Do this...\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    @beartype\n'
-            f'    def muh_func(...) -> ...: ...\n'
-            f'\n'
-            f'    # Rather than either this...\n'
-            f'    @beartype\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    def muh_func(...) -> ...: ...\n'
-            f'\n'
-            f'    # Or this (if you use "beartype.claw", which you really should).\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    def muh_func(...) -> ...: ...\n'
-        )
-    # Else, the active Python interpreter targets Python >= 3.9.
-
-    # Decorate that callable with type-checking.
-    func_checked = _beartype_func(func=func, **kwargs)
-
-    # Dictionary mapping from the names of all keyword parameters originally
-    # passed by the caller to that decorator, enabling the re-decoration of that
-    # callable. Thankfully, that decorator preserves these parameters via the
-    # decorator-specific "cache_parameters" instance variable whose value is a
-    # bizarre argumentless lambda function (...for unknown reasons that are
-    # probably indefensible) creating and returning this dictionary: e.g.,
-    #     >>> from functools import lru_cache
-    #     >>> @lru_cache(maxsize=3)
-    #     ... def plus_one(n: int) -> int: return n +1
-    #     >>> plus_one.cache_parameters()
-    #     {'maxsize': 3, 'typed': False}
-    lru_cache_kwargs = pseudofunc.cache_parameters()  # type: ignore[attr-defined]
-
-    # Closure defined and returned by the @functools.lru_cache decorator when
-    # passed these keyword parameters.
-    lru_cache_configured = lru_cache(**lru_cache_kwargs)
-
-    # Re-decorate that callable by @functools.lru_cache by the same parameters
-    # originally passed by the caller to that decorator.
-    pseudofunc_checked = lru_cache_configured(func_checked)
-
-    # Return that new pseudo-callable.
-    return pseudofunc_checked
 
 # ....................{ PRIVATE ~ globals                  }....................
 # Note that this dispatch table is effectively untypeable, thanks to the general
@@ -908,6 +818,15 @@ _MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR = {
         'property':     _beartype_descriptor_decorator_builtin_property,
         'staticmethod': _beartype_descriptor_decorator_builtin_staticmethod,
     },
+
+    # ....................{ THIRD-PARTY                    }....................
+    # Non-standard types declared by external third-party packages.
+
+    # Click, a popular pure-Python framework for CLI- and TUI-based apps.
+    'click.core': {
+        # Type created and returned by the @click.command() decorator.
+        'Command': beartype_click_command,
+    }
 }
 '''
 **Beartype callable decorator dispatch table** (i.e., dictionary mapping the
@@ -924,8 +843,7 @@ This dispatch table maps to decorator functions with signatures resembling:
 
 The first parameter is passed positionally. All remaining parameters are passed
 by keyword and intended to be transitively (i.e., eventually) passed on to the
-lower-level :func:`._beartype_func` decorator. In other words, all keyword
-parameters accepted by :func:`._beartype_func` are also unconditionally accepted
+lower-level :func:`.beartype_func` decorator. In other words, all keyword
+parameters accepted by :func:`.beartype_func` are also unconditionally accepted
 by *all* of these higher-level decorators.
 '''
-

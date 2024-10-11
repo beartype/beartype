@@ -7,7 +7,7 @@
 Project-wide :mod:`functools` utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.api.utilapifunctools` submodule.
+:mod:`beartype._util.api.standard.utilfunctools` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_functools_lru_cache() -> None:
     '''
     Test the
-    :func:`beartype._util.api.utilapifunctools.is_func_functools_lru_cache`
+    :func:`beartype._util.api.standard.utilfunctools.is_func_functools_lru_cache`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
+    from beartype._util.api.standard.utilfunctools import is_func_functools_lru_cache
     from beartype_test.a00_unit.data.data_type import (
         function_lru_cached,
         function,
@@ -45,12 +45,12 @@ def test_is_func_functools_lru_cache() -> None:
 def test_is_func_functools_partial() -> None:
     '''
     Test the
-    :func:`beartype._util.api.utilapifunctools.is_func_functools_partial`
+    :func:`beartype._util.api.standard.utilfunctools.is_func_functools_partial`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapifunctools import is_func_functools_partial
+    from beartype._util.api.standard.utilfunctools import is_func_functools_partial
     from beartype_test.a00_unit.data.data_type import (
         function,
         function_partial,
@@ -70,12 +70,12 @@ def test_is_func_functools_partial() -> None:
 def test_get_func_functools_partial_args() -> None:
     '''
     Test the
-    :func:`beartype._util.api.utilapifunctools.get_func_functools_partial_args`
+    :func:`beartype._util.api.standard.utilfunctools.get_func_functools_partial_args`
     getter.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapifunctools import (
+    from beartype._util.api.standard.utilfunctools import (
         get_func_functools_partial_args)
     from beartype_test.a00_unit.data.data_type import (
         FUNCTION_PARTIALIZED_ARG_VALUE,
@@ -102,12 +102,12 @@ def test_get_func_functools_partial_args() -> None:
 def test_unwrap_func_functools_partial_once() -> None:
     '''
     Test the
-    :func:`beartype._util.api.utilapifunctools.unwrap_func_functools_partial_once`
+    :func:`beartype._util.api.standard.utilfunctools.unwrap_func_functools_partial_once`
     unwrapper.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapifunctools import (
+    from beartype._util.api.standard.utilfunctools import (
         unwrap_func_functools_partial_once)
     from beartype_test.a00_unit.data.data_type import (
         builtin_partial,

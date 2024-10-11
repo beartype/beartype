@@ -16,7 +16,7 @@ from beartype.typing import (
     Collection,
     Tuple,
 )
-from beartype._util.api.utilapityping import import_typing_attr_or_none
+from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from collections.abc import (
     ItemsView as ItemsViewABC,
 )

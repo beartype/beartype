@@ -7,7 +7,7 @@
 Project-wide :mod:`contextlib` utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.api.utilapicontextlib` submodule.
+:mod:`beartype._util.api.standard.utilcontextlib` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_contextlib_contextmanager() -> None:
     '''
     Test the
-    :func:`beartype._util.api.utilapicontextlib.is_func_contextlib_contextmanager`
+    :func:`beartype._util.api.standard.utilcontextlib.is_func_contextlib_contextmanager`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.api.utilapicontextlib import (
+    from beartype._util.api.standard.utilcontextlib import (
         is_func_contextlib_contextmanager)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.data_type import (

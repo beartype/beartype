@@ -32,7 +32,7 @@ def test_decor_pep593() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype.vale import Is
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from pytest import raises
 
     # ..................{ FAIL                               }..................

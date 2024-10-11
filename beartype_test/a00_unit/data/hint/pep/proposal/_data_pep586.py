@@ -24,7 +24,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
         HintSignList,
         HintSignLiteral,
     )
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         MasterlessDecreeVenomlessWhich)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (

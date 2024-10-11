@@ -23,11 +23,11 @@ from beartype.roar import (
     BeartypeDecorHintNonpepNumpyWarning,
 )
 from beartype.typing import Any
-from beartype._util.api.utilapinumpy import (
+from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
-from beartype._util.api.utilapityping import import_typing_attr_or_none
+from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobject import is_object_hashable

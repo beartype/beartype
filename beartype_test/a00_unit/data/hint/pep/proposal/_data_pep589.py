@@ -28,7 +28,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
         HintSignList,
         HintSignTypedDict,
     )
-    from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,

@@ -27,7 +27,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.cache.utilcachecall import callable_cached
 from string import digits
 
-# ....................{ PRIVATE ~ getter                   }....................
+# ....................{ GETTERS                            }....................
 #FIXME: File an upstream NumPy issue politely requesting they publicize either:
 #* An equivalent container listing these types.
 #* Documentation officially listing these types.
@@ -51,7 +51,7 @@ def get_numpy_dtype_type_abcs() -> FrozenSetTypes:
     :mod:`beartype` and :mod:`numpy` codebases. So it goes.
     '''
 
-    # Defer heavyweight imports.
+    # Avoid third-party import dependencies.
     from numpy import (  # pyright: ignore
         character,
         complexfloating,

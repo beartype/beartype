@@ -7,7 +7,7 @@
 Project-wide **typing module** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.api.utilapityping` submodule.
+:mod:`beartype._util.api.standard.utiltyping` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,14 +19,14 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ attr : typing              }....................
 def test_import_typing_attr() -> None:
     '''
-    Test the :func:`beartype._util.api.utilapityping.import_typing_attr`
+    Test the :func:`beartype._util.api.standard.utiltyping.import_typing_attr`
     importer.
     '''
 
     # ....................{ IMPORTS                            }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.api.utilapityping import import_typing_attr
+    from beartype._util.api.standard.utiltyping import import_typing_attr
     from beartype._util.module.utilmodimport import import_module_attr_or_sentinel
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype._util.utilobject import SENTINEL

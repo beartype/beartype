@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.api.utilapisphinx import is_sphinx_autodocing
+from beartype._util.api.external.utilsphinx import is_sphinx_autodocing
 from beartype._util.func.pep.utilpep484func import (
     is_func_pep484_notypechecked)
 from beartype._util.func.utilfuncget import get_func_annotations_or_none
