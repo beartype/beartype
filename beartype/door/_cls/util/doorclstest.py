@@ -5,7 +5,8 @@
 
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) testers** (i.e.,
-callables testing and validating :class:`beartype.door.TypeHint` instances).
+low-level callables testing and validating high-level
+:class:`beartype.door.TypeHint` wrappers).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

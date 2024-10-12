@@ -176,7 +176,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Tuple[object, ...], Any, True),
         (Union[int, MuhThing], Any, True),
 
-        # Although *ALL* type hints are subhints of "Any", "Any" is only a
+        # Although *ALL* type hints are subhints of "Any", "Any" is *ONLY* a
         # subhint of itself.
         (Any, Any, True),
         (Any, object, False),

@@ -20,7 +20,6 @@ from beartype.typing import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
-# from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_params,
@@ -224,17 +223,6 @@ class CallableTypeHint(TypeHint):
         return self._args_wrapped_tuple[-1]
 
     # ..................{ PROPERTIES ~ bools                 }..................
-    # FIXME: Remove this by instead adding support for ignoring ignorable
-    # callable type hints to our core is_hint_ignorable() tester. Specifically:
-    # * Ignore "Callable[..., {hint_ignorable}]" type hints, where "..." is the
-    #  ellipsis singleton and "{hint_ignorable}" is any ignorable type hint.
-    #  This has to be handled in a deep manner by:
-    #  * Defining a new is_hint_pep484585_ignorable_or_none() tester in the
-    #    existing "utilpep484585" submodule, whose initial implementation tests
-    #    for *ONLY* ignorable callable type hints.
-    #  * Import that tester in the "utilpeptest" submodule.
-    #  * Add that tester to the "_IS_HINT_PEP_IGNORABLE_TESTERS" tuple.
-    #  * Add example ignorable callable type hints to our test suite's data.
     @property
     def is_ignorable(self) -> bool:
         # Callable[..., Any] (or just `Callable`)
@@ -253,18 +241,28 @@ class CallableTypeHint(TypeHint):
         return self.return_hint.is_ignorable
 
     # ..................{ PRIVATE ~ testers                  }..................
-    #FIXME: Internally comment us up, please.
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
+        # print(f'Entering _is_subhint_branch({self}, {branch})...')
+        # print(f'{branch}._is_args_ignorable: {branch._is_args_ignorable}')
 
         # If that branch is unsubscripted (e.g., "typing.Callable"), assume that
-        # branch to be subscripted as "typing.Callable[..., Any]" by reducing to
-        # a test for compatible origin types.
+        # branch to be subscripted as the maximally wide callable type hint
+        # "typing.Callable[..., Any]". Since *ALL* callable type hints are
+        # necessarily subhints of that hint, return true only if the class
+        # originating this hint is a subclass of the class
+        # originating that branch.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
+        # Else, that branch is subscripted (e.g., "typing.Callable[..., int]").
+        #
+        # If that branch is *NOT* a callable type hint, this callable type hint
+        # is incommensurable with that branch and thus *CANNOT* be a subhint of
+        # that branch. Return false.
         elif not isinstance(branch, CallableTypeHint):
             return False
-        elif not issubclass(self._origin, branch._origin):
-            return False
+        # Else, that branch is a callable type hint.
+
+        #FIXME: Internally comment us up, please.
         elif not branch.is_params_ignorable and (
             (
                 self.is_params_ignorable or

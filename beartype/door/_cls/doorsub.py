@@ -17,18 +17,6 @@ from beartype.roar import BeartypeDoorPepArgsLenException
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 
-# ....................{ SUBCLASSES                         }....................
-class TypeHintGeneric(TypeHint):
-    '''
-    **Generic type hint wrapper** (i.e., high-level object encapsulating a
-    low-level subclass of the :pep:`484`-compliant :class:`typing.Generic`
-    superclass, :pep:`544`-compliant :class:`typing.Protocol` superclass, or any
-    :pep:`585`-compliant subscripted type hint (e.g., ``class
-    GenericListOfStrs(list[str]): ...``).
-    '''
-
-    pass
-
 # ....................{ PRIVATE ~ subclasses               }....................
 class _TypeHintOriginIsinstanceable(TypeHint):
     '''

@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doormeta import _TypeHintMeta
-from beartype.door._doortest import die_unless_typehint
+from beartype.door._cls.util.doorclstest import die_unless_typehint
 from beartype.door._func.doorcheck import (
     die_if_unbearable,
     is_bearable,
@@ -649,12 +649,11 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Return true only if either...
         return (
-            # That other hint is the "typing.Any" catch-all. By definition, that
-            # hint is the superhint of *ALL* hints -- including "typing.Any"
-            # itself. Ergo, this hint is necessarily a subhint of that hint.
+            # That hint is the "typing.Any" catch-all (then this hint is
+            # necessarily a subhint of that hint) *OR*...
             other._hint is Any or
-            # Else, that other hint is *NOT* the "typing.Any" catch-all. In this
-            # case, defer to the subclass-specific implementation of this test.
+            # This hint is a subhint of that hint (according to the
+            # subclass-specific implementation of this test).
             self._is_subhint(other)
         )
 
@@ -784,12 +783,25 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Further details.
         '''
 
-        # Return true only if this hint is a subhint of *ANY* branch of that
-        # other hint.
-        return any(
-            self._is_subhint_branch(other_branch)
-            for other_branch in other._branches
-        )
+        # For each branch of that hint...
+        for other_branch in other._branches:
+            # If either...
+            if (
+                # That branch is the "typing.Any" catch-all (then this hint is
+                # necessarily a subhint of that branch) *OR*...
+                other_branch._hint is Any or
+                # This hint is a subhint of that branch (according to the
+                # subclass-specific implementation of this test)...
+                self._is_subhint_branch(other_branch)
+            ):
+                # Then this hint is a subhint of that hint.
+                return True
+            # Else, this hint is *NOT* a subhint of that branch. In this case,
+            # continue to the next branch of that other hint.
+        # Else, this hint is *NOT* a subhint of any branch of that other hint.
+
+        # Return false as a fallback.
+        return False
 
 
     def _is_subhint_branch(self, branch: 'TypeHint') -> bool:
@@ -808,22 +820,38 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :meth:`__le__`
             Further details.
         '''
+        # print(f'Entering is_subhint_branch({self}, {branch})...')
 
+        # If the type originating this hint is *NOT* a subclass of the type
+        # originating that branch, this hint *CANNOT* be a subhint of that
+        # branch. Return false immediately.
+        if not issubclass(self._origin, branch._origin):
+            return False
+        # Else, the class originating this hint is a subclass of the class
+        # originating that branch. In this case, this hint *COULD* be a subhint
+        # of that branch. Further tests are warranted.
+        #
         # If that branch is unsubscripted, assume that branch to have been
-        # subscripted by "Any" by simply checking for compatible origin types.
-        if branch._is_args_ignorable:
+        # subscripted by "Any". Since *ANY* child hint subscripting this hint is
+        # necessarily a subhint of "Any", this hint is a subhint of that branch.
+        # Return true immediately.
+        elif branch._is_args_ignorable:
             # print(f'is_subhint_branch({self}, {branch} [unsubscripted])')
-            return issubclass(self._origin, branch._origin)
+            return True
         # Else, that branch is subscripted.
+        # print(f'isinstance({branch}, {type(self)}): {isinstance(branch, type(self))}')
+        # print(f'issubclass({self._origin}, {branch._origin}): {issubclass(self._origin, branch._origin)}')
+        # all(
+        #     self_child <= branch_child
+        #     for self_child, branch_child in zip(
+        #         self._args_wrapped_tuple, branch._args_wrapped_tuple)
+        # )
 
         # Return true only if...
         return (
             # That branch is also a type hint wrapper of the same concrete
             # subclass as this type hint wrapper *AND*...
             isinstance(branch, type(self)) and
-            # The class originating this hint is a subclass of the class
-            # originating that branch...
-            issubclass(self._origin, branch._origin) and
             # All child type hints of this parent type hint are subhints of the
             # corresponding child type hints of that branch.
             all(

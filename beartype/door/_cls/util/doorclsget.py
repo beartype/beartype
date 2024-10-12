@@ -4,16 +4,15 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) data** (i.e.,
-global constants internally required throughout the :mod:`beartype.door`
-subpackage).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) getters** (i.e.,
+low-level callables introspecting metadata pertaining to high-level
+:class:`beartype.door.TypeHint` wrappers).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.door._cls.doorsub import TypeHintGeneric
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
 from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
@@ -22,6 +21,8 @@ from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
 from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
+from beartype.door._cls.pep.pep484585.doorpep484585generic import (
+    GenericTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,
@@ -147,7 +148,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignAnnotated:  AnnotatedTypeHint,
     HintSignCallable:   CallableTypeHint,
-    HintSignGeneric:    TypeHintGeneric,
+    HintSignGeneric:    GenericTypeHint,
     HintSignLiteral:    LiteralTypeHint,
     HintSignNewType:    NewTypeTypeHint,
     HintSignTuple:      TupleVariableTypeHint,
