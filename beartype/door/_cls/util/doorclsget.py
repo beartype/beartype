@@ -177,7 +177,8 @@ def _init() -> None:
     '''
 
     # Isolate function-specific imports.
-    from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
+    from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
+        SubscriptedTypeHint)
     from beartype._data.hint.pep.sign.datapepsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
     from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -190,10 +191,10 @@ def _init() -> None:
     for hint_sign in HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE.keys():
         # If this sign has *NOT* already been mapped to an existing "TypeHint"
         # subclass, map this sign to the generic private
-        # "_TypeHintOriginIsinstanceable" subclass.
+        # "SubscriptedTypeHint" subclass.
         if hint_sign not in _HINT_SIGN_TO_TYPEHINT_CLS:
             _HINT_SIGN_TO_TYPEHINT_CLS[hint_sign] = (
-                _TypeHintOriginIsinstanceable)
+                SubscriptedTypeHint)
         # Else, this sign has already been mapped to an existing "TypeHint"
         # subclass. Preserve this mapping as is.
 

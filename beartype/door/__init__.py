@@ -50,6 +50,8 @@ from beartype.door._cls.pep.pep484.doorpep484typevar import (
     TypeVarTypeHint as TypeVarTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint as CallableTypeHint)
+from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
+    SubscriptedTypeHint as SubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,

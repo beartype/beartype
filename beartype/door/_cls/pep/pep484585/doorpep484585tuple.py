@@ -12,8 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._cls.doorsub import _TypeHintOriginIsinstanceable
 from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
+    SubscriptedTypeHint)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
     is_hint_pep484585_tuple_empty)
 
@@ -112,7 +113,7 @@ class TupleFixedTypeHint(TypeHint):
         )
 
 
-class TupleVariableTypeHint(_TypeHintOriginIsinstanceable):
+class TupleVariableTypeHint(SubscriptedTypeHint):
     '''
     **Variable-length tuple type hint wrapper** (i.e., high-level object
     encapsulating a low-level :pep:`484`- or :pep:`585`-compliant type hint of

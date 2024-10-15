@@ -62,7 +62,7 @@ class ClassTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ methods                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
-        # print(f'Entering _is_subhint_branch({self}, {branch})...')
+        # print(f'Entering ClassTypeHint._is_subhint_branch({self}, {branch})...')
         # print(f'{self}._hint: {self._hint}')
         # print(f'{branch}._hint: {branch._hint}')
         # print(f'{repr(self)}._origin: {self._origin}')

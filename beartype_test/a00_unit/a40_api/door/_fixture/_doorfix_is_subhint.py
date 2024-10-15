@@ -60,14 +60,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # Intentionally import from "beartype.typing" rather than "typing" to
     # guarantee PEP 544-compliant caching protocol type hints.
     from beartype.typing import (
-        Literal,
-        Protocol,
-        TypedDict,
-    )
-
-    # Intentionally import from "typing" rather than "beartype.typing" to
-    # guarantee PEP 484-compliant type hints.
-    from typing import (
         Any,
         Awaitable,
         ByteString,
@@ -79,15 +71,18 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Hashable,
         Iterable,
         List,
+        Literal,
         Mapping,
         NamedTuple,
         NewType,
         Optional,
+        Protocol,
         Reversible,
         Sequence,
         Sized,
         Tuple,
         Type,
+        TypedDict,
         TypeVar,
         Union,
     )
@@ -139,28 +134,49 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         thing_one: str
         thing_two: int
 
-    # ..................{ CLASSES ~ generics                 }..................
-    class MuhGeneric(Generic[T]):
+    # ..................{ CLASSES ~ pep 484 : generic : one  }..................
+    class GenericSuperT(Generic[T]):
         '''
-        Arbitrary generic parametrized by one unconstrained type variable.
-        '''
-
-        pass
-
-
-    class MuhGenericTwo(Generic[S, T]):
-        '''
-        Arbitrary generic parametrized by two unconstrained type variables.
+        :pep:`484`-compliant generic superclass parametrized by one
+        unconstrained type variable.
         '''
 
         pass
 
 
-    class MuhGenericTwoIntInt(MuhGenericTwo[int, int]):
+    class GenericSubT(GenericSuperT[T]):
         '''
-        Arbitrary concrete generic subclass inheriting the
-        :class:`.MuhGenericTwo` generic superclass subscripted twice by the
+        :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant
+        generic parametrized by one unconstrained type variable.
+        '''
+
+        pass
+
+    # ..................{ CLASSES ~ pep 484 : generic : two  }..................
+    class GenericSuperST(Generic[S, T]):
+        '''
+        :pep:`484`-compliant generic superclass parametrized by two
+        unconstrained type variables.
+        '''
+
+        pass
+
+
+    class GenericSubIntInt(GenericSuperST[int, int]):
+        '''
+        :pep:`484`-compliant concrete generic subclass inheriting a
+        :pep:`484`-compliant generic superclass subscripted twice by the
         builtin :class:`int` type.
+        '''
+
+        pass
+
+    # ..................{ CLASSES ~ pep (484|585) : generic  }..................
+    class SequenceSubT(Sequence[T]):
+        '''
+        :pep:`484`- or :pep:`585`-compliant generic subclass inheriting a
+        :pep:`484`- or :pep:`585`-compliant ``Sequence[...]` type hint
+        parametrized by one unconstrained type variable.
         '''
 
         pass
@@ -238,7 +254,64 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (int, float, False),
         (float, complex, False),
 
-        # ..................{ PEP 484 ~ arg : callable       }..................
+        # ..................{ PEP 484 ~ generic              }..................
+        # "typing.Generic"-centric tests.
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize changes below by replacing all references in
+        # the first tuple item to "GenericSuperT" with "GenericSubT".
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # PEP 484-compliant generic superclasses parametrized by one
+        # unconstrained type variables.
+        (GenericSuperT, GenericSuperT, True),
+        (GenericSuperT, GenericSuperT[int], False),
+        (GenericSuperT[int], GenericSuperT, True),
+        (GenericSuperT[int], GenericSuperT[T_sequence], False),
+        (GenericSuperT[list], GenericSuperT[T_sequence], True),
+        (GenericSuperT[list], GenericSuperT[Sequence], True),
+        (GenericSuperT[str], GenericSuperT[T_sequence], True),
+        (GenericSuperT[Sequence], GenericSuperT[list], False),
+        (GenericSuperT[T_sequence], GenericSuperT, True),
+
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize changes above.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # PEP 484-compliant generic subclasses parametrized by one unconstrained
+        # type variables.
+        (GenericSubT, GenericSuperT, True),
+        (GenericSubT, GenericSuperT[int], False),
+        (GenericSubT[int], GenericSuperT, True),
+        (GenericSubT[int], GenericSuperT[T_sequence], False),
+        (GenericSubT[list], GenericSuperT[T_sequence], True),
+        (GenericSubT[list], GenericSuperT[Sequence], True),
+        (GenericSubT[str], GenericSuperT[T_sequence], True),
+        (GenericSubT[Sequence], GenericSuperT[list], False),
+        (GenericSubT[T_sequence], GenericSuperT, True),
+
+        #FIXME: Uncomment after resolving open issue #271, please.
+        # PEP 484-compliant generics parametrized by two type variables.
+        # (GenericSubIntInt, GenericSuperST[int, int], True),
+
+        # ..................{ PEP 484 ~ optional             }..................
+        # "typing.Optional"-centric tests.
+
+        # PEP 484-compliant optionals.
+        (int, Optional[int], True),
+        (Optional[int], int, False),
+        (list, Optional[Sequence], True),
+
+        # ..................{ PEP 484 ~ union                }..................
+        # "typing.Union"-centric tests.
+
+        # PEP 484-compliant unions.
+        (int, Union[int, str], True),
+        (Union[int, str], Union[list, int, str], True),
+        (Union[str, int], Union[int, str, list], True),  # order doesn't matter
+        (Union[str, list], Union[str, int], False),
+        (Union[int, str, list], list, False),
+        (Union[int, str, list], Union[int, str], False),
+
+        # ..................{ PEP (484|585) ~ callable       }..................
         # PEP 484-compliant callable type hints.
         (Callable, Callable[..., Any], True),
         (Callable[[], int], Callable[..., Any], True),
@@ -257,23 +330,21 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Callable[[int, str], int], Callable[[int, str], Any], True),
         # (types.FunctionType, Callable, True),  # FIXME
 
-        # ..................{ PEP 484 ~ arg : generic        }..................
-        # PEP 484-compliant generics parametrized by one type variable.
-        (MuhGeneric, MuhGeneric, True),
-        (MuhGeneric, MuhGeneric[int], False),
-        (MuhGeneric[int], MuhGeneric, True),
-        (MuhGeneric[int], MuhGeneric[T_sequence], False),
-        (MuhGeneric[list], MuhGeneric[T_sequence], True),
-        (MuhGeneric[list], MuhGeneric[Sequence], True),
-        (MuhGeneric[str], MuhGeneric[T_sequence], True),
-        (MuhGeneric[Sequence], MuhGeneric[list], False),
-        (MuhGeneric[T_sequence], MuhGeneric, True),
+        # ..................{ PEP (484|585) ~ generic        }..................
+        # PEP 484- or 585-compliant generic subclasses inheriting PEP 484- or
+        # 585-compliant type hints parametrized by one unconstrained type
+        # variables.
+        (SequenceSubT, Sequence[T], True),
+        (SequenceSubT, Sequence[int], False),
+        (SequenceSubT[int], Sequence[T], True),
+        (SequenceSubT[int], Sequence[T_sequence], False),
+        (SequenceSubT[list], Sequence[T_sequence], True),
+        (SequenceSubT[list], Sequence[Sequence], True),
+        (SequenceSubT[str], Sequence[T_sequence], True),
+        (SequenceSubT[Sequence], Sequence[list], False),
+        (SequenceSubT[T_sequence], Sequence[T], True),
 
-        #FIXME: Uncomment after resolving open issue #271, please.
-        # PEP 484-compliant generics parametrized by two type variables.
-        # (MuhGenericTwoIntInt, MuhGenericTwo[int, int], True),
-
-        # ..................{ PEP 484 ~ arg : mapping        }..................
+        # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.
         (dict, Dict, True),
         (Dict[str, int], Dict, True),
@@ -284,7 +355,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
             True,
         ),
 
-        # ..................{ PEP 484 ~ arg : sequence       }..................
+        # ..................{ PEP (484|585) ~ sequence       }..................
         # PEP 484-compliant sequence type hints.
         (List[int], List[int], True),
         (List[int], Sequence[int], True),
@@ -317,25 +388,13 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # PEP 484-compliant nested sequence type hints.
         (List[int], Union[str, List[Union[int, str]]], True),
 
-        # ..................{ PEP 484 ~ arg : subclass       }..................
+        # ..................{ PEP (484|585) ~ subclass       }..................
         # PEP 484-compliant subclass type hints.
         (Type[int], Type[int], True),
         (Type[int], Type[str], False),
         (Type[MuhSubThing], Type[MuhThing], True),
         (Type[MuhThing], Type[MuhSubThing], False),
         (MuhThing, Type[MuhThing], False),
-
-        # ..................{ PEP 484 ~ arg : union          }..................
-        # PEP 484-compliant unions.
-        (int, Union[int, str], True),
-        (Union[int, str], Union[list, int, str], True),
-        (Union[str, int], Union[int, str, list], True),  # order doesn't matter
-        (Union[str, list], Union[str, int], False),
-        (Union[int, str, list], list, False),
-        (Union[int, str, list], Union[int, str], False),
-        (int, Optional[int], True),
-        (Optional[int], int, False),
-        (list, Optional[Sequence], True),
 
         # ..................{ PEP 544                        }..................
         # PEP 544-compliant type hints.

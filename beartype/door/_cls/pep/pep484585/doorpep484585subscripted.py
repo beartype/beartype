@@ -4,9 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) middle-men
-subclasses** (i.e., abstract subclasses of the object-oriented type hint class
-hierarchy simplifying the definition of concrete subclasses of this hierarchy).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) subscripted type
+hint classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing
+support for :pep:`484`- and :pep:`585`-compliant subscripted type hints *not*
+already matched by any more fine-grained :class:`beartype.door.TypeHint`
+subclass).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,18 +19,19 @@ from beartype.roar import BeartypeDoorPepArgsLenException
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 
-# ....................{ PRIVATE ~ subclasses               }....................
-class _TypeHintOriginIsinstanceable(TypeHint):
+# ....................{ SUBCLASSES                         }....................
+class SubscriptedTypeHint(TypeHint):
     '''
-    **Isinstanceable type hint wrapper** (i.e., high-level object encapsulating
+    **Subscripted type hint wrapper** (i.e., high-level object encapsulating
     a low-level parent type hint satisfying various conditions).
 
     Notably, this wrapper wraps hints that both:
 
-    * Originate from an **isinstanceable class** such that *all* objects
-      satisfying this hint are instances of that class.
+    * Are either :pep:`484`- or :pep:`585`-compliant.
     * Are subscripted (indexed) by a predetermined number of one or more
       low-level child type hints.
+    * Originate from an **isinstanceable class** such that *all* objects
+      satisfying this hint are instances of that class.
     '''
 
     # ..................{ PRIVATE ~ factories                }..................
