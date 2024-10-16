@@ -162,6 +162,16 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         pass
 
 
+    class GenericSubTInt(GenericSuperST[S, int]):
+        '''
+        :pep:`484`-compliant partially concrete generic subclass inheriting a
+        :pep:`484`-compliant generic superclass subscripted first by an
+        unconstrained type variable and then by the builtin :class:`int` type.
+        '''
+
+        pass
+
+
     class GenericSubIntInt(GenericSuperST[int, int]):
         '''
         :pep:`484`-compliant concrete generic subclass inheriting a
@@ -289,8 +299,19 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (GenericSubT[T_sequence], GenericSuperT, True),
 
         #FIXME: Uncomment after resolving open issue #271, please.
-        # PEP 484-compliant generics parametrized by two type variables.
-        # (GenericSubIntInt, GenericSuperST[int, int], True),
+        # PEP 484-compliant generic subclasses parametrized by one unconstrained
+        # type variables and one concrete type.
+        (GenericSubTInt, GenericSuperST, True),
+        (GenericSubTInt, GenericSuperST[int, int], False),
+        (GenericSubTInt[int], GenericSuperST, True),
+
+        #FIXME: Pickup here tomorrow, please. *sigh*
+        # (GenericSubTInt[int], GenericSuperST[T_sequence], False),
+        # (GenericSubTInt[list], GenericSuperST[T_sequence], True),
+        # (GenericSubTInt[list], GenericSuperST[Sequence], True),
+        # (GenericSubTInt[str], GenericSuperST[T_sequence], True),
+        # (GenericSubTInt[Sequence], GenericSuperST[list], False),
+        # (GenericSubTInt[T_sequence], GenericSuperST, True),
 
         # ..................{ PEP 484 ~ optional             }..................
         # "typing.Optional"-centric tests.

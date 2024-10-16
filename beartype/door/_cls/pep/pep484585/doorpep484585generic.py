@@ -19,6 +19,10 @@ from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint as SubscriptedTypeHint)
 from beartype.typing import TYPE_CHECKING
+from beartype._util.hint.pep.utilpepget import (
+    get_hint_pep_args,
+    get_hint_pep_typevars,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class GenericTypeHint(TypeHint):
@@ -34,6 +38,25 @@ class GenericTypeHint(TypeHint):
     # Squelch false negatives from static type checkers.
     if TYPE_CHECKING:
         _hint: type
+
+    #FIXME: Not a particularly good idea, actually. Instead, call the newly
+    #defined get_hint_pep484585_generic_args_full() below... or *WAIT*. Perhaps
+    #we simply want to define _make_args() to defer to
+    #get_hint_pep484585_generic_args_full() instead, huh? Yup. That's prolly it.
+
+    # ..................{ PRIVATE ~ factories                }..................
+    #FIXME: This should probably just be the superclass implementation.
+    def _make_args(self) -> tuple:
+
+        # Tuple of zero or more child type hints directly subscripting this
+        # generic parent type hint.
+        # hint_args = get_hint_pep_args(self._hint)
+
+        # Fat one-liners for life.
+        return (
+            get_hint_pep_args(self._hint) or
+            get_hint_pep_typevars(self._hint)
+        )
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
@@ -120,6 +143,16 @@ class GenericTypeHint(TypeHint):
         #
         #Come to think of it: shouldn't that *ALREADY* be the superclass
         #implementation? Seems genuinely useful, honestly.
+
+        #FIXME: This doesn't quite work. Why? This generic and that generic may
+        #be subscripted by a differing number of child type hints and
+        #parameters. If this is the case, then the zip() ignores all trailing
+        #child type hints in whichever of these two generics is subscripted by
+        #more child type hints than the other. Basically, we need to:
+        #* Assert that the number of child type hints is the same: e.g.,
+        #    assert len(self._args_wrapped_tuple) == len(branch._args_wrapped_tuple)
+        #* Guarantee this consrtaint in the _make_args() factory defined above.
+        #  How? No idea. Seems pretty non-trivial, honestly.
 
         # Return true only if all child type hints of this parent type hint are
         # subhints of the corresponding child type hints of that branch.

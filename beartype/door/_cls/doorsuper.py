@@ -852,6 +852,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             # That branch is also a type hint wrapper of the same concrete
             # subclass as this type hint wrapper *AND*...
             isinstance(branch, type(self)) and
+            #FIXME: *SLOW*, albeit concise. This should require neither an all()
+            #nor a zip(). Optimize this by unpacking this into explicit
+            #iteration leveraging enumerate(), probably. *shrug* 
             # All child type hints of this parent type hint are subhints of the
             # corresponding child type hints of that branch.
             all(

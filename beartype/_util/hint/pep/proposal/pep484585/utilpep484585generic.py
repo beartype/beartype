@@ -18,8 +18,12 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignGeneric,
+    HintSignTypeVar,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -36,7 +40,11 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 )
 from beartype._util.module.utilmodtest import (
     is_object_module_thirdparty_blacklisted)
-from collections.abc import Iterable
+from collections import deque
+from collections.abc import (
+    Iterable,
+    Sequence,
+)
 
 # Intentionally import PEP 484-compliant "typing" type hint factories rather
 # than possibly PEP 585-compliant "beartype.typing" type hint factories.
@@ -208,6 +216,101 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     #FIXME: Probably insufficient. *shrug*
     return False
 
+# ....................{ GETTERS ~ args                     }....................
+#FIXME: Docstring us up, please.
+#FIXME: Unit test us up, please.
+#FIXME: Optimize away the recursion with explicit iteration, please. For now,
+#recursion yields a substantially simpler implementation. *shrug*
+#FIXME: Actually, maybe we don't care about recursion costs here? This getter is
+#only called by the inherently recursive "beartype.door" subpackage.
+def get_hint_pep484585_generic_args_full(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> tuple:
+    # print(f'Introspecting generic {hint} full arguments...')
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_origin_or_none,
+        get_hint_pep_sign_or_none,
+    )
+
+    hint_args_full: list = []
+
+    #FIXME: Deque coercion is unnecessary and inefficient if this generic is
+    #directly unsubscripted. Consider optimizing, please. *shrug*
+    #FIXME: Discuss why we prefer a deque to a list here (i.e., for the
+    #O(1)-efficient deque.popleft() method called below versus the O(n)-slow
+    #"list.pop(0)" call we'd otherwise require).
+    #FIXME: Alternately, rather than use a deque, we could also use a reversed
+    #list and then treat it as a stack. Indeed, we'd probably then rename this
+    #local variable to "hint_args_stack". Faster? Slower? No idea. *sigh*
+
+    # Intentionally modifiable deque (i.e., doubly-ended queue) of the one or
+    # more child type hints directly subscripting this generic, coerced from
+    # this tuple.
+    hint_args = deque(get_hint_pep_args(hint))
+
+    # Tuple of the one or more unerased pseudo-superclasses originally listed as
+    # superclasses prior to their type erasure by this generic.
+    # print(f'Introspecting generic {hint} unerased bases...')
+    hint_bases = get_hint_pep484585_generic_bases_unerased(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # print(f'Generic {hint} unerased bases: {hint_bases}')
+
+    # For each pseudo-superclass of this generic...
+    for hint_base in hint_bases:
+        # Tuple of the one or more child type hints transitively subscripting
+        # this pseudo-superclass.
+        hint_base_args: Sequence = None  # type: ignore[assignment]
+
+        from beartype.typing import (
+            Generic,
+            Protocol,
+        )
+
+        if (
+            #FIXME: Inefficient. Globalize this frozen set somewhere in
+            #the "beartype._data.hint.pep" subpackage, please.
+            get_hint_pep_origin_or_none(hint_base) not in frozenset((
+                Generic, Protocol)) and
+            is_hint_pep484585_generic(hint_base)
+        ):
+            hint_base_args = get_hint_pep484585_generic_args_full(
+                hint=hint_base,
+                exception_cls=exception_cls,
+                exception_prefix=exception_prefix,
+            )
+        else:
+            hint_base_args = get_hint_pep_args(hint_base)
+
+        if hint_args:
+            hint_base_args = list(hint_base_args)
+
+            for hint_base_arg_index, hint_base_arg in enumerate(hint_base_args):
+                # Sign uniquely identifying this child type hint of this
+                # pseudo-superclass if any *OR* "None".
+                hint_base_arg_sign = get_hint_pep_sign_or_none(hint_base_arg)
+
+                if hint_base_arg_sign is HintSignTypeVar:
+                    hint_base_args[hint_base_arg_index] = hint_args[0]
+                    hint_args.popleft()
+
+                    if not hint_args:
+                        break
+
+        hint_args_full.extend(hint_base_args)
+
+    return tuple(hint_args_full)
+
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(
     # Mandatory parameters.
@@ -216,7 +319,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> Tuple[object, ...]:
+) -> tuple:
     '''
     Tuple of the one or more **unerased pseudo-superclasses** (i.e.,
     PEP-compliant objects originally listed as superclasses prior to their
@@ -358,7 +461,7 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Returns
     -------
-    Tuple[object]
+    tuple
         Tuple of the one or more unerased pseudo-superclasses of this generic.
 
     Raises
@@ -372,19 +475,24 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Examples
     --------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep484585_generic_bases_unerased)
-        >>> T = typing.TypeVar('T')
-        >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
-        (typing.Iterable[~T], typing.Container[~T])
-        >>> MuhIterable.__mro__
-        (MuhIterable,
-         collections.abc.Iterable,
-         collections.abc.Container,
-         typing.Generic,
-         object)
+    .. code-block:: python
+
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpepget import (
+       ...     get_hint_pep484585_generic_bases_unerased)
+
+       >>> T = typing.TypeVar('T')
+       >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
+
+       >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
+       (typing.Iterable[~T], typing.Container[~T])
+
+       >>> MuhIterable.__mro__
+       (MuhIterable,
+        collections.abc.Iterable,
+        collections.abc.Container,
+        typing.Generic,
+        object)
     '''
 
     # Tuple of either...
@@ -656,16 +764,18 @@ def find_hint_pep484585_generic_module_base_first(
 
     Examples
     --------
-        >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        ...     find_hint_pep484585_generic_base_first_in_module)
+    .. code-block:: python
 
-        # Reduce a Pandera type hint to the Pandas type it describes.
-        >>> from pandera import DataFrameModel
-        >>> from pandera.typing import DataFrame
-        >>> class MuhModel(DataFrameModel): pass
-        >>> find_hint_pep484585_generic_base_first_in_module(
-        ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
-        <class 'pandas.DataFrame'>
+       >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+       ...     find_hint_pep484585_generic_base_first_in_module)
+
+       # Reduce a Pandera type hint to the Pandas type it describes.
+       >>> from pandera import DataFrameModel
+       >>> from pandera.typing import DataFrame
+       >>> class MuhModel(DataFrameModel): pass
+       >>> find_hint_pep484585_generic_base_first_in_module(
+       ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
+       <class 'pandas.DataFrame'>
     '''
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
 
@@ -741,9 +851,9 @@ def find_hint_pep484585_generic_module_base_first(
 def iter_hint_pep484585_generic_bases_unerased_tree(
     # Mandatory parameters.
     hint: object,
-    conf: BeartypeConf,
 
     # Optional parameters.
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> Iterable:
@@ -841,9 +951,11 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     ----------
     hint : object
         Generic type hint to be inspected.
-    conf : BeartypeConf
+    conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
+        all settings configuring type-checking for the passed object). Defaults
+        to :data:`.BEARTYPE_CONF_DEFAULT`, the default :math:`O(1)`
+        type-checking configuration.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
@@ -930,17 +1042,17 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
                 hint_base_sign is HintSignGeneric and
                 # Is neither...
                 not (
-                    # A PEP 585-compliant superclass *NOR*...
+                    # A PEP 585-compliant superclass (e.g., "list[T]") *NOR*...
                     is_hint_pep585_builtin_subscripted(hint_base) and
                     # A PEP 484- or 544-compliant superclass defined by the
-                    # "typing" module...
+                    # "typing" module (e.g., "typing.Generic")...
                     is_hint_pep_typing(hint_base)
                 )
             ):
             # Then this pseudo-superclass is a user-defined PEP 484-compliant
             # generic or 544-compliant protocol. In this case, generate *NO*
             # type-checking code for this pseudo-superclass; we only enqueue all
-            # parent pseudo-superclasses of this pseudo-superclasses for
+            # parent pseudo-superclasses of this child pseudo-superclass for
             # visitation by later iteration of this inner BFS.
             #
             # See "hints_bases" for explanatory commentary.

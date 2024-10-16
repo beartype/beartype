@@ -23,6 +23,8 @@ from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585generic import (
     GenericTypeHint)
+from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
+    SubscriptedTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
     TupleFixedTypeHint,
     TupleVariableTypeHint,
@@ -112,6 +114,27 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
                 f'currently unsupported by "beartype.door.TypeHint".'
             )
     # Else, this hint is supported.
+    #
+    #FIXME: This and the prior branch could probably be meaningful combined.
+    #For now, gotta keep 'em separated to preserve personal sanity.
+    # If it is *NOT* the case that either...
+    elif not (
+        #FIXME: Improve "_HINT_SIGNS_IRREDUCIBLE" docstring below, please.
+        # This is irreducible and thus *NOT* safely reducible to the
+        # "ClassTypeHint" wrapper even when unsubscripted *OR*...
+        hint_sign in _HINT_SIGNS_IRREDUCIBLE or
+        # This hint is a generic *OR*...
+        #
+        # This hint is subscripted by one or more child type hints.
+        get_hint_pep_args(hint)
+    ):
+        #FIXME: Still not quite right honestly. The wrapper for the
+        #unsubscripted "typing.List" factory should probably *NOT* be
+        #"ClassTypeHint". After all, "typing.List" is *NOT* a type. I sigh.
+        # Replace this inappropriate "SubscriptedTypeHint" wrapper with the more
+        # appropriate "ClassTypeHint" subclass wrapping unsubscripted types.
+        wrapper_subclass = ClassTypeHint
+    # # In any case, this hint is supported by this concrete subclass.
 
     #FIXME: Alternately, it might be preferable to refactor this to resemble:
     #    if (
@@ -124,21 +147,6 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     #condition we're going for -- assuming it works, of course. *sigh*
     #FIXME: While sensible, the above approach induces non-trivial test
     #failures. Let's investigate this further at a later time, please.
-
-    #FIXME: Push the "not" up to the top level of this conditional, please.
-    # If this hint is unsubscripted a subscriptable type has no args, all we care about is the origin.
-    elif (
-        # Unsubscripted (i.e., indexed by *NO* child type hints) *AND*...
-        not get_hint_pep_args(hint) and
-        #FIXME: No idea, bro. This is pretty weird. For one,
-        #"_HINT_SIGNS_ORIGINLESS" doesn't even contain all the signs it should
-        #(e.g., "HintSignLiteral", "HintSignUnion"). For another we should just
-        #be calling this instead:
-        #    get_hint_pep_origin_type_or_none(hint) is not None
-        hint_sign not in _HINT_SIGNS_ORIGINLESS
-    ):
-        wrapper_subclass = ClassTypeHint
-    # In any case, this hint is supported by this concrete subclass.
 
     # Return this subclass.
     return wrapper_subclass
@@ -161,13 +169,20 @@ to the :class:`TypeHint` subclass handling those hints.
 '''
 
 
-#FIXME: Consider shifting into "datapepsignset" if still required.
-_HINT_SIGNS_ORIGINLESS = frozenset((
+#FIXME: Consider shifting into "datapepsignset".
+_HINT_SIGNS_IRREDUCIBLE = frozenset((
+    # PEP 484- and 585-compliant generics are best wrapped by the standard
+    # "GenericTypeHint" wrapper even when directly unsubscripted. Why? Because
+    # *ALL* generics are (transitively) semantically subscripted either:
+    # * Directly (e.g., "MuhGeneric[int]") *OR*...
+    # * Indirectly by one or more of their unerased pseudo-superclasses.
+    HintSignGeneric,
+
     HintSignNewType,
     HintSignTypeVar,
 ))
 '''
-Frozen set of all **origin-less signs.**
+Frozen set of all **irreducible signs.**
 '''
 
 # ....................{ PRIVATE ~ initializers             }....................
@@ -177,8 +192,6 @@ def _init() -> None:
     '''
 
     # Isolate function-specific imports.
-    from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
-        SubscriptedTypeHint)
     from beartype._data.hint.pep.sign.datapepsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
     from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
