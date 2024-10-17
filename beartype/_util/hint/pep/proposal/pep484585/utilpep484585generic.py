@@ -19,6 +19,7 @@ from beartype.typing import (
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -40,7 +41,6 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 )
 from beartype._util.module.utilmodtest import (
     is_object_module_thirdparty_blacklisted)
-from collections import deque
 from collections.abc import (
     Iterable,
     Sequence,
@@ -217,12 +217,7 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     return False
 
 # ....................{ GETTERS ~ args                     }....................
-#FIXME: Docstring us up, please.
-#FIXME: Unit test us up, please.
-#FIXME: Optimize away the recursion with explicit iteration, please. For now,
-#recursion yields a substantially simpler implementation. *shrug*
-#FIXME: Actually, maybe we don't care about recursion costs here? This getter is
-#only called by the inherently recursive "beartype.door" subpackage.
+@callable_cached
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.
     hint: object,
@@ -231,8 +226,98 @@ def get_hint_pep484585_generic_args_full(
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> tuple:
+    '''
+    Tuple of the one or more **full child type hints** (i.e., complete tuple of
+    *all* PEP-compliant type hints both directly subscripting the passed generic
+    *and* directly subscripting one or more unerased pseudo-superclasses
+    inherited by this generic) transitively subscripting the passed :pep:`484`-
+    or :pep:`585`-compliant **generic** (i.e., class superficially subclassing
+    at least one PEP-compliant type hint that is possibly *not* an actual class)
+    if this object is a generic *or* raise an exception otherwise (i.e., if this
+    object is not a generic).
+
+    This getter greedily replaces in the passed tuple as many abstract
+    :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
+    objects) as there are concrete child type hints directly subscripting the
+    passed generic. Doing so effectively "bubbles up" these concrete children up
+    the class hierarchy into the "empty placeholders" established by the type
+    variables transitively subscripting all pseudo-superclasses of this generic.
+
+    This getter is guaranteed to return a non-empty tuple. By definition, a
+    generic subclasses one or more generic superclasses necessarily subscripted
+    by one or more child type hints.
+
+    This getter is memoized for efficiency.
+
+    Caveats
+    -------
+    **This getter is computationally complex in both space and time.** This
+    getter exhibits:
+
+    * Amortized :math:`O(1)` constant time complexity, thanks to memoization.
+    * Non-amortized worst-case :math:`O(jk)` quadratic time complexity for:
+
+      * :math:`j` the largest number of child type hints transitively
+        subscripting a pseudo-superclass of this generic.
+      * :math:`k` the total number of transitive pseudo-superclasses of this
+        generic.
+
+    **This getter is currently implemented with recursion.** Doing so yields a
+    relatively trivial algorithm at a relatively non-trivial increase in runtime
+    overhead, due to overhead associated with function calls in Python.
+
+    Parameters
+    ----------
+    hint : object
+        Generic type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    tuple
+        Tuple of the one or more full child type hints transitively subscripting
+        this generic.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is either:
+
+        * Neither a :pep:`484`- nor :pep:`585`-compliant generic.
+        * A :pep:`484`- or :pep:`585`-compliant generic subclassing *no*
+          pseudo-superclasses.
+
+    Examples
+    --------
+    .. code-block:: python
+
+       >>> from beartype.typing import Generic, TypeVar
+       >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+       ...     get_hint_pep484585_generic_args_full)
+
+       >>> S = TypeVar('S')
+       >>> T = TypeVar('T')
+
+       >>> class GenericSuperclass(Generic[S, T], list[complex]): pass
+       >>> class GenericSubclass(GenericSuperclass[int, T]): pass
+
+       >>> get_hint_pep484585_generic_args_full(GenericSuperclass)
+       (S, T, complex)
+       >>> get_hint_pep484585_generic_args_full(GenericSuperclass[int, float])
+       (int, float, complex)
+       >>> get_hint_pep484585_generic_args_full(GenericSubclass)
+       (int, T, complex)
+       >>> get_hint_pep484585_generic_args_full(GenericSubclass[float])
+       (int, float, complex)
+    '''
     # print(f'Introspecting generic {hint} full arguments...')
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_args,
@@ -240,21 +325,24 @@ def get_hint_pep484585_generic_args_full(
         get_hint_pep_sign_or_none,
     )
 
+    # ....................{ LOCALS                         }....................
+    # List of all full child type hints transitively subscripting this generic,
+    # to be returned as a coerced tuple.
     hint_args_full: list = []
 
-    #FIXME: Deque coercion is unnecessary and inefficient if this generic is
-    #directly unsubscripted. Consider optimizing, please. *shrug*
-    #FIXME: Discuss why we prefer a deque to a list here (i.e., for the
-    #O(1)-efficient deque.popleft() method called below versus the O(n)-slow
-    #"list.pop(0)" call we'd otherwise require).
-    #FIXME: Alternately, rather than use a deque, we could also use a reversed
-    #list and then treat it as a stack. Indeed, we'd probably then rename this
-    #local variable to "hint_args_stack". Faster? Slower? No idea. *sigh*
+    # Tuple of the zero or more child type hints directly subscripting this
+    # generic.
+    hint_args = get_hint_pep_args(hint)
 
-    # Intentionally modifiable deque (i.e., doubly-ended queue) of the one or
-    # more child type hints directly subscripting this generic, coerced from
-    # this tuple.
-    hint_args = deque(get_hint_pep_args(hint))
+    # 0-based index of the currently visited child type hint directly
+    # subscripting this generic in this tuple.
+    hint_args_index_curr = 0
+
+    # Either:
+    # * If this generic is directly subscripted by at least one child type hint,
+    #   the 0-based index of the last such hint in this tuple.
+    # * Else, this generic is directly unsubscripted. In this case, "-1".
+    hint_args_index_last = len(hint_args) - 1
 
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
     # superclasses prior to their type erasure by this generic.
@@ -266,49 +354,101 @@ def get_hint_pep484585_generic_args_full(
     )
     # print(f'Generic {hint} unerased bases: {hint_bases}')
 
+    # ....................{ SEARCH                         }....................
     # For each pseudo-superclass of this generic...
     for hint_base in hint_bases:
-        # Tuple of the one or more child type hints transitively subscripting
-        # this pseudo-superclass.
-        hint_base_args: Sequence = None  # type: ignore[assignment]
-
-        from beartype.typing import (
-            Generic,
-            Protocol,
+        # Intentionally modifiable sequence of the zero or more full child type
+        # hints transitively subscripting this pseudo-superclass, initially
+        # defined as either the...
+        hint_base_args: Sequence = (
+            # Tuple of the zero or more full child type hints transitively
+            # subscripting this pseudo-superclass, obtained by recursively
+            # calling this getter again with this pseudo-superclass...
+            get_hint_pep484585_generic_args_full(
+                hint_base, exception_cls, exception_prefix)
+            # If both of the following conditions are satisfied:
+            if (
+                # This pseudo-superclass is neither:
+                # * A root PEP 484-compliant "Generic[...]" type hint (e.g.,
+                #   "typing.Generic[S, int]").
+                # * A root PEP 544-compliant "Protocol[...]" type hint (e.g.,
+                #   "typing.Protocol[float, T]").
+                #
+                # Neither of these kinds of root "terminal" generics are valid
+                # generics from the perspective of this getter function, which
+                # expects a user-defined class transitively subscripting one or
+                # more of these kinds of root "terminal" generics.
+                #
+                # Recursively passing either of these kinds of root "terminal"
+                # generics to this getter would raise an exception.
+                get_hint_pep_origin_or_none(hint_base) not in (
+                    TYPES_PEP484544_GENERIC) and
+                # This pseudo-superclass is a PEP 484- or 585-compliant generic.
+                # Note that this tester is mildly slower than the prior test and
+                # thus intentionally tested later.
+                is_hint_pep484585_generic(hint_base)
+            ) else
+            # Else, this pseudo-superclass is either not a generic *OR* is a
+            # generic but is a root "terminal" generic. In either case,
+            # non-recursively obtain the tuple of the zero or more child type
+            # hints directly subscripting this pseudo-superclass.
+            get_hint_pep_args(hint_base)
         )
 
+        # If...
         if (
-            #FIXME: Inefficient. Globalize this frozen set somewhere in
-            #the "beartype._data.hint.pep" subpackage, please.
-            get_hint_pep_origin_or_none(hint_base) not in frozenset((
-                Generic, Protocol)) and
-            is_hint_pep484585_generic(hint_base)
+            # This pseudo-superclass is subscripted by at least one child type
+            # hint *AND*...
+            hint_base_args and
+            # The passed generic is still directly subscripted by one or more
+            # child type hints that have yet to be "bubbled up" the class
+            # hierarchy (i.e., by replacing the first unused PEP 484-compliant
+            # type variable transitively subscripting this pseudo-superclass).
+            hint_args_index_curr <= hint_args_index_last
         ):
-            hint_base_args = get_hint_pep484585_generic_args_full(
-                hint=hint_base,
-                exception_cls=exception_cls,
-                exception_prefix=exception_prefix,
-            )
-        else:
-            hint_base_args = get_hint_pep_args(hint_base)
-
-        if hint_args:
+            # Modifiable list of the one or more child type hints subscripting
+            # this pseudo-superclass, coerced from this tuple.
             hint_base_args = list(hint_base_args)
 
+            # For the 0-based index of each full child type hint transitively
+            # subscripting this pseudo-superclass and this hint...
             for hint_base_arg_index, hint_base_arg in enumerate(hint_base_args):
-                # Sign uniquely identifying this child type hint of this
-                # pseudo-superclass if any *OR* "None".
+                # Sign uniquely identifying this child type hint transitively
+                # subscripting this pseudo-superclass if any *OR* "None".
                 hint_base_arg_sign = get_hint_pep_sign_or_none(hint_base_arg)
 
+                # If this hint is a PEP 484-compliant type variable...
                 if hint_base_arg_sign is HintSignTypeVar:
-                    hint_base_args[hint_base_arg_index] = hint_args[0]
-                    hint_args.popleft()
+                    # "Bubble up" the currently unassigned child type hint
+                    # directly subscripting the passed generic into the
+                    # "empty placeholder" signified by this type variable in
+                    # this list of child type hints transitively subscripting
+                    # this pseudo-superclass of this generic. <-- lolwat
+                    hint_base_args[hint_base_arg_index] = hint_args[
+                        hint_args_index_curr]
 
-                    if not hint_args:
+                    # Note that the current child type hint directly
+                    # subscripting this generic has now been bubbled up.
+                    hint_args_index_curr += 1
+
+                    # If all child type hints directly subscripting this generic
+                    # have now been bubbled up, halt this nested iteration.
+                    if hint_args_index_curr > hint_args_index_last:
                         break
+                    # Else, one or more child type hints directly subscripting
+                    # this generic have yet to be bubbled up. In this case,
+                    # continue to the next such hint.
+        # Else, either this pseudo-superclass is unsubscripted *OR* all child
+        # type hints directly subscripting this generic have already been
+        # bubbled up. In either case, no further bubbling is warranted.
 
+        # Append this possibly modified sequence of all child type hints
+        # transitively subscripting this pseudo-superclass to this list of all
+        # child type hints transitively subscripting this generic.
         hint_args_full.extend(hint_base_args)
 
+    # ....................{ RETURN                         }....................
+    # Return the tuple of all full child type hints, coerced from this list.
     return tuple(hint_args_full)
 
 # ....................{ GETTERS ~ bases                    }....................
@@ -327,8 +467,7 @@ def get_hint_pep484585_generic_bases_unerased(
     :pep:`585`-compliant **generic** (i.e., class superficially subclassing at
     least one PEP-compliant type hint that is possibly *not* an actual class) if
     this object is a generic *or* raise an exception otherwise (i.e., if this
-    object is either not a class *or* is a class subclassing no non-class
-    PEP-compliant objects).
+    object is *not* a generic).
 
     This getter is guaranteed to return a non-empty tuple. By definition, a
     generic is a type subclassing one or more generic superclasses.
@@ -470,19 +609,19 @@ def get_hint_pep484585_generic_bases_unerased(
         If this hint is either:
 
         * Neither a :pep:`484`- nor :pep:`585`-compliant generic.
-        * A :pep:`484`- nor :pep:`585`-compliant generic subclassing *no*
+        * A :pep:`484`- or :pep:`585`-compliant generic subclassing *no*
           pseudo-superclasses.
 
     Examples
     --------
     .. code-block:: python
 
-       >>> import typing
-       >>> from beartype._util.hint.pep.utilpepget import (
+       >>> from beartype.typing import Container, Iterable, TypeVar
+       >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
        ...     get_hint_pep484585_generic_bases_unerased)
 
-       >>> T = typing.TypeVar('T')
-       >>> class MuhIterable(typing.Iterable[T], typing.Container[T]): pass
+       >>> T = TypeVar('T')
+       >>> class MuhIterable(Iterable[T], Container[T]): pass
 
        >>> get_hint_pep585_generic_bases_unerased(MuhIterable)
        (typing.Iterable[~T], typing.Container[~T])
@@ -538,6 +677,158 @@ def get_hint_pep484585_generic_bases_unerased(
 
     # Return this tuple of these pseudo-superclasses.
     return hint_pep_generic_bases_unerased
+
+
+def get_hint_pep484585_generic_base_in_module_first(
+    # Mandatory parameters.
+    hint: object,
+    module_name: str,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> type:
+    '''
+    Iteratively find and return the first **unerased superclass** (i.e.,
+    unerased pseudo-superclass that is an actual superclass) transitively
+    defined under the third-party package or module with the passed name
+    subclassed by the unsubscripted generic type underlying the passed
+    :pep:`484`- or :pep:`585`-compliant **generic** (i.e., object that may *not*
+    actually be a class despite subclassing at least one PEP-compliant type hint
+    that also may *not* actually be a class).
+
+    This finder is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator). Although doing so *would* dramatically
+    improve the efficiency of this getter, doing so:
+
+    * Would require all passed parameters be passed positionally, which becomes
+      rather cumbersome given the number of requisite parameters.
+    * Is (currently) unnecessary, as all callers of this function are themselves
+      already memoized.
+
+    Motivation
+    ----------
+    This finder is typically called to reduce **descriptive generics** (i.e.,
+    generics defined in third-party packages intended to be used *only* as
+    descriptive type hints rather than actually instantiated as objects as most
+    generics are) to the isinstanceable classes those generics describe.
+    Although the mere existence of descriptive generics should be considered to
+    be a semantic (if not syntactic) violation of :pep:`484`, the widespread
+    proliferation of descriptive generics leaves :mod:`beartype` with little
+    choice but to grin wanly and bear the pain they subject us to. As example,
+    this finder is currently called elsewhere to:
+
+    * Reduce Pandera type hints (e.g., `pandera.typing.DataFrame[...]`) to the
+      Pandas types they describe (e.g., `pandas.DataFrame`).
+    * Reduce NumPy type hints (e.g., `numpy.typing.NDArray[...]`) to the
+      NumPy types they describe (e.g., `numpy.ndarray`).
+
+    See examples below for further discussion.
+
+    Parameters
+    ----------
+    hint : object
+        Generic type hint to be inspected.
+    module_name : str
+        Fully-qualified name of the third-party package or module to find the
+        first class in this generic type hint of.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    type
+        First unerased superclass transitively defined under this package or
+        module subclassed by the unsubscripted generic type underlying this
+        generic type hint.
+
+    Examples
+    --------
+    .. code-block:: python
+
+       >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+       ...     find_hint_pep484585_generic_base_first_in_module)
+
+       # Reduce a Pandera type hint to the Pandas type it describes.
+       >>> from pandera import DataFrameModel
+       >>> from pandera.typing import DataFrame
+       >>> class MuhModel(DataFrameModel): pass
+       >>> find_hint_pep484585_generic_base_first_in_module(
+       ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
+       <class 'pandas.DataFrame'>
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.module.utilmodget import get_object_module_name_or_none
+
+    # Either:
+    # * If this generic is unsubscripted, this unsubscripted generic type as is.
+    # * If this generic is subscripted, the unsubscripted generic type
+    #   underlying this subscripted generic (e.g., the type
+    #   "pandera.typing.pandas.DataFrame" given the type hint
+    #   "pandera.typing.DataFrame[...]").
+    hint_type = get_hint_pep484585_generic_type(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Fully-qualified name of the module to be searched for suffixed by a "."
+    # delimiter. This is a micro-optimization improving lookup speed below.
+    module_name_prefix = f'{module_name}.'
+
+    # Tuple of the one or more unerased pseudo-superclasses which this
+    # unsubscripted generic type originally subclassed prior to type erasure.
+    #
+    # Note that we could also inspect the method-resolution order (MRO) of this
+    # type via the "hint.__mro__" dunder tuple, but that doing so would only
+    # needlessly reduce the efficiency of the following iteration by
+    # substantially increasing the number of iterations required to find the
+    # desired superclass and thus the worst-case complexity of that iteration.
+    hint_type_bases = get_hint_pep484585_generic_bases_unerased(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # For each unerased pseudo-superclass of this unsubscripted generic type...
+    for hint_base in hint_type_bases:
+        # If this pseudo-superclass is *NOT* an actual superclass, silently
+        # ignore this non-superclass and continue to the next pseudo-superclass.
+        if not isinstance(hint_base, type):
+            continue
+        # Else, this pseudo-superclass is an actual superclass.
+
+        # Fully-qualified name of the module declaring this superclass if any
+        # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
+        hint_base_module_name = get_object_module_name_or_none(hint_base)
+
+        # If this module exists *AND* either...
+        if hint_base_module_name and (
+            # This module is the desired module itself *OR*...
+            hint_base_module_name == module_name_prefix or
+            # This module is a submodule of the desired module...
+            hint_base_module_name.startswith(module_name_prefix)
+        # Then return this superclass.
+        ):
+            # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
+            return hint_base
+        # Else, this is *NOT* the desired module. In this case, continue to the
+        # next superclass.
+    # Else, *NO* superclass of this generic resides in the desired module.
+
+    # Raise an exception of the passed type.
+    raise exception_cls(
+        f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+        f'type {repr(hint_type)} subclasses no "{module_name}" type '
+        f'(i.e., type with module name prefixed by "{module_name}" not '
+        f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
+    )
 
 # ....................{ GETTERS ~ type                     }....................
 #FIXME: Unit test us up, please.
@@ -693,158 +984,6 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
 
     # Return the "None" singleton.
     return None
-
-# ....................{ FINDERS                            }....................
-def find_hint_pep484585_generic_module_base_first(
-    # Mandatory parameters.
-    hint: object,
-    module_name: str,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
-    exception_prefix: str = '',
-) -> type:
-    '''
-    Iteratively find and return the first **unerased superclass** (i.e.,
-    unerased pseudo-superclass that is an actual superclass) transitively
-    defined under the third-party package or module with the passed name
-    subclassed by the unsubscripted generic type underlying the passed
-    :pep:`484`- or :pep:`585`-compliant **generic** (i.e., object that may *not*
-    actually be a class despite subclassing at least one PEP-compliant type hint
-    that also may *not* actually be a class).
-
-    This finder is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Although doing so *would* dramatically
-    improve the efficiency of this finder, doing so:
-
-    * Would require all passed parameters be passed positionally, which becomes
-      rather cumbersome given the number of requisite parameters.
-    * Is (currently) unnecessary, as all callers of this function are themselves
-      already memoized.
-
-    Motivation
-    ----------
-    This finder is typically called to reduce **descriptive generics** (i.e.,
-    generics defined in third-party packages intended to be used *only* as
-    descriptive type hints rather than actually instantiated as objects as most
-    generics are) to the isinstanceable classes those generics describe.
-    Although the mere existence of descriptive generics should be considered to
-    be a semantic (if not syntactic) violation of :pep:`484`, the widespread
-    proliferation of descriptive generics leaves :mod:`beartype` with little
-    choice but to grin wanly and bear the pain they subject us to. As example,
-    this finder is currently called elsewhere to:
-
-    * Reduce Pandera type hints (e.g., `pandera.typing.DataFrame[...]`) to the
-      Pandas types they describe (e.g., `pandas.DataFrame`).
-    * Reduce NumPy type hints (e.g., `numpy.typing.NDArray[...]`) to the
-      NumPy types they describe (e.g., `numpy.ndarray`).
-
-    See examples below for further discussion.
-
-    Parameters
-    ----------
-    hint : object
-        Generic type hint to be inspected.
-    module_name : str
-        Fully-qualified name of the third-party package or module to find the
-        first class in this generic type hint of.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    type
-        First unerased superclass transitively defined under this package or
-        module subclassed by the unsubscripted generic type underlying this
-        generic type hint.
-
-    Examples
-    --------
-    .. code-block:: python
-
-       >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-       ...     find_hint_pep484585_generic_base_first_in_module)
-
-       # Reduce a Pandera type hint to the Pandas type it describes.
-       >>> from pandera import DataFrameModel
-       >>> from pandera.typing import DataFrame
-       >>> class MuhModel(DataFrameModel): pass
-       >>> find_hint_pep484585_generic_base_first_in_module(
-       ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
-       <class 'pandas.DataFrame'>
-    '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
-
-    # Avoid circular import dependencies.
-    from beartype._util.module.utilmodget import get_object_module_name_or_none
-
-    # Either:
-    # * If this generic is unsubscripted, this unsubscripted generic type as is.
-    # * If this generic is subscripted, the unsubscripted generic type
-    #   underlying this subscripted generic (e.g., the type
-    #   "pandera.typing.pandas.DataFrame" given the type hint
-    #   "pandera.typing.DataFrame[...]").
-    hint_type = get_hint_pep484585_generic_type(
-        hint=hint,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-
-    # Fully-qualified name of the module to be searched for suffixed by a "."
-    # delimiter. This is a micro-optimization improving lookup speed below.
-    module_name_prefix = f'{module_name}.'
-
-    # Tuple of the one or more unerased pseudo-superclasses which this
-    # unsubscripted generic type originally subclassed prior to type erasure.
-    #
-    # Note that we could also inspect the method-resolution order (MRO) of this
-    # type via the "hint.__mro__" dunder tuple, but that doing so would only
-    # needlessly reduce the efficiency of the following iteration by
-    # substantially increasing the number of iterations required to find the
-    # desired superclass and thus the worst-case complexity of that iteration.
-    hint_type_bases = get_hint_pep484585_generic_bases_unerased(
-        hint=hint,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-
-    # For each unerased pseudo-superclass of this unsubscripted generic type...
-    for hint_base in hint_type_bases:
-        # If this pseudo-superclass is *NOT* an actual superclass, silently
-        # ignore this non-superclass and continue to the next pseudo-superclass.
-        if not isinstance(hint_base, type):
-            continue
-        # Else, this pseudo-superclass is an actual superclass.
-
-        # Fully-qualified name of the module declaring this superclass if any
-        # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
-        hint_base_module_name = get_object_module_name_or_none(hint_base)
-
-        # If this module exists *AND* either...
-        if hint_base_module_name and (
-            # This module is the desired module itself *OR*...
-            hint_base_module_name == module_name_prefix or
-            # This module is a submodule of the desired module...
-            hint_base_module_name.startswith(module_name_prefix)
-        # Then return this superclass.
-        ):
-            # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
-            return hint_base
-        # Else, this is *NOT* the desired module. In this case, continue to the
-        # next superclass.
-    # Else, *NO* superclass of this generic resides in the desired module.
-
-    # Raise an exception of the passed type.
-    raise exception_cls(
-        f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
-        f'type {repr(hint_type)} subclasses no "{module_name}" type '
-        f'(i.e., type with module name prefixed by "{module_name}" not '
-        f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
-    )
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.

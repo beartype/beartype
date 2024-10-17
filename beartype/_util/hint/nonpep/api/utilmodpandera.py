@@ -167,14 +167,14 @@ def reduce_hint_pandera(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        find_hint_pep484585_generic_module_base_first)
+        get_hint_pep484585_generic_base_in_module_first)
 
     # Find and return the first Pandas type subclassed by this Pandera generic
     # type hint.
     #
     # Note that we intentionally pass positional rather than keyword arguments
     # as a microoptimization for improved cache-time efficiency. Gah!
-    return find_hint_pep484585_generic_module_base_first(
+    return get_hint_pep484585_generic_base_in_module_first(
         hint=hint,
         module_name=_PANDAS_MODULE_NAME,
         exception_cls=BeartypeDecorHintNonpepPanderaException,

@@ -14,6 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Dict,
     ForwardRef,
+    Generic,
+    Protocol,
 )
 from beartype._cave._cavefast import (
     ClassType,
@@ -129,6 +131,15 @@ TYPES_EXCEPTION_NAMESPACE = (
 Tuple of all **standard scope exception types** (i.e., types of all standard
 exceptions raised when a **namespace** (e.g., global or local scope, class or
 object dictionary) fails to define a given attribute or name).
+'''
+
+# ....................{ PEP ~ (484|544)                    }....................
+TYPES_PEP484544_GENERIC = frozenset((Generic, Protocol))
+'''
+Frozen set of all :pep:`484`- and :pep:`544`-compliant **generic superclasses**
+(i.e., public types defined by the standard :mod:`typing` module, intended to be
+subscripted by user-defined :pep:`484`-compliant generics and
+:pep:`544`-compliant protocols).
 '''
 
 # ....................{ PEP ~ (484|585)                    }....................
