@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Any,
 )
-from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahintpep import TypeGuard
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
     get_func_codeobj_basename,

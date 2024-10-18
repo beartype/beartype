@@ -26,7 +26,7 @@ class _TypeHintTypeFactoryMeta(type):
     '''
     **Type hint type factory metaclass** (i.e., the root :class:`type` metaclass
     augmented with caching to memoize singleton instances of the
-    :class:`TypeHintTypeFactory` class declared below).
+    :class:`.TypeHintTypeFactory` class declared below).
 
     This metaclass is superior to the usual approach of implementing the
     singleton design pattern: overriding the :meth:`__new__` method of a

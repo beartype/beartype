@@ -51,7 +51,7 @@ from beartype._check.checkmake import (
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahintpep import TypeGuard
 from beartype._data.hint.datahinttyping import T
 
 # ....................{ VALIDATORS                         }....................

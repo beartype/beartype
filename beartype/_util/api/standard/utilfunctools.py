@@ -21,7 +21,7 @@ from beartype._cave._cavefast import (
     CallableFunctoolsLruCacheType,
     CallableFunctoolsPartialType,
 )
-from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahintpep import TypeGuard
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     DictStrToAny,

@@ -12,6 +12,12 @@ documentation purposes).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: [PEP] Replace "TypeGuard" with "TypeIs" everywhere across the @beartype
+#codebase, please. "TypeIs" entirely obsoletes "TypeGuard" for all practical
+#intents and purposes (including ours). See also:
+#    https://peps.python.org/pep-0742
+
 # ....................{ IMPORTS                            }....................
 import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
@@ -21,6 +27,7 @@ from ast import (
     FunctionDef,
 )
 from beartype.typing import (
+    # TYPE_CHECKING,
     AbstractSet,
     Any,
     Callable,
@@ -635,6 +642,7 @@ instances definitely encapsulating pathnames).
 # edge cases, including recursive "beartype.HintOverrides" globally defined by
 # the "beartype._conf.confoverrides" submodule.
 
+#FIXME: Shift into the more appropriate "datahintpep" submodule, please.
 Pep484TowerComplex = (
     complex | float | int  # type: ignore[operator]
     if IS_PYTHON_AT_LEAST_3_10 else
@@ -659,6 +667,7 @@ Pep484TowerFloat = (
 # ....................{ PEP (484|585)                      }....................
 # Type hints required to fully comply with both PEP 484 *AND* 585.
 
+#FIXME: Shift into the more appropriate "datahintpep" submodule, please.
 Pep484585ForwardRef = Union[str, ForwardRef]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
@@ -666,7 +675,7 @@ Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 
 See Also
 --------
-:data:`HINT_PEP484585_FORWARDREF_TYPES`
+:data:`.HINT_PEP484585_FORWARDREF_TYPES`
     Further details.
 '''
 

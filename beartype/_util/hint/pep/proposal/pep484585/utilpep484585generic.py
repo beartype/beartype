@@ -20,6 +20,7 @@ from beartype.typing import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
+from beartype._data.hint.datahintpep import TypeFormAny
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -217,24 +218,30 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     return False
 
 # ....................{ GETTERS ~ args                     }....................
-@callable_cached
+#FIXME: Generalize to accept an optional "hint_base" parameter that we then
+#filter returned child type hints against. How? No idea. Perhaps by returning a
+#2-tuple "(args_unfiltered, args_filtered)" where:
+#* "args_unfiltered" is what we currently return.
+#* "args_filtered" is "args_unfiltered" filtered with respect to "hint_base".
+#  Sounds reasonable, honestly. *shrug*
+#FIXME: Unit test up "hint_base_target", please.
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.
-    hint: object,
+    hint: TypeFormAny,
 
     # Optional parameters.
+    hint_base_target: Optional[TypeFormAny] = None,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> tuple:
     '''
     Tuple of the one or more **full child type hints** (i.e., complete tuple of
-    *all* PEP-compliant type hints both directly subscripting the passed generic
-    *and* directly subscripting one or more unerased pseudo-superclasses
-    inherited by this generic) transitively subscripting the passed :pep:`484`-
-    or :pep:`585`-compliant **generic** (i.e., class superficially subclassing
-    at least one PEP-compliant type hint that is possibly *not* an actual class)
-    if this object is a generic *or* raise an exception otherwise (i.e., if this
-    object is not a generic).
+    *all* type hints directly subscripting both the passed generic *and*
+    one or more pseudo-superclasses of this generic) transitively subscripting
+    the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e., class
+    superficially subclassing at least one PEP-compliant type hint that is
+    possibly *not* an actual class) if this object is a generic *or* raise an
+    exception otherwise (i.e., if this object is not a generic).
 
     This getter greedily replaces in the passed tuple as many abstract
     :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
@@ -270,6 +277,25 @@ def get_hint_pep484585_generic_args_full(
     ----------
     hint : object
         Generic type hint to be inspected.
+    hint_base_target : Optional[TypeFormAny] = None
+        **Pseudo-superclass target** (i.e., unerased transitive
+        pseudo-superclass of the passed generic to specifically search, filter,
+        and return the child type hints of). Defaults to :data:`None` such that:
+
+        * If this parameter is :data:`None`, this getter returns the complete
+          tuple of *all* type hints directly subscripting both the passed
+          generic *and* one or more pseudo-superclasses of this generic.
+        * If this parameter is *not* :data:`None`, this getter returns the
+          partial tuple of *only* type hints directly subscripting both the
+          passed generic *and* this passed pseudo-superclass of this generic.
+
+        This parameter is typically passed to deduce whether two arbitrary
+        generics are related according to the :func:`beartype.door.is_subhint`
+        relation. If all child type hints in the tuple returned by this getter
+        passed some generic and its pseudosuperclass are subhints of all
+        child type hints in the tuple returned by this getter passed *only*
+        that pseudosuperclass, then that generic is necessarily a subhint of
+        that pseudosuperclass. Look. Just go with it, people.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep484585Exception`.
@@ -315,6 +341,60 @@ def get_hint_pep484585_generic_args_full(
        >>> get_hint_pep484585_generic_args_full(GenericSubclass[float])
        (int, float, complex)
     '''
+
+    # if hint_base_target is not None:
+
+    # "hint_args_full" is the complete tuple of *ALL* type hints directly
+    # subscripting both the passed generic and *ALL* pseudo-superclasses
+    # of this generic.
+    #
+    # "hint_base_target_args_full" is the partial tuple of *ONLY* type hints
+    # directly subscripting both the passed generic and the passed target
+    # pseudo-superclass of this generic.
+    hint_args_full, hint_base_target_args_full = (
+        _get_hint_pep484585_generic_args_full(
+            hint, hint_base_target, exception_cls, exception_prefix))
+
+    # Return either...
+    return (
+        # If the caller explicitly passed a pseudosuperclass target, return the
+        # partial tuple of *ONLY* type hints directly subscripting both the
+        # passed generic and the passed target pseudo-superclass.
+        hint_args_full
+        if hint_base_target is None else
+        # Else, the caller passed *NO* pseudosuperclass target. In this case,
+        # return the complete tuple of *ALL* type hints directly subscripting
+        # both the passed generic and *ALL* pseudo-superclasses of this generic.
+        hint_base_target_args_full
+    )
+
+
+@callable_cached
+def _get_hint_pep484585_generic_args_full(
+    hint: TypeFormAny,
+    hint_base_target: Optional[TypeFormAny],
+    exception_cls: TypeException,
+    exception_prefix: str,
+) -> Tuple[tuple, tuple]:
+    '''
+    Lower-level memoized private getter underlying the higher-level unmemoized
+    public :func:`.get_hint_pep484585_generic_args_full` getter.
+
+    This private getter enables that public getter to present a user-friendly
+    API while still benefiting from extreme memoization.
+
+    Returns
+    -------
+    Tuple[tuple, tuple]
+        2-tuple ``(hint_args_full, hint_base_target_args_full)``, where:
+
+        * ``hint_args_full`` is the complete tuple of *all* type hints directly
+          subscripting both the passed generic and *all* pseudo-superclasses of
+          this generic.
+        * ``hint_base_target_args_full`` is the partial tuple of *only* type
+          hints directly subscripting both the passed generic and the passed
+          target pseudo-superclass of this generic.
+    '''
     # print(f'Introspecting generic {hint} full arguments...')
 
     # ....................{ IMPORTS                        }....................
@@ -357,43 +437,55 @@ def get_hint_pep484585_generic_args_full(
     # ....................{ SEARCH                         }....................
     # For each pseudo-superclass of this generic...
     for hint_base in hint_bases:
-        # Intentionally modifiable sequence of the zero or more full child type
-        # hints transitively subscripting this pseudo-superclass, initially
-        # defined as either the...
-        hint_base_args: Sequence = (
+        # Possibly modifiable sequence of the zero or more full child type hints
+        # transitively subscripting this pseudo-superclass.
+        hint_base_args: Sequence[TypeFormAny] = ()
+
+        # Possibly modifiable sequence of the zero or more full child type hints
+        # transitively subscripting this pseudo-superclass if this
+        # pseudo-superclass is either the passed target pseudo-superclass *OR* a
+        # subclass of that target pseudo-superclass.
+        hint_base_target_args: Sequence[TypeFormAny] = ()
+
+        # If both of the following conditions are satisfied:
+        if (
+            # This pseudo-superclass is neither:
+            # * A root PEP 484-compliant "Generic[...]" type hint (e.g.,
+            #   "typing.Generic[S, int]").
+            # * A root PEP 544-compliant "Protocol[...]" type hint (e.g.,
+            #   "typing.Protocol[float, T]").
+            #
+            # Neither of these kinds of root "terminal" generics are valid
+            # generics from the perspective of this getter function, which
+            # expects a user-defined class transitively subscripting one or more
+            # of these kinds of root "terminal" generics.
+            #
+            # Recursively passing either of these kinds of root "terminal"
+            # generics to this getter would raise an exception.
+            get_hint_pep_origin_or_none(hint_base) not in (
+                TYPES_PEP484544_GENERIC) and
+            # This pseudo-superclass is a PEP 484- or 585-compliant generic.
+            # Note that this tester is mildly slower than the prior test and
+            # thus intentionally tested later.
+            is_hint_pep484585_generic(hint_base)
+        ):
             # Tuple of the zero or more full child type hints transitively
             # subscripting this pseudo-superclass, obtained by recursively
             # calling this getter again with this pseudo-superclass...
-            get_hint_pep484585_generic_args_full(
-                hint_base, exception_cls, exception_prefix)
-            # If both of the following conditions are satisfied:
-            if (
-                # This pseudo-superclass is neither:
-                # * A root PEP 484-compliant "Generic[...]" type hint (e.g.,
-                #   "typing.Generic[S, int]").
-                # * A root PEP 544-compliant "Protocol[...]" type hint (e.g.,
-                #   "typing.Protocol[float, T]").
-                #
-                # Neither of these kinds of root "terminal" generics are valid
-                # generics from the perspective of this getter function, which
-                # expects a user-defined class transitively subscripting one or
-                # more of these kinds of root "terminal" generics.
-                #
-                # Recursively passing either of these kinds of root "terminal"
-                # generics to this getter would raise an exception.
-                get_hint_pep_origin_or_none(hint_base) not in (
-                    TYPES_PEP484544_GENERIC) and
-                # This pseudo-superclass is a PEP 484- or 585-compliant generic.
-                # Note that this tester is mildly slower than the prior test and
-                # thus intentionally tested later.
-                is_hint_pep484585_generic(hint_base)
-            ) else
-            # Else, this pseudo-superclass is either not a generic *OR* is a
-            # generic but is a root "terminal" generic. In either case,
-            # non-recursively obtain the tuple of the zero or more child type
-            # hints directly subscripting this pseudo-superclass.
-            get_hint_pep_args(hint_base)
-        )
+            hint_base_args, hint_base_target_args = (
+                _get_hint_pep484585_generic_args_full(
+                    hint_base,
+                    hint_base_target,
+                    exception_cls,
+                    exception_prefix,
+                ))
+            # print(f'hint_base_args: {hint_base_args}')
+        # Else, this pseudo-superclass is either not a generic *OR* is a generic
+        # but is a root "terminal" generic. In either case, non-recursively
+        # obtain the tuple of the zero or more child type hints directly
+        # subscripting this pseudo-superclass.
+        else:
+            hint_base_args = get_hint_pep_args(hint_base)
 
         # If...
         if (
@@ -449,7 +541,8 @@ def get_hint_pep484585_generic_args_full(
 
     # ....................{ RETURN                         }....................
     # Return the tuple of all full child type hints, coerced from this list.
-    return tuple(hint_args_full)
+    #FIXME: Actually return something meaningful for the second item, please!
+    return (tuple(hint_args_full), ())
 
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(

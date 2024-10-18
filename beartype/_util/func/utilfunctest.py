@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
-from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahintpep import TypeGuard
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
