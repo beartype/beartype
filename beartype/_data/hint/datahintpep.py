@@ -29,6 +29,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Iterable,
+    Sequence,
+    Tuple,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
@@ -86,7 +89,7 @@ if TYPE_CHECKING:
 
     # See discussion below, please. *sigh*
     from typing_extensions import TypeAlias
-    TypeFormAny: TypeAlias = TypeForm
+    Hint: TypeAlias = TypeForm
 # Else, this submodule is currently being imported at runtime by Python. In this
 # case, dynamically import these type factories from whichever of the standard
 # "typing" module *OR* the third-party "typing_extensions" module declares these
@@ -100,7 +103,7 @@ else:
     TypeForm = import_typing_attr_or_fallback(
         'TypeForm', TypeHintTypeFactory(object))
 
-    TypeFormAny = TypeForm[object]
+    Hint = TypeForm[object]
     '''
     PEP-compliant type hint matching *any* PEP-compliant type hint.
 
@@ -108,3 +111,24 @@ else:
     unsubscripted :obj:`typing.TypeForm` type hint factory is currently unusable
     as such under Python <= 3.14. This insane hack trivially circumvents that.
     '''
+
+# ....................{ HINT                               }....................
+HintArgs = Tuple[Hint, ...]
+'''
+PEP-compliant type hint matching *any* **child type hints** (i.e., tuple of zero
+or more child type hints subscripting a parent type hint).
+'''
+
+
+IterableHints = Iterable[Hint]
+'''
+PEP-compliant type hint matching *any* **type hint iterable** (i.e., iterable
+iteratively yielding zero or more type hints).
+'''
+
+
+SequenceHints = Sequence[Hint]
+'''
+PEP-compliant type hint matching *any* **type hint sequence** (i.e., sequence
+iteratively yielding zero or more type hints).
+'''

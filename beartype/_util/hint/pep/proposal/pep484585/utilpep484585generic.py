@@ -15,12 +15,18 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
     Optional,
+    Sequence,
     Tuple,
 )
+# from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
-from beartype._data.hint.datahintpep import TypeFormAny
+from beartype._data.hint.datahintpep import (
+    Hint,
+    HintArgs,
+    IterableHints,
+)
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -42,10 +48,6 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 )
 from beartype._util.module.utilmodtest import (
     is_object_module_thirdparty_blacklisted)
-from collections.abc import (
-    Iterable,
-    Sequence,
-)
 
 # Intentionally import PEP 484-compliant "typing" type hint factories rather
 # than possibly PEP 585-compliant "beartype.typing" type hint factories.
@@ -218,22 +220,16 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     return False
 
 # ....................{ GETTERS ~ args                     }....................
-#FIXME: Generalize to accept an optional "hint_base" parameter that we then
-#filter returned child type hints against. How? No idea. Perhaps by returning a
-#2-tuple "(args_unfiltered, args_filtered)" where:
-#* "args_unfiltered" is what we currently return.
-#* "args_filtered" is "args_unfiltered" filtered with respect to "hint_base".
-#  Sounds reasonable, honestly. *shrug*
 #FIXME: Unit test up "hint_base_target", please.
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.
-    hint: TypeFormAny,
+    hint: Hint,
 
     # Optional parameters.
-    hint_base_target: Optional[TypeFormAny] = None,
+    hint_base_target: Optional[Hint] = None,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> tuple:
+) -> HintArgs:
     '''
     Tuple of the one or more **full child type hints** (i.e., complete tuple of
     *all* type hints directly subscripting both the passed generic *and*
@@ -277,10 +273,10 @@ def get_hint_pep484585_generic_args_full(
     ----------
     hint : object
         Generic type hint to be inspected.
-    hint_base_target : Optional[TypeFormAny] = None
-        **Pseudo-superclass target** (i.e., unerased transitive
-        pseudo-superclass of the passed generic to specifically search, filter,
-        and return the child type hints of). Defaults to :data:`None` such that:
+    hint_base_target : Optional[Hint] = None
+        **Pseudo-superclass target** (i.e., erased transitive pseudo-superclass
+        of the passed generic to specifically search, filter, and return the
+        child type hints of). Defaults to :data:`None`. Specifically:
 
         * If this parameter is :data:`None`, this getter returns the complete
           tuple of *all* type hints directly subscripting both the passed
@@ -329,53 +325,112 @@ def get_hint_pep484585_generic_args_full(
        >>> S = TypeVar('S')
        >>> T = TypeVar('T')
 
-       >>> class GenericSuperclass(Generic[S, T], list[complex]): pass
-       >>> class GenericSubclass(GenericSuperclass[int, T]): pass
+       >>> class GenericSuperclass(Generic[S], list[T]): pass
+       >>> class GenericList(list[complex]): pass
+       >>> class GenericSubclass(GenericSuperclass[int, T], GenericList): pass
 
        >>> get_hint_pep484585_generic_args_full(GenericSuperclass)
-       (S, T, complex)
+       (S, T)
        >>> get_hint_pep484585_generic_args_full(GenericSuperclass[int, float])
-       (int, float, complex)
+       (int, float)
        >>> get_hint_pep484585_generic_args_full(GenericSubclass)
        (int, T, complex)
        >>> get_hint_pep484585_generic_args_full(GenericSubclass[float])
        (int, float, complex)
+       >>> get_hint_pep484585_generic_args_full(GenericSubclass[float])
+       (int, float, complex)
     '''
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not exception type.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
-    # if hint_base_target is not None:
-
-    # "hint_args_full" is the complete tuple of *ALL* type hints directly
-    # subscripting both the passed generic and *ALL* pseudo-superclasses
-    # of this generic.
+    #FIXME: Unit test us up, please.
+    # If the caller explicitly passed a pseudosuperclass target...
     #
-    # "hint_base_target_args_full" is the partial tuple of *ONLY* type hints
-    # directly subscripting both the passed generic and the passed target
-    # pseudo-superclass of this generic.
-    hint_args_full, hint_base_target_args_full = (
-        _get_hint_pep484585_generic_args_full(
-            hint, hint_base_target, exception_cls, exception_prefix))
+    # Note that this is the common case for this getter and thus tested first.
+    if hint_base_target:
+        # Unsubscripted generic underlying this possibly subscripted target
+        # pseudo-superclass generic. For search purposes, *ANY* child hints
+        # subscripting this generic are not only irrelevant but harmful --
+        # promoting false negatives in higher-level functions (e.g.,
+        # beartype.door.is_subhint()) internally leveraging this lower-level
+        # getter. Ignoring these child hints is thus imperative. Since deciding
+        # child hint compatibility between the passed generic and this target
+        # pseudo-superclass is a non-trivial decision problem, this lower-level
+        # getter defers that problem to the caller by unconditionally returning
+        # the same result regardless of child hints subscripting this target
+        # pseudo-superclass.
+        #
+        # Consider the PEP 484-compliant catch-all "typing.Any", for example.
+        # Clearly, this getter should return the same tuple when passed an
+        # unsubscripted target pseudo-superclass as when passed a target
+        # pseudo-superclass subscripted by "typing.Any": e.g.,
+        #     >>> from typing import Any, Generic
+        #     >>> class MuhGeneric[S, T](Generic[S, T]): pass
+        #     >>> get_hint_pep484585_generic_args_full(
+        #     ...     MuhGeneric, hint_base_target=Generic)
+        #     (S, T)
+        #     >>> get_hint_pep484585_generic_args_full(
+        #     ...     MuhGeneric, hint_base_target=Generic[Any])
+        #     (S, T)
+        #     >>> get_hint_pep484585_generic_args_full(
+        #     ...     MuhGeneric, hint_base_target=Generic[S, T])
+        #     (S, T)
+        #     >>> get_hint_pep484585_generic_args_full(
+        #     ...     MuhGeneric, hint_base_target=Generic[int, float])
+        #     (S, T)
+        hint_base_target = get_hint_pep484585_generic_type(  # pyright: ignore
+            hint=hint_base_target,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
 
-    # Return either...
-    return (
-        # If the caller explicitly passed a pseudosuperclass target, return the
-        # partial tuple of *ONLY* type hints directly subscripting both the
-        # passed generic and the passed target pseudo-superclass.
-        hint_args_full
-        if hint_base_target is None else
-        # Else, the caller passed *NO* pseudosuperclass target. In this case,
-        # return the complete tuple of *ALL* type hints directly subscripting
-        # both the passed generic and *ALL* pseudo-superclasses of this generic.
-        hint_base_target_args_full
-    )
+        # Partial tuple of *ONLY* hints directly
+        # subscripting both this generic and this target pseudo-superclass.
+        _, hint_base_target_args_full = _get_hint_pep484585_generic_args_full(
+            hint, hint_base_target, exception_cls, exception_prefix)
+
+        # If *NO* hints directly subscript both this generic and target
+        # pseudo-superclass, raise an exception.
+        if not hint_base_target_args_full:
+            raise exception_cls(
+                f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+                f'pseudo-superclass target {repr(hint_base_target)} not found.'
+            )
+        # Else, one or more hints directly subscript both this generic and
+        # target pseudo-superclass.
+
+        # Return this partial tuple of these hints.
+        return hint_base_target_args_full
+    # Else, the caller passed *NO* pseudosuperclass target. In this case...
+
+    # Complete tuple of *ALL* hints directly subscripting both this generic and
+    # *ALL* pseudo-superclasses of this generic.
+    hint_args_full, _ = _get_hint_pep484585_generic_args_full(
+        hint, hint_base_target, exception_cls, exception_prefix)
+
+    # If *NO* hints directly subscript both this generic and *ALL*
+    # pseudo-superclasses of this generic, raise an exception.
+    if not hint_args_full:
+        raise exception_cls(
+            f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+            f'pseudo-superclasses not found.'
+        )
+    # Else, one or more hints directly subscript both this generic and *ALL*
+    # pseudo-superclasses of this generic.
+
+    # Return this complete tuple of these hints.
+    return hint_args_full
 
 
 @callable_cached
 def _get_hint_pep484585_generic_args_full(
-    hint: TypeFormAny,
-    hint_base_target: Optional[TypeFormAny],
+    hint: Hint,
+    hint_base_target: Optional[Hint],
     exception_cls: TypeException,
     exception_prefix: str,
-) -> Tuple[tuple, tuple]:
+) -> Tuple[HintArgs, HintArgs]:
     '''
     Lower-level memoized private getter underlying the higher-level unmemoized
     public :func:`.get_hint_pep484585_generic_args_full` getter.
@@ -406,9 +461,13 @@ def _get_hint_pep484585_generic_args_full(
     )
 
     # ....................{ LOCALS                         }....................
-    # List of all full child type hints transitively subscripting this generic,
-    # to be returned as a coerced tuple.
-    hint_args_full: list = []
+    # List of *ALL* child hints transitively subscripting this generic, to be
+    # returned as a coerced tuple.
+    hint_args_full: Sequence[Hint] = []
+
+    # Sequence of *ONLY* child hints transitively subscripting both this generic
+    # and this target pseudo-superclass of this generic.
+    hint_base_target_args_full: HintArgs = ()
 
     # Tuple of the zero or more child type hints directly subscripting this
     # generic.
@@ -437,15 +496,17 @@ def _get_hint_pep484585_generic_args_full(
     # ....................{ SEARCH                         }....................
     # For each pseudo-superclass of this generic...
     for hint_base in hint_bases:
+        print(f'Inspecting generic {hint} pseudo-superclass {hint_base}...')
+
         # Possibly modifiable sequence of the zero or more full child type hints
         # transitively subscripting this pseudo-superclass.
-        hint_base_args: Sequence[TypeFormAny] = ()
+        hint_base_args: Sequence[Hint] = ()
 
         # Possibly modifiable sequence of the zero or more full child type hints
         # transitively subscripting this pseudo-superclass if this
         # pseudo-superclass is either the passed target pseudo-superclass *OR* a
         # subclass of that target pseudo-superclass.
-        hint_base_target_args: Sequence[TypeFormAny] = ()
+        hint_base_target_args: Sequence[Hint] = ()
 
         # If both of the following conditions are satisfied:
         if (
@@ -486,6 +547,10 @@ def _get_hint_pep484585_generic_args_full(
         # subscripting this pseudo-superclass.
         else:
             hint_base_args = get_hint_pep_args(hint_base)
+        print(f'Resuming generic {hint} pseudo-superclass {hint_base} args {hint_base_args}...')
+        print(f'hint_args: {hint_args}')
+        print(f'hint_args_index_curr: {hint_args_index_curr}')
+        print(f'hint_args_index_last: {hint_args_index_last}')
 
         # If...
         if (
@@ -518,6 +583,8 @@ def _get_hint_pep484585_generic_args_full(
                     # this pseudo-superclass of this generic. <-- lolwat
                     hint_base_args[hint_base_arg_index] = hint_args[
                         hint_args_index_curr]
+                    print(f'Bubbled up generic {hint} arg {hint_args[hint_args_index_curr]}...')
+                    print(f'...into pseudo-superclass {hint_base} args {hint_base_args}!')
 
                     # Note that the current child type hint directly
                     # subscripting this generic has now been bubbled up.
@@ -530,19 +597,144 @@ def _get_hint_pep484585_generic_args_full(
                     # Else, one or more child type hints directly subscripting
                     # this generic have yet to be bubbled up. In this case,
                     # continue to the next such hint.
+                # Else, this hint is *NOT* a PEP 484-compliant type variable. In
+                # this case, preserve this hint as is and continue to the next.
         # Else, either this pseudo-superclass is unsubscripted *OR* all child
         # type hints directly subscripting this generic have already been
         # bubbled up. In either case, no further bubbling is warranted.
 
+        # If isolating child type hints to a target pseudo-superclass...
+        if hint_base_target:
+            # Unsubscripted generic underlying this possibly subscripted
+            # pseudo-superclass generic. Strip this pseudo-superclass of *ALL*
+            # child hints to compare this unsubscripted current
+            # pseudo-superclass with this unsubscripted target
+            # pseudo-superclass.
+            hint_base_type = get_hint_pep484585_generic_type(
+                hint=hint_base,
+                exception_cls=exception_cls,
+                exception_prefix=exception_prefix,
+            )
+
+            # If this current pseudo-superclass is this target
+            # pseudo-superclass...
+            if hint_base_type is hint_base_target:
+                # If this sequence of child hints transitively subscripting both
+                # this generic and this target pseudo-superclass has already
+                # been established, this generic has redundantly subclassed this
+                # target pseudo-superclass at least twice. However, one or more
+                # of the child hints subscripting this generic may have already
+                # been "consumed" by prior logic "bubbling up" these hints to
+                # this target pseudo-superclass. In this case, silently ignoring
+                # this edge case would erroneously override this previously
+                # established sequence of "bubbled up" child hints with a new
+                # distinct sequence of non-bubbled up child hints. Raising an
+                # exception here avoids that badness *AND* informs the caller of
+                # an almost certain bug in their codebase.
+                if hint_base_target_args_full:
+                    raise exception_cls(
+                        f'{exception_prefix}PEP 484 or 585 generic '
+                        f'{repr(hint)} redundantly subclasses '
+                        f'pseudo-superclass target {repr(hint_base_target)}.'
+                    )
+                # Else, this sequence has *NOT* already been established.
+                #
+                # If this target pseudo-superclass is transitively
+                # unsubscripted, raise an exception. By definition, *ALL*
+                # generics *MUST* be transitively subscripted by at least one
+                # child hint across their class hierarchies.
+                elif not hint_base_args:
+                    raise exception_cls(
+                        f'{exception_prefix}PEP 484 or 585 generic '
+                        f'{repr(hint)} pseudo-superclass target '
+                        f'{repr(hint_base_target)} transitively unsubscripted '
+                        f'(i.e., subscripted by no child type hints either '
+                        f'directly or indirectly across its class hierarchy).'
+                    )
+                # Else, this target pseudo-superclass is transitively
+                # subscripted by one or more child hints.
+                print(f'Found generic {hint} target psuedo-superclass {hint_base} args {hint_base_args}!')
+
+                #FIXME: Almost there, but *NOT* quite. Desynchronization between
+                #this and the branch above complicates matters. Perhaps we want
+                #to instead return these two integers instead of
+                #"hint_base_target_args_full":
+                #    hint_base_target_args_index_first = len(hint_args_full)
+                #    hint_base_target_args_len = len(hint_base_args)
+                #
+                #Then return below:
+                #    return (
+                #        hint_args_full,
+                #        hint_base_target_args_index_first,
+                #        hint_base_target_args_len,
+                #    )
+                #
+                #Then initialize above:
+                #    hint_base_target_args_index_first = None
+                #    hint_base_target_args_len = None
+                #
+                #Next modify the above recursive call to resemble:
+                #    (
+                #        hint_base_args,
+                #        hint_base_target_args_index_first,
+                #        hint_base_target_args_len,
+                #    ) = _get_hint_pep484585_generic_args_full(...)
+                #
+                #Next add a new "if" conditional branch inside this existing
+                #"if hint_base_target:" block, which should resemble:
+                #    # If isolating child type hints to a target pseudo-superclass...
+                #    if hint_base_target:
+                #        if hint_base_target_args_index_first is not None:
+                #            assert hint_base_target_args_len is not None
+                #
+                #            #FIXME: Ideally, we'd short-circuit here by
+                #            #immediately returning. This is all the caller
+                #            #wants. That would be trivial if this were
+                #            #implemented as a non-recursive algorithm. Alas,
+                #            #this is a recursive algorithm. *sigh*
+                #            #FIXME: Actually, can't we just do this here?
+                #            #    break
+                #            #Pretty sure that *ALMOST* works. We need to
+                #            #perform the "break" statement *AFTER* calling
+                #            #"hint_args_full.extend(hint_base_args)". Of
+                #            #course, we have to be *VERY* careful about how we
+                #            #do that. Notably, a premature "break" statement
+                #            #probably breaks various edge cases by preventing
+                #            #all "hint_args" from being "bubbled up". In other
+                #            #words, we have to stop "bubbling up" *AFTER* the
+                #            #first "break" statement. We could probably force
+                #            #that with yet another item in the return tuple
+                #            #called "is_breaking" or something. But... yeah.
+                #            #That's getting pretty gnarly pretty fast.
+                #            #
+                #            #At that point, it'd be substantially better to
+                #            #just refactor all of this recursion away. *sigh*
+                #            hint_base_target_args_index_first += len(hint_args_full)
+                #
+                #Lastly, refactor get_hint_pep484585_generic_args_full() to
+                #slice out these child hints from the passed "hint_args_full"
+                #tuple using this index and length. Pretty sure that works --
+                #and quite efficiently, too.
+
+                # Record this sequence, coerced from this list.
+                hint_base_target_args_full = tuple(hint_base_args)
+            # Else, this current pseudo-superclass is *NOT* this target
+            # pseudo-superclass.
+        # Else, child type hints are *NOT* isolated to such a pseudo-superclass.
+
         # Append this possibly modified sequence of all child type hints
         # transitively subscripting this pseudo-superclass to this list of all
         # child type hints transitively subscripting this generic.
-        hint_args_full.extend(hint_base_args)
+        hint_args_full.extend(hint_base_args)  # type: ignore[attr-defined]
+        print(f'Inspected generic {hint} pseudo-superclass {hint_base} args {hint_base_args}!')
 
     # ....................{ RETURN                         }....................
-    # Return the tuple of all full child type hints, coerced from this list.
-    #FIXME: Actually return something meaningful for the second item, please!
-    return (tuple(hint_args_full), ())
+    # Tuple of all full child type hints transitively subscripting this generic,
+    # coerced from this list.
+    hint_args_full = tuple(hint_args_full)
+
+    # Return a 2-tuple of these tuples of full child type hints.
+    return (hint_args_full, hint_base_target_args_full)
 
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(
@@ -1088,7 +1280,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> Iterable:
+) -> IterableHints:
     '''
     Breadth-first search (BFS) generator iteratively yielding the one or more
     unignorable unerased transitive pseudo-superclasses originally declared as
@@ -1197,7 +1389,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
     Returns
     -------
-    Iterable
+    Iterable[Hint]
         Breadth-first search (BFS) generator iteratively yielding the one or
         more unignorable unerased transitive pseudo-superclasses originally
         declared as superclasses prior to their type erasure of this generic.
