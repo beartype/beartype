@@ -25,6 +25,17 @@ from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CONSTANTS                          }....................
+FIXED_LIST_SIZE_LARGE = 1024
+'''
+Extremely large length to constrain acquired and released fixed lists to.
+
+This constant is intended to be passed to the :func:`.acquire_fixed_list`
+function, which then returns a fixed list of this length suitable for use in
+contexts requiring an "extremely large" list -- where "extremely" and "large"
+are both subjective but *should* cover 99.9999% of use cases in this codebase.
+'''
+
+
 FIXED_LIST_SIZE_MEDIUM = 256
 '''
 Reasonably large length to constrain acquired and released fixed lists to.

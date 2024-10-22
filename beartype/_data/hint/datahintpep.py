@@ -30,7 +30,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     TYPE_CHECKING,
     Iterable,
+    List,
     Sequence,
+    Set,
     Tuple,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
@@ -89,7 +91,9 @@ if TYPE_CHECKING:
 
     # See discussion below, please. *sigh*
     from typing_extensions import TypeAlias
+
     Hint: TypeAlias = TypeForm
+    # Hint: TypeAlias = object
 # Else, this submodule is currently being imported at runtime by Python. In this
 # case, dynamically import these type factories from whichever of the standard
 # "typing" module *OR* the third-party "typing_extensions" module declares these
@@ -113,6 +117,8 @@ else:
     '''
 
 # ....................{ HINT                               }....................
+#FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
+#Mypy likes that but pyright hates that. This is why we can't have good things.
 HintArgs = Tuple[Hint, ...]
 '''
 PEP-compliant type hint matching *any* **child type hints** (i.e., tuple of zero
@@ -127,8 +133,22 @@ iteratively yielding zero or more type hints).
 '''
 
 
+ListHints = List[Hint]
+'''
+PEP-compliant type hint matching *any* **type hint list** (i.e., list of zero or
+more type hints).
+'''
+
+
 SequenceHints = Sequence[Hint]
 '''
-PEP-compliant type hint matching *any* **type hint sequence** (i.e., sequence
-iteratively yielding zero or more type hints).
+PEP-compliant type hint matching *any* **type hint sequence** (i.e., sequence of
+zero or more type hints).
+'''
+
+
+SetHints = Set[Hint]
+'''
+PEP-compliant type hint matching *any* **type hint set** (i.e., set of zero or
+more type hints).
 '''
