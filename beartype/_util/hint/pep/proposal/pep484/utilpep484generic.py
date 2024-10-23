@@ -16,6 +16,7 @@ from beartype.typing import (
     Any,
     Generic,
 )
+from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
@@ -354,13 +355,25 @@ def get_hint_pep484_generic_bases_unerased(
     # this hint if any. See is_hint_pep484_generic() for details.
     hint = get_hint_pep484585_generic_type_or_none(hint)
 
-    # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
+    # If this hint is *NOT* a PEP 484- or 544-compliant generic, raise an
+    # exception.
     if not is_hint_pep484_generic(hint):
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'
         )
-    # Else, this hint is a PEP 484-compliant generic.
+    # Else, this hint is a PEP 484- or 544-compliant generic.
+    #
+    # If this hint is a PEP 484- or 544-compliant generic superclass in either
+    # unsubscripted form (e.g., "typing.Generic", "typing.Protocol") or
+    # subscripted form (e.g., "typing.Generic[T]", "typing.Protocol[T]"), then
+    # (by definition) this superclass subclasses *NO* pseudo-superclasses. In
+    # this case, trivially return the empty tuple.
+
+    #FIXME: Unit test this edge case up, please.
+    elif hint in TYPES_PEP484544_GENERIC:
+        return ()
+    # Else, this hint is *NOT* a PEP 484- or 544-compliant generic superclass.
 
     # Unerased pseudo-superclasses of this generic if any *OR* "None" otherwise
     # (e.g., if this generic is a single-inherited protocol).

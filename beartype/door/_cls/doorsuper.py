@@ -136,7 +136,13 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # defined as either...
         self._origin: type = (
             # If this hint originates from an origin type, that type;
-            get_hint_pep_origin_type_or_none(hint) or
+            get_hint_pep_origin_type_or_none(
+                hint=hint,
+                # If this hint is a type defining the "__origin__" dunder
+                # attribute to be a non-type, fallback to euphemistically
+                # claiming that this hint originates from "itself." Boooo!
+                is_self_fallback=True,
+            ) or
             # Else, this hint does *NOT* originate from an origin type. In this
             # case, the root superclass "object" of *ALL* classes, guaranteeing
             # sanity when this instance variable is passed as either the first

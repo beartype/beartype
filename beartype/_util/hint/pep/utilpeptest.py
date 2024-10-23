@@ -545,14 +545,15 @@ def is_hint_pep_supported(hint: object) -> bool:
 #* beartype._util.hint.pep.proposal.pep484.utilpep484.py
 #Thankfully, nobody really cares about generalizing this one edge case to
 #"testing_extensions", so it's mostly fine for various definitions of fine.
-@callable_cached
 def is_hint_pep_typing(hint: object) -> bool:
     '''
     :data:`True` only if the passed object is an attribute of a **typing
     module** (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type checkers).
 
-    This tester is memoized for efficiency.
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Parameters
     ----------

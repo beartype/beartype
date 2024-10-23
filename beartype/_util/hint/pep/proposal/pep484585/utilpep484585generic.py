@@ -32,12 +32,12 @@ from beartype._data.hint.datahintpep import (
 )
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignGeneric,
+    # HintSignGeneric,
     HintSignTypeVar,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
-    FIXED_LIST_SIZE_LARGE,
+    # FIXED_LIST_SIZE_LARGE,
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
@@ -49,6 +49,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
 from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
+    is_hint_pep585_builtin_subscripted,
 )
 from beartype._util.kind.sequence.utilseqmake import make_stack
 from beartype._util.module.utilmodtest import (
@@ -72,14 +73,11 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     either:
 
     * A :pep:`484`-compliant generic as tested by the lower-level
-      :func:`is_hint_pep484_generic` function.
+      :func:`.is_hint_pep484_generic` function.
     * A :pep:`585`-compliant generic as tested by the lower-level
-      :func:`is_hint_pep585_generic` function.
+      :func:`.is_hint_pep585_generic` function.
 
-    This tester is memoized for efficiency. Although the implementation
-    trivially reduces to a one-liner, constant factors associated with that
-    one-liner are non-negligible. Moreover, this tester is called frequently
-    enough to warrant its reduction to an efficient lookup.
+    This tester is memoized for efficiency.
 
     Caveats
     -------
@@ -100,7 +98,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
@@ -163,7 +161,6 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     return False
 
 
-#FIXME: Shift into a more appropriate submodule, please.
 def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     '''
     :data:`True` only if the passed :pep:`484`- or :pep:`585`-compliant generic
@@ -189,7 +186,7 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -225,12 +222,67 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
     #FIXME: Probably insufficient. *shrug*
     return False
 
+
+def is_hint_pep484585_generic_user(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`484`- or :pep:`585`-compliant generic
+    is **user-defined** (i.e., defined by a third-party downstream codebase
+    rather than CPython's first-party upstream standard library).
+
+    Specifically, this tester returns :data:`True` only if this generic is
+    neither:
+
+    * A :pep:`484`- or :pep:`544`-compliant superclass defined by the
+      :mod:`typing` module (e.g., :class:`typing.Generic`) *nor*...
+    * A :pep:`585`-compliant superclass (e.g., ``list[T]``).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this is a user-defined generic.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_origin_type_or_none)
+
+    # Return true only if...
+    return (
+        # This object is a generic that is neither...
+        is_hint_pep484585_generic(hint) and not (
+            # A subscripted PEP 585-compliant superclass (e.g., "list[T]")
+            # *NOR*...
+            is_hint_pep585_builtin_subscripted(hint) or
+            # A subscripted or unsubscripted PEP 484- or 544-compliant
+            # superclass defined by the standard "typing" module, including:
+            # * "typing.Generic".
+            # * "typing.Generic[S]".
+            # * "typing.Protocol".
+            # * "typing.Protocol[S]".
+            get_hint_pep_origin_type_or_none(
+                hint=hint,
+                # Preserve "typing.Generic" and "typing.Protocol" as themselves,
+                # as doing so dramatically simplifies this test. *shrug*
+                is_self_fallback=True,
+            ) in TYPES_PEP484544_GENERIC
+        )
+    )
+
 # ....................{ GETTERS ~ args                     }....................
 #FIXME: Memoize us up once debugged, please. *sigh*
 #FIXME: Update the worst-case time complexity. Looks more like O(n**3), eh?
 # def get_hint_pep484585_generic_args_full2(
 #     # Mandatory parameters.
-#     hint: Hint,
+#     hint: object,
 #
 #     # Optional parameters.
 #     hint_base_target: Optional[Hint] = None,
@@ -356,61 +408,66 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
 #     # Avoid circular import dependencies.
 #     from beartype._util.hint.pep.utilpepget import (
 #         get_hint_pep_args,
-#         get_hint_pep_origin_or_none,
+#         # get_hint_pep_origin_or_none,
+#         # get_hint_pep_origin_type_or_none,
 #         get_hint_pep_sign_or_none,
 #     )
 #
 #     # ....................{ PREAMBLE                       }....................
-#     #FIXME: Unit test us up, please.
-#     # If the caller explicitly passed a pseudo-superclass target...
-#     #
-#     # Note that this is the common case for this getter and thus tested first.
-#     if hint_base_target:
-#         # If this pseudo-superclass target is this generic, this
-#         # pseudo-superclass target is effectively meaningless (albeit
-#         # technically valid). In this case, silently ignore this
-#         # pseudo-superclass target.
-#         if hint is hint_base_target:
-#             hint_base_target = None
-#         # Else, this pseudo-superclass target is *NOT* this generic. In this
-#         # case...
-#         else:
-#             # Unsubscripted generic underlying this possibly subscripted target
-#             # pseudo-superclass generic. For search purposes, *ANY* child hints
-#             # subscripting this generic are not only irrelevant but harmful --
-#             # promoting false negatives in higher-level functions (e.g.,
-#             # beartype.door.is_subhint()) internally leveraging this lower-level
-#             # getter. Ignoring these child hints is thus imperative. Since
-#             # deciding child hint compatibility between the passed generic and
-#             # this target pseudo-superclass is a non-trivial decision problem,
-#             # this lower-level getter defers that problem to the caller by
-#             # unconditionally returning the same result regardless of child
-#             # hints subscripting this target pseudo-superclass.
-#             #
-#             # Consider the PEP 484-compliant catch-all "typing.Any", for
-#             # example. Clearly, this getter should return the same tuple when
-#             # passed an unsubscripted target pseudo-superclass as when passed a
-#             # target pseudo-superclass subscripted by "typing.Any": e.g.,
-#             #     >>> from typing import Any, Generic
-#             #     >>> class MuhGeneric[S, T](Generic[S, T]): pass
-#             #     >>> get_hint_pep484585_generic_args_full(
-#             #     ...     MuhGeneric, hint_base_target=Generic)
-#             #     (S, T)
-#             #     >>> get_hint_pep484585_generic_args_full(
-#             #     ...     MuhGeneric, hint_base_target=Generic[Any])
-#             #     (S, T)
-#             #     >>> get_hint_pep484585_generic_args_full(
-#             #     ...     MuhGeneric, hint_base_target=Generic[S, T])
-#             #     (S, T)
-#             #     >>> get_hint_pep484585_generic_args_full(
-#             #     ...     MuhGeneric, hint_base_target=Generic[int, float])
-#             #     (S, T)
-#             hint_base_target = get_hint_pep484585_generic_type(  # pyright: ignore
-#                 hint=hint_base_target,
-#                 exception_cls=exception_cls,
-#                 exception_prefix=exception_prefix,
-#             )
-#     # Else, the caller passed *NO* pseudosuperclass target. In this case...
+#     #FIXME: Preserved due to the large useful comment below, which we should
+#     #copy-paste elsewhere. Still, explicit is better than implicit. If the
+#     #caller wants the unsubscripted generic underlying the passed target, then
+#     #they need to explicitly pass that instead of the passed target. In other
+#     #words, defer to the caller here. They run the show: not us.
+#     # # If the caller explicitly passed a pseudo-superclass target...
+#     # #
+#     # # Note that this is the common case for this getter and thus tested first.
+#     # if hint_base_target:
+#     #     # If this pseudo-superclass target is this generic, this
+#     #     # pseudo-superclass target is effectively meaningless (albeit
+#     #     # technically valid). In this case, silently ignore this
+#     #     # pseudo-superclass target.
+#     #     if hint is hint_base_target:
+#     #         hint_base_target = None
+#     #     # Else, this pseudo-superclass target is *NOT* this generic. In this
+#     #     # case...
+#     #     else:
+#     #         # Unsubscripted generic underlying this possibly subscripted target
+#     #         # pseudo-superclass generic. For search purposes, *ANY* child hints
+#     #         # subscripting this generic are not only irrelevant but harmful --
+#     #         # promoting false negatives in higher-level functions (e.g.,
+#     #         # beartype.door.is_subhint()) internally leveraging this lower-level
+#     #         # getter. Ignoring these child hints is thus imperative. Since
+#     #         # deciding child hint compatibility between the passed generic and
+#     #         # this target pseudo-superclass is a non-trivial decision problem,
+#     #         # this lower-level getter defers that problem to the caller by
+#     #         # unconditionally returning the same result regardless of child
+#     #         # hints subscripting this target pseudo-superclass.
+#     #         #
+#     #         # Consider the PEP 484-compliant catch-all "typing.Any", for
+#     #         # example. Clearly, this getter should return the same tuple when
+#     #         # passed an unsubscripted target pseudo-superclass as when passed a
+#     #         # target pseudo-superclass subscripted by "typing.Any": e.g.,
+#     #         #     >>> from typing import Any, Generic
+#     #         #     >>> class MuhGeneric[S, T](Generic[S, T]): pass
+#     #         #     >>> get_hint_pep484585_generic_args_full(
+#     #         #     ...     MuhGeneric, hint_base_target=Generic)
+#     #         #     (S, T)
+#     #         #     >>> get_hint_pep484585_generic_args_full(
+#     #         #     ...     MuhGeneric, hint_base_target=Generic[Any])
+#     #         #     (S, T)
+#     #         #     >>> get_hint_pep484585_generic_args_full(
+#     #         #     ...     MuhGeneric, hint_base_target=Generic[S, T])
+#     #         #     (S, T)
+#     #         #     >>> get_hint_pep484585_generic_args_full(
+#     #         #     ...     MuhGeneric, hint_base_target=Generic[int, float])
+#     #         #     (S, T)
+#     #         hint_base_target = get_hint_pep484585_generic_type(  # pyright: ignore
+#     #             hint=hint_base_target,
+#     #             exception_cls=exception_cls,
+#     #             exception_prefix=exception_prefix,
+#     #         )
+#     # # Else, the caller passed *NO* pseudosuperclass target. In this case...
 #
 #     # ....................{ LOCALS                         }....................
 #     # List of the zero or more child hints transitively subscripting this
@@ -474,109 +531,112 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
 #         # this stack yet. We only pop a pseudo-superclass off this stack *AFTER*
 #         # resolving all child pseudo-superclasses of that pseudo-superclass,
 #         # which simulates the "backing out" performed by genuine recursion.
-#         hint_full_base_data = hint_full_bases[-1]
+#         hint_base_data = hint_full_bases[-1]
 #
 #         # Currently visited transitive pseudo-superclass of this generic.
-#         hint_full_base = hint_full_base_data[_HINT_FULL_BASES_INDEX_HINT]
+#         hint_base = hint_base_data[_HINT_FULL_BASES_INDEX_HINT]
 #
 #         # Unique identifier of this pseudo-superclass.
-#         hint_full_base_id = id(hint_full_base)
+#         hint_full_base_id = id(hint_base)
 #
-#         # True only if this DFS is currently recursing back up out of the child
-#         # pseudo-superclasses of this pseudo-superclass, initially defaulting to
-#         # true only if this pseudo-superclass has already yet been seen.
-#         is_recurse_up = hint_full_base_id in hint_base_ids_seen
-#
-#         # If this pseudo-superclass has *NOT* yet been seen, this DFS is
-#         # currently recursing down into the child pseudo-superclasses of this
-#         # pseudo-superclass. In this case...
-#         if not is_recurse_up:
-#             # Record this pseudo-superclass as having now been seen.
+#         # If...
+#         if (
+#             # This DFS has *NOT* yet visited this pseudo-superclass...
+#             hint_full_base_id not in hint_base_ids_seen and
+#             # This pseudo-superclass is itself a PEP 484- or 585-compliant
+#             # user-defined generic. Standard generics (i.e., that are *NOT*
+#             # user-defined) have *NO* pseudo-superclasses and are thus omitted.
+#             # Examples of standard generics include:
+#             # * "dict[str, U]".
+#             # * "typing.Generic[S, int]").
+#             # * "typing.Protocol[float, T]").
+#             #
+#             # Note that this tester is mildly slower than the prior test and
+#             # thus intentionally tested later.
+#             is_hint_pep484585_generic_user(hint_base)
+#         # Then this DFS is currently recursing down into the child
+#         # pseudo-superclasses of this pseudo-superclass. In this case...
+#         ):
+#             # Record this pseudo-superclass as having now been visited.
 #             hint_base_ids_seen.add(hint_full_base_id)
 #
-#             # If both of the following conditions are satisfied:
-#             if (
-#                 # This pseudo-superclass is neither:
-#                 # * A root PEP 484-compliant "Generic[...]" type hint (e.g.,
-#                 #   "typing.Generic[S, int]") *NOR*...
-#                 # * A root PEP 544-compliant "Protocol[...]" type hint (e.g.,
-#                 #   "typing.Protocol[float, T]").
-#                 #
-#                 # Neither of these kinds of root "terminal" generics are valid
-#                 # generics from the perspective of the lower-level
-#                 # get_hint_pep484585_generic_bases_unerased() getter function called
-#                 # below, which instead expects a user-defined class transitively
-#                 # subscripting one or more of these kinds of root "terminal"
-#                 # generics. Passing either of these kinds of root "terminal"
-#                 # generics to that getter would thus raise an exception.
-#                 get_hint_pep_origin_or_none(hint_full_base) not in (
-#                     TYPES_PEP484544_GENERIC) and
-#                 # This pseudo-superclass is a PEP 484- or 585-compliant generic.
-#                 # Note that this tester is mildly slower than the prior test and
-#                 # thus intentionally tested later.
-#                 is_hint_pep484585_generic(hint_full_base)
-#             ):
-#                 # Tuple of the one or more child pseudo-superclasses of this
-#                 # pseudo-superclass.
-#                 # print(f'Introspecting generic {hint} unerased bases...')
-#                 hint_bases = get_hint_pep484585_generic_bases_unerased(
-#                     hint=hint_full_base,
-#                     exception_cls=exception_cls,
-#                     exception_prefix=exception_prefix,
-#                 )
-#                 # print(f'Generic {hint} unerased bases: {hint_bases}')
+#             # Tuple of the one or more child pseudo-superclasses of this
+#             # pseudo-superclass.
+#             # print(f'Introspecting generic {hint} unerased bases...')
+#             hint_child_bases = get_hint_pep484585_generic_bases_unerased(
+#                 hint=hint_base,
+#                 exception_cls=exception_cls,
+#                 exception_prefix=exception_prefix,
+#             )
+#             # print(f'Generic {hint} unerased bases: {hint_child_bases}')
 #
-#                 # For each child pseudo-superclass of this pseudo-superclass,
-#                 # intentionally iterated in reverse order so as to ensure that the
-#                 # *FIRST* child pseudo-superclass is the *LAST* item of this stack
-#                 # (and thus the *FIRST* unvisited pseudo-superclass to be visited by
-#                 # this depth-first search (DFS) next).
-#                 #
-#                 # Note that the reversed() builtin is well-known to be the most
-#                 # efficient means of producing a reversed iterable for iteration
-#                 # purposes. See also:
-#                 #     https://stackoverflow.com/a/16514411/2809027
-#                 for hint_base in reversed(hint_bases):
-#                     # Push metadata describing this unvisited child
-#                     # pseudo-superclass onto this stack.
-#                     hint_full_bases.append((
-#                         # This child pseudo-superclass.
-#                         hint_base,
+#             # For each child pseudo-superclass of this pseudo-superclass,
+#             # intentionally iterated in reverse order so as to ensure that the
+#             # *FIRST* child pseudo-superclass is the *LAST* item of this stack
+#             # (and thus the *FIRST* unvisited pseudo-superclass to be visited by
+#             # this depth-first search (DFS) next).
+#             #
+#             # Note that the reversed() builtin is well-known to be the most
+#             # efficient means of producing a reversed iterable for iteration
+#             # purposes. See also:
+#             #     https://stackoverflow.com/a/16514411/2809027
+#             for hint_child_base in reversed(hint_child_bases):
+#                 # Push metadata describing this unvisited child
+#                 # pseudo-superclass onto this stack.
+#                 hint_full_bases.append((
+#                     # This child pseudo-superclass.
+#                     hint_child_base,
 #
-#                         # Poppable stack of the zero or more child hints
-#                         # directly subscripting this child pseudo-superclass.
-#                         make_stack(get_hint_pep_args(hint_base)),
+#                     #FIXME: Inefficient. If this child pseudo-superclass is
+#                     #a leaf terminal, this serves no purpose whatsoever. In
+#                     #that case:
+#                     #* This stack should just be set to "None".
+#                     #* The list below should be set to
+#                     #  "get_hint_pep_args(hint_child_base)".
+#                     #Probably? Contemplate deeper, please.
+#                     #FIXME: Actually, the optimal way to do this is probably:
+#                     #* Rename "_HINT_FULL_BASES_INDEX_ARGS" to
+#                     #  "_HINT_FULL_BASES_INDEX_ARGS_STACK".
+#                     #* Define a new "_HINT_FULL_BASES_INDEX_ARGS".
+#                     #* Pass as follows both here and above:
+#                     #      get_hint_pep_args(hint_child_base),  # ARGS
+#                     #      None,  # ARGS_STACK
+#                     #      None,  # FULL_ARGS
+#                     #
+#                     #Refactor as follows: it then becomes the responsibility
+#                     #of the "else:" branch below to conditionally initialize
+#                     #the "ARGS_STACK" and "FULL_ARGS" of the *PARENT*
+#                     #pseudo-superclass as needed.
 #
-#                         # List of the zero or more child hints transitively
-#                         # subscripting this child pseudo-superclass.
-#                         [],
+#                     # Poppable stack of the zero or more child hints
+#                     # directly subscripting this child pseudo-superclass.
+#                     make_stack(get_hint_pep_args(hint_child_base)),
 #
-#                         # Metadata describing the direct parent
-#                         # pseudo-superclass of this child pseudo-superclass.
-#                         hint_full_base_data,
-#                     ))
-#             # Else, this child pseudo-superclass is either not a generic *OR* is
-#             # a generic but is a root "terminal" generic. In either case, this
-#             # DFS *CANNOT* recurse into this child pseudo-superclass.
-#             else:
-#                 # Instruct this DFS to recurse back up below.
-#                 is_recurse_up = True
+#                     # List of the zero or more child hints transitively
+#                     # subscripting this child pseudo-superclass.
+#                     [],
 #
-#         # If this DFS is currently recursing back up out of this
-#         # pseudo-superclass...
-#         if is_recurse_up:
+#                     # Metadata describing the direct parent
+#                     # pseudo-superclass of this child pseudo-superclass.
+#                     hint_base_data,
+#                 ))
+#         # Else, either:
+#         # * This DFS has already visited this pseudo-superclass *OR*...
+#         # * This pseudo-superclass is a "terminal" leaf generic *OR*...
+#         # * This pseudo-superclass is *NOT* a generic.
+#         #
+#         # In any case, this DFS should *NOT* recurse (back) down into this
+#         # pseudo-superclass. Therefore, this DFS is currently recursing back up
+#         # out of this pseudo-superclass into its parent pseudo-superclass.
+#         else:
 #             # Pop this pseudo-superclass off this stack.
 #             hint_full_bases.pop()
 #
-#             # print(f'Resuming generic {hint} pseudo-superclass {hint_base} args {hint_base_args}...')
-#             # print(f'hint_args: {hint_args}')
-#             # print(f'hint_args_index_curr: {hint_args_index_curr}')
-#             # print(f'hint_args_index_last: {hint_args_index_last}')
-#
 #             # Metadata describing the direct parent pseudo-superclass of this
 #             # pseudo-superclass.
-#             hint_base_super_data = hint_full_base_data[
+#             hint_base_super_data = hint_base_data[
 #                 _HINT_FULL_BASES_INDEX_PARENT]
+#             # print(f'Resuming generic {hint} pseudo-superclass {hint_base} args {hint_base_args}...')
 #
 #             # If this pseudo-superclass has a parent pseudo-superclass (i.e.,
 #             # this pseudo-superclass is *NOT* the passed root generic and is
@@ -588,8 +648,13 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
 #                     _HINT_FULL_BASES_INDEX_ARGS]
 #
 #                 # List of the zero or more child hints transitively subscripting
+#                 # this parent pseudo-superclass of this pseudo-superclass.
+#                 hint_base_super_full_args = hint_base_super_data[
+#                     _HINT_FULL_BASES_INDEX_FULL_ARGS]
+#
+#                 # List of the zero or more child hints transitively subscripting
 #                 # this pseudo-superclass.
-#                 hint_base_full_args = hint_full_base_data[
+#                 hint_base_full_args = hint_base_data[
 #                     _HINT_FULL_BASES_INDEX_FULL_ARGS]
 #
 #                 # # Possibly modifiable sequence of the zero or more full child hints
@@ -598,150 +663,97 @@ def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
 #                 # # *OR* a subclass of that target pseudo-superclass.
 #                 # hint_base_target_args: Sequence[Hint] = ()
 #
-#                 #FIXME: Refactor as follows:
-#                 #* Obtain the parent
-#                 #  "hint_full_bases[_HINT_FULL_BASES_INDEX_PARENT]".
-#                 #* Modify the parent "hint_full_bases[_HINT_FULL_BASES_INDEX_ARGS]"
-#                 #  list.
-#
 #                 # If...
 #                 if (
-#                     # The parent pseudo-superclass of this child
-#                     # pseudo-superclass is still directly subscripted by one or
-#                     # more child hints that have yet to be "bubbled up" the
-#                     # class hierarchy (i.e., by replacing the first unused PEP
-#                     # 484-compliant type variable transitively subscripting this
-#                     # child pseudo-superclass) *AND*...
+#                     # This parent pseudo-superclass of this pseudo-superclass is
+#                     # still directly subscripted by one or more child hints that
+#                     # have yet to "bubble up" the class hierarchy (i.e., by
+#                     # replacing the first unused type variable transitively
+#                     # subscripting this child pseudo-superclass) *AND*...
 #                     hint_base_super_args and
-#                     # This pseudo-superclass is transitively subscripted by one or
-#                     # more child hints.
+#                     # This pseudo-superclass is transitively subscripted by at
+#                     # least one child hint.
 #                     hint_base_full_args
 #                 ):
-#                     #FIXME: Pick up here tomorrow, please. *sigh*
-#                     #FIXME: Pretty sure we don't need to enumerate() anymore.
-#                     #FIXME: "hint_base_args" everywhere below should probably be
-#                     #"hint_base_super_args" instead. *shrug*
-#                     # For the 0-based index of each full child type hint transitively
+#                     # For the 0-based index of each child hint transitively
 #                     # subscripting this pseudo-superclass and this hint...
-#                     for hint_base_arg_index, hint_base_arg in enumerate(hint_base_super_args):
-#                         # Sign uniquely identifying this child type hint transitively
-#                         # subscripting this pseudo-superclass if any *OR* "None".
-#                         hint_base_arg_sign = get_hint_pep_sign_or_none(hint_base_arg)
+#                     for hint_base_full_arg_index, hint_base_full_arg in (
+#                         enumerate(hint_base_full_args)):
+#                         # Sign uniquely identifying this child hint transitively
+#                         # subscripting this pseudo-superclass if any *OR*
+#                         # "None" (i.e., if this child hint is a simple type).
+#                         hint_base_arg_sign = get_hint_pep_sign_or_none(
+#                             hint_base_full_arg)
 #
-#                         # If this hint is a PEP 484-compliant type variable...
+#                         # If this hint is a type variable...
 #                         if hint_base_arg_sign is HintSignTypeVar:
-#                             # "Bubble up" the currently unassigned child type hint
-#                             # directly subscripting the passed generic into the
-#                             # "empty placeholder" signified by this type variable in
-#                             # this list of child type hints transitively subscripting
-#                             # this pseudo-superclass of this generic. <-- lolwat
-#                             hint_base_args[hint_base_arg_index] = hint_args[
-#                                 hint_args_index_curr]
-#                             print(f'Bubbled up generic {hint} arg {hint_args[hint_args_index_curr]}...')
-#                             print(f'...into pseudo-superclass {hint_base} args {hint_base_args}!')
+#                             # "Bubble up" the currently unassigned child hint
+#                             # directly subscripting this parent
+#                             # pseudo-superclass into the "empty placeholder"
+#                             # signified by this type variable in this list of
+#                             # child hints transitively subscripting this
+#                             # pseudo-superclass.   <-- lolwat
+#                             hint_base_full_args[hint_base_full_arg_index] = (
+#                                 hint_base_super_args.pop())
+#                             # print(f'Bubbled up generic {hint} arg {hint_args[hint_args_index_curr]}...')
+#                             # print(f'...into pseudo-superclass {hint_base} args {hint_base_args}!')
 #
-#                             # Note that the current child type hint directly
-#                             # subscripting this generic has now been bubbled up.
-#                             hint_args_index_curr += 1
-#
-#                             # If all child type hints directly subscripting this generic
-#                             # have now been bubbled up, halt this nested iteration.
-#                             if hint_args_index_curr > hint_args_index_last:
+#                             # If all child hints directly subscripting this
+#                             # parent pseudo-superclass have now been bubbled up,
+#                             # halt this nested iteration.
+#                             if not hint_base_super_args:
 #                                 break
-#                             # Else, one or more child type hints directly subscripting
-#                             # this generic have yet to be bubbled up. In this case,
-#                             # continue to the next such hint.
-#                         # Else, this hint is *NOT* a PEP 484-compliant type variable. In
-#                         # this case, preserve this hint as is and continue to the next.
-#                 # Else, either this pseudo-superclass is unsubscripted *OR* all child
-#                 # type hints directly subscripting this generic have already been
-#                 # bubbled up. In either case, no further bubbling is warranted.
+#                             # Else, one or more child hints directly
+#                             # subscripting this parent pseudo-superclass have
+#                             # yet to be bubbled up. In this case, continue to
+#                             # the next such hint.
+#                         # Else, this hint is *NOT* a type variable. In this
+#                         # case, preserve this hint and continue to the next.
+#                 # Else, either this pseudo-superclass is transitively
+#                 # unsubscripted *OR* all child hints directly subscripting this
+#                 # parent pseudo-superclass of this pseudo-superclass have
+#                 # already been bubbled up. In either case, no further bubbling
+#                 # is warranted.
 #
-#                 # If isolating child type hints to a target pseudo-superclass...
-#                 if hint_base_target:
-#                     # Unsubscripted generic underlying this possibly subscripted
-#                     # pseudo-superclass generic. Strip this pseudo-superclass of *ALL*
-#                     # child hints to compare this unsubscripted current
-#                     # pseudo-superclass with this unsubscripted target
-#                     # pseudo-superclass.
-#                     hint_base_type = get_hint_pep484585_generic_type(
-#                         hint=hint_base,
-#                         exception_cls=exception_cls,
-#                         exception_prefix=exception_prefix,
-#                     )
+#                 # If this pseudo-superclass is the target pseudo-superclass...
+#                 if hint_base is hint_base_target:
+#                     # Immediately return the list of the zero or more child
+#                     # hints transitively subscripting this target
+#                     # pseudo-superclass, effectively short-circuiting all
+#                     # further recursion.
+#                     #
+#                     # Note that this short-circuiting is one of several reasons
+#                     # to prefer a non-recursive algorithm. This algorithm was
+#                     # initially implemented recursively for supposed simplicity;
+#                     # however, doing so introduced significant unforeseen
+#                     # complications by effectively preventing short-circuiting.
+#                     # After all, a recursive algorithm cannot short-circuit up
+#                     # out of a deeply nested recursive call stack.
+#                     return hint_base_full_args
+#                 # Else, either no pseudo-superclass is being targeted *OR* a
+#                 # pseudo-superclass is being targeted but this is not that
+#                 # pseudo-superclass. In either case, noop.
 #
-#                     # If this current pseudo-superclass is this target
-#                     # pseudo-superclass...
-#                     if hint_base_type is hint_base_target:
-#                         # If this sequence of child hints transitively subscripting both
-#                         # this generic and this target pseudo-superclass has already
-#                         # been established, this generic has redundantly subclassed this
-#                         # target pseudo-superclass at least twice. However, one or more
-#                         # of the child hints subscripting this generic may have already
-#                         # been "consumed" by prior logic "bubbling up" these hints to
-#                         # this target pseudo-superclass. In this case, silently ignoring
-#                         # this edge case would erroneously override this previously
-#                         # established sequence of "bubbled up" child hints with a new
-#                         # distinct sequence of non-bubbled up child hints. Raising an
-#                         # exception here avoids that badness *AND* informs the caller of
-#                         # an almost certain bug in their codebase.
-#                         if hint_base_target_args_full:
-#                             raise exception_cls(
-#                                 f'{exception_prefix}PEP 484 or 585 generic '
-#                                 f'{repr(hint)} redundantly subclasses '
-#                                 f'pseudo-superclass target {repr(hint_base_target)}.'
-#                             )
-#                         # Else, this sequence has *NOT* already been established.
-#                         #
-#                         # If this target pseudo-superclass is transitively
-#                         # unsubscripted, raise an exception. By definition, *ALL*
-#                         # generics *MUST* be transitively subscripted by at least one
-#                         # child hint across their class hierarchies.
-#                         elif not hint_base_args:
-#                             raise exception_cls(
-#                                 f'{exception_prefix}PEP 484 or 585 generic '
-#                                 f'{repr(hint)} pseudo-superclass target '
-#                                 f'{repr(hint_base_target)} transitively unsubscripted '
-#                                 f'(i.e., subscripted by no child type hints either '
-#                                 f'directly or indirectly across its class hierarchy).'
-#                             )
-#                         # Else, this target pseudo-superclass is transitively
-#                         # subscripted by one or more child hints.
-#                         # print(f'Found generic {hint} target psuedo-superclass {hint_base} args {hint_base_args}!')
-#
-#                         # Record this sequence, coerced from this list.
-#                         hint_base_target_args_full = tuple(hint_base_args)
-#                     # Else, this current pseudo-superclass is *NOT* this target
-#                     # pseudo-superclass.
-#                 # Else, child type hints are *NOT* isolated to such a pseudo-superclass.
-#
-#                 # Append this possibly modified sequence of all child type hints
-#                 # transitively subscripting this pseudo-superclass to this list of all
-#                 # child type hints transitively subscripting this generic.
-#                 hint_args_full.extend(hint_base_args)  # type: ignore[attr-defined]
+#                 # Append this possibly modified list of all child hints
+#                 # transitively subscripting this pseudo-superclass to this list
+#                 # of all child hints transitively subscripting this parent
+#                 # pseudo-superclass of this pseudo-superclass.
+#                 hint_base_super_full_args.extend(hint_base_full_args)
 #                 # print(f'Inspected generic {hint} pseudo-superclass {hint_base} args {hint_base_args}!')
 #
 #     # ....................{ RETURN                         }....................
-#     #FIXME: Detect when the target isn't found, please.
-#     # # If *NO* hints directly subscript both this generic and target
-#     # # pseudo-superclass, raise an exception.
-#     # if not hint_base_target_args_full:
-#     #     raise exception_cls(
-#     #         f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
-#     #         f'pseudo-superclass target {repr(hint_base_target)} not found.'
-#     #     )
-#     # # Else, one or more hints directly subscript both this generic and
-#     # # target pseudo-superclass.
-#
-#     # If *NO* child hints transitively subscript this generic, this is badness.
-#     # By definition, *ALL* generics are transitively subscripted by one or more
-#     # child type hints. In this case, raise an exception.
-#     if not hint_full_args:
+#     # If the caller passed a target pseudo-superclass, that target *CANNOT* be a
+#     # pseudo-superclass of this generic. Why? Because if that target had been a
+#     # pseudo-superclass of this generic, then the above DFS would have found
+#     # that target and immediately returned the desired list on doing so.
+#     # However, that DFS failed to return and thus find that target. In this
+#     # case, raise an exception.
+#     if hint_base_target:
 #         raise exception_cls(
 #             f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
-#             f'pseudo-superclasses not found.'
+#             f'pseudo-superclass target {repr(hint_base_target)} not found.'
 #         )
-#     # Else, one or more child hints transitively subscript this generic.
+#     # Else, the caller did *NOT* pass a target pseudo-superclass.
 #
 #     # Return all child hints transitively subscripting this generic.
 #     return hint_full_args
@@ -828,7 +840,7 @@ del __hint_full_bases_counter
 #FIXME: Unit test up "hint_base_target", please.
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.
-    hint: Hint,
+    hint: object,
 
     # Optional parameters.
     hint_base_target: Optional[Hint] = None,
@@ -1035,7 +1047,7 @@ def get_hint_pep484585_generic_args_full(
 #current recursion also turns out to be unreadable and unmaintainable. Ugh!
 @callable_cached
 def _get_hint_pep484585_generic_args_full(
-    hint: Hint,
+    hint: object,
     hint_base_target: Optional[Hint],
     exception_cls: TypeException,
     exception_prefix: str,
@@ -1555,12 +1567,24 @@ def get_hint_pep484585_generic_bases_unerased(
         )
     )
 
-    # If this generic subclasses *NO* pseudo-superclass, raise an exception.
-    #
-    # Note this should have already been guaranteed on our behalf by:
-    # * If this generic is PEP 484-compliant, the "typing" module.
-    # * If this generic is PEP 585-compliant, CPython or PyPy itself.
-    if not hint_pep_generic_bases_unerased:
+    # If this generic....
+    if (
+        # Subclasses no pseudo-superclasses *AND*...
+        not hint_pep_generic_bases_unerased and
+        # Is user-defined by a third-party downstream codebase.
+        is_hint_pep484585_generic_user(hint)
+    ):
+        # Raise an exception. By definition, *ALL* user-defined generics should
+        # subclass at least one pseudo-superclass. Note that this constraint:
+        # * Does *NOT* apply to standard generics defined by either:
+        #   * The standard "typing" module (e.g., "typing.Generic[S, T]").
+        #   * The Python interpreter itself (e.g., "list[T]").
+        #   Why? Because these generics are the root superclasses that other
+        #   user-defined generics subclass. Clearly, they have no
+        #   pseudo-superclasses.
+        # * Should have already been guaranteed on our behalf by:
+        #   * If this generic is PEP 484-compliant, the standard "typing" module.
+        #   * If this generic is PEP 585-compliant, the Python interpreter itself.
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
         raise exception_cls(
@@ -2018,10 +2042,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     # Avoid circular import dependencies.
     from beartype._check.convert.convsanify import (
         sanify_hint_child_if_unignorable_or_none)
-    from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin_subscripted)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 
     # ....................{ LOCALS                         }....................
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
@@ -2068,30 +2089,14 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
         # If this pseudo-superclass is unignorable...
         if hint_base is not None:
-            # Sign identifying this pseudo-superclass if any *OR* "None".
-            hint_base_sign = get_hint_pep_sign_or_none(hint_base)
-
-            #FIXME: Unit test up this branch, please.
-            # If this pseudo-superclass is...
-            if (
-                # A PEP-compliant generic *AND*...
-                hint_base_sign is HintSignGeneric and
-                # Is neither...
-                not (
-                    # A PEP 585-compliant superclass (e.g., "list[T]") *NOR*...
-                    is_hint_pep585_builtin_subscripted(hint_base) and
-                    # A PEP 484- or 544-compliant superclass defined by the
-                    # "typing" module (e.g., "typing.Generic")...
-                    is_hint_pep_typing(hint_base)
-                )
-            ):
-            # Then this pseudo-superclass is a user-defined PEP 484-compliant
-            # generic or 544-compliant protocol. In this case, generate *NO*
-            # type-checking code for this pseudo-superclass; we only enqueue all
+            # If this pseudo-superclass is a user-defined PEP 484-compliant
+            # generic or 544-compliant protocol, generate *NO* type-checking
+            # code for this pseudo-superclass; instead, we only enqueue *ALL*
             # parent pseudo-superclasses of this child pseudo-superclass for
             # visitation by later iteration of this inner BFS.
             #
             # See "hints_bases" for explanatory commentary.
+            if is_hint_pep484585_generic_user(hint_base):
                 # Tuple of the one or more parent pseudo-superclasses of this
                 # child pseudo-superclass.
                 hint_base_bases = get_hint_pep484585_generic_bases_unerased(
@@ -2117,10 +2122,11 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
             # PEP 484-compliant generic *NOR* an ignorable 544-compliant
             # protocol.
             #
-            # If this pseudo-superclass is *NOT* an isinstanceable type
-            # conveying *NO* meaningful semantics, this pseudo-superclass is
-            # unignorable. Yield this unignorable pseudo-superclass.
-            elif hint_base_sign is not None:
+            # If this pseudo-superclass is identified by a sign, this
+            # pseudo-superclass is *NOT* an isinstanceable type conveying *NO*
+            # meaningful semantics. This pseudo-superclass is unignorable. Yield
+            # this unignorable pseudo-superclass.
+            elif get_hint_pep_sign_or_none(hint_base) is not None:
                 yield hint_base
             # Else, this pseudo-superclass is an isinstanceable type conveying
             # *NO* meaningful semantics and is thus effectively ignorable. Why?

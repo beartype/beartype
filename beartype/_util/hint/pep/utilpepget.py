@@ -23,6 +23,7 @@ from beartype.typing import (
     Optional,
     # Union,
 )
+# from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.hint.datahinttyping import (
     # HintSignTrie,
     TypeException,
@@ -826,9 +827,8 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     **Unsafe origin object** (i.e., arbitrary object originating the passed
     PEP-compliant type hint but *not* necessarily an isinstanceable class such
     that all objects satisfying this hint are instances of this class)
-    originating this hint if this hint originates from an object *or*
-    :data:`None` otherwise (i.e., if this hint originates from *no* such
-    object).
+    originating this hint if this hint originates from an origin *or*
+    :data:`None` otherwise (i.e., if this hint originates from *no* origin).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -947,7 +947,7 @@ def get_hint_pep_origin_type(
         Type originating this hint.
 
     Raises
-    -------
+    ------
     exception_cls
         If this hint either:
 
@@ -995,26 +995,43 @@ def get_hint_pep_origin_type(
 
 
 #FIXME: Unit test us up, please.
-@callable_cached
-def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
+def get_hint_pep_origin_type_or_none(
+    # Mandatory parameters.
+    hint: Any,
+
+    # Optional parameters.
+    is_self_fallback: bool = False,
+) -> Optional[type]:
     '''
     **Origin type** (i.e., class such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
     if this hint originates from such a type *or* :data:`None` otherwise (i.e.,
     if this hint does *not* originate from such a type).
 
-    This getter is memoized for efficiency.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Caveats
     -------
-    **This high-level getter should always be called in lieu of the low-level**
-    :func:`get_hint_pep_origin_or_none` **getter on attempting to
-    directly access the low-level** ``__origin__`` **dunder attribute.**
+    **This high-level getter should always be called in lieu of either calling
+    the low-level** :func:`.get_hint_pep_origin_or_none` **getter or attempting
+    to directly access the low-level** ``__origin__`` **dunder attribute.**
 
     Parameters
     ----------
     hint : object
         Type hint to be inspected.
+    is_self_fallback : bool = False
+        :data:`True` only if returning the passed hint as a last-ditch fallback
+        when this hint is a type defining the ``__origin__`` dunder attribute to
+        be a non-type. Equivalently, if the passed hint is such a hint *and*
+        this parameter is:
+
+        * :data:`True`, this getter returns this hint as is.
+        * :data:`False`, this getter returns :data:`None`.
+
+        Defaults to :data:`False`. Explicit is better than implicit.
 
     Returns
     -------
@@ -1029,12 +1046,15 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     :func:`.get_hint_pep_origin_or_none`
         Further details.
     '''
+    assert isinstance(is_self_fallback, bool), (
+        f'{repr(is_self_fallback)} not boolean.')
 
-    # Origin type originating this hint if any *OR* "None" otherwise,
+    # Unsafe origin type originating this hint if any *OR* "None" otherwise,
     # initialized to the arbitrary object set as the "hint.__origin__" dunder
     # attribute if this hint defines that attribute.
     hint_origin: Optional[type] = get_hint_pep_origin_or_none(hint)  # type: ignore[assignment]
 
+    #FIXME: Unit test this up, please. *shrug*
     # If this origin is *NOT* a type...
     #
     # Ideally, this attribute would *ALWAYS* be a type for all possible
@@ -1050,12 +1070,17 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     if not isinstance(hint_origin, type):
         # Default this origin type to either...
         hint_origin = (
-            # If this hint is itself a type, this hint could be euphemistically
-            # said to originate from "itself." In this case, this hint.
-            #
-            # Look. Just go with it. We wave our hands in the air.
-            hint if isinstance(hint, type) else
-            # Else, this hint is *NOT* a type. Default to "None". No choice, yo!
+            # If...
+            hint if (
+                # The caller requests the "self" fallback logic *AND*...
+                is_self_fallback and
+                # This hint is itself a type, this hint could be euphemistically
+                # said to originate from "itself." Fallback to this hint itself.
+                # Look. Just go with it. We wave our hands in the air
+                isinstance(hint, type)
+            ) else
+            # Else, either the caller did not request the "self" fallback logic
+            # *OR* this hint is not a type. In either case, fallback to "None".
             None
         )
     # Else, this origin is a type.
@@ -1064,9 +1089,6 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     return hint_origin
 
 
-#FIXME: Is this even required or desired anymore? Can't we just replace all
-#calls to this frankly non-ideal getter with calls to a dramatically superior
-#get_hint_pep_origin_type() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument
@@ -1115,9 +1137,6 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     return hint_origin_type
 
 
-#FIXME: Is this even required or desired anymore? Can't we just replace all
-#calls to this frankly non-ideal getter with calls to the dramatically superior
-#get_hint_pep_origin_type_or_none() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable_or_none(
     hint: Any) -> Optional[type]:
     '''
