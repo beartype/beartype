@@ -178,10 +178,10 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     # List of all generic argument cases, each of which is a 2-tuple of the
     # form "(src_generic, trg_args)" such that:
     # * "src_generic" is a PEP 484- or 585-compliant generic to be passed as the
-    #   input parameter to the get_hint_pep484585_generic_args_full() getter.
+    #   input "hint" parameter to this getter.
     # * "trg_args" is the output tuple returned by this getter when passed that
     #   input generic.
-    PEP484585_GENERIC_TO_ARGS_FULL = [
+    PEP484585_GENERIC_ARGS_FULL = [
         (GenericST, (S, T,)),
         (GenericST[int, float], (int, float,)),
         (SequenceU, (U,)),
@@ -190,22 +190,66 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (GenericIntTSequenceU, (bool, int, float, U,)),
     ]
 
+    # List of all generic argument cases, each of which is a 2-tuple of the
+    # form "(src_generic, src_base_target, trg_args)" such that:
+    # * "src_generic" is a PEP 484- or 585-compliant generic to be passed as the
+    #   input "hint" parameter to this getter.
+    # * "src_base_target" is a target pseudo-superclass to be passed as the
+    #   input "hint_base_target" parameter to this getter.
+    # * "trg_args" is the output tuple returned by this getter when passed that
+    #   input generic and target pseudo-superclass.
+    PEP484585_GENERIC_BASE_TARGET_ARGS_FULL = [
+        (GenericST, Generic, (S, T,)),
+        (GenericST, Generic[S, T], (S, T,)),
+        (GenericST[int, float], Generic, (int, float,)),
+        (SequenceU, Sequence, (U,)),
+        (SequenceU[complex], Sequence, (complex,)),
+        (GenericSTSequenceU, List, (bool,)),
+        (GenericSTSequenceU, GenericST, (int, T,)),
+        (GenericSTSequenceU, Nongeneric, ()),
+        (GenericSTSequenceU, SequenceU, (U,)),
+        (GenericIntTSequenceU, GenericSTSequenceU, (bool, int, float, U,)),
+    ]
 
     # If the active Python interpreter targets Python >= 3.9 and thus behaves
     # sanely with respect to complex subscripted generics, extend this list with
     # cases covering complex subscripted generics. For unknown and presumably
     # irrelevant reasons, Python 3.8 raises exceptions here. *shrug*
     if IS_PYTHON_AT_LEAST_3_9:
-        PEP484585_GENERIC_TO_ARGS_FULL.extend((
+        PEP484585_GENERIC_ARGS_FULL.extend((
             (GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
             (GenericIntTSequenceU[complex], (bool, int, float, complex,)),
         ))
 
+        PEP484585_GENERIC_BASE_TARGET_ARGS_FULL.extend((
+            (GenericSTSequenceU[float, complex], GenericST, (int, float,)),
+            (GenericSTSequenceU[float, complex], SequenceU, (complex,)),
+            (
+                GenericIntTSequenceU[complex],
+                GenericSTSequenceU,
+                (bool, int, float, complex,),
+            ),
+        ))
+
     # ....................{ PASS                           }....................
-    # Assert that this getter returns the expected tuples for the passed types,
-    # including both subscripted and unsubscripted forms of these types.
-    for src_generic, trg_args in PEP484585_GENERIC_TO_ARGS_FULL:
+    # Assert that this getter returns the expected tuples for the passed
+    # generics, including subscripted and unsubscripted forms of these generics.
+    for src_generic, trg_args in PEP484585_GENERIC_ARGS_FULL:
         assert get_hint_pep484585_generic_args_full(src_generic) == trg_args
+
+        # Additionally assert that this getter returns the same tuple when
+        # passed the passed generic as the target pseudo-superclass. By
+        # definition, any class is the superclass of itself. (Math goes hard.)
+        assert get_hint_pep484585_generic_args_full(
+            src_generic, src_generic) == trg_args
+
+    # Assert that this getter returns the expected tuples for the passed
+    # generics and target pseudo-superclasses of these generics, including
+    # subscripted and unsubscripted forms of these generics.
+    for src_generic, src_base_target, trg_args in (
+        PEP484585_GENERIC_BASE_TARGET_ARGS_FULL):
+        assert get_hint_pep484585_generic_args_full(
+            src_generic, src_base_target) == trg_args
 
     # ....................{ FAIL                           }....................
     # Assert that this getter raises the expected exception when passed an
