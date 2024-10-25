@@ -15,6 +15,19 @@ from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import TypeVar
 from beartype._util.cache.utilcachecall import callable_cached
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_hint_pep484_typevar(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed object is a :pep:`484`-compliant **type
+    variable** (i.e., :class:`typing.TypeVar` instance).
+    '''
+
+    # Although this test currently reduces to a trivial one-liner, it's *NOT*
+    # inconceivable that this test could become non-trivial under a subsequent
+    # CPython version. *shrug*
+    return isinstance(hint, TypeVar)
+
 # ....................{ GETTERS                            }....................
 @callable_cached
 def get_hint_pep484_typevar_bound_or_none(
@@ -34,10 +47,10 @@ def get_hint_pep484_typevar_bound_or_none(
     #. One **upper bound** (i.e., ``bound`` keyword argument passed by the
        caller to the :meth:`typing.TypeVar.__init__` call initializing this
        type variable), this getter returns that bound as is.
-    #. Else, this getter returns the ``None`` singleton.
+    #. Else, this getter returns the :data:`None` singleton.
 
     Caveats
-    ----------
+    -------
     **This getter treats constraints and upper bounds as semantically
     equivalent,** preventing callers from distinguishing between these two
     technically distinct variants of type variable metadata.
@@ -78,7 +91,7 @@ def get_hint_pep484_typevar_bound_or_none(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -88,13 +101,13 @@ def get_hint_pep484_typevar_bound_or_none(
         * Else, :data:`None`.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484Exception
         if this object is *not* a :pep:`484`-compliant type variable.
     '''
 
     # If this hint is *NOT* a type variable, raise an exception.
-    if not isinstance(hint, TypeVar):
+    if not is_hint_pep484_typevar(hint):
         raise BeartypeDecorHintPep484Exception(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 484 type variable.'
@@ -145,7 +158,7 @@ def reduce_hint_pep484_typevar(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
