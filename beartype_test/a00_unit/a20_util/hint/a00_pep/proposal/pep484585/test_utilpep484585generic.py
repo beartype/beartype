@@ -174,6 +174,18 @@ def test_get_hint_pep484585_generic_args_full() -> None:
 
         pass
 
+
+    class GenericUUST(SequenceU, GenericST, List[U]):
+        '''
+        Arbitrary :pep:`484`- or :pep:`585`-compliant generic list
+        parametrized by three unconstrained type variables, one of which is
+        repeated twice across two different pseudo-superclasses at different
+        hierarchical nesting levels.
+        '''
+
+        pass
+
+
     # ....................{ LOCALS                         }....................
     # List of all generic argument cases, each of which is a 2-tuple of the
     # form "(src_generic, trg_args)" such that:
@@ -188,6 +200,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (SequenceU[complex], (complex,)),
         (GenericSTSequenceU, (bool, int, T, U,)),
         (GenericIntTSequenceU, (bool, int, float, U,)),
+        (GenericUUST, (U, S, T, U,)),
     ]
 
     # List of all generic argument cases, each of which is a 2-tuple of the
@@ -209,6 +222,8 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (GenericSTSequenceU, Nongeneric, ()),
         (GenericSTSequenceU, SequenceU, (U,)),
         (GenericIntTSequenceU, GenericSTSequenceU, (bool, int, float, U,)),
+        (GenericUUST, SequenceU, (U,)),
+        (GenericUUST, GenericST, (S, T)),
     ]
 
     # If the active Python interpreter targets Python >= 3.9 and thus behaves
@@ -216,9 +231,23 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     # cases covering complex subscripted generics. For unknown and presumably
     # irrelevant reasons, Python 3.8 raises exceptions here. *shrug*
     if IS_PYTHON_AT_LEAST_3_9:
+        class GenericUIntT(GenericUUST[U, int, T]):
+            '''
+            Arbitrary :pep:`484`- or :pep:`585`-compliant generic list
+            parametrized by two unconstrained type variables, one of which is
+            repeated twice across two different pseudo-superclasses at different
+            hierarchical nesting levels.
+            '''
+
+            pass
+
+
         PEP484585_GENERIC_ARGS_FULL.extend((
             (GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
             (GenericIntTSequenceU[complex], (bool, int, float, complex,)),
+            (GenericUUST[bool, int, float], (bool, int, float, bool,)),
+            (GenericUIntT, (U, int, T, U,)),
+            (GenericUIntT[bool, float], (bool, int, float, bool,)),
         ))
 
         PEP484585_GENERIC_BASE_TARGET_ARGS_FULL.extend((
@@ -229,6 +258,12 @@ def test_get_hint_pep484585_generic_args_full() -> None:
                 GenericSTSequenceU,
                 (bool, int, float, complex,),
             ),
+            (GenericUUST[bool, int, float], List[U], (bool,)),
+            (GenericUUST[bool, int, float], GenericST, (int, float)),
+            (GenericUIntT, SequenceU, (U,)),
+            (GenericUIntT, GenericST, (int, T)),
+            (GenericUIntT[bool, float], List[U], (bool,)),
+            (GenericUIntT[bool, float], GenericST, (int, float)),
         ))
 
     # ....................{ PASS                           }....................
