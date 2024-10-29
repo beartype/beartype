@@ -20,9 +20,9 @@ from beartype.typing import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import FrozenSetInts
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     make_hint_pep484585_tuple_fixed_hint)
-from beartype._util.hint.pep.proposal.utilpep484604 import (
+from beartype._util.hint.pep.proposal.pep484604 import (
     make_hint_pep484604_union)
 from beartype._util.kind.integer.utilintget import (
     get_integer_pseudorandom_signed_32bit)

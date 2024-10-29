@@ -8,7 +8,7 @@ Project-wide :pep:`484` and :pep:`585` **callable type hint utility unit
 tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.pep484585callable` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -22,7 +22,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     '''
     Test both the ``get_hint_pep484585_callable_params`` and
     ``get_hint_pep484585_callable_return`` getters declared by the
-    :mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable`
+    :mod:`beartype._util.hint.pep.proposal.pep484585.pep484585callable`
     submodule.
 
     Since these getters are inextricably interrelated, this unit test exercises
@@ -40,7 +40,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype.typing import Any
     from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
         get_hint_pep484585_callable_params,
         get_hint_pep484585_callable_return,
     )

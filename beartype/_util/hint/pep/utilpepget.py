@@ -46,19 +46,19 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     get_hint_pep484585_sign_tuplefixed_or_same)
-from beartype._util.hint.pep.proposal.utilpep585 import (
+from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_builtin_subscripted,
     is_hint_pep585_generic,
 )
-from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.utilpep484604 import (
+from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
+from beartype._util.hint.pep.proposal.pep484604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.py.utilpyversion import (
     # IS_PYTHON_AT_LEAST_3_10,

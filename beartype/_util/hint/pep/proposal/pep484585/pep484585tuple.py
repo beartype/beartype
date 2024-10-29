@@ -18,9 +18,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignTupleFixed,
 )
-from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
-from beartype._util.hint.pep.proposal.utilpep585 import (
+from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 from beartype._util.py.utilpyversion import (
     # IS_PYTHON_AT_LEAST_3_11,

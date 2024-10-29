@@ -63,7 +63,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
     get_hint_pep484585_ref_names_relative_to)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count

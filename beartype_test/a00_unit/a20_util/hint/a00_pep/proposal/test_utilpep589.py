@@ -7,7 +7,7 @@
 **Beartype** :pep:`589` **utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep589` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep589` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep589() -> None:
     '''
     Test the
-    :beartype._util.hint.pep.proposal.utilpep589.is_hint_pep589` tester.
+    :beartype._util.hint.pep.proposal.pep589.is_hint_pep589` tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
+    from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
 

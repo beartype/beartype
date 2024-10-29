@@ -7,7 +7,7 @@
 **Beartype** :pep:`586` **utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep586` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep586` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ from pytest import raises
 def test_is_hint_pep586() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep586.die_unless_hint_pep586`
+    :func:`beartype._util.hint.pep.proposal.pep586.die_unless_hint_pep586`
     raiser.
     '''
 
@@ -29,7 +29,7 @@ def test_is_hint_pep586() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep586Exception
     from beartype.typing import Optional
-    from beartype._util.hint.pep.proposal.utilpep586 import (
+    from beartype._util.hint.pep.proposal.pep586 import (
         die_unless_hint_pep586)
     from beartype._util.api.standard.utiltyping import get_typing_attrs
     from enum import Enum

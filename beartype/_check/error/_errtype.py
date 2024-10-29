@@ -33,7 +33,7 @@ from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal)
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
     import_pep484585_ref_type)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,

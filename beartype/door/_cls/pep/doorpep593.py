@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.utilpep593 import (
+from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )

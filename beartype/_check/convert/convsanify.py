@@ -30,7 +30,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 

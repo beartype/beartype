@@ -67,7 +67,7 @@ from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdmain import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
-from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
 
 # ....................{ COERCERS ~ root                    }....................

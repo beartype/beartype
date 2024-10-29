@@ -113,7 +113,7 @@ class GenericTypeHint(TypeHint):
         #both are useless. Ergo, we have *NO* recourse but to iteratively
         #reconstruct the full transitive subscriptions for unsubscripted
         #generics by iterating with the
-        #iter_hint_pep484585_generic_bases_unerased_tree() iterator. The idea
+        #iter_hint_pep484585_generic_bases_unerased() iterator. The idea
         #here is that we want to iteratively inspect first the "__args__" and
         #then the "__parameters__" of all superclasses of both "self" and
         #"branch" until obtaining two n-tuples (where "n" is the number of

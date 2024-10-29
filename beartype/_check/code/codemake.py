@@ -131,17 +131,17 @@ from beartype._util.cls.pep.utilpep3119 import (
     is_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_args)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    get_hint_pep484585_generic_type,
-    iter_hint_pep484585_generic_bases_unerased_tree,
-)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_type)
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585geniter import (
+    iter_hint_pep484585_generic_bases_unerased)
+from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.utilpep586 import (
+from beartype._util.hint.pep.proposal.pep586 import (
     get_hint_pep586_literals)
-from beartype._util.hint.pep.proposal.utilpep593 import (
+from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
@@ -2101,8 +2101,8 @@ def make_check_expr(
                     # For each unignorable unerased transitive pseudo-superclass
                     # originally declared as a superclass of this generic...
                     for hint_child in (
-                        iter_hint_pep484585_generic_bases_unerased_tree(
-                            hint=hint_curr,
+                        iter_hint_pep484585_generic_bases_unerased(
+                            hint=hint_curr,  # pyright: ignore
                             conf=conf,
                             exception_prefix=EXCEPTION_PREFIX,
                     )):

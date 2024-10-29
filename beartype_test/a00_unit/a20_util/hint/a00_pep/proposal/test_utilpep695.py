@@ -7,7 +7,7 @@
 Project-wide :pep:`695` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep695` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep695` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,14 +20,14 @@ This submodule unit tests the public API of the private
 def test_iter_hint_pep695_forwardrefs() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep695.iter_hint_pep695_forwardrefs`
+    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_forwardrefs`
     iterator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.utilpep695 import (
+    from beartype._util.hint.pep.proposal.pep695 import (
         iter_hint_pep695_forwardrefs)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from pytest import raises
@@ -55,7 +55,7 @@ def test_iter_hint_pep695_forwardrefs() -> None:
 def test_reduce_hint_pep695() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep695.reduce_hint_pep695`
+    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695`
     iterator.
     '''
 

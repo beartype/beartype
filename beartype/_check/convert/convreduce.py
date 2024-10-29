@@ -95,38 +95,38 @@ from beartype._util.hint.nonpep.api.utilmodnumpy import (
     reduce_hint_numpy_ndarray)
 from beartype._util.hint.nonpep.api.utilmodpandera import (
     reduce_hint_pandera)
-from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.pep484 import (
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
 )
-from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
+from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     reduce_hint_pep484_generic)
-from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     reduce_hint_pep484_newtype)
-from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
+from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     reduce_hint_pep484_typevar)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585container import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
     reduce_hint_pep484585_itemsview)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585type import (
     reduce_hint_pep484585_type)
-from beartype._util.hint.pep.proposal.utilpep557 import (
+from beartype._util.hint.pep.proposal.pep557 import (
     reduce_hint_pep557_initvar)
-from beartype._util.hint.pep.proposal.utilpep585 import (
+from beartype._util.hint.pep.proposal.pep585 import (
     reduce_hint_pep585_builtin_subscripted_unknown)
-from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
-from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
-from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
-from beartype._util.hint.pep.proposal.utilpep612 import (
+from beartype._util.hint.pep.proposal.pep589 import reduce_hint_pep589
+from beartype._util.hint.pep.proposal.pep591 import reduce_hint_pep591
+from beartype._util.hint.pep.proposal.pep593 import reduce_hint_pep593
+from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_args,
     reduce_hint_pep612_kwargs,
 )
-from beartype._util.hint.pep.proposal.utilpep613 import reduce_hint_pep613
-from beartype._util.hint.pep.proposal.utilpep646692 import (
+from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
+from beartype._util.hint.pep.proposal.pep646692 import (
     reduce_hint_pep646692_unpack)
-from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
-from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
-from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
-from beartype._util.hint.pep.proposal.utilpep695 import reduce_hint_pep695
+from beartype._util.hint.pep.proposal.pep647 import reduce_hint_pep647
+from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
+from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
+from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from beartype._util.utilobject import SENTINEL

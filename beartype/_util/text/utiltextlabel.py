@@ -384,7 +384,7 @@ def label_type(
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin
-    from beartype._util.hint.pep.proposal.utilpep544 import (
+    from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep544_protocol)
     from beartype._util.text.utiltextansi import color_attr_name
 

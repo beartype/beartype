@@ -117,7 +117,7 @@ def get_hint_pep484_typevar_bound_or_none(
     # If this type variable was parametrized by one or more constraints...
     if hint.__constraints__:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+        from beartype._util.hint.pep.proposal.pep484.pep484union import (
             make_hint_pep484_union)
 
         # Create and return the PEP 484-compliant union of these constraints.

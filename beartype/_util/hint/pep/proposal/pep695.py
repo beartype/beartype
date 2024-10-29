@@ -61,7 +61,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    type {alias_name} = {alias_value}
 #
 #    # ...into this.
-#    from beartype._util.hint.pep.proposal.utilpep695 import (
+#    from beartype._util.hint.pep.proposal.pep695 import (
 #        iter_hint_pep695_forwardrefs as
 #        __iter_hint_pep695_forwardref_beartype__
 #    )

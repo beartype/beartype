@@ -16,10 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    get_hint_pep484585_generic_type,
-    iter_hint_pep484585_generic_bases_unerased_tree,
-)
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_type)
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585geniter import (
+    iter_hint_pep484585_generic_bases_unerased)
 
 # ....................{ GETTERS                            }....................
 def find_cause_generic(cause: ViolationCause) -> ViolationCause:
@@ -64,7 +64,7 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
 
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
-    for hint_child in iter_hint_pep484585_generic_bases_unerased_tree(
+    for hint_child in iter_hint_pep484585_generic_bases_unerased(
         hint=cause.hint,
         conf=cause.conf,
         exception_prefix=cause.exception_prefix,

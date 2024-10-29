@@ -18,10 +18,10 @@ from beartype.typing import Dict
 from beartype._data.hint.datahinttyping import BeartypeForwardRef
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_object_isinstanceable)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    is_hint_pep484585_generic,
-    get_hint_pep484585_generic_type,
-)
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_type)
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+    is_hint_pep484585_generic)
 from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.text.utiltextidentifier import is_dunder
 

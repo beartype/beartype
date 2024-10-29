@@ -999,8 +999,8 @@ that enumeration's type and should be directly referenced as such: e.g.,
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
     class HintGenericSubscriptedType(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
@@ -1043,11 +1043,11 @@ else:
     by this type, higher-level PEP-specific functions *must* be called instead.
     These include:
 
-    * :func:`beartype._util.hint.pep.proposal.pep484.utilpep484.is_hint_pep484_generic`,
+    * :func:`beartype._util.hint.pep.proposal.pep484.pep484.is_hint_pep484_generic`,
       detecting :pep:`484`-compliant generic type hints.
-    * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin_subscripted`,
+    * :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subscripted`,
       detecting :pep:`585`-compliant builtin type hints.
-    * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`,
+    * :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_generic`,
       detecting :pep:`585`-compliant generic type hints.
     '''
 
@@ -1167,8 +1167,8 @@ objects annotating variadic parameters with syntax resembling
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
-#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
     class HintPep695Type(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a

@@ -8,7 +8,7 @@ Project-wide :pep:`484`- and :pep:`604`-compliant **union type hint utility**
 unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep484604` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484604` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,11 +21,11 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep604() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep484604.is_hint_pep604` tester.
+    :mod:`beartype._util.hint.pep.proposal.pep484604.is_hint_pep604` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
+    from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
     # If the active Python interpreter targets Python >= 3.10 and thus supports
@@ -43,7 +43,7 @@ def test_is_hint_pep604() -> None:
 def test_make_hint_pep484604_union() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep484604.make_hint_pep484604_union`
+    :mod:`beartype._util.hint.pep.proposal.pep484604.make_hint_pep484604_union`
     factory.
     '''
 
@@ -54,7 +54,7 @@ def test_make_hint_pep484604_union() -> None:
         List,
         Union,
     )
-    from beartype._util.hint.pep.proposal.utilpep484604 import (
+    from beartype._util.hint.pep.proposal.pep484604 import (
         make_hint_pep484604_union)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pytest import raises

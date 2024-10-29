@@ -23,7 +23,7 @@ Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep695.iter_hint_pep695_forwardrefs`
+    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_forwardrefs`
     iterator.
     '''
 
@@ -32,7 +32,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     from beartype.roar import BeartypeDecorHintPep695Exception
     from beartype._check.forward.reference.fwdrefmeta import (
         BeartypeForwardRefMeta)
-    from beartype._util.hint.pep.proposal.utilpep695 import (
+    from beartype._util.hint.pep.proposal.pep695 import (
         iter_hint_pep695_forwardrefs)
     from pytest import raises
 
@@ -120,14 +120,14 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
 def unit_test_reduce_hint_pep695() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep695.reduce_hint_pep695`
+    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695`
     reducer.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.utilpep695 import reduce_hint_pep695
+    from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695
     from pytest import raises
 
     # ....................{ LOCALS                         }....................

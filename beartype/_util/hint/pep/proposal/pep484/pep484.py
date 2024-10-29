@@ -143,7 +143,7 @@ def reduce_hint_pep484_deprecated(
 # Note that this reducer is intentionally typed as returning "type" rather than
 # "NoneType". While the former would certainly be preferable, mypy erroneously
 # emits false positives when this reducer is typed as returning "NoneType":
-#     beartype/_util/hint/pep/proposal/pep484/utilpep484.py:190: error: Variable
+#     beartype._util.hint.pep.proposal.pep484.pep484.py:190: error: Variable
 #     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
 def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
     '''

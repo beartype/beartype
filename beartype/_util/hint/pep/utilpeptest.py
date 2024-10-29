@@ -38,18 +38,18 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 )
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+from beartype._util.hint.pep.proposal.pep484.pep484 import (
     is_hint_pep484_typevar_ignorable,
 )
-from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_ignorable)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_ignorable)
-from beartype._util.hint.pep.proposal.utilpep484604 import (
+from beartype._util.hint.pep.proposal.pep484604 import (
     is_hint_pep484604_union_ignorable)
-from beartype._util.hint.pep.proposal.utilpep544 import is_hint_pep544_ignorable
-from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593_ignorable
-from beartype._util.hint.pep.proposal.utilpep695 import is_hint_pep695_ignorable
+from beartype._util.hint.pep.proposal.pep544 import is_hint_pep544_ignorable
+from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593_ignorable
+from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_ignorable
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from collections.abc import Callable
@@ -542,7 +542,7 @@ def is_hint_pep_supported(hint: object) -> bool:
 # ....................{ TESTERS ~ typing                   }....................
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
 #access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
-#* beartype._util.hint.pep.proposal.pep484.utilpep484.py
+#* beartype._util.hint.pep.proposal.pep484.pep484.py
 #Thankfully, nobody really cares about generalizing this one edge case to
 #"testing_extensions", so it's mostly fine for various definitions of fine.
 def is_hint_pep_typing(hint: object) -> bool:

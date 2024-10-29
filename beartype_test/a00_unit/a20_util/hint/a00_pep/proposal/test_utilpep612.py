@@ -7,7 +7,7 @@
 Project-wide :pep:`612` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep612` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep612` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,14 +20,14 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep612_paramspec() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep612.get_hint_pep612_paramspec`
+    :mod:`beartype._util.hint.pep.proposal.pep612.get_hint_pep612_paramspec`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
-    from beartype._util.hint.pep.proposal.utilpep612 import (
+    from beartype._util.hint.pep.proposal.pep612 import (
         get_hint_pep612_paramspec)
 
     # ....................{ LOCALS                         }....................
@@ -53,7 +53,7 @@ def test_get_hint_pep612_paramspec() -> None:
 def test_make_hint_pep612_concatenate_list_or_none() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep612.make_hint_pep612_concatenate_list_or_none`
+    :mod:`beartype._util.hint.pep.proposal.pep612.make_hint_pep612_concatenate_list_or_none`
     factory.
     '''
 
@@ -63,7 +63,7 @@ def test_make_hint_pep612_concatenate_list_or_none() -> None:
         import_typing_attr,
         import_typing_attr_or_none,
     )
-    from beartype._util.hint.pep.proposal.utilpep612 import (
+    from beartype._util.hint.pep.proposal.pep612 import (
         make_hint_pep612_concatenate_list_or_none)
 
     # ....................{ LOCALS                         }....................

@@ -355,7 +355,7 @@ def make_hint_pep484604_union(hints: tuple) -> object:
     # If a PEP 604-compliant new-style union was *NOT* fabricated above...
     if hint_union is SENTINEL:
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
+        from beartype._util.hint.pep.proposal.pep484.pep484union import (
             make_hint_pep484_union)
 
         # Fallback to a PEP 484-compliant old-style union.

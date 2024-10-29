@@ -7,7 +7,7 @@
 **Beartype** :pep:`593` **utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep593` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep593` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_die_unless_hint_pep593() -> None:
     '''
     Test the
-    :beartype._util.hint.pep.proposal.utilpep593.die_unless_hint_pep593`
+    :beartype._util.hint.pep.proposal.pep593.die_unless_hint_pep593`
     validator.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
-    from beartype._util.hint.pep.proposal.utilpep593 import (
+    from beartype._util.hint.pep.proposal.pep593 import (
         die_unless_hint_pep593)
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
@@ -51,7 +51,7 @@ def test_die_unless_hint_pep593() -> None:
 def test_is_hint_pep593_beartype() -> None:
     '''
     Test usage of the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep593.is_hint_pep593_beartype`
+    :mod:`beartype._util.hint.pep.proposal.pep593.is_hint_pep593_beartype`
     tester.
     '''
 
@@ -61,7 +61,7 @@ def test_is_hint_pep593_beartype() -> None:
         BeartypeValeLambdaWarning,
     )
     from beartype.vale import Is
-    from beartype._util.hint.pep.proposal.utilpep593 import (
+    from beartype._util.hint.pep.proposal.pep593 import (
         is_hint_pep593_beartype)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pytest import raises, warns
@@ -98,13 +98,13 @@ def test_is_hint_pep593_beartype() -> None:
 def test_get_hint_pep593_metadata() -> None:
     '''
     Test the
-    :beartype._util.hint.pep.proposal.utilpep593.get_hint_pep593_metadata`
+    :beartype._util.hint.pep.proposal.pep593.get_hint_pep593_metadata`
     getter.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
-    from beartype._util.hint.pep.proposal.utilpep593 import (
+    from beartype._util.hint.pep.proposal.pep593 import (
         get_hint_pep593_metadata)
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
@@ -133,13 +133,13 @@ def test_get_hint_pep593_metadata() -> None:
 def test_get_hint_pep593_metahint() -> None:
     '''
     Test the
-    :beartype._util.hint.pep.proposal.utilpep593.get_hint_pep593_metahint`
+    :beartype._util.hint.pep.proposal.pep593.get_hint_pep593_metahint`
     getter.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
-    from beartype._util.hint.pep.proposal.utilpep593 import (
+    from beartype._util.hint.pep.proposal.pep593 import (
         get_hint_pep593_metahint)
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)

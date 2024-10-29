@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     is_hint_pep484585_tuple_empty)
 
 # ....................{ SUBCLASSES                         }....................

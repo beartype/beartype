@@ -76,7 +76,7 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_builtin_subscripted(hint: object) -> bool:
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
             is_hint_pep484585_generic)
 
         # Return true only if this hint...
@@ -85,7 +85,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             # PEP 585-compliant builtin *AND*...
             isinstance(hint, HintGenericSubscriptedType) and
             # Is *NOT* a PEP 484- or -585-compliant subscripted generic.
-            not is_hint_pep484585_generic(hint)
+            not is_hint_pep484585_generic(hint)  # pyright: ignore
         )
 
 
@@ -93,13 +93,13 @@ if IS_PYTHON_AT_LEAST_3_9:
     def is_hint_pep585_generic(hint: object) -> bool:  # pyright: ignore[reportGeneralTypeIssues]
 
         # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
             get_hint_pep484585_generic_type_or_none)
 
         # If this hint is *NOT* a type, reduce this hint to the object
         # originating this hint if any. See the comparable
         # is_hint_pep484_generic() tester for further details.
-        hint = get_hint_pep484585_generic_type_or_none(hint)
+        hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
 
         # Tuple of all pseudo-superclasses originally subclassed by the passed
         # hint if this hint is a generic *OR* false otherwise.
@@ -262,12 +262,12 @@ def get_hint_pep585_generic_bases_unerased(
 
     See Also
     --------
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating

@@ -7,7 +7,7 @@
 Project-wide :pep:`484` and :pep:`585` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.pep484585` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep484585_tuple_empty() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple.is_hint_pep484585_tuple_empty`
+    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585tuple.is_hint_pep484585_tuple_empty`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585tuple import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
         is_hint_pep484585_tuple_empty)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
@@ -55,7 +55,7 @@ def test_is_hint_pep484585_tuple_empty() -> None:
 def test_get_hint_pep484585_args() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585.get_hint_pep484585_args`
+    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585.get_hint_pep484585_args`
     getter.
     '''
 
@@ -66,7 +66,7 @@ def test_get_hint_pep484585_args() -> None:
         Dict,
         List,
     )
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
         get_hint_pep484585_args)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pytest import raises

@@ -7,7 +7,7 @@
 **Beartype** :pep:`484`-compliant **type variable utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484.utilpep484typevar` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep484_typevar_bound_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.utilpep484typevar.get_hint_pep484_typevar_bound_or_none`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_typevar_bound_or_none`
     tester.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484Exception
-    from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         T,

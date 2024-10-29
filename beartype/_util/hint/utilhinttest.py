@@ -24,9 +24,9 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_supported,
 )
-from beartype._util.hint.pep.proposal.utilpep585 import (
+from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subscripted)
-from beartype._util.hint.pep.proposal.utilpep484604 import is_hint_pep604
+from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
 # from beartype._util.module.utilmodtest import (
 #     is_object_module_thirdparty_blacklisted)
 

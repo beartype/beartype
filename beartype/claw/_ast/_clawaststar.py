@@ -70,7 +70,7 @@ from beartype.door._func.doorcheck import (
 # iterator (i.e., generator iteratively creating and yielding one forward
 # reference proxy for each unqualified relative forward reference in the passed
 # PEP 695-compliant type alias).
-from beartype._util.hint.pep.proposal.utilpep695 import (
+from beartype._util.hint.pep.proposal.pep695 import (
     iter_hint_pep695_forwardrefs as __iter_hint_pep695_forwardref_beartype__)
 
 # ....................{ GLOBALS                            }....................

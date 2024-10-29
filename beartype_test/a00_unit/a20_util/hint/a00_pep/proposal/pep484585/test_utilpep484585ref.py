@@ -8,7 +8,7 @@ Project-wide :pep:`484` and :pep:`585` **forward reference type hint utility
 unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.pep484585ref` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep484585_ref_names() -> None:
     '''
     Test
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref.get_hint_pep484585_ref_names`
+    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585ref.get_hint_pep484585_ref_names`
     getter.
     '''
 
@@ -29,7 +29,7 @@ def test_get_hint_pep484585_ref_names() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
         get_hint_pep484585_ref_names)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pytest import raises
@@ -102,7 +102,7 @@ def test_get_hint_pep484585_ref_names() -> None:
 def test_get_hint_pep484585_ref_names_relative_to() -> None:
     '''
     Test
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref.get_hint_pep484585_ref_names_relative_to`
+    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585ref.get_hint_pep484585_ref_names_relative_to`
     getter.
     '''
 
@@ -110,7 +110,7 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
         get_hint_pep484585_ref_names_relative_to)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (

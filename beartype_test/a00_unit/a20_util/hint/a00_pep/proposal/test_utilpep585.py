@@ -7,7 +7,7 @@
 **Beartype** :pep:`585` **utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep585` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep585` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_builtin_subscripted`
+    :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subscripted`
     function.
 
     Parameters
@@ -31,7 +31,7 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.utilpep585 import (
+    from beartype._util.hint.pep.proposal.pep585 import (
         is_hint_pep585_builtin_subscripted)
 
     # Assert this tester accepts only PEP 585-compliant type hints.
@@ -43,7 +43,7 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
 def test_is_hint_pep585_generic(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`
+    :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_generic`
     function.
 
     Parameters
@@ -54,7 +54,7 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.utilpep585 import (
+    from beartype._util.hint.pep.proposal.pep585 import (
         is_hint_pep585_generic)
 
     # Assert this tester accepts only PEP 585-compliant generics.
@@ -66,7 +66,7 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
 def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep585.get_hint_pep585_generic_typevars`
+    :func:`beartype._util.hint.pep.proposal.pep585.get_hint_pep585_generic_typevars`
     function.
 
     Parameters
@@ -78,7 +78,7 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep585Exception
-    from beartype._util.hint.pep.proposal.utilpep585 import (
+    from beartype._util.hint.pep.proposal.pep585 import (
         get_hint_pep585_generic_typevars)
     from pytest import raises
 

@@ -7,7 +7,7 @@
 Beartype :pep:`557` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep557` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep557` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_get_hint_pep557_initvar_arg() -> None:
     '''
     Test usage of the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep557.get_hint_pep557_initvar_arg`
+    :mod:`beartype._util.hint.pep.proposal.pep557.get_hint_pep557_initvar_arg`
     getter.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep557Exception
-    from beartype._util.hint.pep.proposal.utilpep557 import (
+    from beartype._util.hint.pep.proposal.pep557 import (
         get_hint_pep557_initvar_arg)
     from dataclasses import InitVar
     from pytest import raises

@@ -82,7 +82,7 @@ def reduce_hint_pep484585_func_return(
         f'{repr(func_arg_name_to_hint)} not dictionary.')
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
         get_hint_pep484585_args)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 

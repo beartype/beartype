@@ -50,7 +50,7 @@ def reduce_hint_pep484585_itemsview(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
         get_hint_pep484585_args)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
 

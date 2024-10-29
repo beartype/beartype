@@ -7,7 +7,7 @@
 Beartype :pep:`544` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.utilpep544` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep544` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,14 +20,14 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep544_protocol() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.utilpep544.is_hint_pep544_protocol`
+    :mod:`beartype._util.hint.pep.proposal.pep544.is_hint_pep544_protocol`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
-    from beartype._util.hint.pep.proposal.utilpep544 import (
+    from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep544_protocol)
     from beartype_test.a00_unit.data.data_type import (
         TYPES_BUILTIN,
@@ -112,13 +112,13 @@ def test_is_hint_pep544_protocol() -> None:
 def test_is_hint_pep544_io_generic() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep544.is_hint_pep484_generic_io`
+    :func:`beartype._util.hint.pep.proposal.pep544.is_hint_pep484_generic_io`
     tester.
     '''
 
     # Defer test-specific imports.
     from beartype.typing import Union
-    from beartype._util.hint.pep.proposal.utilpep544 import (
+    from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep484_generic_io)
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
@@ -134,7 +134,7 @@ def test_is_hint_pep544_io_generic() -> None:
 def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.utilpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
+    :func:`beartype._util.hint.pep.proposal.pep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
     reducer.
     '''
 
@@ -142,9 +142,9 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype.typing import Union
-    from beartype._util.hint.pep.proposal.utilpep544 import (
+    from beartype._util.hint.pep.proposal.pep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
-    from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
+    from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
     from pytest import raises

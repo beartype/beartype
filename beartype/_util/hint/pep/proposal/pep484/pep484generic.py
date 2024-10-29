@@ -56,7 +56,7 @@ def is_hint_pep484_generic(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
@@ -66,7 +66,7 @@ def is_hint_pep484_generic(hint: object) -> bool:
     # enabling the subsequent test to test whether this origin object is an
     # unsubscripted generic, which would then imply this hint to be a
     # subscripted generic. If this strikes you as insane, you're not alone.
-    hint = get_hint_pep484585_generic_type_or_none(hint)
+    hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
 
     # Return true only if this hint is a subclass of the "typing.Generic"
     # abstract base class (ABC), in which case this hint is a user-defined
@@ -223,7 +223,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     See Also
     --------
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_bases_unerased`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
 
@@ -348,7 +348,7 @@ def get_hint_pep484_generic_bases_unerased(
     #    duplicate superclasses.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_type_or_none)
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
@@ -478,7 +478,7 @@ def reduce_hint_pep484_generic(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.utilpep544 import (
+    from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep484_generic_io,
         reduce_hint_pep484_generic_io_to_pep544_protocol,
     )

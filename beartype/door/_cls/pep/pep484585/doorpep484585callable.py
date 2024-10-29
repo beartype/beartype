@@ -21,7 +21,7 @@ from beartype.typing import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._util.cache.utilcachecall import property_cached
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
+from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
     get_hint_pep484585_callable_params,
     get_hint_pep484585_callable_return,
 )
