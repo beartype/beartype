@@ -39,9 +39,7 @@ from beartype._util.kind.sequence.utilseqmake import make_stack
 from itertools import count
 
 # ....................{ GETTERS ~ args                     }....................
-#FIXME: Update the worst-case time complexity. Looks more like O(n**3), eh?
-#FIXME: *BRUTAL.* So brutal, in fact, that this deserves its own
-#"utilpep484585genargsfull" submodule. Look. Just do it, please. *sigh*
+#FIXME: Document all of the edge cases in which this getter raises exceptions.
 @callable_cached
 def get_hint_pep484585_generic_args_full(
     # Mandatory parameters.

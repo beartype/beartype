@@ -18,11 +18,9 @@ from beartype.door._cls.doorsuper import TypeHint
 from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint as SubscriptedTypeHint)
-from beartype.typing import TYPE_CHECKING
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_typevars,
-)
+from beartype.roar import BeartypeDoorIsSubhintException
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_args_full)
 
 # ....................{ SUBCLASSES                         }....................
 class GenericTypeHint(TypeHint):
@@ -34,45 +32,19 @@ class GenericTypeHint(TypeHint):
     GenericListOfStrs(list[str]): ...``).
     '''
 
-    # ..................{ STATIC                             }..................
-    # Squelch false negatives from static type checkers.
-    if TYPE_CHECKING:
-        _hint: type
-
-    #FIXME: Not a particularly good idea, actually. Instead, call the newly
-    #defined get_hint_pep484585_generic_args_full() below... or *WAIT*. Perhaps
-    #we simply want to define _make_args() to defer to
-    #get_hint_pep484585_generic_args_full() instead, huh? Yup. That's prolly it.
-
-    # ..................{ PRIVATE ~ factories                }..................
-    #FIXME: This should probably just be the superclass implementation.
-    def _make_args(self) -> tuple:
-
-        # Tuple of zero or more child type hints directly subscripting this
-        # generic parent type hint.
-        # hint_args = get_hint_pep_args(self._hint)
-
-        # Fat one-liners for life.
-        return (
-            get_hint_pep_args(self._hint) or
-            get_hint_pep_typevars(self._hint)
-        )
-
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
         # print(f'Entering GenericTypeHint._is_subhint_branch({self}, {branch})...')
 
-        #FIXME: This is *EXTREMELY* similar to the superclass
-        #TypeHint._is_subhint_branch() implementation. Consider generalizing.
-
         # If the unsubscripted type originating this generic is *NOT* a subclass
-        # of the unsubscripted type originating that generic, then this generic
-        # is *NOT* a subhint of that generic. In this case, return false.
+        # of the unsubscripted type originating that branch, this generic is
+        # *NOT* a subhint of that branch. In this case, return false.
         if not issubclass(self._origin, branch._origin):
             # print(f'{self._origin} not subclass of {branch._origin})!')
             return False
-        # Else, this generic is a subclass of that generic. Note, however, that
-        # this does *NOT* imply this generic to be a subhint of that generic.
+        # Else, the unsubscripted type originating this generic is a subclass
+        # of the unsubscripted type originating that branch. Note, however, that
+        # this does *NOT* imply this generic to be a subhint of that branch.
         # The issubclass() builtin ignores parametrizations and thus returns
         # false positives for parametrized generics: e.g.,
         #     >>> from typing import Generic, TypeVar
@@ -83,85 +55,174 @@ class GenericTypeHint(TypeHint):
         #
         # Clearly, the unsubscripted generic "MuhGeneric" is a superhint
         # (rather than a subhint) of the subscripted generic
-        # "MuhGeneric[int]". Further introspection is needed to decide how
-        # exactly these two generics interrelate.
+        # "MuhGeneric[int]". Further introspection is needed.
         #
         # If that branch is unsubscripted, assume that branch to have been
         # subscripted by "Any". Since *ANY* child hint subscripting this hint is
         # necessarily a subhint of "Any", this hint is a subhint of that branch.
         # Return true immediately.
+        #
+        # Note that this this common edge case implicitly handles comparison of
+        # this generic against an unsubscripted simple class encapsulated by the
+        # "ClassTypeHint" wrapper. Why? Because the
+        # "ClassTypeHint._is_args_ignorable" property unconditionally returns
+        # "True". Ergo, "ClassTypeHint" need *NOT* be handled below.
         elif branch._is_args_ignorable:
             # print(f'is_subhint_branch({self}, {branch} [unsubscripted])')
             return True
         # Else, that branch is subscripted.
-
-        #FIXME: If this actually works:
-        #* Revise comment accordingly.
-        #* Globalize this 2-tuple as a new private global.
-        #* Since this is the only line that differs between this and the
-        #  superclass _is_subhint_branch(), generalize this out, please.
-        # If that branch is also a type hint wrapper of the same concrete
-        # subclass as this type hint wrapper *AND*...
+        #
+        # If this generic and that subscripted branch are incommensurable (i.e.,
+        # encapsulated by incomparable type hint wrappers *NOT* supporting
+        # comparison between a generic and a possibly non-generic type hint),
+        # this generic is *NOT* a subhint of that branch. In this case, return
+        # false.
         elif not isinstance(branch, _IS_SUBHINT_TYPES_COMMENSURABLE):
             # print(f'{branch.__class__} not in {_IS_SUBHINT_TYPES_COMMENSURABLE})!')
             return False
-
-        #FIXME: Do something intelligent here. In particular, we probably
-        #*MUST* expand unsubscripted generics like "MuhGeneric" to their
-        #full transitive subscriptions like "MuhGeneric[T]". Of course,
-        #"MuhGeneric" has *NO* "__args__" and only an empty "__parameters__";
-        #both are useless. Ergo, we have *NO* recourse but to iteratively
-        #reconstruct the full transitive subscriptions for unsubscripted
-        #generics by iterating with the
-        #iter_hint_pep484585_generic_bases_unerased() iterator. The idea
-        #here is that we want to iteratively inspect first the "__args__" and
-        #then the "__parameters__" of all superclasses of both "self" and
-        #"branch" until obtaining two n-tuples (where "n" is the number of
-        #type variables with which the root "Generic[...]" superclass was
-        #originally subscripted):
-        #* "self_args", the n-tuple of all types or type variables
-        #   subscripting this generic.
-        #* "branch_args", the n-tuple of all types or type variables
-        #   subscripting the "branch" generic.
+        # Else, this generic and that subscripted branch are commensurable
+        # (i.e., encapsulated by comparable type hint wrappers supporting
+        # comparison between a generic and a possibly non-generic type hint).
         #
-        #Once we have those two n-tuples, we can then decide the is_subhint()
-        #relation by simply iteratively subjecting each pair of items from
-        #both "self_args" and "branch_args" to is_subhint(). Notably, we
-        #return True if and only if is_subhint() returns True for *ALL* pairs
-        #of items of these two n-tuples.
-        #FIXME: Actually, it might be sufficient to just do something
-        #resembling:
-        #    if self._is_args_ignorable:
-        #        args_wrapped_tuple = ...
-        #
-        #Actually, maybe we should just override _make_args() like so:
-        #    def _make_args(self) -> tuple:
-        #        return (
-        #            get_hint_pep_args(self._hint) or
-        #            get_hint_pep_typevars(self._hint)
-        #        )
-        #
-        #Come to think of it: shouldn't that *ALREADY* be the superclass
-        #implementation? Seems genuinely useful, honestly.
+        # By elimination, that branch *MUST* now be encapsulated by either:
+        # * If that branch is also a PEP 484- or 585-compliant user-defined
+        #   subscripted generic, "GenericTypeHint".
+        # * Else, that branch *MUST* be a PEP 484- or 585-compliant subscripted
+        #   non-generic (e.g., "list[int]", "collections.abc.Sized[str]").
 
-        #FIXME: This doesn't quite work. Why? This generic and that generic may
-        #be subscripted by a differing number of child type hints and
-        #parameters. If this is the case, then the zip() ignores all trailing
-        #child type hints in whichever of these two generics is subscripted by
-        #more child type hints than the other. Basically, we need to:
-        #* Assert that the number of child type hints is the same: e.g.,
-        #    assert len(self._args_wrapped_tuple) == len(branch._args_wrapped_tuple)
-        #* Guarantee this consrtaint in the _make_args() factory defined above.
-        #  How? No idea. Seems pretty non-trivial, honestly.
+        # Human-readable substring prefixing exception messages raised below.
+        exception_prefix = f'{self} <= {branch} undecidable, as '
 
-        # Return true only if all child type hints of this parent type hint are
-        # subhints of the corresponding child type hints of that branch.
-        # print(f'Comparing {self._args_wrapped_tuple} against {branch._args_wrapped_tuple}...')
-        return all(
-            self_child <= branch_child
-            for self_child, branch_child in zip(
-                self._args_wrapped_tuple, branch._args_wrapped_tuple)
+        # Tuple of the zero or more child hints transitively (i.e., *NOT*
+        # directly) subscripting this generic *WITH RESPECT TO THAT BRANCH*.
+        # This tuple generalizes the original tuple of child type hints directly
+        # (i.e., *NOT* transitively) subscripting this generic. A generic is
+        # transitively subscripted by the tuple of all child hints directly
+        # subscripting this generic and all pseudo-superclasses of this generic.
+        #
+        # Deciding this tuple requires a highly non-trivial algorithm
+        # performing a recursive depth-first search (DFS) over the
+        # pseudo-superclass hierarchy implied by this generic. Doing so greedily
+        # replaces in the original tuple as many abstract PEP 484-compliant type
+        # variables (i.e., "typing.TypeVar" objects) as there are concrete child
+        # hints directly subscripting this generic. Doing so effectively
+        # "bubbles up" these concrete children up the class hierarchy into the
+        # "empty placeholders" established by the type variables transitively
+        # subscripting all pseudo-superclasses of this generic.  # <-- lolwat
+        #
+        # Note that this getter is memoized for efficiency and thus
+        # intentionally accepts *NO* keyword parameters. It is what it is.
+        self_args_full = get_hint_pep484585_generic_args_full(
+            # This generic.
+            self._hint,
+
+            # The target pseudo-superclass of this generic to be searched for in
+            # the pseudo-superclass hierarchy implied by this generic.
+            branch._hint,  # pyright: ignore
+
+            # Exception class to be raised in the event of fatal error.
+            BeartypeDoorIsSubhintException,
+
+            # Human-readable substring prefixing raised exception messages.
+            exception_prefix,
         )
+
+        #FIXME: Comment us up, please.
+        #FIXME: Unit test us up, please.
+        if isinstance(branch, SubscriptedTypeHint):
+            # If these two hints are subscripted by a differing number of child
+            # hints, raise an exception. See the superclass method for details.
+            if len(self_args_full) != len(branch._args_wrapped_tuple):
+                # Number of child hints subscripting that branch.
+                branch_args_len = len(branch._args_wrapped_tuple)
+
+                # Raise an exception embedding these numbers.
+                raise BeartypeDoorIsSubhintException(
+                    f'{exception_prefix}'
+                    f'{self._hint} transitively subscripted by child hints '
+                    f'{self_args_full} whose length differs from '
+                    f'{branch._hint} directly subscripted by child hints '
+                    f'{branch.args} '
+                    f'(i.e., {len(self_args_full)} != {branch_args_len}).'
+                )
+            # Else, these two hints are subscripted by the same number of child
+            # hints.
+
+            #FIXME: Comment us up, please.
+            for self_arg_full_index, self_arg_full in enumerate(self_args_full):
+                self_child = TypeHint(self_arg_full)
+                branch_child = branch._args_wrapped_tuple[self_arg_full_index]
+
+                # If this child hint is *NOT* a subhint of that child hint, this
+                # hint is *NOT* a subhint of that branch. In this case,
+                # short-circuit by immediately returning false.
+                if not self_child.is_subhint(branch_child):
+                    return False
+                # Else, this child hint is a subhint of that child hint. In this
+                # case, this hint *COULD* be a subhint of that branch. Decide by
+                # continuing to the next pair of child hints.
+            # Else, each child hint of this hint is a subhint of the
+            # corresponding child hint of that branch. In this case, this hint
+            # is a subhint of that branch.
+        #FIXME: Comment us up, please.
+        #FIXME: Unit test us up, please.
+        else:
+            assert isinstance(branch, GenericTypeHint), (
+                f'{branch} not PEP 484 or 585 subscripted generic '
+                f'(i.e., "beartype.door.GenericTypeHint" instance).')
+
+            # Tuple of the zero or more child hints transitively subscripting
+            # that generic branch. See above for further details.
+            branch_args_full = get_hint_pep484585_generic_args_full(
+                # That generic branch.
+                branch._hint,
+
+                # *NO* target pseudo-superclass of that generic branch. Instead,
+                # completely decide the full tuple of child hints transitively
+                # subscripting that generic branch.
+                None,
+
+                # Exception class to be raised in the event of fatal error.
+                BeartypeDoorIsSubhintException,
+
+                # Human-readable substring prefixing raised exception messages.
+                exception_prefix,
+            )
+
+            # If these two generics are transitively subscripted by a differing
+            # number of child hints, raise an exception. See above for details.
+            if len(self_args_full) != len(branch_args_full):
+                # Raise an exception embedding these numbers.
+                raise BeartypeDoorIsSubhintException(
+                    f'{exception_prefix}'
+                    f'{self._hint} transitively subscripted by child hints '
+                    f'{self_args_full} whose length differs from '
+                    f'{branch._hint} transitively subscripted by child hints '
+                    f'{branch_args_full} '
+                    f'(i.e., {len(self_args_full)} != {len(branch_args_full)}).'
+                )
+            # Else, these two generics are transitively subscripted by the same
+            # number of child hints.
+
+            #FIXME: Comment us up, please.
+            for self_arg_full_index, self_arg_full in enumerate(self_args_full):
+                self_child = TypeHint(self_arg_full)
+                branch_child = TypeHint(branch_args_full[self_arg_full_index])
+
+                # If this child hint is *NOT* a subhint of that child hint, this
+                # hint is *NOT* a subhint of that branch. In this case,
+                # short-circuit by immediately returning false.
+                if not self_child.is_subhint(branch_child):
+                    return False
+                # Else, this child hint is a subhint of that child hint. In this
+                # case, this hint *COULD* be a subhint of that branch. Decide by
+                # continuing to the next pair of child hints.
+            # Else, each child hint of this hint is a subhint of the
+            # corresponding child hint of that branch. In this case, this hint
+            # is a subhint of that branch.
+
+        # Return true! We have liftoff.
+        return True
 
 # ....................{ PRIVATE ~ constants                }....................
 _IS_SUBHINT_TYPES_COMMENSURABLE = (
@@ -171,11 +232,11 @@ _IS_SUBHINT_TYPES_COMMENSURABLE = (
     # Generics are also commensurable with subscripted type hints: e.g.,
     #     >>> from collections.abc import Sequence
     #     >>> class MuhSequence[T](Sequence[T]): pass
-    #     >>> is_subhint(MuhSequence[T], Sequence[int])
+    #     >>> is_subhint(MuhSequence[int], Sequence[int])
     #     True
     SubscriptedTypeHint,
 
-    # Generics are also commensurable with unsubscripted classes: e.g.,
+    # Generics are also commensurable with unsubscripted simple classes: e.g.,
     #     >>> from collections.abc import Sequence
     #     >>> class MuhSequence[T](Sequence[T]): pass
     #     >>> is_subhint(MuhSequence[T], Sequence)

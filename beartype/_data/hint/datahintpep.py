@@ -34,6 +34,7 @@ from beartype.typing import (
     Sequence,
     Set,
     Tuple,
+    TypeVar,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
@@ -116,7 +117,14 @@ else:
     as such under Python <= 3.14. This insane hack trivially circumvents that.
     '''
 
-# ....................{ HINT                               }....................
+# ....................{ HINTS                              }....................
+T_Hint = TypeVar('T_Hint', bound=Hint)
+'''
+:pep:`484`-compliant **type hint type variable** (i.e., :class:`typing.TypeVar`
+object bound to match *only* PEP-compliant type hints).
+'''
+
+# ....................{ HINTS ~ container                  }....................
 #FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
 #Mypy likes that but pyright hates that. This is why we can't have good things.
 HintArgs = Tuple[Hint, ...]

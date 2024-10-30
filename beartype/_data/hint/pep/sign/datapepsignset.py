@@ -93,6 +93,175 @@ _FrozenSetHintSign = FrozenSet[HintSign]
 PEP-compliant type matching matching a frozen set of signs.
 '''
 
+# ....................{ SETS ~ args                        }....................
+HINT_SIGNS_UNSUBSCRIPTABLE = frozenset((
+    # ..................{ PEP 484                            }..................
+    # The PEP 484-compliant "typing.Any" singleton is *ALWAYS* unsubscripted and
+    # thus clearly unsubscriptable.
+    HintSignAny,
+
+    # PEP 484-compliant new types (i.e., "typing.NewType" objects) are *ALWAYS*
+    # unsubscripted and thus clearly unsubscriptable.
+    HintSignNewType,
+
+    # PEP 484-compliant type variables (i.e., "typing.TypeVar" objects) are
+    # *ALWAYS* unsubscripted and thus clearly unsubscriptable.
+    HintSignTypeVar,
+
+    # ..................{ PEP (484|585)                      }..................
+    # PEP 484- and 585-compliant generics are best wrapped by the standard
+    # "GenericTypeHint" wrapper even when directly unsubscripted. Why? Because
+    # *ALL* generics are (transitively) semantically subscripted either:
+    # * Directly (e.g., "MuhGeneric[int]") *OR*...
+    # * Indirectly by one or more of their unerased pseudo-superclasses.
+    HintSignGeneric,
+
+    # ..................{ PEP 612                            }..................
+    # PEP 612-compliant parameter specifications (i.e., "typing.ParamSpec"
+    # objects) are *ALWAYS* unsubscripted and thus clearly unsubscriptable.
+    HintSignParamSpec,
+))
+'''
+Frozen set of the signs uniquely identifying all **unsubscriptable type hints**,
+defined as type hints that are acceptable when unsubscripted by child type hints
+both:
+
+* Technically, as formally standardized by one or more PEPs.
+* Pragmatically, as effectively standardized by common usage throughout
+  real-world downstream modules.
+
+This frozen set intentionally excludes:
+
+* :pep:`484`-compliant **type hint factories** published by the standard
+  :mod:`typing` module subsequently deprecated by :pep:`585` (e.g.,
+  :obj:`typing.Dict`, :obj:`typing.List`). Technically, :mod:`beartype`
+  permissively accepts these factories as unsubscripted type hints to avoid
+  raising excessive decoration-time exceptions that most users would consider to
+  be ignorable and thus noxious false negatives. Pragmatically, these factories
+  are intended to *only* be subscripted by child type hints. Since these
+  factories have been deprecated, this debate is largely moot in either case.
+'''
+
+# ....................{ SETS ~ args : container            }....................
+HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignAbstractSet,
+    HintSignCollection,
+    HintSignFrozenSet,
+    HintSignKeysView,
+    HintSignMutableSet,
+    HintSignSet,
+    HintSignValuesView,
+
+    #FIXME: Deques are actually somewhat more than merely single-argument
+    #reiterables. They provide efficient access to both the first *AND* last
+    #deque items. Ergo, both should be type-checked. The current approach only
+    #type-checkes the first deque item. That's certainly better than nothing,
+    #but we can (and should) do better. *sigh*
+    HintSignDeque,
+))
+'''
+Frozen set of all **standard single-argument reiterable signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+subscripted by exactly one child type hint constraining *all* items of compliant
+collections, which necessarily satisfy the :class:`collections.abc.Collection`
+protocol with guaranteed :math:`O(1)` read-only access to *only* the first
+collection item).
+
+For disambiguity, we prefer the :mod:`beartype`-specific term "reiterable" to
+the standard term "collection" in this context. Why? Because numerous other data
+structures (e.g., mappings, sequences) are also technically collections but
+*not* matched by this frozen set. Why? Because this frozen set only matches the
+proper subset of all collections *not* matched by any other such frozen set.
+
+Equivalently, this frozen set only matches the proper subset of all collections
+that are **reiterable** (i.e., that may be safely reiterated multiple times,
+where "safely" implies side effect-free idempotency). Reiterable items are thus
+preserved (rather than modified) by reiteration such that each call of the:
+
+* :func:`iter` builtin passed the same reiterable effectively creates and
+  returns the same iterator.
+* :func:`next` builtin passed the same reiterable deterministically returns
+  the same items in the same order.
+'''
+
+
+HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignList,
+    HintSignMutableSequence,
+    HintSignSequence,
+    HintSignTuple,
+))
+'''
+Frozen set of all **standard single-argument sequence signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+subscripted by exactly one child type hint constraining *all* items of compliant
+sequences, which necessarily satisfy the :class:`collections.abc.Sequence`
+protocol with guaranteed :math:`O(1)` indexation across all sequence items).
+
+This set intentionally includes the:
+
+* :data:`.HintSignTuple` sign, identifying variable-length tuple type hints
+  subscripted by a single child type hint followed by an ignorable
+  :data:`Ellipses` object (i.e., `"..."` substring sans quotes). As such,
+  callers should explicitly ignore :data:`Ellipses` objects that are the second
+  child type hints subscripting type hints whose signs are in this set.
+
+This set intentionally excludes the:
+
+* :obj:`typing.AnyStr` sign, which accepts only the :class:`str` and
+  :class:`bytes` types as its sole subscripted argument, which does *not*
+  unconditionally constrain *all* items (i.e., unencoded and encoded characters
+  respectively) of compliant sequences but instead parametrizes this attribute.
+* :obj:`typing.ByteString` sign, which conditionally accepts either no or an
+  arbitrary number of subscripted arguments depending on whether that sign
+  identifies:
+
+  * A :pep:`484`-compliant ``typing.ByteString`` type hint subscriptable *no*
+    child type hints.
+  * A :pep:`585`-compliant ``collections.abc.ByteString[...]`` type hint
+    subscriptable by an arbitrary number of child type hints (but typically
+    simply :class:`str`).
+
+  Since neither PEP 484 nor 585 comment on ``ByteString`` in detail (or at all,
+  really), this non-orthogonality remains inexplicable, frustrating, and utterly
+  unsurprising. We elect to merely shrug. In all likelihood, this is an
+  ignorable error that no one particularly cares about -- especially since both
+  type hint factories have now been scheduled for removal as deprecated.
+* :obj:`typing.Deque` sign, whose compliant objects (i.e.,
+  :class:`collections.deque` instances) only `guarantee O(n) indexation across
+  all sequence items <collections.deque_>`__:
+
+     Indexed access is ``O(1)`` at both ends but slows to ``O(n)`` in the
+     middle. For fast random access, use lists instead.
+
+* :obj:`typing.NamedTuple` sign, which embeds a variadic number of
+  PEP-compliant field type hints and thus requires special-cased handling.
+* :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
+  :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
+  thus handled elsewhere as a PEP-noncompliant type hint.
+* :data:`.HintSignTupleFixed` sign, identifying fixed-length tuple type hints
+  subscripted by an arbitrary number of child type hints and thus requiring
+  special-cased handling.
+
+.. _collections.deque:
+   https://docs.python.org/3/library/collections.html#collections.deque
+'''
+
+
+HINT_SIGNS_CONTAINER_ARGS_1: _FrozenSetHintSign = (
+    HINT_SIGNS_REITERABLE_ARGS_1 |
+    HINT_SIGNS_SEQUENCE_ARGS_1
+)
+'''
+Frozen set of all **standard single-argument container signs** (i.e., arbitrary
+objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+describing standard containers satisfying at least the
+:class:`collections.abc.Container` protocol subscripted by exactly one child
+type hint constraining *all* items contained in that container).
+'''
+
 # ....................{ SETS ~ deprecated                  }....................
 #FIXME: Currently unused but preserved for posterity. *shrug*
 # HINT_SIGNS_DEPRECATED = frozenset((
@@ -244,126 +413,6 @@ If the active Python interpreter targets:
   membership are :math:`O(1)`, this set incurs no significant performance
   penalty versus direct usage of the :obj:`typing.Union` attribute and is thus
   unconditionally used as is irrespective of Python version.
-'''
-
-# ....................{ SETS ~ kind : container            }....................
-HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
-    # ..................{ PEP (484|585)                      }..................
-    HintSignAbstractSet,
-    HintSignCollection,
-    HintSignFrozenSet,
-    HintSignKeysView,
-    HintSignMutableSet,
-    HintSignSet,
-    HintSignValuesView,
-
-    #FIXME: Deques are actually somewhat more than merely single-argument
-    #reiterables. They provide efficient access to both the first *AND* last
-    #deque items. Ergo, both should be type-checked. The current approach only
-    #type-checkes the first deque item. That's certainly better than nothing,
-    #but we can (and should) do better. *sigh*
-    HintSignDeque,
-))
-'''
-Frozen set of all **standard single-argument reiterable signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
-subscripted by exactly one child type hint constraining *all* items of compliant
-collections, which necessarily satisfy the :class:`collections.abc.Collection`
-protocol with guaranteed :math:`O(1)` read-only access to *only* the first
-collection item).
-
-For disambiguity, we prefer the :mod:`beartype`-specific term "reiterable" to
-the standard term "collection" in this context. Why? Because numerous other data
-structures (e.g., mappings, sequences) are also technically collections but
-*not* matched by this frozen set. Why? Because this frozen set only matches the
-proper subset of all collections *not* matched by any other such frozen set.
-
-Equivalently, this frozen set only matches the proper subset of all collections
-that are **reiterable** (i.e., that may be safely reiterated multiple times,
-where "safely" implies side effect-free idempotency). Reiterable items are thus
-preserved (rather than modified) by reiteration such that each call of the:
-
-* :func:`iter` builtin passed the same reiterable effectively creates and
-  returns the same iterator.
-* :func:`next` builtin passed the same reiterable deterministically returns
-  the same items in the same order.
-'''
-
-
-HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
-    # ..................{ PEP (484|585)                      }..................
-    HintSignList,
-    HintSignMutableSequence,
-    HintSignSequence,
-    HintSignTuple,
-))
-'''
-Frozen set of all **standard single-argument sequence signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
-subscripted by exactly one child type hint constraining *all* items of compliant
-sequences, which necessarily satisfy the :class:`collections.abc.Sequence`
-protocol with guaranteed :math:`O(1)` indexation across all sequence items).
-
-This set intentionally includes the:
-
-* :data:`.HintSignTuple` sign, identifying variable-length tuple type hints
-  subscripted by a single child type hint followed by an ignorable
-  :data:`Ellipses` object (i.e., `"..."` substring sans quotes). As such,
-  callers should explicitly ignore :data:`Ellipses` objects that are the second
-  child type hints subscripting type hints whose signs are in this set.
-
-This set intentionally excludes the:
-
-* :obj:`typing.AnyStr` sign, which accepts only the :class:`str` and
-  :class:`bytes` types as its sole subscripted argument, which does *not*
-  unconditionally constrain *all* items (i.e., unencoded and encoded characters
-  respectively) of compliant sequences but instead parametrizes this attribute.
-* :obj:`typing.ByteString` sign, which conditionally accepts either no or an
-  arbitrary number of subscripted arguments depending on whether that sign
-  identifies:
-
-  * A :pep:`484`-compliant ``typing.ByteString`` type hint subscriptable *no*
-    child type hints.
-  * A :pep:`585`-compliant ``collections.abc.ByteString[...]`` type hint
-    subscriptable by an arbitrary number of child type hints (but typically
-    simply :class:`str`).
-
-  Since neither PEP 484 nor 585 comment on ``ByteString`` in detail (or at all,
-  really), this non-orthogonality remains inexplicable, frustrating, and utterly
-  unsurprising. We elect to merely shrug. In all likelihood, this is an
-  ignorable error that no one particularly cares about -- especially since both
-  type hint factories have now been scheduled for removal as deprecated.
-* :obj:`typing.Deque` sign, whose compliant objects (i.e.,
-  :class:`collections.deque` instances) only `guarantee O(n) indexation across
-  all sequence items <collections.deque_>`__:
-
-     Indexed access is ``O(1)`` at both ends but slows to ``O(n)`` in the
-     middle. For fast random access, use lists instead.
-
-* :obj:`typing.NamedTuple` sign, which embeds a variadic number of
-  PEP-compliant field type hints and thus requires special-cased handling.
-* :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
-  :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
-  thus handled elsewhere as a PEP-noncompliant type hint.
-* :data:`.HintSignTupleFixed` sign, identifying fixed-length tuple type hints
-  subscripted by an arbitrary number of child type hints and thus requiring
-  special-cased handling.
-
-.. _collections.deque:
-   https://docs.python.org/3/library/collections.html#collections.deque
-'''
-
-
-HINT_SIGNS_CONTAINER_ARGS_1: _FrozenSetHintSign = (
-    HINT_SIGNS_REITERABLE_ARGS_1 |
-    HINT_SIGNS_SEQUENCE_ARGS_1
-)
-'''
-Frozen set of all **standard single-argument container signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
-describing standard containers satisfying at least the
-:class:`collections.abc.Container` protocol subscripted by exactly one child
-type hint constraining *all* items contained in that container).
 '''
 
 # ....................{ SIGNS ~ origin                     }....................

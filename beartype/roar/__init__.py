@@ -56,6 +56,7 @@ from beartype.roar._roarexc import (
     BeartypeConfParamException as BeartypeConfParamException,
     BeartypeConfShellVarException as BeartypeConfShellVarException,
     BeartypeDoorException as BeartypeDoorException,
+    BeartypeDoorIsSubhintException as BeartypeDoorIsSubhintException,
     BeartypeDoorNonpepException as BeartypeDoorNonpepException,
     BeartypeDoorPepException as BeartypeDoorPepException,
     BeartypeDoorPepArgsLenException as BeartypeDoorPepArgsLenException,

@@ -1131,6 +1131,22 @@ class BeartypeDoorHintViolation(BeartypeCallHintViolation):
 
     pass
 
+
+class BeartypeDoorIsSubhintException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) subhint type hint
+    exception.**
+
+    This exception is raised at call time from both the
+    :func:`beartype.door.is_subhint` function *and* implementations of the
+    :meth:`beartype.door.TypeHint.is_subhint` method, typically due to an
+    unexpected internal issue (i.e., bug) within the :mod:beartype.door` API.
+    Computing the subhint relation between any two type hints is a surprisingly
+    non-trivial decision problem. Unsurprisingly, doing so *can* rarely blow up.
+    '''
+
+    pass
+
 # ....................{ API ~ door : non-pep               }....................
 class BeartypeDoorNonpepException(BeartypeDoorException):
     '''

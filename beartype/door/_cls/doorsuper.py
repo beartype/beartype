@@ -22,17 +22,23 @@ from beartype.door._func.doorcheck import (
     die_if_unbearable,
     is_bearable,
 )
+from beartype.roar import BeartypeDoorIsSubhintException
 from beartype.typing import (
+    TYPE_CHECKING,
     Any,
     FrozenSet,
     Generic,
     Iterable,
     Tuple,
+    TypeVar,
     overload,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahinttyping import T
+from beartype._data.hint.datahintpep import (
+    Hint,
+    T_Hint,
+)
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -48,7 +54,7 @@ from beartype._util.utilobject import get_object_type_basename
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
-class TypeHint(Generic[T], metaclass=_TypeHintMeta):
+class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically
@@ -95,7 +101,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     _args : Tuple[object, ...]
         Tuple of the zero or more low-level child type hints subscripting
         (indexing) the low-level parent type hint wrapped by this wrapper.
-    _hint : T
+    _hint : T_Hint
         Low-level type hint wrapped by this wrapper.
     _hint_sign : beartype._data.hint.pep.sign.datapepsigncls.HintSign | None
         Either:
@@ -114,7 +120,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, hint: T) -> None:
+    def __init__(self, hint: T_Hint) -> None:
         '''
         Initialize this type hint wrapper from the passed low-level type hint.
 
@@ -406,7 +412,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     @property
-    def hint(self) -> T:
+    def hint(self) -> T_Hint:
         '''
         **Original type hint** (i.e., low-level PEP-compliant type hint wrapped
         by this wrapper at :meth:`TypeHint.__init__` instantiation time).
@@ -648,6 +654,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :func:`beartype.door.is_subhint`
             Further details.
         '''
+        # print(f'[TypeHint.is_subhint] Comparing {self} to {other}...')
 
         # If the passed object is *NOT* a type hint wrapper, raise an exception.
         die_unless_typehint(other)
@@ -788,6 +795,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :func:`beartype.door.is_subhint`
             Further details.
         '''
+        # print(f'[TypeHint._is_subhint] Comparing {self} to {other}...')
 
         # For each branch of that hint...
         for other_branch in other._branches:
@@ -821,6 +829,17 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         branch : TypeHint
             Conditional branch of another type hint to be tested against.
 
+        Raises
+        ------
+        BeartypeDoorIsSubhintException
+            If this type hint and the passed branch are **incommensurable**
+            (i.e., incomparable with respect to the subhint relation). This rare
+            edge case typically arises due to an unexpected internal issue
+            (i.e., bug) within the :mod:beartype.door` API. Computing the
+            subhint relation between any two type hints is a surprisingly
+            non-trivial decision problem. Unsurprisingly, doing so mostly
+            rarely blows up with this exception.
+
         See Also
         --------
         :meth:`__le__`
@@ -845,30 +864,68 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             # print(f'is_subhint_branch({self}, {branch} [unsubscripted])')
             return True
         # Else, that branch is subscripted.
-        # print(f'isinstance({branch}, {type(self)}): {isinstance(branch, type(self))}')
-        # print(f'issubclass({self._origin}, {branch._origin}): {issubclass(self._origin, branch._origin)}')
-        # all(
-        #     self_child <= branch_child
-        #     for self_child, branch_child in zip(
-        #         self._args_wrapped_tuple, branch._args_wrapped_tuple)
-        # )
+        #
+        # If that branch is *NOT* also a type hint wrapper of the same subclass
+        # as this type hint wrapper, these two wrappers are incommensurable
+        # (i.e., *NOT* comparable). Return false immediately.
+        elif not isinstance(branch, type(self)):
+            return False
+        # Else, that branch is also a type hint wrapper of the same subclass
+        # as this type hint wrapper, implying these two wrappers are
+        # incommensurable (i.e., comparable). In this case, this hint *COULD* be
+        # a subhint of that branch. Further tests are warranted.
 
-        # Return true only if...
-        return (
-            # That branch is also a type hint wrapper of the same concrete
-            # subclass as this type hint wrapper *AND*...
-            isinstance(branch, type(self)) and
-            #FIXME: *SLOW*, albeit concise. This should require neither an all()
-            #nor a zip(). Optimize this by unpacking this into explicit
-            #iteration leveraging enumerate(), probably. *shrug* 
-            # All child type hints of this parent type hint are subhints of the
-            # corresponding child type hints of that branch.
-            all(
-                self_child <= branch_child
-                for self_child, branch_child in zip(
-                    self._args_wrapped_tuple, branch._args_wrapped_tuple)
+        # If these two hints are subscripted by a differing number of child
+        # hints, raise an exception. Why? Because this rare edge case almost
+        # certainly signifies a low-level issue internal to this "beartype.door"
+        # subpackage. Silently "accepting" this issue by instead returning a
+        # boolean would constitute a false negative or positive. Moreover, the
+        # zip() builtin called below silently ignores the trailing portion of
+        # the longest iterable exceeding the length of the smallest iterable.
+        # Silently permitting that would invite issues throughout this API.
+        if (
+            len(self._args_wrapped_tuple) !=
+            len(branch._args_wrapped_tuple)
+        ):
+            # Number of child hints subscripting these two hints.
+            self_args_len = len(self._args_wrapped_tuple)
+            branch_args_len = len(branch._args_wrapped_tuple)
+
+            # Raise an exception embedding these numbers.
+            raise BeartypeDoorIsSubhintException(
+                f'{self} <= {branch} undecidable, as '
+                f'{self._hint} and {branch._hint} subscripted by '
+                f'differing number of child type hints '
+                f'(i.e., {self_args_len} != {branch_args_len}).'
             )
-        )
+        # Else, these two hints are subscripted by the same number of child
+        # hints.
+
+        # For each pair of corresponding child hints subscripting these two
+        # hints, encapsulated as type hint wrappers...
+        #
+        # Note that the zip() builtin has been quantitatively profiled to be
+        # approximately as fast as manual iteration (e.g., leveraging some
+        # combination of the enumerate(), len(), and range() builtins). Since
+        # zip() is likely to be optimized even further *AND* since this approach
+        # is substantially more concise, let's go. See also:
+        #     https://stackoverflow.com/a/62479781/2809027
+        for self_child, branch_child in zip(
+            self._args_wrapped_tuple, branch._args_wrapped_tuple):
+            # If this child hint is *NOT* a subhint of that child hint, this
+            # hint is *NOT* a subhint of that branch. In this case,
+            # short-circuit by immediately returning false.
+            if not self_child.is_subhint(branch_child):
+                return False
+            # Else, this child hint is a subhint of that child hint. In this
+            # case, this hint *COULD* be a subhint of that branch. Decide by
+            # continuing to the next pair of child hints.
+        # Else, each child hint of this hint is a subhint of the corresponding
+        # child hint of that branch. In this case, this hint is a subhint of
+        # that branch. 
+
+        # Return true! We have liftoff.
+        return True
 
     # ..................{ PRIVATE ~ properties : read-only   }..................
     # Read-only properties intentionally defining *NO* corresponding setter.

@@ -42,6 +42,8 @@ from beartype.door._cls.pep.doorpep586 import (
     LiteralTypeHint as LiteralTypeHint)
 from beartype.door._cls.pep.doorpep593 import (
     AnnotatedTypeHint as AnnotatedTypeHint)
+from beartype.door._cls.pep.pep484.doorpep484any import (
+    AnyTypeHint as AnyTypeHint)
 from beartype.door._cls.pep.pep484.doorpep484class import (
     ClassTypeHint as ClassTypeHint)
 from beartype.door._cls.pep.pep484.doorpep484newtype import (

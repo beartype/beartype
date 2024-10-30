@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Decidedly Object-Oriented Runtime-checking (DOOR) class type hint classes**
-(i.e., :class:`beartype.door.TypeHint` subclasses implementing support
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) class type hint
+classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing support
 for :pep:`484`-compliant type hints that are, in fact, simple classes).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -13,10 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.typing import (
-    TYPE_CHECKING,
-    Any,
-)
+from beartype.typing import TYPE_CHECKING
 
 # ....................{ SUBCLASSES                         }....................
 class ClassTypeHint(TypeHint):
@@ -73,15 +70,6 @@ class ClassTypeHint(TypeHint):
         # print(f'{repr(branch)}._origin.__parameters__: {branch._origin.__parameters__}')
         # print(f'{repr(self)}._is_args_ignorable: {self._is_args_ignorable}')
         # print(f'{repr(branch)}._is_args_ignorable: {branch._is_args_ignorable}')
-
-        #FIXME: *UHM.* Wat? Do we really currently wrap "typing.Any" with an
-        #instance of this class? Why? That makes *NO* sense. "typing.Any" should
-        #be wrapped by its own "TypeHintAny" subclass, please. *sigh*
-        #FIXME: *LOL.* We totally do wrap "typing.Any" with an instance of this
-        #class. What a facepalm. </facepalm>
-        # "Any" is only a subclass of "Any".
-        if self._hint is Any:
-            return False
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.
         #Explicit is better than implicit and we really strongly disagree with
