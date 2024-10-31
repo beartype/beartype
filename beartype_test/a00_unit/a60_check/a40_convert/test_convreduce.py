@@ -34,6 +34,7 @@ def test_reduce_hint() -> None:
     from beartype._check.convert.convreduce import reduce_hint
     from beartype._conf.confcls import BeartypeConf
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+    from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
     from beartype._data.hint.datahinttyping import (
         Pep484TowerComplex,
         Pep484TowerFloat,
@@ -42,7 +43,6 @@ def test_reduce_hint() -> None:
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        PEP484_GENERICS_IO,
         T,
         T_BOUNDED,
         T_CONSTRAINED,
@@ -110,7 +110,7 @@ def test_reduce_hint() -> None:
 
     # ..................{ PEP 544                            }..................
     # For each PEP 484-compliant "typing" IO generic superclass...
-    for pep484_generic_io in PEP484_GENERICS_IO:
+    for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
         # Equivalent protocol reduced from this generic.
         pep544_protocol_io = reduce_hint(hint=pep484_generic_io, **kwargs)
 

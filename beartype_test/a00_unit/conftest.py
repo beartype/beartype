@@ -13,7 +13,7 @@ child submodules of the test subpackage containing this :mod:`pytest` plugin).
 # ....................{ IMPORTS                            }....................
 # Import all subpackage-specific fixtures implicitly required by tests defined
 # by submodules of this subpackage.
-from beartype_test.a00_unit.data.api.data_apinumpy import numpy_arrays
+from beartype_test.a00_unit.data.api.external.data_apinumpy import numpy_arrays
 from beartype_test.a00_unit.data.hint.data_hint import (
     hints_meta,
     hints_ignorable,
@@ -27,5 +27,7 @@ from beartype_test.a00_unit.data.hint.pep.data_pep import (
     hints_pep_ignorable_shallow,
     hints_pep_meta,
 )
+from beartype_test.a00_unit.data.hint.pep.proposal._fixture.data_pep484585generic import (
+    pep484585_generics)
 from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
     iter_hints_piths_meta)

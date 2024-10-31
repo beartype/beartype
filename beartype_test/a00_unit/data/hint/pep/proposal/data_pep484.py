@@ -4,7 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant **type hint test data.**
+Project-wide :pep:`484`-compliant **data factories** (i.e., low-level callables
+creating and returning lists of :pep:`484`-compliant type hints, exercising edge
+cases in unit tests requiring these fixtures).
 
 Caveats
 -------
@@ -46,6 +48,9 @@ from collections.abc import (
     Callable as CallableABC,
     Sized as SizedABC,
 )
+
+# Intentionally import from the standard "typing" module rather than the
+# forward-compatible "beartype.typing" subpackage to ensure PEP 484-compliance.
 from typing import (
     BinaryIO,
     Container,
@@ -74,11 +79,13 @@ Arbitrary **constrained type variable** (i.e., type variable parametrized by
 two or more PEP-compliant child type hints passed as positional arguments).
 '''
 
-# ....................{ GENERICS ~ io                      }....................
-PEP484_GENERICS_IO = frozenset((BinaryIO, IO, TextIO,))
-'''
-Frozen set of all :pep:`484`-compliant :mod:`typing` IO generic base classes.
-'''
+#FIXME: Obsolete *ALL* of the global attributes defined below in favour of our
+#new pep484585_generics() fixture, please. *sigh*
+#
+#Note, however, that doing so will require refactoring most (or even *ALL*)
+#non-fixtures defined below into proper session-scoped fixtures. This is fine.
+#Just do it, please. Indeed, perhaps we should have *ALWAYS* made everything
+#proper session-scoped fixtures.
 
 # ....................{ GENERICS ~ single                  }....................
 class Pep484GenericTypevaredSingle(Generic[S, T]):
@@ -215,19 +222,6 @@ class _Pep484GenericTypevaredDeepMultiple(
     def __len__(self) -> bool:
         return len(self._iterable)
 
-# ....................{ PRIVATE ~ forwardref               }....................
-_TEST_PEP484_FORWARDREF_CLASSNAME = (
-    'beartype_test.a00_unit.data.data_type.Subclass')
-'''
-Fully-qualified classname of an arbitrary class guaranteed to be importable.
-'''
-
-
-_TEST_PEP484_FORWARDREF_TYPE = Subclass
-'''
-Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
-'''
-
 # ....................{ FIXTURES                           }....................
 def hints_pep484_meta() -> 'List[HintPepMetadata]':
     '''
@@ -349,9 +343,24 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ValuesView,
     )
 
-    # ..................{ LOCALS                             }..................
-    # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
+    # ....................{ CONSTANTS                      }....................
+    # True only if unsubscripted typing attributes (i.e., public attributes of
+    # the "typing" module without arguments) are parametrized by one or more
+    # type variables under the active Python interpreter.
+    #
+    # This boolean is true for Python interpreters targeting Python < 3.9.
+    # Prior to Python 3.9, the "typing" module parametrized most unsubscripted
+    # typing attributes by default. Python 3.9 halted that barbaric practice by
+    # leaving unsubscripted typing attributes unparametrized by default.
+    IS_TYPEVARS_HIDDEN = not IS_PYTHON_AT_LEAST_3_9
+
+    # True only if unsubscripted typing attributes (i.e., public attributes of
+    # the "typing" module without arguments) are actually subscripted by one or
+    # more type variables under the active Python interpreter.
+    #
+    # This boolean is true for Python interpreters targeting 3.6 < Python <
+    # 3.9, oddly. (We don't make the rules. We simply complain about them.)
+    IS_ARGS_HIDDEN = False
 
     # Type of warning emitted by the @beartype decorator for PEP 484-compliant
     # type hints obsoleted by PEP 585, defined as either...
@@ -365,25 +374,18 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         None
     )
 
-    # True only if unsubscripted typing attributes (i.e., public attributes of
-    # the "typing" module without arguments) are parametrized by one or more
-    # type variables under the active Python interpreter.
-    #
-    # This boolean is true for Python interpreters targeting Python < 3.9.
-    # Prior to Python 3.9, the "typing" module parametrized most unsubscripted
-    # typing attributes by default. Python 3.9 halted that barbaric practice by
-    # leaving unsubscripted typing attributes unparametrized by default.
-    _IS_TYPEVARS_HIDDEN = not IS_PYTHON_AT_LEAST_3_9
+    # ....................{ CONSTANTS ~ forwardref         }....................
+    # Fully-qualified classname of an arbitrary class guaranteed to be
+    # importable.
+    FORWARDREF_CLASSNAME = 'beartype_test.a00_unit.data.data_type.Subclass'
 
-    # True only if unsubscripted typing attributes (i.e., public attributes of
-    # the "typing" module without arguments) are actually subscripted by one or
-    # more type variables under the active Python interpreter.
-    #
-    # This boolean is true for Python interpreters targeting 3.6 < Python <
-    # 3.9, oddly. (We don't make the rules. We simply complain about them.)
-    _IS_ARGS_HIDDEN = False
+    # Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
+    ForwardRefType = Subclass
 
     # ..................{ LISTS                              }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
+
     # Add PEP-specific type hint metadata to this list.
     hints_pep_meta.extend((
         # ................{ UNSUBSCRIPTED                      }................
@@ -450,12 +452,12 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Unsubscripted forward reference defined as a simple string.
         HintPepMetadata(
-            hint=_TEST_PEP484_FORWARDREF_CLASSNAME,
+            hint=FORWARDREF_CLASSNAME,
             pep_sign=HintSignForwardRef,
             is_type_typing=False,
             piths_meta=(
                 # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(_TEST_PEP484_FORWARDREF_TYPE()),
+                HintPithSatisfiedMetadata(ForwardRefType()),
                 # String object.
                 HintPithUnsatisfiedMetadata(
                     'Empirical Ṗath after‐mathematically harvesting agro‐'),
@@ -464,11 +466,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Unsubscripted forward reference defined as a typing object.
         HintPepMetadata(
-            hint=ForwardRef(_TEST_PEP484_FORWARDREF_CLASSNAME),
+            hint=ForwardRef(FORWARDREF_CLASSNAME),
             pep_sign=HintSignForwardRef,
             piths_meta=(
                 # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(_TEST_PEP484_FORWARDREF_TYPE()),
+                HintPithSatisfiedMetadata(ForwardRefType()),
                 # String object.
                 HintPithUnsatisfiedMetadata('Silvicultures of'),
             ),
@@ -620,8 +622,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignCollection,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=CollectionABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -991,8 +993,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Dict,
             pep_sign=HintSignDict,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=dict,
             piths_meta=(
                 # Empty dictionary.
@@ -1228,8 +1230,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=ChainMap,
             pep_sign=HintSignChainMap,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=ChainMapType,
             piths_meta=(
                 # Chain map containing arbitrary key-value pairs.
@@ -1296,8 +1298,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Counter,
             pep_sign=HintSignCounter,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=CounterType,
             piths_meta=(
                 # Counter containing arbitrary keys.
@@ -1359,8 +1361,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=DefaultDict,
             pep_sign=HintSignDefaultDict,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=defaultdict,
             piths_meta=(
                 # Default dictionary containing arbitrary key-value pairs.
@@ -1409,8 +1411,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Mapping,
             pep_sign=HintSignMapping,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=MappingABC,
             piths_meta=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -1466,8 +1468,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=MutableMapping,
             pep_sign=HintSignMutableMapping,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=MutableMappingABC,
             piths_meta=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -1523,8 +1525,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=OrderedDict,
             pep_sign=HintSignOrderedDict,
             warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             isinstanceable_type=OrderedDictType,
             piths_meta=(
                 # Ordered dictionary containing arbitrary key-value pairs.
@@ -1634,8 +1636,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignMatch,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexMatchType,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression match of one or more string constants.
                 HintPithSatisfiedMetadata(re.search(
@@ -1672,8 +1674,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPattern,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexCompiledType,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression string pattern.
                 HintPithSatisfiedMetadata(
@@ -1705,8 +1707,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignAbstractSet,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=SetABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -1827,8 +1829,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignDeque,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=deque,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty deque.
                 HintPithSatisfiedMetadata(deque()),
@@ -1954,8 +1956,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignFrozenSet,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=frozenset,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty frozen set.
                 HintPithSatisfiedMetadata(frozenset()),
@@ -2073,8 +2075,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignItemsView,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=ItemsViewABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty items view.
                 HintPithSatisfiedMetadata({}.items()),
@@ -2215,8 +2217,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignKeysView,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=KeysViewABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty keys view.
                 HintPithSatisfiedMetadata({}.keys()),
@@ -2341,8 +2343,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignValuesView,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=ValuesViewABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty values view.
                 HintPithSatisfiedMetadata({}.values()),
@@ -2472,8 +2474,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignMutableSet,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=MutableSetABC,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -2589,8 +2591,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignSet,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=set,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -2706,8 +2708,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignList,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty list.
                 HintPithSatisfiedMetadata([]),
@@ -3065,8 +3067,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignType,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=type,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Transitive superclass of all superclasses.
                 HintPithSatisfiedMetadata(object),
@@ -3125,7 +3127,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Specific class deferred with a forward reference.
         HintPepMetadata(
-            hint=Type[_TEST_PEP484_FORWARDREF_CLASSNAME],
+            hint=Type[FORWARDREF_CLASSNAME],
             pep_sign=HintSignType,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=type,

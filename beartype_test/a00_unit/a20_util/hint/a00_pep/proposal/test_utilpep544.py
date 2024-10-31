@@ -118,13 +118,12 @@ def test_is_hint_pep544_io_generic() -> None:
 
     # Defer test-specific imports.
     from beartype.typing import Union
+    from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
     from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep484_generic_io)
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        PEP484_GENERICS_IO)
 
     # Assert this tester accepts all standard PEP 484-compliant IO generics.
-    for pep484_generic_io in PEP484_GENERICS_IO:
+    for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
         assert is_hint_pep484_generic_io(pep484_generic_io) is True
 
     # Assert this tester rejects standard type hints in either case.
@@ -145,14 +144,13 @@ def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     from beartype._util.hint.pep.proposal.pep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        PEP484_GENERICS_IO)
+    from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
     from pytest import raises
     from typing import Protocol
 
     # ....................{ PASS                           }....................
     # For each PEP 484-compliant "typing" IO generic base class...
-    for pep484_generic_io in PEP484_GENERICS_IO:
+    for pep484_generic_io in TYPES_PEP484_GENERIC_IO:
         # Equivalent protocol reduced from this generic.
         pep544_protocol_io = (
             reduce_hint_pep484_generic_io_to_pep544_protocol(

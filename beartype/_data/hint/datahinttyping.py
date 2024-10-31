@@ -68,14 +68,21 @@ from types import (
 S = TypeVar('S')
 '''
 **Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
-different types than the :data:`.T` type variable.
+different types than the :data:`.T` and :data:`.U` type variables.
 '''
 
 
 T = TypeVar('T')
 '''
 **Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
-different types than the :data:`.S` type variable.
+different types than the :data:`.S` and :data:`.U` type variables.
+'''
+
+
+U = TypeVar('U')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.S` and :data:`.T` type variables.
 '''
 
 

@@ -20,6 +20,7 @@ from beartype.typing import (
     Optional,
     TextIO,
 )
+from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
@@ -126,17 +127,24 @@ def is_hint_pep484_generic_io(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_origin_or_none)
+        get_hint_pep_origin_type_or_none)
 
-    # Return true only if this hint is either...
-    return (
-        # An unsubscripted PEP 484-compliant IO generic base class
-        # (e.g., "typing.IO") *OR*....
-        (isinstance(hint, type) and hint in _HINTS_PEP484_IO_GENERIC) or
-        # A subscripted PEP 484-compliant IO generic base class
-        # (e.g., "typing.IO[str]") *OR*....
-        get_hint_pep_origin_or_none(hint) in _HINTS_PEP484_IO_GENERIC
-    )
+    # Type originating this hint, defined as Either:
+    # * If this hint defines the "__origin__" dunder attribute...
+    #   * Whose value is a type, that type (which is then said to "originate"
+    #     this hint).
+    #   * Whose value is *not* a type but this hint is a type, this hint itself
+    #     (which is then said to "originate" itself).
+    # * In all other cases, "None".
+    hint_origin = get_hint_pep_origin_type_or_none(
+        hint=hint, is_self_fallback=True)
+
+    # Return true only if this originating type is either:
+    # * An unsubscripted PEP 484-compliant IO generic base class
+    #   (e.g., "typing.IO") *OR*....
+    # * A subscripted PEP 484-compliant IO generic base class
+    #   (e.g., "typing.IO[str]").
+    return hint_origin in TYPES_PEP484_GENERIC_IO
 
 
 def is_hint_pep544_protocol(hint: object) -> bool:
@@ -287,14 +295,6 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     return pep544_protocol
 
 # ....................{ PRIVATE ~ mappings                 }....................
-_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
-'''
-Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
-:class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by the
-:mod:`typing` module).
-'''
-
-
 # Conditionally initialized by the _init() function below.
 _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, Any] = {}
 '''

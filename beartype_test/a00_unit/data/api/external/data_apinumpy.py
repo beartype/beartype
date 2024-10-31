@@ -4,22 +4,50 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **generic NumPy data** submodule.
-
-This submodule defines high-level session-scoped fixtures exposing various
-objects unique to the third-party :mod:`numpy` package, exercising known edge
-cases on behalf of higher-level unit test submodules.
+Project-wide **NumPy test data fixtures** (i.e., high-level session-scoped
+:mod:`pytest` fixtures exposing various third-party :mod:`numpy` objects,
+exercising edge cases in unit tests requiring these fixtures).
 '''
 
 # ....................{ IMPORTS                            }....................
 from pytest import fixture
 
+# ....................{ TODO                               }....................
+#FIXME: Overly cumbersome design. Rather than have the numpy_arrays() fixture
+#create arrays and then pass those arrays to the _NumpyArrays.__init__() method,
+#just:
+#* Reduce numpy_arrays() to a trivial one-liner: e.g.,
+#      @fixture(scope='session')
+#      def numpy_arrays() -> _NumpyArrays:
+#          yield _NumpyArrays()
+#* Refactor the _NumpyArrays.__init__() method to resemble:
+#      def __init__(self) -> None:
+#          # Defer fixture-specific imports.
+#          from numpy import (
+#              asarray,
+#              complex128,
+#              float32,
+#              float64,
+#              int32,
+#              int64,
+#              uint32,
+#              uint64,
+#              void,
+#          )
+#  
+#          # Classify all attributes of this dataclass. 
+#          self.array_1d_boolean = asarray(
+#              (True, False, True, True, False, True, False, False,))
+#          ...
+#
+#Trivial, honestly. No idea why we went overkill on the current design. *shrug*
+
 # ....................{ CLASSES                            }....................
 class _NumpyArrays(object):
     '''
-    **NumPy arrays dataclass** (i.e., well-typed and -described object
-    comprising *all* third-party :mod:`numpy` arrays created by the
-    session-scoped :func:`.numpy_arrays` fixture).
+    **NumPy arrays dataclass** (i.e., object yielded by the
+    :func:`.numpy_arrays` fixture comprising various third-party :mod:`numpy`
+    arrays of interest to downstream unit tests).
 
     Attributes
     ----------
@@ -112,8 +140,8 @@ class _NumpyArrays(object):
 def numpy_arrays() -> _NumpyArrays:
     '''
     Session-scoped fixture yielding a **NumPy arrays dataclass** (i.e.,
-    well-typed and -described object comprising various third-party :mod:`numpy`
-    arrays exercising edge cases of interest to higher-level unit tests).
+    object comprising various third-party :mod:`numpy` arrays of interest to
+    higher-level unit tests).
 
     Raises
     ------
@@ -157,7 +185,8 @@ def numpy_arrays() -> _NumpyArrays:
         void,
     )
 
-    # Yield the desired NumPy arrays dataclass.
+    # ..................{ YIELD                              }..................
+    # Yield a singleton instance of this NumPy array dataclass.
     yield _NumpyArrays(
         # NumPy array containing only booleans.
         array_1d_boolean=asarray(

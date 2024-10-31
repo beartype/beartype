@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Dict,
+    BinaryIO,
     ForwardRef,
     Generic,
     Protocol,
@@ -33,6 +34,14 @@ from collections.abc import (
     Set as SetABC,
 )
 from pathlib import Path
+
+# Intentionally import from the standard "typing" module rather than the
+# forward-compatible "beartype.typing" subpackage to ensure PEP 484-compliance.
+from typing import (
+    BinaryIO,
+    IO,
+    TextIO,
+)
 
 # ....................{ TYPES ~ abc                        }....................
 TYPES_CONTEXTMANAGER_FAKE: TupleTypes = (Path,)
@@ -131,6 +140,18 @@ TYPES_EXCEPTION_NAMESPACE = (
 Tuple of all **standard scope exception types** (i.e., types of all standard
 exceptions raised when a **namespace** (e.g., global or local scope, class or
 object dictionary) fails to define a given attribute or name).
+'''
+
+# ....................{ PEP ~ 484                          }....................
+TYPES_PEP484_GENERIC_IO = frozenset((BinaryIO, IO, TextIO,))
+'''
+Frozen set of all :pep:`484`-compliant **I/O generics** (i.e., public
+:pep:`484`-compliant :class:`typing.Generic` subclasses defined by the standard
+:mod:`typing` module, covering input/output use cases albeit in a non-optimized
+and completely unconstrained manner).
+
+Note that these generics are *not* :pep:`544`-compliant protocols. These
+generics are thus mostly useless for most real-world purposes.
 '''
 
 # ....................{ PEP ~ (484|544)                    }....................
