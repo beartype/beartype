@@ -18,17 +18,11 @@ submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getters : args             }....................
-def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
+def test_get_hint_pep484585_generic_args_full() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.pep484585generic.get_hint_pep484585_generic_args_full`
     getter.
-
-    Parameters
-    ----------
-    pep484585_generics : 'beartype_test.a00_unit.data.hint.pep.proposal._fixture.data_pep484585generic._Pep484585Generics'
-        **Generics dataclass** (i.e., object comprising various :pep:`484`- and
-        :pep:`585`-compliant :class:`typing.Generic` subclasses).
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -47,6 +41,15 @@ def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_args_full)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Nongeneric,
+        Pep484GenericST,
+        Pep484585SequenceU,
+        Pep484585GenericSTSequenceU,
+        Pep484585GenericIntTSequenceU,
+        Pep484585GenericUUST,
+        Pep585GenericUIntT,
+    )
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -57,13 +60,13 @@ def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
     # * "trg_args" is the output tuple returned by this getter when passed that
     #   input generic.
     PEP484585_GENERIC_ARGS_FULL = [
-        (pep484585_generics.Pep484GenericST, (S, T,)),
-        (pep484585_generics.Pep484GenericST[int, float], (int, float,)),
-        (pep484585_generics.Pep484585SequenceU, (U,)),
-        (pep484585_generics.Pep484585SequenceU[complex], (complex,)),
-        (pep484585_generics.Pep484585GenericSTSequenceU, (bool, int, T, U,)),
-        (pep484585_generics.Pep484585GenericIntTSequenceU, (bool, int, float, U,)),
-        (pep484585_generics.Pep484585GenericUUST, (U, S, T, U,)),
+        (Pep484GenericST, (S, T,)),
+        (Pep484GenericST[int, float], (int, float,)),
+        (Pep484585SequenceU, (U,)),
+        (Pep484585SequenceU[complex], (complex,)),
+        (Pep484585GenericSTSequenceU, (bool, int, T, U,)),
+        (Pep484585GenericIntTSequenceU, (bool, int, float, U,)),
+        (Pep484585GenericUUST, (U, S, T, U,)),
     ]
 
     # List of all generic argument cases, each of which is a 2-tuple of the
@@ -75,22 +78,22 @@ def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
     # * "trg_args" is the output tuple returned by this getter when passed that
     #   input generic and target pseudo-superclass.
     PEP484585_GENERIC_BASE_TARGET_ARGS_FULL = [
-        (pep484585_generics.Pep484GenericST, Generic, (S, T,)),
-        (pep484585_generics.Pep484GenericST, Generic[S, T], (S, T,)),
-        (pep484585_generics.Pep484GenericST[int, float], Generic, (int, float,)),
-        (pep484585_generics.Pep484585SequenceU, Sequence, (U,)),
-        (pep484585_generics.Pep484585SequenceU[complex], Sequence, (complex,)),
-        (pep484585_generics.Pep484585GenericSTSequenceU, List, (bool,)),
-        (pep484585_generics.Pep484585GenericSTSequenceU, pep484585_generics.Pep484GenericST, (int, T,)),
-        (pep484585_generics.Pep484585GenericSTSequenceU, pep484585_generics.Nongeneric, ()),
-        (pep484585_generics.Pep484585GenericSTSequenceU, pep484585_generics.Pep484585SequenceU, (U,)),
+        (Pep484GenericST, Generic, (S, T,)),
+        (Pep484GenericST, Generic[S, T], (S, T,)),
+        (Pep484GenericST[int, float], Generic, (int, float,)),
+        (Pep484585SequenceU, Sequence, (U,)),
+        (Pep484585SequenceU[complex], Sequence, (complex,)),
+        (Pep484585GenericSTSequenceU, List, (bool,)),
+        (Pep484585GenericSTSequenceU, Pep484GenericST, (int, T,)),
+        (Pep484585GenericSTSequenceU, Nongeneric, ()),
+        (Pep484585GenericSTSequenceU, Pep484585SequenceU, (U,)),
         (
-            pep484585_generics.Pep484585GenericIntTSequenceU,
-            pep484585_generics.Pep484585GenericSTSequenceU,
+            Pep484585GenericIntTSequenceU,
+            Pep484585GenericSTSequenceU,
             (bool, int, float, U,),
         ),
-        (pep484585_generics.Pep484585GenericUUST, pep484585_generics.Pep484585SequenceU, (U,)),
-        (pep484585_generics.Pep484585GenericUUST, pep484585_generics.Pep484GenericST, (S, T)),
+        (Pep484585GenericUUST, Pep484585SequenceU, (U,)),
+        (Pep484585GenericUUST, Pep484GenericST, (S, T)),
     ]
 
     # If the active Python interpreter targets Python >= 3.9 and thus behaves
@@ -99,43 +102,43 @@ def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
     # irrelevant reasons, Python 3.8 raises exceptions here. *shrug*
     if IS_PYTHON_AT_LEAST_3_9:
         PEP484585_GENERIC_ARGS_FULL.extend((
-            (pep484585_generics.Pep484585GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
-            (pep484585_generics.Pep484585GenericIntTSequenceU[complex], (bool, int, float, complex,)),
-            (pep484585_generics.Pep484585GenericUUST[bool, int, float], (bool, int, float, bool,)),
-            (pep484585_generics.Pep585GenericUIntT, (U, int, T, U,)),
-            (pep484585_generics.Pep585GenericUIntT[bool, float], (bool, int, float, bool,)),
+            (Pep484585GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
+            (Pep484585GenericIntTSequenceU[complex], (bool, int, float, complex,)),
+            (Pep484585GenericUUST[bool, int, float], (bool, int, float, bool,)),
+            (Pep585GenericUIntT, (U, int, T, U,)),
+            (Pep585GenericUIntT[bool, float], (bool, int, float, bool,)),
         ))
 
         PEP484585_GENERIC_BASE_TARGET_ARGS_FULL.extend((
             (
-                pep484585_generics.Pep484585GenericSTSequenceU[float, complex],
-                pep484585_generics.Pep484GenericST,
+                Pep484585GenericSTSequenceU[float, complex],
+                Pep484GenericST,
                 (int, float,),
             ),
             (
-                pep484585_generics.Pep484585GenericSTSequenceU[float, complex],
-                pep484585_generics.Pep484585SequenceU,
+                Pep484585GenericSTSequenceU[float, complex],
+                Pep484585SequenceU,
                 (complex,),
             ),
             (
-                pep484585_generics.Pep484585GenericIntTSequenceU[complex],
-                pep484585_generics.Pep484585GenericSTSequenceU,
+                Pep484585GenericIntTSequenceU[complex],
+                Pep484585GenericSTSequenceU,
                 (bool, int, float, complex,),
             ),
             (
-                pep484585_generics.Pep484585GenericUUST[bool, int, float],
+                Pep484585GenericUUST[bool, int, float],
                 List[U],
                 (bool,),
             ),
             (
-                pep484585_generics.Pep484585GenericUUST[bool, int, float],
-                pep484585_generics.Pep484GenericST,
+                Pep484585GenericUUST[bool, int, float],
+                Pep484GenericST,
                 (int, float),
             ),
-            (pep484585_generics.Pep585GenericUIntT, pep484585_generics.Pep484585SequenceU, (U,)),
-            (pep484585_generics.Pep585GenericUIntT, pep484585_generics.Pep484GenericST, (int, T)),
-            (pep484585_generics.Pep585GenericUIntT[bool, float], List[U], (bool,)),
-            (pep484585_generics.Pep585GenericUIntT[bool, float], pep484585_generics.Pep484GenericST, (int, float)),
+            (Pep585GenericUIntT, Pep484585SequenceU, (U,)),
+            (Pep585GenericUIntT, Pep484GenericST, (int, T)),
+            (Pep585GenericUIntT[bool, float], List[U], (bool,)),
+            (Pep585GenericUIntT[bool, float], Pep484GenericST, (int, float)),
         ))
 
     # ....................{ PASS                           }....................
@@ -162,7 +165,7 @@ def test_get_hint_pep484585_generic_args_full(pep484585_generics) -> None:
     # Assert that this getter raises the expected exception when passed an
     # object that is *NOT* a PEP 484- or 585-compliant generic.
     with raises(BeartypeDecorHintPep484585Exception):
-        get_hint_pep484585_generic_args_full(pep484585_generics.Nongeneric)
+        get_hint_pep484585_generic_args_full(Nongeneric)
 
 # ....................{ TESTS ~ getters : base             }....................
 def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:

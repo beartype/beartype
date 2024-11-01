@@ -59,9 +59,9 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         # PEP-noncompliant type hints are intentionally tested *AFTER*
         # PEP-compliant type hints to simplify debugging in the event that core
         # functionality is catastrophically broken. *gulp*
-        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy.hints_pep_meta_numpy',
-        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodos.hints_pep_meta_os',
-        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodweakref.hints_pep_meta_weakref',
+        'beartype_test.a00_unit.data.hint.pep.api._data_hintmodnumpy.hints_pep_meta_numpy',
+        'beartype_test.a00_unit.data.hint.pep.api._data_hintmodos.hints_pep_meta_os',
+        'beartype_test.a00_unit.data.hint.pep.api._data_hintmodweakref.hints_pep_meta_weakref',
     ))
 
     # If the active Python interpreter targets Python >= 3.12, this interpreter

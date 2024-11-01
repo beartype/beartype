@@ -44,8 +44,8 @@ def test_reduce_hint() -> None:
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         T,
-        T_BOUNDED,
-        T_CONSTRAINED,
+        T_int,
+        T_str_or_bytes,
     )
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
@@ -98,11 +98,11 @@ def test_reduce_hint() -> None:
     assert reduce_hint(hint=T, **kwargs) is T
 
     # Assert this reducer reduces bounded type variables to their upper bound.
-    assert reduce_hint(hint=T_BOUNDED, **kwargs) is int
+    assert reduce_hint(hint=T_int, **kwargs) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
-    typevar_constraints_union = reduce_hint(hint=T_CONSTRAINED, **kwargs)
+    typevar_constraints_union = reduce_hint(hint=T_str_or_bytes, **kwargs)
 
     # Assert this union contains all constraints parametrizing this variable.
     assert str   in typevar_constraints_union.__args__

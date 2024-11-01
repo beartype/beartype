@@ -126,13 +126,18 @@ class GenericTypeHint(TypeHint):
             # Human-readable substring prefixing raised exception messages.
             exception_prefix,
         )
+        # print(f'Found self {self} full child hints: {self_args_full}')
 
-        #FIXME: Comment us up, please.
         #FIXME: Unit test us up, please.
+        # If that branch is a subscripted non-generic (e.g., "Sequence[int]")...
         if isinstance(branch, SubscriptedTypeHint):
+            # print(f'Comparing against subscripted non-generic {branch}...')
+
             # If these two hints are subscripted by a differing number of child
             # hints, raise an exception. See the superclass method for details.
-            if len(self_args_full) != len(branch._args_wrapped_tuple):
+            #
+            # Note that this should *NEVER* occur. Therefore, this will occur.
+            if len(self_args_full) != len(branch._args_wrapped_tuple):  # pragma: no cover
                 # Number of child hints subscripting that branch.
                 branch_args_len = len(branch._args_wrapped_tuple)
 
@@ -148,25 +153,40 @@ class GenericTypeHint(TypeHint):
             # Else, these two hints are subscripted by the same number of child
             # hints.
 
-            #FIXME: Comment us up, please.
+            # For the 0-based index of each child hint transitively subscripting
+            # this generic and this hint...
             for self_arg_full_index, self_arg_full in enumerate(self_args_full):
+                # Hint wrapper encapsulating this child hint transitively
+                # subscripting this generic.
                 self_child = TypeHint(self_arg_full)
+
+                # Hint wrapper encapsulating the corresponding child hint
+                # directly subscripting that non-generic branch.
                 branch_child = branch._args_wrapped_tuple[self_arg_full_index]
 
                 # If this child hint is *NOT* a subhint of that child hint, this
-                # hint is *NOT* a subhint of that branch. In this case,
-                # short-circuit by immediately returning false.
+                # generic is *NOT* a subhint of that non-generic branch. In this
+                # case, short-circuit by immediately returning false.
                 if not self_child.is_subhint(branch_child):
+                    # print(f'{self_child} <= {branch_child} == False!')
                     return False
                 # Else, this child hint is a subhint of that child hint. In this
-                # case, this hint *COULD* be a subhint of that branch. Decide by
-                # continuing to the next pair of child hints.
-            # Else, each child hint of this hint is a subhint of the
-            # corresponding child hint of that branch. In this case, this hint
-            # is a subhint of that branch.
-        #FIXME: Comment us up, please.
-        #FIXME: Unit test us up, please.
+                # case, this generic *COULD* be a subhint of that non-generic
+                # branch. Decide by continuing to the next pair of child hints.
+
+                # print(f'{self_child} <= {branch_child} == True...')
+            # Else, each child hint of this generic is a subhint of the
+            # corresponding child hint of that non-generic branch. In this case,
+            # this generic is a subhint of that non-generic branch.
+        # Else, that branch is *NOT* a subscripted non-generic
+        # (e.g., "Sequence[int]"). By the above validation, that branch is both
+        # subscripted and commensurable with this generic. By elimination, that
+        # branch *MUST* be a subscripted generic (e.g., "MuhGeneric[T]"). In
+        # this case...
         else:
+            # print(f'Comparing against subscripted generic {branch}...')
+
+            # Validate that that branch is, in fact, a subscripted generic.
             assert isinstance(branch, GenericTypeHint), (
                 f'{branch} not PEP 484 or 585 subscripted generic '
                 f'(i.e., "beartype.door.GenericTypeHint" instance).')
@@ -188,10 +208,13 @@ class GenericTypeHint(TypeHint):
                 # Human-readable substring prefixing raised exception messages.
                 exception_prefix,
             )
+            # print(f'Found branch {branch} full child hints: {branch_args_full}')
 
             # If these two generics are transitively subscripted by a differing
             # number of child hints, raise an exception. See above for details.
-            if len(self_args_full) != len(branch_args_full):
+            #
+            # Note that this should *NEVER* occur. Therefore, this will occur.
+            if len(self_args_full) != len(branch_args_full):  # pragma: no cover
                 # Raise an exception embedding these numbers.
                 raise BeartypeDoorIsSubhintException(
                     f'{exception_prefix}'
@@ -204,22 +227,32 @@ class GenericTypeHint(TypeHint):
             # Else, these two generics are transitively subscripted by the same
             # number of child hints.
 
-            #FIXME: Comment us up, please.
+            # For the 0-based index of each child hint transitively subscripting
+            # this generic and this hint...
             for self_arg_full_index, self_arg_full in enumerate(self_args_full):
+                # Hint wrapper encapsulating this child hint transitively
+                # subscripting this generic.
                 self_child = TypeHint(self_arg_full)
+
+                # Hint wrapper encapsulating the corresponding child hint
+                # directly subscripting that generic branch.
                 branch_child = TypeHint(branch_args_full[self_arg_full_index])
+                # print(f'{self_child} <= {branch_child}?')
 
                 # If this child hint is *NOT* a subhint of that child hint, this
-                # hint is *NOT* a subhint of that branch. In this case,
-                # short-circuit by immediately returning false.
+                # generic is *NOT* a subhint of that generic branch. In this
+                # case, short-circuit by immediately returning false.
                 if not self_child.is_subhint(branch_child):
+                    # print(f'{self_child} <= {branch_child} == False!')
                     return False
                 # Else, this child hint is a subhint of that child hint. In this
-                # case, this hint *COULD* be a subhint of that branch. Decide by
-                # continuing to the next pair of child hints.
-            # Else, each child hint of this hint is a subhint of the
-            # corresponding child hint of that branch. In this case, this hint
-            # is a subhint of that branch.
+                # case, this generic *COULD* be a subhint of that generic
+                # branch. Decide by continuing to the next pair of child hints.
+
+                # print(f'{self_child} <= {branch_child} == True...')
+            # Else, each child hint of this generic is a subhint of the
+            # corresponding child hint of that generic branch. In this case,
+            # this generic is a subhint of that generic branch.
 
         # Return true! We have liftoff.
         return True

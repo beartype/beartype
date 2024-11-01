@@ -27,7 +27,5 @@ from beartype_test.a00_unit.data.hint.pep.data_pep import (
     hints_pep_ignorable_shallow,
     hints_pep_meta,
 )
-from beartype_test.a00_unit.data.hint.pep.proposal._fixture.data_pep484585generic import (
-    pep484585_generics)
 from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
     iter_hints_piths_meta)

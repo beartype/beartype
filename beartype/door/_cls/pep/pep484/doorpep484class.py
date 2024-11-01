@@ -60,16 +60,17 @@ class ClassTypeHint(TypeHint):
     # ..................{ PRIVATE ~ methods                  }..................
     def _is_subhint_branch(self, branch: TypeHint) -> bool:
         # print(f'Entering ClassTypeHint._is_subhint_branch({self}, {branch})...')
+        # print(f'{branch}._is_args_ignorable: {branch._is_args_ignorable}')
+        # print(f'{self}._origin: {self._origin}')
+        # print(f'{branch}._origin: {branch._origin}')
+
         # print(f'{self}._hint: {self._hint}')
         # print(f'{branch}._hint: {branch._hint}')
-        # print(f'{repr(self)}._origin: {self._origin}')
         # # print(f'{repr(self)}._origin.__args__: {self._origin.__args__}')
         # print(f'{repr(self)}._origin.__parameters__: {self._origin.__parameters__}')
-        # print(f'{repr(branch)}._origin: {branch._origin}')
         # # print(f'{repr(branch)}._origin.__args__: {branch._origin.__args__}')
         # print(f'{repr(branch)}._origin.__parameters__: {branch._origin.__parameters__}')
         # print(f'{repr(self)}._is_args_ignorable: {self._is_args_ignorable}')
-        # print(f'{repr(branch)}._is_args_ignorable: {branch._is_args_ignorable}')
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.
         #Explicit is better than implicit and we really strongly disagree with

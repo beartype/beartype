@@ -49,7 +49,22 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # Defer fixture-specific imports.
     import collections.abc
     import typing
-    from beartype._data.hint.datahinttyping import S, T
+    from beartype._data.hint.datahinttyping import (
+        S,
+        T,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        T_sequence,
+        T_int_or_str,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Pep484GenericT,
+        Pep484GenericSubT,
+        Pep484GenericST,
+        Pep484GenericSInt,
+        Pep484GenericIntInt,
+        Pep484585SequenceT,
+    )
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from collections.abc import (
@@ -67,7 +82,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Collection,
         DefaultDict,
         Dict,
-        Generic,
         Hashable,
         Iterable,
         List,
@@ -89,11 +103,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ NEWTYPES                           }..................
     NewStr = NewType('NewStr', str)
-
-    # ..................{ TYPEVARS                           }..................
-    # Arbitrary constrained type variables.
-    T_sequence = TypeVar('T_sequence', bound=SequenceABC)
-    T_int_or_str = TypeVar('T_int_or_str', int, str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -133,63 +142,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         thing_one: str
         thing_two: int
-
-    # ..................{ CLASSES ~ pep 484 : generic : one  }..................
-    class GenericSuperT(Generic[T]):
-        '''
-        :pep:`484`-compliant generic superclass parametrized by one
-        unconstrained type variable.
-        '''
-
-        pass
-
-
-    class GenericSubT(GenericSuperT[T]):
-        '''
-        :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant
-        generic parametrized by one unconstrained type variable.
-        '''
-
-        pass
-
-    # ..................{ CLASSES ~ pep 484 : generic : two  }..................
-    class GenericSuperST(Generic[S, T]):
-        '''
-        :pep:`484`-compliant generic superclass parametrized by two
-        unconstrained type variables.
-        '''
-
-        pass
-
-
-    class GenericSubTInt(GenericSuperST[S, int]):
-        '''
-        :pep:`484`-compliant partially concrete generic subclass inheriting a
-        :pep:`484`-compliant generic superclass subscripted first by an
-        unconstrained type variable and then by the builtin :class:`int` type.
-        '''
-
-        pass
-
-
-    class GenericSubIntInt(GenericSuperST[int, int]):
-        '''
-        :pep:`484`-compliant concrete generic subclass inheriting a
-        :pep:`484`-compliant generic superclass subscripted twice by the
-        builtin :class:`int` type.
-        '''
-
-        pass
-
-    # ..................{ CLASSES ~ pep (484|585) : generic  }..................
-    class SequenceSubT(Sequence[T]):
-        '''
-        :pep:`484`- or :pep:`585`-compliant generic subclass inheriting a
-        :pep:`484`- or :pep:`585`-compliant ``Sequence[...]` type hint
-        parametrized by one unconstrained type variable.
-        '''
-
-        pass
 
     # ..................{ LISTS ~ cases                      }..................
     # List of all hint subhint cases (i.e., 3-tuples "(subhint, superhint,
@@ -269,49 +221,46 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes below by replacing all references in
-        # the first tuple item to "GenericSuperT" with "GenericSubT".
+        # the first tuple item to "Pep484GenericT" with "Pep484GenericSubT".
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic superclasses parametrized by one
         # unconstrained type variables.
-        (GenericSuperT, GenericSuperT, True),
-        (GenericSuperT, GenericSuperT[int], False),
-        (GenericSuperT[int], GenericSuperT, True),
-        (GenericSuperT[int], GenericSuperT[T_sequence], False),
-        (GenericSuperT[list], GenericSuperT[T_sequence], True),
-        (GenericSuperT[list], GenericSuperT[Sequence], True),
-        (GenericSuperT[str], GenericSuperT[T_sequence], True),
-        (GenericSuperT[Sequence], GenericSuperT[list], False),
-        (GenericSuperT[T_sequence], GenericSuperT, True),
+        (Pep484GenericT, Pep484GenericT, True),
+        (Pep484GenericT, Pep484GenericT[int], False),
+        (Pep484GenericT[int], Pep484GenericT, True),
+        (Pep484GenericT[int], Pep484GenericT[T_sequence], False),
+        (Pep484GenericT[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[list], Pep484GenericT[Sequence], True),
+        (Pep484GenericT[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericT[Sequence], Pep484GenericT[list], False),
+        (Pep484GenericT[T_sequence], Pep484GenericT, True),
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize changes above.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
         # type variables.
-        (GenericSubT, GenericSuperT, True),
-        (GenericSubT, GenericSuperT[int], False),
-        (GenericSubT[int], GenericSuperT, True),
-        (GenericSubT[int], GenericSuperT[T_sequence], False),
-        (GenericSubT[list], GenericSuperT[T_sequence], True),
-        (GenericSubT[list], GenericSuperT[Sequence], True),
-        (GenericSubT[str], GenericSuperT[T_sequence], True),
-        (GenericSubT[Sequence], GenericSuperT[list], False),
-        (GenericSubT[T_sequence], GenericSuperT, True),
+        (Pep484GenericSubT, Pep484GenericT, True),
+        (Pep484GenericSubT, Pep484GenericT[int], False),
+        (Pep484GenericSubT[int], Pep484GenericT, True),
+        (Pep484GenericSubT[int], Pep484GenericT[T_sequence], False),
+        (Pep484GenericSubT[list], Pep484GenericT[T_sequence], True),
+        (Pep484GenericSubT[list], Pep484GenericT[Sequence], True),
+        (Pep484GenericSubT[str], Pep484GenericT[T_sequence], True),
+        (Pep484GenericSubT[Sequence], Pep484GenericT[list], False),
+        (Pep484GenericSubT[T_sequence], Pep484GenericT, True),
 
-        #FIXME: Uncomment after resolving open issue #271, please.
         # PEP 484-compliant generic subclasses parametrized by one unconstrained
         # type variables and one concrete type.
-        (GenericSubTInt, GenericSuperST, True),
-        (GenericSubTInt, GenericSuperST[int, int], False),
-        (GenericSubTInt[int], GenericSuperST, True),
-
-        #FIXME: Pickup here tomorrow, please. *sigh*
-        # (GenericSubTInt[int], GenericSuperST[T_sequence], False),
-        # (GenericSubTInt[list], GenericSuperST[T_sequence], True),
-        # (GenericSubTInt[list], GenericSuperST[Sequence], True),
-        # (GenericSubTInt[str], GenericSuperST[T_sequence], True),
-        # (GenericSubTInt[Sequence], GenericSuperST[list], False),
-        # (GenericSubTInt[T_sequence], GenericSuperST, True),
+        (Pep484GenericSInt, Pep484GenericST, True),
+        (Pep484GenericSInt, Pep484GenericST[int, int], False),
+        (Pep484GenericSInt[int], Pep484GenericST, True),
+        (Pep484GenericSInt[int], Pep484GenericST[S, T_sequence], False),
+        (Pep484GenericSInt[list], Pep484GenericST[T_sequence, object], True),
+        (Pep484GenericSInt[list], Pep484GenericST[Sequence, Any], True),
+        (Pep484GenericSInt[str], Pep484GenericST[T_sequence, S], True),
+        (Pep484GenericSInt[Sequence], Pep484GenericST[list, object], False),
+        (Pep484GenericSInt[T_sequence], Pep484GenericST, True),
 
         # ..................{ PEP 484 ~ optional             }..................
         # "typing.Optional"-centric tests.
@@ -355,15 +304,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # PEP 484- or 585-compliant generic subclasses inheriting PEP 484- or
         # 585-compliant type hints parametrized by one unconstrained type
         # variables.
-        (SequenceSubT, Sequence[T], True),
-        (SequenceSubT, Sequence[int], False),
-        (SequenceSubT[int], Sequence[T], True),
-        (SequenceSubT[int], Sequence[T_sequence], False),
-        (SequenceSubT[list], Sequence[T_sequence], True),
-        (SequenceSubT[list], Sequence[Sequence], True),
-        (SequenceSubT[str], Sequence[T_sequence], True),
-        (SequenceSubT[Sequence], Sequence[list], False),
-        (SequenceSubT[T_sequence], Sequence[T], True),
+        (Pep484585SequenceT, Sequence[T], True),
+        (Pep484585SequenceT, Sequence[int], False),
+        (Pep484585SequenceT[int], Sequence[T], True),
+        (Pep484585SequenceT[int], Sequence[T_sequence], False),
+        (Pep484585SequenceT[list], Sequence[T_sequence], True),
+        (Pep484585SequenceT[list], Sequence[Sequence], True),
+        (Pep484585SequenceT[str], Sequence[T_sequence], True),
+        (Pep484585SequenceT[Sequence], Sequence[list], False),
+        (Pep484585SequenceT[T_sequence], Sequence[T], True),
 
         # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.

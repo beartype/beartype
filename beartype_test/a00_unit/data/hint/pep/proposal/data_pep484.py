@@ -46,6 +46,7 @@ from beartype_test.a00_unit.data.data_type import (
 )
 from collections.abc import (
     Callable as CallableABC,
+    Sequence as SequenceABC,
     Sized as SizedABC,
 )
 
@@ -65,19 +66,37 @@ from typing import (
     TypeVar,
 )
 
-# ....................{ TYPEVARS ~ unbounded               }....................
-T_BOUNDED = TypeVar('T_BOUNDED', bound=int)
+# ....................{ TYPEVARS ~ bounded                 }....................
+T_int = TypeVar('T_int', bound=int)
 '''
-Arbitrary **bounded type variable** (i.e., type variable parametrized by a
-PEP-compliant child type hint passed as the ``bound`` keyword argument).
+**Integer-bounded type variable** (i.e., type variable parametrized by the
+builtin :class:`int` type passed as the ``bound`` keyword argument).
 '''
 
 
-T_CONSTRAINED = TypeVar('T_CONSTRAINED', str, bytes)
+T_sequence = TypeVar('T_sequence', bound=SequenceABC)
 '''
-Arbitrary **constrained type variable** (i.e., type variable parametrized by
-two or more PEP-compliant child type hints passed as positional arguments).
+**Sequence-bounded type variable** (i.e., type variable parametrized by the
+standard :class:`collections.abc.Sequence` abstract base class (ABC) passed as
+the ``bound`` keyword argument).
 '''
+
+# ....................{ TYPEVARS ~ constrained             }....................
+T_int_or_str = TypeVar('T_int_or_str', int, str)
+'''
+**Integer- or string-constrained type variable** (i.e., type variable
+parametrized by both the builtin :class:`int` and :class:`str` types passed as
+positional arguments).
+'''
+
+
+T_str_or_bytes = TypeVar('T_str_or_bytes', str, bytes)
+'''
+**String- or bytes-constrained type variable** (i.e., type variable parametrized
+by both the builtin :class:`str` and :class:`bytes` types passed as positional
+arguments).
+'''
+
 
 #FIXME: Obsolete *ALL* of the global attributes defined below in favour of our
 #new pep484585_generics() fixture, please. *sigh*
@@ -88,7 +107,7 @@ two or more PEP-compliant child type hints passed as positional arguments).
 #proper session-scoped fixtures.
 
 # ....................{ GENERICS ~ single                  }....................
-class Pep484GenericTypevaredSingle(Generic[S, T]):
+class Pep484GenericST(Generic[S, T]):
     '''
     :pep:`484`-compliant user-defined generic subclassing a single parametrized
     :mod:`typing` type.
@@ -539,7 +558,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # User-defined constrained type variable.
         HintPepMetadata(
-            hint=T_CONSTRAINED,
+            hint=T_str_or_bytes,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
@@ -563,7 +582,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # User-defined bounded type variable.
         HintPepMetadata(
-            hint=T_BOUNDED,
+            hint=T_int,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
@@ -843,14 +862,14 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Generic subclassing a single parametrized "typing" type.
         HintPepMetadata(
-            hint=Pep484GenericTypevaredSingle,
+            hint=Pep484GenericST,
             pep_sign=HintSignGeneric,
-            generic_type=Pep484GenericTypevaredSingle,
+            generic_type=Pep484GenericST,
             is_typevars=True,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic.
-                HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
+                HintPithSatisfiedMetadata(Pep484GenericST()),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'An arterially giving, triage nature — '
@@ -862,15 +881,15 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
-            hint=Pep484GenericTypevaredSingle[S, T],
+            hint=Pep484GenericST[S, T],
             pep_sign=HintSignGeneric,
-            generic_type=Pep484GenericTypevaredSingle,
+            generic_type=Pep484GenericST,
             is_typevars=True,
             is_type_typing=True,
             is_typing=False,
             piths_meta=(
                 # Subclass-specific generic.
-                HintPithSatisfiedMetadata(Pep484GenericTypevaredSingle()),
+                HintPithSatisfiedMetadata(Pep484GenericST()),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Token welfare’s malformed keening fare, keenly despaired'
