@@ -21,6 +21,10 @@ from beartype._data.hint.datahinttyping import (
     HintAnnotations,
     TypeException,
 )
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+
+if IS_PYTHON_AT_LEAST_3_14:
+    from annotationlib import get_annotations, Format
 
 # ....................{ GETTERS ~ descriptors              }....................
 #FIXME: Unit test us up, please.
@@ -207,4 +211,6 @@ def get_func_annotations_or_none(func: Callable) -> Optional[HintAnnotations]:
     #   in general-purpose contexts where this guarantee does *NOT*
     #   necessarily hold, we intentionally access that attribute safely albeit
     #   somewhat more slowly via getattr().
+    if IS_PYTHON_AT_LEAST_3_14:
+        return get_annotations(func, format=Format.FORWARDREF)
     return getattr(func, '__annotations__', None)
