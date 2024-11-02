@@ -4,9 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hookable function submodule** (i.e., data
-module containing *only* annotated functions, mimicking real-world usage of the
-:func:`beartype.claw.beartype_package` import hook from an external caller).
+Project-wide **beartype import hookable synchronous function submodule** (i.e.,
+data module containing *only* annotated synchronous functions, mimicking
+real-world usage of the :func:`beartype.claw.beartype_package` import hook from
+an external caller).
+
+See Also
+--------
+:mod:`beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind.data_claw_coro`
+    Comparable beartype import hookable **coroutine** (i.e., asynchronous
+    function) submodule. Coroutines are *only* callable from within an
+    **asynchronous event loop** (e.g., :mod:`asyncio.run`) unavailable from
+    within this asynchronous-agnostic submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -37,22 +46,23 @@ from pytest import (
 def thee_ever_and_thee_only(i_have_watched: Union[float, bytes]) -> (
     Optional[complex]):
     '''
-    Arbitrary method either returning the passed float first doubled and then
-    coerced into a complex number with imaginary component ``1`` if this float
-    is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation` exception
-    otherwise (i.e., if this float is zero), exercising that beartype import
-    hooks decorate global functions as expected.
+    Arbitrary synchronous function either returning the passed float first
+    doubled and then coerced into a complex number with imaginary component
+    ``1`` if this float is non-zero *or* raising a
+    :exc:`.BeartypeCallHintParamViolation` exception otherwise (i.e., if this
+    float is zero), exercising that beartype import hooks decorate global
+    synchronous functions as expected.
     '''
 
     def thy_shadow(and_the_darkness_of_thy_steps: Optional[float]) -> (
         Union[complex, str]):
         '''
-        Arbitrary closure either returning the passed float first doubled and
-        then coerced into a complex number with imaginary component ``1`` if
-        this float is non-:data:`None` *or* raising a
+        Arbitrary synchronous closure either returning the passed float first
+        doubled and then coerced into a complex number with imaginary component
+        ``1`` if this float is non-:data:`None` *or* raising a
         :exc:`.BeartypeCallHintReturnViolation` exception otherwise (i.e., if
         this float is :data:`None`), exercising that beartype import hooks
-        decorate closures as expected.
+        decorate synchronous closures as expected.
         '''
 
         # Return either...
@@ -84,8 +94,7 @@ def thee_ever_and_thee_only(i_have_watched: Union[float, bytes]) -> (
 # Assert that calling this function passed an arbitrary float returns the
 # expected complex number *WITHOUT* raising an exception.
 assert thee_ever_and_thee_only(
-    len('And my heart ever gazes on the depth') + 0.0) == (
-    72 + 1j)
+    len('And my heart ever gazes on the depth') + 0.0) == 72 + 1j
 
 # ....................{ FAIL                               }....................
 # Assert that calling this function passed an invalid parameter raises the
@@ -97,7 +106,8 @@ with raises(BeartypeCallHintParamViolation):
 # from the closure defined and called by this function.
 with raises(BeartypeCallHintReturnViolation):
     thee_ever_and_thee_only(
-        len('In and on coffins') - len('where black death') + 0.0)
+        len('In and on coffins') -       # <-- same string length *wat*
+        len('where black death') + 0.0)  # <-- same string length *lol*
 
 # ....................{ FAIL ~ decoration                  }....................
 # Assert that attempting to define a function whose type hints violate one or

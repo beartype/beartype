@@ -31,9 +31,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #will only leverage a single @beartype configuration (if any @beartype
 #configuration at all); ergo, caching improves everything by enabling us to
 #reuse the same "BeartypeNodeTransformer" instance for every hooked module.
-#Score @beartype!
-#
-#See the BeartypeConf.__new__() method for relevant logic. \o/
+#Score @beartype! See the BeartypeConf.__new__() method for relevant logic. \o/
 #FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
 #defining a comparable reinit() method as we do for "BeartypeDecorMeta". After
 #retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
@@ -498,8 +496,8 @@ class BeartypeNodeTransformer(
         encapsulating the definition of a pure-Python function or method)
         decorating that callable by our private
         :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator if
-        and only if that callable is **typed** (i.e., annotated by a return type
-        hint and/or one or more parameter type hints).
+        that callable is **typed** (i.e., annotated by a return type hint and/or
+        one or more parameter type hints).
 
         Parameters
         ----------
@@ -539,6 +537,8 @@ class BeartypeNodeTransformer(
             # decoration...
             is_node_callable_typed(node)
         ):
+            # print(f'Decorating function {node.name}()...')
+
             # Add a new child decoration node to this parent callable node
             # decorating this callable by @beartype under this configuration.
             self._decorate_node_beartype(node=node, conf=self._conf_beartype)
@@ -547,3 +547,14 @@ class BeartypeNodeTransformer(
 
         # Recursively transform *ALL* child nodes of this parent callable node.
         return self.generic_visit(node)
+
+
+    # Efficiently decorate coroutines (i.e., asynchronous callables declared via
+    # the "async" keyword) by aliasing the existing visit_FunctionDef() method
+    # defined above (which directly handles *ONLY* synchronous callables) to a
+    # new visit_AsyncFunctionDef (which directly handles *ONLY* asynchronous
+    # callables). Since the visit_FunctionDef() implementation transparently
+    # handles both synchronous and asynchronous callables, this is the optimally
+    # efficient approach to decorate coroutines *WITHOUT* adding any additional
+    # stack frames to the call stack.
+    visit_AsyncFunctionDef = visit_FunctionDef
