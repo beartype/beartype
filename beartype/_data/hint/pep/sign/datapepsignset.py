@@ -68,7 +68,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPattern,
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignTypeAlias,
-    HintSignPep695TypeAlias,
+    HintSignPep695TypeAliasUnsubscripted,
     HintSignProtocol,
     HintSignReversible,
     HintSignSelf,
@@ -607,7 +607,7 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: _FrozenSetHintSign = frozenset((
     HintSignLiteralString,
 
     # ..................{ PEP 695                            }..................
-    HintSignPep695TypeAlias,
+    HintSignPep695TypeAliasUnsubscripted,
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary

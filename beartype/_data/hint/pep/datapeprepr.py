@@ -65,7 +65,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
     HintSignPep557DataclassInitVar,
-    HintSignPep695TypeAlias,
+    HintSignPep695TypeAliasUnsubscripted,
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
@@ -254,7 +254,8 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: Dict[str, DictStrToHintSign] = {
     # Standard builtins module.
     'builtins': {
         # ..................{ PEP 484                        }..................
-        # PEP 484-compliant forward reference type hints may be annotated either:
+        # PEP 484-compliant forward reference type hints may be annotated
+        # either:
         # * Explicitly as "typing.ForwardRef" instances, which automated
         #   inspection performed by the _init() function below already handles.
         # * Implicitly as strings, which this key-value pair here detects. Note
@@ -263,6 +264,7 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: Dict[str, DictStrToHintSign] = {
         #   * Absolute forward references (i.e., fully-qualified classnames)
         #     technically non-compliant with PEP 484 but seemingly compliant
         #     with PEP 585.
+        #
         #   Since the distinction between PEP-compliant and -noncompliant
         #   forward references is murky at best and since unconditionally
         #   matching *ALL* string as PEP-compliant substantially simplifies
@@ -522,7 +524,7 @@ def _init() -> None:
         # ....................{ PEP 695                    }....................
         # PEP 695-compliant "type" aliases are merely instances of the low-level
         # C-based "typing.TypeAliasType" type.
-        'TypeAliasType': HintSignPep695TypeAlias,
+        'TypeAliasType': HintSignPep695TypeAliasUnsubscripted,
     }
 
     # ..................{ HINTS ~ deprecated                 }..................

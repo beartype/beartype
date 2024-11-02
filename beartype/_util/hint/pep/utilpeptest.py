@@ -27,7 +27,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignOptional,
     HintSignNewType,
-    HintSignPep695TypeAlias,
+    HintSignPep695TypeAliasUnsubscripted,
     HintSignProtocol,
     HintSignTypeVar,
     HintSignUnion,
@@ -49,7 +49,7 @@ from beartype._util.hint.pep.proposal.pep484604 import (
     is_hint_pep484604_union_ignorable)
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep544_ignorable
 from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593_ignorable
-from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_ignorable
+from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_unsubscripted_ignorable
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from collections.abc import Callable
@@ -702,7 +702,7 @@ _HINT_SIGN_TO_IS_HINT_IGNORABLE: Dict[HintSign, Callable] = {
 
     # ..................{ PEP 695                            }..................
     # Ignore *ALL* PEP 695-compliant type aliases aliasing ignorable type hints.
-    HintSignPep695TypeAlias: is_hint_pep695_ignorable,
+    HintSignPep695TypeAliasUnsubscripted: is_hint_pep695_unsubscripted_ignorable,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints

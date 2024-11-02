@@ -23,7 +23,7 @@ Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_forwardrefs`
+    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_unsubscripted_forwardrefs`
     iterator.
     '''
 
@@ -33,7 +33,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     from beartype._check.forward.reference.fwdrefmeta import (
         BeartypeForwardRefMeta)
     from beartype._util.hint.pep.proposal.pep695 import (
-        iter_hint_pep695_forwardrefs)
+        iter_hint_pep695_unsubscripted_forwardrefs)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -49,14 +49,14 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # ....................{ ASSERTS ~ null                 }....................
     # Assert that this iterator yields nothing when passed a type alias
     # containing *NO* unquoted forward references.
-    their_own_life = list(iter_hint_pep695_forwardrefs(of_intermitted_song))
+    their_own_life = list(iter_hint_pep695_unsubscripted_forwardrefs(of_intermitted_song))
     assert not their_own_life
 
     # ....................{ ASSERTS ~ single               }....................
     # Assert that this iterator yields a single forward reference proxy
     # referring to the single unquoted forward reference embedded in a
     # passed type alias containing only that reference.
-    and_saw_by = iter_hint_pep695_forwardrefs(sudden_she_rose)
+    and_saw_by = iter_hint_pep695_unsubscripted_forwardrefs(sudden_she_rose)
     the_warm_light_of = next(and_saw_by)
     assert isinstance(the_warm_light_of, BeartypeForwardRefMeta)
     assert the_warm_light_of.__name__ == 'ItsBurstingBurthen'
@@ -83,7 +83,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # Assert that this iterator first yields a forward reference proxy referring
     # to the first unquoted forward reference embedded in a passed type alias
     # containing only that reference.
-    her_glowing_limbs = iter_hint_pep695_forwardrefs(as_if_her_heart)
+    her_glowing_limbs = iter_hint_pep695_unsubscripted_forwardrefs(as_if_her_heart)
     beneath_the_sinuous_veil = next(her_glowing_limbs)
     assert isinstance(beneath_the_sinuous_veil, BeartypeForwardRefMeta)
     assert beneath_the_sinuous_veil.__name__ == 'ImpatientlyEndured'
@@ -120,14 +120,14 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
 def unit_test_reduce_hint_pep695() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695`
+    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`
     reducer.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695
+    from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695_unsubscripted
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -140,11 +140,11 @@ def unit_test_reduce_hint_pep695() -> None:
     # ....................{ PASS                           }....................
     # Assert that this reducer returns the type hint underlying the passed type
     # alias containing *NO* unquoted forward references.
-    assert reduce_hint_pep695(
+    assert reduce_hint_pep695_unsubscripted(
         hint=her_dark_locks, exception_prefix='') == str | int
 
     # ....................{ FAIL                           }....................
     # Assert that this reducer raises the expected exception when passed a type
     # alias containing one unquoted forward reference.
     with raises(BeartypeDecorHintPep695Exception):
-        reduce_hint_pep695(hint=floating_in, exception_prefix='')
+        reduce_hint_pep695_unsubscripted(hint=floating_in, exception_prefix='')

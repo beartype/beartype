@@ -512,7 +512,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     Examples
     --------
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> import typing
        >>> from beartype._util.hint.pep.utilpepget import (
@@ -815,6 +815,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # conveys substantially less semantics and would imply this object to be an
     # isinstanceable class, which subscripted builtin type hints are *NOT*.
     if is_hint_pep585_builtin_subscripted(hint):
+        #FIXME: Call is_hint_pep695_subscripted() for further disambiguation.
         return HintSignPep585BuiltinSubscriptedUnknown
     # Else, this hint is *NOT* an unrecognized subscripted builtin type hint.
 
@@ -926,7 +927,7 @@ def get_hint_pep_origin_type(
     **Origin type** (i.e., class such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
     if this hint originates from such a type *or* raise an exception otherwise
-    (i.e., if this hint does *not* originate from such a type).
+    (i.e., if this hint originates from *no* such type).
 
     This getter is memoized for efficiency.
 
@@ -1006,10 +1007,10 @@ def get_hint_pep_origin_type_or_none(
     **Origin type** (i.e., class such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
     if this hint originates from such a type *or* :data:`None` otherwise (i.e.,
-    if this hint does *not* originate from such a type).
+    if this hint originates from *no* such type).
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Caveats

@@ -313,12 +313,39 @@ pure-Python origin classes (which are type-checkable as is).
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 695       }....................
-# "type {alias_name} = {alias_value}" statements.
-HintSignPep695TypeAlias = _HintSign(name='HintSignPep695TypeAlias')
+# "type {alias_name} = {alias_value}" statements under Python >= 3.12.
+
+HintSignPep695TypeAliasUnsubscripted = _HintSign(
+    name='HintSignPep695TypeAliasUnsubscripted')
 '''
 :pep:`695`-compliant C-based :class:`types.TypeAliasType` class of all
-:pep:`695`-compliant **type aliases** (i.e., objects created as the left-hand
-sides of statements of the form ``type {alias_name} = {alias_value}``).
+:pep:`695`-compliant **unsubscripted type aliases** (i.e., objects created as
+the left-hand sides of statements of the form ``type {alias_name} =
+{alias_value}``).
+
+Most real-world type aliases are unsubscripted and thus identified by this sign.
+'''
+
+
+HintSignPep695TypeAliasSubscripted = _HintSign(
+    name='HintSignPep695TypeAliasSubscripted')
+'''
+Sign uniquely identifying all :pep:`695`-compliant **subscripted type aliases**
+(i.e., unsubscripted type aliases originally parametrized by one or more
+:pep:`484`-compliant type variables subscripted by a corresponding number of
+arbitrary child type hints): e.g.,
+
+```pycon
+>>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+
+# Unsubscripted PEP 695 type alias parametrized by a PEP 484 type variable.
+>>> MuhTypeAlias[T] = T | float
+>>> get_hint_pep_sign_or_none(MuhTypeAlias)
+HintSignPep695TypeAliasUnsubscripted
+
+# Subscripted PEP 695 type alias replacing that type variable with a type.
+>>> get_hint_pep_sign_or_none(MuhTypeAlias[int])
+HintSignPep695TypeAliasSubscripted
 '''
 
 # ....................{ CLEANUP                            }....................

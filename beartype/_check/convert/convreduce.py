@@ -72,7 +72,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPattern,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep695TypeAlias,
+    HintSignPep695TypeAliasUnsubscripted,
     HintSignReversible,
     HintSignSelf,
     HintSignSequence,
@@ -126,7 +126,7 @@ from beartype._util.hint.pep.proposal.pep646692 import (
 from beartype._util.hint.pep.proposal.pep647 import reduce_hint_pep647
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
-from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695
+from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695_unsubscripted
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from beartype._util.utilobject import SENTINEL
@@ -660,7 +660,7 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ PEP 695                            }..................
     # If this hint is a PEP 695-compliant "type" alias, reduce this alias to the
     # underlying hint lazily referred to by this alias.
-    HintSignPep695TypeAlias: reduce_hint_pep695,
+    HintSignPep695TypeAliasUnsubscripted: reduce_hint_pep695_unsubscripted,
 
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,

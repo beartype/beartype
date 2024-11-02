@@ -33,7 +33,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import (
-        HintSignPep695TypeAlias,
+        HintSignPep695TypeAliasUnsubscripted,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -60,7 +60,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         # *NO* forward references, recursion, or type variables).
         HintPepMetadata(
             hint=AliasSimple,
-            pep_sign=HintSignPep695TypeAlias,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_type_typing=True,
             is_typing=False,
             piths_meta=(
@@ -94,7 +94,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         # hints parametrized by the same type variable subscripting this alias.
         HintPepMetadata(
             hint=AliasGeneric,
-            pep_sign=HintSignPep695TypeAlias,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_type_typing=True,
             is_typevars=True,
             is_typing=False,

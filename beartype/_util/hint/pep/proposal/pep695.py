@@ -62,7 +62,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #    # ...into this.
 #    from beartype._util.hint.pep.proposal.pep695 import (
-#        iter_hint_pep695_forwardrefs as
+#        iter_hint_pep695_unsubscripted_forwardrefs as
 #        __iter_hint_pep695_forwardref_beartype__
 #    )
 #    type {alias_name} = {alias_value}
@@ -81,7 +81,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            exec(f'{__hint_pep695_forwardref_beartype__.__name_beartype__} = __hint_pep695_forwardref_beartype__')
 #
 #    #FIXME: Technically, this *ONLY* needs to be done if the
-#    #iter_hint_pep695_forwardrefs() iterator returned something. *shrug*
+#    #iter_hint_pep695_unsubscripted_forwardrefs() iterator returned something. *shrug*
 #    # Intentionally redefine this alias. Although this appears to be an
 #    # inefficient noop, this is in fact an essential operation. Why?
 #    # Because the prior successful access of the "__value__" dunder
@@ -109,21 +109,76 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import HintPep695Type
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
+from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep695_ignorable(hint: HintPep695Type) -> bool:
+#FIXME: Unit test us up, please.
+def is_hint_pep695_subscripted(hint: object) -> bool:
     '''
-    :data:`True` only if the passed :pep:`695`-compliant **type alias** (i.e.,
-    object created by a statement of the form ``type {alias_name} =
-    {alias_value}``) is ignorable.
+    :data:`True` only if the passed type hint is a :pep:`695`-compliant
+    **subscripted type alias** (i.e., object created by subscripting an object
+    created by a statement of the form ``type {alias_name}[{type_var}] =
+    {alias_value}`` by one or more child type hints) is ignorable.
 
-    Specifically, this tester ignores the passed type alias if the lower-level
-    type hint aliased by this alias is itself deeply ignorable.
+    This tester disambiguates between **unrecognized subscripted builtin type
+    hints** (i.e., C-based type hints instantiated by subscripting pure-Python
+    origin types unrecognized by :mod:`beartype` and thus PEP-noncompliant)
+    from subscripted type aliases (which are clearly :pep:`695`-compliant).
+    Superficially, subscripted type aliases resemble unrecognized subscripted
+    builtin type hints due to internally reusing the same low-level
+    :pep:`585`-compliant :class:`types.GenericAlias` architecture. We sigh.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation efficiently reduces to
+    a one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this hint is a subscripted type alias.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+    from beartype._util.hint.pep.proposal.pep585 import (
+        is_hint_pep585_builtin_subscripted)
+
+    # If this hint is a PEP 585-compliant subscripted builtin hint, immediately
+    # return false. All PEP 695-compliant subscripted type aliases are
+    # implemented as PEP 585-compliant subscripted builtin hints, interestingly.
+    if not is_hint_pep585_builtin_subscripted(hint):
+        return False
+    # Else, this hint is a PEP 585-compliant subscripted builtin hint and thus
+    # *COULD* be a PEP 695-compliant subscripted type alias. Further detection
+    # is warranted.
+
+    # Origin (i.e., value of the "__origin__" dunder attribute) originating this
+    # hint if this hint originates from such a type *OR* "None" otherwise (i.e.,
+    # if this hint originates from such a type).
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # Return true only if this origin is a PEP 695-compliant unsubscripted type
+    # alias. Yes. It really is this non-trivial, folks. *sigh*
+    return isinstance(hint_origin, HintPep695Type)
+
+
+def is_hint_pep695_unsubscripted_ignorable(hint: HintPep695Type) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`695`-compliant **unsubscripted type
+    alias** (i.e., object created by a statement of the form ``type {alias_name}
+    = {alias_value}``) is ignorable.
+
+    Specifically, this tester ignores the passed unsubscripted type alias if the
+    lower-level type hint aliased by this alias is itself deeply ignorable.
 
     This tester is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as this tester is only safely callable by
@@ -133,41 +188,47 @@ def is_hint_pep695_ignorable(hint: HintPep695Type) -> bool:
     Parameters
     ----------
     hint : HintPep695Type
-        Type alias to be inspected.
+        Unsubscripted type alias to be inspected.
 
     Returns
     -------
     bool
-        :data:`True` only if this :pep:`695`-compliant type alias is ignorable.
+        :data:`True` only if this unsubscripted type alias is ignorable.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
 
-    # Return true only if this hint aliases an ignorable child type hint.
-    return is_hint_ignorable(get_hint_pep695_alias(hint))
+    # Return true only if this PEP 695-compliant unsubscripted type alias
+    # recursively aliases an ignorable child type hint. *gulp*
+    return is_hint_ignorable(get_hint_pep695_unsubscripted_alias(hint))
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep695_alias(
-    hint: HintPep695Type, exception_prefix: str = '') -> object:
+def get_hint_pep695_unsubscripted_alias(
+    # Mandatory parameters.
+    hint: HintPep695Type,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> object:
     '''
     **Non-alias type hint** (i.e., type hint that is *not* a
     :pep:`695`-compliant type alias) encapsulated by the passed
-    :pep:`695`-compliant **type alias** (i.e., object created by a statement of
-    the form ``type {alias_name} = {alias_value}``).
+    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
+    statement of the form ``type {alias_name} = {alias_value}``).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
     forward references. Notably, memoizing this getter would prevent the
-    external caller of the higher-level :func:`.iter_hint_pep695_forwardrefs`
+    external caller of the higher-level :func:`.iter_hint_pep695_unsubscripted_forwardrefs`
     iterator calling this lower-level getter from externally modifying this type
     alias by forcefully injecting forward reference proxies into this alias.
 
     Parameters
     ----------
     hint : HintPep695Type
-        Type alias to be inspected.
+        Unsubscripted type alias to be inspected.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -180,19 +241,20 @@ def get_hint_pep695_alias(
     Raises
     ------
     BeartypeDecorHintPep695Exception
-        If this type hint is *not* a PEP 695-compliant type alias.
+        If this type hint is *not* an unsubscripted type alias.
     NameError
-        If this type alias contains one or more **unquoted forward references**
-        to undefined types.
+        If this unsubscripted type alias contains one or more **unquoted forward
+        references** to undefined types.
     '''
 
-    # If this hint is *NOT* a PEP 695-compliant type alias, raise an exception.
+    # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
+    # an exception.
     if not isinstance(hint, HintPep695Type):
         raise BeartypeDecorHintPep695Exception(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 type alias.'
         )
-    # Else, this hint is a PEP 695-compliant type alias.
+    # Else, this hint is a PEP 695-compliant unsubscripted type alias.
 
     # While the Universe continues infinitely expanding...
     while True:
@@ -213,7 +275,7 @@ def get_hint_pep695_alias(
     return hint
 
 # ....................{ ITERATORS                          }....................
-def iter_hint_pep695_forwardrefs(
+def iter_hint_pep695_unsubscripted_forwardrefs(
     # Mandatory parameters.
     hint: HintPep695Type,
 
@@ -224,23 +286,24 @@ def iter_hint_pep695_forwardrefs(
     Iteratively create and yield one **forward reference proxy** (i.e.,
     :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
     subclass) for each unquoted relative forward reference in the passed
-    :pep:`695`-compliant **type alias** (i.e., object created by a statement of
-    the form ``type {alias_name} = {alias_value}``) to the underlying type hint
-    lazily referred to by this type alias.
+    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
+    statement of the form ``type {alias_name} = {alias_value}``) to the
+    underlying type hint lazily referred to by this type alias.
 
     This iterator is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this iterator is intended to be
-    called only once per type alias in userspace code dynamically instrumented
-    by beartype import hook abstract syntax tree (AST) node transformers.
-    Since those transformers are expected to replace *all* unquoted relative
-    forward references in this type alias with corresponding forward reference
-    proxies, calling this iterator again on any type alias instrumented in this
-    way *should* silently reduce to a noop.
+    called only once per unsubscripted type alias in userspace code dynamically
+    instrumented by beartype import hook abstract syntax tree (AST) node
+    transformers. Since those transformers are expected to replace *all*
+    unquoted relative forward references in this unsubscripted type alias with
+    corresponding forward reference proxies, calling this iterator again on any
+    unsubscripted type alias instrumented in this way *should* silently reduce
+    to a noop. "Should" is doing a lot of heavy lifting here.
 
     Parameters
     ----------
     hint : HintPep695Type
-        Type alias to be iterated over.
+        Unsubscripted type alias to be iterated over.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         reducer. Defaults to the empty string.
@@ -249,19 +312,19 @@ def iter_hint_pep695_forwardrefs(
     ------
     BeartypeForwardRefMeta
         Forward reference proxy encapsulating the next unquoted relative forward
-        reference in this :pep:`695`-compliant type alias.
+        reference in this unsubscripted type alias.
 
     Raises
     ------
     BeartypeDecorHintPep695Exception
-        If this type hint is *not* a PEP 695-compliant type alias.
+        If this type hint is *not* an unsubscripted type alias.
     '''
 
     # Unqualified basename of the previous undeclared attribute in this alias.
     hint_ref_name_prev: Optional[str] = None
 
-    # While this type alias still contains one or more forward references to
-    # attributes *NOT* defined by the module declaring this type alias...
+    # While this alias still contains one or more forward references to
+    # attributes *NOT* defined by the module declaring this alias...
     while True:
         # Attempt to...
         try:
@@ -271,9 +334,9 @@ def iter_hint_pep695_forwardrefs(
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
             #
-            # Note that get_hint_pep695_alias() is memoized and thus
-            # intentionally called with positional arguments.
-            get_hint_pep695_alias(hint, exception_prefix)
+            # Note that get_hint_pep695_unsubscripted_alias() is memoized and
+            # thus intentionally called with positional arguments.
+            get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.
@@ -408,15 +471,15 @@ def iter_hint_pep695_forwardrefs(
             hint_ref_name_prev = hint_ref_name
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep695(
+def reduce_hint_pep695_unsubscripted(
     hint: HintPep695Type,
     exception_prefix: str,
     *args, **kwargs
 ) -> object:
     '''
-    Reduce the passed :pep:`695`-compliant **type alias** (i.e., object created
-    by a statement of the form ``type {alias_name} = {alias_value}``) to the
-    underlying type hint lazily referred to by this type alias.
+    Reduce the passed :pep:`695`-compliant **unsubscripted type alias** (i.e.,
+    object created by a statement of the form ``type {alias_name} =
+    {alias_value}``) to the underlying type hint referred to by this alias.
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as reducers cannot be memoized.
@@ -424,7 +487,7 @@ def reduce_hint_pep695(
     Parameters
     ----------
     hint : object
-        Type alias to be reduced.
+        Unsubscripted type alias to be reduced.
     exception_prefix : str
         Human-readable substring prefixing exception messages raised by this
         reducer.
@@ -434,15 +497,15 @@ def reduce_hint_pep695(
     Returns
     -------
     object
-        Underlying type hint lazily referred to by this type alias.
+        Underlying type hint referred to by this unsubscripted type alias.
 
     Raises
     ------
     BeartypeDecorHintPep695Exception
-        If this type alias contains one or more unquoted relative forward
-        references to undefined attributes. Note that this *only* occurs when
-        callers avoid beartype import hooks in favour of manually decorating
-        callables and classes with the :func:`beartype.beartype` decorator.
+        If this alias contains one or more unquoted relative forward references
+        to undefined attributes. Note that this *only* occurs when callers avoid
+        beartype import hooks in favour of manually decorating callables and
+        classes with the :func:`beartype.beartype` decorator.
     '''
 
     # Underlying type hint to be returned.
@@ -454,9 +517,9 @@ def reduce_hint_pep695(
         # contains *NO* forward references to undeclared attributes, this
         # reduction *SHOULD* succeed. Let's pretend we mean that.
         #
-        # Note that get_hint_pep695_alias() is memoized and thus
+        # Note that get_hint_pep695_unsubscripted_alias() is memoized and thus
         # intentionally called with positional arguments.
-        hint_aliased = get_hint_pep695_alias(hint, exception_prefix)
+        hint_aliased = get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
     # If doing so raises a builtin "NameError" exception, this alias contains
     # one or more forward references to undeclared attributes. In this case...
     except NameError as exception:

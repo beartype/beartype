@@ -15,6 +15,9 @@ See Also
     Comparable beartype import hookable synchronous function submodule.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Also type-check asynchronous generators, please. *shrug*
+
 # ....................{ IMPORTS                            }....................
 from asyncio import (
     run as asyncio_run,

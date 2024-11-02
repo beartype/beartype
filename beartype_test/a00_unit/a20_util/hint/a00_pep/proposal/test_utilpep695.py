@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_iter_hint_pep695_forwardrefs() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_forwardrefs`
+    :mod:`beartype._util.hint.pep.proposal.pep695.iter_hint_pep695_unsubscripted_forwardrefs`
     iterator.
     '''
 
@@ -28,7 +28,7 @@ def test_iter_hint_pep695_forwardrefs() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
     from beartype._util.hint.pep.proposal.pep695 import (
-        iter_hint_pep695_forwardrefs)
+        iter_hint_pep695_unsubscripted_forwardrefs)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from pytest import raises
 
@@ -48,14 +48,14 @@ def test_iter_hint_pep695_forwardrefs() -> None:
     # Assert this iterator raises the expected exception when passed an
     # arbitrary PEP 695-noncompliant object.
     with raises(BeartypeDecorHintPep695Exception):
-        next(iter_hint_pep695_forwardrefs(
+        next(iter_hint_pep695_unsubscripted_forwardrefs(
             'Tumultuously accorded with those fits'))
 
 # ....................{ TESTS ~ reducer                    }....................
 def test_reduce_hint_pep695() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695`
+    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`
     iterator.
     '''
 
