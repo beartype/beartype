@@ -321,7 +321,7 @@ def coerce_hint_any(hint: object) -> Any:
     subscripting type hint factories declared by the :mod:`typing` module,
     which internally cache their resulting type hints: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> import typing
        >>> typing.List[int] is typing.List[int]
@@ -333,7 +333,7 @@ def coerce_hint_any(hint: object) -> Any:
     :pep:`585`-compliant type hints produced by subscripting builtin container
     types, which fail to internally cache their resulting type hints: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> list[int] is list[int]
        False

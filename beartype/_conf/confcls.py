@@ -925,13 +925,13 @@ class BeartypeConf(object):
         method to the corresponding values of those parameters in this
         configuration).
 
-        This property can be used to permute new configurations from existing
-        configurations, overriding only a small handful of parameters while
-        preserving all other parameters as is: e.g.,
+        This property can be used to permute a new beartype configuration from
+        an existing beartype configuration, overriding only a small handful of
+        parameters while preserving all other parameters as is: e.g.,
 
         .. code-block:: python
 
-           # Arbitrary input beartype configuration.
+           # Input beartype configuration.
            conf = BeartypeConf(is_color=True)
 
            # New keyword dictionary permuted from this input.
@@ -940,6 +940,13 @@ class BeartypeConf(object):
 
            # New beartype configuration initialized by this dictionary.
            debug_conf = BeartypeConf(**conf_kwargs)
+
+        Caveats
+        -------
+        **Avoid modifying this dictionary directly.** Instead, only modify
+        shallow copies of this dictionary as in the above example. If this
+        dictionary is directly modified, this beartype configuration *will*
+        behave erratically, erroneously, and non-deterministically.
 
         See Also
         --------

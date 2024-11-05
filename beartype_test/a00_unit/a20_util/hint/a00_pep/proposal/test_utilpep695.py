@@ -16,6 +16,38 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ tester                     }....................
+def test_is_hint_pep695_subscripted() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_subscripted`
+    iterator.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_subscripted)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+            unit_test_is_hint_pep695_subscripted)
+
+        # Perform this test.
+        unit_test_is_hint_pep695_subscripted()
+    # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
+    # 695.
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects objects that are *NOT* PEP 585-compliant
+    # subscripted builtins.
+    assert is_hint_pep695_subscripted(
+        'And thou, colossal Skeleton, that, still') is False
+
 # ....................{ TESTS ~ iterator                   }....................
 def test_iter_hint_pep695_forwardrefs() -> None:
     '''
@@ -52,7 +84,7 @@ def test_iter_hint_pep695_forwardrefs() -> None:
             'Tumultuously accorded with those fits'))
 
 # ....................{ TESTS ~ reducer                    }....................
-def test_reduce_hint_pep695() -> None:
+def test_reduce_hint_pep695_unsubscripted() -> None:
     '''
     Test the private
     :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`
@@ -68,9 +100,9 @@ def test_reduce_hint_pep695() -> None:
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
-            unit_test_reduce_hint_pep695)
+            unit_test_reduce_hint_pep695_unsubscripted)
 
         # Perform this test.
-        unit_test_reduce_hint_pep695()
+        unit_test_reduce_hint_pep695_unsubscripted()
     # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
     # 695.

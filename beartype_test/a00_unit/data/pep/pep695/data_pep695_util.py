@@ -19,6 +19,53 @@ Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
 
+# ....................{ TESTS ~ tester                     }....................
+def unit_test_is_hint_pep695_subscripted() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_subscripted`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep695 import (
+        is_hint_pep695_subscripted)
+
+    # ....................{ LOCALS                         }....................
+    # Unsubscripted type alias.
+    type and_thou = int | float
+
+    # Subscriptable type alias yet to be subscripted by a concrete type.
+    #
+    # Note that, although subscriptable type aliases superficially appear to be
+    # "pre-subscripted" by PEP 484-compliant type variables, this
+    # "pre-subscription" is simply syntactic sugar; subscriptable type aliases
+    # remain unsubscripted until explicitly subscripted by concrete types.
+    type colossal_skeleton[T] = complex | T
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts PEP 695-compliant subscripted type aliases
+    # (i.e., subscriptable type aliases subscripted by concrete types).
+    assert is_hint_pep695_subscripted(colossal_skeleton[int]) is True
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester rejects objects that are *NOT* PEP 585-compliant
+    # subscripted builtins.
+    assert is_hint_pep695_subscripted(
+        'And thou, colossal Skeleton, that, still') is False
+
+    # Assert this tester rejects PEP 585-compliant subscripted builtins that are
+    # *NOT* PEP 695-compliant subscripted type aliases.
+    assert is_hint_pep695_subscripted(list[str]) is False
+
+    # Assert this tester rejects PEP 695-compliant unsubscripted type aliases.
+    assert is_hint_pep695_subscripted(and_thou) is False
+
+    # Assert this tester accepts PEP 695-compliant subscriptable type aliases
+    # yet to be subscripted by a concrete type.
+    assert is_hint_pep695_subscripted(colossal_skeleton) is False
+
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
@@ -117,7 +164,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
         next(her_glowing_limbs)
 
 # ....................{ TESTS ~ reducer                    }....................
-def unit_test_reduce_hint_pep695() -> None:
+def unit_test_reduce_hint_pep695_unsubscripted() -> None:
     '''
     Test the private
     :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`

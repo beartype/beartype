@@ -108,7 +108,10 @@ from beartype.typing import (
     Iterable,
     Optional,
 )
-from beartype._cave._cavefast import HintPep695Type
+from beartype._cave._cavefast import (
+    HintGenericSubscriptedType,
+    HintPep695Type,
+)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
@@ -136,6 +139,23 @@ def is_hint_pep695_subscripted(hint: object) -> bool:
     ``callable_cached`` decorator), as the implementation efficiently reduces to
     a one-liner.
 
+    Caveats
+    -------
+    Note that, although subscriptable type aliases superficially appear to be
+    "pre-subscripted" by :pep:`484`-compliant type variables, this
+    "pre-subscription" is simply syntactic sugar; subscriptable type aliases
+    remain unsubscripted until explicitly subscripted by concrete types: e.g.,
+
+    .. code-block:: pycon
+
+       >>> from beartype._util.hint.pep.proposal.pep695 import (
+       ...     is_hint_pep695_subscripted)
+       >>> type subscriptable_alias[T] = int | T
+       >>> is_hint_pep695_subscripted(subscriptable_alias)
+       False
+       >>> is_hint_pep695_subscripted(subscriptable_alias[float])
+       True
+
     Parameters
     ----------
     hint : object
@@ -149,17 +169,19 @@ def is_hint_pep695_subscripted(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
-    from beartype._util.hint.pep.proposal.pep585 import (
-        is_hint_pep585_builtin_subscripted)
+    # from beartype._util.hint.pep.proposal.pep585 import (
+    #     is_hint_pep585_builtin_subscripted)
 
-    # If this hint is a PEP 585-compliant subscripted builtin hint, immediately
-    # return false. All PEP 695-compliant subscripted type aliases are
-    # implemented as PEP 585-compliant subscripted builtin hints, interestingly.
-    if not is_hint_pep585_builtin_subscripted(hint):
-        return False
-    # Else, this hint is a PEP 585-compliant subscripted builtin hint and thus
-    # *COULD* be a PEP 695-compliant subscripted type alias. Further detection
-    # is warranted.
+    #FIXME: Actually, this test is surprisingly computationally expensive.
+    #Ignore for now as the test below currently suffices. *shrug*
+    # # If this hint is a PEP 585-compliant subscripted builtin hint, immediately
+    # # return false. All PEP 695-compliant subscripted type aliases are
+    # # implemented as PEP 585-compliant subscripted builtin hints, interestingly.
+    # if not is_hint_pep585_builtin_subscripted(hint):
+    #     return False
+    # # Else, this hint is a PEP 585-compliant subscripted builtin hint and thus
+    # # *COULD* be a PEP 695-compliant subscripted type alias. Further detection
+    # # is warranted.
 
     # Origin (i.e., value of the "__origin__" dunder attribute) originating this
     # hint if this hint originates from such a type *OR* "None" otherwise (i.e.,
@@ -252,7 +274,7 @@ def get_hint_pep695_unsubscripted_alias(
     if not isinstance(hint, HintPep695Type):
         raise BeartypeDecorHintPep695Exception(
             f'{exception_prefix}type hint {repr(hint)} '
-            f'not PEP 695 type alias.'
+            f'not PEP 695 unsubscripted type alias.'
         )
     # Else, this hint is a PEP 695-compliant unsubscripted type alias.
 
@@ -519,7 +541,8 @@ def reduce_hint_pep695_unsubscripted(
         #
         # Note that get_hint_pep695_unsubscripted_alias() is memoized and thus
         # intentionally called with positional arguments.
-        hint_aliased = get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
+        hint_aliased = get_hint_pep695_unsubscripted_alias(
+            hint, exception_prefix)
     # If doing so raises a builtin "NameError" exception, this alias contains
     # one or more forward references to undeclared attributes. In this case...
     except NameError as exception:
@@ -559,3 +582,181 @@ def reduce_hint_pep695_unsubscripted(
 
     # Return this underlying type hint.
     return hint_aliased
+
+
+#FIXME: *STOP DOING THIS.* This is simply a temporary kludge to shallowly
+#type-check PEP 695-compliant subscripted type aliases. Although this is
+#certainly preferable to raising exceptions on these aliases (which is what
+#@beartype *USED* to do), shallow type-checking is still far from optimal.
+#Ideally, @beartype should deeply type-check these aliases. There are any number
+#of ways of doing so, including:
+#* THE OBVIOUS WAY. Generalize the make_check_expr() to:
+#  * Define a new local "typevar_to_hint" dictionary mapping from PEP
+#    484-compliant type variables parametrizing subscripted type aliases to the
+#    child hints subscripting those aliases.
+#  * Refactor the sanify_hint_*() family of functions to optionally accept a
+#    new... *UGH.*
+#  * Refactor the breadth-first search (BFS) as follows:
+#    * *BEFORE* getting the sign of the currently iterated hint, detect whether
+#      this hint is a... *UGH.*
+#* FORGET THE OBVIOUS WAY. The obvious way of maintaining a mapping from type
+#  variables to type alias subscriptions is surprisingly non-trivial --
+#  especially when you consider that top-level "root" type hints directly
+#  annotating parameters and returns are sanified differently from child hints.
+#  Moreover, the "obvious way" actually reduplicates functionality already
+#  implemented by "BeartypeHintOverrides". Thus, a novel new approach presents
+#  itself: reuse "BeartypeHintOverrides" to do what we want to do.
+#
+#  The general approach is as follows:
+#  * If any hint satisfies is_hint_pep695_subscripted() (i.e., if that hint is a
+#    PEP 695-compliant subscripted type alias), then (in order):
+#    * Decide whether the child hint subscripting this alias is already mapped
+#      by the "conf.hint_overrides" dictionary. If so, *HALT*. Else, proceed.
+#    * Copy the current beartype configuration with:
+#          conf_kwargs = conf.kwargs.copy()
+#    * Copy the current "hint_overrides" with:
+#          #FIXME: Unsure what the best way to permute "BeartypeHintOverrides"
+#          #is. Does copy() even work there? No idea. Examine closer.
+#          hint_overrides = conf.hint_overrides.copy()
+#
+#          #FIXME: What about multiple type variables? Handle that, please.
+#          hint_overrides[alias_typevar] = alias_hint_child
+#    * Create a new beartype configuration with these overrides:
+#          conf_kwargs['hint_overrides'] = BeartypeHintOverrides(
+#              hint_overrides)
+#          conf_new = BeartypeConf(**conf_kwargs)
+#
+#  The nice thing about is this approach is that the sanify_hint_*() family of
+#  functions will then implicitly handle the mapping for us. The not-so-nice
+#  thing about this approach is that:
+#  * *WE THEN HAVE TO REPLACE THE CURRENT BEARTYPE CONFIGURATION* with the
+#    modified beartype configuration throughout literally everything. How?
+#    Couple of options here:
+#    * For the sanify_hint_root_func() function, this is trivial. Just replace
+#      in the passed "decor_meta" parameter: e.g.,
+#          decor_meta.conf = conf_new"  # <-- trivial lol
+#    * For all of the *OTHER* sanify_*() functions, though, this then becomes
+#      problematic. They'd have to be refactored to instead return a 2-tuple
+#      "(hint_sanified, conf_sanified)". The caller would then need to replace
+#      its current "conf" with the returned "conf". Feasible, yet annoying.
+#
+#      Note that we (...probably) do want to return a 2-tuple rather than
+#      dictionary (as in the solution below) for the set of sanify_*()
+#      functions. Why? Speed and simplicity. It'd be a *HUGE* pain to have to
+#      manually test whether the return value is a dictionary and, if so,
+#      probably handle its entries, everywhere. Unconditionally returning a
+#      2-tuple from sanifiers dramatically simplifies everything.
+#    * Ditto for *ALL* of the reduce_*() and _reduce_*() functions. This is a
+#      *HUGE* undertaking. *ALL* reducers across the entire codebase will now
+#      need to be refactored to... *HMM*. Okay. A few options here:
+#      1. EASY OPTION. The "easy option" is to just preserve backward
+#         compatibility with our existing reduce_*() API by stating that:
+#         * A reduce_*() function may simply return a single non-tuple *IF AND
+#           ONLY IF* that reducer is preserving the passed "conf" as is. Since
+#           this is almost all reducers, this is both the simplest and fastest
+#           approach.
+#         * A reduce_*() function *MUST* instead return a 2-tuple
+#           "(hint_sanified, conf_sanified)" if that reducer is modifying the
+#           passed "conf". Presumably, only a *VERY* small number of reducers
+#           will ever need to do this.
+#      2. HARD OPTION. Refactor every reduce_*() function to instead return a
+#         2-tuple "(hint_sanified, conf_sanified)". Pretty sucky, honestly.
+#         We're reducing space and time efficiency, because then every reducer
+#         needs to start throwing around 2-tuples where previously just raw
+#         sanified hints sufficed.
+#      3. EASY BUT MORE SCALABLE OPTION. Okay. So, option 1 is okay but option 2
+#         is sucky. Can option 1 be improved upon? Probably. The issue is the
+#         future. We just *KNOW* we're going to need to start sanifying other
+#         stuff, too. At that point, a tuple approach *REALLY* starts to break
+#         down. Instead, let's just consider returning a full-blown *DICTIONARY*
+#         rather than a 2-tuple. This gives us extensibility and readability,
+#         which is huge. It's also not *THAT* much less efficient than the tuple
+#         approach, because the number of reducers that should need to ever do
+#         this is (again) quite small. Clearly, this is the optimal approach.
+#    * Actually, even the latter points are fine. Why? Because we'd have to
+#      perform the same refactoring anyway if we go the "raw dictionary
+#      approach" -- except that refactoring is even worse, because we'd then
+#      need to pass additional "typevar_to_hint" dictionaries everywhere. Forget
+#      that noise! Just use the existing "BeartypeHintOverrides", obviously.
+#  * It's kinda inefficient? The raw dictionary approach might be a bit faster,
+#    because it doesn't require all of that copying; instead, a raw dictionary
+#    can simply be updated in-place. Of course, this only becomes an issue if
+#    people actually start using PEP 695-compliant subscripted type aliases.
+#    * Actually, wait. The raw dictionary approach isn't quite that efficient
+#      either. Why? Because we *DO* actually have to copy it in various places
+#      to preserve sane memoization. Notably, make_check_expr() would then need
+#      to be passed that dictionary and, if it needed to modify that dictionary,
+#      would then to copy that dictionary before doing so. Feasible, yet
+#      supremely annoying.
+#    * *INDEED.* Forget this efficiency argument. We'll *DEFINITELY* need to
+#      "freeze" that dictionary by copying it everywhere. Consider the memoized
+#      _reduce_hint_cached() function, for example. So, we absolutely don't gain
+#      much at all. *JUST USE THE BEARTYPE CONFIGURATION APPROACH.*
+#FIXME: Wire this up, please.
+#FIXME: Test this up, please.
+def reduce_hint_pep695_subscripted(
+    hint: HintGenericSubscriptedType,
+    exception_prefix: str,
+    *args, **kwargs
+) -> object:
+    '''
+    Reduce the passed :pep:`695`-compliant **subscripted type alias** (i.e.,
+    object created by subscripting an object created by a statement of the form
+    ``type {alias_name}[{type_var}] = {alias_value}`` by one or more child type
+    hints) to the underlying type hint referred to by this alias, stripped of
+    *all* :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
+    objects) parametrizing this alias.
+
+    This reducer effectively shallowly type-checks subscripted type aliases.
+    While deeply type-checking subscripted type aliases would certainly be
+    preferable, some type-checking is certainly better than no type-checking --
+    which is exactly what :mod:`beartype` did *before* this reducer existed.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
+
+    Parameters
+    ----------
+    hint : object
+        Unsubscripted type alias to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
+
+    All remaining passed arguments are silently ignored.
+
+    Returns
+    -------
+    object
+        Underlying type hint referred to by this unsubscripted type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this alias contains one or more unquoted relative forward references
+        to undefined attributes. Note that this *only* occurs when callers avoid
+        beartype import hooks in favour of manually decorating callables and
+        classes with the :func:`beartype.beartype` decorator.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+
+    # Origin (i.e., value of the "__origin__" dunder attribute) originating this
+    # hint if this hint originates from such a type *OR* "None" otherwise (i.e.,
+    # if this hint originates from such a type).
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # If this origin is *NOT* a PEP 695-compliant unsubscripted type alias,
+    # raise an exception.
+    if not isinstance(hint_origin, HintPep695Type):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not PEP 695 subscripted type alias.'
+        )
+    # Else, this origin is a PEP 695-compliant unsubscripted type alias,
+
+    # Reduce this subscripted type alias to the underlying type hint referred to
+    # by this unsubscripted type alias.
+    return reduce_hint_pep695_unsubscripted(  # type: ignore[misc]
+        hint=hint_origin, exception_prefix=exception_prefix, *args, **kwargs)

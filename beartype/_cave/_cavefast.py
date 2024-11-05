@@ -1020,8 +1020,8 @@ else:
     targets Python >= 3.9 *or* :class:`.UnavailableType` otherwise.
 
     This type is a version-agnostic generalization of the standard
-    :class:`types.GenericAlias` type available only under Python >= 3.9. Subscripted
-    generics include:
+    :class:`types.GenericAlias` type available only under Python >= 3.9.
+    Subscripted generics include:
 
     * :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
       instantiated by subscripting either a concrete builtin container class like
@@ -1037,11 +1037,11 @@ else:
 
     Caveats
     -------
-    **This low-level type ambiguously matches semantically unrelated PEP-compliant
-    type hints,** rendering this type all but useless for most practical purposes.
-    To distinguish between the various semantic types of hints ambiguously matched
-    by this type, higher-level PEP-specific functions *must* be called instead.
-    These include:
+    **This low-level type ambiguously matches semantically unrelated
+    PEP-compliant type hints,** rendering this type all but useless for most
+    practical purposes. To distinguish between the various semantic types of
+    hints ambiguously matched by this type, higher-level PEP-specific functions
+    *must* be called instead. These include:
 
     * :func:`beartype._util.hint.pep.proposal.pep484.pep484.is_hint_pep484_generic`,
       detecting :pep:`484`-compliant generic type hints.

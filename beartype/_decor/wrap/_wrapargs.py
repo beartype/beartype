@@ -69,9 +69,9 @@ from warnings import catch_warnings
 # ....................{ CODERS                             }....................
 def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     '''
-    Generate a Python code snippet type-checking all annotated parameters of
-    the decorated callable if any *or* the empty string otherwise (i.e., if
-    these parameters are unannotated).
+    Generate a Python code snippet type-checking all annotated parameters of the
+    decorated callable if any *or* the empty string otherwise (i.e., if these
+    parameters are unannotated).
 
     Parameters
     ----------
@@ -134,6 +134,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     #FIXME: Remove the "args_name_keywordable" local variable and associated
     #"ARG_NAME_ARGS_NAME_KEYWORDABLE" global variable *AFTER* refactoring
     #@beartype to generate callable-specific wrapper signatures.
+
     # Either...
     args_name_keywordable: Optional[Set[str]] = (
         # If the decorated callable accepts an annotated variadic keyword
