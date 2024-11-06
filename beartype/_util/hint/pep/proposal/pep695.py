@@ -692,6 +692,144 @@ def reduce_hint_pep695_unsubscripted(
 #      "freeze" that dictionary by copying it everywhere. Consider the memoized
 #      _reduce_hint_cached() function, for example. So, we absolutely don't gain
 #      much at all. *JUST USE THE BEARTYPE CONFIGURATION APPROACH.*
+#FIXME: All of the above is nice, but it's still not quite enough. Returning
+#either tuples or dictionaries is insufficient. Why? Ambiguity. If a future PEP
+#ever standardizes tuples or dictionaries as valid type hints, then we'd have no
+#means of disambiguating between a valid type hint returned by a reduce_*()
+#function and one of our "special" tuples or dictionaries.
+#
+#The solution to that, of course, is clear:
+#* Define a new public dataclass resembling:
+#    @dataclass(frozen=True, slots=True)
+#    class HintSanifiedData(object):
+#        hint: Hint
+#        conf: BeartypeConf
+#
+#  Yes, an actual @dataclass. It's time to stop needlessly avoiding that.
+#  Profiling demonstrates @dataclass to perform optimally. Just go with it.
+#
+#  Also, note that the "frozen=True" is a hard prerequisite. We'll be returning
+#  instances of this dataclass from memoized functions. Ergo, frozen.
+#* From *ALL* sanify_*() and reduce_*() functions across the entire codebase,
+#  return either:
+#  * A "HintSanifiedData" instance.
+#  * Literally anything else, which is then unambiguously interpreted as a hint.
+#
+#  Yes, just do it. Callers will then have to detect whether the return value is
+#  A "HintSanifiedData" instance or not. So what. That's fine. I think, anyway.
+#  Sounds good on paper. If detecting whether the return value is A
+#  "HintSanifiedData" instance or not turns out to be too cumbersome, we could
+#  simply *UNCONDITIONALLY* return "HintSanifiedData" instances. It's a bit
+#  heavyweight, which is why we'd like to avoid that unless absolutely
+#  necessary. But... yeah. Do whatevah is simplest, please.
+#
+#  For the moment, let's just define a utility getter resembling:
+#      def get_hint_sanified_tuple(
+#          hint: object, conf: BeartypeConf) -> Tuple[Hint, BeartypeConf]:
+#          '''
+#          2-tuple ``(hint, conf)`` unpacked from the passed ``hint`` parameter
+#          if that parameter is a :class:`.HintSanifiedData` object *or*
+#          trivially referring to the passed ``hint`` and ``conf`` parameters
+#          otherwise (i.e., if the passed ``hint`` parameter is *not* a
+#          :class:`.HintSanifiedData` object).
+#          '''
+#
+#          return (
+#              (hint_data.hint, hint_data.conf)
+#              if isinstance(hint_data, HintSanifiedData) else
+#              (hint, conf)
+#          )
+#
+#  Given that, any higher-level callable calling a sanify_*() or reduce_*()
+#  function would then pass the return value through this getter as follows:
+#                       hint_child, conf = get_hint_sanified_tuple(
+#                           sanify_hint_child(
+#                               hint=hint_child,
+#                               conf=conf,
+#                               cls_stack=cls_stack,
+#                               exception_prefix=EXCEPTION_PREFIX,
+#                           ))
+#
+#  Or... maybe just forget the get_hint_sanified_tuple() helper altogether and
+#  inline that logic? No idea. Contemplate. Consider.
+#
+#  Also, as above, sanify_hint_root_func() should just modify its "conf"
+#  instance variable in place. *shrug*
+#FIXME: *WAIT.* Honestly, all of the above is *SHEER RAVING MADNESS.* We're only
+#going to these extravagant lengths to avoid lightly refactoring our
+#make_check_expr() function. We've examined several of the calls to that
+#function, however; it's clear that what we *REALLY* want to do is aggregate
+#*ALL* of our calls to the top-level sanify_hint_root_func() function into the
+#make_check_expr() function itself. That's where all other sanification is
+#performed, after all. Most type hints aren't even ignorable, so... We probably
+#should have been doing this all along.
+#
+#By calling sanify_hint_root_func() from the top of make_check_expr(), we can
+#then just locally define a "typevar_to_hint" dictionary inside
+#make_check_expr() as we were originally intending to do. That's *WAY* saner,
+#friendlier, and more trivial.
+#
+#In short:
+#* Either:
+#  * Locally define a "typevar_to_hint" dictionary inside make_check_expr().
+#    This is the easiest approach and (probably) fine for an initial
+#    implementation, but... yeah. What we *REALLY* want to do instead is...
+#  * Recursively define one "typevar_to_hint" dictionary for each hint by
+#    appending yet another item to each tuple of our "hints_metadata" whose
+#    value is either:
+#    * "None" if that hint requires *NO* "typevar_to_hint" dictionary, which is
+#      most of them.
+#    * Else, that "typevar_to_hint" dictionary.
+#
+#    Actually... recursion kinda seems like overkill for now. Let's just go with
+#    a local "typevar_to_hint" dictionary for now. This is already hard enough.
+#* Refactor make_check_expr() to call at the top *BEFORE* doing anything else
+#  (in order):
+#  * sanify_hint_root_func() on the passed "hint". To simplify everything, we
+#    actually *SHOULD* probably just pass the aforementioned "typevar_to_hint"
+#    dictionary as yet another optional parameter to all sanify_*() and
+#    reduce_*() functions. *WHATEVAHS.* Just do it. The alternative is madness.
+#    Who cares about yet another parameter, anyway? Most of this is memoized.
+#  * is_hint_ignorable() on the now-sanified "hint".
+#* Stop calling sanify_hint_root_func() anywhere else, mostly.
+#* Refactor reduce_hint_pep695_subscripted() below to accept this new optional
+#  "typevar_to_hint" parameter and then add a new entry to that dictionary
+#  mapping the type variable parametrizing the passed type alias to the type
+#  hint subscripting that alias.
+#* Refactor reduce_hint_pep484_typevar() elsewhere to accept this new optional
+#  "typevar_to_hint" parameter and then:
+#  * If the passed type variable is a key in this "typevar_to_hint", return the
+#    corresponding value.
+#  * Else, return the bounds or constraints of the passed type variable (as we
+#    currently do).
+#
+#Note that make_check_expr() doesn't even need to be modified to notify the
+#caller that the passed hint is ignorable. Why? Because the is_hint_ignorable()
+#tester is already memoized. So, the caller can just trivially call
+#is_hint_ignorable() a second time if they need to detect whether this hint is
+#ignorable or not. Nothing is lost. Everything is gained.
+#FIXME: Lastly, note that type-checking of subscripted generics in
+#make_check_expr() should also be improved to support "typevar_to_hint": e.g.,
+#
+#    class MuhGeneric[S, T](List[T], Callable[[], S]):
+#        def __init__(self, muh_arg: S) -> None:
+#            self._muh_arg = S
+#        def __call__(self) -> S:
+#            return self._muh_arg
+#
+#    @beartype
+#    def muh_func(muh_arg: MuhGeneric[int, float]) -> None: pass
+#
+#When generating type-checking for the "muh_arg" parameter, make_check_expr()
+#should establish a mapping resembling:
+#    typevar_to_hint = {
+#        S: int,
+#        T: float,
+#    }
+#
+#The above reduce_hint_pep484_typevar() will then automatically replace those
+#type variables as needed. Woah!
+
 #FIXME: Wire this up, please.
 #FIXME: Test this up, please.
 def reduce_hint_pep695_subscripted(

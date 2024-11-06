@@ -250,6 +250,8 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 if arg_name.startswith('__bear'):
                     raise BeartypeDecorParamNameException(
                         f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
+                # Else, this parameter's name is *NOT* reserved for use by the
+                # @beartype decorator.
 
                 # Sanitize this hint into a possibly different type hint more
                 # readily consumable by @beartype's code generator *BEFORE*
