@@ -350,6 +350,25 @@
 #dependency, as failing to support both *WILL* cause deep type-checking of
 #otherwise valid callables to spuriously fail.
 
+#FIXME: [PEP] Deeply type-check PEP 484- and 585-compliant subscripted generics,
+#whose child type hints are currently ignored: e.g.,
+#    class MuhGeneric[S, T](List[T], Callable[[], S]):
+#        def __init__(self, muh_arg: S) -> None:
+#            self._muh_arg = S
+#        def __call__(self) -> S:
+#            return self._muh_arg
+#
+#    # The "int" and "float" child type hints subscripting this generic should
+#    # be deeply type-checked, yo.
+#    @beartype
+#    def muh_func(muh_arg: MuhGeneric[int, float]) -> None: pass
+#
+#When generating type-checking for the "muh_arg" parameter, make_check_expr()
+#should establish a mapping resembling:
+#    typevar_to_hint = {
+#        S: int,
+#        T: float,
+#    }
 #FIXME: [PEP] Type-check "collections.abc.Collection" and "typing.Collection" in
 #a more thoughtful manner. Currently, we only type-check collections as if they
 #were reiterables (i.e., by only type-checking the first items of those

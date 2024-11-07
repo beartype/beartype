@@ -301,8 +301,8 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
     Motivation
     ----------
     The current implementation of :pep:`585` under at least Python 3.9 is
-    fundamentally broken with respect to parametrized generics. While `PEP
-    484`_-compliant generics properly propagate type variables from
+    fundamentally broken with respect to parametrized generics. While
+    :pep:`484`-compliant generics properly propagate type variables from
     pseudo-superclasses to subclasses, :pep:`585` fails to do so. This function
     "fills in the gaps" by recovering these type variables from parametrized
     :pep:`585`-compliant generics by iteratively constructing a new tuple from
@@ -338,8 +338,8 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
     #
     # Note the following inefficient iteration *CANNOT* be reduced to an
     # efficient set comprehension, as each get_hint_pep_typevars() call returns
-    # a tuple of type variables rather than single type variable to be added to
-    # this set.
+    # a tuple of type variables rather than a single type variable to be added
+    # to this set.
     hint_typevars: Set[type] = set()
 
     # For each such pseudo-superclass, add all type variables parametrizing
@@ -348,7 +348,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
         # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typevars(hint_base)}]')
         hint_typevars.update(get_hint_pep_typevars(hint_base))
 
-    # Return this set coerced into a tuple.
+    # Return a tuple coerced from this set.
     return tuple(hint_typevars)
 
 # ....................{ REDUCERS                           }....................

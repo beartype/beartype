@@ -66,6 +66,60 @@ def unit_test_is_hint_pep695_subscripted() -> None:
     # yet to be subscripted by a concrete type.
     assert is_hint_pep695_subscripted(colossal_skeleton) is False
 
+# ....................{ TESTS ~ getter                     }....................
+def unit_test_get_hint_pep695_subscripted_typevars() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_subscripted_typevars`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import (
+        get_hint_pep695_subscripted_typevars)
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Unsubscripted type alias.
+    type guiding_its = int | float
+
+    # Subscriptable type alias correctly parametrized by a single type variable.
+    type irresistible_career[T] = complex | T
+
+    # Subscriptable type alias correctly parametrized by multiple type
+    # variables.
+    type in_thy[S, T] = list[S] | dict[S, T]
+
+    # ....................{ PASS                           }....................
+    # Assert this getter passed PEP 695-compliant subscripted type aliases
+    # returns the expected tuple of all type variables parametrizing the
+    # unsubscripted type aliases underlying these subscripted type aliases.
+    #
+    # Note that these type variables are literally scoped (i.e., isolated) to
+    # these aliases and thus accessible *ONLY* be directly accessing the
+    # "__parameters__" dunder attribute on these aliases. It is what it is.
+    assert get_hint_pep695_subscripted_typevars(irresistible_career[int]) == (
+        irresistible_career.__parameters__[0],)
+    assert get_hint_pep695_subscripted_typevars(in_thy[bool, complex]) == (
+        in_thy.__parameters__[0],
+        in_thy.__parameters__[1],
+    )
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when passed an object
+    # that is *NOT* a PEP 695-compliant subscripted type alias.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_subscripted_typevars('In thy devastating omnipotence,')
+
+    # Assert this getter raises the expected exception when passed a PEP
+    # 695-compliant unsubscripted type alias.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_subscripted_typevars(guiding_its)
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_subscripted_typevars(irresistible_career)
+
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''

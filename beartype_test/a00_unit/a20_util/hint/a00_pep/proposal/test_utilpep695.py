@@ -48,6 +48,41 @@ def test_is_hint_pep695_subscripted() -> None:
     assert is_hint_pep695_subscripted(
         'And thou, colossal Skeleton, that, still') is False
 
+
+# ....................{ TESTS ~ getter                     }....................
+def test_get_hint_pep695_subscripted_typevars() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_subscripted_typevars`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.pep695 import (
+        get_hint_pep695_subscripted_typevars)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695...
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+            unit_test_get_hint_pep695_subscripted_typevars)
+
+        # Perform this test.
+        unit_test_get_hint_pep695_subscripted_typevars()
+    # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
+    # 695.
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when passed an object
+    # that is *NOT* a PEP 695-compliant subscripted type alias.
+    with raises(BeartypeDecorHintPep695Exception):
+        get_hint_pep695_subscripted_typevars('In thy devastating omnipotence,')
+
 # ....................{ TESTS ~ iterator                   }....................
 def test_iter_hint_pep695_forwardrefs() -> None:
     '''

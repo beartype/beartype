@@ -40,6 +40,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
     HintSignTypedDict,
     HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep695TypeAliasSubscripted,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -52,14 +53,15 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic)
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     get_hint_pep484585_sign_tuplefixed_or_same)
+from beartype._util.hint.pep.proposal.pep484604 import (
+    die_if_hint_pep604_inconsistent)
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_builtin_subscripted,
     is_hint_pep585_generic,
 )
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.pep484604 import (
-    die_if_hint_pep604_inconsistent)
+from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subscripted
 from beartype._util.py.utilpyversion import (
     # IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_MOST_3_9,
@@ -808,14 +810,21 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #FIXME: Unit test us up, please.
     # If this hint is an unrecognized subscripted builtin type hint (i.e.,
     # C-based type hint instantiated by subscripting a pure-Python origin class
-    # unrecognized by @beartype and thus PEP-noncompliant), return this sign.
-    # Examples include "os.PathLike[...]" and "weakref.weakref[...]" type hints.
-    #
-    # This is a last-ditch fallback preferable to merely returning "None", which
-    # conveys substantially less semantics and would imply this object to be an
-    # isinstanceable class, which subscripted builtin type hints are *NOT*.
+    # unrecognized by @beartype and thus PEP-noncompliant)...
     if is_hint_pep585_builtin_subscripted(hint):
-        #FIXME: Call is_hint_pep695_subscripted() for further disambiguation.
+        # If this hint is a PEP 695-compliant subscripted type alias (i.e.,
+        # object created by subscripting an object created by a statement of the
+        # form "type {alias_name}[{type_var}] = {alias_value}" by one or more
+        # child type hints), return the corresponding sign.
+        if is_hint_pep695_subscripted(hint):
+            return HintSignPep695TypeAliasSubscripted
+        # Else, this hint is *NOT* a PEP 695-compliant subscripted type alias.
+
+        # Return this ambiguous sign. This is a last-ditch fallback preferable
+        # to merely returning "None", which conveys substantially less semantics
+        # and would imply this object to be an isinstanceable class, which
+        # subscripted builtin type hints are *NOT*. Examples include
+        # "os.PathLike[...]" and "weakref.weakref[...]" type hints.
         return HintSignPep585BuiltinSubscriptedUnknown
     # Else, this hint is *NOT* an unrecognized subscripted builtin type hint.
 

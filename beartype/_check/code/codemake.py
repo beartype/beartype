@@ -18,10 +18,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPep593Exception,
+    # BeartypeDecorHintPep695Exception,
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype.typing import Optional
+# from beartype._cave._cavefast import HintPep695Type
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
@@ -104,6 +106,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
+    HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
@@ -149,6 +152,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
     get_hint_pep_sign_or_none,
+    get_hint_pep_origin_or_none,
     get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
@@ -1444,7 +1448,7 @@ def make_check_expr(
                         # non-"None". Nonetheless, assumptions make a donkey.
                         if hint_sign_logic is None:  # pragma: no cover
                             raise BeartypeDecorHintPepException(
-                                f'{EXCEPTION_PREFIX} '
+                                f'{EXCEPTION_PREFIX}'
                                 f'1-argument container type hint '
                                 f'{repr(hint_curr)} '
                                 f'beartype sign {repr(hint_curr_sign)} '
@@ -2141,11 +2145,11 @@ def make_check_expr(
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
                 # Else, this hint is *NOT* a generic.
                 #
-                # ............{ LITERAL                            }............
+                # ............{ PEP 586 ~ typing.Literal           }............
                 # If this hint is a PEP 586-compliant type hint (i.e., the
                 # "typing.Literal" singleton subscripted by one or more literal
                 # objects), this hint is largely useless and thus intentionally
-                # detected last. Why? Because "typing.Literal" is subscriptable
+                # detected late. Why? Because "typing.Literal" is subscriptable
                 # by objects that are instances of only *SIX* possible types,
                 # which is sufficiently limiting as to render this singleton
                 # patently absurd and a farce that we weep to even implement.
@@ -2210,6 +2214,28 @@ def make_check_expr(
                         f'{CODE_PEP586_SUFFIX}'
                     ).format(indent_curr=indent_curr)
                 # Else, this hint is *NOT* a PEP 586-compliant type hint.
+                #
+                # ............{ PEP 695 ~ type alias subscripted   }............
+                # If this hint is a PEP 695-compliant subscripted type alias
+                # (i.e., object created by subscripting an object created by a
+                # statement of the form "type {alias_name}[{type_var}] =
+                # {alias_value}" by one or more child type hints), this hint is
+                # exceedingly rare and thus intentionally detected late. Why?
+                # Because type alias syntax is only permissible under Python >=
+                # 3.12. Older Python versions unilaterally reject this syntax.
+                # Three older Python versions have yet to hit their End of Life
+                # (EOL) and are thus actively maintained (as of this comment).
+                # This constraint renders type aliases unusable for open-source
+                # packages, which tend to preserve backward compatibility with
+                # older Python versions. In this case...
+
+                #FIXME: Unit test us up, please.
+                #FIXME: Implement corresponding "beartype._check.error"
+                #validation, please. *sigh*
+                #FIXME: Implement by calling
+                #get_hint_pep695_subscripted_typevars().
+                # elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
+                #     pass
 
                 # ............{ UNSUPPORTED                        }............
                 # Else, this hint is neither shallowly nor deeply supported and
