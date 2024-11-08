@@ -22,8 +22,8 @@ from beartype.typing import (
 )
 from beartype._data.hint.datahintpep import (
     Hint,
-    HintArgs,
     ListHints,
+    TupleHints,
 )
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
@@ -49,7 +49,7 @@ def get_hint_pep484585_generic_args_full(
     hint_base_target: Optional[Hint] = None,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> HintArgs:
+) -> TupleHints:
     '''
     Tuple of the one or more **full child type hints** (i.e., complete tuple of
     *all* type hints directly subscripting both the passed generic *and*
@@ -156,7 +156,7 @@ def get_hint_pep484585_generic_args_full(
 
     Returns
     -------
-    tuple
+    Tuple[Hint, ...]
         Tuple of the one or more full child type hints transitively subscripting
         this generic.
 

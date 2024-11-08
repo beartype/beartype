@@ -41,6 +41,7 @@ from beartype.typing import (
     Literal,
     Mapping,
     Optional,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -63,40 +64,6 @@ from types import (
     FrameType,
     GeneratorType,
 )
-
-# ....................{ TYPEVARS                           }....................
-S = TypeVar('S')
-'''
-**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
-different types than the :data:`.T` and :data:`.U` type variables.
-'''
-
-
-T = TypeVar('T')
-'''
-**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
-different types than the :data:`.S` and :data:`.U` type variables.
-'''
-
-
-U = TypeVar('U')
-'''
-**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
-different types than the :data:`.S` and :data:`.T` type variables.
-'''
-
-
-CallableT = TypeVar('CallableT', bound=CallableABC)
-'''
-**Callable type variable** (i.e., bound to match *only* callables).
-'''
-
-
-NodeT = TypeVar('NodeT', bound=AST)
-'''
-**Node type variable** (i.e., type variable constrained to match *only* abstract
-syntax tree (AST) nodes).
-'''
 
 # ....................{ AST                                }....................
 NodeCallable = Union[FunctionDef, AsyncFunctionDef]
@@ -176,7 +143,7 @@ PEP-compliant type hint matching any callable in a manner explicitly matching
 all possible callable signatures.
 '''
 
-# ....................{ TYPEVAR ~ early                    }....................
+# ....................{ PEP 484 ~ typevar : early          }....................
 # Type variables required by subsequent type hints below.
 
 BeartypeableT = TypeVar(
@@ -492,7 +459,7 @@ test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
 # ....................{ TUPLE                              }....................
 TupleTypes = Tuple[type, ...]
 '''
-PEP-compliant type hint matching a tuple of zero or more classes.
+:pep:`585`-compliant type hint matching a tuple of zero or more classes.
 
 Equivalently, this hint matches all tuples passable as the second parameters to
 the :func:`isinstance` and :func:`issubclass` builtins.
@@ -669,6 +636,54 @@ Pep484TowerFloat = (
 '''
 :pep:`484`-compliant type hint matching the **implicit floating-point tower**
 (i.e., both floating-point numbers and integers).
+'''
+
+# ....................{ PEP 484 ~ typevar                  }....................
+S = TypeVar('S')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.T` and :data:`.U` type variables.
+'''
+
+
+T = TypeVar('T')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.S` and :data:`.U` type variables.
+'''
+
+
+U = TypeVar('U')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.S` and :data:`.T` type variables.
+'''
+
+
+CallableT = TypeVar('CallableT', bound=CallableABC)
+'''
+**Callable type variable** (i.e., bound to match *only* callables).
+'''
+
+
+NodeT = TypeVar('NodeT', bound=AST)
+'''
+**Node type variable** (i.e., type variable constrained to match *only* abstract
+syntax tree (AST) nodes).
+'''
+
+# ....................{ PEP 484 ~ typevar : container      }....................
+SetTypeVars = Set[TypeVar]
+'''
+:pep:`585`-compliant type hint matching a mutable set of zero or more
+:pep:`484`-compliant **type variables** (i.e., :class:`.TypeVar` objects).
+'''
+
+
+TupleTypeVars = Tuple[TypeVar, ...]
+'''
+:pep:`585`-compliant type hint matching a tuple of zero or more
+:pep:`484`-compliant **type variables** (i.e., :class:`.TypeVar` objects).
 '''
 
 # ....................{ PEP (484|585)                      }....................

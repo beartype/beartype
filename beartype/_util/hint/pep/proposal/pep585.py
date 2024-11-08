@@ -13,14 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype.typing import (
     Any,
-    Set,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.datahinttyping import (
+    SetTypeVars,
+    TupleTypeVars,
+    TypeException,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
-from beartype._data.hint.datahinttyping import TupleTypes
 
 # ....................{ HINTS                              }....................
 HINT_PEP585_TUPLE_EMPTY = (
@@ -289,7 +291,7 @@ def get_hint_pep585_generic_bases_unerased(
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
+def get_hint_pep585_generic_typevars(hint: object) -> TupleTypeVars:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed :pep:`585`-compliant generic listed by the caller
@@ -340,10 +342,10 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypes:
     # efficient set comprehension, as each get_hint_pep_typevars() call returns
     # a tuple of type variables rather than a single type variable to be added
     # to this set.
-    hint_typevars: Set[type] = set()
+    hint_typevars: SetTypeVars = set()
 
-    # For each such pseudo-superclass, add all type variables parametrizing
-    # this pseudo-superclass to this set.
+    # For each such pseudo-superclass, add all type variables parametrizing this
+    # pseudo-superclass to this set.
     for hint_base in hint_bases:
         # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typevars(hint_base)}]')
         hint_typevars.update(get_hint_pep_typevars(hint_base))

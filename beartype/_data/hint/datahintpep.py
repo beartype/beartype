@@ -29,6 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Dict,
     Iterable,
     List,
     Sequence,
@@ -127,36 +128,49 @@ object bound to match *only* PEP-compliant type hints).
 # ....................{ HINTS ~ container                  }....................
 #FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
 #Mypy likes that but pyright hates that. This is why we can't have good things.
-HintArgs = Tuple[Hint, ...]
-'''
-PEP-compliant type hint matching *any* **child type hints** (i.e., tuple of zero
-or more child type hints subscripting a parent type hint).
-'''
-
 
 IterableHints = Iterable[Hint]
 '''
-PEP-compliant type hint matching *any* **type hint iterable** (i.e., iterable
-iteratively yielding zero or more type hints).
+:pep:`585`-compliant type hint matching *any* **type hint iterable** (i.e.,
+iterable iteratively yielding zero or more type hints).
 '''
 
 
 ListHints = List[Hint]
 '''
-PEP-compliant type hint matching *any* **type hint list** (i.e., list of zero or
-more type hints).
+:pep:`585`-compliant type hint matching *any* **type hint list** (i.e., list of
+zero or more type hints).
 '''
 
 
 SequenceHints = Sequence[Hint]
 '''
-PEP-compliant type hint matching *any* **type hint sequence** (i.e., sequence of
-zero or more type hints).
+:pep:`585`-compliant type hint matching *any* **type hint sequence** (i.e.,
+sequence of zero or more type hints).
 '''
 
 
 SetHints = Set[Hint]
 '''
-PEP-compliant type hint matching *any* **type hint set** (i.e., set of zero or
-more type hints).
+:pep:`585`-compliant type hint matching *any* **type hint set** (i.e., set of
+zero or more type hints).
+'''
+
+
+TupleHints = Tuple[Hint, ...]
+'''
+:pep:`585`-compliant type hint matching *any* **child type hints** (i.e., tuple
+of zero or more child type hints subscripting a parent type hint).
+'''
+
+
+TypeVarToHint = Dict[TypeVar, Hint]
+'''
+:pep:`585`-compliant type hint matching a **type variable lookup table** (i.e.,
+dictionary mapping from :pep:`484`-compliant type variables to the arbitrary
+type hints those type variables map to).
+
+Type variable lookup tables are commonly employed throughout the :mod:`beartype`
+codebase to record **type variable substitutions** (i.e., the dynamic
+replacement of type variables by non-type variables in larger type hints).
 '''

@@ -13,6 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import TypeVar
+from beartype._data.hint.datahintpep import (
+    TupleHints,
+    TypeVarToHint,
+)
+from beartype._data.hint.datahinttyping import TupleTypeVars
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ TESTERS                            }....................
@@ -133,6 +138,138 @@ def get_hint_pep484_typevar_bound_or_none(
 
     # Return "None".
     return None
+
+# ....................{ MAPPERS                            }....................
+#FIXME: Unit test us up, please.
+def map_typevars_to_hints(
+    # Mandatory parameters.
+    typevar_to_hint: TypeVarToHint,
+    typevars: TupleTypeVars,
+    hints: TupleHints,
+
+    # Optional parameters.
+    exception_message: str = '',
+) -> None:
+    '''
+    Add one or more key-value pairs to the passed dictionary, mapping each
+    :pep:`484`-compliant **type variable** (i.e., :class:`.TypeVar`) in the
+    passed tuple of type variables to the type hint in the passed tuple of type
+    hints with the same 0-based tuple index as that type variable.
+
+    Caveats
+    -------
+    If a previous call to this function already added one or more of these type
+    variables to this dictionary, this function silently replaces the type hints
+    those type variables previously mapped to with the corresponding type hints
+    of the passed tuple. This intentionally mimics the behaviour of type
+    variables in *most* real-world use cases.
+
+    The sizes of these two tuples is constrained as follows:
+
+    .. code-block:: python
+
+       len(typevars) >= len(hints) > 0
+
+    Informally, at least one type variable and type hint *must* be passed. For
+    each passed type hint, there *must* exist a corresponding type variable to
+    map that type hint to. The converse is *not* the case, as:
+
+    * For the first passed type variable, there also *must* exist a
+      corresponding type hint mapped to that type variable.
+    * For *all* type variables following the first, there need *not* exist a
+      corresponding type hint mapped to that type variable. Type variables with
+      *no* corresponding type hints are simply silently ignored.
+
+    Equivalently:
+
+    * Both of these tuples *must* be **non-empty** (i.e., contain one or more
+      items).
+    * This tuple of type variables *must* contain at least as many items as this
+      tuple of type hints. Therefore:
+
+      * This tuple of type variables *may* contain exactly as many items as this
+        tuple of type hints.
+      * This tuple of type variables *may* contain strictly more items than this
+        tuple of type hints.
+      * This tuple of type variables must *not* contain fewer items than this
+        tuple of type hints.
+
+    Parameters
+    ----------
+    typevar_to_hint : TypeVarToHint
+        **Type variable lookup table** (i.e., dictionary mapping from type
+        variables to the arbitrary type hints those type variables map to).
+    typevars : TupleTypeVars
+        Tuple of one or more type variables.
+    hints : TupleHints
+        Tuple of one or more type hints those type variables map to.
+    exception_message: str, optional
+        Human-readable substring prefixing the exception message in the event of
+        a fatal error. Defaults to the empty string.
+
+    Raises
+    ------
+    BeartypeDecorHintPep484Exception
+        If either:
+
+        * This tuple of type variables is empty.
+        * This tuple of type hints is empty.
+        * This tuple of type hints contains more items than this tuple of type
+          variables.
+    '''
+    assert isinstance(typevar_to_hint, dict), (
+        f'{repr(typevar_to_hint)} not dictionary.')
+    assert isinstance(typevars, tuple), f'{repr(typevars)} not tuple.'
+    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+    assert isinstance(exception_message, str), (
+        f'{repr(exception_message)} not string.')
+
+    # If *NO* type variables were passed, raise an exception.
+    if not typevars:
+        raise BeartypeDecorHintPep484Exception(
+            f'{exception_message}parametrized by no PEP 484 type variables.')
+    # Else, one or more type variables were passed.
+    #
+    # If *NO* type hints were passed, raise an exception.
+    elif not hints:
+        raise BeartypeDecorHintPep484Exception(
+            f'{exception_message}subscripted by no type hints.')
+    # Else, one or more type hints were passed.
+    #
+    # If more type hints than type variables were passed, raise an exception.
+    elif len(hints) > len(typevars):
+        raise BeartypeDecorHintPep484Exception(
+            f'{exception_message}'
+            f'number of subscripted type hints {len(hints)} exceeds '
+            f'number of parametrized type variables {len(typevars)} '
+            f'(i.e., {len(hints)} > {len(typevars)}).'
+        )
+    # Else, either the same number of type hints and type variables were passed
+    # *OR* more type variables than type hints were passed.
+
+    # For type variable and corresponding type hint...
+    #
+    # Note that:
+    # * The C-based zip() builtin has been profiled to be the fastest means of
+    #   iterating pairs in pure-Python, interestingly.
+    # * If more type variables than type hints were passed, zip() silently
+    #   ignores type variables with *NO* corresponding type hints -- exactly as
+    #   required and documented by the above docstring.
+    # * If this type variable has already been mapped to some type hint by
+    #   either this call or a prior call of this function, this mapping is
+    #   silently overwritten by mapping this type variable to a new type hint.
+    for typevar, hint in zip(typevars, hints):
+        # If this type variable is *NOT* actually a type variable, raise an
+        # exception.
+        if not isinstance(typevar, TypeVar):
+            raise BeartypeDecorHintPep484Exception(
+                f'{exception_message}'
+                f'type hint {repr(typevar)} not PEP 484 type variable.'
+            )
+        # Else, this type variable is actually a type variable.
+
+        # Map this type variable to this type hint.
+        typevar_to_hint[typevar] = hint
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove this function *AFTER* deeply type-checking type variables.
