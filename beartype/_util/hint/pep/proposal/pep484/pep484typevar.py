@@ -140,7 +140,6 @@ def get_hint_pep484_typevar_bound_or_none(
     return None
 
 # ....................{ MAPPERS                            }....................
-#FIXME: Unit test us up, please.
 def map_typevars_to_hints(
     # Mandatory parameters.
     typevar_to_hint: TypeVarToHint,
@@ -159,26 +158,33 @@ def map_typevars_to_hints(
     Caveats
     -------
     If a previous call to this function already added one or more of these type
-    variables to this dictionary, this function silently replaces the type hints
-    those type variables previously mapped to with the corresponding type hints
-    of the passed tuple. This intentionally mimics the behaviour of type
-    variables in *most* real-world use cases.
+    variables to this dictionary, this function **silently replaces the type
+    hints those type variables previously mapped to with the corresponding type
+    hints of the passed tuple.** Doing so intentionally mimics the behaviour of
+    type variables in *most* real-world use cases.
 
-    The sizes of these two tuples is constrained as follows:
+    This function does *not* validate these type variables to actually be type
+    variables. Instead, this function defers that validation to the caller. Why?
+    Efficiency, mostly. Avoiding the need to explicitly validate these type
+    variables reduces the underlying mapping operation to a fast one-liner.
+
+    This function *does* validate the sizes of these two tuples, which are are
+    constrained as follows:
 
     .. code-block:: python
 
        len(typevars) >= len(hints) > 0
 
-    Informally, at least one type variable and type hint *must* be passed. For
-    each passed type hint, there *must* exist a corresponding type variable to
-    map that type hint to. The converse is *not* the case, as:
+    Informally, at least one type hint *must* be passed. For each passed type
+    hint, there *must* exist a corresponding type variable to map that type hint
+    to. The converse is *not* the case, as:
 
     * For the first passed type variable, there also *must* exist a
       corresponding type hint mapped to that type variable.
     * For *all* type variables following the first, there need *not* exist a
       corresponding type hint mapped to that type variable. Type variables with
-      *no* corresponding type hints are simply silently ignored.
+      *no* corresponding type hints are simply silently ignored (i.e., preserved
+      as type variables rather than mapped to other type hints).
 
     Equivalently:
 
@@ -247,7 +253,10 @@ def map_typevars_to_hints(
     # Else, either the same number of type hints and type variables were passed
     # *OR* more type variables than type hints were passed.
 
-    # For type variable and corresponding type hint...
+    # Add a key-value pair to the passed dictionary mapping each of these type
+    # variables to the corresponding type hint with an optimally efficient
+    # one-liner. Although alternative approaches exist, this one-liner is
+    # well-known to be the most efficient means of effecting this.
     #
     # Note that:
     # * The C-based zip() builtin has been profiled to be the fastest means of
@@ -258,18 +267,7 @@ def map_typevars_to_hints(
     # * If this type variable has already been mapped to some type hint by
     #   either this call or a prior call of this function, this mapping is
     #   silently overwritten by mapping this type variable to a new type hint.
-    for typevar, hint in zip(typevars, hints):
-        # If this type variable is *NOT* actually a type variable, raise an
-        # exception.
-        if not isinstance(typevar, TypeVar):
-            raise BeartypeDecorHintPep484Exception(
-                f'{exception_message}'
-                f'type hint {repr(typevar)} not PEP 484 type variable.'
-            )
-        # Else, this type variable is actually a type variable.
-
-        # Map this type variable to this type hint.
-        typevar_to_hint[typevar] = hint
+    typevar_to_hint.update(zip(typevars, hints))
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove this function *AFTER* deeply type-checking type variables.
