@@ -140,7 +140,7 @@ def get_hint_pep484_typevar_bound_or_none(
     return None
 
 # ....................{ MAPPERS                            }....................
-def map_typevars_to_hints(
+def map_pep484_typevars_to_hints(
     # Mandatory parameters.
     typevar_to_hint: TypeVarToHint,
     typevars: TupleTypeVars,
@@ -150,10 +150,15 @@ def map_typevars_to_hints(
     exception_message: str = '',
 ) -> None:
     '''
-    Add one or more key-value pairs to the passed dictionary, mapping each
-    :pep:`484`-compliant **type variable** (i.e., :class:`.TypeVar`) in the
-    passed tuple of type variables to the type hint in the passed tuple of type
-    hints with the same 0-based tuple index as that type variable.
+    Add mappings from the passed :pep:`484`-compliant **type variables** (i.e.,
+    :class:`.TypeVar` objects) to the associated passed type hints as new
+    key-value pairs of the passed **type variable lookup table** (i.e.,
+    dictionary mapping from these type variables to these type hints).
+
+    Specifically, this function efficiently adds one or more key-value pairs to
+    this dictionary mapping each type variable in the passed tuple of type
+    variables to the associated type hint in the passed tuple of type hints with
+    the same 0-based tuple index as that type variable.
 
     Caveats
     -------

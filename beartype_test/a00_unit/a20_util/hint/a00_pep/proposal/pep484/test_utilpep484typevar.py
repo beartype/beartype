@@ -74,7 +74,7 @@ def test_map_typevars_to_hints() -> None:
         T,
     )
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        map_typevars_to_hints)
+        map_pep484_typevars_to_hints)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -84,7 +84,7 @@ def test_map_typevars_to_hints() -> None:
     # ....................{ PASS                           }....................
     # Assert that this getter correctly maps a single type variable to a single
     # type hint.
-    map_typevars_to_hints(
+    map_pep484_typevars_to_hints(
         typevar_to_hint=typevar_to_hint,
         typevars=(S,),
         hints=(int,),
@@ -95,7 +95,7 @@ def test_map_typevars_to_hints() -> None:
     # type hints, including to a previously mapped type variable by silently
     # overwriting the type hint previously mapped to that type variable with the
     # corresponding passed hint.
-    map_typevars_to_hints(
+    map_pep484_typevars_to_hints(
         typevar_to_hint=typevar_to_hint,
         typevars=(T, S,),
         hints=(float, complex,),
@@ -106,7 +106,7 @@ def test_map_typevars_to_hints() -> None:
     # Assert this getter raises the expected exception when passed *NO* type
     # variables.
     with raises(BeartypeDecorHintPep484Exception):
-        map_typevars_to_hints(
+        map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(),
             hints=(bool,),
@@ -115,7 +115,7 @@ def test_map_typevars_to_hints() -> None:
     # Assert this getter raises the expected exception when passed *NO* type
     # hints.
     with raises(BeartypeDecorHintPep484Exception):
-        map_typevars_to_hints(
+        map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(S,),
             hints=(),
@@ -124,7 +124,7 @@ def test_map_typevars_to_hints() -> None:
     # Assert this getter raises the expected exception when passed more type
     # hints than type variables.
     with raises(BeartypeDecorHintPep484Exception):
-        map_typevars_to_hints(
+        map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(S, T,),
             hints=(int, bool, complex,),

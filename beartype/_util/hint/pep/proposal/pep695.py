@@ -115,8 +115,10 @@ from beartype._cave._cavefast import (
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._data.hint.datahintpep import TypeVarToHint
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrget import get_name_error_attr_name
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ TESTERS                            }....................
@@ -226,23 +228,26 @@ def is_hint_pep695_unsubscripted_ignorable(hint: HintPep695Type) -> bool:
     return is_hint_ignorable(get_hint_pep695_unsubscripted_alias(hint))
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep695_subscripted_typevars(
+#FIXME: Unit test us up, please.
+@callable_cached
+def get_hint_pep695_subscripted_typevar_to_hint(
     # Mandatory parameters.
     hint: HintPep695Type,
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> object:
+) -> TypeVarToHint:
     '''
-    **Type variables** (i.e., :pep:`484`-compliant :class:`typing.TypeVar`
-    objects) parametrizing the passed :pep:`695`-compliant **subscripted type
-    alias** (i.e., object created by subscripting an object created by a
-    statement of the form ``type {alias_name}[{type_var}] = {alias_value}`` by
-    one or more child type hints).
+    **Type variable lookup table** describing the passed :pep:`695`-compliant
+    **subscripted type alias** (i.e., object created by subscripting an object
+    created by a statement of the form ``type {alias_name}[{type_var}] =
+    {alias_value}`` by one or more child type hints), defined as a dictionary
+    mapping from the :pep:`484`-compliant **type variables** (i.e.,
+    :class:`typing.TypeVar` objects) parametrizing the :pep:`695`-compliant
+    unsubscripted type alias underlying this subscripted type alias to the
+    corresponding type hints subscripting this subscripted type alias.
 
-    This getter is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces to a
-    one-liner.
+    This getter is memoized for efficiency.
 
     Parameters
     ----------
@@ -254,8 +259,8 @@ def get_hint_pep695_subscripted_typevars(
 
     Returns
     -------
-    object
-        Unaliased type hint encapsulated by this type alias.
+    TypeVarToHint
+        Type variable lookup table describing this subscripted type alias.
 
     Raises
     ------
@@ -264,13 +269,15 @@ def get_hint_pep695_subscripted_typevars(
     '''
 
     # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        map_pep484_typevars_to_hints)
     from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
         get_hint_pep_origin_or_none,
         get_hint_pep_typevars,
     )
 
-    # PEP 695-compliant unsubscripted type alias originating this subscripted
-    # type alias.
+    # Unsubscripted type alias originating this subscripted type alias.
     hint_bare = get_hint_pep_origin_or_none(hint)
 
     # If this subscripted type alias does *NOT* originate from an unsubscripted
@@ -283,7 +290,10 @@ def get_hint_pep695_subscripted_typevars(
         )
     # Else, this is actually a subscripted type alias.
 
-    # Tuple of all type variables parametrizing this subscripted type alias.
+    # Tuple of all type hints subscripting this subscripted type alias.
+    hint_args = get_hint_pep_args(hint)
+
+    # Tuple of all type variables parametrizing this unsubscripted type alias.
     #
     # Note that "type" syntax superficially appears to erroneously permit type
     # aliases to be parametrized by non-type variables. In truth, "type" syntax
@@ -295,11 +305,29 @@ def get_hint_pep695_subscripted_typevars(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hint_bare_typevars = get_hint_pep_typevars(hint_bare)
+    hint_typevars = get_hint_pep_typevars(hint_bare)
 
-    # Return this tuple of all type variables parametrizing this subscripted
-    # type alias.
-    return hint_bare_typevars
+    #FIXME: *HMM.* For efficiency, the following three operations could be
+    #condensed into a single call by refactoring map_pep484_typevars_to_hints()
+    #to create and return the desired "FrozenDict" data structure. That said,
+    #the current approach is certainly more flexible. Let's leave this as is for
+    #the moment and see where this API ends up, eh?
+
+    # Type variable lookup table to be returned, initialized to the empty
+    # dictionary.
+    typevar_to_hint: TypeVarToHint = {}
+
+    # Add key-value pairs to this dictionary mapping from each of these type
+    # variables to the associated type hints.
+    map_pep484_typevars_to_hints(
+        typevar_to_hint=typevar_to_hint,
+        typevars=hint_typevars,
+        hints=hint_args,
+    )
+
+    # Return this type variable lookup table, coerced into an immutable frozen
+    # dictionary to ensure that this getter remains safely memoizable.
+    return FrozenDict(typevar_to_hint)
 
 
 #FIXME: Unit test us up, please.

@@ -50,10 +50,10 @@ def test_is_hint_pep695_subscripted() -> None:
 
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep695_subscripted_typevars() -> None:
+def test_get_hint_pep695_subscripted_typevar_to_hint() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_subscripted_typevars`
+    :mod:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_subscripted_typevar_to_hint`
     getter.
     '''
 
@@ -61,7 +61,7 @@ def test_get_hint_pep695_subscripted_typevars() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
     from beartype._util.hint.pep.proposal.pep695 import (
-        get_hint_pep695_subscripted_typevars)
+        get_hint_pep695_subscripted_typevar_to_hint)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from pytest import raises
 
@@ -70,10 +70,10 @@ def test_get_hint_pep695_subscripted_typevars() -> None:
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
-            unit_test_get_hint_pep695_subscripted_typevars)
+            unit_test_get_hint_pep695_subscripted_typevar_to_hint)
 
         # Perform this test.
-        unit_test_get_hint_pep695_subscripted_typevars()
+        unit_test_get_hint_pep695_subscripted_typevar_to_hint()
     # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
     # 695.
 
@@ -81,7 +81,8 @@ def test_get_hint_pep695_subscripted_typevars() -> None:
     # Assert this getter raises the expected exception when passed an object
     # that is *NOT* a PEP 695-compliant subscripted type alias.
     with raises(BeartypeDecorHintPep695Exception):
-        get_hint_pep695_subscripted_typevars('In thy devastating omnipotence,')
+        get_hint_pep695_subscripted_typevar_to_hint(
+            'In thy devastating omnipotence,')
 
 # ....................{ TESTS ~ iterator                   }....................
 def test_iter_hint_pep695_forwardrefs() -> None:
