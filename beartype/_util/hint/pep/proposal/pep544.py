@@ -21,7 +21,7 @@ from beartype.typing import (
     TextIO,
 )
 from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
-from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 

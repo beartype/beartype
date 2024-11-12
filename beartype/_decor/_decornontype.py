@@ -44,7 +44,7 @@ from beartype._util.api.utilbeartype import (
 )
 from beartype._util.api.external.utilclick import beartype_click_command
 from beartype._util.api.standard.utilcontextlib import (
-    is_func_contextlib_contextmanager)
+    get_func_contextlib_contextmanager_or_none)
 from beartype._util.api.standard.utilfunctools import (
     beartype_functools_lru_cache,
     is_func_functools_lru_cache,
@@ -188,7 +188,8 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     elif not is_func_python(obj):
         return _beartype_pseudofunc(obj, **kwargs)  # type: ignore[return-value]
     # Else, this object is a pure-Python function.
-    #
+
+    #FIXME: Revise commentary, please.
     # If this function is a @contextlib.contextmanager-based isomorphic
     # decorator closure (i.e., closure both created and returned by the standard
     # @contextlib.contextmanager decorator where that closure isomorphically
@@ -230,7 +231,9 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     #
     # Note that detecting @contextlib.contextmanager-based isomorphic
     # decorator closures is extremely non-trivial.
-    elif is_func_contextlib_contextmanager(obj):
+    func_contextmanager = get_func_contextlib_contextmanager_or_none(obj)
+    if func_contextmanager is not None:
+        #FIXME: Refactor appropriately, please. *sigh*
         return _beartype_func_contextlib_contextmanager(obj, **kwargs)  # type: ignore[return-value]
     # Else, this function is *NOT* a @contextlib.contextmanager-based isomorphic
     # decorator closure.

@@ -408,7 +408,7 @@ def _init() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignUnpack,
     )
-    from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
+    from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_3_11,
         IS_PYTHON_AT_LEAST_3_9,

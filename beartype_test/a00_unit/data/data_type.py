@@ -13,6 +13,7 @@ cases on behalf of higher-level unit test submodules.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     AsyncGenerator,
+    AsyncIterator,
     Callable,
     Coroutine,
     Generator,
@@ -29,7 +30,10 @@ from collections.abc import (
     ValuesView as ValuesViewABC,
     Sized as SizedABC,
 )
-from contextlib import contextmanager
+from contextlib import (
+    asynccontextmanager,
+    contextmanager,
+)
 from enum import Enum
 from functools import (
     lru_cache,
@@ -92,6 +96,19 @@ Arbitrary pure-Python asynchronous non-generator coroutine.
 
 # Prevent Python from emitting "ResourceWarning" warnings.
 async_coroutine.close()
+
+# ....................{ CALLABLES ~ sync : api : contextlib}....................
+@asynccontextmanager
+async def async_context_manager_factory(obj: object) -> AsyncIterator[object]:
+    '''
+    **Asynchronous context manager factory** (i.e., function creating and
+    returning a new **asynchronous identity context manager** (i.e., context
+    manager trivially yielding the passed object implemented as a generator
+    factory function decorated by the standard
+    :func:`contextlib.asynccontextmanager` decorator)).
+    '''
+
+    yield obj
 
 # ....................{ CALLABLES ~ sync                   }....................
 def function():
@@ -372,7 +389,7 @@ sync_generator = sync_generator_factory()
 Arbitrary pure-Python synchronous generator.
 '''
 
-# ....................{ CALLABLES ~ sync : mod : contextlib}....................
+# ....................{ CALLABLES ~ sync : api : contextlib}....................
 @contextmanager
 def context_manager_factory(obj: object) -> Iterator[object]:
     '''
@@ -384,7 +401,7 @@ def context_manager_factory(obj: object) -> Iterator[object]:
 
     yield obj
 
-# ....................{ CALLABLES ~ sync : mod : functools }....................
+# ....................{ CALLABLES ~ sync : api : functools }....................
 @lru_cache
 def function_lru_cached(n: int) -> int:
     '''
@@ -978,7 +995,7 @@ def _init() -> None:
 
     # Defer initialization-specific imports.
     import builtins, types
-    from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
+    from beartype._data.api.standard.datamodpy import BUILTINS_MODULE_NAME
     from beartype._util.utilobject import get_object_type_unless_type
 
     # Global variables assigned to below.

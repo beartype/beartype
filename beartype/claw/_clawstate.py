@@ -20,7 +20,7 @@ from beartype.claw._package.clawpkgtrie import (
     PackagesTrieWhitelist,
     PackageBasenameToTrieBlacklist,
 )
-from beartype._data.module.datamodthirdparty import (
+from beartype._data.api.external.datamodthirdparty import (
     THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
 from beartype.typing import (
     TYPE_CHECKING,

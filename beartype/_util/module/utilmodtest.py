@@ -15,7 +15,7 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from beartype._cave._cavefast import ModuleType
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.module.datamodthirdparty import (
+from beartype._data.api.external.datamodthirdparty import (
     THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
 from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextidentifier import die_unless_identifier

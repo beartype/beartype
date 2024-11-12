@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
+    Optional,
 )
-from beartype._data.hint.datahintpep import TypeGuard
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
     get_func_codeobj_basename,
@@ -25,21 +25,49 @@ from collections.abc import (
     # Generator,
 )
 
-# ....................{ TESTERS                            }....................
-def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
+# ....................{ GETTERS                            }....................
+#FIXME: Generalize into a new get_func_contextlib_contextmanager_or_none()
+#function behaving as follows:
+#* If the passed callable is decorated by @contextlib.contextmanager, return
+#  the contextlib.contextmanager() decorator function.
+#* If the passed callable is decorated by @contextlib.asynccontextmanager, return
+#  the contextlib.asynccontextmanager() decorator function.
+#* Else, return "None".
+#FIXME: Unit test us up, please.
+def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     '''
-    :data:`True` only if the passed object is a
-    :func:`contextlib.contextmanager`-based **isomorphic decorator closure**
-    (i.e., closure both defined and returned by the standard
-    :func:`contextlib.contextmanager` decorator where that closure
-    isomorphically preserves both the number and types of all passed parameters
-    and returns by accepting only a variadic positional argument and variadic
-    keyword argument).
+    :mod:`contextlib` decorator underlying the passed object if this object is a
+    :mod:`contextlib`-based **isomorphic decorator closure** (i.e., closure both
+    defined and returned by either the standard
+    :func:`contextlib.contextmanager` or :func:`contextlib.asynccontextmanager`
+    decorators where that closure isomorphically preserves both the number and
+    types of all passed parameters and returns by accepting only a variadic
+    positional argument and variadic keyword argument) *or* :data:`None`
+    otherwise (i.e., if this object is *not* such a closure).
 
-    This tester enables callers to detect when a user-defined callable has been
-    decorated by :func:`contextlib.contextmanager` and thus has a mismatch
-    between the type hints annotating that decorated callable and the type of
-    the object created and returned by that decorated callable.
+    Specifically, this getter returns either:
+
+    * If the passed object was produced by a prior call to the
+      :func:`contextlib.contextmanager` decorator, that decorator as a function.
+    * If the passed object was produced by a prior call to the
+      :func:`contextlib.asynccontextmanager` decorator, that decorator as a
+      function.
+    * Else, :data:`None`.
+
+    This getter enables callers to detect when a user-defined callable has been
+    decorated by a :mod:`contextlib` decorator and thus has a mismatch between
+    the type hints annotating that decorated callable and the type of the object
+    created and returned by that decorated callable.
+
+    Caveats
+    -------
+    **This getter only supports Python >= 3.11.** Under Python <= 3.10, this
+    getter erroneously returns **false negatives** (i.e., :data:`False` even
+    when the passed callable is a valid :func:`contextlib.contextmanager`-based
+    isomorphic decorator closure). Why? Because this getter detects these
+    closures by internally testing the ``co_qualname`` instance variable on the
+    code object of the passed callable, which only exists under Python >= 3.11.
+    This is not the fault of :mod:`beartype` and *totally* outside our control.
 
     Parameters
     ----------
@@ -48,13 +76,18 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
 
     Returns
     -------
-    bool
-        :data:`True` only if this object is a
-        :func:`contextlib.contextmanager`-based isomorphic decorator closure.
+    Optional[Callable]
+        Either:
+
+        * If this object is a :func:`contextlib.contextmanager`-based isomorphic
+          decorator closure, :func:`contextlib.contextmanager`.
+        * If this object is a :func:`contextlib.asynccontextmanager`-based
+          isomorphic decorator closure, :func:`contextlib.asynccontextmanager`.
+        * Else, :data:`None`.
 
     See Also
     --------
-    beartype._data.func.datafunc.CONTEXTLIB_CONTEXTMANAGER_CO_NAME_QUALNAME
+    :obj:`beartype._data.func.datafunc.CONTEXTLIB_CONTEXTMANAGER_CO_NAME_QUALNAME`
         Further discussion.
     '''
 
@@ -70,8 +103,8 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
         # The passed callable is *NOT* a closure...
         not is_func_closure(func)
     ):
-        # Then immediately return false.
-        return False
+        # Then immediately return "None".
+        return None
     # Else, that callable is a closure.
 
     # Code object underlying that callable as is (rather than possibly unwrapped
@@ -79,24 +112,31 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
     # "None" otherwise (i.e., if that callable is C-based).
     func_codeobj = get_func_codeobj_or_none(func)
 
-    # If that callable is C-based, immediately return false.
+    # If that callable is C-based, immediately return "None".
     if func_codeobj is None:
-        return False
+        return None
     # Else, that callable is pure-Python.
 
-    # Defer heavyweight tester-specific imports with potential side effects --
+    # Defer heavyweight getter-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
-    from beartype._data.module.datamodcontextlib import (
-        CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME)
+    from beartype._data.api.standard.datamodcontextlib import (
+        CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME_TO_DECORATOR)
 
-    # Fully-qualified name of that code object.
+    # Fully-qualified name of this code object.
     func_codeobj_name = get_func_codeobj_basename(func_codeobj)
 
-    # Return true only if the fully-qualified name of that code object is that
-    # of the isomorphic decorator closure created and returned by the standard
-    # @contextlib.contextmanager decorator.
+    # Either:
+    # * If the fully-qualified name of this code object is that of an isomorphic
+    #   decorator closure created and returned by a standard "contextlib"
+    #   decorator, that decorator.
+    # * Else, "None".
+    contextlib_decorator = (
+        CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME_TO_DECORATOR.get(
+            func_codeobj_name))
+
+    # Return this decorator.
     #
     # Note that we *COULD* technically also explicitly test whether that
-    # callable satisfies the is_func_wrapper_isomorphic() tester, but that
-    # there's no benefit and a minor efficiency cost  to doing so.
-    return func_codeobj_name == CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME
+    # callable satisfies the is_func_wrapper_isomorphic() getter -- but that
+    # there's no benefit and a minor efficiency cost to doing so.
+    return contextlib_decorator  # type: ignore[return-value]

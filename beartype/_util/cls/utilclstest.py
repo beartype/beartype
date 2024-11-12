@@ -18,7 +18,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )
-from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
+from beartype._data.api.standard.datamodpy import BUILTINS_MODULE_NAME
 
 # ....................{ RAISERS                            }....................
 def die_unless_type(

@@ -27,7 +27,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
-from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
+from beartype._data.api.standard.datamodpy import BUILTINS_MODULE_NAME
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.module.utilmodtest import is_module
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
