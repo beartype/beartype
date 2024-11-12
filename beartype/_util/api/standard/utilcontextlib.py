@@ -79,10 +79,10 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
     Optional[Callable]
         Either:
 
-        * If this object is a :func:`contextlib.contextmanager`-based isomorphic
-          decorator closure, :func:`contextlib.contextmanager`.
         * If this object is a :func:`contextlib.asynccontextmanager`-based
           isomorphic decorator closure, :func:`contextlib.asynccontextmanager`.
+        * If this object is a :func:`contextlib.contextmanager`-based isomorphic
+          decorator closure, :func:`contextlib.contextmanager`.
         * Else, :data:`None`.
 
     See Also
