@@ -153,13 +153,13 @@ jobs:
             python-version: "3.11"
           - tox-env: py312-coverage
             python-version: "3.12"
-          #- tox-env: pypy37-coverage
-          #  python-version: "pypy-3.7"
-          #- tox-env: pypy38-coverage
-          #  python-version: "pypy-3.8"
-          #FIXME: Uncomment after PyPy 3.9 goes live.
-          # - tox-env: pypy39-coverage
-          #   python-version: "pypy-3.9"
+          - tox-env: py313-coverage
+            python-version: "3.13"
+          # - tox-env: py314-coverage
+          #   python-version: "3.14"
+          #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
+          # - tox-env: pypy310-coverage
+          #   python-version: "pypy-3.10"
 
     # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.

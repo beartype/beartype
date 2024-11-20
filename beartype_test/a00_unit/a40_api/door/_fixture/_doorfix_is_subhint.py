@@ -49,10 +49,14 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # Defer fixture-specific imports.
     import collections.abc
     import typing
+    from abc import ABCMeta
     from beartype._data.hint.datahinttyping import (
         S,
         T,
     )
+    from beartype._util.cls.utilclstest import is_type_subclass_proper
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         T_sequence,
         T_int_or_str,
@@ -65,8 +69,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericIntInt,
         Pep484585SequenceT,
     )
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from collections.abc import (
         Collection as CollectionABC,
         Sequence as SequenceABC,
@@ -390,18 +392,26 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ LISTS ~ typing                     }..................
     # List of the unqualified basenames of all standard ABCs published by
-    # the standard "collections.abc" module, defined as...
-    COLLECTIONS_ABC_BASENAMES = [
-        # For the unqualified basename of each attribute defined by the standard
-        # "collections.abc" module...
-        COLLECTIONS_ABC_BASENAME
-        for COLLECTIONS_ABC_BASENAME in dir(collections.abc)
-        # If this basename is *NOT* prefixed by an underscore, this attribute is
-        # public and thus an actual ABC. In this case, include this ABC.
-        if not COLLECTIONS_ABC_BASENAME.startswith('_')
-        # Else, this is an unrelated private attribute. In this case, silently
-        # ignore this attribute and continue to the next.
-    ]
+    # the standard "collections.abc" module, initialized to the empty list.
+    COLLECTIONS_ABC_BASENAMES = []
+
+    # For the unqualified basename of each attribute and that attribute defined
+    # by the standard "collections.abc" submodule...
+    for collections_abc_basename, collections_abc in (
+        collections.abc.__dict__.items()):
+        # If this attribute is a public ABC, include this ABC, where public ABCs
+        # are detected as...
+        if (
+            # The unqualified basename of this attribute is not prefixed by an
+            # underscore (and is thus public) *AND*...
+            not collections_abc_basename.startswith('_') and
+            # This attribute is an ABC but *NOT* the semantically meaningless
+            # "abc.ABCMeta" superclass itself.
+            is_type_subclass_proper(collections_abc, ABCMeta)
+        ):
+            COLLECTIONS_ABC_BASENAMES.append(collections_abc_basename)
+        # Else, this is an unrelated attribute. In this case, silently ignore
+        # this attribute and continue to the next.
 
     # List of the unqualified basenames of all standard abstract base classes
     # (ABCs) supported by the standard "typing" module, defined as the
@@ -415,6 +425,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # supported by the standard "typing" module.
         ['Deque']
     )
+    print(f'TYPING_ABC_BASENAMES: {TYPING_ABC_BASENAMES}')
 
     # ..................{ HINTS ~ abcs                       }..................
     # For the unqualified basename of each standard ABCs supported by the
@@ -428,40 +439,41 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # Type hint factory published by the "typing" module corresponding to
         # this ABC if any *OR* "None" otherwise (i.e., if "typing" publishes
         # *NO* such type hint factory).
-        TypingABC = getattr(typing, TYPING_ABC_BASENAME, None)
+        typing_abc = getattr(typing, TYPING_ABC_BASENAME, None)
 
         # If "typing" publishes *NO* such type hint factory, silently ignore
         # this ABC and continue to the next.
-        if TypingABC is None:
+        if typing_abc is None:
             continue
         # Else, "typing" publishes this type hint factory.
 
         # Number of type variables parametrizing this ABC, defined as either...
-        TYPING_ABC_TYPEVARS_LEN = (
+        typing_abc_typevars_len = (
             # If the active Python interpreter targets Python >= 3.9, a private
             # instance variable of this type hint factory yielding this
             # metadata. Under Python >= 3.9, unsubscripted type hint factories
             # are *NOT* parametrized by type variables.
-            TypingABC._nparams
+            typing_abc._nparams
+            # getattr(typing_abc, '_nparams', 0)
             if IS_PYTHON_AT_LEAST_3_9 else
             # Else, the active Python interpreter targets Python < 3.9. In this
             # case, the number of type variables directly parametrizing this
             # ABC.
-            len(get_hint_pep_typevars(TypingABC))
+            len(get_hint_pep_typevars(typing_abc))
         )
 
         # If this ABC is parametrized by one or more type variables, exercise
         # that this ABC subscripted by one or more arbitrary concrete types is a
         # non-trivial subhint of this same ABC subscripted by one or more
         # arbitrary different ABCs of those concrete types.
-        if TYPING_ABC_TYPEVARS_LEN:
-            subhint =   TypingABC[(list,)     * TYPING_ABC_TYPEVARS_LEN]
-            superhint = TypingABC[(Sequence,) * TYPING_ABC_TYPEVARS_LEN]
+        if typing_abc_typevars_len:
+            subhint =   typing_abc[(list,)     * typing_abc_typevars_len]
+            superhint = typing_abc[(Sequence,) * typing_abc_typevars_len]
         # Else, this ABC is parametrized by *NO* type variables. In this case,
         # fallback to exercising that this ABC is a trivial subhint of itself.
         else:
-            subhint =   TypingABC
-            superhint = TypingABC
+            subhint =   typing_abc
+            superhint = typing_abc
 
         # Append a new hint subhint case exercising that this subhint is
         # actually a subhint of this superhint.

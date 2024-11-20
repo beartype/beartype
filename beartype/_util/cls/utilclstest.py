@@ -285,7 +285,7 @@ def is_type_subclass(
     lower-level** :func:`issubclass` **builtin,** which raises an undescriptive
     exception when the first passed parameter is *not* a class: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> issubclass(object(), type)
        TypeError: issubclass() arg 1 must be a class
@@ -327,10 +327,10 @@ def is_type_subclass(
 def is_type_subclass_proper(
     cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''
-    ``True`` only if the passed object is a proper subclass of the passed
+    :data:`True` only if the passed object is a proper subclass of the passed
     superclass(es).
 
-    Specifically, this tester returns ``True`` only if either:
+    Specifically, this tester returns :data:`True` only if either:
 
     * If ``base_classes`` is a single superclass, the passed class is a subclass
       of that superclass (but *not* that superclass itself).
@@ -352,7 +352,7 @@ def is_type_subclass_proper(
     Returns
     -------
     bool
-        ``True`` only if this object is a proper subclass of these
+        :data:`True` only if this object is a proper subclass of these
         superclass(es).
     '''
     assert isinstance(base_classes, TestableTypesTuple), (

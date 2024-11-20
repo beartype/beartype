@@ -472,8 +472,8 @@ def make_check_expr(
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
     func_root_code = hints_meta.enqueue_hint_child(
         hint=hint_root,
-        pith_expr=VAR_NAME_PITH_ROOT,
         indent_level=indent_level_curr,
+        pith_expr=VAR_NAME_PITH_ROOT,
     )
 
     # Python code snippet to be returned, seeded with a placeholder to be
@@ -697,7 +697,7 @@ def make_check_expr(
                     hint_curr_expr,
                     hint_refs_type_basename,
                 ) = express_func_scope_type_ref(
-                    forwardref=hint_curr,
+                    forwardref=hint_curr,  # type: ignore[arg-type]
                     forwardrefs_class_basename=hint_refs_type_basename,
                     func_scope=func_wrapper_scope,
                     exception_prefix=EXCEPTION_PREFIX,
@@ -1206,6 +1206,7 @@ def make_check_expr(
                             # Expression yielding the value of this pith.
                             hint_child_placeholder=hints_meta.enqueue_hint_child(
                                 hint=hint_child,
+                                indent_level=indent_level_child,
                                 pith_expr=(
                                     # If either...
                                     #
@@ -1242,8 +1243,7 @@ def make_check_expr(
                                     # constraint here.
                                     pith_curr_assign_expr
                                 ),
-                                indent_level=indent_level_child,
-                            )
+                            ),
                         )
 
                     # If this code is *NOT* its initial value, this union is
@@ -1360,13 +1360,13 @@ def make_check_expr(
                             hint_curr_expr=hint_curr_expr,
                             hint_child_placeholder=hints_meta.enqueue_hint_child(
                                 hint=hint_child,
+                                indent_level=indent_level_child,
                                 # Python expression efficiently yielding some
                                 # item of this pith to be deeply type-checked
                                 # against this child hint.
                                 pith_expr=hint_sign_logic.pith_child_expr_format(
                                     pith_curr_var_name=pith_curr_var_name),
-                                indent_level=indent_level_child,
-                            )
+                            ),
                         )
                     # Else, this child hint is ignorable. In this case, fallback
                     # to trivial code shallowly type-checking this pith as an
@@ -1447,18 +1447,20 @@ def make_check_expr(
                             # type-check this child pith.
                             if hint_child is not None:
                                 func_curr_code += CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
-                                    hint_child_placeholder=hints_meta.enqueue_hint_child(
-                                        hint=hint_child,
-                                        # Python expression yielding the value
-                                        # of the currently indexed item of this
-                                        # tuple to be type-checked against this
-                                        # child hint.
-                                        pith_expr=CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                            pith_curr_var_name=pith_curr_var_name,
-                                            pith_child_index=hint_child_index,
+                                    hint_child_placeholder=(
+                                        hints_meta.enqueue_hint_child(
+                                            hint=hint_child,
+                                            indent_level=indent_level_child,
+                                            # Python expression yielding the value
+                                            # of the currently indexed item of this
+                                            # tuple to be type-checked against this
+                                            # child hint.
+                                            pith_expr=CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                                pith_curr_var_name=pith_curr_var_name,
+                                                pith_child_index=hint_child_index,
+                                            ),
                                         )
-                                        indent_level=indent_level_child,
-                                    )
+                                    ),
                                 )
                             # Else, this child hint is ignorable.
 
@@ -1601,8 +1603,8 @@ def make_check_expr(
                                 hint_key_placeholder = (
                                     hints_meta.enqueue_hint_child(
                                         hint=hint_child_key,
-                                        pith_expr=pith_curr_key_var_name,
                                         indent_level=indent_level_child,
+                                        pith_expr=pith_curr_key_var_name,
                                     ))
 
                                 # Placeholder string to be subsequently replaced
@@ -1611,11 +1613,11 @@ def make_check_expr(
                                 hint_value_placeholder = (
                                     hints_meta.enqueue_hint_child(
                                         hint=hint_child_value,
+                                        indent_level=indent_level_child,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=pith_curr_var_name,
                                             pith_curr_key_var_name=pith_curr_key_var_name,
                                         ),
-                                        indent_level=indent_level_child,
                                     ))
 
                                 # Code deeply type-checking these child key and
@@ -1642,13 +1644,15 @@ def make_check_expr(
                                         # Placeholder string to be subsequently
                                         # replaced by code type-checking this
                                         # child key pith against this hint.
-                                        hint_key_placeholder=hints_meta.enqueue_hint_child(
-                                            hint=hint_child_key,
-                                            pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
-                                                pith_curr_var_name=(
-                                                    pith_curr_var_name)),
-                                            indent_level=indent_level_child,
-                                        )
+                                        hint_key_placeholder=(
+                                            hints_meta.enqueue_hint_child(
+                                                hint=hint_child_key,
+                                                indent_level=indent_level_child,
+                                                pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
+                                                    pith_curr_var_name=(
+                                                        pith_curr_var_name)),
+                                            )
+                                        ),
                                     )
                                 )
                         # Else, this child key hint is ignorable. By process
@@ -1663,13 +1667,15 @@ def make_check_expr(
                                     # Placeholder string to be subsequently
                                     # replaced by code type-checking this
                                     # child value pith against this hint.
-                                    hint_value_placeholder=hints_meta.enqueue_hint_child(
-                                        hint=hint_child_value,
-                                        pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
-                                            pith_curr_var_name=(
-                                                pith_curr_var_name)),
-                                        indent_level=indent_level_child,
-                                    )
+                                    hint_value_placeholder=(
+                                        hints_meta.enqueue_hint_child(
+                                            hint=hint_child_value,
+                                            indent_level=indent_level_child,
+                                            pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
+                                                pith_curr_var_name=(
+                                                    pith_curr_var_name)),
+                                        )
+                                    ),
                                 )
                             )
 
@@ -1762,9 +1768,9 @@ def make_check_expr(
                             # Ergo, we need *NOT* explicitly validate that here.
                             hint_child_placeholder=hints_meta.enqueue_hint_child(
                                 hint=hint_child,
-                                pith_expr=pith_curr_assign_expr,
                                 indent_level=indent_level_child,
-                            )
+                                pith_expr=pith_curr_assign_expr,
+                            ),
                         )
                     # Else, this metahint is ignorable.
 
@@ -2014,12 +2020,12 @@ def make_check_expr(
                         func_curr_code += CODE_PEP484585_GENERIC_CHILD_format(
                             hint_child_placeholder=hints_meta.enqueue_hint_child(
                                 hint=hint_child,
+                                indent_level=indent_level_child,
                                 # Python expression efficiently reusing the
                                 # value of this pith previously assigned to a
                                 # local variable by the prior expression.
                                 pith_expr=pith_curr_var_name,
-                                indent_level=indent_level_child,
-                            )
+                            ),
                         )
 
                     # Munge this code to...

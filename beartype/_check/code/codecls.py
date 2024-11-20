@@ -37,6 +37,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
 )
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
@@ -55,7 +56,7 @@ class HintMeta(object):
 
     Attributes
     ----------
-    hint : object
+    hint : Hint
         Type hint currently visited by this BFS.
     hint_placeholder : str
         **Type-checking placeholder substring** to be globally replaced in the
@@ -125,6 +126,14 @@ class HintMeta(object):
                    pith_name=$%PITH_ROOT_NAME/~,
                    pith_value=__beartype_pith_root,
                )
+    indent_level : int
+        **Indentation level** (i.e., 1-based positive integer providing the
+        level of indentation appropriate for the currently visited type hint).
+        Indexing the
+        :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
+        dictionary singleton by this integer efficiently yields the current
+        **indendation string** suitable for prefixing each line of code
+        type-checking the current pith against the current type hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value
         of) the current **pith** (i.e., possibly nested object of the passed
@@ -147,14 +156,6 @@ class HintMeta(object):
         low-level scalar rather than as an inefficient high-level
         :class:`itertools.Counter` object. Since both are equally thread-safe in
         the internal context of a function body, the former is preferable.
-    indent_level : int
-        **Indentation level** (i.e., 1-based positive integer providing the
-        level of indentation appropriate for the currently visited type hint).
-        Indexing the
-        :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
-        dictionary singleton by this integer efficiently yields the current
-        **indendation string** suitable for prefixing each line of code
-        type-checking the current pith against the current type hint.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -165,24 +166,24 @@ class HintMeta(object):
     __slots__ = (
         'hint',
         'hint_placeholder',
+        'indent_level',
         'pith_expr',
         'pith_var_name_index',
-        'indent_level',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        hint: object
+        hint: Hint
         hint_placeholder: str
+        indent_level: int
         pith_expr: str
         pith_var_name_index: int
-        indent_level: int
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, pith_var_name_index: int) -> None:
         '''
-        Initialize this type-checking metadata dataclass.
+        Initialize this type-checking metadata.
 
         Parameters
         ----------
@@ -206,9 +207,43 @@ class HintMeta(object):
         )
 
         # Nullify all remaining parameters for safety.
-        self.hint = SENTINEL
-        self.pith_expr = SENTINEL  # type: ignore[assignment]
+        self.hint = SENTINEL  # type: ignore[assignment]
         self.indent_level = SENTINEL  # type: ignore[assignment]
+        self.pith_expr = SENTINEL  # type: ignore[assignment]
+
+
+    def reinit(
+        self,
+        hint: Hint,
+        indent_level: int,
+        pith_expr: str,
+    ) -> None:
+        '''
+        Reinitialize this type-checking metadata with the passed metadata.
+
+        Parameters
+        ----------
+        hint : Hint
+            Currently iterated child type hint subscripting the currently
+            visited type hint.
+        indent_level : int
+            1-based indentation level describing the current level of
+            indentation appropriate for the currently iterated child hint.
+        pith_expr : str
+            Python code snippet evaluating to the child pith to be type-checked
+            against the currently iterated child type hint.
+        '''
+        assert isinstance(indent_level, int), (
+            f'{repr(indent_level)} not integer.')
+        assert isinstance(pith_expr, str), (
+            f'{repr(pith_expr)} not string.')
+        assert indent_level > 1, f'{repr(indent_level)} <= 1.'
+        assert pith_expr, f'{repr(pith_expr)} empty.'
+
+        # Classify all passed parameters.
+        self.hint = hint
+        self.indent_level = indent_level
+        self.pith_expr = pith_expr
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -314,7 +349,7 @@ class HintsMeta(FixedList):
         assert 0 <= index <= len(self), f'{index} not in [0, {len(self)}].'
 
         # Type hint type-checking metadata at this index.
-        hint_meta = FixedList.__getitem__(index)  # type: ignore[call-overload]
+        hint_meta = super().__getitem__(index)  # type: ignore[call-overload]
 
         # If this metadata has yet to be instantiated...
         if hint_meta is None:
@@ -327,29 +362,18 @@ class HintsMeta(FixedList):
         return hint_meta
 
     # ..................{ METHODS                            }..................
-    def enqueue_hint_child(
-        self,
-        hint: object,
-        pith_expr: str,
-        indent_level: int,
-    ) -> str:
+    def enqueue_hint_child(self, *args, **kwargs) -> str:
         '''
-        **Enqueue** (i.e., append) a new tuple of metadata describing the
-        currently iterated child type hint to the end of the this queue,
-        enabling this hint to be visited by the ongoing breadth-first search
-        (BFS) traversing over this queue.
+        **Enqueue** (i.e., append) to the end of the this queue new
+        **type-checking metadata** (i.e., a :class:`.HintMeta` object)
+        describing the currently iterated child type hint with the passed
+        metadata, enabling this hint to be visited by the ongoing breadth-first
+        search (BFS) traversing over this queue.
 
         Parameters
         ----------
-        hint : object
-            Currently iterated child type hint subscripting the currently
-            visited type hint.
-        pith_expr : str
-            Python code snippet evaluating to the child pith to be type-checked
-            against the currently iterated child type hint.
-        indent_level : int
-            1-based indentation level describing the current level of
-            indentation appropriate for the currently iterated child hint.
+        All parameters are passed as is to the lower-level
+        :meth:`HintMeta.reinit` method.
 
         Returns
         -------
@@ -357,12 +381,6 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
-        assert isinstance(pith_expr, str), (
-            f'{repr(pith_expr)} not string.')
-        assert isinstance(indent_level, int), (
-            f'{repr(indent_level)} not integer.')
-        assert pith_expr, f'{repr(pith_expr)} empty.'
-        assert indent_level > 1, f'{repr(indent_level)} <= 1.'
 
         # Increment the 0-based index of metadata describing the last visitable
         # hint in this list (which also serves as the unique identifier of the
@@ -378,9 +396,7 @@ class HintsMeta(FixedList):
         hint_meta = self.__getitem__(self.index_last)
 
         # Replace prior fields of this metadata with the passed fields.
-        hint_meta.hint = hint
-        hint_meta.pith_expr = pith_expr
-        hint_meta.indent_level = indent_level
+        hint_meta.reinit(*args, **kwargs)
 
         # Return the placeholder substring associated with this type hint.
         return hint_meta.hint_placeholder
