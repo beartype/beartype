@@ -17,14 +17,17 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 #FIXME: This refactoring has yet another profound benefit. What? We can
-#precompute the values of "pith_curr_var_name" at "HintMeta" instantiation time.
-#Since that string *NEVER* changes, just assign each ""pith_curr_var_name"
+#precompute the values of "pith_curr_var_name" at "HintsMeta" instantiation
+#time. Since that string *NEVER* changes, just assign each ""pith_curr_var_name"
 #according to its index. Indeed, this suggests we probably no longer need
 #either:
 #* "pith_curr_var_name_index".
 #* The entire "codesnipcls" submodule.
 #
 #Well, isn't this turning out to be a significant facepalm.
+#FIXME: Note, however, that we occasionally externally need the
+#"pith_curr_var_name" *BEFORE* "HintsMeta" instantiation time. Welp. Guess that
+#pretty much scuttles that one, huh? Oh, well. It's fine as is, we suppose.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
@@ -89,8 +92,8 @@ class HintMeta(object):
         For example, the
         :func:`beartype._check.code.codemake.make_check_expr` factory might
         generate intermediary code resembling the following on visiting the
-        :obj:`typing.Union` parent type hint of a subscripted ``Union[int,
-        str]`` type hint *before* visiting either the :class:`int` or
+        :obj:`typing.Union` parent type hint of a subscripted type hint
+        ``Union[int, str]`` *before* visiting either the :class:`int` or
         :class:`str` child type hints of that parent type hint:
 
         .. code-block:: python
@@ -133,7 +136,7 @@ class HintMeta(object):
         the parent type hint of the currently visited type hint.
     pith_var_name_index : int
         **Pith variable name index** (i.e., 0-based integer suffixing the name
-        of each local variable assigned the value of the current pith in a
+        of each local variable assigned the value of the current pith in an
         assignment expression, thus uniquifying this variable in the body of the
         current wrapper function). Indexing the
         :obj:`beartype._check.code.snip.codesnipcls.PITH_INDEX_TO_VAR_NAME`
@@ -146,8 +149,8 @@ class HintMeta(object):
         the internal context of a function body, the former is preferable.
     indent_level : int
         **Indentation level** (i.e., 1-based positive integer providing the
-        current level of indentation appropriate for the currently visited type
-        hint). Indexing the
+        level of indentation appropriate for the currently visited type hint).
+        Indexing the
         :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
         dictionary singleton by this integer efficiently yields the current
         **indendation string** suitable for prefixing each line of code
@@ -267,7 +270,7 @@ class HintsMeta(FixedList):
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, index: int) -> HintMeta:  # type: ignore[override]
         '''
-        **Type hint type-checking metadata** (i.e., :class:`HintMeta` object)
+        **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object)
         describing the type hint visited at the passed index by the
         breadth-first search (BFS) in the
         :func:`beartype._check.code.codemake.make_check_expr` factory.
