@@ -17,24 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.datahinttyping import CallableStrFormat
 
-# ....................{ HINT ~ placeholder : child         }....................
-CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
-'''
-Prefix of each **placeholder hint child type-checking substring** (i.e.,
-placeholder to be globally replaced by a Python code snippet type-checking the
-current pith expression against the currently iterated child hint of the
-currently visited parent hint).
-'''
-
-
-CODE_HINT_CHILD_PLACEHOLDER_SUFFIX = ')!'
-'''
-Suffix of each **placeholder hint child type-checking substring** (i.e.,
-placeholder to be globally replaced by a Python code snippet type-checking the
-current pith expression against the currently iterated child hint of the
-currently visited parent hint).
-'''
-
 # ....................{ HINT ~ placeholder : forwardref    }....................
 CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX = '${FORWARDREF:'
 '''
