@@ -153,7 +153,7 @@ def map_pep484_typevars_to_hints(
     Add mappings from the passed :pep:`484`-compliant **type variables** (i.e.,
     :class:`.TypeVar` objects) to the associated passed type hints as new
     key-value pairs of the passed **type variable lookup table** (i.e.,
-    dictionary mapping from these type variables to these type hints).
+    immutable dictionary mapping from these type variables to these type hints).
 
     Specifically, this function efficiently adds one or more key-value pairs to
     this dictionary mapping each type variable in the passed tuple of type

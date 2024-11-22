@@ -27,7 +27,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    * Refactor the express_func_scope_type_ref() function to:
 #      * If the passed forward reference is relative, additionally return that
 #        stack in the returned 3-tuple
-#        "(forwardref_expr, forwardrefs_class_basename, forwardref_parent_hints)",
+#        "(forwardref_expr, refs_type_basename, forwardref_parent_hints)",
 #        where "forwardref_parent_hints" is that stack.
 #* *PART II.* In the second part:
 #  * Refactor the beartype._decor.wrap.wrapmain._unmemoize_func_wrapper_code()
@@ -526,7 +526,7 @@ def express_func_scope_type_ref(
     # Mandatory parameters.
     func_scope: LexicalScope,
     forwardref: Pep484585ForwardRef,
-    forwardrefs_class_basename: Optional[set],
+    refs_type_basename: Optional[set],
 
     # Optional parameters.
     exception_prefix: str = 'Globally or locally scoped forward reference ',
@@ -546,7 +546,7 @@ def express_func_scope_type_ref(
         Local or global scope to add this forward reference to.
     forwardref : Pep484585ForwardRef
         Forward reference to be expressed relative to this scope.
-    forwardrefs_class_basename : Optional[set]
+    refs_type_basename : Optional[set]
         Set of all existing **relative forward references** (i.e., unqualified
         basenames of all types referred to by all relative forward references
         relative to this scope) if any *or* :data:`None` otherwise (i.e., if no
@@ -558,18 +558,18 @@ def express_func_scope_type_ref(
     Returns
     -------
     Tuple[str, Optional[set]]
-        2-tuple ``(forwardref_expr, forwardrefs_class_basename)``, where:
+        2-tuple ``(forwardref_expr, refs_type_basename)``, where:
 
         * ``forwardref_expr`` is the Python expression evaluating to this
           forward reference when accessed via the beartypistry singleton added
           to this scope.
-        * ``forwardrefs_class_basename`` is either:
+        * ``refs_type_basename`` is either:
 
           * If this forward reference is a fully-qualified classname, the
-            passed ``forwardrefs_class_basename`` set as is.
+            passed ``refs_type_basename`` set as is.
           * If this forward reference is an unqualified classname, either:
 
-            * If the passed ``forwardrefs_class_basename`` set is *not*
+            * If the passed ``refs_type_basename`` set is *not*
               :data:`None`, this set with this classname added to it.
             * Else, a new set containing only this classname.
 
@@ -605,17 +605,17 @@ def express_func_scope_type_ref(
         )
     # Else, this classname is unqualified. In this case...
     else:
-        assert isinstance(forwardrefs_class_basename, NoneTypeOr[set]), (
-            f'{repr(forwardrefs_class_basename)} neither set nor "None".')
+        assert isinstance(refs_type_basename, NoneTypeOr[set]), (
+            f'{repr(refs_type_basename)} neither set nor "None".')
 
         # If this set of unqualified classnames referred to by all relative
         # forward references has yet to be instantiated, do so.
-        if forwardrefs_class_basename is None:
-            forwardrefs_class_basename = set()
+        if refs_type_basename is None:
+            refs_type_basename = set()
         # In any case, this set now exists.
 
         # Add this unqualified classname to this set.
-        forwardrefs_class_basename.add(ref_name)
+        refs_type_basename.add(ref_name)
 
         # Placeholder substring to be replaced by the caller with a Python
         # expression evaluating to this unqualified classname canonicalized
@@ -628,7 +628,7 @@ def express_func_scope_type_ref(
         )
 
     # Return a 2-tuple of this expression and set of unqualified classnames.
-    return ref_expr, forwardrefs_class_basename
+    return ref_expr, refs_type_basename
 
 # ....................{ PRIVATE ~ globals                  }....................
 _tuple_union_to_tuple_union: Dict[TupleTypes, TupleTypes] = {}

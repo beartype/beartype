@@ -107,6 +107,7 @@ from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype.typing import (
     Iterable,
     Optional,
+    Tuple,
 )
 from beartype._cave._cavefast import (
     # HintGenericSubscriptedType,
@@ -115,7 +116,10 @@ from beartype._cave._cavefast import (
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
-from beartype._data.hint.datahintpep import TypeVarToHint
+from beartype._data.hint.datahintpep import (
+    # Hint,
+    TypeVarToHint,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -236,13 +240,13 @@ def get_hint_pep695_subscripted_typevar_to_hint(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> TypeVarToHint:
+) -> Tuple[HintPep695Type, TypeVarToHint]:
     '''
     **Type variable lookup table** describing the passed :pep:`695`-compliant
     **subscripted type alias** (i.e., object created by subscripting an object
     created by a statement of the form ``type {alias_name}[{type_var}] =
-    {alias_value}`` by one or more child type hints), defined as a dictionary
-    mapping from the :pep:`484`-compliant **type variables** (i.e.,
+    {alias_value}`` by one or more child type hints), defined as an immutable
+    dictionary mapping from the :pep:`484`-compliant **type variables** (i.e.,
     :class:`typing.TypeVar` objects) parametrizing the :pep:`695`-compliant
     unsubscripted type alias underlying this subscripted type alias to the
     corresponding type hints subscripting this subscripted type alias.
@@ -259,8 +263,14 @@ def get_hint_pep695_subscripted_typevar_to_hint(
 
     Returns
     -------
-    TypeVarToHint
-        Type variable lookup table describing this subscripted type alias.
+    Tuple[HintPep695Type, TypeVarToHint]
+        2-tuple ``(hint_bare, typevar_to_hint)`` where:
+
+        * ``hint_bare`` is the :pep:`695`-compliant unsubscripted type alias
+          originating this subscripted type alias (e.g., ``muh_type_alias`` when
+          passed the subscripted type alias ``muh_type_alias[str]``).
+        * ``typevar_to_hint`` is the type variable lookup table describing this
+          subscripted type alias.
 
     Raises
     ------
@@ -325,9 +335,12 @@ def get_hint_pep695_subscripted_typevar_to_hint(
         hints=hint_args,
     )
 
-    # Return this type variable lookup table, coerced into an immutable frozen
-    # dictionary to ensure that this getter remains safely memoizable.
-    return FrozenDict(typevar_to_hint)
+    # This type variable lookup table, coerced into an immutable frozen
+    # dictionary to ensure that this getter remains safely memoizable
+    typevar_to_hint = FrozenDict(typevar_to_hint)
+
+    # Return this unsubscripted type alias and this type variable lookup table.
+    return (hint_bare, typevar_to_hint)
 
 
 #FIXME: Unit test us up, please.

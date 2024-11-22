@@ -111,7 +111,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
-    # HintSignPep695TypeAliasSubscripted,
+    HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
@@ -152,7 +152,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
     get_hint_pep_sign_or_none,
-    get_hint_pep_origin_or_none,
+    # get_hint_pep_origin_or_none,
     get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
@@ -160,7 +160,10 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.kind.map.utilmapfrozen import EMPTY_FROZEN_DICT
 from beartype._util.kind.map.utilmapset import update_mapping
+from beartype._util.hint.pep.proposal.pep695 import (
+    get_hint_pep695_subscripted_typevar_to_hint)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits
@@ -280,25 +283,6 @@ def make_check_expr(
     # associated with the currently visited type hint if any.
     hint_curr_expr: str = None  # type: ignore[assignment]
 
-    # Full Python expression evaluating to the value of the current pith (i.e.,
-    # possibly nested object of the passed parameter or return value to be
-    # type-checked against the currently visited hint).
-    #
-    # Note that this is intentionally *NOT* an assignment expression but rather
-    # the original inefficient expression provided by the parent type hint of
-    # the currently visited hint.
-    pith_curr_expr = None
-
-    # Name of the current pith variable (i.e., local Python variable in the
-    # body of the wrapper function whose value is that of the current pith).
-    # This name is either:
-    # * Initially, the name of the currently type-checked parameter or return.
-    # * On subsequently type-checking nested items of the parameter or return,
-    #   the name of the local variable uniquely assigned to by the assignment
-    #   expression defined by "pith_curr_assign_expr" (i.e., the left-hand side
-    #   (LHS) of that assignment expression).
-    pith_curr_var_name = VAR_NAME_PITH_ROOT
-
     # ..................{ LOCALS ~ hint : child              }..................
     # Currently iterated PEP-compliant child hint subscripting the currently
     # visited hint.
@@ -356,11 +340,6 @@ def make_check_expr(
     # 0-based index of metadata describing the currently visited hint in this
     # fixed list.
     hints_meta_index_curr = 0
-
-    # ..................{ LOCALS ~ func : code               }..................
-    # Python code snippet type-checking the current pith against the currently
-    # visited hint (to be appended to the "func_wrapper_code" string).
-    func_curr_code: str = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ func : code : locals      }..................
     # Local scope (i.e., dictionary mapping from the name to value of each
@@ -441,6 +420,25 @@ def make_check_expr(
     #   the currently visited hint has *NO* meaningful child hints and is thus
     #   effectively a leaf node with respect to performing this optimization.
 
+    # Full Python expression evaluating to the value of the current pith (i.e.,
+    # possibly nested object of the passed parameter or return value to be
+    # type-checked against the currently visited hint).
+    #
+    # Note that this is intentionally *NOT* an assignment expression but rather
+    # the original inefficient expression provided by the parent type hint of
+    # the currently visited hint.
+    pith_curr_expr = None
+
+    # Name of the current pith variable (i.e., local Python variable in the
+    # body of the wrapper function whose value is that of the current pith).
+    # This name is either:
+    # * Initially, the name of the currently type-checked parameter or return.
+    # * On subsequently type-checking nested items of the parameter or return,
+    #   the name of the local variable uniquely assigned to by the assignment
+    #   expression defined by "pith_curr_assign_expr" (i.e., the left-hand side
+    #   (LHS) of that assignment expression).
+    pith_curr_var_name = VAR_NAME_PITH_ROOT
+
     # Integer suffixing the name of each local variable assigned the value of
     # the current pith in a assignment expression, thus uniquifying this
     # variable in the body of the current wrapper function.
@@ -455,9 +453,10 @@ def make_check_expr(
     # local variable assigned the value of this expression.
     pith_curr_assign_expr: str = None  # type: ignore[assignment]
 
-    # ..................{ LOCALS ~ closure                   }..................
-    # Local variables calling one or more closures declared above and thus
-    # deferred until after declaring those closures.
+    # ..................{ LOCALS ~ func : code               }..................
+    # Python code snippet type-checking the current pith against the currently
+    # visited hint (to be appended to the "func_wrapper_code" string).
+    func_curr_code: str = None  # type: ignore[assignment]
 
     # Python code snippet type-checking the root pith against the root hint:
     # * Localized separately from the "func_wrapper_code" snippet to enable this
@@ -471,6 +470,7 @@ def make_check_expr(
         indent_level=indent_level_curr,
         pith_expr=VAR_NAME_PITH_ROOT,
         pith_var_name_index=pith_curr_var_name_index,
+        typevar_to_hint=EMPTY_FROZEN_DICT,
     )
 
     # Python code snippet to be returned, seeded with a placeholder to be
@@ -635,14 +635,22 @@ def make_check_expr(
             # recurse and thus "bottoms out" at this hint) *BEFORE* deep
             # type-checking logic. The latter needs additional setup (e.g.,
             # generation of assignment expressions) *NOT* needed by the former,
-            # whose requirements are more understandably minimalist. Note that:
+            # whose requirements are more understandably minimalist.
+            #
+            # Note that:
             # * Shallow type-checking code should access this pith via
             #   "pith_curr_expr". Since this code does *NOT* recurse,
-            #   "pith_curr_expr" accesses this pith optimally efficiently
+            #   "pith_curr_expr" accesses this pith optimally efficiently.
             # * Deep type-checking code should access this pith via
             #   "pith_assign_expr". Since that code *DOES* recurse, only
             #   "pith_assign_expr" accesses this pith optimally efficiently;
             #   "pith_curr_expr" accesses this pith extremely inefficiently.
+            # * Ignorable type-checking code (i.e., code ignoring this hint but
+            #   otherwise unsuitable for implementation as a reducer called by
+            #   the "beartype._check.convert.convreduce" submodule, typically
+            #   due to useful side effects intentionally interacting with this
+            #   BFS) should follow the design pattern established by the
+            #   "HintSignPep695TypeAliasSubscripted" branch below.
             #
             # ..............{ ORIGIN                             }..............
             # If this hint both...
@@ -696,7 +704,7 @@ def make_check_expr(
                     hint_refs_type_basename,
                 ) = express_func_scope_type_ref(
                     forwardref=hint_curr,  # type: ignore[arg-type]
-                    forwardrefs_class_basename=hint_refs_type_basename,
+                    refs_type_basename=hint_refs_type_basename,
                     func_scope=func_wrapper_scope,
                     exception_prefix=EXCEPTION_PREFIX,
                 )
@@ -847,6 +855,14 @@ def make_check_expr(
                 #  * Do... something? Oh, boy. Why didn't we finish this comment?
 
                 # If the expression yielding the current pith is neither...
+                #
+                # Note that we explicitly test against piths rather than
+                # seemingly equivalent metadata to account for edge cases.
+                # Notably, child hints of unions (and possibly other "typing"
+                # objects) do *NOT* narrow the current pith and are *NOT* the
+                # root hint. Ergo, a seemingly equivalent test like
+                # "hints_meta_index_curr != 0" would generate false positives
+                # and thus unnecessarily inefficient code.
                 if not (
                     # The root pith *NOR*...
                     #
@@ -863,7 +879,7 @@ def make_check_expr(
                     # this implies this expression to already be an assignment
                     # expression, needlessly reassigning the local variable to
                     # which this assignment expression was previously assigned
-                    # to yet another redundant local variable only harms
+                    # as yet another redundant local variable only harms
                     # efficiency for *NO* tangible gain (e.g., expanding the
                     # efficient assignment expression "__beartype_pith_1 :=
                     # next(iter(__beartype_pith_0))" to the inefficient
@@ -875,21 +891,15 @@ def make_check_expr(
                     #    hints_meta.enqueue_hint_child(
                     #        ..., pith_expr=pith_curr_assign_expr, ...)
                     #
-                    # As of this writing, the only such edge case is a PEP 484-
-                    # or 604-compliant union containing *ONLY* two or more
-                    # PEP-compliant type hints (e.g., "list[str] | set[bytes]").
+                    # As of this writing, the only such edge cases are:
+                    # * PEP 484- or 604-compliant unions containing *ONLY* two
+                    #   or more PEP-compliant type hints (e.g., "list[str] |
+                    #   set[bytes]").
+                    # * PEP 695-compliant subscripted type aliases.
                     ':=' in pith_curr_expr
                 ):
-                    # Then the current pith is safely assignable to a unique
+                    # Then the current pith is ideally assigned to a unique
                     # local variable via an assignment expression.
-                    #
-                    # Note that we explicitly test against piths rather than
-                    # seemingly equivalent metadata to account for edge cases.
-                    # Notably, child hints of unions (and possibly other
-                    # "typing" objects) do *NOT* narrow the current pith and are
-                    # *NOT* the root hint. Ergo, a seemingly equivalent test
-                    # like "hints_meta_index_curr != 0" would generate false
-                    # positives and thus unnecessarily inefficient code.
                     # print(f'Incrementing hint {hint_curr} pith expression {pith_curr_expr}...')
                     # print(f'...index {pith_curr_var_name_index} by one.')
 
@@ -1104,16 +1114,17 @@ def make_check_expr(
                     hint_childs_nonpep.clear()
                     hint_childs_pep.clear()
 
-                    # For each subscripted argument of this union...
+                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
+                    # For each child hint subscripting this union...
                     for hint_child in hint_childs:
                         #FIXME: Uncomment as desired for debugging. This test is
                         #currently a bit too costly to warrant uncommenting.
-                        # Assert that this child hint is *NOT* shallowly ignorable.
-                        # Why? Because any union containing one or more shallowly
-                        # ignorable child hints is deeply ignorable and should thus
-                        # have already been ignored after a call to the
-                        # is_hint_ignorable() tester passed this union on handling
-                        # the parent hint of this union.
+                        # Assert that this child hint is *NOT* shallowly
+                        # ignorable. Why? Because any union containing one or
+                        # more shallowly ignorable child hints is deeply
+                        # ignorable and should thus have already been ignored
+                        # after a call to the is_hint_ignorable() tester passed
+                        # this union on handling the parent hint of this union.
                         # assert (
                         #     repr(hint_curr) not in HINTS_REPR_IGNORABLE_SHALLOW), (
                         #     f'{hint_curr_exception_prefix} {repr(hint_curr)} child '
@@ -1201,6 +1212,7 @@ def make_check_expr(
                                 ),
                             ))
 
+                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
                     # For the 0-based index and each child hint of this union...
                     for hint_child_index, hint_child in enumerate(
                         hint_childs_pep):
@@ -1247,6 +1259,7 @@ def make_check_expr(
                                     pith_curr_assign_expr
                                 ),
                                 pith_var_name_index=pith_curr_var_name_index,
+                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             ),
                         )
 
@@ -1371,6 +1384,7 @@ def make_check_expr(
                                 pith_expr=hint_sign_logic.pith_child_expr_format(
                                     pith_curr_var_name=pith_curr_var_name),
                                 pith_var_name_index=pith_curr_var_name_index,
+                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             ),
                         )
                     # Else, this child hint is ignorable. In this case, fallback
@@ -1433,6 +1447,7 @@ def make_check_expr(
                                 hint_childs_len=hint_childs_len,
                             ))
 
+                        #FIXME: Optimize by refactoring into a "while" loop.
                         # For each possibly ignorable insane child hint of this
                         # parent tuple...
                         for hint_child_index, hint_child in enumerate(
@@ -1466,6 +1481,8 @@ def make_check_expr(
                                             ),
                                             pith_var_name_index=(
                                                 pith_curr_var_name_index),
+                                            typevar_to_hint=(
+                                                hint_curr_meta.typevar_to_hint),
                                         )
                                     ),
                                 )
@@ -1490,7 +1507,8 @@ def make_check_expr(
                 # If this hint is a standard mapping (e.g., "dict[str, int]")...
                 elif hint_curr_sign in HINT_SIGNS_MAPPING:
                     # Python expression evaluating to the origin type of this
-                    # mapping hint.
+                    # mapping hint as a hidden beartype-specific parameter
+                    # injected into the signature of this wrapper function.
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
@@ -1511,6 +1529,7 @@ def make_check_expr(
                         #    ]
                         #However, the current approach is even *MORE* trivial
                         #than that reduction. So, we currently prefer this.
+
                         # If this hint describes a "collections.Counter"
                         # dictionary subclass:
                         # * The "typing.Counter[...]" type hint factory is
@@ -1614,6 +1633,8 @@ def make_check_expr(
                                         pith_expr=pith_curr_key_var_name,
                                         pith_var_name_index=(
                                             pith_curr_var_name_index),
+                                        typevar_to_hint=(
+                                            hint_curr_meta.typevar_to_hint),
                                     ))
 
                                 # Placeholder string to be subsequently replaced
@@ -1629,6 +1650,8 @@ def make_check_expr(
                                         ),
                                         pith_var_name_index=(
                                             pith_curr_var_name_index),
+                                        typevar_to_hint=(
+                                            hint_curr_meta.typevar_to_hint),
                                     ))
 
                                 # Code deeply type-checking these child key and
@@ -1664,6 +1687,8 @@ def make_check_expr(
                                                         pith_curr_var_name)),
                                                 pith_var_name_index=(
                                                     pith_curr_var_name_index),
+                                                typevar_to_hint=(
+                                                    hint_curr_meta.typevar_to_hint),
                                             )
                                         ),
                                     )
@@ -1689,6 +1714,8 @@ def make_check_expr(
                                                     pith_curr_var_name)),
                                             pith_var_name_index=(
                                                 pith_curr_var_name_index),
+                                            typevar_to_hint=(
+                                                hint_curr_meta.typevar_to_hint),
                                         )
                                     ),
                                 )
@@ -1786,10 +1813,12 @@ def make_check_expr(
                                 indent_level=indent_level_child,
                                 pith_expr=pith_curr_assign_expr,
                                 pith_var_name_index=pith_curr_var_name_index,
+                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             ),
                         )
                     # Else, this metahint is ignorable.
 
+                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
                     # For the 0-based index and each beartype validator
                     # annotating this metahint...
                     for hint_child_index, hint_child in enumerate(hints_child):
@@ -1902,7 +1931,7 @@ def make_check_expr(
                                 hint_refs_type_basename,
                             ) = express_func_scope_type_ref(
                                 forwardref=hint_child,  # type: ignore[arg-type]
-                                forwardrefs_class_basename=(
+                                refs_type_basename=(
                                     hint_refs_type_basename),
                                 func_scope=func_wrapper_scope,
                                 exception_prefix=EXCEPTION_PREFIX,
@@ -2021,15 +2050,16 @@ def make_check_expr(
                     # generic to the substring prefixing all such code.
                     func_curr_code = CODE_PEP484585_GENERIC_PREFIX
 
+                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
                     # For each unignorable unerased transitive pseudo-superclass
                     # originally declared as a superclass of this generic...
-                    for hint_child in (
-                        iter_hint_pep484585_generic_bases_unerased(
-                            hint=hint_curr,  # pyright: ignore
-                            conf=conf,
-                            exception_prefix=EXCEPTION_PREFIX,
-                    )):
-                        # print(f'Visiting generic type hint {repr(hint_curr)} unerased base {repr(hint_child)}...')
+                    for hint_child in iter_hint_pep484585_generic_bases_unerased(
+                        hint=hint_curr,  # pyright: ignore
+                        conf=conf,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    ):
+                        # print(f'Visiting generic type hint {repr(hint_curr)}...')
+                        # print(f'...unerased base {repr(hint_child)}...')
 
                         # Generate and append code type-checking this pith
                         # against this superclass.
@@ -2042,6 +2072,7 @@ def make_check_expr(
                                 # local variable by the prior expression.
                                 pith_expr=pith_curr_var_name,
                                 pith_var_name_index=pith_curr_var_name_index,
+                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             ),
                         )
 
@@ -2101,6 +2132,9 @@ def make_check_expr(
                         # Python expression evaluating to a tuple of the unique
                         # types of all literal objects subscripting this hint.
                         hint_child_types_expr=add_func_scope_types(
+                            #FIXME: Optimize by refactoring into a "while"
+                            #loop. Also, this should probably be a "frozenset"
+                            #rather than "set". *sigh*
                             # Set comprehension of all unique literal objects
                             # subscripting this hint, implicitly discarding all
                             # duplicate such objects.
@@ -2114,6 +2148,7 @@ def make_check_expr(
                         ),
                     )
 
+                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
                     # For each literal object subscripting this hint...
                     for hint_child in hint_childs:
                         # Generate and append efficient code type-checking
@@ -2156,10 +2191,43 @@ def make_check_expr(
                 #FIXME: Unit test us up, please.
                 #FIXME: Implement corresponding "beartype._check.error"
                 #validation, please. *sigh*
-                #FIXME: Implement by calling
-                #get_hint_pep695_subscripted_typevars().
-                # elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
-                #     pass
+                elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
+                    # Reduce this subscripted type alias to:
+                    # * The semantically useful unsubscripted type alias
+                    #   originating this semantically useless subscripted type
+                    #   alias.
+                    # * The type variable lookup table mapping all type
+                    #   variables parametrizing this alias to all non-type
+                    #   variable hints subscripting this alias.
+                    hint_child, typevar_to_hint_child = (
+                        get_hint_pep695_subscripted_typevar_to_hint(
+                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX))  # pyright: ignore
+
+                    # Full type variable lookup table uniting...
+                    typevar_to_hint_curr = (
+                        # The type variable lookup table describing all
+                        # transitive parent hints of this alias *AND*...
+                        hint_curr_meta.typevar_to_hint |  # type: ignore[operator]
+                        # The type variable lookup table describing this alias.
+                        typevar_to_hint_child
+                    )
+
+                    # Silently ignore this semantically useless subscripted type
+                    # alias in favour of this semantically useful unsubscripted
+                    # type alias by trivially replacing *ALL* hint metadata
+                    # describing the former with the latter.
+                    hint_curr_meta.reinit(
+                        hint=hint_child,  # pyright: ignore
+                        indent_level=indent_level_child,
+                        pith_expr=pith_curr_assign_expr,
+                        pith_var_name_index=pith_curr_var_name_index,
+                        typevar_to_hint=typevar_to_hint_curr,
+                    )
+
+                    # Revisit this hint metadata in the outermost "while" loop.
+                    # Doing so avoids the "CLEANUP" logic below, which assumes
+                    # this hint to be unignorable and thus type-checkable.
+                    continue
 
                 # ............{ UNSUPPORTED                        }............
                 # Else, this hint is neither shallowly nor deeply supported and

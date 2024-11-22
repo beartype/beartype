@@ -279,7 +279,7 @@ def test_express_func_scope_type_ref() -> None:
     # Set of the unqualified classnames referred to by all relative forward
     # references relative to this scope if any *OR* "None" otherwise (i.e., if
     # no such references have been expressed relative to this scope yet).
-    forwardrefs_class_basename = None
+    refs_type_basename = None
 
     # Fully-qualified classname of a non-existing class.
     CLASSNAME_QUALIFIED = 'Thy.giant.brood.of.pines.around.thee.clinging'
@@ -309,15 +309,15 @@ def test_express_func_scope_type_ref() -> None:
     # For each absolute forward reference...
     for forwardref_qualified in FORWARDREFS_QUALIFIED:
         # Express a fully-qualified forward reference to a non-existing class.
-        forwardref_expr, forwardrefs_class_basename = (
+        forwardref_expr, refs_type_basename = (
             express_func_scope_type_ref(
                 forwardref=forwardref_qualified,
-                forwardrefs_class_basename=forwardrefs_class_basename,
+                refs_type_basename=refs_type_basename,
                 func_scope=func_scope,
             ))
 
         # Assert this set remains empty.
-        assert forwardrefs_class_basename is None
+        assert refs_type_basename is None
 
         # Forward reference proxy added to this scope by the above call.
         forwardref = func_scope[forwardref_expr]
@@ -329,19 +329,19 @@ def test_express_func_scope_type_ref() -> None:
         forwardref_expr_again, forwardrefs_class_basename_again = (
             express_func_scope_type_ref(
                 forwardref=forwardref_qualified,
-                forwardrefs_class_basename=forwardrefs_class_basename,
+                refs_type_basename=refs_type_basename,
                 func_scope=func_scope,
             ))
         assert forwardref_expr_again == forwardref_expr
-        assert forwardrefs_class_basename_again is forwardrefs_class_basename
+        assert forwardrefs_class_basename_again is refs_type_basename
 
     # For each relative forward reference...
     for forwardref_unqualified in FORWARDREFS_UNQUALIFIED:
         # Express an unqualified forward reference to a non-existing class.
-        forwardref_expr, forwardrefs_class_basename = (
+        forwardref_expr, refs_type_basename = (
             express_func_scope_type_ref(
                 forwardref=forwardref_unqualified,
-                forwardrefs_class_basename=forwardrefs_class_basename,
+                refs_type_basename=refs_type_basename,
                 func_scope=func_scope,
             ))
 
@@ -349,13 +349,13 @@ def test_express_func_scope_type_ref() -> None:
         assert CLASSNAME_UNQUALIFIED in forwardref_expr
 
         # Assert this set now contains only this classname.
-        assert forwardrefs_class_basename == {CLASSNAME_UNQUALIFIED,}
+        assert refs_type_basename == {CLASSNAME_UNQUALIFIED,}
 
         # Assert this function rexpresses the same forward reference.
         forwardref_expr_again, forwardrefs_class_basename_again = (
             express_func_scope_type_ref(
                 forwardref=forwardref_unqualified,
-                forwardrefs_class_basename=forwardrefs_class_basename,
+                refs_type_basename=refs_type_basename,
                 func_scope=func_scope,
             ))
         assert forwardref_expr_again == forwardref_expr
@@ -367,6 +367,6 @@ def test_express_func_scope_type_ref() -> None:
     with raises(BeartypeDecorHintForwardRefException):
         express_func_scope_type_ref(
             forwardref=b'The chainless winds still come and ever came',
-            forwardrefs_class_basename=forwardrefs_class_basename,
+            refs_type_basename=refs_type_basename,
             func_scope=func_scope,
         )

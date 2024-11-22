@@ -102,13 +102,18 @@ def unit_test_get_hint_pep695_subscripted_typevar_to_hint() -> None:
     # these aliases and thus accessible *ONLY* be directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     assert get_hint_pep695_subscripted_typevar_to_hint(
-        irresistible_career[int]) == FrozenDict({
-        irresistible_career.__parameters__[0]: int,})
+        irresistible_career[int]) == (
+            irresistible_career,
+            FrozenDict({irresistible_career.__parameters__[0]: int,}),
+        )
     assert get_hint_pep695_subscripted_typevar_to_hint(
-        in_thy[bool, complex]) == FrozenDict({
-        in_thy.__parameters__[0]: bool,
-        in_thy.__parameters__[1]: complex,
-    })
+        in_thy[bool, complex]) == (
+            in_thy,
+            FrozenDict({
+                in_thy.__parameters__[0]: bool,
+                in_thy.__parameters__[1]: complex,
+            }),
+        )
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed an object

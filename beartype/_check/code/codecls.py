@@ -22,11 +22,15 @@ from beartype.typing import (
 )
 from beartype._check.code.snip.codesnipcls import (
     HINT_INDEX_TO_HINT_PLACEHOLDER)
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeVarToHint,
+)
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
 )
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import SENTINEL
 
 # ....................{ DATACLASSES                        }....................
@@ -82,6 +86,40 @@ class HintMeta(object):
         low-level scalar rather than as an inefficient high-level
         :class:`itertools.Counter` object. Since both are equally thread-safe in
         the internal context of a function body, the former is preferable.
+    typevar_to_hint : TypeVarToHint
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        each :pep:`484`-compliant **type variable** (i.e.,
+        :class:`typing.TypeVar` object) parametrizing either the currently
+        visited type hint *or* a transitive parent type hint of this hint to the
+        corresponding non-type variable type hint subscripting that hint). This
+        table enables runtime type-checkers to efficiently reduce a proper
+        subset of type variables to non-type variables at
+        :func:`beartype.beartype` decoration time, including:
+
+        * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
+          example, this table enables runtime type-checkers to reduce the
+          semantically useless pseudo-superclass ``list[T]`` to the
+          semantically useful pseudo-superclass ``list[int]`` at decoration time
+          in the following example:
+
+          .. code-block:: python
+
+             class MuhGeneric[T](list[T]): pass
+
+             @beartype
+             def muh_func(muh_arg: MuhGeneric[int]) -> None: pass
+
+        * :pep:`695`-compliant **subscripted type aliases.** For example, this
+          table enables runtime type-checkers to reduce the semantically useless
+          type hint ``muh_type_alias[float]`` to the semantically useful type
+          hint ``float | int`` at decoration time in the following example:
+
+          .. code-block:: python
+
+             type muh_type_alias[T] = T | int
+
+             @beartype
+             def muh_func(muh_arg: muh_type_alias[float]) -> None: pass
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -95,6 +133,7 @@ class HintMeta(object):
         'indent_level',
         'pith_expr',
         'pith_var_name_index',
+        'typevar_to_hint',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -105,6 +144,7 @@ class HintMeta(object):
         indent_level: int
         pith_expr: str
         pith_var_name_index: int
+        typevar_to_hint: TypeVarToHint
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint_index: int) -> None:
@@ -129,6 +169,7 @@ class HintMeta(object):
         self.indent_level = SENTINEL  # type: ignore[assignment]
         self.pith_expr = SENTINEL  # type: ignore[assignment]
         self.pith_var_name_index = SENTINEL  # type: ignore[assignment]
+        self.typevar_to_hint = SENTINEL  # type: ignore[assignment]
 
 
     def reinit(
@@ -137,6 +178,7 @@ class HintMeta(object):
         indent_level: int,
         pith_expr: str,
         pith_var_name_index: int,
+        typevar_to_hint: TypeVarToHint,
     ) -> None:
         '''
         Reinitialize this type-checking metadata.
@@ -155,6 +197,7 @@ class HintMeta(object):
         pith_var_name_index : int
             0-based integer suffixing the name of each local variable assigned
             the value of the current pith in an assignment expression.
+        typevar_to_hint : TypeVarToHint
         '''
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
@@ -162,6 +205,8 @@ class HintMeta(object):
             f'{repr(pith_expr)} not string.')
         assert isinstance(pith_var_name_index, int), (
             f'{repr(pith_var_name_index)} not integer.')
+        assert isinstance(typevar_to_hint, FrozenDict), (
+            f'{repr(typevar_to_hint)} not frozen dictionary.')
         assert indent_level > 1, f'{repr(indent_level)} <= 1.'
         assert pith_expr, f'{repr(pith_expr)} empty.'
         assert pith_var_name_index >= 0, f'{repr(pith_var_name_index)} < 0.'
@@ -171,6 +216,7 @@ class HintMeta(object):
         self.indent_level = indent_level
         self.pith_expr = pith_expr
         self.pith_var_name_index = pith_var_name_index
+        self.typevar_to_hint = typevar_to_hint
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.

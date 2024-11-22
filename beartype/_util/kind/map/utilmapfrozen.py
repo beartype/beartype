@@ -21,7 +21,6 @@ from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
 
 # ....................{ CLASSES                            }....................
-#FIXME: Unit test us up, please.
 class FrozenDict(dict):
     '''
     **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`
@@ -220,3 +219,10 @@ class FrozenDict(dict):
             f'not updatable from positional arguments {repr(args)} '
             f'and keyword arguments {repr(kwargs)}.'
         )
+
+# ....................{ CONSTANTS                          }....................
+EMPTY_FROZEN_DICT = FrozenDict()
+'''
+**Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
+key-value pairs).
+'''

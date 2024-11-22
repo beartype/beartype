@@ -114,6 +114,7 @@ jobs:
           - py310-coverage
           - py311-coverage
           - py312-coverage
+          - py313-coverage
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
           #recently broken by work generalizing @beartype to decorate builtin
