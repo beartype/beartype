@@ -15,9 +15,23 @@ third-party LangChain package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to,
+    skip_unless_package,
+)
 
 # ....................{ TESTS                              }....................
+#FIXME: Remove the "skip_if_python_version_greater_than_or_equal_to('3.13.0')"
+#line *AFTER* both LangChain and Pydantic officially support Python >= 3.13.0.
+#Currently, both packages emit a "DeprecationWarning" due to violating
+#"typing.ForwardRef" privacy encapsulation. Are you kidding me, Pydantic? *sigh*
+#    DeprecationWarning: Failing to pass a value to the 'type_params' parameter
+#    of 'typing.ForwardRef._evaluate' is deprecated, as it leads to incorrect
+#    behaviour when calling typing.ForwardRef._evaluate on a stringified
+#    annotation that references a PEP 695 type parameter. It will be disallowed
+#    in Python 3.15.
+
+@skip_if_python_version_greater_than_or_equal_to('3.13.0')
 @skip_unless_package('langchain')
 def test_langchain_baseretriever() -> None:
     '''

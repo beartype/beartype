@@ -17,11 +17,19 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
-def is_forwardref(obj: object) -> bool:
+def is_beartype_forwardref(obj: object) -> bool:
     '''
-    :data:`True` only if the passed object is a **forward reference subclass**
-    (i.e., class whose metaclass is class:`.BeartypeForwardRefMeta`).
+    :data:`True` only if the passed object is a **forward reference proxy**
+    (i.e., :mod:`beartype`-specific class whose metaclass is
+    class:`.BeartypeForwardRefMeta`).
+
+    Caveats
+    -------
+    **This high-level tester should always be called in lieu of lower-level
+    operations,** especially attempts to detect forward reference proxies by
+    calling either the :func:`isinstance` or :func:`issubclass` builtins. Since
+    forward reference proxies proxy calls to those builtins, forward reference
+    proxies *cannot* be detected by calling either of those builtins.
 
     Parameters
     ----------

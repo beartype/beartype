@@ -12,13 +12,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
-from beartype.typing import TypeVar
+from beartype.typing import (
+    Optional,
+    TypeVar,
+)
 from beartype._data.hint.datahintpep import (
+    Hint,
     TupleHints,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TupleTypeVars
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.pep.utilpep3119 import (
+    is_object_issubclassable)
+from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -34,6 +41,72 @@ def is_hint_pep484_typevar(hint: object) -> bool:
     return isinstance(hint, TypeVar)
 
 # ....................{ GETTERS                            }....................
+#FIXME: *UHM.* We probably shouldn't be treating type variable constraints and
+#upper bounds as semantically equivalent. They're really not at all. We suspect
+#our younger self was simply confused by the frankly unreadable PEP
+#documentation surrounding this subject. In a readable nutshell:
+#* Type variable bounds are arbitrary type hints. An object satisfies a type
+#  variable bound if and only if that object is an instance of that bound (i.e.,
+#  the type hint of that object is a subhint of that bound). Subclasses are thus
+#  permitted. Standard code generation thus suffices here.
+#* Type variable constraints are a tuple of one or more... what exactly? Types?
+#  Type hints? If merely types, constraints are trivial to support. If arbitrary
+#  type hints, however, constraints are definitely non-trivial to support. We
+#  suspect that, as with bounds, constraints may be arbitrary type hints. *sigh*
+#
+#  In either case, the distinction is clear: an object satisfies a type variable
+#  constraint if and only if that object is *EXACTLY* matched by one of those
+#  constraint (i.e., the type hint of that object is exactly one of those
+#  constraints). Subclasses are thus prohibited. This is non-trivial to support,
+#  as the only means of performing exact type hint matching is probably to:
+#  * Call "beartype.door.infer_hint(obj)" to infer the type hint for an object.
+#  * Iteratively test whether that hint is one of these constraints.
+#
+#  That's pretty awful, though. We really shouldn't be calling infer_hint() on
+#  arbitrary objects at type-checking time.
+#
+#  An alternative presents itself. It's extremely non-trivial, but something we
+#  probably need to do anyway to support contravariant, covariant, and invariant
+#  type variables. If you consider the formal definitions of bounds and
+#  constraints, it's clear that:
+#  * Bounds are type-checked *COVARIANTLY.* This is what almost everyone wants.
+#    It's also how isinstance() and issubclass() work. So, it's how runtime
+#    type-checkers behave out-of-the-box. Easy.
+#  * Constraints are type-checked *INVARIANTLY.*
+#
+#  First, consider how our code generation algorithm currently type-checks
+#  types: it assumes covariance everywhere by calling isinstance() and
+#  issubclass() to perform type-checks. But what if we instead augmented our
+#  make_check_expr() factory to internally track what the current kind of
+#  type-checking variance is? Notably, we could:
+#  * Define a new "CheckVariance" enumeration somewhere resembling:
+#        class CheckVariance(Enum):
+#            COVARIANCE = auto()  # <-- standard default, thus first
+#            CONTRAVARIANCE = auto()
+#            INVARIANCE = auto()
+#  * Add a new "check_variance: CheckVariance = CheckVariance.COVARIANCE"
+#    instance variable to our existing "HintMeta" dataclass.
+#  * Refactor this get_hint_pep484_typevar_bound_or_none() to return a 2-tuple
+#    "(typevar_bound, check_variance)" where:
+#    * "typevar_bound" is the current return value.
+#    * "check_variance" is either:
+#      * "None" if this type variable is unbounded and unconstrained.
+#      * "CheckVariance.COVARIANCE" if this type variable is bounded.
+#      * "CheckVariance.INVARIANCE" if this type variable is constrained.
+#  * Refactor make_check_expr() to:
+#    * Track this new "HintMeta.check_variance" instance variable. Mostly
+#      trivial. Child hints inherit their parent hint's "check_variance".
+#    * Dynamically generate code appropriate for this new
+#      "HintMeta.check_variance" instance variable. That's the super-hard part.
+#      Even if we initially ignore "CheckVariance.CONTRAVARIANCE" (which we
+#      really should), we'd still basically have to:
+#      * Refactor *MOST* single magic code string globals into dictionary
+#        globals mapping from all possible "CheckVariance" members to the
+#        corresponding magic code strings appropriate for those variances.
+#      * Lookup the appropriate magic code strings in those dictionaries with
+#        the current "hint_curr_meta.check_variable" instance variable.
+#
+#  Kinda fun, but *REALLY* non-trivial -- and probably no one cares. Guh!
 @callable_cached
 def get_hint_pep484_typevar_bound_or_none(
     hint: TypeVar, exception_prefix: str = '') -> object:
@@ -48,7 +121,7 @@ def get_hint_pep484_typevar_bound_or_none(
     #. One or more **constraints** (i.e., positional arguments passed by the
        caller to the :meth:`typing.TypeVar.__init__` call initializing this
        type variable), this getter returns a new **PEP-compliant union type
-       hint** (i.e., :attr:`typing.Union` subscription) of those constraints.
+       hint** (e.g., :attr:`typing.Union` subscription) of those constraints.
     #. One **upper bound** (i.e., ``bound`` keyword argument passed by the
        caller to the :meth:`typing.TypeVar.__init__` call initializing this
        type variable), this getter returns that bound as is.
@@ -60,13 +133,13 @@ def get_hint_pep484_typevar_bound_or_none(
     equivalent,** preventing callers from distinguishing between these two
     technically distinct variants of type variable metadata.
 
-    For runtime type-checking purposes, type variable constraints and bounds
-    are sufficiently similar as to be semantically equivalent for all intents
-    and purposes. To simplify handling of type variables, this getter
-    ambiguously aggregates both into the same tuple.
+    For runtime type-checking purposes, type variable constraints and bounds are
+    sufficiently similar as to be semantically equivalent for all intents and
+    purposes. To simplify handling of type variables, this getter ambiguously
+    aggregates both into the same tuple.
 
-    For static type-checking purposes, type variable constraints and bounds
-    are *still* sufficiently similar as to be semantically equivalent for all
+    For static type-checking purposes, type variable constraints and bounds are
+    *still* sufficiently similar as to be semantically equivalent for all
     intents and purposes. Any theoretical distinction between the two is likely
     to be lost on *most* engineers, who tend to treat the two interchangeably.
     To quote :pep:`484`:
@@ -140,6 +213,10 @@ def get_hint_pep484_typevar_bound_or_none(
     return None
 
 # ....................{ MAPPERS                            }....................
+#FIXME: Generalize to accept an optional "exception_cls" parameter, please.
+#FIXME: Unit test up:
+#* Non-type variable in "typevars".
+#* Type variable bounds checking.
 def map_pep484_typevars_to_hints(
     # Mandatory parameters.
     typevar_to_hint: TypeVarToHint,
@@ -147,7 +224,8 @@ def map_pep484_typevars_to_hints(
     hints: TupleHints,
 
     # Optional parameters.
-    exception_message: str = '',
+    hint_parent: Optional[Hint] = None,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Add mappings from the passed :pep:`484`-compliant **type variables** (i.e.,
@@ -214,7 +292,12 @@ def map_pep484_typevars_to_hints(
         Tuple of one or more type variables.
     hints : TupleHints
         Tuple of one or more type hints those type variables map to.
-    exception_message: str, optional
+    hint_parent: Optional[Hint] = None
+        Parent type hint presumably both subscripted by these ``hints`` if any
+        *or* :data:`None` otherwise. This hint is *only* embedded in the
+        exception message in the event of a fatal error and thus technically
+        optional, albeit strongly advised.
+    exception_prefix: str, optional
         Human-readable substring prefixing the exception message in the event of
         a fatal error. Defaults to the empty string.
 
@@ -232,25 +315,30 @@ def map_pep484_typevars_to_hints(
         f'{repr(typevar_to_hint)} not dictionary.')
     assert isinstance(typevars, tuple), f'{repr(typevars)} not tuple.'
     assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
-    assert isinstance(exception_message, str), (
-        f'{repr(exception_message)} not string.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
+    # ....................{ PREAMBLE                       }....................
     # If *NO* type variables were passed, raise an exception.
     if not typevars:
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_message}parametrized by no PEP 484 type variables.')
+            f'{exception_prefix}type hint {repr(hint_parent)} '
+            f'parametrized by no PEP 484 type variables.'
+        )
     # Else, one or more type variables were passed.
     #
     # If *NO* type hints were passed, raise an exception.
     elif not hints:
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_message}subscripted by no type hints.')
+            f'{exception_prefix}type hint {repr(hint_parent)} '
+            f'subscripted by no type hints.'
+        )
     # Else, one or more type hints were passed.
     #
     # If more type hints than type variables were passed, raise an exception.
     elif len(hints) > len(typevars):
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_message}'
+            f'{exception_prefix}type hint {repr(hint_parent)} '
             f'number of subscripted type hints {len(hints)} exceeds '
             f'number of parametrized type variables {len(typevars)} '
             f'(i.e., {len(hints)} > {len(typevars)}).'
@@ -258,10 +346,8 @@ def map_pep484_typevars_to_hints(
     # Else, either the same number of type hints and type variables were passed
     # *OR* more type variables than type hints were passed.
 
-    # Add a key-value pair to the passed dictionary mapping each of these type
-    # variables to the corresponding type hint with an optimally efficient
-    # one-liner. Although alternative approaches exist, this one-liner is
-    # well-known to be the most efficient means of effecting this.
+    # ....................{ MAP                            }....................
+    # For each passed type variable and corresponding type hint...
     #
     # Note that:
     # * The C-based zip() builtin has been profiled to be the fastest means of
@@ -269,10 +355,116 @@ def map_pep484_typevars_to_hints(
     # * If more type variables than type hints were passed, zip() silently
     #   ignores type variables with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
-    # * If this type variable has already been mapped to some type hint by
-    #   either this call or a prior call of this function, this mapping is
-    #   silently overwritten by mapping this type variable to a new type hint.
-    typevar_to_hint.update(zip(typevars, hints))
+    for typevar, hint in zip(typevars, hints):
+        # If this is *NOT* actually a type variable, raise an exception.
+        #
+        # Note that Python itself typically fails to validate this constraint,
+        # thus requiring that we do so explicitly. For example:
+        # * Ideally, *ALL* child hints parametrizing a PEP 695-compliant
+        #   subscripted type alias would actually be type variables. Sadly, the
+        #   "type" statement is excessively permissive under at least Python <=
+        #   3.13 (and possibly newer Python releases as well): e.g.,
+        #       >>> type muh_alias[int] = float | complex
+        #       >>> muh_alias.__parameters__
+        #       (int,)  # <-- pretty sure that's *NOT* a parameter, Python
+        if not is_hint_pep484_typevar(typevar):
+            raise BeartypeDecorHintPep484Exception(
+                f'{exception_prefix}type hint {repr(hint_parent)} '
+                f'parametrization {repr(typevar)} not '
+                f'PEP 484 type variable (i.e., "typing.TypeVar" object).'
+            )
+        # Else, this is actually a type variable.
+
+        #FIXME: Insufficient. Ideally, we would also validate this hint to be a
+        #*SUBHINT* of this type variable. Specifically, if this type variable is
+        #bounded by one or more bounded constraints, then we should validate
+        #this hint to be a *SUBHINT* of those constraints: e.g.,
+        #    class MuhClass(object): pass
+        #
+        #    # PEP 695 type alias parametrized by a type variable bound to a
+        #    # subclass of the "MuhClass" type.
+        #    type muh_alias[T: MuhClass] = T | int
+        #
+        #    # *INVALID.* Ideally, @beartype should reject this, as "int" is
+        #    # *NOT* a subhint of "MuhClass".
+        #    def muh_func(muh_arg: muh_alias[int]) -> None: pass
+        #
+        #Doing so is complicated, however, by forward reference proxies. For
+        #obvious reasons, forward reference proxies are *NOT* safely resolvable
+        #at this early decoration time that this function is typically called
+        #at. If this hint either:
+        #* Is itself a forward reference proxy, ignore rather than validate this
+        #  hint as a subhint of these bounded constraints. Doing so is trivial
+        #  by simply calling "is_beartype_forwardref(hint)" here.
+        #* Is *NOT* itself a forward reference proxy but is transitively
+        #  subscripted by one or more forward reference proxies, ignore rather
+        #  than validate this hint as a subhint of these bounded constraints.
+        #  Doing so is *EXTREMELY NON-TRIVIAL.* Indeed, there's *NO* reasonable
+        #  way to do so directly here. Rather, we'd probably have to embrace an
+        #  EAFP approach: that is, just crudely try to:
+        #  * Detect whether this hint is a subhint of these bounded constraints.
+        #  * If doing so raises an exception indicative of a forward reference
+        #    issue, silently ignore that exception.
+        #
+        #  Of course, we're unclear what exception type that would even be. Does
+        #  the beartype.door.is_subhint() tester even explicitly detect forward
+        #  reference issues and raise an appropriate exception type? No idea.
+        #  Probably *NOT*, honestly. Interestingly, is_subhint() currently even
+        #  fails to support standard PEP 484-compliant forward references:
+        #      >>> is_subhint('int', int)
+        #      beartype.roar.BeartypeDoorNonpepException: Type hint 'int'
+        #      currently unsupported by "beartype.door.TypeHint".
+        #
+        #Due to these (and probably more) issues, we currently *ONLY* validate
+        #this hint to be a subhint of these bounded constraints...
+
+        # If this hint is a PEP-noncompliant isinstanceable type (and thus *NOT*
+        # an unresolvable forward reference proxy, which by definition is *NOT*
+        # isinstanceable)...
+        elif is_hint_nonpep_type(hint=hint, is_forwardref_valid=False):
+            # PEP-compliant type hint synthesized from all bounded constraints
+            # parametrizing this type variable if any *OR* "None" otherwise.
+            #
+            # Note that this call is intentionally passed positional rather
+            # positional keywords due to memoization.
+            typevar_bound = get_hint_pep484_typevar_bound_or_none(
+                typevar, exception_prefix)
+
+            # If...
+            if (
+                # This type variable was bounded or constrained *AND*...
+                typevar_bound is not None and
+                # These bounded constraints are issubclassable (i.e., an object
+                # safely passable as the second parameter to the issubclass()
+                # builtin) *AND*...
+                is_object_issubclassable(
+                    obj=typevar_bound, is_forwardref_valid=False) and
+                # This PEP-noncompliant isinstanceable type hint is *NOT* a
+                # subclass of these bounded constraints...
+                not issubclass(hint, typevar_bound)  # type: ignore[arg-type]
+            ):
+                # Raise an exception.
+                raise BeartypeDecorHintPep484Exception(
+                    f'{exception_prefix}type hint {repr(hint_parent)} '
+                    f'originally parametrized by '
+                    f'PEP 484 type variable {repr(typevar)} '
+                    f'subsequently subscripted by '
+                    f'child type hint {repr(hint)} '
+                    f"violating that type variable's "
+                    f'bounds or constraints {repr(typevar_bound)}.'
+                )
+            # Else, this type variable was either:
+            # * Unbounded and unconstrained.
+            # * Bounded or constrained by a hint that is *NOT* issubclassable.
+            # * Bounded or constrained by an issubclassable object that is the
+            #   superclass of this corresponding hint, which thus satisfies
+            #   these bounded constraints.
+        # Else, this hint is *NOT* a PEP-noncompliant isinstanceable type.
+
+        # Map this type variable to this hint with an optimally efficient
+        # one-liner, silently overwriting any prior such mapping of this type
+        # variable by either this call or a prior call of this function.
+        typevar_to_hint[typevar] = hint
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove this function *AFTER* deeply type-checking type variables.

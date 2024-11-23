@@ -445,11 +445,13 @@ def is_hint_nonpep(
         Object to be inspected.
     is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to contain
-        forward references. Defaults to :data:`False`. If this boolean is:
+        forward references. If this boolean is:
 
         * :data:`True`, this object is valid only when containing classes and/or
           forward references.
         * :data:`False`, this object is valid only when containing classes.
+
+        Defaults to :data:`False` for safety.
 
     Returns
     -------
@@ -476,19 +478,88 @@ def is_hint_nonpep(
 
     # Return true only if either...
     return (
-        # If this object is a class, return true only if this is *NOT* a
-        # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
-        # class by definition.
-        _is_hint_nonpep_type(hint, is_forwardref_valid) if isinstance(hint, type) else
+        # If this object is a class, return true only if this is is a
+        # PEP-noncompliant class (or possibly a caller-permitted forward
+        # reference).
+        is_hint_nonpep_type(
+            hint, is_forwardref_valid) if isinstance(hint, type) else
         # Else, this object is *NOT* a class.
         #
         # If this object is a tuple, return true only if this tuple contains
-        # only one or more caller-permitted forward references and
-        # PEP-noncompliant classes.
-        _is_hint_nonpep_tuple(hint, is_forwardref_valid) if isinstance(hint, tuple) else
+        # only one or more PEP-noncompliant classes (and possibly
+        # caller-permitted forward references).
+        _is_hint_nonpep_tuple(
+            hint, is_forwardref_valid) if isinstance(hint, tuple) else
         # Else, this object is neither a class nor tuple and thus *CANNOT* be
         # PEP-noncompliant. In this case, fallback to returning false.
         False
+    )
+
+
+#FIXME: Unit test us up, please.
+def is_hint_nonpep_type(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    is_forwardref_valid: bool = False,
+) -> bool:
+    '''
+    :data:`True` only if the passed object is a PEP-noncompliant isinstanceable
+    type (and/or forward reference proxy when ``is_forwardref_valid`` is
+    :data:`True`).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+    is_forwardref_valid : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). If this
+        boolean is:
+
+        * :data:`True`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy (regardless of whether this proxy is
+            currently resolvable to an isinstanceable type that has already been
+            externally defined).
+
+        * :data:`False`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy that is currently resolvable to an
+            isinstanceable type that has already been externally defined.
+
+        Defaults to :data:`False` for safety.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a PEP-noncompliant isinstanceable
+        type (and/or forward reference proxy when ``is_forwardref_valid`` is
+        :data:`True`).
+    '''
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep
+
+    # Return true only if...
+    return (
+        # This object is an isinstanceable type *AND*...
+        is_type_isinstanceable(hint, is_forwardref_valid) and
+        # This object is *NOT* a PEP-compliant type, in which case this object
+        # is a PEP-noncompliant type by definition.
+        not is_hint_pep(hint)
     )
 
 # ....................{ TESTERS ~ private                  }....................
@@ -547,7 +618,7 @@ def _is_hint_nonpep_tuple(
         # If this item is a type...
         if isinstance(hint_item, type):
             # If this type is *NOT* isinstanceable, return false.
-            if not _is_hint_nonpep_type(hint_item, is_forwardref_valid):
+            if not is_hint_nonpep_type(hint_item, is_forwardref_valid):
                 # print(f'Non-isinstanceable type {repr(hint_item)} prohibited!')
                 return False
             # Else, this type is isinstanceable.
@@ -570,53 +641,3 @@ def _is_hint_nonpep_tuple(
 
     # Return true.
     return True
-
-
-#FIXME: Unit test up the new "is_forwardref_valid" parameter, please.
-def _is_hint_nonpep_type(
-    hint: object, is_forwardref_valid: bool) -> bool:
-    '''
-    :data:`True` only if the passed object is a PEP-noncompliant type.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-    is_forwardref_valid : bool, optional
-        :data:`True` only if this function permits this object to be a
-        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). If this
-        boolean is:
-
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a PEP-noncompliant type.
-    '''
-
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep
-
-    # Return true only if...
-    return (
-        # This object is an isinstanceable class *AND*...
-        is_type_isinstanceable(hint, is_forwardref_valid) and
-        # This object is *NOT* a PEP-compliant class, in which case this object
-        # is a PEP-noncompliant class by definition.
-        not is_hint_pep(hint)
-    )

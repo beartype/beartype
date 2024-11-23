@@ -16,16 +16,17 @@ from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
+from beartype._data.hint.datahintpep import TypeGuard
 from beartype._data.hint.datahinttyping import (
+    IsBuiltinOrSubclassableTypes,
     TypeException,
-    TypeOrTupleTypes,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ RAISERS ~ instance                 }....................
 def die_unless_object_isinstanceable(
     # Mandatory parameters.
-    obj: TypeOrTupleTypes,
+    obj: IsBuiltinOrSubclassableTypes,
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
@@ -50,7 +51,7 @@ def die_unless_object_isinstanceable(
 
     Parameters
     ----------
-    obj : TypeOrTupleTypes
+    obj : IsBuiltinOrSubclassableTypes
         Object to be validated.
     is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
@@ -297,10 +298,10 @@ def die_unless_type_isinstanceable(
         # Else, this exception fails to human-readably describe this
         # non-isinstanceability.
 
-        #FIXME: Uncomment after we uncover why doing so triggers an
-        #infinite circular exception chain when "hint" is a "GenericAlias".
-        #It's clearly the is_hint_pep544_protocol() call, but why? In any
-        #case, the simplest workaround would just be to inline the logic of
+        #FIXME: Uncomment after we uncover why doing so triggers an infinite
+        #circular exception chain when "hint" is a "GenericAlias". It's clearly
+        #the is_hint_pep544_protocol() call, but why? In any case, the simplest
+        #workaround would just be to inline the logic of
         #is_hint_pep544_protocol() here directly. Yes, we know. *shrug*
 
         # # Human-readable exception message to be raised as either...
@@ -337,7 +338,7 @@ def die_unless_type_isinstanceable(
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_object_issubclassable(
     # Mandatory parameters.
-    obj: TypeOrTupleTypes,
+    obj: IsBuiltinOrSubclassableTypes,
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
@@ -551,9 +552,9 @@ def is_type_isinstanceable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> bool:
+) -> TypeGuard[type]:
     '''
-    :data:`True` only if the passed object is an **isinstanceable class** (i.e.,
+    :data:`True` only if the passed object is an **isinstanceable type** (i.e.,
     class whose metaclass does *not* define an ``__instancecheck__()`` dunder
     method that raises a :exc:`TypeError` exception).
 
@@ -607,7 +608,8 @@ def is_type_isinstanceable(
         f'{repr(is_forwardref_valid)} not bool.')
 
     # Avoid circular import dependencies.
-    from beartype._check.forward.reference.fwdreftest import is_forwardref
+    from beartype._check.forward.reference.fwdreftest import (
+        is_beartype_forwardref)
     # print('Start!')
 
     # If this object is *NOT* a class, immediately return false.
@@ -622,7 +624,7 @@ def is_type_isinstanceable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_forwardref(cls):
+    elif is_forwardref_valid and is_beartype_forwardref(cls):
         # print(f'{repr(cls)} is forward reference proxy!')
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
@@ -645,16 +647,14 @@ def is_type_isinstanceable(
     # by @beartype wrapper functions to check arbitrary types.
     try:
         isinstance(None, cls)  # type: ignore[arg-type]
-
-        # If the prior function call raised *NO* exception, this class is
-        # probably but *NOT* necessarily isinstanceable. Return true.
     # If the prior function call raised *ANY* exception, return true only if
     # this exception ambiguously suggests that this class could still be
     # isinstanceable.
     except Exception as exception:
         return _is_exception_ambiguous(exception)
 
-    # Look. Just do it. *sigh*
+    # Return true, as the prior isinstance() call raised *NO* exception,
+    # implying this class to probably (but *NOT* necessarily) be isinstanceable.
     return True
 
 # ....................{ TESTERS ~ issubclassable           }....................
@@ -662,11 +662,11 @@ def is_type_isinstanceable(
 @callable_cached
 def is_object_issubclassable(
     # Mandatory parameters.
-    obj: TypeOrTupleTypes,
+    obj: object,
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> bool:
+) -> TypeGuard[IsBuiltinOrSubclassableTypes]:
     '''
     :data:`True` only if the passed object is **issubclassable** (i.e., valid as
     the second parameter to the :func:`issubclass` builtin).
@@ -684,20 +684,28 @@ def is_object_issubclassable(
 
     Parameters
     ----------
-    obj : TypeOrTupleTypes
+    obj : IsBuiltinOrSubclassableTypes
         Object to be tested.
     is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
-        proxying an external type that may currently be undefined). Defaults to
-        :data:`True`. If this boolean is:
+        proxying an external type that may currently be undefined). If this
+        boolean is:
 
-        * :data:`True`, this object is valid only when this object is either an
-          isinstanceable classes *or* a forward reference proxy.
-        * :data:`False`, this object is valid only when this object is an
-          isinstanceable class. Note that forward reference proxies are
-          isinstanceable classes *if and only if* the external classes they
-          refer to have already been defined.
+        * :data:`True`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy (regardless of whether this proxy is
+            currently resolvable to an isinstanceable type that has already been
+            externally defined).
+
+        * :data:`False`, this object is valid only when this object is either:
+
+          * An isinstanceable type.
+          * A forward reference proxy that is currently resolvable to an
+            isinstanceable type that has already been externally defined.
+
+        Defaults to :data:`True`, but probably shouldn't.
 
     Returns
     -------
@@ -777,8 +785,7 @@ def is_type_issubclassable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> bool:
-
+) -> TypeGuard[type]:
     '''
     :data:`True` only if the passed object is an **issubclassable class** (i.e.,
     class whose metaclass does *not* define a ``__subclasscheck__()`` dunder
@@ -826,7 +833,8 @@ def is_type_issubclassable(
         f'{repr(is_forwardref_valid)} not bool.')
 
     # Avoid circular import dependencies.
-    from beartype._check.forward.reference.fwdreftest import is_forwardref
+    from beartype._check.forward.reference.fwdreftest import (
+        is_beartype_forwardref)
 
     # If this object is *NOT* a class, immediately return false.
     if not isinstance(cls, type):
@@ -839,7 +847,7 @@ def is_type_issubclassable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_valid and is_forwardref(cls):
+    elif is_forwardref_valid and is_beartype_forwardref(cls):
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.
@@ -878,10 +886,10 @@ def is_type_issubclassable(
 
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_object_uncheckable(
-    obj: TypeOrTupleTypes,
+    obj: IsBuiltinOrSubclassableTypes,
     obj_pith: object,
     obj_raiser: Callable,
-    obj_tester: Callable[[object, TypeOrTupleTypes], bool],
+    obj_tester: Callable[[object, IsBuiltinOrSubclassableTypes], bool],
     is_forwardref_valid: bool,
     exception_cls: TypeException,
     exception_prefix: str,
@@ -906,7 +914,7 @@ def _die_if_object_uncheckable(
 
         * :func:`.die_unless_type_isinstanceable`.
         * :func:`.die_unless_type_issubclassable`.
-    obj_tester : Callable[[object, TypeOrTupleTypes], bool]
+    obj_tester : Callable[[object, IsBuiltinOrSubclassableTypes], bool]
         Callable returning :data:`True` only if this object is runtime-checkable
         according to this predicate, which should be either:
 
@@ -958,6 +966,14 @@ def _die_if_object_uncheckable(
     #
     # In any case, this object *COULD* now be runtime-checkable. To decide
     # whether this object is runtime-checkable, further handling is warranted.
+
+    #FIXME: *UHHHH... WAT!?* This is totally busted, guys. Since this object is
+    #now a PEP 604-compliant new union, this object clearly is neither a type
+    #nor a tuple of types; it's a union! So, most of the code below no longer
+    #makes any sense whatsoever. Actually, maybe it's just this "if
+    #isinstance(obj, type):" branch that no longer makes sense? Maybe just
+    #remove that branch and quietly pretend this never happened. Note that we
+    #still do require the passed "obj_raiser" parameter, however. I sigh. *sigh*
 
     # If this object is a class...
     if isinstance(obj, type):

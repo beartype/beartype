@@ -57,7 +57,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
-from beartype._check.forward.reference.fwdreftest import is_forwardref
+from beartype._check.forward.reference.fwdreftest import is_beartype_forwardref
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
@@ -417,7 +417,7 @@ def add_func_scope_types(
     # For each type in this container...
     for cls in types:
         # If this type is a beartype-specific forward reference proxy...
-        if is_forwardref(cls):
+        if is_beartype_forwardref(cls):
             # print(f'Found forward reference proxy {repr(cls)}...')
             # Note that this container contains at least one such proxy.
             is_types_ref = True
@@ -441,7 +441,7 @@ def add_func_scope_types(
         for cls in types:
             # If this type is such a proxy, append this proxy to the list of all
             # such proxies.
-            if is_forwardref(cls):
+            if is_beartype_forwardref(cls):
                 types_ref.append(cls)
             # Else, this type is *NOT* such a proxy. In this case...
             else:

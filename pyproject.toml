@@ -324,8 +324,10 @@ test-tox = [
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 
+    #FIXME: Reenable Python >= 3.13 support *AFTER* Numba resolves:
+    #    https://github.com/numba/numba/issues/9413
     # Required by optional numba-specific integration tests.
-    "numba",
+    "numba; python_version < '3.13.0'",
 
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor

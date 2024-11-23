@@ -115,6 +115,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
+    HintSignTypeVar,
     HintSignUnion,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -162,6 +163,8 @@ from beartype._util.hint.pep.utilpeptest import (
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapfrozen import EMPTY_FROZEN_DICT
 from beartype._util.kind.map.utilmapset import update_mapping
+from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+    get_hint_pep484_typevar_bound_or_none)
 from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_subscripted_typevar_to_hint)
 from beartype._util.text.utiltextmunge import replace_str_substrs
@@ -2100,6 +2103,104 @@ def make_check_expr(
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
                 # Else, this hint is *NOT* a generic.
                 #
+                # ............{ PEP 484 ~ type variable            }............
+                # If this hint is a PEP 484-compliant type variable (i.e.,
+                # "typing.TypeVar" object), this hint is both dependent on and
+                # less common than .PEP 484- and 585-compliant generics and thus
+                # intentionally detected immediately after generics. In this
+                # case...
+
+                #FIXME: Unit test us up, please.
+                #FIXME: Remove the corresponding reducer once working, please.
+                #FIXME: Implement corresponding "beartype._check.error"
+                #validation, please. *sigh*
+                elif hint_curr_sign is HintSignTypeVar:
+                    #FIXME: Encapsulate most of this logic below as a new
+                    #get_hint_pep484_typevar_reduced() getter called ala:
+                    #    hint_child = get_hint_pep484_typevar_reduced(
+                    #        hint=hint_curr,
+                    #        conf=conf,
+                    #        cls_stack=cls_stack,
+                    #        typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                    #        exception_prefix=EXCEPTION_PREFIX,
+                    #    )
+                    #
+                    #Actually... maybe that's pointless, huh? We'll eventually
+                    #be deeply type-checking type variables. Hopefully, anyway.
+
+                    # Hint mapped to by this type variable if one or more
+                    # transitive parent hints previously mapped this type
+                    # variable to a hint *OR* "None" otherwise.
+                    hint_child = hint_curr_meta.typevar_to_hint.get(hint_curr)  # pyright: ignore
+
+                    # If *NO* transitive parent hints previously mapped this
+                    # type variable to a hint...
+                    if hint_child is None:
+                        # PEP-compliant hint synthesized from all bounded
+                        # constraints parametrizing this type variable if any
+                        # *OR* "None" otherwise.
+                        #
+                        # Note this call is intentionally passed positional
+                        # rather positional keywords due to memoization.
+                        hint_curr_bound = get_hint_pep484_typevar_bound_or_none(
+                            hint_curr, EXCEPTION_PREFIX)  # pyright: ignore
+
+                        # If this type variable was parametrized by one or more
+                        # bounded constraints, reduce this type variable to
+                        # these bounded constraints.
+                        if hint_curr_bound is not None:
+                            hint_child = hint_curr_bound
+                        # Else, this type variable was unparametrized. In this
+                        # case, preserve this type variable as is.
+                    # Else, one or more transitive parent hints previously
+                    # mapped this type variable to a hint.
+
+                    # If this type variable was either mapped to another hint by
+                    # one or more transitive parent hints *OR* parametrized by
+                    # one or more bounded constraints...
+                    if hint_child is not None:
+                        # Unignorable sane hint sanified from this possibly
+                        # ignorable insane hint *OR* "None" otherwise (i.e.,
+                        # if this hint is ignorable).
+                        hint_child = sanify_hint_child_if_unignorable_or_none(
+                            hint=hint_child,
+                            conf=conf,
+                            cls_stack=cls_stack,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        )
+
+                    # If this type variable is reducible to an unignorable
+                    # hint...
+                    if hint_child is not None:
+                        # Ignore this semantically useless type variable in
+                        # favour of this semantically useful hint by replacing
+                        # *ALL* hint metadata describing the former with the
+                        # latter.
+                        hint_curr_meta.reinit(
+                            hint=hint_child,  # pyright: ignore
+                            indent_level=indent_level_child,
+                            pith_expr=pith_curr_assign_expr,
+                            pith_var_name_index=pith_curr_var_name_index,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                        )
+
+                        # Revisit this hint metadata in the outermost "while"
+                        # loop. Doing so avoids the "CLEANUP" logic below, which
+                        # assumes this hint to be unignorable and thus
+                        # type-checkable.
+                        continue
+                    # Else, this type variable is *NOT* reducible to an
+                    # unignorable hint. Since @beartype currently fails to
+                    # generate type-checking code for type variables in and of
+                    # themselves, type variables have *NO* intrinsic semantic
+                    # meaning and are thus ignorable. In this case...
+                    else:
+                        # Prepare this BFS to visit the next enqueued hint by
+                        # incrementing the 0-based index of metadata describing
+                        # the next visited hint in the "hints_meta" list
+                        # *BEFORE* visiting that hint.
+                        hints_meta_index_curr += 1
+
                 # ............{ PEP 586 ~ typing.Literal           }............
                 # If this hint is a PEP 586-compliant type hint (i.e., the
                 # "typing.Literal" singleton subscripted by one or more literal
@@ -2209,6 +2310,12 @@ def make_check_expr(
                         # transitive parent hints of this alias *AND*...
                         hint_curr_meta.typevar_to_hint |  # type: ignore[operator]
                         # The type variable lookup table describing this alias.
+                        #
+                        # Note that this table is intentionally the second
+                        # rather than first operand of this "|" operation,
+                        # efficiently ensuring that type variables mapped by
+                        # this alias take precedence over type variables mapped
+                        # by transitive parent hints of this alias.
                         typevar_to_hint_child
                     )
 
@@ -2283,10 +2390,11 @@ def make_check_expr(
         #     disabled by passing "is_forwardref_valid=False" to that call.
         #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
         #     disabled by passing such an option to that call.
-        else:
+        else:  # pragma: no cover
             raise BeartypeDecorHintPepException(
-                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
-                f'not PEP-compliant.'
+                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} unrecognized '
+                f'(i.e., either PEP-noncompliant or '
+                f'PEP-compliant but currently unsupported by @beartype).'
             )
 
         # ................{ CLEANUP                            }................
@@ -2313,10 +2421,6 @@ def make_check_expr(
             old=hint_curr_meta.hint_placeholder,
             new=func_curr_code,
         )
-
-        # Nullify the metadata describing the previously visited hint in this
-        # list for safety.
-        hints_meta[hints_meta_index_curr] = None
 
         # Increment the 0-based index of metadata describing the next visited
         # hint in the "hints_meta" list *BEFORE* visiting that hint but *AFTER*

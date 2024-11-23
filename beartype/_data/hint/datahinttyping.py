@@ -48,6 +48,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import (
+    HintPep604Type,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -456,7 +457,7 @@ more shell words comprising a shell command, suitable for passing as the
 test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
 '''
 
-# ....................{ TUPLE                              }....................
+# ....................{ TUPLE : type                       }....................
 TupleTypes = Tuple[type, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of zero or more classes.
@@ -466,25 +467,33 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-#FIXME: *INSUFFICIENT.* Generalize this to additionally accept the types of PEP
-#604-compliant new unions (e.g., "int | str").
-TypeOrTupleTypes = Union[type, TupleTypes]
+IsBuiltinOrSubclassableTypes = Union[type, TupleTypes, HintPep604Type]
 '''
-PEP-compliant type hint matching either a single class *or* a tuple of zero or
-more classes.
-
-Equivalently, this hint matches all objects passable as the second parameters
+PEP-compliant type hint matching any objects passable as the second parameter
 to the :func:`isinstance` and :func:`issubclass` builtins.
+
+Specifically, this hint matches either:
+
+* A single type.
+* A tuple of zero or more types.
+* A :pep:`604`-compliant **new union** (i.e., two or more types delimited by the
+  ``|`` operator under Python >= 3.10).
 '''
 
 
 SetOrTupleTypes = Union[AbstractSet[type], TupleTypes]
 '''
-PEP-compliant type hint matching a set *or* tuple of zero or more classes.
+PEP-compliant type hint matching a set *or* tuple of zero or more types.
 '''
 
-# ....................{ TUPLE ~ stack                      }....................
-TypeStack = Optional[Tuple[type, ...]]
+
+TypeOrTupleTypes = Union[type, TupleTypes]
+'''
+PEP-compliant type hint matching either a type *or* tuple of zero or more types.
+'''
+
+
+TypeStack = Optional[TupleTypes]
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
 more arbitrary types *or* :data:`None`).

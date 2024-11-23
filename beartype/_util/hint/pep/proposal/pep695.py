@@ -330,6 +330,7 @@ def get_hint_pep695_subscripted_typevar_to_hint(
     # Add key-value pairs to this dictionary mapping from each of these type
     # variables to the associated type hints.
     map_pep484_typevars_to_hints(
+        hint_parent=hint,  # pyright: ignore
         typevar_to_hint=typevar_to_hint,
         typevars=hint_typevars,
         hints=hint_args,
