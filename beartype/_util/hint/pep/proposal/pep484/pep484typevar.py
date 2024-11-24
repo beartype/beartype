@@ -213,7 +213,6 @@ def get_hint_pep484_typevar_bound_or_none(
     return None
 
 # ....................{ MAPPERS                            }....................
-#FIXME: Generalize to accept an optional "exception_cls" parameter, please.
 #FIXME: Unit test up:
 #* Non-type variable in "typevars".
 #* Type variable bounds checking.
@@ -443,6 +442,9 @@ def map_pep484_typevars_to_hints(
                 # subclass of these bounded constraints...
                 not issubclass(hint, typevar_bound)  # type: ignore[arg-type]
             ):
+                #FIXME: This should be a distinct exception time: e.g.,
+                #"BeartypeDecorHintPep484TypeVarViolation".
+
                 # Raise an exception.
                 raise BeartypeDecorHintPep484Exception(
                     f'{exception_prefix}type hint {repr(hint_parent)} '
