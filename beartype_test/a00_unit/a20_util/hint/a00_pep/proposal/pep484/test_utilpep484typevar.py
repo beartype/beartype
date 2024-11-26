@@ -63,15 +63,22 @@ def test_map_typevars_to_hints() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar.map_typevars_to_hints`
-    tester.
+    mapper.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPep484Exception
+    from beartype.roar import (
+        BeartypeDecorHintPep484TypeVarException,
+        BeartypeDecorHintPep484TypeVarViolation,
+    )
     from beartype._data.hint.datahinttyping import (
         S,
         T,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        T_sequence,
+        T_str_or_bytes,
     )
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         map_pep484_typevars_to_hints)
@@ -82,7 +89,7 @@ def test_map_typevars_to_hints() -> None:
     typevar_to_hint = {}
 
     # ....................{ PASS                           }....................
-    # Assert that this getter correctly maps a single type variable to a single
+    # Assert that this mapper correctly maps a single type variable to a single
     # type hint.
     map_pep484_typevars_to_hints(
         typevar_to_hint=typevar_to_hint,
@@ -90,8 +97,30 @@ def test_map_typevars_to_hints() -> None:
         hints=(int,),
     )
     assert typevar_to_hint == {S: int}
+    typevar_to_hint.clear()
 
-    # Assert that this getter correctly maps multiple type variable to multiple 
+    # Assert that this mapper correctly maps a single type variable bounded to a
+    # type to a single type hint satisfying that type.
+    map_pep484_typevars_to_hints(
+        typevar_to_hint=typevar_to_hint,
+        typevars=(T_sequence,),
+        hints=(list,),
+    )
+    assert typevar_to_hint == {T_sequence: list}
+    typevar_to_hint.clear()
+
+    # Assert that this mapper correctly maps a single type variable constrained
+    # to two or more types to a single type hint satisfying at least one of
+    # those types.
+    map_pep484_typevars_to_hints(
+        typevar_to_hint=typevar_to_hint,
+        typevars=(T_str_or_bytes,),
+        hints=(bytes,),
+    )
+    assert typevar_to_hint == {T_str_or_bytes: bytes}
+    typevar_to_hint.clear()
+
+    # Assert that this mapper correctly maps multiple type variables to multiple
     # type hints, including to a previously mapped type variable by silently
     # overwriting the type hint previously mapped to that type variable with the
     # corresponding passed hint.
@@ -101,31 +130,61 @@ def test_map_typevars_to_hints() -> None:
         hints=(float, complex,),
     )
     assert typevar_to_hint == {S: complex, T: float}
+    typevar_to_hint.clear()
 
     # ....................{ FAIL                           }....................
-    # Assert this getter raises the expected exception when passed *NO* type
-    # variables.
-    with raises(BeartypeDecorHintPep484Exception):
+    # Assert that this mapper raises the expected exception when passed *NO*
+    # type variables.
+    with raises(BeartypeDecorHintPep484TypeVarException):
         map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(),
             hints=(bool,),
         )
 
-    # Assert this getter raises the expected exception when passed *NO* type
-    # hints.
-    with raises(BeartypeDecorHintPep484Exception):
+    # Assert that this mapper raises the expected exception when passed a type
+    # variable that is *NOT* actually a type variables.
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        map_pep484_typevars_to_hints(
+            typevar_to_hint=typevar_to_hint,
+            typevars=(S, 'His brother Death. A rare and regal prey',),
+            hints=(int, str,),
+        )
+
+    # Assert that this mapper raises the expected exception when passed *NO*
+    # type hints.
+    with raises(BeartypeDecorHintPep484TypeVarException):
         map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(S,),
             hints=(),
         )
 
-    # Assert this getter raises the expected exception when passed more type
-    # hints than type variables.
-    with raises(BeartypeDecorHintPep484Exception):
+    # Assert that this mapper raises the expected exception when passed more
+    # type hints than type variables.
+    with raises(BeartypeDecorHintPep484TypeVarException):
         map_pep484_typevars_to_hints(
             typevar_to_hint=typevar_to_hint,
             typevars=(S, T,),
             hints=(int, bool, complex,),
         )
+
+    # Assert that this mapper raises the expected violation when passed a type
+    # hint violating the bounds of a passed type variable.
+    with raises(BeartypeDecorHintPep484TypeVarViolation):
+        map_pep484_typevars_to_hints(
+            typevar_to_hint=typevar_to_hint,
+            typevars=(S, T, T_sequence,),
+            hints=(float, complex, int,),
+        )
+
+    #FIXME: Uncomment *AFTER* we generalize this mapper to type-check violations
+    #against arbitrarily complex constraints.
+    # # Assert that this mapper raises the expected violation when passed a type
+    # # hint violating the constraints of a passed type variable.
+    # with raises(BeartypeDecorHintPep484TypeVarViolation):
+    #     map_pep484_typevars_to_hints(
+    #         typevar_to_hint=typevar_to_hint,
+    #         typevars=(S, T, T_str_or_bytes,),
+    #         hints=(float, complex, ,),
+    #     )

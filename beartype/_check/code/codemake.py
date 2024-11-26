@@ -21,7 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPep593Exception,
-    # BeartypeDecorHintPep695Exception,
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
@@ -45,15 +44,15 @@ from beartype._check.code.codescope import (
     add_func_scope_type_or_types,
     express_func_scope_type_ref,
 )
+from beartype._check.code.pep.codepep484604 import (
+    make_hint_pep484604_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none,
-    sanify_hint_child,
-)
+    sanify_hint_child_if_unignorable_or_none)
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
 from beartype._conf.confcls import BeartypeConf
@@ -80,12 +79,6 @@ from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_TUPLE_FIXED_PREFIX,
     CODE_PEP484585_TUPLE_FIXED_SUFFIX,
-)
-from beartype._data.code.pep.datacodepep484604 import (
-    CODE_PEP484604_UNION_CHILD_PEP_format,
-    CODE_PEP484604_UNION_CHILD_NONPEP_format,
-    CODE_PEP484604_UNION_PREFIX,
-    CODE_PEP484604_UNION_SUFFIX,
 )
 from beartype._data.code.pep.datacodepep586 import (
     CODE_PEP586_LITERAL_format,
@@ -143,8 +136,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585geniter import 
     iter_hint_pep484585_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.pep586 import (
-    get_hint_pep586_literals)
+from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -300,20 +292,8 @@ def make_check_expr(
     # (e.g., "(int, str)" if "hint_curr == Union[int, str]").
     hint_childs: tuple = None  # type: ignore[assignment]
 
-    # Current list of all output child hints to replace the Current tuple of all
-    # input child hints subscripting the currently visited hint with.
-    hint_childs_new: list = None  # type: ignore[assignment]
-
     # Number of child hints subscripting the currently visited hint.
     hint_childs_len: int = None  # type: ignore[assignment]
-
-    # 0-based index of the currently iterated child hint of the "hint_childs"
-    # tuple.
-    hint_childs_index: int = None  # type: ignore[assignment]
-
-    # Current tuple of all child child hints subscripting the currently visited
-    # child hint (e.g., "(int, str)" if "hint_child == Union[int, str]").
-    hint_child_childs: tuple = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : metadata           }..................
     # Metadata describing the currently visited hint, appended by the previously
@@ -359,10 +339,6 @@ def make_check_expr(
     # Python code snippet expanding to the current level of indentation
     # appropriate for the currently visited hint.
     indent_curr: str = None  # type: ignore[assignment]
-
-    # 1-based indentation level describing the current level of indentation
-    # appropriate for the currently visited hint.
-    indent_level_curr = 2
 
     # 1-based indentation level describing the current level of indentation
     # appropriate for the currently iterated child hint.
@@ -470,7 +446,9 @@ def make_check_expr(
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
     func_root_code = hints_meta.enqueue_hint_child(
         hint=hint_root,
-        indent_level=indent_level_curr,
+        # 1-based indentation level describing the initial level of indentation
+        # appropriate for the root hint.
+        indent_level=2,
         pith_expr=VAR_NAME_PITH_ROOT,
         pith_var_name_index=pith_curr_var_name_index,
         typevar_to_hint=EMPTY_FROZEN_DICT,
@@ -726,8 +704,8 @@ def make_check_expr(
             # Perform deep type-checking logic (i.e., logic that is guaranteed
             # to recurse and thus *NOT* "bottom out" at this hint).
             else:
-                # Tuple of all arguments subscripting this hint if any *OR* the
-                # empty tuple otherwise (e.g., if this hint is its own
+                # Tuple of all child hints subscripting this hint if any *OR*
+                # the empty tuple otherwise (e.g., if this hint is its own
                 # unsubscripted "typing" attribute).
                 #
                 # Note that the "__args__" dunder attribute is *NOT* guaranteed
@@ -735,6 +713,8 @@ def make_check_expr(
                 # obtain this attribute via a higher-level utility getter
                 # instead.
                 hint_childs = get_hint_pep_args(hint_curr)
+
+                # Number of these child hints.
                 hint_childs_len = len(hint_childs)
 
                 # Python code snippet expanding to the current level of
@@ -953,341 +933,21 @@ def make_check_expr(
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
                 # typing.Optional[float]")...
-                #
-                # Note that unions are non-physical abstractions of physical
-                # types and thus *NOT* themselves subject to type-checking;
-                # only the subscripted arguments of unions are type-checked.
-                # This differs from "typing" pseudo-containers like
-                # "List[int]", in which both the parent "List" and child "int"
-                # types represent physical types to be type-checked. Ergo,
-                # unions themselves impose no narrowing of the current pith
-                # expression and thus *CANNOT* by definition benefit from
-                # assignment expressions. This differs from "typing"
-                # pseudo-containers, which narrow the current pith expression
-                # and thus do benefit from assignment expressions.
                 if hint_curr_sign in HINT_SIGNS_UNION:
-                    # Assert this union to be subscripted by one or more child
-                    # hints. Note this should *ALWAYS* be the case, as:
-                    # * The unsubscripted "typing.Union" object is explicitly
-                    #   listed in the "HINTS_REPR_IGNORABLE_SHALLOW" set and
-                    #   should thus have already been ignored when present.
-                    # * The "typing" module explicitly prohibits empty union
-                    #   subscription: e.g.,
-                    #       >>> typing.Union[]
-                    #       SyntaxError: invalid syntax
-                    #       >>> typing.Union[()]
-                    #       TypeError: Cannot take a Union of no types.
-                    assert hint_childs, (
-                        f'{EXCEPTION_PREFIX}union type hint '
-                        f'{repr(hint_curr)} unsubscripted.'
+                    #FIXME: *BRILLIANT.* Refactor everything below similarly!
+                    # Python code snippet type-checking the current pith against
+                    # this union if this union is unignorable *OR* "None".
+                    func_curr_code = make_hint_pep484604_check_expr(  # type: ignore[assignment]
+                        hint_meta=hint_curr_meta,
+                        hints_meta=hints_meta,
+                        conf=conf,
+                        func_wrapper_scope=func_wrapper_scope,
+                        pith_curr_expr=pith_curr_expr,
+                        pith_curr_assign_expr=pith_curr_assign_expr,
+                        pith_curr_var_name_index=pith_curr_var_name_index,
+                        cls_stack=cls_stack,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
-                    # Else, this union is subscripted by two or more arguments.
-                    # Why two rather than one? Because the "typing" module
-                    # reduces unions of one argument to that argument: e.g.,
-                    #     >>> import typing
-                    #     >>> typing.Union[int]
-                    #     int
-
-                    # 0-based index of the currently iterated child hint.
-                    hint_childs_index = 0
-
-                    # For efficiency, reuse a previously created list of all
-                    # new child hints of this parent union.
-                    hint_childs_new = acquire_object_typed(list)
-                    hint_childs_new.clear()
-
-                    # For each subscripted argument of this union...
-                    #
-                    # Note that this preliminary iteration:
-                    # * Modifies the "hint_childs" container being iterated over
-                    #   and is thus intentionally implemented as a cumbersome
-                    #   "while" loop rather than a convenient "for" loop.
-                    # * Exists for the sole purpose of explicitly flattening
-                    #   *ALL* child unions nested in this parent union. This
-                    #   iteration *CANNOT* be efficiently combined with the
-                    #   iteration performed below for that reason.
-                    # * Does *NOT* recursively flatten arbitrarily nested
-                    #   child unions regardless of nesting depth in this parent
-                    #   union. Doing so is non-trivial and currently *NOT*
-                    #   required by any existing edge cases. "Huzzah!"
-                    while hint_childs_index < hint_childs_len:
-                        # Current child hint of this union.
-                        hint_child = hint_childs[hint_childs_index]
-
-                        # This child hint sanified (i.e., sanitized) from this
-                        # child hint if this child hint is reducible *OR*
-                        # preserved as is otherwise (i.e., if this child hint is
-                        # irreducible).
-                        #
-                        # Note that:
-                        # * This sanification is intentionally performed
-                        #   *BEFORE* this child hint is tested as being either
-                        #   PEP-compliant or -noncompliant. Why? Because a small
-                        #   subset of low-level reduction routines performed by
-                        #   this high-level sanification actually expand a
-                        #   PEP-noncompliant type into a PEP-compliant type
-                        #   hint. This includes:
-                        #   * The PEP-noncompliant "float' and "complex" types,
-                        #     implicitly expanded to the PEP 484-compliant
-                        #     "float | int" and "complex | float | int" type
-                        #     hints (respectively) when the non-default
-                        #     "conf.is_pep484_tower=True" parameter is enabled.
-                        # * This sanification intentionally calls the
-                        #   lower-level sanify_hint_child() rather than the
-                        #   higher-level
-                        #   sanify_hint_child_if_unignorable_or_none() sanifier.
-                        #   Technically, the latter would suffice as well.
-                        #   Pragmatically, both are semantically equivalent here
-                        #   but the former is faster. Why? By definition, this
-                        #   union is unignorable. If this union were ignorable,
-                        #   the parent hint containing this union would already
-                        #   have ignored this union. Moreover, *ALL* child
-                        #   hints subscripting an unignorable union are
-                        #   necessarily also unignorable. It follows that this
-                        #   child hint need *NOT* be tested for ignorability.
-                        # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-                        hint_child = sanify_hint_child(
-                            hint=hint_child,
-                            conf=conf,
-                            cls_stack=cls_stack,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        )
-                        # print(f'Sanified union child hint to {repr(hint_child)}...')
-
-                        # Sign of this sanified child hint if this hint is
-                        # PEP-compliant *OR* "None" otherwise (i.e., if this
-                        # hint is PEP-noncompliant).
-                        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
-
-                        # If this child hint is itself a child union nested in
-                        # this parent union, explicitly flatten this nested
-                        # union by appending *ALL* child child hints
-                        # subscripting this child union onto this parent union.
-                        #
-                        # Note that this edge case currently *ONLY* arises when
-                        # this child hint has been expanded by the above call to
-                        # the sanify_hint_child() function from a non-union (e.g.,
-                        # "float") into a union (e.g., "float | int"). The
-                        # standard PEP 484-compliant "typing.Union" factory
-                        # already implicitly flattens nested unions: e.g.,
-                        #     >>> from typing import Union
-                        #     >>> Union[float, Union[int, str]]
-                        #     typing.Union[float, int, str]
-                        if hint_child_sign in HINT_SIGNS_UNION:
-                            # Tuple of all child child type hints subscripting
-                            # this child union.
-                            hint_child_childs = get_hint_pep_args(hint_child)
-                            # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
-
-                            # Append these child child type hints to this parent
-                            # union.
-                            hint_childs_new.extend(hint_child_childs)
-                        # Else, this child hint is *NOT* itself a union. In this
-                        # case, append this child hint to this parent union.
-                        else:
-                            hint_childs_new.append(hint_child)
-
-                        # Increment the 0-based index of the currently iterated
-                        # child hint.
-                        hint_childs_index += 1
-
-                    # Freeze this temporary list back to this permanent tuple,
-                    # replacing the prior unflattened contents of this tuple.
-                    hint_childs = tuple(hint_childs_new)
-
-                    # Release this list back to its respective pool.
-                    release_object_typed(hint_childs_new)
-                    # print(f'Flattened union to {repr(hint_childs)}...')
-
-                    # For efficiency, reuse previously created sets of the
-                    # following (when available):
-                    # * "hint_childs_nonpep", the set of all PEP-noncompliant
-                    #   child hints subscripting this union.
-                    # * "hint_childs_pep", the set of all PEP-compliant child
-                    #   hints subscripting this union.
-                    #
-                    # Since these child hints require fundamentally different
-                    # forms of type-checking, prefiltering child hints into
-                    # these sets *BEFORE* generating code type-checking these
-                    # child hints improves both efficiency and maintainability.
-                    hint_childs_nonpep = acquire_object_typed(set)
-                    hint_childs_pep = acquire_object_typed(set)
-
-                    # Clear these sets prior to use below.
-                    hint_childs_nonpep.clear()
-                    hint_childs_pep.clear()
-
-                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
-                    # For each child hint subscripting this union...
-                    for hint_child in hint_childs:
-                        #FIXME: Uncomment as desired for debugging. This test is
-                        #currently a bit too costly to warrant uncommenting.
-                        # Assert that this child hint is *NOT* shallowly
-                        # ignorable. Why? Because any union containing one or
-                        # more shallowly ignorable child hints is deeply
-                        # ignorable and should thus have already been ignored
-                        # after a call to the is_hint_ignorable() tester passed
-                        # this union on handling the parent hint of this union.
-                        # assert (
-                        #     repr(hint_curr) not in HINTS_REPR_IGNORABLE_SHALLOW), (
-                        #     f'{hint_curr_exception_prefix} {repr(hint_curr)} child '
-                        #     f'{repr(hint_child)} ignorable but not ignored.')
-
-                        # If this child hint is PEP-compliant...
-                        if is_hint_pep(hint_child):
-                            # Filter this child hint into the set of
-                            # PEP-compliant child hints.
-                            #
-                            # Note that this PEP-compliant child hint *CANNOT*
-                            # also be filtered into the set of PEP-noncompliant
-                            # child hints, even if this child hint originates
-                            # from a non-"typing" type (e.g., "List[int]" from
-                            # "list"). Why? Because that would then induce
-                            # false positives when the current pith shallowly
-                            # satisfies this non-"typing" type but does *NOT*
-                            # deeply satisfy this child hint.
-                            hint_childs_pep.add(hint_child)
-                        # Else, this child hint is PEP-noncompliant. In this
-                        # case, filter this child hint into the list of
-                        # PEP-noncompliant arguments.
-                        else:
-                            hint_childs_nonpep.add(hint_child)
-
-                    # Initialize the code type-checking the current pith against
-                    # these arguments to the substring prefixing all such code.
-                    func_curr_code = CODE_PEP484604_UNION_PREFIX
-
-                    # If this union is subscripted by one or more
-                    # PEP-noncompliant child hints, generate and append
-                    # efficient code type-checking these child hints *BEFORE*
-                    # less efficient code type-checking any PEP-compliant child
-                    # hints subscripting this union.
-                    if hint_childs_nonpep:
-                        func_curr_code += (
-                            CODE_PEP484604_UNION_CHILD_NONPEP_format(
-                                # Python expression yielding the value of the
-                                # current pith. Specifically...
-                                pith_curr_expr=(
-                                    # If this union is also subscripted by one
-                                    # or more PEP-compliant child hints, prefer
-                                    # the expression assigning this value to a
-                                    # local variable efficiently reused by
-                                    # subsequent code generated for those
-                                    # PEP-compliant child hints.
-                                    pith_curr_assign_expr
-                                    if hint_childs_pep else
-                                    # Else, this union is subscripted by *NO*
-                                    # PEP-compliant child hints. Since this is
-                                    # the first and only test generated for this
-                                    # union, prefer the expression yielding the
-                                    # value of the current pith *WITHOUT*
-                                    # assigning this value to a local variable,
-                                    # which would needlessly go unused.
-                                    pith_curr_expr
-                                ),
-                                # Python expression evaluating to a tuple of
-                                # these arguments.
-                                #
-                                # Note that we would ideally avoid coercing this
-                                # set into a tuple when this set only contains
-                                # one type by passing that type directly to the
-                                # _add_func_wrapper_local_type() function.
-                                # Sadly, the "set" class defines no convenient
-                                # or efficient means of retrieving the only item
-                                # of a 1-set. Indeed, the most efficient means
-                                # of doing so is to iterate over that set and
-                                # immediately halt iteration:
-                                #     for first_item in muh_set: break
-                                #
-                                # While we *COULD* technically leverage that
-                                # approach here, doing so would also mandate
-                                # adding multiple intermediate tests, mitigating
-                                # any performance gains. Ultimately, we avoid
-                                # doing so by falling back to the usual
-                                # approach. See also this relevant
-                                # self-StackOverflow post:
-                                #       https://stackoverflow.com/a/40054478/2809027
-                                hint_curr_expr=add_func_scope_types(
-                                    types=hint_childs_nonpep,
-                                    func_scope=func_wrapper_scope,
-                                    exception_prefix=(
-                                        EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                                ),
-                            ))
-
-                    #FIXME: Optimize by refactoring into a "while" loop. *sigh*
-                    # For the 0-based index and each child hint of this union...
-                    for hint_child_index, hint_child in enumerate(
-                        hint_childs_pep):
-                        # Code deeply type-checking this child hint.
-                        func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
-                            # Expression yielding the value of this pith.
-                            hint_child_placeholder=hints_meta.enqueue_hint_child(
-                                hint=hint_child,
-                                indent_level=indent_level_child,
-                                pith_expr=(
-                                    # If either...
-                                    #
-                                    # Then prefer the expression efficiently
-                                    # reusing the value previously assigned to a
-                                    # local variable by either the above
-                                    # conditional or prior iteration of the
-                                    # current conditional.
-                                    pith_curr_var_name
-                                    if (
-                                        # This union is also subscripted by one
-                                        # or more PEP-noncompliant child hints
-                                        # *OR*...
-                                        hint_childs_nonpep or
-                                        # This is any PEP-compliant child hint
-                                        # *EXCEPT* the first...
-                                        hint_child_index
-                                    ) else
-                                    # Then this union is not subscripted by any
-                                    # PEP-noncompliant child hints *AND* this is
-                                    # the first PEP-compliant child hint. In
-                                    # this case, preface this code with an
-                                    # expression assigning this value to a local
-                                    # variable efficiently reused by code
-                                    # generated by subsequent iteration.
-                                    #
-                                    # Note this child hint is guaranteed to be
-                                    # followed by at least one more child hint.
-                                    # Why? Because the "typing" module forces
-                                    # unions to be subscripted by two or more
-                                    # child hints. By deduction, those child
-                                    # hints *MUST* be PEP-compliant. Ergo, we
-                                    # need *NOT* explicitly validate that
-                                    # constraint here.
-                                    pith_curr_assign_expr
-                                ),
-                                pith_var_name_index=pith_curr_var_name_index,
-                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
-                            ),
-                        )
-
-                    # If this code is *NOT* its initial value, this union is
-                    # subscripted by one or more unignorable child hints and
-                    # the above logic generated code type-checking these child
-                    # hints. In this case...
-                    if func_curr_code is not CODE_PEP484604_UNION_PREFIX:
-                        # Munge this code to...
-                        func_curr_code = (
-                            # Strip the erroneous " or" suffix appended by the
-                            # last child hint from this code.
-                            f'{func_curr_code[:LINE_RSTRIP_INDEX_OR]}'
-                            # Suffix this code by the substring suffixing all
-                            # such code.
-                            f'{CODE_PEP484604_UNION_SUFFIX}'
-                        # Format the "indent_curr" prefix into this code,
-                        # deferred above for efficiency.
-                        ).format(indent_curr=indent_curr)
-                    # Else, this snippet is its initial value and thus
-                    # ignorable.
-
-                    # Release this pair of sets back to their respective pools.
-                    release_object_typed(hint_childs_nonpep)
-                    release_object_typed(hint_childs_pep)
                 # Else, this hint is *NOT* a union.
                 #
                 # ..........{ CONTAINERS                           }............
@@ -1296,6 +956,7 @@ def make_check_expr(
                 # * A similar hint semantically resembling a single-argument
                 #   container subscripted by one argument and one or more
                 #   ignorable arguments like tuple[str, ...].
+                #
                 # Then this hint is effectively (for all intents and purposes) a
                 # standard single-argument container. In this case...
                 elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:

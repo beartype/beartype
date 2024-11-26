@@ -11,7 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.roar import (
+    BeartypeDecorHintPep484TypeVarException,
+    BeartypeDecorHintPep484TypeVarViolation,
+)
 from beartype.typing import (
     Optional,
     TypeVar,
@@ -180,13 +183,13 @@ def get_hint_pep484_typevar_bound_or_none(
 
     Raises
     ------
-    BeartypeDecorHintPep484Exception
+    BeartypeDecorHintPep484TypeVarException
         if this object is *not* a :pep:`484`-compliant type variable.
     '''
 
     # If this hint is *NOT* a type variable, raise an exception.
     if not is_hint_pep484_typevar(hint):
-        raise BeartypeDecorHintPep484Exception(
+        raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 484 type variable.'
         )
@@ -213,9 +216,6 @@ def get_hint_pep484_typevar_bound_or_none(
     return None
 
 # ....................{ MAPPERS                            }....................
-#FIXME: Unit test up:
-#* Non-type variable in "typevars".
-#* Type variable bounds checking.
 def map_pep484_typevars_to_hints(
     # Mandatory parameters.
     typevar_to_hint: TypeVarToHint,
@@ -302,13 +302,16 @@ def map_pep484_typevars_to_hints(
 
     Raises
     ------
-    BeartypeDecorHintPep484Exception
+    BeartypeDecorHintPep484TypeVarException
         If either:
 
         * This tuple of type variables is empty.
         * This tuple of type hints is empty.
         * This tuple of type hints contains more items than this tuple of type
           variables.
+    BeartypeDecorHintPep484TypeVarViolation
+        If one of these type hints violates the bounds or constraints of one of
+        these type variables.
     '''
     assert isinstance(typevar_to_hint, dict), (
         f'{repr(typevar_to_hint)} not dictionary.')
@@ -320,7 +323,7 @@ def map_pep484_typevars_to_hints(
     # ....................{ PREAMBLE                       }....................
     # If *NO* type variables were passed, raise an exception.
     if not typevars:
-        raise BeartypeDecorHintPep484Exception(
+        raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint_parent)} '
             f'parametrized by no PEP 484 type variables.'
         )
@@ -328,7 +331,7 @@ def map_pep484_typevars_to_hints(
     #
     # If *NO* type hints were passed, raise an exception.
     elif not hints:
-        raise BeartypeDecorHintPep484Exception(
+        raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint_parent)} '
             f'subscripted by no type hints.'
         )
@@ -336,7 +339,7 @@ def map_pep484_typevars_to_hints(
     #
     # If more type hints than type variables were passed, raise an exception.
     elif len(hints) > len(typevars):
-        raise BeartypeDecorHintPep484Exception(
+        raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint_parent)} '
             f'number of subscripted type hints {len(hints)} exceeds '
             f'number of parametrized type variables {len(typevars)} '
@@ -355,6 +358,8 @@ def map_pep484_typevars_to_hints(
     #   ignores type variables with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
     for typevar, hint in zip(typevars, hints):
+        # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
+
         # If this is *NOT* actually a type variable, raise an exception.
         #
         # Note that Python itself typically fails to validate this constraint,
@@ -367,7 +372,7 @@ def map_pep484_typevars_to_hints(
         #       >>> muh_alias.__parameters__
         #       (int,)  # <-- pretty sure that's *NOT* a parameter, Python
         if not is_hint_pep484_typevar(typevar):
-            raise BeartypeDecorHintPep484Exception(
+            raise BeartypeDecorHintPep484TypeVarException(
                 f'{exception_prefix}type hint {repr(hint_parent)} '
                 f'parametrization {repr(typevar)} not '
                 f'PEP 484 type variable (i.e., "typing.TypeVar" object).'
@@ -428,6 +433,8 @@ def map_pep484_typevars_to_hints(
             # positional keywords due to memoization.
             typevar_bound = get_hint_pep484_typevar_bound_or_none(
                 typevar, exception_prefix)
+            # print(f'[{typevar}] is_object_issubclassable({typevar_bound})? ...')
+            # print(f'{is_object_issubclassable(typevar_bound, False)}')
 
             # If...
             if (
@@ -436,24 +443,32 @@ def map_pep484_typevars_to_hints(
                 # These bounded constraints are issubclassable (i.e., an object
                 # safely passable as the second parameter to the issubclass()
                 # builtin) *AND*...
+                #
+                # Note that this function is memoized and thus permits *ONLY*
+                # positional parameters.
                 is_object_issubclassable(
-                    obj=typevar_bound, is_forwardref_valid=False) and
+                    typevar_bound,
+                    # Ignore unresolvable forward reference proxies (i.e.,
+                    # beartype-specific objects referring to user-defined
+                    # external types that have yet to be defined).
+                    False,
+                ) and
                 # This PEP-noncompliant isinstanceable type hint is *NOT* a
                 # subclass of these bounded constraints...
                 not issubclass(hint, typevar_bound)  # type: ignore[arg-type]
             ):
-                #FIXME: This should be a distinct exception time: e.g.,
-                #"BeartypeDecorHintPep484TypeVarViolation".
-
-                # Raise an exception.
-                raise BeartypeDecorHintPep484Exception(
-                    f'{exception_prefix}type hint {repr(hint_parent)} '
-                    f'originally parametrized by '
-                    f'PEP 484 type variable {repr(typevar)} '
-                    f'subsequently subscripted by '
-                    f'child type hint {repr(hint)} '
-                    f"violating that type variable's "
-                    f'bounds or constraints {repr(typevar_bound)}.'
+                # Raise a type-checking violation.
+                raise BeartypeDecorHintPep484TypeVarViolation(
+                    message=(
+                        f'{exception_prefix}type hint {repr(hint_parent)} '
+                        f'originally parametrized by '
+                        f'PEP 484 type variable {repr(typevar)} '
+                        f'subsequently subscripted by '
+                        f'child type hint {repr(hint)} violating '
+                        f"this type variable's bounds or constraints "
+                        f'{repr(typevar_bound)}.'
+                    ),
+                    culprits=(hint,),
                 )
             # Else, this type variable was either:
             # * Unbounded and unconstrained.

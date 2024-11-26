@@ -73,6 +73,7 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintPepSignException as BeartypeDecorHintPepSignException,
     BeartypeDecorHintPepUnsupportedException as BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception as BeartypeDecorHintPep484Exception,
+    BeartypeDecorHintPep484TypeVarException as BeartypeDecorHintPep484TypeVarException,
     BeartypeDecorHintPep484585Exception as BeartypeDecorHintPep484585Exception,
     BeartypeDecorHintPep544Exception as BeartypeDecorHintPep544Exception,
     BeartypeDecorHintPep557Exception as BeartypeDecorHintPep557Exception,
@@ -109,10 +110,13 @@ from beartype.roar._roarexc import (
     BeartypeValeValidationException as BeartypeValeValidationException,
 
     # Violations (i.e., exceptions raised during runtime type-checking).
+    BeartypeHintViolation as BeartypeHintViolation,
     BeartypeCallHintViolation as BeartypeCallHintViolation,
     BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
+    BeartypeDecorHintViolation as BeartypeDecorHintViolation,
     BeartypeDecorHintParamDefaultViolation as BeartypeDecorHintParamDefaultViolation,
+    BeartypeDecorHintPep484TypeVarViolation as BeartypeDecorHintPep484TypeVarViolation,
     BeartypeDoorHintViolation as BeartypeDoorHintViolation,
 )
 
