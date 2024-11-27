@@ -46,6 +46,8 @@ from beartype._check.code.codescope import (
 )
 from beartype._check.code.pep.codepep484604 import (
     make_hint_pep484604_check_expr)
+from beartype._check.code.pep.codepep695 import (
+    make_hint_pep695_type_alias_subscripted_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
@@ -157,8 +159,6 @@ from beartype._util.kind.map.utilmapfrozen import EMPTY_FROZEN_DICT
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bound_or_none)
-from beartype._util.hint.pep.proposal.pep695 import (
-    get_hint_pep695_subscripted_typevar_to_hint)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits
@@ -1954,42 +1954,15 @@ def make_check_expr(
                 #FIXME: Implement corresponding "beartype._check.error"
                 #validation, please. *sigh*
                 elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
-                    # Reduce this subscripted type alias to:
-                    # * The semantically useful unsubscripted type alias
-                    #   originating this semantically useless subscripted type
-                    #   alias.
-                    # * The type variable lookup table mapping all type
-                    #   variables parametrizing this alias to all non-type
-                    #   variable hints subscripting this alias.
-                    hint_child, typevar_to_hint_child = (
-                        get_hint_pep695_subscripted_typevar_to_hint(
-                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX))  # pyright: ignore
-
-                    # Full type variable lookup table uniting...
-                    typevar_to_hint_curr = (
-                        # The type variable lookup table describing all
-                        # transitive parent hints of this alias *AND*...
-                        hint_curr_meta.typevar_to_hint |  # type: ignore[operator]
-                        # The type variable lookup table describing this alias.
-                        #
-                        # Note that this table is intentionally the second
-                        # rather than first operand of this "|" operation,
-                        # efficiently ensuring that type variables mapped by
-                        # this alias take precedence over type variables mapped
-                        # by transitive parent hints of this alias.
-                        typevar_to_hint_child
-                    )
-
                     # Silently ignore this semantically useless subscripted type
                     # alias in favour of this semantically useful unsubscripted
                     # type alias by trivially replacing *ALL* hint metadata
                     # describing the former with the latter.
-                    hint_curr_meta.reinit(
-                        hint=hint_child,  # pyright: ignore
-                        indent_level=indent_level_child,
-                        pith_expr=pith_curr_assign_expr,
-                        pith_var_name_index=pith_curr_var_name_index,
-                        typevar_to_hint=typevar_to_hint_curr,
+                    make_hint_pep695_type_alias_subscripted_check_expr(
+                        hint_meta=hint_curr_meta,
+                        pith_curr_assign_expr=pith_curr_assign_expr,
+                        pith_curr_var_name_index=pith_curr_var_name_index,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
 
                     # Revisit this hint metadata in the outermost "while" loop.

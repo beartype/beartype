@@ -6,17 +6,10 @@
 '''
 Beartype :pep:`484`- or :pep:`604`-compliant **union type-checking code
 factories** (i.e., low-level callables dynamically generating pure-Python code
-snippets type-checking arbitrary objects against PEP-compliant type hints).
+snippets type-checking arbitrary objects against unions).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
-
-# ....................{ TODO                               }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
-
-#FIXME: Rename this submodule to "codemake" *AFTER* finalizing this refactoring,
-#please.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
