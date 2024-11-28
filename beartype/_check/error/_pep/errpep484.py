@@ -19,7 +19,7 @@ from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484_noreturn(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing describing the failure of the decorated callable to
     *not* return a value in violation of the :pep:`484`-compliant

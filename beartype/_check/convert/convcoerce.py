@@ -56,7 +56,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
-    Optional,
+    # Optional,
     Union,
 )
 from beartype._cave._cavefast import NotImplementedType

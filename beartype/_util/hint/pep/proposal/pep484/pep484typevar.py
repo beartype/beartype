@@ -112,7 +112,7 @@ def is_hint_pep484_typevar(hint: object) -> bool:
 #  Kinda fun, but *REALLY* non-trivial -- and probably no one cares. Guh!
 @callable_cached
 def get_hint_pep484_typevar_bound_or_none(
-    hint: TypeVar, exception_prefix: str = '') -> object:
+    hint: TypeVar, exception_prefix: str = '') -> Optional[Hint]:
     '''
     PEP-compliant type hint synthesized from all bounded constraints
     parametrizing the passed :pep:`484`-compliant **type variable** (i.e.,
@@ -173,7 +173,7 @@ def get_hint_pep484_typevar_bound_or_none(
 
     Returns
     -------
-    object
+    Optional[Hint]
         Either:
 
         * If this type variable was parametrized by one or more constraints, a

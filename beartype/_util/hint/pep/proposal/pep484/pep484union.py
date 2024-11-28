@@ -14,11 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import Union
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TupleHints,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ FACTORIES                          }....................
 @callable_cached
-def make_hint_pep484_union(hints: tuple) -> object:
+def make_hint_pep484_union(hints: TupleHints) -> Hint:
     '''
     :pep:`484`-compliant **union type hint** (:attr:`typing.Union`
     subscription) synthesized from the passed tuple of two or more
@@ -37,12 +41,12 @@ def make_hint_pep484_union(hints: tuple) -> object:
 
     Parameters
     ----------
-    hint : object
+    hint : TupleHints
         Type hint to be inspected.
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this tuple contains two or more items, the union type hint

@@ -163,6 +163,13 @@ TupleHints = Tuple[Hint, ...]
 of zero or more child type hints subscripting a parent type hint).
 '''
 
+# ....................{ HINTS ~ container : dict           }....................
+DictStrToHint = Dict[str, Hint]
+'''
+:pep:`585`-compliant type hint matching a dictionary mapping from strings to
+PEP-compliant type hints.
+'''
+
 
 TypeVarToHint = Dict[TypeVar, Hint]
 '''

@@ -22,8 +22,8 @@ from beartype._util.hint.pep.proposal.pep593 import (
 from beartype._data.code.datacodeindent import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_pith
 
-# ....................{ GETTERS                            }....................
-def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
+# ....................{ FINDERS                            }....................
+def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`593`-compliant :mod:`beartype`-specific

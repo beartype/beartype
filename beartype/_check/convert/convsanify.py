@@ -138,7 +138,7 @@ def sanify_hint_root_func(
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
+    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(  # pyright: ignore
         decor_meta=decor_meta,
         hint=hint,
         pith_name=pith_name,

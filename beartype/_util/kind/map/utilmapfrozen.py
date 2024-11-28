@@ -221,7 +221,7 @@ class FrozenDict(dict):
         )
 
 # ....................{ CONSTANTS                          }....................
-EMPTY_FROZEN_DICT = FrozenDict()
+FROZEN_DICT_EMPTY = FrozenDict()
 '''
 **Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
 key-value pairs).

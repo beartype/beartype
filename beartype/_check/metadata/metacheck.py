@@ -16,8 +16,9 @@ from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import DictStrToHint
 from beartype._data.hint.datahinttyping import (
-    DictStrToAny,
+    # DictStrToAny,
     TypeStack,
 )
 from collections.abc import Callable
@@ -57,7 +58,7 @@ class BeartypeCheckMeta(object):
     func : Callable
         **Decorated callable** (i.e., high-level callable currently being
         decorated by the :func:`beartype.beartype` decorator).
-    func_arg_name_to_hint : dict[str, object]
+    func_arg_name_to_hint : dict[str, Hint]
         **Type hint dictionary** (i.e., mapping from the name of each annotated
         parameter accepted by the decorated callable to the type hint annotating
         that parameter).
@@ -81,7 +82,7 @@ class BeartypeCheckMeta(object):
         cls_stack: TypeStack
         conf: BeartypeConf
         func: Callable
-        func_arg_name_to_hint: DictStrToAny
+        func_arg_name_to_hint: DictStrToHint
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
@@ -101,7 +102,7 @@ class BeartypeCheckMeta(object):
         conf: BeartypeConf,
         cls_stack: TypeStack,
         func: Callable,
-        func_arg_name_to_hint: DictStrToAny,
+        func_arg_name_to_hint: DictStrToHint,
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
@@ -128,7 +129,7 @@ class BeartypeCheckMeta(object):
         func : Callable
             **Decorated callable** (i.e., high-level callable currently being
             decorated by the :func:`beartype.beartype` decorator).
-        func_arg_name_to_hint : dict[str, object]
+        func_arg_name_to_hint : dict[str, Hint]
             **Type hint dictionary** (i.e., mapping from the name of each
             annotated parameter accepted by the decorated callable to the type
             hint annotating that parameter).

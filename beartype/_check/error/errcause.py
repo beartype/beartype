@@ -33,7 +33,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #              self, unbearability: _TypeHintUnbearability) -> Optional[str]:
 #              ...
 #* Refactor existing find_cause_*() getters (e.g.,
-#  find_cause_sequence_args_1(), find_cause_union()) into
+#  find_cause_sequence_args_1(), find_cause_pep484604_union()) into
 #  _get_unbearability_cause_or_none() methods of the corresponding "TypeHint"
 #  subclasses, please.
 #
@@ -53,7 +53,13 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.convert.convsanify import (
+    sanify_hint_child_if_unignorable_or_none)
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeVarToHint,
+)
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
@@ -64,8 +70,10 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
+from beartype._util.kind.map.utilmapfrozen import (
+    FROZEN_DICT_EMPTY,
+    FrozenDict,
+)
 
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
@@ -105,14 +113,14 @@ class ViolationCause(object):
         * If this violation originates from a decorated callable, that
           callable.
         * Else, :data:`None`.
-    hint : Any
+    hint : Hint
         Type hint to validate this object against.
-    hint_sign : Any
+    hint_sign : Optional[HintSign]
         Either:
 
         * If this hint is PEP-compliant, the sign identifying this hint.
         * Else, :data:`None` otherwise.
-    hint_childs : Optional[Tuple]
+    hint_childs : Optional[Tuple[Hint, ...]]
         Either:
 
         * If this hint is PEP-compliant, the possibly empty tuple of all child
@@ -135,8 +143,15 @@ class ViolationCause(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._check.error.errget.get_func_pith_violation`
-        function for further details.
+        :func:`beartype._check.error.errget.get_func_pith_violation` function.
+    typevar_to_hint : TypeVarToHint
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        each :pep:`484`-compliant type variable parametrizing either the
+        currently visited type hint *or* a transitive parent type hint of this
+        hint to the corresponding non-type variable type hint subscripting that
+        hint). See also the comparable
+        :func:`beartype._check.codecls.HintMeta.typevar_to_hint` instance
+        variable.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -156,6 +171,7 @@ class ViolationCause(object):
         'pith',
         'pith_name',
         'random_int',
+        'typevar_to_hint',
     )
 
 
@@ -170,6 +186,7 @@ class ViolationCause(object):
         'pith',
         'pith_name',
         'random_int',
+        'typevar_to_hint',
     ))
     '''
     Frozen set of the names of all parameters accepted by the :meth:`init`
@@ -190,13 +207,14 @@ class ViolationCause(object):
         conf: BeartypeConf,
         exception_prefix: str,
         func: Optional[Callable],
-        hint: Any,
+        hint: Hint,
         pith: Any,
         pith_name: Optional[str],
         random_int: Optional[int],
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
+        typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     ) -> None:
         '''
         Initialize this type-checking violation cause finder.
@@ -221,6 +239,8 @@ class ViolationCause(object):
             f'{repr(random_int)} not integer or "None".')
         assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
             f'{repr(cause_str_or_none)} not string or "None".')
+        assert isinstance(typevar_to_hint, FrozenDict), (
+            f'{repr(typevar_to_hint)} not frozen dictionary.')
 
         # Classify all passed parameters.
         self.func = func
@@ -233,6 +253,7 @@ class ViolationCause(object):
         self.exception_prefix = exception_prefix
         self.random_int = random_int
         self.cause_str_or_none = cause_str_or_none
+        self.typevar_to_hint = typevar_to_hint
 
         # Nullify all remaining parameters for safety.
         self.hint_sign: Any = None
@@ -327,22 +348,21 @@ class ViolationCause(object):
         satisfy the corresponding hint transitively nested in the hint passed to
         that function.
 
-        For example, consider the PEP-compliant type hint ``List[Union[int,
-        str]]`` describing a list whose items are either integers or strings
-        and the list ``list(range(256)) + [False,]`` consisting of the integers
+        For example, consider the type hint ``List[Union[int, str]]`` describing
+        a list whose items are either integers or strings and the list
+        ``list(range(256)) + [False,]`` consisting of the integers
         0 through 255 followed by boolean :data:`False`. Since that list is a
-        standard sequence, the
-        :func:`._peperrorsequence.find_cause_sequence_args_1`
+        sequence, the :func:`._peperrorsequence.find_cause_sequence_args_1`
         function must decide the cause of this list's failure to comply with
         this hint by finding the list item that is neither an integer nor a
         string, implemented by by iteratively passing each list item to the
-        :func:`._peperrorunion.find_cause_union` function. Since
-        the first 256 items of this list are integers satisfying this hint,
-        :func:`._peperrorunion.find_cause_union` returns a dataclass instance
+        :func:`._peperrorunion.find_cause_pep484604_union` function. Since the first 256
+        items of this list are integers satisfying this hint,
+        :func:`._peperrorunion.find_cause_pep484604_union` returns a dataclass instance
         whose :attr:`cause` field is :data:`None` up to
-        :func:`._peperrorsequence.find_cause_sequence_args_1`
-        before finally finding the non-compliant boolean item and returning the
-        human-readable cause.
+        :func:`._peperrorsequence.find_cause_sequence_args_1` before finally
+        finding the non-compliant boolean item and returning the human-readable
+        cause.
 
         Returns
         -------
@@ -508,6 +528,8 @@ class ViolationCause(object):
             # default this parameter to its current value from this object.
             if arg_name not in kwargs:
                 kwargs[arg_name] = getattr(self, arg_name)
+            # Else, this parameter was explicitly passed by the caller. In this
+            # case, preserve this parameter as is.
 
         # Return a new instance of this class initialized with these arguments.
         return ViolationCause(**kwargs)

@@ -35,9 +35,7 @@ from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,
 )
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-)
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached

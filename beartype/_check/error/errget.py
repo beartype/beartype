@@ -123,6 +123,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
@@ -231,7 +232,7 @@ def get_func_pith_violation(
         cls_stack=check_meta.cls_stack,
         conf=check_meta.conf,
         func=check_meta.func,
-        hint=hint,
+        hint=hint,  # pyright: ignore
         obj=pith_value,
         pith_name=pith_name,
         **kwargs
@@ -241,7 +242,7 @@ def get_func_pith_violation(
 def get_hint_object_violation(
     # Mandatory parameters.
     obj: object,
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
 
     # Optional parameters.
@@ -294,7 +295,7 @@ def get_hint_object_violation(
     ----------
     obj : object
         Arbitrary object to be type-checked against this type hint.
-    hint : object
+    hint : Hint
         Type hint against which to type-check this object.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating

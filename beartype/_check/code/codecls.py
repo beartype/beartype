@@ -88,12 +88,11 @@ class HintMeta(object):
         the internal context of a function body, the former is preferable.
     typevar_to_hint : TypeVarToHint
         **Type variable lookup table** (i.e., immutable dictionary mapping from
-        each :pep:`484`-compliant **type variable** (i.e.,
-        :class:`typing.TypeVar` object) parametrizing either the currently
-        visited type hint *or* a transitive parent type hint of this hint to the
-        corresponding non-type variable type hint subscripting that hint). This
-        table enables runtime type-checkers to efficiently reduce a proper
-        subset of type variables to non-type variables at
+        each :pep:`484`-compliant type variable parametrizing either the
+        currently visited type hint *or* a transitive parent type hint of this
+        hint to the corresponding non-type variable type hint subscripting that
+        hint). This table enables runtime type-checkers to efficiently reduce a
+        proper subset of type variables to non-type variables at
         :func:`beartype.beartype` decoration time, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For

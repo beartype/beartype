@@ -24,8 +24,8 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import DictStrToHint
 from beartype._data.hint.datahinttyping import (
-    DictStrToAny,
     LexicalScope,
     TypeStack,
 )
@@ -92,7 +92,7 @@ class BeartypeDecorMeta(object):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable).
-    func_arg_name_to_hint : dict[str, object]
+    func_arg_name_to_hint : dict[str, Hint]
         **Type hint dictionary** (i.e., mapping from the name of each annotated
         parameter accepted by the decorated callable to the type hint annotating
         that parameter).
@@ -221,7 +221,7 @@ class BeartypeDecorMeta(object):
     if TYPE_CHECKING:
         cls_stack: TypeStack
         conf: BeartypeConf
-        func_arg_name_to_hint: DictStrToAny
+        func_arg_name_to_hint: DictStrToHint
         func_arg_name_to_hint_get: Callable[[str, object], object]
         func_wrappee: Callable
         func_wrappee_is_nested: bool

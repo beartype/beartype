@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
+# from beartype.typing import Optional
 from beartype._check.code.codecls import HintMeta
 from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_subscripted_typevar_to_hint)

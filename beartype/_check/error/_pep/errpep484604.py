@@ -27,7 +27,7 @@ from beartype._util.text.utiltextmunge import (
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_union(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the PEP-compliant union type hint of that cause.

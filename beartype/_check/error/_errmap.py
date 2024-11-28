@@ -57,10 +57,10 @@ def _init() -> None:
         find_cause_subclass_type,
         find_cause_type_instance_origin,
     )
-    from beartype._check.error._pep.errpep484 import find_cause_noreturn
-    from beartype._check.error._pep.errpep484604 import find_cause_union
+    from beartype._check.error._pep.errpep484 import find_cause_pep484_noreturn
+    from beartype._check.error._pep.errpep484604 import find_cause_pep484604_union
     from beartype._check.error._pep.errpep586 import find_cause_literal
-    from beartype._check.error._pep.errpep593 import find_cause_annotated
+    from beartype._check.error._pep.errpep593 import find_cause_pep593_annotated
     from beartype._check.error._pep.pep484585.errpep484585container import (
         find_cause_container_args_1,
         find_cause_tuple_fixed,
@@ -86,17 +86,17 @@ def _init() -> None:
 
     # Map each union-specific sign to its corresponding finder.
     for hint_sign in HINT_SIGNS_UNION:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_union
+        HINT_SIGN_TO_GET_CAUSE_FUNC[hint_sign] = find_cause_pep484604_union
 
     # Map each sign validated by a unique finder to that finder *AFTER* all
     # other mappings. These sign-specific finders are intended to replace all
     # other automated mappings above.
     HINT_SIGN_TO_GET_CAUSE_FUNC.update({
-        HintSignAnnotated: find_cause_annotated,
+        HintSignAnnotated: find_cause_pep593_annotated,
         HintSignForwardRef: find_cause_instance_type_forwardref,
         HintSignGeneric: find_cause_generic,
         HintSignLiteral: find_cause_literal,
-        HintSignNoReturn: find_cause_noreturn,
+        HintSignNoReturn: find_cause_pep484_noreturn,
         HintSignTupleFixed: find_cause_tuple_fixed,
         HintSignType: find_cause_subclass_type,
     })
