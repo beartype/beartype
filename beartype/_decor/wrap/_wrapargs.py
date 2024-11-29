@@ -35,6 +35,7 @@ from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
@@ -168,11 +169,11 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # ..................{ LOCALS ~ hint                      }..................
     # Type hint annotating the current parameter if any *OR* "_PARAM_HINT_EMPTY"
     # otherwise (i.e., if this parameter is unannotated).
-    hint_insane = None
+    hint_insane: Hint = None  # pyright: ignore
 
     # This type hint sanitized into a possibly different type hint more readily
     # consumable by @beartype's code generator.
-    hint = None
+    hint: Hint = None  # pyright: ignore
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -233,7 +234,8 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         # Note that "None" is a semantically meaningful PEP 484-compliant type
         # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
         # distinguish between that type hint and unannotated parameters.
-        hint_insane = decor_meta.func_arg_name_to_hint_get(arg_name, SENTINEL)
+        hint_insane = decor_meta.func_arg_name_to_hint_get(  # pyright: ignore
+            arg_name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.
         if hint_insane is SENTINEL:

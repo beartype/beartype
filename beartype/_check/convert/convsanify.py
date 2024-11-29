@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Optional,
-)
+from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.convert.convcoerce import (
@@ -27,6 +24,7 @@ from beartype._check.convert.convreduce import reduce_hint
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
@@ -39,13 +37,13 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 def sanify_hint_root_func(
     # Mandatory parameters.
     decor_meta: BeartypeDecorMeta,
-    hint: object,
+    hint: Hint,
     pith_name: str,
 
     # Optional parameters.
     arg_kind: Optional[ArgKind] = None,
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
-) -> object:
+) -> Hint:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint annotating the
@@ -86,7 +84,7 @@ def sanify_hint_root_func(
     ----------
     decor_meta : BeartypeDecorMeta
         Decorated callable directly annotated by this hint.
-    hint : object
+    hint : Hint
         Possibly PEP-noncompliant root type hint to be sanified.
     pith_name : str
         Either:
@@ -109,7 +107,7 @@ def sanify_hint_root_func(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this hint is PEP-noncompliant, a PEP-compliant type hint converted
@@ -138,7 +136,7 @@ def sanify_hint_root_func(
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(  # pyright: ignore
+    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
         decor_meta=decor_meta,
         hint=hint,
         pith_name=pith_name,
@@ -204,10 +202,10 @@ def sanify_hint_root_func(
 
 #FIXME: Unit test us up, please.
 def sanify_hint_root_statement(
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
-) -> object:
+) -> Hint:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -228,7 +226,7 @@ def sanify_hint_root_statement(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Possibly PEP-noncompliant root type hint to be sanified.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -239,7 +237,7 @@ def sanify_hint_root_statement(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this hint is PEP-noncompliant, a PEP-compliant type hint converted
@@ -280,7 +278,7 @@ def sanify_hint_root_statement(
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
-def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
+def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Hint:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child
     type hint** (i.e., hint transitively subscripting the root type hint
@@ -290,16 +288,18 @@ def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
     hint is ignorable).
 
     This high-level sanifier effectively chains the lower-level
-    :func:`sanify_hilt_child` sanifier and
+    :func:`.sanify_hint_child` sanifier and
     :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester into a
     single unified function, streamlining sanification and ignorability
     detection throughout the codebase.
 
-    Note that a :data:`None` return unambiguously implies this hint to be
-    ignorable, even if the passed hint is itself :data:`None`. Why? Because if
-    the passed hint were :data:`None`, then a :pep:`484`-compliant reducer will
-    internally reduce this hint to ``type(None)``. After reduction, *all* hints
-    are guaranteed to be non-:data:`None`.
+    Note that a :data:`None` return unambiguously signifies this hint to be
+    ignorable, even if the passed hint was itself :data:`None`. Why? Because if
+    the passed hint were :data:`None`, then a :pep:`484`-compliant reducer would
+    have already internally reduced this hint to ``type(None)``. This implies
+    that *all* hints are guaranteed to be non-:data:`None` after reduction,
+    which then implies that a return value of :data:`None` unambiguously
+    signifies ignorability.
 
     Parameters
     ----------
@@ -308,7 +308,7 @@ def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If the passed possibly insane child type hint is ignorable after
@@ -321,19 +321,19 @@ def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
     hint_child = sanify_hint_child(*args, **kwargs)
 
     # Return either "None" if this hint is ignorable or this hint otherwise.
-    return None if is_hint_ignorable(hint_child) else hint_child
+    return None if is_hint_ignorable(hint_child) else hint_child  # pyright: ignore
 
 
 def sanify_hint_child(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
     pith_name: Optional[str] = None,
-) -> Any:
+) -> Hint:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child
     type hint** (i.e., hint transitively subscripting the root type hint
@@ -343,7 +343,7 @@ def sanify_hint_child(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be sanified.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating

@@ -51,6 +51,7 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     CallableRaiser,
     CallableRaiserOrTester,
@@ -80,7 +81,7 @@ def make_func_raiser(
     # rather than by keyword. Care should be taken when refactoring parameters,
     # particularly with respect to parameter position.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
 ) -> CallableRaiser:
@@ -101,7 +102,7 @@ def make_func_raiser(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -139,7 +140,7 @@ def make_func_tester(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
@@ -155,7 +156,7 @@ def make_func_tester(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -185,7 +186,7 @@ def make_func_tester(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix : str,
 ) -> CodeGenerated:
@@ -198,7 +199,7 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -242,7 +243,7 @@ def make_code_tester_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     cls_stack: Optional[TypeStack],
     is_param: Optional[bool],
@@ -258,7 +259,7 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -411,7 +412,7 @@ def make_code_raiser_func_pep484_noreturn_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
 ) -> CodeGenerated:
@@ -425,7 +426,7 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -531,7 +532,7 @@ def _func_checker_ignorable(obj: object) -> bool:
 #FIXME: Unit test us up, please.
 def _make_func_checker(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     make_code_check: Callable[..., CodeGenerated],
 
@@ -557,7 +558,7 @@ def _make_func_checker(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating

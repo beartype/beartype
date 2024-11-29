@@ -4,15 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`695`-compliant **type hint violation describers** (i.e.,
+Beartype :pep:`695`-compliant **type alias violation describers** (i.e.,
 functions returning human-readable strings explaining violations of
-:pep:`695`-compliant :attr:`typing.Annotated` type hints).
+:pep:`695`-compliant type aliases).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.error.errcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep695TypeAliasSubscripted)
@@ -20,7 +19,6 @@ from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_subscripted_typevar_to_hint)
 
 # ....................{ FINDERS                            }....................
-#FIXME: Register this finder with the "_errmap" submodule, please.
 def find_cause_pep695_type_alias_subscripted(
     cause: ViolationCause) -> ViolationCause:
     '''
@@ -51,7 +49,7 @@ def find_cause_pep695_type_alias_subscripted(
     #   this alias to all non-type variable hints subscripting this alias.
     hint_child, typevar_to_hint_child = (
         get_hint_pep695_subscripted_typevar_to_hint(
-            hint=cause.hint, exception_prefix=cause.exception_prefix))  # pyright: ignore
+            hint=cause.hint, exception_prefix=cause.exception_prefix))  # type: ignore[arg-type]
 
     # Full type variable lookup table uniting...
     typevar_to_hint_curr = (
@@ -70,8 +68,8 @@ def find_cause_pep695_type_alias_subscripted(
     # Silently ignore this semantically useless subscripted type alias in favour
     # of this semantically useful unsubscripted type alias by trivially
     # replacing *ALL* hint metadata describing the former with the latter.
-    cause_deep = cause.permute(
-        hint=hint_child, typevar_to_hint=typevar_to_hint_curr).find_cause()  # pyright: ignore
+    cause_return = cause.permute(
+        hint=hint_child, typevar_to_hint=typevar_to_hint_curr).find_cause()
 
     # Return this output cause.
-    return cause_deep
+    return cause_return

@@ -36,6 +36,7 @@ from beartype.typing import (
     Set,
     Tuple,
     TypeVar,
+    # Union,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
@@ -162,6 +163,13 @@ TupleHints = Tuple[Hint, ...]
 :pep:`585`-compliant type hint matching *any* **child type hints** (i.e., tuple
 of zero or more child type hints subscripting a parent type hint).
 '''
+
+
+# HintOrTupleHints = Union[Hint, TupleHints]
+# '''
+# :pep:`585`-compliant type hint matching either a single type hint *or* a tuple
+# of zero or more type hints.
+# '''
 
 # ....................{ HINTS ~ container : dict           }....................
 DictStrToHint = Dict[str, Hint]

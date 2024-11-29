@@ -153,7 +153,7 @@ HintSignBinaryIO = HintSignGeneric
 HintSignTextIO = HintSignGeneric
 
 # One-off things.
-# AnyStr   <-- not a unique type hint (just a constrained "TypeVar")
+# AnyStr   <-- not a unique type hint (merely a constrained "TypeVar")
 # assert_never   <-- unusable as a type hint
 # assert_type   <-- unusable as a type hint
 # cast   <-- unusable as a type hint
@@ -203,6 +203,8 @@ HintSignSelf            = _HintSign(name='Self')
 # TYPE_CHECKING   <-- unusable as a type hint
 HintSignTypeAlias       = _HintSign(name='TypeAlias')
 HintSignTypeGuard       = _HintSign(name='TypeGuard')
+HintSignTypeIs          = _HintSign(name='TypeIs')
+# TypeAliasType  <-- not a unique type hint (merely a C-based type)
 HintSignUnpack          = _HintSign(name='Unpack')
 
 # Wrapper namespace for re type aliases.

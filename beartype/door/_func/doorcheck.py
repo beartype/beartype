@@ -11,6 +11,9 @@ process).
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Narrow *ALL* "hint: object" parameters to "hint: Hint" *AFTER* CPython
+#officially publishes the "typing.TypeForm" type hint.
+
 #FIXME: Consider adding the following new tester:
 #    def is_objects_similar(
 #        # Mandatory parameters.
@@ -119,11 +122,11 @@ def die_if_unbearable(
     # Since make_func_raiser() is memoized, passing parameters by keyword would
     # raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    func_raiser = make_func_raiser(hint, conf, exception_prefix)
+    func_raiser = make_func_raiser(hint, conf, exception_prefix)  # pyright: ignore
 
     # Either raise an exception or emit a warning only if the passed object
     # violates this hint.
-    func_raiser(obj)  # pyright: ignore[reportUnboundVariable]
+    func_raiser(obj)  # pyright: ignore
 
 # ....................{ TESTERS ~ is_bearable              }....................
 # Note that this PEP 484- and 647-compliant API is entirely the brain child of

@@ -43,8 +43,10 @@ def _init() -> None:
         HintSignGeneric,
         HintSignLiteral,
         HintSignNoReturn,
+        HintSignPep695TypeAliasSubscripted,
         HintSignTupleFixed,
         HintSignType,
+        HintSignTypeVar,
     )
     from beartype._data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_MAPPING,
@@ -57,10 +59,16 @@ def _init() -> None:
         find_cause_subclass_type,
         find_cause_type_instance_origin,
     )
-    from beartype._check.error._pep.errpep484 import find_cause_pep484_noreturn
-    from beartype._check.error._pep.errpep484604 import find_cause_pep484604_union
-    from beartype._check.error._pep.errpep586 import find_cause_literal
+    from beartype._check.error._pep.errpep484604 import (
+        find_cause_pep484604_union)
+    from beartype._check.error._pep.errpep586 import find_cause_pep586_literal
     from beartype._check.error._pep.errpep593 import find_cause_pep593_annotated
+    from beartype._check.error._pep.errpep695 import (
+        find_cause_pep695_type_alias_subscripted)
+    from beartype._check.error._pep.pep484.errpep484noreturn import (
+        find_cause_pep484_noreturn)
+    from beartype._check.error._pep.pep484.errpep484typevar import (
+        find_cause_pep484_typevar)
     from beartype._check.error._pep.pep484585.errpep484585container import (
         find_cause_container_args_1,
         find_cause_tuple_fixed,
@@ -95,10 +103,13 @@ def _init() -> None:
         HintSignAnnotated: find_cause_pep593_annotated,
         HintSignForwardRef: find_cause_instance_type_forwardref,
         HintSignGeneric: find_cause_generic,
-        HintSignLiteral: find_cause_literal,
+        HintSignLiteral: find_cause_pep586_literal,
         HintSignNoReturn: find_cause_pep484_noreturn,
+        HintSignPep695TypeAliasSubscripted: (
+            find_cause_pep695_type_alias_subscripted),
         HintSignTupleFixed: find_cause_tuple_fixed,
         HintSignType: find_cause_subclass_type,
+        HintSignTypeVar: find_cause_pep484_typevar,
     })
 
 

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`484`-compliant :attr:`typing.NoReturn` **type hint violation
+Beartype :pep:`484`-compliant :attr:`typing.NoReturn` **type hint violation
 describers** (i.e., functions returning human-readable strings explaining
 violations of :pep:`484`-compliant :attr:`typing.NoReturn` type hints).
 
@@ -22,7 +22,7 @@ from beartype._util.text.utiltextrepr import represent_pith
 def find_cause_pep484_noreturn(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing describing the failure of the decorated callable to
-    *not* return a value in violation of the :pep:`484`-compliant
+    *not* return a value in violation of the passed :pep:`484`-compliant
     :attr:`typing.NoReturn` type hint.
 
     Parameters

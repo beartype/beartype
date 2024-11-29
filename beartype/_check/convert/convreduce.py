@@ -18,13 +18,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Any,
-    # Callable,
     Dict,
     Optional,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
@@ -83,6 +82,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
     HintSignTypeAlias,
     HintSignTypeGuard,
+    HintSignTypeIs,
     HintSignTypeVar,
     HintSignTypedDict,
     HintSignUnpack,
@@ -123,7 +123,8 @@ from beartype._util.hint.pep.proposal.pep612 import (
 from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
 from beartype._util.hint.pep.proposal.pep646692 import (
     reduce_hint_pep646692_unpack)
-from beartype._util.hint.pep.proposal.pep647 import reduce_hint_pep647
+from beartype._util.hint.pep.proposal.pep647742 import (
+    reduce_hint_pep647_or_pep742)
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
 from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695_unsubscripted
@@ -135,7 +136,7 @@ from collections.abc import Callable
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
     # Mandatory parameters.
-    hint: Any,
+    hint: Hint,
     conf: BeartypeConf,
 
     # Optional parameters.
@@ -144,7 +145,7 @@ def reduce_hint(
     arg_kind: Optional[ArgKind] = None,
     cls_stack: TypeStack = None,
     exception_prefix: str = '',
-) -> object:
+) -> Hint:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible *or* this hint as is otherwise (i.e., if
@@ -165,7 +166,7 @@ def reduce_hint(
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         Type hint to be possibly reduced.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -208,7 +209,7 @@ def reduce_hint(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If the passed hint is reducible, another hint reduced from this hint.
@@ -219,7 +220,7 @@ def reduce_hint(
     # guarantee that the passed hint is *NEVER* equal to the previously reduced
     # instance of this hint unless actually reduced below. This is necessary, as
     # "None" is a valid type hint reduced to "type(None)" below.
-    hint_prev: object = SENTINEL
+    hint_prev: Hint = SENTINEL  # pyright: ignore
 
     # Repeatedly reduce this hint to increasingly irreducible hints until this
     # hint is no longer reducible.
@@ -263,14 +264,14 @@ def reduce_hint(
 
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_uncached(
-    hint: Any,
+    hint: Hint,
     conf: BeartypeConf,
     decor_meta: Optional[BeartypeDecorMeta],
     arg_kind: Optional[ArgKind],
     pith_name: Optional[str],
     cls_stack: TypeStack,
     exception_prefix: str,
-) -> object:
+) -> Hint:
     '''
     Lower-level **contextual type hint** (i.e., type hint contextually dependent
     on the kind of class, attribute, callable parameter, or callable return
@@ -286,7 +287,7 @@ def _reduce_hint_uncached(
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         Type hint to be possibly reduced.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -322,7 +323,7 @@ def _reduce_hint_uncached(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If the passed hint is reducible, another hint reduced from this hint.
@@ -361,10 +362,10 @@ def _reduce_hint_uncached(
 
 @callable_cached
 def _reduce_hint_cached(
-    hint: Any,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
-) -> object:
+) -> Hint:
     '''
     Lower-level **context-free type hint** (i.e., type hint *not* contextually
     dependent on the kind of class, attribute, callable parameter, or callable
@@ -377,7 +378,7 @@ def _reduce_hint_cached(
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         Type hint to be possibly reduced.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -387,7 +388,7 @@ def _reduce_hint_cached(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If the passed hint is reducible, another hint reduced from this hint.
@@ -501,8 +502,8 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignNone: reduce_hint_pep484_none,
 
     #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
-    # If this type variable was parametrized by one or more bounded
-    # constraints, reduce this hint to these constraints.
+    # # If this type variable was parametrized by one or more bounded
+    # # constraints, reduce this hint to these constraints.
     HintSignTypeVar: reduce_hint_pep484_typevar,
 
     # ..................{ PEP (484|585)                      }..................
@@ -803,7 +804,7 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Reduce PEP 647-compliant "typing.TypeGuard[...]" type hints to either:
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
-    HintSignTypeGuard: reduce_hint_pep647,
+    HintSignTypeGuard: reduce_hint_pep647_or_pep742,
 
     # ..................{ PEP 673                            }..................
     # Reduce PEP 673-compliant "typing.Self" type hints to either:
@@ -811,6 +812,12 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     #   class on the passed type stack.
     # * Else, raise an exception.
     HintSignSelf: reduce_hint_pep673,
+
+    # ..................{ PEP 742                            }..................
+    # Reduce PEP 742-compliant "typing.TypeIs[...]" type hints to either:
+    # * If this hint annotates the return of some callable, the "bool" type.
+    # * Else, raise an exception.
+    HintSignTypeIs: reduce_hint_pep647_or_pep742,
 }
 '''
 Dictionary mapping from each sign uniquely identifying various type hints to

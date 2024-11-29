@@ -6,7 +6,7 @@
 '''
 Beartype :pep:`593`-compliant **type hint violation describers** (i.e.,
 functions returning human-readable strings explaining violations of
-:pep:`593`-compliant :attr:`typing.Annotated` type hints).
+:pep:`593`-compliant :obj:`typing.Annotated` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

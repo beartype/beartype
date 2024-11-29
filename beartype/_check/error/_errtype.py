@@ -18,6 +18,14 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
+# from beartype._data.hint.datahintpep import (
+#     HintOrTupleHints,
+#     TupleHints,
+# )
+from beartype._data.hint.datahinttyping import (
+    TupleTypes,
+    TypeOrTupleTypes,
+)
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
@@ -82,7 +90,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
 
     # Isinstanceable class against which this pith was type-checked.
-    hint = cause.hint
+    hint: type = cause.hint  # type: ignore[assignment]
 
     # Pith type-checked against this isinstanceable class.
     pith = cause.pith
@@ -193,7 +201,7 @@ def find_cause_instance_type_forwardref(
 
     # Class referred to by this absolute or relative forward reference.
     hint_ref_type = import_pep484585_ref_type(
-        hint=cause.hint,
+        hint=cause.hint,  # type: ignore[arg-type]
         cls_stack=cause.cls_stack,
         func=cause.func,
         exception_cls=BeartypeCallHintForwardRefException,
@@ -259,31 +267,36 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
 
+    # This tuple union.
+    hint: TupleTypes = cause.hint  # type: ignore[assignment]
+
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(
-        hint=cause.hint,
+        hint=hint,
         exception_prefix=cause.exception_prefix,
         exception_cls=_BeartypeCallHintPepRaiseException,
     )
     # Else, this hint is a tuple union.
 
-    # Output cause to be returned, permuted from this input cause such that the
-    # output cause justification is either...
-    cause_return = cause.permute(cause_str_or_none=(
-        # If this pith is an instance of one or more types in this tuple union,
-        # "None";
-        None
-        if isinstance(cause.pith, cause.hint) else
-        # Else, this pith is an instance of *NO* types in this tuple union. In
-        # this case, a substring describing this failure to be embedded in a
-        # longer string.
-        (
-            f'{represent_pith(cause.pith)} not instance of '
-            f'{color_hint(text=join_delimited_disjunction_types(cause.hint), is_color=cause.conf.is_color)}'
+    # If this pith is an instance of one or more types in this tuple union,
+    # record that this pith satisfies this tuple union.
+    if isinstance(cause.pith, hint):
+        cause_return = cause.permute(cause_str_or_none=None)
+    # Else, this pith is an instance of *NO* types in this tuple union. In
+    # this case, this pith violates this tuple union.
+    else:
+        # Machine-readable representation of this tuple union.
+        hint_repr = color_hint(
+            text=join_delimited_disjunction_types(hint),
+            is_color=cause.conf.is_color,
         )
-    ))
 
-    # Return this cause.
+        # Output cause to be returned, permuted from this input cause such that
+        # the output cause justification is a substring describing this failure.
+        cause_return = cause.permute(cause_str_or_none=(
+            f'{represent_pith(cause.pith)} not instance of {hint_repr}'))
+
+    # Return this output cause.
     return cause_return
 
 # ....................{ GETTERS ~ subclass : type          }....................
@@ -316,7 +329,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     # Else, this pith is a type.
 
     # Superclass this pith is required to be a subclass of.
-    hint_child = cause.hint_childs[0]
+    hint_child: TypeOrTupleTypes = cause.hint_childs[0]  # pyright: ignore
 
     # If this superclass is ignorable, then *ALL* types including this pith
     # satisfy this superclass. In this case, return the passed cause as is.

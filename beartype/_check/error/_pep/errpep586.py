@@ -20,11 +20,11 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_literal(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`586`-compliant :mod:`beartype`-specific
-    **literal** (i.e., :attr:`typing.Literal` type hint) of that cause.
+    **literal** (i.e., :obj:`typing.Literal` type hint) of that cause.
 
     Parameters
     ----------

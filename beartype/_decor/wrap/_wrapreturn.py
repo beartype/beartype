@@ -24,6 +24,7 @@ from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._decor.wrap.wrapsnip import (
     CODE_RETURN_CHECK_PREFIX,
@@ -86,7 +87,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # Note that "None" is a semantically meaningful PEP 484-compliant type hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
     # between that type hint and an unannotated return.
-    hint = decor_meta.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)
+    hint: Hint = decor_meta.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)  # pyright: ignore
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:

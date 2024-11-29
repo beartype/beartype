@@ -123,6 +123,9 @@ def make_hint_pep484_typevar_check_expr(
             cls_stack=cls_stack,
             exception_prefix=exception_prefix,
         )
+    # Else, this type variable was neither mapped to another hint by one or more
+    # transitive parent hints *NOR* parametrized by one or more bounded
+    # constraints.
 
     # If this type variable is reducible to an unignorable hint...
     if hint_child is not None:

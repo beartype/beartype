@@ -63,6 +63,7 @@ from beartype._cave._cavefast import NotImplementedType
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
+from beartype._data.hint.datahintpep import Hint
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdmain import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
@@ -73,11 +74,11 @@ from beartype._util.hint.pep.proposal.pep484.pep484union import (
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
-    hint: object,
+    hint: Hint,
     decor_meta: BeartypeDecorMeta,
     pith_name: str,
     exception_prefix: str,
-) -> object:
+) -> Hint:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint annotating the
@@ -102,7 +103,7 @@ def coerce_func_hint_root(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Possibly PEP-noncompliant type hint to be possibly coerced.
     decor_meta : BeartypeDecorMeta
         Decorated callable directly annotated by this hint.
@@ -118,7 +119,7 @@ def coerce_func_hint_root(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this possibly PEP-noncompliant hint is coercible, a PEP-compliant
@@ -137,11 +138,8 @@ def coerce_func_hint_root(
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
-        hint = resolve_hint(
-            hint=hint,
-            decor_meta=decor_meta,
-            exception_prefix=exception_prefix,
-        )
+        hint = resolve_hint(  # pyright: ignore
+            hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)
     # Else, this hint is *NOT* stringified.
     #
     # In either case, this hint is guaranteed to now be a non-string hint.
@@ -198,13 +196,13 @@ def coerce_func_hint_root(
         # thus taken the surprisingly sensible course of silently ignoring this
         # edge case by effectively performing the same type expansion as
         # performed here. *applause*
-        return Union[hint, NotImplementedType]  # pyright: ignore[reportGeneralTypeIssues]
+        return Union[hint, NotImplementedType]  # pyright: ignore
 
     # Defer to the function-agnostic root hint coercer as a generic fallback.
     return coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
 
 
-def coerce_hint_root(hint: object, exception_prefix: str) -> object:
+def coerce_hint_root(hint: Hint, exception_prefix: str) -> Hint:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -245,7 +243,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this possibly PEP-noncompliant hint is coercible, a PEP-compliant
@@ -271,7 +269,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
     return coerce_hint_any(hint)
 
 # ....................{ COERCERS ~ any                     }....................
-def coerce_hint_any(hint: object) -> Any:
+def coerce_hint_any(hint: Hint) -> Hint:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed
     PEP-compliant type hint if this hint is coercible *or* this hint as is
@@ -379,12 +377,12 @@ def coerce_hint_any(hint: object) -> Any:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be possibly coerced.
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If this PEP-compliant type hint is coercible, another PEP-compliant
@@ -406,7 +404,7 @@ def coerce_hint_any(hint: object) -> Any:
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_cacheworthy(hint):
         # print(f'Self-caching type hint {repr(hint)}...')
-        return _hint_repr_to_hint.cache_or_get_cached_value(
+        return _hint_repr_to_hint.cache_or_get_cached_value(  # pyright: ignore
             key=repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 

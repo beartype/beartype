@@ -16,8 +16,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import Tuple
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.datahintpep import (
+    DictStrToHint,
+    Hint,
+)
 from beartype._data.hint.datahinttyping import (
-    DictStrToAny,
     TypeException,
 )
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
@@ -41,19 +44,19 @@ from collections.abc import (
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
     func: Callable,
-    func_arg_name_to_hint : DictStrToAny,
+    func_arg_name_to_hint: DictStrToHint,
     exception_prefix: str,
-) -> object:
+) -> Hint:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the
-    passed callable if any to a simpler form to generate optimally efficient
+    passed callable if any to a simpler form generating optimally efficient
     type-checking by the :func:`beartype.beartype` decorator.
 
     Parameters
     ----------
     func : Callable
         Callable to be type-checked.
-    func_arg_name_to_hint : dict[str, Any]
+    func_arg_name_to_hint : dict[str, Hint]
         Dictionary mapping from the name of each annotated parameter
         semantically (but possibly *not* physically in the edge case in which
         the passed callable to be type-checked differs from the callable
@@ -65,7 +68,7 @@ def reduce_hint_pep484585_func_return(
 
     Returns
     -------
-    object
+    Hint
         Single argument subscripting this hint.
 
     Raises
@@ -100,7 +103,7 @@ def reduce_hint_pep484585_func_return(
         if hint_sign is HintSignCoroutine:
             # 3-tuple of all child type hints subscripting this hint if
             # subscripted by three such hints *OR* raise an exception.
-            hint_args: Tuple[object, object, object] = get_hint_pep484585_args(  # type: ignore[assignment]
+            hint_args: Tuple[Hint, Hint, Hint] = get_hint_pep484585_args(  # type: ignore[assignment]
                 hint=hint, args_len=3, exception_prefix=exception_prefix)
 
             # Reduce this hint to the last child type hint subscripting this
