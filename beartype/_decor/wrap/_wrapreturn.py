@@ -119,7 +119,19 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # * If this hint is PEP-compliant and supported, this hint as is.
             # * Else, raise an exception.
             #
-            # Do this first *BEFORE* passing this hint to any further callables.
+            # Note that:
+            # * This hint must sanitized *BEFORE* testing this hint. Why? The
+            #   PEP 484-compliant "typing.NoReturn" return hint in conjunction
+            #   with PEP 563. If this return hint is "typing.NoReturn" *AND*
+            #   this submodule enables PEP 563 via "from __future__ import
+            #   annotations, then this hint will be the useless string
+            #   "NoReturn" rather than the useful hint "typing.NoReturn". In
+            #   this case, this hist *MUST* be sanitized first; doing so
+            #   destringifies this string into a usable hint, enabling this hint
+            #   to then be detected below.
+            # * For the exact same reason, this sanitization *CANNOT* be
+            #   performed in the low-level make_check_expr() dynamically
+            #   generating code type-checking this hint.
             hint = sanify_hint_root_func(
                 hint=hint, pith_name=ARG_NAME_RETURN, decor_meta=decor_meta)
             # print(f'Sanified {repr(decor_meta.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
@@ -144,80 +156,81 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                 # Full code snippet to be returned.
                 func_wrapper_code = (
                     f'{code_noreturn_check}{code_noreturn_violation}')
-            # Else, this is *NOT* "typing.NoReturn". In this case...
-            else:
-                # If this PEP-compliant hint is unignorable, generate and return
-                # a snippet type-checking this return against this hint.
-                if not is_hint_ignorable(hint):
-                    # Type stack if required by this hint *OR* "None" otherwise.
-                    # See is_hint_needs_cls_stack() for details.
-                    #
-                    # Note that the original unsanitized "hint_insane" (e.g.,
-                    # "typing.Self") rather than the new sanitized "hint" (e.g.,
-                    # the class currently being decorated by @beartype) is
-                    # passed to that tester. See _code_check_args() for details.
-                    cls_stack = (
-                        decor_meta.cls_stack
-                        if is_hint_needs_cls_stack(hint_insane) else
-                        None
-                    )
-                    # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
+            # Else, this is *NOT* "typing.NoReturn".
+            #
+            # If this PEP-compliant hint is unignorable, generate and return
+            # a snippet type-checking this return against this hint.
+            elif not is_hint_ignorable(hint):
+                # Type stack if required by this hint *OR* "None" otherwise.
+                # See is_hint_needs_cls_stack() for details.
+                #
+                # Note that the original unsanitized "hint_insane" (e.g.,
+                # "typing.Self") rather than the new sanitized "hint" (e.g.,
+                # the class currently being decorated by @beartype) is
+                # passed to that tester. See _code_check_args() for details.
+                cls_stack = (
+                    decor_meta.cls_stack
+                    if is_hint_needs_cls_stack(hint_insane) else
+                    None
+                )
+                # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
 
-                    # Empty tuple, passed below to satisfy the
-                    # _unmemoize_func_wrapper_code() API.
-                    hint_refs_type_basename = ()
+                #FIXME: Uhh... wat? This shouldn't be necessary at all. Excise!
+                # Empty tuple, passed below to satisfy the
+                # unmemoize_func_wrapper_code() API.
+                hint_refs_type_basename = ()
 
-                    # Code snippet type-checking any arbitrary return.
-                    (
-                        code_return_check_pith,
-                        func_scope,
-                        hint_refs_type_basename,
-                    ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                        hint,
-                        decor_meta.conf,
-                        cls_stack,
-                        False,  # <-- True only for parameters
-                    )
+                # Code snippet type-checking any arbitrary return.
+                (
+                    code_return_check_pith,
+                    func_scope,
+                    hint_refs_type_basename,
+                ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
+                    hint,
+                    decor_meta.conf,
+                    cls_stack,
+                    False,  # <-- True only for parameters
+                )
 
-                    # Unmemoize this snippet against this return.
-                    code_return_check = unmemoize_func_wrapper_code(
-                        decor_meta=decor_meta,
-                        func_wrapper_code=code_return_check_pith,
-                        pith_repr=ARG_NAME_RETURN_REPR,
-                        hint_refs_type_basename=hint_refs_type_basename,
-                    )
+                # Unmemoize this snippet against this return.
+                code_return_check = unmemoize_func_wrapper_code(
+                    decor_meta=decor_meta,
+                    func_wrapper_code=code_return_check_pith,
+                    pith_repr=ARG_NAME_RETURN_REPR,
+                    hint_refs_type_basename=hint_refs_type_basename,
+                )
 
-                    #FIXME: [SPEED] Optimize the following two string munging
-                    #operations into a single string-munging operation resembling:
-                    #    func_wrapper_code = CODE_RETURN_CHECK.format(
-                    #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
-                    #        check_expr=code_return_check_pith_unmemoized,
-                    #    )
-                    #
-                    #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
-                    #resemble:
-                    #    CODE_RETURN_CHECK = (
-                    #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
-                    #        f'{CODE_RETURN_CHECK_SUFFIX}'
-                    #    )
+                #FIXME: [SPEED] Optimize the following two string munging
+                #operations into a single string-munging operation resembling:
+                #    func_wrapper_code = CODE_RETURN_CHECK.format(
+                #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
+                #        check_expr=code_return_check_pith_unmemoized,
+                #    )
+                #
+                #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
+                #resemble:
+                #    CODE_RETURN_CHECK = (
+                #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
+                #        f'{CODE_RETURN_CHECK_SUFFIX}'
+                #    )
 
-                    # Code snippet type-checking this return.
-                    code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
-                        func_call_prefix=(
-                            decor_meta.func_wrapper_code_call_prefix))
+                # Code snippet type-checking this return.
+                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
+                    func_call_prefix=(
+                        decor_meta.func_wrapper_code_call_prefix))
 
-                    # Full code snippet to be returned, consisting of:
-                    # * Calling the decorated callable and localize its return
-                    #   *AND*...
-                    # * Type-checking this return *AND*...
-                    # * Returning this return from this wrapper function.
-                    func_wrapper_code = (
-                        f'{code_return_check_prefix}'
-                        f'{code_return_check}'
-                        f'{CODE_RETURN_CHECK_SUFFIX}'
-                    )
-                # Else, this hint is ignorable.
-                # if not func_wrapper_code: print(f'Ignoring {decor_meta.func_name} return hint {repr(hint)}...')
+                # Full code snippet to be returned, consisting of:
+                # * Calling the decorated callable and localize its return
+                #   *AND*...
+                # * Type-checking this return *AND*...
+                # * Returning this return from this wrapper function.
+                func_wrapper_code = (
+                    f'{code_return_check_prefix}'
+                    f'{code_return_check}'
+                    f'{CODE_RETURN_CHECK_SUFFIX}'
+                )
+            # Else, this hint is ignorable.
+            # if not func_wrapper_code: print(f'Ignoring {decor_meta.func_name} return hint {repr(hint)}...')
         # If one or more warnings were issued, reissue these warnings with each
         # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
         # replaced by a human-readable description of this callable and

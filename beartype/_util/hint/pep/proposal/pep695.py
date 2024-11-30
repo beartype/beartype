@@ -110,14 +110,15 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavefast import (
-    # HintGenericSubscriptedType,
+    HintGenericSubscriptedType,
     HintPep695Type,
 )
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.metadata.metasane import HintSanifiedData
 from beartype._data.hint.datahintpep import (
-    # Hint,
+    Hint,
     TypeVarToHint,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -126,7 +127,7 @@ from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep695_subscripted(hint: object) -> bool:
+def is_hint_pep695_subscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed type hint is a :pep:`695`-compliant
     **subscripted type alias** (i.e., object created by subscripting an object
@@ -164,7 +165,7 @@ def is_hint_pep695_subscripted(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -236,7 +237,7 @@ def is_hint_pep695_unsubscripted_ignorable(hint: HintPep695Type) -> bool:
 @callable_cached
 def get_hint_pep695_subscripted_typevar_to_hint(
     # Mandatory parameters.
-    hint: HintPep695Type,
+    hint: HintGenericSubscriptedType,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -255,8 +256,8 @@ def get_hint_pep695_subscripted_typevar_to_hint(
 
     Parameters
     ----------
-    hint : HintPep695Type
-        Unsubscripted type alias to be inspected.
+    hint : HintGenericSubscriptedType
+        Subscripted type alias to be inspected.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -351,7 +352,7 @@ def get_hint_pep695_unsubscripted_alias(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> object:
+) -> Hint:
     '''
     **Non-alias type hint** (i.e., type hint that is *not* a
     :pep:`695`-compliant type alias) encapsulated by the passed
@@ -376,7 +377,7 @@ def get_hint_pep695_unsubscripted_alias(
 
     Returns
     -------
-    object
+    Hint
         Unaliased type hint encapsulated by this type alias.
 
     Raises
@@ -612,11 +613,72 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
             hint_ref_name_prev = hint_ref_name
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep695_unsubscripted(
-    hint: HintPep695Type,
+def reduce_hint_pep695_subscripted(
+    hint: HintGenericSubscriptedType,
     exception_prefix: str,
-    *args, **kwargs
-) -> object:
+    **kwargs
+) -> HintSanifiedData:
+    '''
+    Reduce the passed :pep:`695`-compliant **subscripted type alias** (i.e.,
+    object created by subscripting an object created by a statement of the form
+    ``type {alias_name}[{type_var}] = {alias_value}`` by one or more child type
+    hints) to the underlying type hint referred to by this alias, stripped of
+    *all* :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
+    objects) parametrizing this alias.
+
+    This reducer effectively deeply type-checks subscripted type aliases.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
+
+    Parameters
+    ----------
+    hint : HintGenericSubscriptedType
+        Subscripted type alias to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
+
+    All remaining passed keyword parameters are silently ignored.
+
+    Returns
+    -------
+    HintSanifiedData
+        Sanified type hint metadata describing this reduction, including the
+        underlying type hint referred to by this unsubscripted type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this alias contains one or more unquoted relative forward references
+        to undefined attributes. Note that this *only* occurs when callers avoid
+        beartype import hooks in favour of manually decorating callables and
+        classes with the :func:`beartype.beartype` decorator.
+    '''
+
+    # Reduce this subscripted type alias to:
+    # * The semantically useful unsubscripted type alias originating this
+    #   semantically useless subscripted type alias.
+    # * The type variable lookup table mapping all type variables parametrizing
+    #   this alias to all non-type variable hints subscripting this alias.
+    hint_unsubscripted, typevar_to_hint = (
+        get_hint_pep695_subscripted_typevar_to_hint(
+            hint=hint, exception_prefix=exception_prefix))
+
+    # Reduce this unsubscripted type alias to the hint it refers to.
+    hint_aliased = reduce_hint_pep695_unsubscripted(  # type: ignore[misc]
+        hint=hint_unsubscripted, exception_prefix=exception_prefix, **kwargs)
+
+    # Metadata encapsulating this hint and type variable lookup table.
+    hint_data = HintSanifiedData(
+        hint=hint_aliased, typevar_to_hint=typevar_to_hint)
+
+    # Return this metadata.
+    return hint_data
+
+
+def reduce_hint_pep695_unsubscripted(
+    hint: HintPep695Type, exception_prefix: str, **kwargs) -> Hint:
     '''
     Reduce the passed :pep:`695`-compliant **unsubscripted type alias** (i.e.,
     object created by a statement of the form ``type {alias_name} =
@@ -627,17 +689,17 @@ def reduce_hint_pep695_unsubscripted(
 
     Parameters
     ----------
-    hint : object
+    hint : HintPep695Type
         Unsubscripted type alias to be reduced.
     exception_prefix : str
         Human-readable substring prefixing exception messages raised by this
         reducer.
 
-    All remaining passed arguments are silently ignored.
+    All remaining passed keyword parameters are silently ignored.
 
     Returns
     -------
-    object
+    Hint
         Underlying type hint referred to by this unsubscripted type alias.
 
     Raises
@@ -650,7 +712,7 @@ def reduce_hint_pep695_unsubscripted(
     '''
 
     # Underlying type hint to be returned.
-    hint_aliased: object = None
+    hint_aliased: Hint = None  # pyright: ignore
 
     # Attempt to...
     try:

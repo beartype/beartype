@@ -513,7 +513,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ UNSUBSCRIPTED ~ typevar : unbound  }................
+        # ................{ TYPEVAR                            }................
         # Unbounded type variable.
         HintPepMetadata(
             hint=T,
@@ -533,7 +533,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ UNSUBSCRIPTED ~ typevar : bound    }................
         # Constrained type variable declared by the "typing" module.
         HintPepMetadata(
             hint=AnyStr,

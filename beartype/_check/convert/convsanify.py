@@ -186,7 +186,7 @@ def sanify_hint_root_func(
     #
     # Note that parameters are intentionally passed positionally to both
     # optimize memoization efficiency and circumvent memoization warnings.
-    hint = reduce_hint(
+    hint = reduce_hint(  # pyright: ignore
         hint=hint,
         conf=decor_meta.conf,
         decor_meta=decor_meta,
@@ -271,7 +271,7 @@ def sanify_hint_root_statement(
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See
     # sanify_hint_root_func() for further commentary.
-    hint = reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)
+    hint = reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)  # pyright: ignore
 
     # Return this sanified hint.
     return hint
@@ -383,7 +383,7 @@ def sanify_hint_child(
     hint = coerce_hint_any(hint)
 
     # Return this hint reduced.
-    return reduce_hint(
+    return reduce_hint(  # pyright: ignore
         hint=hint,
         conf=conf,
         cls_stack=cls_stack,

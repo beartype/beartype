@@ -93,20 +93,21 @@ def test_reduce_hint() -> None:
         conf=BeartypeConf(is_pep484_tower=False),
     ) is complex
 
-    # ..................{ PEP 484 ~ typevar                  }..................
-    # Assert this reducer preserves unbounded type variables as is.
-    assert reduce_hint(hint=T, **kwargs) is T
-
-    # Assert this reducer reduces bounded type variables to their upper bound.
-    assert reduce_hint(hint=T_int, **kwargs) is int
-
-    # Union of all constraints parametrizing a constrained type variable,
-    # reduced from that type variable.
-    typevar_constraints_union = reduce_hint(hint=T_str_or_bytes, **kwargs)
-
-    # Assert this union contains all constraints parametrizing this variable.
-    assert str   in typevar_constraints_union.__args__
-    assert bytes in typevar_constraints_union.__args__
+    #FIXME: Excise us up, please. We no longer reduce type variables. *sigh*
+    # # ..................{ PEP 484 ~ typevar                  }..................
+    # # Assert this reducer preserves unbounded type variables as is.
+    # assert reduce_hint(hint=T, **kwargs) is T
+    #
+    # # Assert this reducer reduces bounded type variables to their upper bound.
+    # assert reduce_hint(hint=T_int, **kwargs) is int
+    #
+    # # Union of all constraints parametrizing a constrained type variable,
+    # # reduced from that type variable.
+    # typevar_constraints_union = reduce_hint(hint=T_str_or_bytes, **kwargs)
+    #
+    # # Assert this union contains all constraints parametrizing this variable.
+    # assert str   in typevar_constraints_union.__args__
+    # assert bytes in typevar_constraints_union.__args__
 
     # ..................{ PEP 544                            }..................
     # For each PEP 484-compliant "typing" IO generic superclass...

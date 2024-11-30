@@ -27,37 +27,6 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ TESTERS                            }....................
-#FIXME: Remove this *AFTER* properly supporting type variables. For now,
-#ignoring type variables is required to at least shallowly support generics
-#parametrized by one or more type variables.
-def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
-    '''
-    :data:`True` unconditionally.
-
-    This tester currently unconditionally ignores *all* :pep:`484`-compliant
-    type variables, which require non-trivial and currently unimplemented
-    code generation support.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : object
-        Type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
-    '''
-
-    # Ignore *ALL* PEP 484-compliant type variables.
-    return True
-
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_deprecated(
     hint: object, exception_prefix : str, *args, **kwargs) -> object:

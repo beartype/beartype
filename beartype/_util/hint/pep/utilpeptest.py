@@ -38,9 +38,8 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 )
 from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.pep484 import (
-    is_hint_pep484_typevar_ignorable,
-)
+from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+    is_hint_pep484_typevar_ignorable)
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_ignorable)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (

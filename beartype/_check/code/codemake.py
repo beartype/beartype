@@ -46,10 +46,10 @@ from beartype._check.code.codescope import (
 )
 from beartype._check.code.pep.codepep484604 import (
     make_hint_pep484604_check_expr)
-from beartype._check.code.pep.codepep695 import (
-    make_hint_pep695_type_alias_subscripted_check_expr)
-from beartype._check.code.pep.pep484.codepep484typevar import (
-    make_hint_pep484_typevar_check_expr)
+# from beartype._check.code.pep.codepep695 import (
+#     make_hint_pep695_type_alias_subscripted_check_expr)
+# from beartype._check.code.pep.pep484.codepep484typevar import (
+#     make_hint_pep484_typevar_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
@@ -1771,39 +1771,42 @@ def make_check_expr(
                 # intentionally detected immediately after generics. In this
                 # case...
 
+                #FIXME: Preserved for posterity, once we begin generating
+                #call-time type variable type-checking.
                 #FIXME: Unit test us up, please.
-                #FIXME: Remove the corresponding reducer once working, please.
                 #FIXME: Implement corresponding "beartype._check.error"
                 #validation, please. *sigh*
-                elif hint_curr_sign is HintSignTypeVar:
-                    # Either the unignorable hint this type variable reduces to
-                    # if any *OR* "None" if this type variable is ignorable.
-                    hint_child = make_hint_pep484_typevar_check_expr(  # type: ignore[assignment]
-                        hint_meta=hint_curr_meta,
-                        conf=conf,
-                        pith_curr_assign_expr=pith_curr_assign_expr,
-                        pith_curr_var_name_index=pith_curr_var_name_index,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-
-                    # If this type variable is reducible to an unignorable
-                    # hint, revisit this hint metadata in the outermost "while"
-                    # loop. Doing so avoids the "CLEANUP" logic below, which
-                    # assumes this hint to be unignorable and thus
-                    # type-checkable.
-                    if hint_child is not None:
-                        continue
-                    # Else, this type variable is *NOT* reducible to an
-                    # unignorable hint. Since @beartype currently fails to
-                    # generate type-checking code for type variables in and of
-                    # themselves, type variables have *NO* intrinsic semantic
-                    # meaning and are thus ignorable. In this case, prepare this
-                    # BFS to visit the next enqueued hint by incrementing the
-                    # 0-based index of metadata describing the next visited hint
-                    # in the "hints_meta" list *BEFORE* visiting that hint.
-                    else:
-                        hints_meta_index_curr += 1
+                # elif hint_curr_sign is HintSignTypeVar:
+                #     # Either the unignorable hint this type variable reduces to
+                #     # if any *OR* "None" if this type variable is ignorable.
+                #     hint_child = make_hint_pep484_typevar_check_expr(  # type: ignore[assignment]
+                #         hint_meta=hint_curr_meta,
+                #         conf=conf,
+                #         pith_curr_assign_expr=pith_curr_assign_expr,
+                #         pith_curr_var_name_index=pith_curr_var_name_index,
+                #         cls_stack=cls_stack,
+                #         exception_prefix=EXCEPTION_PREFIX,
+                #     )
+                #
+                #     # If this type variable is reducible to an unignorable
+                #     # hint, revisit this hint metadata in the outermost "while"
+                #     # loop. Doing so avoids the "CLEANUP" logic below, which
+                #     # assumes this hint to be unignorable and thus
+                #     # type-checkable.
+                #     if hint_child is not None:
+                #         continue
+                #     # Else, this type variable is *NOT* reducible to an
+                #     # unignorable hint. Since @beartype currently fails to
+                #     # generate type-checking code for type variables in and of
+                #     # themselves, type variables have *NO* intrinsic semantic
+                #     # meaning and are thus ignorable. In this case, prepare this
+                #     # BFS to visit the next enqueued hint by incrementing the
+                #     # 0-based index of metadata describing the next visited hint
+                #     # in the "hints_meta" list *BEFORE* visiting that hint.
+                #     else:
+                #         #FIXME: Insufficient. The parent type hint thought this
+                #         #type variable was unignorable and thus 
+                #         hints_meta_index_curr += 1
                 # ............{ PEP 586 ~ typing.Literal           }............
                 # If this hint is a PEP 586-compliant type hint (i.e., the
                 # "typing.Literal" singleton subscripted by one or more literal
@@ -1892,25 +1895,26 @@ def make_check_expr(
                 # packages, which tend to preserve backward compatibility with
                 # older Python versions. In this case...
 
+                #FIXME: Excise us up, please.
                 #FIXME: Unit test us up, please.
                 #FIXME: Implement corresponding "beartype._check.error"
                 #validation, please. *sigh*
-                elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
-                    # Silently ignore this semantically useless subscripted type
-                    # alias in favour of this semantically useful unsubscripted
-                    # type alias by trivially replacing *ALL* hint metadata
-                    # describing the former with the latter.
-                    make_hint_pep695_type_alias_subscripted_check_expr(
-                        hint_meta=hint_curr_meta,
-                        pith_curr_assign_expr=pith_curr_assign_expr,
-                        pith_curr_var_name_index=pith_curr_var_name_index,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-
-                    # Revisit this hint metadata in the outermost "while" loop.
-                    # Doing so avoids the "CLEANUP" logic below, which assumes
-                    # this hint to be unignorable and thus type-checkable.
-                    continue
+                # elif hint_curr_sign is HintSignPep695TypeAliasSubscripted:
+                #     # Silently ignore this semantically useless subscripted type
+                #     # alias in favour of this semantically useful unsubscripted
+                #     # type alias by trivially replacing *ALL* hint metadata
+                #     # describing the former with the latter.
+                #     make_hint_pep695_type_alias_subscripted_check_expr(
+                #         hint_meta=hint_curr_meta,
+                #         pith_curr_assign_expr=pith_curr_assign_expr,
+                #         pith_curr_var_name_index=pith_curr_var_name_index,
+                #         exception_prefix=EXCEPTION_PREFIX,
+                #     )
+                #
+                #     # Revisit this hint metadata in the outermost "while" loop.
+                #     # Doing so avoids the "CLEANUP" logic below, which assumes
+                #     # this hint to be unignorable and thus type-checkable.
+                #     continue
 
                 # ............{ UNSUPPORTED                        }............
                 # Else, this hint is neither shallowly nor deeply supported and
