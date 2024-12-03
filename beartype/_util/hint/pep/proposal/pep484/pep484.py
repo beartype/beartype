@@ -29,7 +29,7 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_deprecated(
-    hint: object, exception_prefix : str, *args, **kwargs) -> object:
+    hint: object, exception_prefix : str, **kwargs) -> object:
     '''
     Preserve the passed :pep:`484`-compliant type hint as is while emitting one
     non-fatal deprecation warning for this type hint if **deprecated** (i.e.,
@@ -114,7 +114,7 @@ def reduce_hint_pep484_deprecated(
 # emits false positives when this reducer is typed as returning "NoneType":
 #     beartype._util.hint.pep.proposal.pep484.pep484.py:190: error: Variable
 #     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
-def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
+def reduce_hint_pep484_none(hint: object, **kwargs) -> type:
     '''
     Reduce the passed :pep:`484`-compliant :data:`None` type hint to the type of
     that type hint (i.e., the builtin :class:`types.NoneType` class).

@@ -81,14 +81,15 @@ def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
 #upper bounds as semantically equivalent. They're really not at all. We suspect
 #our younger self was simply confused by the frankly unreadable PEP
 #documentation surrounding this subject. In a readable nutshell:
-#* Type variable bounds are arbitrary type hints. An object satisfies a type
+#* Type variable *BOUNDS* are arbitrary type hints. An object satisfies a type
 #  variable bound if and only if that object is an instance of that bound (i.e.,
 #  the type hint of that object is a subhint of that bound). Subclasses are thus
 #  permitted. Standard code generation thus suffices here.
-#* Type variable constraints are a tuple of one or more... what exactly? Types?
-#  Type hints? If merely types, constraints are trivial to support. If arbitrary
-#  type hints, however, constraints are definitely non-trivial to support. We
-#  suspect that, as with bounds, constraints may be arbitrary type hints. *sigh*
+#* Type variable *CONSTRAINTS* are a tuple of one or more... what exactly?
+#  Types? Type hints? If merely types, constraints are trivial to support. If
+#  arbitrary type hints, however, constraints are definitely non-trivial to
+#  support. We suspect that, as with bounds, constraints may be arbitrary type
+#  hints. *sigh*
 #
 #  In either case, the distinction is clear: an object satisfies a type variable
 #  constraint if and only if that object is *EXACTLY* matched by one of those
@@ -517,9 +518,12 @@ def map_pep484_typevars_to_hints(
         typevar_to_hint[typevar] = hint
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Remove this function *AFTER* deeply type-checking type variables.
 def reduce_hint_pep484_typevar(
-    hint: TypeVar, exception_prefix: str, *args, **kwargs) -> object:
+    hint: TypeVar,
+    typevar_to_hint: TypeVarToHint,
+    exception_prefix: str,
+    **kwargs
+) -> object:
     '''
     Reduce the passed :pep:`484`-compliant **type variable** (i.e.,
     :class:`typing.TypedDict` instance) to a lower-level type hint currently
@@ -533,6 +537,9 @@ def reduce_hint_pep484_typevar(
     ----------
     hint : object
         Type variable to be reduced.
+    typevar_to_hint : TypeVarToHint, optional
+        **Type variable lookup table** (i.e., dictionary mapping from type
+        variables to the arbitrary type hints those type variables map to).
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -545,22 +552,29 @@ def reduce_hint_pep484_typevar(
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
 
-    # PEP-compliant type hint synthesized from all bounded constraints
+    # Concrete hint mapped to by this type variable if one or more transitive
+    # parent hints previously mapped this type variable to a hint *OR* "None".
+    hint_reduced: Optional[Hint] = typevar_to_hint.get(hint)  # pyright: ignore
+
+    # If *NO* transitive parent hints previously mapped this type variable to a
+    # hint, PEP-compliant hint synthesized from all bounded constraints
     # parametrizing this type variable if any *OR* "None" otherwise.
     #
-    # Note that this function call is intentionally passed positional rather
-    # positional keywords for efficiency with respect to @callable_cached.
-    hint_bound = get_hint_pep484_typevar_bound_or_none(hint, exception_prefix)
-    # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
-    # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
+    # Note this call is intentionally passed positional rather positional
+    # keywords due to memoization.
+    if hint_reduced is None:
+        hint_reduced = get_hint_pep484_typevar_bound_or_none(
+            hint, exception_prefix)  # pyright: ignore
+        # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
+        # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
+    # Else, one or more transitive parent hints previously mapped this type
+    # variable to a hint.
 
     # Return either...
     return (
-        # If this type variable was parametrized by *NO* bounded constraints,
-        # this type variable preserved as is;
+        # If this type variable is irreducible, this type variable preserved;
         hint
-        if hint_bound is None else
-        # Else, this type variable was parametrized by one or more bounded
-        # constraints. In this case, these constraints.
-        hint_bound
+        if hint_reduced is None else
+        # Else, this type variable was reduced. In this case, that reduction.
+        hint_reduced
     )

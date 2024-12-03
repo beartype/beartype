@@ -25,6 +25,7 @@ from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintSanifiedData,
+    unpack_hint_or_data,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahintpep import (
@@ -220,12 +221,12 @@ def reduce_hint(
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
     typevar_to_hint : TypeVarToHint, optional
-        **Type variable lookup table** transitively describing all parent hints
-        of this hint, defined as an immutable dictionary mapping from the
-        :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
-        objects) originally parametrizing the origins of these parent hints if
-        any to the corresponding child hints subscripting these parent hints.
-        Defaults to :data:`.FROZEN_DICT_EMPTY`.
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        the :pep:`484`-compliant **type variables** (i.e.,
+        :class:`typing.TypeVar` objects) originally parametrizing the origins of
+        all transitive parent hints of this hint to the corresponding child
+        hints subscripting these parent hints). Defaults to
+        :data:`.FROZEN_DICT_EMPTY`.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         reducer. Defaults to the empty string.
@@ -240,6 +241,8 @@ def reduce_hint(
           * If reducing this hint to a lower-level hint generates supplementary
             metadata, that metadata including that lower-level hint.
           * Else, that lower-level hint alone.
+
+        * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
     assert isinstance(typevar_to_hint, FrozenDict), (
         f'{repr(typevar_to_hint)} not frozen dictionary.')
@@ -277,42 +280,17 @@ def reduce_hint(
             exception_prefix=exception_prefix,
         )
 
-        # This possibly context-free hint efficiently reduced to another hint.
+        # Sane hint reduced from this possibly insane hint if reducing this hint
+        # did not generate supplementary metadata *OR* that metadata otherwise
+        # (i.e., if reducing this hint generated supplementary metadata).
         hint_or_data = _reduce_hint_cached(hint, conf, exception_prefix)
 
-        # If reducing this hint generated supplementary metadata...
-        if isinstance(hint_or_data, HintSanifiedData):
-            # This lower-level hint reduced from this higher-level hint.
-            hint = hint_or_data.hint
-
-            # If reducing this hint generated a non-empty type variable lookup
-            # table...
-            if hint_or_data.typevar_to_hint:
-                # If the caller passed an empty type variable lookup table,
-                # trivially replace the latter with the former.
-                if not typevar_to_hint:
-                    typevar_to_hint = hint_or_data.typevar_to_hint
-                else:
-                    # Full type variable lookup table uniting...
-                    typevar_to_hint = (
-                        # The type variable lookup table describing all
-                        # transitive parent hints of this reduced hint *AND*...
-                        typevar_to_hint |  # type: ignore[operator]
-                        # The type variable lookup table describing this hint.
-                        #
-                        # Note that this table is intentionally the second
-                        # rather than first operand of this "|" operation,
-                        # efficiently ensuring that type variables mapped by
-                        # this hint take precedence over type variables mapped
-                        # by transitive parent hints of this hint.
-                        hint_or_data.typevar_to_hint
-                    )
-            # Else, reducing this hint generated an empty type variable lookup
-            # table. In this case, this table is ignorable.
-        # Else, reducing this hint did *NOT* generate supplementary metadata. In
-        # this case, preserve this reduced hint as is.
-        else:
-            hint = hint_or_data
+        # This possibly context-free hint efficiently reduced to another hint
+        # and the resulting type variable lookup table.
+        hint, typevar_to_hint = unpack_hint_or_data(
+            hint_or_data=hint_or_data,
+            typevar_to_hint=typevar_to_hint,
+        )
 
         # If the current and previously reduced instances of this hint are
         # identical, the above reductions preserved this hint as is rather than
@@ -381,7 +359,7 @@ def _reduce_hint_cached(
             metadata, that metadata including that lower-level hint.
           * Else, that lower-level hint alone.
 
-        * Else, this hint as is unmodified.
+        * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
 
     # Attempt to...
@@ -478,12 +456,12 @@ def _reduce_hint_uncached(
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
-    typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** transitively describing all parent hints
-        of this hint, defined as an immutable dictionary mapping from the
-        :pep:`484`-compliant **type variables** (i.e., :class:`typing.TypeVar`
-        objects) originally parametrizing the origins of these parent hints if
-        any to the corresponding child hints subscripting these parent hints.
+    typevar_to_hint : TypeVarToHint, optional
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        the :pep:`484`-compliant **type variables** (i.e.,
+        :class:`typing.TypeVar` objects) originally parametrizing the origins of
+        all transitive parent hints of this hint to the corresponding child
+        hints subscripting these parent hints).
     exception_prefix : str
         Human-readable substring prefixing exception messages raised by this
         reducer.
@@ -594,11 +572,6 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # The "None" singleton is used to type callables lacking an explicit
     # "return" statement and thus absurdly common.
     HintSignNone: reduce_hint_pep484_none,
-
-    #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
-    # # If this type variable was parametrized by one or more bounded
-    # # constraints, reduce this hint to these constraints.
-    HintSignTypeVar: reduce_hint_pep484_typevar,
 
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant items view type hint, reduce
@@ -813,8 +786,15 @@ Note that:
 
 _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # ..................{ PEP 484                            }..................
-    # Preserve deprecated PEP 484-compliant type hints as is while emitting one
-    # non-fatal deprecation warning for each.
+    # Reduce PEP 484-compliant type variables that have subsequently been
+    # semantically (but *NOT* syntactically) "replaced" by concrete hints to
+    # those hints, usually due to higher-level hints initially parametrized by
+    # those type variables then being subscripted by those concrete hints.
+    # tl;dr: the "typevar_to_hint" dictionary, which is uncached.
+    HintSignTypeVar: reduce_hint_pep484_typevar,
+
+    # Preserve deprecated PEP 484-compliant hints while emitting one non-fatal
+    # deprecation warning for each.
     #
     # Note that, to ensure that one such warning is emitted for each such hint,
     # these reducers are intentionally uncached rather than cached.

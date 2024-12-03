@@ -19,7 +19,7 @@ from beartype.roar import BeartypeDecorHintPep591Exception
 #shallowly type-checking such hints by reduction to their subscripted arguments
 #remains the sanest temporary work-around.
 def reduce_hint_pep591(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`591`-compliant **final type hint** (i.e.,
     subscription of the :obj:`typing.Final` type hint factory) to a lower-level

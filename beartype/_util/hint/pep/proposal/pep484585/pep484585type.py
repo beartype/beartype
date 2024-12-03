@@ -32,7 +32,7 @@ from typing import (
 #
 #Clearly, we should have documented that here as well. Examine closer, please.
 def reduce_hint_pep484585_type(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass type
     hint** (i.e., hint constraining objects to subclass that superclass) to the

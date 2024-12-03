@@ -29,9 +29,14 @@ from beartype.typing import (
     Set,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._check.metadata.metasane import (
+    HintOrHintSanifiedData,
+    # HintSanifiedData,
+)
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
-from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.convert.convsanify import (
+    sanify_hint_root_func_if_unignorable_or_none)
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
@@ -54,10 +59,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
-from beartype._util.hint.utilhinttest import (
-    is_hint_ignorable,
-    is_hint_needs_cls_stack,
-)
+from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import lowercase_str_char_first
 from beartype._util.text.utiltextprefix import (
@@ -138,6 +140,10 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
 
     # Either...
     args_name_keywordable: Optional[Set[str]] = (
+        #FIXME: [SPEED] Minor optimization. If the decorated callable *ONLY*
+        #accepts an annotated variadic keyword parameter and no other
+        #parameters, then the empty set reused from a global "SET_EMPTY" import
+        #suffices here. Probably. Consider, anyway. *sigh*
         # If the decorated callable accepts an annotated variadic keyword
         # parameter (e.g., "**kwargs: int"), the set of the names of all
         # keywordable parameters (i.e., parameters that may be passed by
@@ -167,13 +173,14 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     )
 
     # ..................{ LOCALS ~ hint                      }..................
-    # Type hint annotating the current parameter if any *OR* "_PARAM_HINT_EMPTY"
-    # otherwise (i.e., if this parameter is unannotated).
+    # Possibly insane hint annotating the current parameter if any *OR* the
+    # sentinel placeholder otherwise (i.e., if this parameter is unannotated).
     hint_insane: Hint = None  # pyright: ignore
 
-    # This type hint sanitized into a possibly different type hint more readily
-    # consumable by @beartype's code generator.
-    hint: Hint = None  # pyright: ignore
+    # Sane hint annotating the current parameter sanified from this possibly
+    # insane hint if sanifying this hint generated no supplementary metadata
+    # *OR* that metadata otherwise.
+    hint_or_data: HintOrHintSanifiedData = None  # pyright: ignore
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -255,23 +262,20 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # Else, this parameter's name is *NOT* reserved for use by the
                 # @beartype decorator.
 
-                # Sanitize this hint into a possibly different type hint more
-                # readily consumable by @beartype's code generator *BEFORE*
-                # passing this hint to any further callables.
-                hint = sanify_hint_root_func(
-                    hint=hint_insane,
+                # Sane hint sanified from this possibly insane parameter hint if
+                # sanifying this hint generated no supplementary metadata *OR*
+                # that metadata otherwise. Additionally, if this hint is
+                # unsupported by @beartype, raise an exception.
+                hint_or_data = sanify_hint_root_func_if_unignorable_or_none(
                     decor_meta=decor_meta,
+                    hint=hint_insane,
                     pith_name=arg_name,
                     arg_kind=arg_kind,
+                    exception_prefix=EXCEPTION_PLACEHOLDER,
                 )
 
                 # If this hint is ignorable, continue to the next parameter.
-                #
-                # Note that this is intentionally tested *AFTER* this hint has
-                # been coerced into a PEP-compliant type hint to implicitly
-                # ignore PEP-noncompliant type hints as well (e.g., "(object,
-                # int, str)").
-                if is_hint_ignorable(hint):
+                if hint_or_data is None:
                     # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.
@@ -316,6 +320,9 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
+                #FIXME: [SPEED] Negligibly optimized the ".get" access away:
+                #    ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE_get(  # type: ignore
+                #        arg_kind, None)
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
                 ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
@@ -360,7 +367,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
-                    hint,
+                    hint_or_data,
                     decor_meta.conf,
                     cls_stack,
                     True,  # <-- True only for parameters
@@ -420,6 +427,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 ),
             )
 
+    # ..................{ RETURN                             }..................
     # If that callable accepts an annotated variadic keyword parameter, expose
     # the set of the names of all keywordable parameters to this wrapper
     # function needed to type-check that annotated variadic keyword parameter.

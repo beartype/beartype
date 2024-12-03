@@ -21,7 +21,7 @@ def reduce_hint_pep673(
     hint: object,
     cls_stack: TypeStack,
     exception_prefix: str,
-    *args, **kwargs
+    **kwargs
 ) -> type:
     '''
     Reduce the passed :pep:`673`-compliant **self type hint** (i.e.,

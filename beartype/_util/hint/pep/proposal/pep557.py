@@ -80,7 +80,7 @@ def get_hint_pep557_initvar_arg(
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep557_initvar(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`557`-compliant **dataclass initialization-only
     instance variable type hint** (i.e., subscription of the

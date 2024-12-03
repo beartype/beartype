@@ -144,8 +144,7 @@ def is_hint_pep589(hint: object) -> bool:
 #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
 #shallowly type-checking such hints by reduction to untyped dictionaries
 #remains the sanest temporary work-around.
-def reduce_hint_pep589(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+def reduce_hint_pep589(hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`589`-compliant **typed dictionary** (i.e.,
     :class:`typing.TypedDict` subclass) to a lower-level type hint currently

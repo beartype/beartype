@@ -291,8 +291,7 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
     return hint.__origin__
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep593(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+def reduce_hint_pep593(hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`593`-compliant **type metahint** (i.e., subscription
     of either the :attr:`typing.Annotated` or

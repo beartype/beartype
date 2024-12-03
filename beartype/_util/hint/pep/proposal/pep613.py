@@ -15,8 +15,7 @@ from beartype.roar import BeartypeDecorHintPep613DeprecationWarning
 from beartype._util.error.utilerrwarn import issue_warning
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep613(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+def reduce_hint_pep613(hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`613`-compliant **type alias** (i.e.,
     :obj:`typing.TypeAlias` type hint singleton) to the ignorable

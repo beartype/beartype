@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Tuple,
     Union,
 )
 from beartype._data.hint.datahintpep import (
@@ -23,7 +24,6 @@ from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     FrozenDict,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
@@ -107,23 +107,89 @@ class HintSanifiedData(object):
 # ....................{ HINTS                              }....................
 HintOrHintSanifiedData = Union[Hint, HintSanifiedData]
 '''
-PEP-compliant type hint matching either a type hint *or* sanified type hint
-metadata.
+PEP-compliant type hint matching either a type hint *or* **sanified type hint
+metadata** (i.e., :class:`.HintSanifiedData` object).
 '''
 
-# ....................{ GETTERS                            }....................
-# def get_hint_sanified_tuple(
-#     hint_or_data: HintOrHintSanifiedData) -> Tuple[Hint, TypeVarToHint]:
-#     '''
-#     2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed ``hint``
-#     parameter if that parameter is a :class:`.HintSanifiedData` object *or*
-#     trivially referring to the passed ``hint`` and ``conf`` parameters otherwise
-#     (i.e., if the passed ``hint`` parameter is *not* a
-#     :class:`.HintSanifiedData` object).
-#     '''
-#
-#     return (
-#         (hint_data.hint, hint_data.conf)
-#         if isinstance(hint_data, HintSanifiedData) else
-#         (hint, conf)
-#     )
+
+HintOrHintSanifiedDataUnpacked = Tuple[Hint, TypeVarToHint]
+'''
+PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
+returned by the :func:`.unpack_hint_or_data` unpacker.
+'''
+
+# ....................{ UNPACKERS                          }....................
+#FIXME: Unit test us up, please.
+def unpack_hint_or_data(
+    hint_or_data: HintOrHintSanifiedData,
+    typevar_to_hint: TypeVarToHint,
+) -> HintOrHintSanifiedDataUnpacked:
+    '''
+    2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
+
+    This low-level utility function "unpacks" (i.e., coerces, converts) the
+    passed type hint and type variable lookup table.
+
+    Parameters
+    ----------
+    hint_or_data : HintSanifiedData
+        Either a type hint *or* **sanified type hint metadata** (i.e.,
+        :class:`.HintSanifiedData` object) to be unpacked.
+    typevar_to_hint : TypeVarToHint
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        the :pep:`484`-compliant **type variables** (i.e.,
+        :class:`typing.TypeVar` objects) originally parametrizing the origins of
+        all transitive parent hints of this hint to the corresponding child
+        hints subscripting these parent hints).
+
+    Returns
+    -------
+    Tuple[Hint, TypeVarToHint]
+        2-tuple ``(hint, typevar_to_hint)`` where:
+
+        * ``hint`` is the hint encapsulated by the passed parameters.
+        * ``typevar_to_hint`` is the type variable lookup table encapsulated by
+          the passed parameters. If the pair of type variable lookup tables
+          encapsulated by both the passed ``typevar_to_hint`` parameter *and*
+          ``hint_or_data.typevar_to_hint`` instance variable are non-empty, then
+          this ``typevar_to_hint`` item of this 2-tuple is a new type variable
+          lookup table efficiently merging this parameter and instance variable
+          (in that order).
+    '''
+
+    # If reducing this hint generated supplementary metadata...
+    if isinstance(hint_or_data, HintSanifiedData):
+        # This lower-level hint reduced from this higher-level hint.
+        hint = hint_or_data.hint
+
+        # If reducing this hint generated a non-empty type variable lookup
+        # table...
+        if hint_or_data.typevar_to_hint:
+            # If the caller passed an empty type variable lookup table,
+            # trivially replace the latter with the former.
+            if not typevar_to_hint:
+                typevar_to_hint = hint_or_data.typevar_to_hint
+            else:
+                # Full type variable lookup table uniting...
+                typevar_to_hint = (
+                    # The type variable lookup table describing all
+                    # transitive parent hints of this reduced hint *AND*...
+                    typevar_to_hint |  # type: ignore[operator]
+                    # The type variable lookup table describing this hint.
+                    #
+                    # Note that this table is intentionally the second
+                    # rather than first operand of this "|" operation,
+                    # efficiently ensuring that type variables mapped by
+                    # this hint take precedence over type variables mapped
+                    # by transitive parent hints of this hint.
+                    hint_or_data.typevar_to_hint
+                )
+        # Else, reducing this hint generated an empty type variable lookup
+        # table. In this case, this table is ignorable.
+    # Else, reducing this hint did *NOT* generate supplementary metadata. In
+    # this case, preserve this reduced hint as is.
+    else:
+        hint = hint_or_data
+
+    # Return the 2-tuple containing this hint and type variable lookup table.
+    return (hint, typevar_to_hint)

@@ -15,7 +15,7 @@ from beartype.typing import Type
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-def reduce_hint_pep675(*args, **kwargs) -> Type[str]:
+def reduce_hint_pep675(**kwargs) -> Type[str]:
     '''
     Reduce the passed :pep:`675`-compliant **literal string type hint** (i.e.,
     :obj:`typing.LiteralString` singleton) to the builtin :class:`str` class as

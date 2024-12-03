@@ -209,7 +209,7 @@ def get_hint_pep484_newtype_alias(
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_newtype(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed **new type** (i.e., object created and returned by the
     :pep:`484`-compliant :func:`typing.NewType` type hint factory) to the

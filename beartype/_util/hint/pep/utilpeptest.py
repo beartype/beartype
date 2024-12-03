@@ -207,13 +207,14 @@ def die_if_hint_pep_unsupported(
     # case, subsequent logic raises an exception specific to the passed
     # parameters.
 
-    # If this hint is *NOT* PEP-compliant, raise an exception.
+    # If this hint is *NOT* PEP-compliant, raise a more readable exception.
     die_unless_hint_pep(hint=hint, exception_prefix=exception_prefix)
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
-
     # Else, this hint is PEP-compliant.
-    #
+
+    #FIXME: Pretty weird, honestly. This would almost certainly better be
+    #raised in a reducer testing whether "arg_name == ARG_NAME_RETURN".
     # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:

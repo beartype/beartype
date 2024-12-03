@@ -21,7 +21,8 @@ from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._check.code.codescope import add_func_scope_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-from beartype._check.convert.convsanify import sanify_hint_child
+from beartype._check.convert.convsanify import (
+    sanify_hint_child_if_unignorable_or_none)
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_OR
@@ -34,6 +35,7 @@ from beartype._data.code.pep.datacodepep484604 import (
 from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,
+    TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -54,15 +56,13 @@ def make_hint_pep484604_check_expr(
     # Mandatory parameters.
     hint_meta: HintMeta,
     hints_meta: HintsMeta,
+    cls_stack: TypeStack,
     conf: BeartypeConf,
     func_wrapper_scope: LexicalScope,
     pith_curr_expr: str,
     pith_curr_assign_expr: str,
     pith_curr_var_name_index: int,
-
-    # Optional parameters.
-    cls_stack: TypeStack = None,
-    exception_prefix: str = '',
+    exception_prefix: str,
 ) -> Optional[str]:
     '''
     Either a Python code snippet type-checking the current pith against the
@@ -154,7 +154,12 @@ def make_hint_pep484604_check_expr(
     #
     # Note that this getter is memoized and thus requires positional parameters.
     hint_childs = _get_hint_pep484604_union_args_flattened(
-        hint_meta.hint, conf, cls_stack, exception_prefix)
+        hint_meta.hint,
+        cls_stack,
+        conf,
+        hint_meta.typevar_to_hint,
+        exception_prefix,
+    )
 
     # Reuse previously created sets of the following (when available):
     # * "hint_childs_nonpep", the set of all PEP-noncompliant child hints
@@ -342,13 +347,11 @@ def make_hint_pep484604_check_expr(
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached
 def _get_hint_pep484604_union_args_flattened(
-    # Mandatory parameters.
     hint: Hint,
+    cls_stack: TypeStack,
     conf: BeartypeConf,
-
-    # Optional parameters.
-    cls_stack: TypeStack = None,
-    exception_prefix: str = '',
+    typevar_to_hint: TypeVarToHint,
+    exception_prefix: str,
 ) -> TupleHints:
     '''
     Flattened tuple of the two or more child type hints subscripting the passed
@@ -371,17 +374,23 @@ def _get_hint_pep484604_union_args_flattened(
     ----------
     hint : object
         Union type hint to be flattened.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    exception_prefix : str, optional
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+    typevar_to_hint : TypeVarToHint
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        the :pep:`484`-compliant **type variables** (i.e.,
+        :class:`typing.TypeVar` objects) originally parametrizing the origins of
+        all transitive parent hints of this hint to the corresponding child
+        hints subscripting these parent hints).
+    exception_prefix : str
         Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+        the exception message.
 
     Returns
     -------
@@ -453,31 +462,21 @@ def _get_hint_pep484604_union_args_flattened(
         # this child hint is reducible *OR* preserved as is otherwise (i.e., if
         # this child hint is irreducible).
         #
-        # Note that:
-        # * This sanification is intentionally performed *BEFORE* this child
-        #   hint is tested as being either PEP-compliant or -noncompliant. Why?
-        #   Because a small subset of low-level reduction routines performed by
-        #   this high-level sanification actually expand a PEP-noncompliant type
-        #   into a PEP-compliant type hint. This includes:
-        #   * The PEP-noncompliant "float' and "complex" types, implicitly
-        #     expanded to the PEP 484-compliant "float | int" and "complex |
-        #     float | int" type hints (respectively) when the non-default
-        #     "conf.is_pep484_tower=True" parameter is enabled.
-        # * This sanification intentionally calls the lower-level
-        #   sanify_hint_child() rather than the higher-level
-        #   sanify_hint_child_if_unignorable_or_none() sanifier. Technically,
-        #   the latter would suffice as well. Pragmatically, both are
-        #   semantically equivalent here but the former is faster. Why? By
-        #   definition, this union is unignorable. If this union were ignorable,
-        #   the parent hint containing this union would already have ignored
-        #   this union. Moreover, *ALL* child hints subscripting an unignorable
-        #   union are necessarily also unignorable. It follows that this child
-        #   hint need *NOT* be tested for ignorability.
+        # Note that this sanification is intentionally performed *BEFORE* this
+        # child hint is tested as being either PEP-compliant or -noncompliant.
+        # Why? Because a small subset of low-level reduction routines performed
+        # by this high-level sanification actually expand a PEP-noncompliant
+        # type into a PEP-compliant type hint. This includes:
+        # * The PEP-noncompliant "float' and "complex" types, implicitly
+        #   expanded to the PEP 484-compliant "float | int" and "complex | float
+        #   | int" type hints (respectively) when the non-default
+        #   "conf.is_pep484_tower=True" parameter is enabled.
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-        hint_child = sanify_hint_child(
+        hint_child = sanify_hint_child_if_unignorable_or_none(
             hint=hint_child,
             conf=conf,
             cls_stack=cls_stack,
+            typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
         # print(f'Sanified union child hint to {repr(hint_child)}...')

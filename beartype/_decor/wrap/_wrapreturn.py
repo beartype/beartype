@@ -19,7 +19,9 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
-from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.convert.convsanify import (
+    sanify_hint_root_func_if_unignorable_or_none)
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
@@ -34,10 +36,7 @@ from beartype._decor.wrap.wrapsnip import (
 from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
-from beartype._util.hint.utilhinttest import (
-    is_hint_ignorable,
-    is_hint_needs_cls_stack,
-)
+from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from beartype._util.utilobject import SENTINEL
@@ -81,16 +80,18 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     assert isinstance(decor_meta, BeartypeDecorMeta), (
         f'{repr(decor_meta)} not beartype call.')
 
-    # Type hint annotating this callable's return if any *OR* "SENTINEL"
-    # otherwise (i.e., if this return is unannotated).
+    # ..................{ LOCALS                             }..................
+    # Possibly insane hint annotating this callable's return if any *OR* the
+    # sentinel placeholder otherwise (i.e., if this return is unannotated).
     #
-    # Note that "None" is a semantically meaningful PEP 484-compliant type hint
-    # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
-    # between that type hint and an unannotated return.
-    hint: Hint = decor_meta.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)  # pyright: ignore
+    # Note that "None" is a semantically meaningful PEP 484-compliant hint
+    # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish between
+    # "None" and an unannotated return with a sentinel.
+    hint_insane: Hint = decor_meta.func_arg_name_to_hint_get(  # pyright: ignore
+        ARG_NAME_RETURN, SENTINEL)
 
     # If this return is unannotated, silently reduce to a noop.
-    if hint is SENTINEL:
+    if hint_insane is SENTINEL:
         return ''
     # Else, this return is annotated.
 
@@ -104,20 +105,16 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # callable or class), initialized to "None" for safety.
     func_scope: LexicalScope = None  # type: ignore[assignment]
 
+    # ..................{ GENERATE                           }..................
     # Attempt to...
     try:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
         # during this logic for subsequent "playrback" below...
         with catch_warnings(record=True) as warnings_issued:
-            # Preserve the original unsanitized type hint for subsequent
-            # reference *BEFORE* sanitizing this type hint.
-            hint_insane = hint
-
-            # Sanitize this hint to either:
-            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
-            #   converted from this PEP-noncompliant type hint.
-            # * If this hint is PEP-compliant and supported, this hint as is.
-            # * Else, raise an exception.
+            # Sane hint sanified from this possibly insane return hint if
+            # sanifying this hint generated no supplementary metadata *OR*
+            # that metadata otherwise. Additionally, if this hint is unsupported
+            # by @beartype, raise an exception.
             #
             # Note that:
             # * This hint must sanitized *BEFORE* testing this hint. Why? The
@@ -132,13 +129,17 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # * For the exact same reason, this sanitization *CANNOT* be
             #   performed in the low-level make_check_expr() dynamically
             #   generating code type-checking this hint.
-            hint = sanify_hint_root_func(
-                hint=hint, pith_name=ARG_NAME_RETURN, decor_meta=decor_meta)
+            hint_or_data = sanify_hint_root_func_if_unignorable_or_none(
+                decor_meta=decor_meta,
+                hint=hint_insane,
+                pith_name=ARG_NAME_RETURN,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
+            )
             # print(f'Sanified {repr(decor_meta.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
-            # permitted *ONLY* as a return annotation...
-            if hint is NoReturn:
+            # allowed *ONLY* as a return annotation...
+            if hint_or_data is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
@@ -158,9 +159,8 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     f'{code_noreturn_check}{code_noreturn_violation}')
             # Else, this is *NOT* "typing.NoReturn".
             #
-            # If this PEP-compliant hint is unignorable, generate and return
-            # a snippet type-checking this return against this hint.
-            elif not is_hint_ignorable(hint):
+            # If this hint is unignorable...
+            elif hint_or_data is not None:
                 # Type stack if required by this hint *OR* "None" otherwise.
                 # See is_hint_needs_cls_stack() for details.
                 #
@@ -176,9 +176,9 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                 # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
 
                 #FIXME: Uhh... wat? This shouldn't be necessary at all. Excise!
-                # Empty tuple, passed below to satisfy the
-                # unmemoize_func_wrapper_code() API.
-                hint_refs_type_basename = ()
+                # # Empty tuple, passed below to satisfy the
+                # # unmemoize_func_wrapper_code() API.
+                # hint_refs_type_basename = ()
 
                 # Code snippet type-checking any arbitrary return.
                 (
@@ -186,7 +186,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                    hint,
+                    hint_or_data,
                     decor_meta.conf,
                     cls_stack,
                     False,  # <-- True only for parameters
@@ -216,8 +216,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
 
                 # Code snippet type-checking this return.
                 code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
-                    func_call_prefix=(
-                        decor_meta.func_wrapper_code_call_prefix))
+                    func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
 
                 # Full code snippet to be returned, consisting of:
                 # * Calling the decorated callable and localize its return
@@ -256,6 +255,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             ),
         )
 
+    # ..................{ RETURN                             }..................
     # If a local scope is required to type-check this return, merge this scope
     # into the local scope currently required by the current wrapper function.
     if func_scope:

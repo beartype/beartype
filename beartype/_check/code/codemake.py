@@ -46,10 +46,6 @@ from beartype._check.code.codescope import (
 )
 from beartype._check.code.pep.codepep484604 import (
     make_hint_pep484604_check_expr)
-# from beartype._check.code.pep.codepep695 import (
-#     make_hint_pep695_type_alias_subscripted_check_expr)
-# from beartype._check.code.pep.pep484.codepep484typevar import (
-#     make_hint_pep484_typevar_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
@@ -59,6 +55,10 @@ from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+from beartype._check.metadata.metasane import (
+    HintOrHintSanifiedData,
+    HintSanifiedData,
+)
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import (
@@ -97,22 +97,27 @@ from beartype._data.code.pep.datacodepep593 import (
 )
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeVarToHint,
+)
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     LexicalScope,
     TypeStack,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignCounter,
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
-    HintSignPep695TypeAliasSubscripted,
+    # HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
-    HintSignTypeVar,
+    # HintSignTypeVar,
     HintSignUnion,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -167,7 +172,7 @@ from random import getrandbits
 @callable_cached
 def make_check_expr(
     # ..................{ ARGS ~ mandatory                   }..................
-    hint: object,
+    hint_or_data: HintOrHintSanifiedData,
     conf: BeartypeConf,
 
     # ..................{ ARGS ~ optional                    }..................
@@ -212,8 +217,9 @@ def make_check_expr(
 
     Parameters
     ----------
-    hint : object
-        PEP-compliant type hint to be type-checked.
+    hint_or_data : HintOrHintSanifiedData
+        Either a type hint *or* **sanified type hint metadata** (i.e.,
+        :data:`.HintSanifiedData` object) to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -259,33 +265,47 @@ def make_check_expr(
     '''
 
     # ..................{ LOCALS ~ hint : root               }..................
-    # Top-level hint relocalized for disambiguity.
-    hint_root = hint
+    # Top-level hint, initialized to the passed hint.
+    hint_root: Hint = hint_or_data  # pyright: ignore
 
-    # Delete the passed parameter whose name is ambiguous within the context of
-    # this function for similar disambiguity.
-    del hint
+    # Top-level type variable lookup table (i.e., dictionary mapping from each
+    # type variable parametrizing the origin of this top-level hint to the
+    # concrete hint subscripting this top-level hint), initialized to the empty
+    # type variable lookup table.
+    typevar_to_hint_root: TypeVarToHint = FROZEN_DICT_EMPTY
+
+    # If sanifying this hint generated supplementary metadata...
+    if isinstance(hint_or_data, HintSanifiedData):
+        # Top-level hint encapsulated by this metadata.
+        hint_root = hint_or_data.hint
+
+        # Top-level type variable lookup table encapsulated by this metadata.
+        typevar_to_hint_root = hint_or_data.typevar_to_hint
+    # Else, sanifying this hint generated *NO* supplementary metadata.
 
     # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
-    hint_curr = None
+    hint_curr: Hint = None  # pyright: ignore
 
     # Current unsubscripted typing attribute associated with this hint (e.g.,
     # "Union" if "hint_curr == Union[int, str]").
-    hint_curr_sign = None
+    hint_curr_sign: HintSign = None  # type: ignore[assignment]
 
     # Python expression evaluating to an isinstanceable type (e.g., origin type)
     # associated with the currently visited type hint if any.
     hint_curr_expr: str = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : child              }..................
-    # Currently iterated PEP-compliant child hint subscripting the currently
-    # visited hint.
+    # Currently iterated child hint subscripting the currently visited hint.
     hint_child = None
 
     # Current unsubscripted typing attribute associated with this child hint
     # (e.g., "Union" if "hint_child == Union[int, str]").
     hint_child_sign = None
+
+    # Type variable lookup table unique to the currently iterated child hint
+    # subscripting the currently visited hint.
+    typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
@@ -451,7 +471,7 @@ def make_check_expr(
         indent_level=2,
         pith_expr=VAR_NAME_PITH_ROOT,
         pith_var_name_index=pith_curr_var_name_index,
-        typevar_to_hint=FROZEN_DICT_EMPTY,
+        typevar_to_hint=typevar_to_hint_root,
     )
 
     # Python code snippet to be returned, seeded with a placeholder to be
@@ -940,12 +960,12 @@ def make_check_expr(
                     func_curr_code = make_hint_pep484604_check_expr(  # type: ignore[assignment]
                         hint_meta=hint_curr_meta,
                         hints_meta=hints_meta,
+                        cls_stack=cls_stack,
                         conf=conf,
                         func_wrapper_scope=func_wrapper_scope,
                         pith_curr_expr=pith_curr_expr,
                         pith_curr_assign_expr=pith_curr_assign_expr,
                         pith_curr_var_name_index=pith_curr_var_name_index,
-                        cls_stack=cls_stack,
                         exception_prefix=EXCEPTION_PREFIX,
                     )
                 # Else, this hint is *NOT* a union.
@@ -996,18 +1016,22 @@ def make_check_expr(
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
-                        hint=hint_child,
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                    # hint_child, typevar_to_hint_child = (
+                    hint_child = (
+                        sanify_hint_child_if_unignorable_or_none(
+                            hint=hint_child,
+                            conf=conf,
+                            cls_stack=cls_stack,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ))
 
                     # If this child hint is unignorable:
                     # * Shallowly type-check the type of the current pith.
                     # * Deeply type-check an efficiently retrievable item of
                     #   this pith.
                     if hint_child is not None:
+                        #FIXME: [SPEED] Optimize away this ".get" lookup. *sigh*
                         # Hint sign logic type-checking this sign if any *OR*
                         # "None" otherwise.
                         hint_sign_logic = HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
@@ -1805,7 +1829,7 @@ def make_check_expr(
                 #     # in the "hints_meta" list *BEFORE* visiting that hint.
                 #     else:
                 #         #FIXME: Insufficient. The parent type hint thought this
-                #         #type variable was unignorable and thus 
+                #         #type variable was unignorable and thus... ugh.
                 #         hints_meta_index_curr += 1
                 # ............{ PEP 586 ~ typing.Literal           }............
                 # If this hint is a PEP 586-compliant type hint (i.e., the

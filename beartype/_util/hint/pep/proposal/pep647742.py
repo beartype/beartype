@@ -32,7 +32,7 @@ def reduce_hint_pep647_or_pep742(
     hint: Hint,
     pith_name: Optional[str],
     exception_prefix: str,
-    *args, **kwargs
+    **kwargs
 ) -> Type[bool]:
     '''
     Reduce the passed :pep:`647`-compliant **old-style type guard** (i.e.,
