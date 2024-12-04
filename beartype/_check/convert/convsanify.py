@@ -305,67 +305,6 @@ def sanify_hint_root_statement_if_unignorable_or_none(
     return _get_hint_or_data_unignorable_or_none(hint_or_data)
 
 # ....................{ SANIFIERS ~ any                    }....................
-#FIXME: Gradually refactor the codebase to call
-#sanify_hint_child_if_unignorable_or_none_unpacked() rather than
-#sanify_hint_child_if_unignorable_or_none() everywhere, please. *sigh*
-#FIXME: Unit test us up, please.
-def sanify_hint_child_if_unignorable_or_none_unpacked(
-    # Optional parameters.
-    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
-    **kwargs
-) -> HintOrHintSanifiedDataUnpacked:
-    '''
-    Type hint sanified (i.e., sanitized) from the passed **possibly insane child
-    type hint** (i.e., possibly PEP-noncompliant hint transitively subscripting
-    the root type hint annotating a parameter or return of the currently
-    decorated callable) if this hint is both reducible and unignorable, this
-    hint unmodified if this hint is both irreducible and unignorable, and
-    :data:`None` otherwise (i.e., if this hint is ignorable).
-
-    This high-level sanifier effectively chains the lower-level
-    :func:`.sanify_hint_child_if_unignorable_or_none` sanifier and
-    :func:`.unpack_hint_or_data` unpacker into a single unified function,
-    streamlining child type hint sanification throughout the codebase.
-
-    Parameters
-    ----------
-    typevar_to_hint : TypeVarToHint, optional
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        the :pep:`484`-compliant **type variables** (i.e.,
-        :class:`typing.TypeVar` objects) originally parametrizing the origins of
-        all transitive parent hints of this hint to the corresponding child
-        hints subscripting these parent hints). Defaults to
-        :data:`.FROZEN_DICT_EMPTY`.
-
-    All remaining passed keyword parameters are passed as is to the lower-level
-    :func:`.sanify_hint_child_if_unignorable_or_none` sanifier.
-
-    Returns
-    -------
-    Tuple[Hint, TypeVarToHint]
-        2-tuple ``(hint, typevar_to_hint)`` where:
-
-        * ``hint`` is a sane hint sanified from the passed possibly insane hint.
-        * ``typevar_to_hint`` is the type variable lookup table encapsulated by
-          the passed parameters. If the pair of type variable lookup tables
-          encapsulated by both the passed ``typevar_to_hint`` parameter *and*
-          ``hint_or_data.typevar_to_hint`` instance variable are non-empty, then
-          this ``typevar_to_hint`` item of this 2-tuple is a new type variable
-          lookup table efficiently merging this parameter and instance variable
-          (in that order).
-    '''
-
-    # Sane hint sanified from this possibly insane hint if sanifying this hint
-    # did not generate supplementary metadata *OR* that metadata otherwise
-    # (i.e., if sanifying this hint generated supplementary metadata).
-    hint_or_data = sanify_hint_child_if_unignorable_or_none(
-        typevar_to_hint=typevar_to_hint, **kwargs)
-
-    # Return this sane hint and corresponding type variable lookup table.
-    return unpack_hint_or_data(
-        hint_or_data=hint_or_data, typevar_to_hint=typevar_to_hint)
-
-
 #FIXME: Unit test us up, please.
 def sanify_hint_child_if_unignorable_or_none(
     # Mandatory parameters.

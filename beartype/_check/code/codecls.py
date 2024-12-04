@@ -22,6 +22,11 @@ from beartype.typing import (
 )
 from beartype._check.code.snip.codesnipcls import (
     HINT_INDEX_TO_HINT_PLACEHOLDER)
+from beartype._check.metadata.metasane import (
+    HintOrHintSanifiedData,
+    HintSanifiedData,
+    unpack_hint_or_data,
+)
 from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
@@ -197,6 +202,11 @@ class HintMeta(object):
             0-based integer suffixing the name of each local variable assigned
             the value of the current pith in an assignment expression.
         typevar_to_hint : TypeVarToHint
+            **Type variable lookup table** (i.e., immutable dictionary mapping
+            from the :pep:`484`-compliant **type variables** (i.e.,
+            :class:`typing.TypeVar` objects) originally parametrizing the
+            origins of all transitive parent hints of this hint to the
+            corresponding child hints subscripting these parent hints).
         '''
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
@@ -344,7 +354,13 @@ class HintsMeta(FixedList):
         return hint_meta
 
     # ..................{ METHODS                            }..................
-    def enqueue_hint_child(self, *args, **kwargs) -> str:
+    def enqueue_hint_or_data_child(
+        self,
+        hint_or_data: HintOrHintSanifiedData,
+        indent_level: int,
+        pith_expr: str,
+        pith_var_name_index: int,
+    ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
         **type-checking metadata** (i.e., a :class:`.HintMeta` object)
@@ -354,8 +370,48 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        All parameters are passed as is to the lower-level
-        :meth:`HintMeta.reinit` method.
+        hint_or_data : HintOrHintSanifiedData
+            Either a type hint *or* **sanified type hint metadata** (i.e.,
+            :data:`.HintSanifiedData` object) to be type-checked.
+
+        All remaining passed keyword parameters are passed as is to the
+        lower-level :meth:`.HintMeta.reinit` method.
+
+        Returns
+        -------
+        str
+            Placeholder string to be subsequently replaced by code type-checking
+            this child pith against this child type hint.
+        '''
+
+        # Child hint and type variable lookup table encapsulated by this data.
+        hint, typevar_to_hint = unpack_hint_or_data(hint_or_data)
+
+        # Return the placeholder string to be subsequently replaced by code
+        # type-checking this child pith against this child hint, produced by
+        # enqueueing new type-checking metadata describing this child hint.
+        return self.enqueue_hint_child(
+            hint=hint,
+            indent_level=indent_level,
+            pith_expr=pith_expr,
+            pith_var_name_index=pith_var_name_index,
+            typevar_to_hint=typevar_to_hint,
+        )
+
+
+    #FIXME: Obsolete in favour of enqueue_hint_or_data_child(), please.
+    def enqueue_hint_child(self, **kwargs) -> str:
+        '''
+        **Enqueue** (i.e., append) to the end of the this queue new
+        **type-checking metadata** (i.e., a :class:`.HintMeta` object)
+        describing the currently iterated child type hint with the passed
+        metadata, enabling this hint to be visited by the ongoing breadth-first
+        search (BFS) traversing over this queue.
+
+        Parameters
+        ----------
+        All passed keyword parameters are passed as is to the lower-level
+        :meth:`.HintMeta.reinit` method.
 
         Returns
         -------
@@ -378,7 +434,7 @@ class HintsMeta(FixedList):
         hint_meta = self.__getitem__(self.index_last)
 
         # Replace prior fields of this metadata with the passed fields.
-        hint_meta.reinit(*args, **kwargs)
+        hint_meta.reinit(**kwargs)
 
         # Return the placeholder substring associated with this type hint.
         return hint_meta.hint_placeholder

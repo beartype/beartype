@@ -297,15 +297,21 @@ def make_check_expr(
 
     # ..................{ LOCALS ~ hint : child              }..................
     # Currently iterated child hint subscripting the currently visited hint.
-    hint_child = None
+    hint_child: Hint = None  # pyright: ignore
 
     # Current unsubscripted typing attribute associated with this child hint
     # (e.g., "Union" if "hint_child == Union[int, str]").
-    hint_child_sign = None
+    hint_child_sign: Optional[HintSign] = None
 
-    # Type variable lookup table unique to the currently iterated child hint
-    # subscripting the currently visited hint.
-    typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
+    # Currently iterated child hint subscripting the currently visited hint *OR*
+    # sanified child hint metadata** (i.e., "HintSanifiedData" object describing
+    # that child hint).
+    hint_or_data_child: HintOrHintSanifiedData = None  # pyright: ignore
+
+    #FIXME: Excise us up, please.
+    # # Type variable lookup table unique to the currently iterated child hint
+    # # subscripting the currently visited hint.
+    # typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
@@ -993,7 +999,7 @@ def make_check_expr(
 
                     # Possibly ignorable insane child hint subscripting this
                     # parent hint, defined as either...
-                    hint_child = (
+                    hint_child = (  # pyright: ignore
                         # If this parent hint is a variable-length tuple, the
                         # get_hint_pep_sign() getter called above has already
                         # validated the contents of this tuple. In this case,
@@ -1016,12 +1022,11 @@ def make_check_expr(
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
-                    # hint_child, typevar_to_hint_child = (
-                    hint_child = (
+                    hint_or_data_child = (
                         sanify_hint_child_if_unignorable_or_none(
                             hint=hint_child,
-                            conf=conf,
                             cls_stack=cls_stack,
+                            conf=conf,
                             typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             exception_prefix=EXCEPTION_PREFIX,
                         ))
@@ -1030,12 +1035,13 @@ def make_check_expr(
                     # * Shallowly type-check the type of the current pith.
                     # * Deeply type-check an efficiently retrievable item of
                     #   this pith.
-                    if hint_child is not None:
+                    if hint_or_data_child is not None:
                         #FIXME: [SPEED] Optimize away this ".get" lookup. *sigh*
                         # Hint sign logic type-checking this sign if any *OR*
                         # "None" otherwise.
-                        hint_sign_logic = HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
-                            hint_curr_sign)
+                        hint_sign_logic = (
+                            HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
+                                hint_curr_sign))
 
                         # If *NO* hint sign logic type-checks this sign, raise
                         # an exception. Note that this logic should *ALWAYS* be
@@ -1063,17 +1069,17 @@ def make_check_expr(
                             pith_curr_assign_expr=pith_curr_assign_expr,
                             pith_curr_var_name=pith_curr_var_name,
                             hint_curr_expr=hint_curr_expr,
-                            hint_child_placeholder=hints_meta.enqueue_hint_child(
-                                hint=hint_child,
-                                indent_level=indent_level_child,
-                                # Python expression efficiently yielding some
-                                # item of this pith to be deeply type-checked
-                                # against this child hint.
-                                pith_expr=hint_sign_logic.pith_child_expr_format(
-                                    pith_curr_var_name=pith_curr_var_name),
-                                pith_var_name_index=pith_curr_var_name_index,
-                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
-                            ),
+                            hint_child_placeholder=(
+                                hints_meta.enqueue_hint_or_data_child(
+                                    hint_or_data=hint_or_data_child,
+                                    indent_level=indent_level_child,
+                                    # Python expression efficiently yielding some
+                                    # item of this pith to be deeply type-checked
+                                    # against this child hint.
+                                    pith_expr=hint_sign_logic.pith_child_expr_format(
+                                        pith_curr_var_name=pith_curr_var_name),
+                                    pith_var_name_index=pith_curr_var_name_index,
+                                )),
                         )
                     # Else, this child hint is ignorable. In this case, fallback
                     # to trivial code shallowly type-checking this pith as an
@@ -1129,11 +1135,10 @@ def make_check_expr(
                     # case...
                     else:
                         # Append code type-checking the length of this pith.
-                        func_curr_code += (
-                            CODE_PEP484585_TUPLE_FIXED_LEN_format(
-                                pith_curr_var_name=pith_curr_var_name,
-                                hint_childs_len=hint_childs_len,
-                            ))
+                        func_curr_code += CODE_PEP484585_TUPLE_FIXED_LEN_format(
+                            pith_curr_var_name=pith_curr_var_name,
+                            hint_childs_len=hint_childs_len,
+                        )
 
                         #FIXME: Optimize by refactoring into a "while" loop.
                         # For each possibly ignorable insane child hint of this
@@ -1143,37 +1148,40 @@ def make_check_expr(
                             # Unignorable sane child hint sanified from this
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
-                            hint_child = (
+                            hint_or_data_child = (
                                 sanify_hint_child_if_unignorable_or_none(
                                     hint=hint_child,
-                                    conf=conf,
                                     cls_stack=cls_stack,
+                                    conf=conf,
+                                    typevar_to_hint=(
+                                        hint_curr_meta.typevar_to_hint),
                                     exception_prefix=EXCEPTION_PREFIX,
                                 ))
 
-                            # If this child hint is unignorable, deeply
-                            # type-check this child pith.
-                            if hint_child is not None:
-                                func_curr_code += CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
-                                    hint_child_placeholder=(
-                                        hints_meta.enqueue_hint_child(
-                                            hint=hint_child,
-                                            indent_level=indent_level_child,
-                                            # Python expression yielding the value
-                                            # of the currently indexed item of this
-                                            # tuple to be type-checked against this
-                                            # child hint.
-                                            pith_expr=CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                                pith_curr_var_name=pith_curr_var_name,
-                                                pith_child_index=hint_child_index,
-                                            ),
-                                            pith_var_name_index=(
-                                                pith_curr_var_name_index),
-                                            typevar_to_hint=(
-                                                hint_curr_meta.typevar_to_hint),
-                                        )
-                                    ),
-                                )
+                            # If this child hint is unignorable...
+                            if hint_or_data_child is not None:
+                                # Python expression yielding the value of the
+                                # currently indexed item of this tuple to be
+                                # type-checked against this child hint.
+                                pith_child_expr = (
+                                    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                        pith_curr_var_name=pith_curr_var_name,
+                                        pith_child_index=hint_child_index,
+                                    ))
+
+                                # Deeply type-check this child pith.
+                                func_curr_code += (
+                                    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                                        hint_child_placeholder=(
+                                            hints_meta.enqueue_hint_or_data_child(
+                                                hint_or_data=hint_or_data_child,
+                                                indent_level=indent_level_child,
+                                                pith_expr=pith_child_expr,
+                                                pith_var_name_index=(
+                                                    pith_curr_var_name_index),
+                                            )
+                                        ),
+                                    ))
                             # Else, this child hint is ignorable.
 
                     # Munge this code to...
@@ -1278,25 +1286,32 @@ def make_check_expr(
                     # Unignorable sane child key and value hints sanified from
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
-                    hint_child_key = sanify_hint_child_if_unignorable_or_none(
-                        hint=hint_childs[0],
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-                    hint_child_value = sanify_hint_child_if_unignorable_or_none(
-                        hint=hint_childs[1],  # type: ignore[has-type]
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                    hint_or_data_child_key = (
+                        sanify_hint_child_if_unignorable_or_none(
+                            hint=hint_childs[0],
+                            cls_stack=cls_stack,
+                            conf=conf,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ))
+                    hint_or_data_child_value = (
+                        sanify_hint_child_if_unignorable_or_none(
+                            hint=hint_childs[1],  # type: ignore[has-type]
+                            cls_stack=cls_stack,
+                            conf=conf,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ))
 
                     # If at least one of these child hints are unignorable...
-                    if hint_child_key or hint_child_value:
+                    if not (
+                        hint_or_data_child_key is None and
+                        hint_or_data_child_value is None
+                    ):
                         # If this child key hint is unignorable...
-                        if hint_child_key:
+                        if hint_or_data_child_key is not None:
                             # If this child value hint is also unignorable...
-                            if hint_child_value:
+                            if hint_or_data_child_value is not None:
                                 # Increase the indentation level of code
                                 # type-checking this child value pith.
                                 indent_level_child += 1
@@ -1315,22 +1330,20 @@ def make_check_expr(
                                 # by code type-checking this child key pith
                                 # against this hint.
                                 hint_key_placeholder = (
-                                    hints_meta.enqueue_hint_child(
-                                        hint=hint_child_key,
+                                    hints_meta.enqueue_hint_or_data_child(
+                                        hint_or_data=hint_or_data_child_key,
                                         indent_level=indent_level_child,
                                         pith_expr=pith_curr_key_var_name,
                                         pith_var_name_index=(
                                             pith_curr_var_name_index),
-                                        typevar_to_hint=(
-                                            hint_curr_meta.typevar_to_hint),
                                     ))
 
                                 # Placeholder string to be subsequently replaced
                                 # by code type-checking this child value pith
                                 # against this hint.
                                 hint_value_placeholder = (
-                                    hints_meta.enqueue_hint_child(
-                                        hint=hint_child_value,
+                                    hints_meta.enqueue_hint_or_data_child(
+                                        hint_or_data=hint_or_data_child_value,
                                         indent_level=indent_level_child,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=pith_curr_var_name,
@@ -1338,8 +1351,6 @@ def make_check_expr(
                                         ),
                                         pith_var_name_index=(
                                             pith_curr_var_name_index),
-                                        typevar_to_hint=(
-                                            hint_curr_meta.typevar_to_hint),
                                     ))
 
                                 # Code deeply type-checking these child key and
@@ -1367,16 +1378,15 @@ def make_check_expr(
                                         # replaced by code type-checking this
                                         # child key pith against this hint.
                                         hint_key_placeholder=(
-                                            hints_meta.enqueue_hint_child(
-                                                hint=hint_child_key,
+                                            hints_meta.enqueue_hint_or_data_child(
+                                                hint_or_data=(
+                                                    hint_or_data_child_key),
                                                 indent_level=indent_level_child,
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
                                                     pith_curr_var_name=(
                                                         pith_curr_var_name)),
                                                 pith_var_name_index=(
                                                     pith_curr_var_name_index),
-                                                typevar_to_hint=(
-                                                    hint_curr_meta.typevar_to_hint),
                                             )
                                         ),
                                     )
@@ -1394,16 +1404,14 @@ def make_check_expr(
                                     # replaced by code type-checking this
                                     # child value pith against this hint.
                                     hint_value_placeholder=(
-                                        hints_meta.enqueue_hint_child(
-                                            hint=hint_child_value,
+                                        hints_meta.enqueue_hint_or_data_child(
+                                            hint_or_data=hint_or_data_child_value,
                                             indent_level=indent_level_child,
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
                                                     pith_curr_var_name)),
                                             pith_var_name_index=(
                                                 pith_curr_var_name_index),
-                                            typevar_to_hint=(
-                                                hint_curr_meta.typevar_to_hint),
                                         )
                                     ),
                                 )

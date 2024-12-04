@@ -121,8 +121,11 @@ returned by the :func:`.unpack_hint_or_data` unpacker.
 # ....................{ UNPACKERS                          }....................
 #FIXME: Unit test us up, please.
 def unpack_hint_or_data(
+    # Mandatory parameters.
     hint_or_data: HintOrHintSanifiedData,
-    typevar_to_hint: TypeVarToHint,
+
+    # Optional parameters.
+    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
 ) -> HintOrHintSanifiedDataUnpacked:
     '''
     2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
@@ -140,7 +143,8 @@ def unpack_hint_or_data(
         the :pep:`484`-compliant **type variables** (i.e.,
         :class:`typing.TypeVar` objects) originally parametrizing the origins of
         all transitive parent hints of this hint to the corresponding child
-        hints subscripting these parent hints).
+        hints subscripting these parent hints). Defaults to
+        :class:`.FROZEN_DICT_EMPTY`.
 
     Returns
     -------
@@ -156,6 +160,8 @@ def unpack_hint_or_data(
           lookup table efficiently merging this parameter and instance variable
           (in that order).
     '''
+    assert isinstance(typevar_to_hint, FrozenDict), (
+        f'{repr(typevar_to_hint)} not frozen dictionary.')
 
     # If reducing this hint generated supplementary metadata...
     if isinstance(hint_or_data, HintSanifiedData):
