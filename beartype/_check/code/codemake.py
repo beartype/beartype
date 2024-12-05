@@ -58,6 +58,8 @@ from beartype._check.logic.logmap import (
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintSanifiedData,
+    get_hint_or_data_hint,
+    # unpack_hint_or_data,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
@@ -138,7 +140,9 @@ from beartype._util.cls.pep.utilpep3119 import (
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
-    get_hint_pep484585_args)
+    get_hint_pep484585_arg,
+    get_hint_pep484585_args,
+)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585geniter import (
@@ -308,10 +312,9 @@ def make_check_expr(
     # that child hint).
     hint_or_data_child: HintOrHintSanifiedData = None  # pyright: ignore
 
-    #FIXME: Excise us up, please.
-    # # Type variable lookup table unique to the currently iterated child hint
-    # # subscripting the currently visited hint.
-    # typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
+    # Type variable lookup table unique to the currently iterated child hint
+    # subscripting the currently visited hint.
+    typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
@@ -1011,11 +1014,8 @@ def make_check_expr(
                         # which case the contents of this container have yet to
                         # be validated. In this case, inefficiently get the lone
                         # child hint of this parent hint *WITH* validation.
-                        get_hint_pep484585_args(
-                            hint=hint_curr,
-                            args_len=1,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        )
+                        get_hint_pep484585_arg(
+                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
                     )
                     # print(f'Sanifying sequence hint {repr(hint_curr)} child hint {repr(hint_child)}...')
 
@@ -1258,9 +1258,8 @@ def make_check_expr(
                         # defaulting the undeclared value child type hint for
                         # counter type hints to be the "int" type.
                         (
-                            get_hint_pep484585_args(  # type: ignore[assignment]
+                            get_hint_pep484585_arg(
                                 hint=hint_curr,
-                                args_len=1,
                                 exception_prefix=EXCEPTION_PREFIX,
                             ),
                             int,
@@ -1449,12 +1448,14 @@ def make_check_expr(
                     # Unignorable sane metahint annotating this parent hint
                     # sanified from this possibly ignorable insane metahint *OR*
                     # "None" otherwise (i.e., if this metahint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
-                        hint=get_hint_pep593_metahint(hint_curr),
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                    hint_or_data_child = (
+                        sanify_hint_child_if_unignorable_or_none(
+                            hint=get_hint_pep593_metahint(hint_curr),
+                            conf=conf,
+                            cls_stack=cls_stack,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ))
 
                     # Python expression yielding the value of the current pith,
                     # defaulting to the name of the local variable assigned to
@@ -1467,27 +1468,32 @@ def make_check_expr(
                     # print(f'hints_child: {repr(hints_child)}')
 
                     # If this metahint is ignorable...
-                    if hint_child is None:
-                        # If this metahint is annotated by only one beartype
-                        # validator, the most efficient expression yielding the
-                        # value of the current pith is simply the full Python
-                        # expression *WITHOUT* assigning that value to a
-                        # reusable local variable in an assignment expression.
-                        # *NO* assignment expression is needed in this case.
-                        #
-                        # Why? Because beartype validators are *NEVER* recursed
-                        # into. Each beartype validator is guaranteed to be the
-                        # leaf of a type-checking subtree, guaranteeing this
-                        # pith to be evaluated only once.
-                        if len(hints_child) == 1:
-                            hint_curr_expr = pith_curr_expr
-                        # Else, this metahint is annotated by two or more
-                        # beartype validators. In this case, the most efficient
-                        # expression yielding the value of the current pith is
-                        # the assignment expression assigning this value to a
-                        # reusable local variable.
-                        else:
-                            hint_curr_expr = pith_curr_assign_expr
+                    if hint_or_data_child is None:
+                        # Expression yielding the value of the current pith,
+                        # defined as either...
+                        hint_curr_expr = (
+                            pith_curr_expr
+                            # If this metahint is annotated by only one beartype
+                            # validator, the most efficient expression yielding
+                            # the value of the current pith is simply the full
+                            # Python expression *WITHOUT* assigning that value
+                            # to a reusable local variable in an assignment
+                            # expression. *NO* assignment expression is needed
+                            # in this case.
+                            #
+                            # Why? Because beartype validators are *NEVER*
+                            # recursed into. Each beartype validator is
+                            # guaranteed to be the leaf of a type-checking
+                            # subtree, guaranteeing this pith to be evaluated
+                            # only once.
+                            if len(hints_child) == 1 else
+                            # Else, this metahint is annotated by two or more
+                            # beartype validators. In this case, the most
+                            # efficient expression yielding the value of the
+                            # current pith is the assignment expression
+                            # assigning this value to a reusable local variable.
+                            pith_curr_assign_expr
+                        )
                     # Else, this metahint is unignorable. In this case...
                     else:
                         # Code deeply type-checking this metahint.
@@ -1504,13 +1510,14 @@ def make_check_expr(
                             # module forces metahints to be subscripted by one
                             # child hint and one or more arbitrary objects.
                             # Ergo, we need *NOT* explicitly validate that here.
-                            hint_child_placeholder=hints_meta.enqueue_hint_child(
-                                hint=hint_child,
-                                indent_level=indent_level_child,
-                                pith_expr=pith_curr_assign_expr,
-                                pith_var_name_index=pith_curr_var_name_index,
-                                typevar_to_hint=hint_curr_meta.typevar_to_hint,
-                            ),
+                            hint_child_placeholder=(
+                                hints_meta.enqueue_hint_or_data_child(
+                                    hint_or_data=hint_or_data_child,
+                                    indent_level=indent_level_child,
+                                    pith_expr=pith_curr_assign_expr,
+                                    pith_var_name_index=(
+                                        pith_curr_var_name_index),
+                                )),
                         )
                     # Else, this metahint is ignorable.
 
@@ -1599,22 +1606,26 @@ def make_check_expr(
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
-                        # Possibly ignorable insane child hint subscripting this
-                        # parent hint, validated to be the *ONLY* child hint
-                        # subscripting this parent hint.
-                        hint=get_hint_pep484585_args(
-                            hint=hint_curr,
-                            args_len=1,
+                    hint_or_data_child = (
+                        sanify_hint_child_if_unignorable_or_none(
+                            # Possibly ignorable insane child hint subscripting
+                            # this parent hint, validated to be the *ONLY* child
+                            # hint subscripting this parent hint.
+                            hint=get_hint_pep484585_arg(
+                                hint=hint_curr,
+                                exception_prefix=EXCEPTION_PREFIX,
+                            ),
+                            conf=conf,
+                            cls_stack=cls_stack,
+                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
                             exception_prefix=EXCEPTION_PREFIX,
-                        ),
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                        ))
 
                     # If this child hint is unignorable...
-                    if hint_child is not None:
+                    if hint_or_data_child is not None:
+                        # Child hint encapsulated by this metadata.
+                        hint_child = get_hint_or_data_hint(hint_or_data_child)
+
                         # Sign identifying this child hint.
                         hint_child_sign = get_hint_pep_sign_or_none(hint_child)
 
@@ -1627,8 +1638,7 @@ def make_check_expr(
                                 hint_refs_type_basename,
                             ) = express_func_scope_type_ref(
                                 forwardref=hint_child,  # type: ignore[arg-type]
-                                refs_type_basename=(
-                                    hint_refs_type_basename),
+                                refs_type_basename=hint_refs_type_basename,
                                 func_scope=func_wrapper_scope,
                                 exception_prefix=EXCEPTION_PREFIX,
                             )
@@ -1641,7 +1651,7 @@ def make_check_expr(
                             # parameter to the issubclass() builtin under all
                             # supported Python versions.
                             if hint_child_sign is HintSignUnion:
-                                hint_child = get_hint_pep_args(hint_child)
+                                hint_child = get_hint_pep_args(hint_child)  # pyright: ignore
                             # Else, this child hint is *NOT* a union.
 
                             # If this child hint is *NOT* an issubclassable

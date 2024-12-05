@@ -13,22 +13,69 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype._data.hint.datahintpep import (
+    Hint,
+    HintOrTupleHints,
+)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep484585_args(
-    hint: object, args_len: int, exception_prefix: str) -> object:
+def get_hint_pep484585_arg(hint: Hint, exception_prefix: str) -> Hint:
     '''
-    Either the single argument or tuple of all arguments subscripting the passed
-    :pep:`484`- or :pep:`585`-compliant type hint if this hint is subscripted by
-    exactly the passed number of child type hints *or* raise an exception
+    Sole child hint subscripting the passed :pep:`484`- or :pep:`585`-compliant
+    parent hint if this hint is subscripted by exactly one child hint *or* raise
+    an exception otherwise (i.e., if this parent hint is either unsubscripted
+    *or* subscripted by two or more child hints).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Parent hint to be inspected.
+    args_len : int
+        Number of child hints expected to subscript this parent hint.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    -------
+    Hint
+        Sole child hint subscripting this parent hint.
+
+    Raises
+    ------
+    BeartypeDecorHintPep585Exception
+        If this hint is subscripted by an unexpected number of child hints.
+
+    See Also
+    --------
+    :func:`.get_hint_pep484585_args`
+        Further details.
+    '''
+
+    # Defer to this lower-level getter.
+    return get_hint_pep484585_args(
+        hint=hint, args_len=1, exception_prefix=exception_prefix)
+
+
+#FIXME: Unit test us up, please.
+def get_hint_pep484585_args(
+    hint: Hint, args_len: int, exception_prefix: str) -> HintOrTupleHints:
+    '''
+    Single child hint *or* tuple of all child hints subscripting the passed
+    :pep:`484`- or :pep:`585`-compliant parent hint if this hint is subscripted
+    by exactly the passed number of child hints *or* raise an exception
     otherwise.
 
     This getter returns either:
 
-    * If ``args_len == 1``, the single argument subscripting this hint as a
-      convenience to the caller.
-    * Else, the tuple of all arguments subscripting this hint.
+    * If ``args_len == 1``, the single child hint subscripting this parent hint
+      as a convenience to the caller.
+    * Else, the tuple of all child hints subscripting this parent hint.
 
     This getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation trivially reduces to
@@ -55,24 +102,24 @@ def get_hint_pep484585_args(
 
     Parameters
     ----------
-    hint : Any
-        Type hint to be inspected.
+    hint : Hint
+        Parent hint to be inspected.
     args_len : int
-        Number of child type hints expected to subscript this hint.
+        Number of child hints expected to subscript this parent hint.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
     Returns
     -------
-    Union[object, tuple]
-        Either the single argument or tuple of all arguments subscripting this
-        type hint.
+    HintOrTupleHints
+        Either the sole child hint *or* tuple of all child hints subscripting
+        this parent hint.
 
     Raises
     ------
     BeartypeDecorHintPep585Exception
-        If this hint is subscripted by an unexpected number of child type hints.
+        If this hint is subscripted by an unexpected number of child hints.
     '''
     assert isinstance(args_len, int), f'{repr(args_len)} not integer.'
     assert args_len >= 1, f'{args_len} < 0.'

@@ -36,7 +36,7 @@ from beartype.typing import (
     Set,
     Tuple,
     TypeVar,
-    # Union,
+    Union,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
@@ -157,20 +157,6 @@ SetHints = Set[Hint]
 zero or more type hints).
 '''
 
-
-TupleHints = Tuple[Hint, ...]
-'''
-:pep:`585`-compliant type hint matching *any* **child type hints** (i.e., tuple
-of zero or more child type hints subscripting a parent type hint).
-'''
-
-
-# HintOrTupleHints = Union[Hint, TupleHints]
-# '''
-# :pep:`585`-compliant type hint matching either a single type hint *or* a tuple
-# of zero or more type hints.
-# '''
-
 # ....................{ HINTS ~ container : dict           }....................
 DictStrToHint = Dict[str, Hint]
 '''
@@ -188,4 +174,18 @@ type hints those type variables map to).
 Type variable lookup tables are commonly employed throughout the :mod:`beartype`
 codebase to record **type variable substitutions** (i.e., the dynamic
 replacement of type variables by non-type variables in larger type hints).
+'''
+
+# ....................{ HINTS ~ container : tuple          }....................
+TupleHints = Tuple[Hint, ...]
+'''
+:pep:`585`-compliant type hint matching *any* **child type hints** (i.e., tuple
+of zero or more child type hints subscripting a parent type hint).
+'''
+
+
+HintOrTupleHints = Union[Hint, TupleHints]
+'''
+:pep:`585`-compliant type hint matching either a single type hint *or* a tuple
+of zero or more type hints.
 '''

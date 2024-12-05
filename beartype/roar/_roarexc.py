@@ -1664,6 +1664,22 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
 
     pass
 
+# ....................{ PRIVATE ~ util : decor               }..................
+class _BeartypeDecorHintSanifyException(_BeartypeUtilException):
+    '''
+    Abstract base class of all **beartype type hint sanification exceptions.**
+
+    Instances of subclasses of this exception are raised by private utility
+    **type hint sanifiers** (i.e., functions reducing otherwise semantically
+    useless and possibly PEP-noncompliant hints to semantically useful and fully
+    PEP-compliant hints) when an unexpected failure occurs.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util : kind                }..................
 class _BeartypeUtilCallFrameException(_BeartypeUtilException):
     '''

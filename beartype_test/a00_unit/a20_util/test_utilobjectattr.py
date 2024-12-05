@@ -7,7 +7,7 @@
 Project-wide **object attribute utility** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilobjectattr` submodule.
+:mod:`beartype._util.utilobjattr` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,15 +20,15 @@ This submodule unit tests the public API of the private
 def test_get_object_attrs_name_to_value_explicit() -> None:
     '''
     Test both the
-    :func:`beartype._util.utilobjectattr.get_object_attrs_name_to_value_explicit`
+    :func:`beartype._util.utilobjattr.get_object_attrs_name_to_value_explicit`
     *and*
-    :func:`beartype._util.utilobjectattr.get_object_methods_name_to_value_explicit`
+    :func:`beartype._util.utilobjattr.get_object_methods_name_to_value_explicit`
     getters, whose testing requires identical types and objects.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.utilobjectattr import (
+    from beartype._util.utilobjattr import (
         get_object_attrs_name_to_value_explicit,
         get_object_methods_name_to_value_explicit,
     )

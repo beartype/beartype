@@ -74,6 +74,7 @@ from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     FrozenDict,
 )
+from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
@@ -463,24 +464,24 @@ class ViolationCause(object):
     # ..................{ PERMUTERS                          }..................
     def permute(self, **kwargs) -> 'ViolationCause':
         '''
-        Shallow copy of this object such that each the passed keyword argument
+        Shallow copy of this object such that each passed keyword parameter
         overwrites the instance variable of the same name in this copy.
 
         Parameters
         ----------
-        Keyword arguments of the same name and type as instance variables of
-        this object (e.g., ``hint``, ``pith``).
+        Keyword parameters of the same name and type as instance variables of
+        this object (e.g., ``hint: Hint``, ``pith: object``).
 
         Returns
         -------
         ViolationCause
-            Shallow copy of this object such that each keyword argument
+            Shallow copy of this object such that each keyword parameter
             overwrites the instance variable of the same name in this copy.
 
         Raises
         ------
         _BeartypeCallHintPepRaiseException
-            If the name of any passed keyword argument is *not* the name of an
+            If the name of any passed keyword parameter is *not* that of an
             existing instance variable of this object.
 
         Examples
@@ -500,27 +501,13 @@ class ViolationCause(object):
            typing.List[int]
         '''
 
-        # For the name of each passed keyword argument...
-        for arg_name in kwargs.keys():
-            # If this name is *NOT* that of a parameter accepted by the
-            # __init__() method, raise an exception.
-            if arg_name not in self._INIT_PARAM_NAMES:
-                raise _BeartypeCallHintPepRaiseException(
-                    f'{self.__class__}.__init__() parameter '
-                    f'{arg_name} unrecognized.'
-                )
-
-        # For the name of each parameter accepted by the __init__() method...
-        for arg_name in self._INIT_PARAM_NAMES:
-            # If this parameter was *NOT* explicitly passed by the caller,
-            # default this parameter to its current value from this object.
-            if arg_name not in kwargs:
-                kwargs[arg_name] = getattr(self, arg_name)
-            # Else, this parameter was explicitly passed by the caller. In this
-            # case, preserve this parameter as is.
-
-        # Return a new instance of this class initialized with these arguments.
-        return ViolationCause(**kwargs)
+        # Set us up the permutation! Make your time!
+        return permute_object(
+            obj=self,
+            init_arg_name_to_value=kwargs,
+            init_arg_names=self._INIT_PARAM_NAMES,
+            exception_cls=_BeartypeCallHintPepRaiseException,
+        )
 
     # ..................{ SANIFIERS                          }..................
     def sanify_hint_if_unignorable_or_none(self, hint: Hint) -> Hint:

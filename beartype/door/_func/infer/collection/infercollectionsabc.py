@@ -70,7 +70,7 @@ from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobjectattr import (
+from beartype._util.utilobjattr import (
     get_object_methods_name_to_value_explicit)
 from collections.abc import (
     Collection as CollectionABC,

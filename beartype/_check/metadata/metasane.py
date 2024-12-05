@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype.typing import (
     TYPE_CHECKING,
     Tuple,
@@ -24,6 +25,7 @@ from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     FrozenDict,
 )
+from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
@@ -64,11 +66,19 @@ class HintSanifiedData(object):
         'typevar_to_hint',
     )
 
+
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         hint: Hint
         typevar_to_hint: TypeVarToHint
+
+
+    _INIT_PARAM_NAMES = frozenset(__slots__)
+    '''
+    Frozen set of the names of all parameters accepted by the :meth:`init`
+    method, defined as a set to enable efficient membership testing.
+    '''
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
@@ -81,7 +91,7 @@ class HintSanifiedData(object):
         typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     ) -> None:
         '''
-        Initialize this metadata with the passed parameters.
+        Initialize this sanified type hint metadata with the passed parameters.
 
         Parameters
         ----------
@@ -104,6 +114,38 @@ class HintSanifiedData(object):
         self.hint = hint
         self.typevar_to_hint = typevar_to_hint
 
+    # ..................{ PERMUTERS                          }..................
+    def permute(self, **kwargs) -> 'HintSanifiedData':
+        '''
+        Shallow copy of this metadata such that each passed keyword parameter
+        overwrites the instance variable of the same name in this copy.
+
+        Parameters
+        ----------
+        Keyword parameters of the same name and type as instance variables of
+        this object (e.g., ``hint: Hint``, ``typevar_to_hint: TypeVarToHint``).
+
+        Returns
+        -------
+        HintSanifiedData
+            Shallow copy of this metadata such that each keyword parameter
+            overwrites the instance variable of the same name in this copy.
+
+        Raises
+        ------
+        _BeartypeDecorHintSanifyException
+            If the name of any passed keyword parameter is *not* that of an
+            existing instance variable of this object.
+        '''
+
+        # Set us up the permutation! Make your time!
+        return permute_object(
+            obj=self,
+            init_arg_name_to_value=kwargs,
+            init_arg_names=self._INIT_PARAM_NAMES,
+            exception_cls=_BeartypeDecorHintSanifyException,
+        )
+
 # ....................{ HINTS                              }....................
 HintOrHintSanifiedData = Union[Hint, HintSanifiedData]
 '''
@@ -117,6 +159,37 @@ HintOrHintSanifiedDataUnpacked = Tuple[Hint, TypeVarToHint]
 PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
 returned by the :func:`.unpack_hint_or_data` unpacker.
 '''
+
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+def get_hint_or_data_hint(hint_or_data: HintOrHintSanifiedData) -> Hint:
+    '''
+    Hint unpacked (i.e., coerced, converted) from the passed parameter.
+
+    Caveats
+    -------
+    This getter effectively discards *all* supplementary metadata recorded with
+    this parameter -- including any type variable lookup table associated with
+    this child hint.
+
+    Parameters
+    ----------
+    hint_or_data : HintSanifiedData
+        Either a type hint *or* **sanified type hint metadata** (i.e.,
+        :class:`.HintSanifiedData` object) to be unpacked.
+
+    Returns
+    -------
+    Hint
+        Hint unpacked (i.e., coerced, converted) from this parameter.
+    '''
+
+    # Return the hint encapsulated by this metadata.
+    return (
+        hint_or_data.hint
+        if isinstance(hint_or_data, HintSanifiedData) else
+        hint_or_data
+    )
 
 # ....................{ UNPACKERS                          }....................
 #FIXME: Unit test us up, please.

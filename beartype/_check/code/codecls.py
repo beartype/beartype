@@ -24,7 +24,7 @@ from beartype._check.code.snip.codesnipcls import (
     HINT_INDEX_TO_HINT_PLACEHOLDER)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    HintSanifiedData,
+    # HintSanifiedData,
     unpack_hint_or_data,
 )
 from beartype._data.hint.datahintpep import (
@@ -399,7 +399,7 @@ class HintsMeta(FixedList):
         )
 
 
-    #FIXME: Obsolete in favour of enqueue_hint_or_data_child(), please.
+    #FIXME: Excise us up, please. This should no longer be required.
     def enqueue_hint_child(self, **kwargs) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
