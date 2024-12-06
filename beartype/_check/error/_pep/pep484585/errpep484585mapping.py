@@ -56,9 +56,9 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
-    assert len(cause.hint_childs) in hints_child_len_expected, (
+    assert len(cause.hint_or_data_childs) in hints_child_len_expected, (
         f'Mapping type hint {repr(cause.hint)} number of child type hints '
-        f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
+        f'{len(cause.hint_or_data_childs)} not in {hints_child_len_expected}.'
     )
 
     # Shallow output cause describing the failure of this path to be a shallow
@@ -80,7 +80,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # Else, this mapping is non-empty.
 
     # Child key hint subscripting this parent mapping hint.
-    hint_key = cause.hint_childs[0]
+    hint_key = cause.hint_or_data_childs[0]
 
     # Child value hint subscripting this parent mapping hint, defined as
     # either...
@@ -92,12 +92,12 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         # Else, this hint does *NOT* describes a "collections.Counter"
         # dictionary subclass. In this case, this child value hint as is.
         if cause.hint_sign is HintSignCounter else
-        cause.hint_childs[1]
+        cause.hint_or_data_childs[1]
     )
 
     # True only if these hints are unignorable.
-    hint_key_unignorable = hint_key is not None
-    hint_value_unignorable = hint_value is not None
+    is_hint_key_unignorable = hint_key is not None
+    is_hint_value_unignorable = hint_value is not None
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:
@@ -126,7 +126,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # For each key-value pair of this mapping...
     for pith_key, pith_value in pith_items:
         # If this child key hint is unignorable...
-        if hint_key_unignorable:
+        if is_hint_key_unignorable:
             # Deep output cause describing the failure of this key to satisfy
             # this child key hint if this key violates this child key hint *OR*
             # "None" otherwise (i.e., if this key satisfies this child key
@@ -150,7 +150,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         # Else, this child key hint is ignorable.
 
         # If this child value hint is unignorable...
-        if hint_value_unignorable:
+        if is_hint_value_unignorable:
             # Deep output cause describing the failure of this value to satisfy
             # this child value hint if this value violates this child value hint
             # *OR* "None" otherwise (i.e., if this value satisfies this child

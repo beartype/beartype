@@ -58,6 +58,7 @@ def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
     # Shallow output cause to be returned, type-checking only whether this pith
     # satisfies this metahint.
     cause_shallow = cause.permute(hint=metahint).find_cause()
+    # cause_shallow = cause.permute(hint=metahint, is_hint_root=True).find_cause()
 
     # If this pith fails to satisfy this metahint, return this cause as is.
     if cause_shallow.cause_str_or_none is not None:

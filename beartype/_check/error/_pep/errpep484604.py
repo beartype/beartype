@@ -69,7 +69,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     PITH_REPR_INDEX = len(pith_repr) + 1
 
     # For each subscripted argument of this union...
-    for hint_child in cause.hint_childs:
+    for hint_child in cause.hint_or_data_childs:
         # If this child hint is ignorable, continue to the next.
         if hint_child is None:
             continue

@@ -59,9 +59,9 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
-    assert len(cause.hint_childs) in hints_child_len_expected, (
+    assert len(cause.hint_or_data_childs) in hints_child_len_expected, (
         f'Sequence type hint {repr(cause.hint)} number of child type hints '
-        f'{len(cause.hint_childs)} not in {hints_child_len_expected}.'
+        f'{len(cause.hint_or_data_childs)} not in {hints_child_len_expected}.'
     )
 
     # First child hint subscripting this parent container hint. All remaining
@@ -71,7 +71,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
     #   subscripted by only two child hints -- the latter of which is guaranteed
     #   to be an ellipses and thus ignorable syntactic chuff.
-    hint_child = cause.hint_childs[0]
+    hint_child = cause.hint_or_data_childs[0]
 
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "list" for the hint
@@ -197,12 +197,12 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
-    elif len(cause.pith) != len(cause.hint_childs):
+    elif len(cause.pith) != len(cause.hint_or_data_childs):
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
         cause_deep = cause.permute(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} length '
-            f'{len(cause.pith)} != {len(cause.hint_childs)}'
+            f'{len(cause.pith)} != {len(cause.hint_or_data_childs)}'
         ))
 
         # Return this cause.
@@ -213,7 +213,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     for pith_item_index, pith_item in enumerate(cause.pith):
         # Child hint corresponding to this tuple item. Since this pith and
         # hint are of the same length, this child hint exists.
-        hint_child = cause.hint_childs[pith_item_index]
+        hint_child = cause.hint_or_data_childs[pith_item_index]
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.

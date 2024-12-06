@@ -461,6 +461,7 @@ def get_hint_object_violation(
         exception_prefix=exception_prefix,
         func=func,
         hint=hint,
+        # is_hint_root=True,
         pith=obj,
         pith_name=pith_name,
         random_int=random_int,

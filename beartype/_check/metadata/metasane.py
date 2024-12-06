@@ -160,6 +160,14 @@ PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
 returned by the :func:`.unpack_hint_or_data` unpacker.
 '''
 
+
+TupleHintOrHintSanifiedData = Tuple[HintOrHintSanifiedData, ...]
+'''
+PEP-compliant type hint matching a tuple containing zero or more items, each of
+which is either a type hint *or* **sanified type hint metadata** (i.e.,
+:class:`.HintSanifiedData` object).
+'''
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_or_data_hint(hint_or_data: HintOrHintSanifiedData) -> Hint:

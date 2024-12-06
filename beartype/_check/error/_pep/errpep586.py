@@ -43,7 +43,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
     # Tuple of zero or more literal objects subscripting this hint,
     # intentionally replacing the current such tuple due to the non-standard
     # implementation of the third-party "typing_extensions.Literal" factory.
-    hint_childs = get_hint_pep586_literals(
+    hint_or_data_childs = get_hint_pep586_literals(
         hint=cause.hint, exception_prefix=cause.exception_prefix)
 
     # If this pith is equal to any literal object subscripting this hint, this
@@ -62,7 +62,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
             cause.pith == hint_literal
         )
         # For each literal object subscripting this hint...
-        for hint_literal in hint_childs
+        for hint_literal in hint_or_data_childs
     ):
         # Then return this cause unmodified, as this pith deeply satisfies this
         # hint.
@@ -71,7 +71,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Tuple union of the types of all literals subscripting this hint.
     hint_literal_types = tuple(
-        type(hint_literal) for hint_literal in hint_childs)
+        type(hint_literal) for hint_literal in hint_or_data_childs)
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is an instance of one or more of these types.
@@ -87,7 +87,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
     # Human-readable comma-delimited disjunction of the machine-readable
     # representations of all literal objects subscripting this hint.
     cause_literals_unsatisfied = join_delimited_disjunction(
-        repr(hint_literal) for hint_literal in hint_childs)
+        repr(hint_literal) for hint_literal in hint_or_data_childs)
 
     # Deep output cause to be returned, permuted from this input cause such that
     # the justification is a human-readable string describing this failure.
