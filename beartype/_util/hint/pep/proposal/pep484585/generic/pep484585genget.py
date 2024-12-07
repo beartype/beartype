@@ -24,6 +24,7 @@ from beartype._data.hint.datahintpep import (
     Hint,
     ListHints,
     TupleHints,
+    TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
@@ -171,7 +172,7 @@ def get_hint_pep484585_generic_args_full(
 
     Examples
     --------
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.typing import Generic, TypeVar
        >>> from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -295,7 +296,7 @@ def get_hint_pep484585_generic_args_full(
     #
     # For the above call, this contents of this dictionary resemble:
     #     typevar_to_hint = {T: int}
-    typevar_to_hint: Dict[TypeVar, Hint] = {}
+    typevar_to_hint: TypeVarToHint = {}
 
     # ....................{ LOCALS ~ target                }....................
     # List of zero or more child hints transitively subscripting the passed

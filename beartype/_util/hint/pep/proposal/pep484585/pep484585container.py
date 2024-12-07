@@ -16,6 +16,7 @@ from beartype.typing import (
     Collection,
     Tuple,
 )
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from collections.abc import (
     ItemsView as ItemsViewABC,
@@ -23,7 +24,7 @@ from collections.abc import (
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_itemsview(
-    hint: object, exception_prefix: str, **kwargs) -> object:
+    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **items view type
     hint** (i.e., of the form ``(collections.abc|typing).ItemsView[{hint_key},
@@ -35,7 +36,7 @@ def reduce_hint_pep484585_itemsview(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Items view type hint to be reduced.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this hint in
@@ -45,7 +46,7 @@ def reduce_hint_pep484585_itemsview(
 
     Returns
     -------
-    object
+    Hint
         More suitable type hint better supported by :mod:`beartype`.
     '''
 
@@ -56,7 +57,7 @@ def reduce_hint_pep484585_itemsview(
 
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)
     # of *ALL* items views.
-    hint_reduced = ItemsViewABC
+    hint_reduced: Hint = ItemsViewABC  # pyright: ignore
 
     # If this hint is subscripted by one or more child type hints...
     if is_hint_pep_subscripted(hint):

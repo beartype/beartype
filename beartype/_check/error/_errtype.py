@@ -18,11 +18,6 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
-# from beartype._data.hint.datahintpep import (
-#     HintOrTupleHints,
-#     TupleHints,
-# )
-from beartype._check.metadata.metasane import get_hint_or_data_hint
 from beartype._data.hint.datahinttyping import (
     TupleTypes,
     TypeOrTupleTypes,

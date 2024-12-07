@@ -16,10 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type
+from beartype._check.proposal.checkpep484585generic import (
+    iter_hint_pep484585_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585geniter import (
-    iter_hint_pep484585_generic_bases_unerased)
 
 # ....................{ GETTERS                            }....................
 def find_cause_generic(cause: ViolationCause) -> ViolationCause:
@@ -53,8 +53,8 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is instance of this origin type.
-    cause_shallow = cause.permute(hint=hint_type)
-    cause_shallow = find_cause_instance_type(cause_shallow)
+    cause_type = cause.permute(hint=hint_type)
+    cause_shallow = find_cause_instance_type(cause_type)
     # print(f'[find_cause_generic] cause.hint [post-reduction]: {cause.hint}')
 
     # If this pith is *NOT* an instance of this type, return this cause.
@@ -64,13 +64,17 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
 
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
-    for hint_child in iter_hint_pep484585_generic_bases_unerased(
+    for hint_or_sane_child in iter_hint_pep484585_generic_bases_unerased(
         hint=cause.hint,
         conf=cause.conf,
+        typevar_to_hint=cause.typevar_to_hint,
         exception_prefix=cause.exception_prefix,
     ):
+        # Cause permuted to reflect this pseudo-superclass.
+        cause_child = cause.permute(hint_or_sane=hint_or_sane_child)
+
         # Deep output cause to be returned, permuted from this input cause.
-        cause_deep = cause.permute(hint=hint_child).find_cause()
+        cause_deep = cause_child.find_cause()
         # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
 
         # If this pseudo-superclass is the cause of this failure...
@@ -78,7 +82,7 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
             # Human-readable string prefixing this failure with additional
             # metadata describing this pseudo-superclass.
             cause_deep.cause_str_or_none = (
-                f'generic base {repr(hint_child)} '
+                f'generic base {repr(cause_child.hint)} '
                 f'{cause_deep.cause_str_or_none}'
             )
 

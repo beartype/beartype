@@ -129,7 +129,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # * For the exact same reason, this sanitization *CANNOT* be
             #   performed in the low-level make_check_expr() dynamically
             #   generating code type-checking this hint.
-            hint_or_data = sanify_hint_root_func_if_unignorable_or_none(
+            hint_or_sane = sanify_hint_root_func_if_unignorable_or_none(
                 decor_meta=decor_meta,
                 hint=hint_insane,
                 pith_name=ARG_NAME_RETURN,
@@ -139,7 +139,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # allowed *ONLY* as a return annotation...
-            if hint_or_data is NoReturn:
+            if hint_or_sane is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
@@ -160,7 +160,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # Else, this is *NOT* "typing.NoReturn".
             #
             # If this hint is unignorable...
-            elif hint_or_data is not None:
+            elif hint_or_sane is not None:
                 # Type stack if required by this hint *OR* "None" otherwise.
                 # See is_hint_needs_cls_stack() for details.
                 #
@@ -186,7 +186,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                    hint_or_data,
+                    hint_or_sane,
                     decor_meta.conf,
                     cls_stack,
                     False,  # <-- True only for parameters

@@ -25,7 +25,7 @@ from beartype._check.code.snip.codesnipcls import (
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     # HintSanifiedData,
-    unpack_hint_or_data,
+    unpack_hint_or_sane,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -354,9 +354,9 @@ class HintsMeta(FixedList):
         return hint_meta
 
     # ..................{ METHODS                            }..................
-    def enqueue_hint_or_data_child(
+    def enqueue_hint_or_sane_child(
         self,
-        hint_or_data: HintOrHintSanifiedData,
+        hint_or_sane: HintOrHintSanifiedData,
         indent_level: int,
         pith_expr: str,
         pith_var_name_index: int,
@@ -370,7 +370,7 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint_or_data : HintOrHintSanifiedData
+        hint_or_sane : HintOrHintSanifiedData
             Either a type hint *or* **sanified type hint metadata** (i.e.,
             :data:`.HintSanifiedData` object) to be type-checked.
 
@@ -385,7 +385,7 @@ class HintsMeta(FixedList):
         '''
 
         # Child hint and type variable lookup table encapsulated by this data.
-        hint, typevar_to_hint = unpack_hint_or_data(hint_or_data)
+        hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
 
         # Return the placeholder string to be subsequently replaced by code
         # type-checking this child pith against this child hint, produced by

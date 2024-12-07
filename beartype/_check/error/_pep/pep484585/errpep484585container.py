@@ -59,19 +59,10 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
-    assert len(cause.hint_or_data_childs) in hints_child_len_expected, (
+    assert len(cause.hint_or_sane_childs) in hints_child_len_expected, (
         f'Sequence type hint {repr(cause.hint)} number of child type hints '
-        f'{len(cause.hint_or_data_childs)} not in {hints_child_len_expected}.'
+        f'{len(cause.hint_or_sane_childs)} not in {hints_child_len_expected}.'
     )
-
-    # First child hint subscripting this parent container hint. All remaining
-    # child hints if any are ignorable. Specifically, if this hint is:
-    # * A standard container (e.g., "typing.List[str]"), this hint is subscripted
-    #   by only one child hint.
-    # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
-    #   subscripted by only two child hints -- the latter of which is guaranteed
-    #   to be an ellipses and thus ignorable syntactic chuff.
-    hint_child = cause.hint_or_data_childs[0]
 
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "list" for the hint
@@ -83,14 +74,24 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     if cause_shallow.cause_str_or_none is not None:
         return cause_shallow
     # Else, this pith is an instance of this type.
-    #
+
+    # First sanified child hint metadata subscripting this parent container
+    # hint. All remaining child hints if any are ignorable. Specifically, if
+    # this hint is:
+    # * A standard container (e.g., "typing.List[str]"), this hint is subscripted
+    #   by only one child hint.
+    # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
+    #   subscripted by only two child hints -- the latter of which is guaranteed
+    #   to be an ellipses and thus ignorable syntactic chuff.
+    hint_or_sane_child = cause.hint_or_sane_childs[0]
+
     # If either...
-    elif (
-        # This container is empty, all items of this container (of which there are
-        # none) are necessarily valid *OR*...
+    if (
+        # This container is empty, *ALL* items of this container (of which there
+        # are none) are necessarily valid *OR*...
         not cause.pith or
         # This child hint is ignorable...
-        hint_child is None
+        hint_or_sane_child is None
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -123,7 +124,8 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         # Deep output cause describing the failure of this item to satisfy this
         # child hint if this item violates this child hint *OR* "None" otherwise
         # (i.e., if this item satisfies this child hint).
-        cause_deep = cause.permute(pith=pith_item, hint=hint_child).find_cause()
+        cause_deep = cause.permute(
+            hint_or_sane=hint_or_sane_child, pith=pith_item).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:
@@ -197,12 +199,12 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
-    elif len(cause.pith) != len(cause.hint_or_data_childs):
+    elif len(cause.pith) != len(cause.hint_or_sane_childs):
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
         cause_deep = cause.permute(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} length '
-            f'{len(cause.pith)} != {len(cause.hint_or_data_childs)}'
+            f'{len(cause.pith)} != {len(cause.hint_or_sane_childs)}'
         ))
 
         # Return this cause.
@@ -213,11 +215,11 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     for pith_item_index, pith_item in enumerate(cause.pith):
         # Child hint corresponding to this tuple item. Since this pith and
         # hint are of the same length, this child hint exists.
-        hint_child = cause.hint_or_data_childs[pith_item_index]
+        hint_or_sane_child = cause.hint_or_sane_childs[pith_item_index]
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_child is None:
+        if hint_or_sane_child is None:
             continue
         # Else, this child hint is unignorable.
 
@@ -226,7 +228,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # sleuth_copy = cause.permute(pith=pith_item, hint=hint_child)
         # pith_item_cause = sleuth_copy.find_cause()
         cause_deep = cause.permute(
-            pith=pith_item, hint=hint_child).find_cause()
+            pith=pith_item, hint_or_sane=hint_or_sane_child).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:

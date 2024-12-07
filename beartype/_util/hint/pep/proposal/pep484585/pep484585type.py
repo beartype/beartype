@@ -13,7 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
-    get_hint_pep484585_args)
+    get_hint_pep484585_arg)
+from beartype._data.hint.datahintpep import Hint
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
@@ -32,7 +33,7 @@ from typing import (
 #
 #Clearly, we should have documented that here as well. Examine closer, please.
 def reduce_hint_pep484585_type(
-    hint: object, exception_prefix: str, **kwargs) -> object:
+    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass type
     hint** (i.e., hint constraining objects to subclass that superclass) to the
@@ -46,7 +47,7 @@ def reduce_hint_pep484585_type(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Subclass type hint to be reduced.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
@@ -87,8 +88,8 @@ def reduce_hint_pep484585_type(
     # validation performed by that function would raise exceptions for
     # various child type hints that are otherwise permissible (e.g.,
     # "typing.Any").
-    hint_superclass = get_hint_pep484585_args(
-        hint=hint, args_len=1, exception_prefix=exception_prefix)
+    hint_superclass = get_hint_pep484585_arg(
+        hint=hint, exception_prefix=exception_prefix)
 
     # If this argument is either...
     if (
@@ -106,7 +107,7 @@ def reduce_hint_pep484585_type(
         hint_superclass is type
     ):
         # Reduce this subclass type hint to the "type" superclass.
-        hint = type
+        hint = type  # pyright: ignore
     # Else, this argument is unignorable and thus irreducible.
 
     # Return this possibly reduced type hint.

@@ -29,7 +29,9 @@ from beartype._check.convert.convsanify import (
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintSanifiedData,
-    get_hint_or_data_hint,
+    ListHintOrHintSanifiedData,
+    SetHintOrHintSanifiedData,
+    get_hint_or_sane_hint,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
@@ -42,12 +44,12 @@ from beartype._data.code.pep.datacodepep484604 import (
 )
 from beartype._data.hint.datahintpep import (
     Hint,
-    ListHints,
-    SetHints,
-    # TupleHints,
     TypeVarToHint,
 )
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    SetTypes,
+)
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
@@ -168,7 +170,7 @@ def make_hint_pep484604_check_expr(
     #   "hint_meta" object in entirety. Why? Memoization, of course. Passing the
     #   "hint_meta" object in entirety would effectively inhibit the memoization
     #   of this getter, which entirely defeats the point.
-    hint_or_data_childs = _get_hint_pep484604_union_args_flattened(
+    hint_or_sane_childs = _get_hint_pep484604_union_args_flattened(
         hint_meta.hint,
         cls_stack,
         conf,
@@ -179,19 +181,21 @@ def make_hint_pep484604_check_expr(
     # Reuse previously created sets of the following (when available):
     # * "hint_childs_nonpep", the set of all PEP-noncompliant child hints
     #   subscripting this union.
-    # * "hint_or_data_childs_pep", the set of all PEP-compliant child hints subscripting
+    # * "hint_or_sane_childs_pep", the set of all PEP-compliant child hints subscripting
     #   this union.
     #
     # Since these child hints require fundamentally different forms of
     # type-checking, prefiltering child hints into these sets *BEFORE*
     # generating code type-checking these child hints improves both efficiency
     # and maintainability.
-    hint_childs_nonpep: SetHints = acquire_object_typed(set)
-    hint_or_data_childs_pep: SetHints = acquire_object_typed(set)
+    hint_childs_nonpep: SetTypes = (
+        acquire_object_typed(set))
+    hint_or_sane_childs_pep: SetHintOrHintSanifiedData = (
+        acquire_object_typed(set))
 
     # Clear these sets prior to use below.
     hint_childs_nonpep.clear()
-    hint_or_data_childs_pep.clear()
+    hint_or_sane_childs_pep.clear()
 
     # 1-based indentation level describing the current level of indentation
     # appropriate for the currently iterated child hint.
@@ -205,7 +209,7 @@ def make_hint_pep484604_check_expr(
     #doing so actually *IS* an optimization before doing so. *sigh*
 
     # For each child hint subscripting this union...
-    for hint_or_data_child in hint_or_data_childs:
+    for hint_or_sane_child in hint_or_sane_childs:
         #FIXME: Uncomment as desired for debugging. This test is currently a bit
         #too costly to warrant uncommenting.
         # Assert that this child hint is *NOT* shallowly ignorable. Why? Because
@@ -219,7 +223,7 @@ def make_hint_pep484604_check_expr(
         #     f'{repr(hint_child)} ignorable but not ignored.')
 
         # Child hint encapsulated by this metadata.
-        hint_child = get_hint_or_data_hint(hint_or_data_child)
+        hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
@@ -232,13 +236,13 @@ def make_hint_pep484604_check_expr(
             # "list"). Why? Because that would then induce false positives when
             # the current pith shallowly satisfies this non-"typing" type but
             # does *NOT* deeply satisfy this child hint.
-            hint_or_data_childs_pep.add(hint_or_data_child)
+            hint_or_sane_childs_pep.add(hint_or_sane_child)
         # Else, this child hint is PEP-noncompliant. In this case...
         else:
             # Filter this child hint into this set of PEP-noncompliant child
             # hints. Since PEP-noncompliant hints are by definition associated
             # with *NO* meaningful metadata, silently ignore this metadata.
-            hint_childs_nonpep.add(hint_child)
+            hint_childs_nonpep.add(hint_child)  # pyright: ignore
 
     # ....................{ NON-PEP                        }....................
     # Initialize the code type-checking the current pith against these arguments
@@ -261,7 +265,7 @@ def make_hint_pep484604_check_expr(
                     # subsequent code generated for those PEP-compliant child
                     # hints.
                     pith_curr_assign_expr
-                    if hint_or_data_childs_pep else
+                    if hint_or_sane_childs_pep else
                     # Else, this union is subscripted by *NO* PEP-compliant
                     # child hints. Since this is the first and only test
                     # generated for this union, prefer the expression yielding
@@ -297,13 +301,13 @@ def make_hint_pep484604_check_expr(
     # ....................{ PEP                            }....................
     # For the 0-based index of each PEP-compliant child hint of this union *AND*
     # that hint...
-    for hint_or_data_child_pep_index, hint_or_data_child_pep in enumerate(
-        hint_or_data_childs_pep):
+    for hint_or_sane_child_pep_index, hint_or_sane_child_pep in enumerate(
+        hint_or_sane_childs_pep):
         # Code deeply type-checking this child hint.
         func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
             # Expression yielding the value of this pith.
-            hint_child_placeholder=hints_meta.enqueue_hint_or_data_child(
-                hint_or_data=hint_or_data_child_pep,
+            hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
+                hint_or_sane=hint_or_sane_child_pep,
                 indent_level=indent_level_child,
                 pith_expr=(
                     # If either...
@@ -319,7 +323,7 @@ def make_hint_pep484604_check_expr(
                         hint_childs_nonpep or
                         # This is any PEP-compliant child hint *EXCEPT* the
                         # first...
-                        hint_or_data_child_pep_index
+                        hint_or_sane_child_pep_index
                     ) else
                     # Then this union is not subscripted by any PEP-noncompliant
                     # child hints *AND* this is the first PEP-compliant child
@@ -342,7 +346,7 @@ def make_hint_pep484604_check_expr(
     # ....................{ RETURN                         }....................
     # Release this pair of sets back to their respective pools.
     release_object_typed(hint_childs_nonpep)
-    release_object_typed(hint_or_data_childs_pep)
+    release_object_typed(hint_or_sane_childs_pep)
 
     # If this code is *NOT* its initial value, this union is subscripted by one
     # or more unignorable child hints and the above logic generated code
@@ -459,8 +463,9 @@ def _get_hint_pep484604_union_args_flattened(
 
     # For efficiency, reuse a previously created list of all new child hints of
     # this parent union.
-    hint_or_data_childs_new: ListHints = acquire_object_typed(list)
-    hint_or_data_childs_new.clear()
+    hint_or_sane_childs_new: ListHintOrHintSanifiedData = (
+        acquire_object_typed(list))
+    hint_or_sane_childs_new.clear()
 
     # ....................{ SEARCH                         }....................
     # For each subscripted argument of this union...
@@ -494,7 +499,7 @@ def _get_hint_pep484604_union_args_flattened(
         #   | int" type hints (respectively) when the non-default
         #   "conf.is_pep484_tower=True" parameter is enabled.
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-        hint_or_data_child = sanify_hint_child_if_unignorable_or_none(
+        hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
             hint=hint_child,
             conf=conf,
             cls_stack=cls_stack,
@@ -504,7 +509,7 @@ def _get_hint_pep484604_union_args_flattened(
         # print(f'Sanified union child hint to {repr(hint_child)}...')
 
         # Child hint encapsulated by this metadata.
-        hint_child = get_hint_or_data_hint(hint_or_data_child)
+        hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 
         # Sign of this sanified child hint if this hint is PEP-compliant *OR*
         # "None" otherwise (i.e., if this hint is PEP-noncompliant).
@@ -530,27 +535,27 @@ def _get_hint_pep484604_union_args_flattened(
 
             #FIXME: Unit test us up, please. This is pretty insane. *sigh*
             # If this hint is encapsulated by metadata...
-            if isinstance(hint_or_data_child, HintSanifiedData):
+            if isinstance(hint_or_sane_child, HintSanifiedData):
                 # For each child child type subscripting this child union...
                 for hint_child_child in hint_child_childs:
                     # Metadata encapsulating the sanification of this child
                     # child hint.
-                    hint_or_data_child_child = hint_or_data_child.permute(
+                    hint_or_sane_child_child = hint_or_sane_child.permute(
                         hint=hint_child_child)
 
                     # Inefficiently append this child child hint to this parent
                     # union in a manner preserving this metadata.
-                    hint_or_data_childs_new.append(hint_or_data_child_child)
+                    hint_or_sane_childs_new.append(hint_or_sane_child_child)
             # Else, this is a bare hint *NOT* encapsulated by metadata. In this
             # case...
             else:
                 # Efficiently append these child child hints to this parent
                 # union while ignoring this non-existent metadata.
-                hint_or_data_childs_new.extend(hint_child_childs)
+                hint_or_sane_childs_new.extend(hint_child_childs)
         # Else, this child hint is *NOT* itself a union. In this case, append
         # this child hint to this parent union.
         else:
-            hint_or_data_childs_new.append(hint_or_data_child)
+            hint_or_sane_childs_new.append(hint_or_sane_child)
 
         # Increment the 0-based index of the currently iterated child hint.
         hint_childs_index += 1
@@ -558,11 +563,11 @@ def _get_hint_pep484604_union_args_flattened(
     # ....................{ RETURN                         }....................
     # Freeze this temporary list back to this permanent tuple, replacing the
     # prior unflattened contents of this tuple.
-    hint_or_data_childs = tuple(hint_or_data_childs_new)
+    hint_or_sane_childs = tuple(hint_or_sane_childs_new)
 
     # Release this list back to its respective pool.
-    release_object_typed(hint_or_data_childs_new)
+    release_object_typed(hint_or_sane_childs_new)
     # print(f'Flattened union to {repr(hint_childs)}...')
 
     # Return this tuple and corresponding type variable lookup table.
-    return hint_or_data_childs
+    return hint_or_sane_childs

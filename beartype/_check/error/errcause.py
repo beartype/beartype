@@ -13,6 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: The "ViolationCause.hint_childs" tuple is arguably useless. It's only
+#used in one other submodule and can, in any case, be trivially reconstructed
+#from the more useful "ViolationCause.hint_or_sane_childs" tuple. In other
+#words, please excise "ViolationCause.hint_childs".
+
 #FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
 #recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
 #* Define a new private "beartype.door._doorerror" submodule.
@@ -24,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  dataclass encapsulating metadata describing the current type-checking
 #  violation. That metadata (e.g., "cause_indent") is inappropriate for
 #  general-purpose type hints. Exceptions include:
-#  * "hint", "hint_sign", and "hint_or_data_childs" -- all of which are subsumed
+#  * "hint", "hint_sign", and "hint_or_sane_childs" -- all of which are subsumed
 #    by the "TypeHint" dataclass and should thus be excised.
 #* Refactor the TypeHint._find_cause() method to accept an instance of
 #  the "_TypeHintUnbearability" dataclass: e.g.,
@@ -57,8 +62,8 @@ from beartype._check.convert.convsanify import (
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     TupleHintOrHintSanifiedData,
-    get_hint_or_data_hint,
-    unpack_hint_or_data,
+    get_hint_or_sane_hint,
+    unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahintpep import (
@@ -78,8 +83,9 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
-    FrozenDict,
+    # FrozenDict,
 )
+from beartype._util.utilobject import SENTINEL
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
@@ -130,10 +136,10 @@ class ViolationCause(object):
         * Else, :data:`None`.
 
         This instance variable is effectively a streamlined variant of the
-        :attr:`hint_or_data_childs` instance variable. Whereas the latter
+        :attr:`hint_or_sane_childs` instance variable. Whereas the latter
         *includes* all supplementary metadata, the former instance variable
         *excludes* all supplementary metadata and thus only contains hints.
-    hint_or_data_childs : Optional[TupleHintOrHintSanifiedData]
+    hint_or_sane_childs : Optional[TupleHintOrHintSanifiedData]
         Either:
 
         * If this hint is PEP-compliant, the possibly empty tuple of all child
@@ -190,7 +196,7 @@ class ViolationCause(object):
         'func',
         'hint',
         'hint_childs',
-        'hint_or_data_childs',
+        'hint_or_sane_childs',
         'hint_sign',
         'pith',
         'pith_name',
@@ -207,7 +213,7 @@ class ViolationCause(object):
         'exception_prefix',
         'func',
         'hint',
-        # 'is_hint_root',
+        'hint_or_sane',
         'pith',
         'pith_name',
         'random_int',
@@ -227,12 +233,6 @@ class ViolationCause(object):
         self,
 
         # Mandatory parameters.
-
-        #FIXME: Obsolete this in favour of "hint_or_data", please.
-        hint: Hint,
-        #FIXME: Make this mandatory, please.
-        # hint_or_data: HintOrHintSanifiedData,
-
         cause_indent: str,
         cls_stack: TypeStack,
         conf: BeartypeConf,
@@ -243,12 +243,9 @@ class ViolationCause(object):
         random_int: Optional[int],
 
         # Optional parameters.
+        hint: Hint = SENTINEL,  # type: ignore[arg-type]
+        hint_or_sane: HintOrHintSanifiedData = SENTINEL,  # type: ignore[arg-type]
         cause_str_or_none: Optional[str] = None,
-
-        #FIXME: Good idea, but no time at the moment. Revisit, please! When we
-        #do so, we probably want to generalize this to resemble:
-        #    is_hint_sanified: bool = True,
-        # is_hint_root: bool = False,
         # typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     ) -> None:
         '''
@@ -256,24 +253,39 @@ class ViolationCause(object):
 
         Parameters
         ----------
-        hint_or_data : HintOrHintSanifiedData
-            Type hint to validate this object against, defined as either:
+        hint : Hint
+            Unsanified hint to validate this object against. This parameter is
+            mutually exclusive with the competing ``hint_or_sane`` parameter.
+            Defaults to the sentinel placeholder such that either:
 
-            * If this hint is reducible to:
+            * This parameter is unpassed (thus, the sentinel) and the
+              ``hint_or_sane`` parameter is passed (thus, *not* the sentinel).
+            * This parameter is passed (thus, *not* the sentinel) and the
+              ``hint_or_sane`` parameter is unpassed (thus, the sentinel).
+        hint_or_sane : HintOrHintSanifiedData
+            Sanified hint *or* **supplementary metadata** (i.e.,
+            :class:`.HintSanifiedData` object) generated by the sanification of
+            this hint to validate this object against. This parameter is
+            mutually exclusive with the competing ``hint_or_sane`` parameter.
+            Defaults to the sentinel placeholder such that either:
 
-              * An ignorable lower-level hint, :data:`None`.
-              * An unignorable lower-level hint, either:
+            * This parameter is unpassed (thus, the sentinel) and the
+              ``hint_or_sane`` parameter is passed (thus, *not* the sentinel).
+            * This parameter is passed (thus, *not* the sentinel) and the
+              ``hint_or_sane`` parameter is unpassed (thus, the sentinel). In
+              this case, this parameter is defined as either:
 
-                * If reducing this hint to that lower-level hint generates
-                  supplementary metadata, that metadata.
-                * Else, that lower-level hint alone.
+              * If this hint is reducible to:
 
-            * Else, this hint is irreducible. In this case, this hint
-              unmodified.
-        is_hint_root : bool
-            :data:`True` only if this is the **root hint** (i.e., top-level
-            hint annotating the callable parameter or return that has violated
-            this type-check). Defaults to :data:`False`.
+                * An ignorable lower-level hint, :data:`None`.
+                * An unignorable lower-level hint, either:
+
+                  * If reducing this hint to that lower-level hint generates
+                    supplementary metadata, that metadata.
+                  * Else, that lower-level hint alone.
+
+              * Else, this hint is irreducible. In this case, this hint
+                unmodified.
 
         See the class docstring for a description of all remaining parameters.
         '''
@@ -311,32 +323,43 @@ class ViolationCause(object):
 
         # Nullify all remaining parameters for safety.
         self.hint_childs: TupleHints = None  # type: ignore[assignment]
-        self.hint_or_data_childs: TupleHintOrHintSanifiedData = None  # type: ignore[assignment]
+        self.hint_or_sane_childs: TupleHintOrHintSanifiedData = None  # type: ignore[assignment]
         self.typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY
 
-        # Either...
-        hint_or_data = (
-            # If this is the root hint, the sane root hint sanified from this
-            # possibly insane root hint if sanifying this hint did not generate
-            # supplementary metadata *OR* that metadata otherwise (i.e., if
-            # doing so generated supplementary metadata).
-            self.sanify_hint_if_unignorable_or_none(hint)
-            if True else
-            # if is_hint_root else
-            # Else, this is a child hint. In this case, this hint as is. Why?
-            # Because child hints are already sanified below. Ergo, this hint
-            # *MUST* necessarily already have been sanified.
-            hint
-        )
+        # If the caller passed a sanified hint...
+        if hint_or_sane is not SENTINEL:
+            # Silently ignore the passed unsanified hint if any by simply
+            # deleting the latter.
+            #
+            # Note that we would ideally raise an exception if the caller also
+            # passed an unsanified hint, but that doing so would raise
+            # complications with our current implementation of the permute()
+            # method. Since this dataclass *ONLY* applies to private
+            # functionality *NEVER* exposed to end users, a bit of wonkiness in
+            # this private API is currently an acceptable tradeoff.
+            del hint
+        # Else, the caller passed *NO* sanified hint. In this case...
+        else:
+            # Assert that the caller passed an unsanified hint.
+            assert hint is not SENTINEL, (
+                f'"hint" {repr(hint)} and '
+                f'"hint_or_sane" {repr(hint_or_sane)} parameters both unpassed.'
+            )
+
+            # Sane hint sanified from this possibly insane hint if sanifying
+            # this hint did not generate supplementary metadata *OR* that
+            # metadata (i.e., if doing so generated supplementary metadata).
+            hint_or_sane = self.sanify_hint_if_unignorable_or_none(hint)
 
         # Sane hint sanified from this possibly insane hint *AND* the
         # corresponding type variable lookup table unpacked from this metadata.
-        self.hint, self.typevar_to_hint = unpack_hint_or_data(hint_or_data)
+        self.hint, self.typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
 
         # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
         # "None" otherwise (i.e., if this hint is PEP-noncompliant).
         self.hint_sign = get_hint_pep_sign_or_none(self.hint)
 
+        #FIXME: Refactor into a new private method for maintainability, please.
         # If this hint is both...
         if (
             # Unignorable *AND*...
@@ -353,7 +376,7 @@ class ViolationCause(object):
 
             # List of the zero or more possibly ignorable metadata generated by
             # sanifying these child hints, initialized to the empty list.
-            hint_or_data_childs_sane = []
+            hint_or_sane_childs_sane = []
 
             # For each possibly ignorable insane child hints subscripting this
             # parent hint...
@@ -365,7 +388,7 @@ class ViolationCause(object):
                 # if sanifying this child hint did not generate supplementary
                 # metadata *OR* that metadata otherwise (i.e., if sanifying this
                 # child hint generated supplementary metadata).
-                hint_or_data_child_sane: HintOrHintSanifiedData = None  # pyright: ignore
+                hint_or_sane_child_sane: HintOrHintSanifiedData = None  # pyright: ignore
 
                 # If this child hint is PEP-compliant...
                 #
@@ -377,28 +400,28 @@ class ViolationCause(object):
                 # this case, preserve this child hint as is.
                 if is_hint_pep(hint_child_insane):
                     # Sanify this child hint into this metadata.
-                    hint_or_data_child_sane = (
+                    hint_or_sane_child_sane = (
                         self.sanify_hint_if_unignorable_or_none(
                             hint_child_insane))
 
                     # Sane child hint encapsulated by this metadata.
-                    hint_child_sane = get_hint_or_data_hint(
-                        hint_or_data_child_sane)
+                    hint_child_sane = get_hint_or_sane_hint(
+                        hint_or_sane_child_sane)
                 # Else, this child hint is PEP-noncompliant. In this case,
                 # preserve this child hint as is.
                 else:
-                    hint_child_sane = hint_or_data_child_sane = (
+                    hint_child_sane = hint_or_sane_child_sane = (
                         hint_child_insane)
 
                 # Append this possibly ignorable sane child hint and
                 # supplementary metadata to these lists.
                 hint_childs_sane.append(hint_child_sane)
-                hint_or_data_childs_sane.append(hint_or_data_child_sane)
+                hint_or_sane_childs_sane.append(hint_or_sane_child_sane)
 
             # Tuples of the zero or more possibly ignorable sane child hints and
             # supplementary metadatum, coerced from these lists.
             self.hint_childs = tuple(hint_childs_sane)
-            self.hint_or_data_childs = tuple(hint_or_data_childs_sane)
+            self.hint_or_sane_childs = tuple(hint_or_sane_childs_sane)
         # Else, this hint is PEP-noncompliant (e.g., isinstanceable class).
 
     # ..................{ FINDERS                            }..................
@@ -637,7 +660,7 @@ class ViolationCause(object):
         # Sane hint sanified from this possibly insane hint if sanifying this
         # hint did not generate supplementary metadata *OR* that metadata
         # otherwise (i.e., if doing so generated supplementary metadata).
-        hint_or_data_child = sanify_hint_child_if_unignorable_or_none(
+        hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
             hint=hint,
             cls_stack=self.cls_stack,
             conf=self.conf,
@@ -647,4 +670,4 @@ class ViolationCause(object):
         )
 
         # Return this metadata.
-        return hint_or_data_child
+        return hint_or_sane_child

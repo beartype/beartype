@@ -19,7 +19,7 @@ from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintOrHintSanifiedDataUnpacked,
     HintSanifiedData,
-    unpack_hint_or_data,
+    unpack_hint_or_sane,
 )
 from beartype._check.convert.convcoerce import (
     coerce_func_hint_root,
@@ -205,7 +205,7 @@ def sanify_hint_root_func_if_unignorable_or_none(
     # sense whatsoever; they're simply non-trivial for @beartype to support in
     # their current form and thus temporarily reduced in-memory into a more
     # convenient form for beartype-specific type-checking elsewhere.
-    hint_or_data = reduce_hint(
+    hint_or_sane = reduce_hint(
         hint=hint,
         conf=decor_meta.conf,
         decor_meta=decor_meta,
@@ -216,7 +216,7 @@ def sanify_hint_root_func_if_unignorable_or_none(
     )
 
     # Return this hint if this hint is unignorable *OR* "None" otherwise.
-    return _get_hint_or_data_unignorable_or_none(hint_or_data)
+    return _get_hint_or_sane_unignorable_or_none(hint_or_sane)
 
 
 #FIXME: Unit test us up, please.
@@ -298,11 +298,11 @@ def sanify_hint_root_statement_if_unignorable_or_none(
     # this hint did not generate supplementary metadata *OR* that metadata
     # otherwise (i.e., if reducing this hint generated supplementary metadata).
     # See also sanify_hint_root_func_if_unignorable_or_none().
-    hint_or_data = reduce_hint(
+    hint_or_sane = reduce_hint(
         hint=hint, conf=conf, exception_prefix=exception_prefix)
 
     # Return this hint if this hint is unignorable *OR* "None" otherwise.
-    return _get_hint_or_data_unignorable_or_none(hint_or_data)
+    return _get_hint_or_sane_unignorable_or_none(hint_or_sane)
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
@@ -395,7 +395,7 @@ def sanify_hint_child_if_unignorable_or_none(
     # Sane child hint sanified from this possibly insane child hint if reducing
     # this hint did not generate supplementary metadata *OR* that metadata
     # otherwise (i.e., if reducing this hint generated supplementary metadata).
-    hint_or_data = reduce_hint(
+    hint_or_sane = reduce_hint(
         hint=hint,
         conf=conf,
         cls_stack=cls_stack,
@@ -405,7 +405,7 @@ def sanify_hint_child_if_unignorable_or_none(
     )
 
     # Return this hint if this hint is unignorable *OR* "None" otherwise.
-    return _get_hint_or_data_unignorable_or_none(hint_or_data)
+    return _get_hint_or_sane_unignorable_or_none(hint_or_sane)
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()
@@ -455,8 +455,8 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
-def _get_hint_or_data_unignorable_or_none(
-    hint_or_data: HintOrHintSanifiedData) -> HintOrHintSanifiedData:
+def _get_hint_or_sane_unignorable_or_none(
+    hint_or_sane: HintOrHintSanifiedData) -> HintOrHintSanifiedData:
     '''
     Passed type hint as is if this hint is unignorable *or* :data:`None`
     otherwise (i.e., if this hint is ignorable).
@@ -466,7 +466,7 @@ def _get_hint_or_data_unignorable_or_none(
 
     Parameters
     ----------
-    hint_or_data : HintOrHintSanifiedData
+    hint_or_sane : HintOrHintSanifiedData
         Either a type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object).
 
@@ -485,11 +485,11 @@ def _get_hint_or_data_unignorable_or_none(
     hint = (
         # If reducing this hint generated supplementary metadata, the reduced
         # hint encapsulated by this metadata;
-        hint_or_data.hint
-        if isinstance(hint_or_data, HintSanifiedData) else
+        hint_or_sane.hint
+        if isinstance(hint_or_sane, HintSanifiedData) else
         # Else, this reduced hint as is.
-        hint_or_data
+        hint_or_sane
     )
 
     # Return either "None" if this hint is ignorable or this hint otherwise.
-    return None if is_hint_ignorable(hint) else hint_or_data  # pyright: ignore
+    return None if is_hint_ignorable(hint) else hint_or_sane  # pyright: ignore

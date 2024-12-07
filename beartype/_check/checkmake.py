@@ -247,7 +247,7 @@ def make_code_tester_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
-    hint_or_data: HintOrHintSanifiedData,
+    hint_or_sane: HintOrHintSanifiedData,
     conf: BeartypeConf,
     cls_stack: Optional[TypeStack],
     is_param: Optional[bool],
@@ -263,7 +263,7 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    hint_or_data : HintOrHintSanifiedData
+    hint_or_sane : HintOrHintSanifiedData
         Either a type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object) to be type-checked.
     conf : BeartypeConf
@@ -311,7 +311,7 @@ def make_code_raiser_func_pith_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint_or_data, conf, cls_stack)
+    ) = make_check_expr(hint_or_sane, conf, cls_stack)
 
     # Code snippet passing the value of the random integer previously generated
     # for the current call to the exception-handling function call embedded in
@@ -624,12 +624,12 @@ def _make_func_checker(
             # unsupported by @beartype, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint_or_data = sanify_hint_root_statement_if_unignorable_or_none(
+            hint_or_sane = sanify_hint_root_statement_if_unignorable_or_none(
                 hint=hint, conf=conf, exception_prefix=EXCEPTION_PLACEHOLDER)
 
             # If this hint is ignorable, all objects satisfy this hint. In this
             # case, return a trivial function unconditionally returning true.
-            if hint_or_data is None:
+            if hint_or_sane is None:
                 return _func_checker_ignorable
             # Else, this hint is unignorable.
 
@@ -640,7 +640,7 @@ def _make_func_checker(
                 code_check,
                 func_scope,
                 hint_refs_type_basename,
-            ) = make_code_check(hint_or_data, conf, exception_prefix)
+            ) = make_code_check(hint_or_sane, conf, exception_prefix)
 
             #FIXME: Actually, nothing below is particularly significant. Users
             #now basically require this. So, let's find a way to do this. The

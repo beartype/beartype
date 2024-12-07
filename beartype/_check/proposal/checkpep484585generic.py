@@ -13,17 +13,26 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype._check.metadata.metasane import (
+    IterableHintOrHintSanifiedData,
+    get_hint_or_sane_hint,
+)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,
     IterableHints,
+    TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
+)
+from beartype._util.kind.map.utilmapfrozen import (
+    FROZEN_DICT_EMPTY,
+    FrozenDict,
 )
 
 # ....................{ ITERATORS                          }....................
@@ -34,9 +43,10 @@ def iter_hint_pep484585_generic_bases_unerased(
 
     # Optional parameters.
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> IterableHints:
+) -> IterableHintOrHintSanifiedData:
     '''
     Breadth-first search (BFS) generator iteratively yielding the one or more
     unignorable unerased transitive pseudo-superclasses originally declared as
@@ -136,6 +146,10 @@ def iter_hint_pep484585_generic_bases_unerased(
         all settings configuring type-checking for the passed object). Defaults
         to :data:`.BEARTYPE_CONF_DEFAULT`, the default :math:`O(1)`
         type-checking configuration.
+    typevar_to_hint : TypeVarToHint, optional
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        type variables to the concrete hints those type variables map to).
+        Defaults to the empty type variable lookup table.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
@@ -145,7 +159,7 @@ def iter_hint_pep484585_generic_bases_unerased(
 
     Returns
     -------
-    Iterable[Hint]
+    IterableHintOrHintSanifiedData
         Breadth-first search (BFS) generator iteratively yielding the one or
         more unignorable unerased transitive pseudo-superclasses originally
         declared as superclasses prior to their type erasure of this generic.
@@ -160,6 +174,8 @@ def iter_hint_pep484585_generic_bases_unerased(
     :func:`get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
+    assert isinstance(typevar_to_hint, FrozenDict), (
+        f'{repr(typevar_to_hint)} not frozen dictionary.')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
@@ -202,12 +218,14 @@ def iter_hint_pep484585_generic_bases_unerased(
     # exceed that of the last pseudo-superclass in this list, there remains one
     # or more pseudo-superclasses to be visited in this BFS.
     while hint_bases_index_curr < hint_bases_index_past_last:
-        # Unignorable sane pseudo-superclass sanified from this possibly
-        # ignorable insane pseudo-superclass *OR* "None" otherwise (i.e.,
-        # if this pseudo-superclass is ignorable).
-        hint_base = sanify_hint_child_if_unignorable_or_none(
+        # Sane pseudo-superclass sanified from this possibly insane
+        # pseudo-superclass if sanifying this pseudo-superclass did not generate
+        # supplementary metadata *OR* that metadata (i.e., if doing so generated
+        # supplementary metadata).
+        hint_or_sane_base = sanify_hint_child_if_unignorable_or_none(
             hint=hint_bases[hint_bases_index_curr],
             conf=conf,
+            typevar_to_hint=typevar_to_hint,
             #FIXME: Possibly also pass this, please. Ignorable for now. *shrug*
             # cls_stack=cls_stack,
             exception_prefix=exception_prefix,
@@ -215,7 +233,10 @@ def iter_hint_pep484585_generic_bases_unerased(
         # print(f'generic {hint} base: {repr(hint_base)}')
 
         # If this pseudo-superclass is unignorable...
-        if hint_base is not None:
+        if hint_or_sane_base is not None:
+            # Pseudo-superclass encapsulated by this metadata.
+            hint_base = get_hint_or_sane_hint(hint_or_sane_base)
+
             # If this pseudo-superclass is a user-defined PEP 484-compliant
             # generic or 544-compliant protocol, generate *NO* type-checking
             # code for this pseudo-superclass; instead, we only enqueue *ALL*
@@ -254,7 +275,7 @@ def iter_hint_pep484585_generic_bases_unerased(
             # meaningful semantics. This pseudo-superclass is unignorable. Yield
             # this unignorable pseudo-superclass.
             elif get_hint_pep_sign_or_none(hint_base) is not None:
-                yield hint_base
+                yield hint_or_sane_base
             # Else, this pseudo-superclass is an isinstanceable type conveying
             # *NO* meaningful semantics and is thus effectively ignorable. Why?
             # Because the caller already type-checks this pith against the

@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._check.error.errcause import ViolationCause
+from beartype._check.metadata.metasane import get_hint_or_sane_hint
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -69,44 +70,47 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     PITH_REPR_INDEX = len(pith_repr) + 1
 
     # For each subscripted argument of this union...
-    for hint_child in cause.hint_or_data_childs:
+    for hint_or_sane_child in cause.hint_or_sane_childs:
         # If this child hint is ignorable, continue to the next.
-        if hint_child is None:
+        if hint_or_sane_child is None:
             continue
         # Else, this child hint is unignorable.
+
+        # Child hint encapsulated by this metadata.
+        hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
             # Non-"typing" class originating this child hint if any *OR* "None"
             # otherwise.
             hint_child_origin_type = (
-                get_hint_pep_origin_type_isinstanceable_or_none(hint_child))
+                get_hint_pep_origin_type_isinstanceable_or_none(
+                    hint_child))
 
             # If...
             if (
-                # This child hint originates from a non-"typing" class *AND*...
+                # This child hint originates from a non-"typing" type *AND*...
                 hint_child_origin_type is not None and
-                # This pith is *NOT* an instance of this class...
+                # This pith is *NOT* an instance of this type...
                 not isinstance(cause.pith, hint_child_origin_type)
             # Then this pith fails to satisfy this child hint. In this case...
             ):
-                # Add this class to the subset of all classes this pith does
-                # *NOT* satisfy.
+                # Add this type to the subset of all types this pith violates.
                 hint_types_violated.add(hint_child_origin_type)
 
                 # Continue to the next child hint.
                 continue
-            # Else, this pith is an instance of this class and thus shallowly
+            # Else, this pith is an instance of this type and thus shallowly
             # (but *NOT* necessarily deeply) satisfies this child hint.
 
             # Child hint output cause to be returned, type-checking only whether
             # this pith deeply satisfies this child hint.
             cause_child = cause.permute(
-                hint=hint_child, cause_indent=CAUSE_INDENT_CHILD,
+                hint_or_sane=hint_or_sane_child,
+                cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
 
-            # If this pith deeply satisfies this child hint, return this cause
-            # as is.
+            # If this pith deeply satisfies this child hint, return this cause.
             if cause_child.cause_str_or_none is None:
                 # print('Union child {!r} pith {!r} deeply satisfied!'.format(hint_child, pith))
                 return cause
@@ -148,14 +152,14 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
                 f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
-            # If this pith is an instance of this class, this pith satisfies
+            # If this pith is an instance of this type, this pith satisfies
             # this hint. In this case, return this cause as is.
             if isinstance(cause.pith, hint_child):
                 return cause
+            # Else, this pith is *NOT* an instance of this type, implying this
+            # pith to *NOT* satisfy this hint.
 
-            # Else, this pith is *NOT* an instance of this class, implying this
-            # pith to *NOT* satisfy this hint. In this case, add this class to
-            # the subset of all classes this pith does *NOT* satisfy.
+            # Add this class to the subset of all types this pith violates.
             hint_types_violated.add(hint_child)
 
     # If this pith fails to shallowly satisfy one or more of the types of this
@@ -165,6 +169,10 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
         # classes (e.g., "bool, float, int, or str").
         cause_types_unsatisfied = join_delimited_disjunction_types(
             hint_types_violated)
+
+        # This substring coloured for readability.
+        cause_types_unsatisfied_color = color_hint(
+            text=cause_types_unsatisfied, is_color=cause.conf.is_color)
 
         # Prepend this cause as a discrete bullet-prefixed line.
         #
@@ -191,9 +199,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        cause_strs.insert(0, (
-            f'not {color_hint(text=cause_types_unsatisfied, is_color=cause.conf.is_color)}'
-        ))
+        cause_strs.insert(0, f'not {cause_types_unsatisfied_color}')
     # Else, this pith shallowly satisfies *ALL* the types of this union.
 
     # If prior logic appended *NO* causes, raise an exception.

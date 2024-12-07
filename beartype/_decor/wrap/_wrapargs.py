@@ -180,7 +180,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # Sane hint annotating the current parameter sanified from this possibly
     # insane hint if sanifying this hint generated no supplementary metadata
     # *OR* that metadata otherwise.
-    hint_or_data: HintOrHintSanifiedData = None  # pyright: ignore
+    hint_or_sane: HintOrHintSanifiedData = None  # pyright: ignore
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -266,7 +266,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # sanifying this hint generated no supplementary metadata *OR*
                 # that metadata otherwise. Additionally, if this hint is
                 # unsupported by @beartype, raise an exception.
-                hint_or_data = sanify_hint_root_func_if_unignorable_or_none(
+                hint_or_sane = sanify_hint_root_func_if_unignorable_or_none(
                     decor_meta=decor_meta,
                     hint=hint_insane,
                     pith_name=arg_name,
@@ -275,7 +275,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 )
 
                 # If this hint is ignorable, continue to the next parameter.
-                if hint_or_data is None:
+                if hint_or_sane is None:
                     # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.
@@ -367,7 +367,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
-                    hint_or_data,
+                    hint_or_sane,
                     decor_meta.conf,
                     cls_stack,
                     True,  # <-- True only for parameters

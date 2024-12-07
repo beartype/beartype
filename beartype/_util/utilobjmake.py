@@ -134,14 +134,13 @@ def permute_object(
             # placeholder otherwise.
             init_arg_value = getattr(obj, init_arg_name, SENTINEL)
 
-            # If this object fails to define this variable, raise an exception.
-            if init_arg_value is SENTINEL:
-                raise exception_cls(
-                    f'{cls} instance variable {repr(init_arg_name)} undefined.')
-            # Else, this object defines this variable.
-
-            # Default this parameter to its current value from this object.
-            init_arg_name_to_value[init_arg_name] = init_arg_value
+            # If the current value of this parameter is *NOT* the sentinel
+            # placeholder, this object defines this variable. In this case...
+            if init_arg_value is not SENTINEL:
+                # Default this parameter to its current value from this object.
+                init_arg_name_to_value[init_arg_name] = init_arg_value
+            # Else, this object fails to define this variable. In this case,
+            # assume this parameter to be optional and thus safely undefinable.
         # Else, this parameter was explicitly passed by the caller. In this
         # case, preserve this parameter as is.
 

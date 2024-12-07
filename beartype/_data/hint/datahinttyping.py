@@ -386,24 +386,6 @@ func_wrapper_scope, hint_refs_type_basename)``, where:
   List['YoClass']]``).
 '''
 
-# ....................{ FROZENSET                          }....................
-FrozenSetInts = FrozenSet[int]
-'''
-PEP-compliant type hint matching *any* frozen set of zero or more integers.
-'''
-
-
-FrozenSetStrs = FrozenSet[str]
-'''
-PEP-compliant type hint matching *any* frozen set of zero or more strings.
-'''
-
-
-FrozenSetTypes = FrozenSet[type]
-'''
-PEP-compliant type hint matching *any* frozen set of zero or more types.
-'''
-
 # ....................{ ITERABLE                           }....................
 IterableStrs = Iterable[str]
 '''
@@ -455,6 +437,30 @@ PEP-compliant type hint matching **command words** (i.e., an iterable of one or
 more shell words comprising a shell command, suitable for passing as the
 ``command_words`` parameter accepted by most callables declared in the
 test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
+'''
+
+# ....................{ SET ~ frozenset                    }....................
+FrozenSetInts = FrozenSet[int]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more integers.
+'''
+
+
+FrozenSetStrs = FrozenSet[str]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more strings.
+'''
+
+
+FrozenSetTypes = FrozenSet[type]
+'''
+PEP-compliant type hint matching *any* frozen set of zero or more types.
+'''
+
+# ....................{ SET ~ set                          }....................
+SetTypes = Set[type]
+'''
+PEP-compliant type hint matching *any* set of zero or more types.
 '''
 
 # ....................{ TUPLE : type                       }....................

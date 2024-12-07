@@ -25,7 +25,7 @@ from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintSanifiedData,
-    unpack_hint_or_data,
+    unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahintpep import (
@@ -283,12 +283,12 @@ def reduce_hint(
         # Sane hint reduced from this possibly insane hint if reducing this hint
         # did not generate supplementary metadata *OR* that metadata otherwise
         # (i.e., if reducing this hint generated supplementary metadata).
-        hint_or_data = _reduce_hint_cached(hint, conf, exception_prefix)
+        hint_or_sane = _reduce_hint_cached(hint, conf, exception_prefix)
 
         # This possibly context-free hint efficiently reduced to another hint
         # and the resulting type variable lookup table.
-        hint, typevar_to_hint = unpack_hint_or_data(
-            hint_or_data=hint_or_data,
+        hint, typevar_to_hint = unpack_hint_or_sane(
+            hint_or_sane=hint_or_sane,
             typevar_to_hint=typevar_to_hint,
         )
 
@@ -308,7 +308,7 @@ def reduce_hint(
     # ....................{ RETURN                         }....................
     # Either this possibly reduced hint *OR* metadata describing this hint,
     # defined as...
-    hint_or_data = (
+    hint_or_sane = (
         # If the passed type variable lookup table is unmodified, *NO*
         # meaningful metadata describes this hint. In this case, this hint.
         hint
@@ -319,7 +319,7 @@ def reduce_hint(
     )
 
     # Return this possibly reduced hint.
-    return hint_or_data
+    return hint_or_sane
 
 # ....................{ PRIVATE ~ reducers                 }....................
 @callable_cached
