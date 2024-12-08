@@ -41,6 +41,21 @@ THIRDPARTY_PACKAGE_NAMES_BLACKLIST = frozenset((
     #     https://github.com/beartype/beartype/issues/444
     'pydantic',
 
+    # "urllib3" employs the forward reference antipattern everywhere: e.g.,
+    #     import typing
+    #     ...
+    #
+    #     if typing.TYPE_CHECKING:
+    #         from typing import Final  # <-- undefined at runtime
+    #
+    #     ...
+    #
+    #     _DEFAULT_TIMEOUT: Final[_TYPE_DEFAULT] = _TYPE_DEFAULT.token
+    #
+    # See also this @beartype-specific comment on "urllib3":
+    #     https://github.com/beartype/beartype/issues/223#issuecomment-2525261497
+    'urllib3',
+
     # xarray employs the forward reference antipattern everywhere: e.g.,
     #     from __future__ import annotations
     #     from typing import IO, TYPE_CHECKING, Any, Generic, Literal, cast, overload
