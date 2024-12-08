@@ -1200,7 +1200,7 @@ code, reducing static type-checker chum that went rotten decades ago:
        # function accepting only a list of integers.
        if is_bearable(lst, list[int]):
            # "lst" has been though a lot. Let's celebrate its courageous story.
-           munch_on_list_of_strings(lst)  # mypy/pyright: OK!
+           munch_on_list_of_integers(lst)  # mypy/pyright: OK!
        # If this list contains strings rather than integers, call another
        # function accepting only a list of strings.
        elif is_bearable(lst, list[str]):

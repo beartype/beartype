@@ -72,22 +72,26 @@ def test_is_hint_pep593_beartype() -> None:
         # Defer version-specific imports.
         from typing import Annotated
 
-        # Assert this tester accepts beartype-specific metahints.
-        #
-        # Unfortunately, this test actually induces an error in CPython, which
-        # our codebase emits as a non-fatal warning. Specifically, CPython
-        # reports the "func.__code__.co_firstlineno" attribute of the nested
-        # lambda function defined below to be one less than the expected value.
-        # Since this issue is unlikely to be resolved soon *AND* since we have
-        # no means of monkey-patching CPython itself, we acknowledge the
-        # existence of this warning by simply ignoring it. *sigh*
-        with warns(BeartypeValeLambdaWarning):
-            assert is_hint_pep593_beartype(Annotated[
-                str, Is[lambda text: bool(text)]]) is True
+        #FIXME: Fascinatingly, recent versions of even CPython 3.9 appear to
+        #have *FINALLY* resolved this upstream issue. Consider excising. *shrug*
+        # # Assert this tester accepts beartype-specific metahints.
+        # #
+        # # Unfortunately, this test actually induces an error in CPython, which
+        # # our codebase emits as a non-fatal warning. Specifically, CPython
+        # # reports the "func.__code__.co_firstlineno" attribute of the nested
+        # # lambda function defined below to be one less than the expected value.
+        # # Since this issue is unlikely to be resolved soon *AND* since we have
+        # # no means of monkey-patching CPython itself, we acknowledge the
+        # # existence of this warning by simply ignoring it. *sigh*
+        # with warns(BeartypeValeLambdaWarning):
+        #     assert is_hint_pep593_beartype(Annotated[
+        #         str, Is[lambda text: bool(text)]]) is True
 
         # Assert this tester rejects beartype-agnostic metahints.
         assert is_hint_pep593_beartype(Annotated[
             str, 'And may there be no sadness of farewell']) is False
+    # Else, the active Python interpreter targets Python <= 3.8 and thus fails
+    # to support PEP 593.
 
     # Assert this tester raises the expected exception when passed a
     # non-metahint in either case.
