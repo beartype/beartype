@@ -661,9 +661,10 @@ def reduce_hint_pep695_subscripted(
     #   semantically useless subscripted type alias.
     # * The type variable lookup table mapping all type variables parametrizing
     #   this alias to all non-type variable hints subscripting this alias.
+    #
+    # Note that this getter is memoized and thus requires positional parameters.
     hint_unsubscripted, typevar_to_hint = (
-        get_hint_pep695_subscripted_typevar_to_hint(
-            hint=hint, exception_prefix=exception_prefix))
+        get_hint_pep695_subscripted_typevar_to_hint(hint, exception_prefix))
 
     # Reduce this unsubscripted type alias to the hint it refers to.
     hint_aliased = reduce_hint_pep695_unsubscripted(  # type: ignore[misc]

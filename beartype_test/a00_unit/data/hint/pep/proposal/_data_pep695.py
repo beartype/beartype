@@ -32,7 +32,11 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
+    from beartype.typing import (
+        Union,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignPep695TypeAliasSubscripted,
         HintSignPep695TypeAliasUnsubscripted,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
@@ -41,23 +45,53 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ LOCALS                             }..................
+    # ..................{ LOCALS ~ concrete                  }..................
     # Simple type alias whose value is a standard type hint containing *NO*
     # syntax or semantics unique to PEP 695-compliant type aliases (e.g., *NO*
     # forward references, recursion, or type variables).
     type AliasSimple = int | list[str]
 
-    # Generic type alias whose value is a union of two or more generic type
-    # hints parametrized by the same type variable subscripting this alias.
-    type AliasGeneric[T] = list[T] | set[T]
+    # ..................{ LOCALS ~ generic                   }..................
+    # Generic type alias support is unavoidably implemented in an *EXTREMELY*
+    # fragile manner throughout the @beartype codebase. Recursively "bubbling
+    # up" the concrete child type hints subscripting a generic type alias into
+    # the lower-level target type hint aliased by that generic type alias is so
+    # non-trivial that it necessitates implementing manual support for "bubbling
+    # up" across both all hint-specific dynamic code generators *AND* all
+    # hint-specific dynamic exception raisers: which is to say, basically the
+    # *ENTIRE* "beartype._check" subpackage.
+    #
+    # Generic type alias support is so widely distributed that the *ONLY* valid
+    # means of testing this support is to exhaustively define here and
+    # subsequently use below at least one generic type alias for *EACH* other
+    # PEP standard supported by @beartype. Non-trivial, thy name is PEP 695.
+
+    # Generic type alias whose value is a PEP 604-compliant new union of:
+    # * Two or more generic type hints parametrized by the same type variable
+    #   subscripting this alias *AND*...
+    # * A PEP 484-compliant old union of (...waitforit) two or more generic type
+    #   hints parametrized by the same type variable subscripting this alias.
+    #
+    # This alias thus tests that dynamic code generation for PEP 484- and
+    # 604-compliant unions preserves PEP 484-compliant type variable mappings
+    # while also flattening directly nested unions into the top-level union.
+    type AliasPep484604[T] = (
+        # PEP 604-compliant new union of two or more generic type hints
+        # parametrized by the same type variable subscripting this alias.
+        list[T] | set[T] |
+        # PEP 484-compliant old union of (...waitforit) two or more generic type
+        # hints parametrized by the same type variable subscripting this alias.
+        Union[dict[T, T] | frozenset[T]]
+    )
 
     # ..................{ LISTS                              }..................
     # Add PEP 604-specific test type hints to this list.
     hints_pep_meta.extend((
-        # ................{ TYPE ALIAS                         }................
-        # Simple type alias whose value is a standard type hint containing *NO*
-        # syntax or semantics unique to PEP 695-compliant type aliases (e.g.,
-        # *NO* forward references, recursion, or type variables).
+        # ................{ TYPE ALIAS ~ unsubscripted         }................
+        # Unsubscripted non-generic type alias whose value is a standard type
+        # hint containing *NO* syntax or semantics unique to PEP 695-compliant
+        # type aliases (e.g., *NO* forward references, recursion, or type
+        # variables).
         HintPepMetadata(
             hint=AliasSimple,
             pep_sign=HintSignPep695TypeAliasUnsubscripted,
@@ -90,15 +124,25 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic type alias whose value is a union of two or more generic type
-        # hints parametrized by the same type variable subscripting this alias.
+        # Arbitrary unsubscripted generic type alias.
         HintPepMetadata(
-            hint=AliasGeneric,
+            hint=AliasPep484604,
             pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_type_typing=True,
             is_typevars=True,
             is_typing=False,
             piths_meta=(
+                # Dictionary mapping from arbitrary objects all of the same type
+                # to yet more arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata({
+                    'When on the threshold': 'of the green recess',
+                    "The wanderer's footsteps fell,": 'he knew that death',
+                }),
+                # Frozen set of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata(frozenset((
+                    b'Nor ever more offer at thy dark shrine',
+                    b'The unheeded tribute of a broken heart.',
+                ))),
                 # List of arbitrary objects all of the same type.
                 HintPithSatisfiedMetadata([
                     'Knowledge and truth and virtue were her theme,',
@@ -108,6 +152,57 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                 HintPithSatisfiedMetadata({
                     b'Thoughts the most dear to him, and poesy,',
                     b'Herself a poet. Soon the solemn mood',
+                }),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0xFACECAFE,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\blist\b',
+                        r'\bset\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ TYPE ALIAS ~ subscripted           }................
+        # Subscripted generic type alias testing type variable mappings across
+        # PEP 484- and 604-compliant union hints.
+        HintPepMetadata(
+            hint=AliasPep484604[str],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            # is_type_typing=True,
+            # is_typevars=False,
+            # is_typing=False,
+            piths_meta=(
+                # Dictionary mapping from arbitrary objects all of the same type
+                # to yet more arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata({
+                    'When on the threshold': 'of the green recess',
+                    "The wanderer's footsteps fell,": 'he knew that death',
+                }),
+                # Frozen set of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata(frozenset((
+                    'Nor ever more offer at thy dark shrine',
+                    'The unheeded tribute of a broken heart.',
+                ))),
+                # List of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata([
+                    'Knowledge and truth and virtue were her theme,',
+                    'And lofty hopes of divine liberty,',
+                ]),
+                # Set of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata({
+                    'Thoughts the most dear to him, and poesy,',
+                    'Herself a poet. Soon the solemn mood',
                 }),
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(

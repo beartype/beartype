@@ -539,7 +539,6 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is identified by *NO* sign, this hint is either an
     # isinstanceable type *OR* a hint unrecognized by beartype. In either case,
     # apply the following reductions:
-    #
     # * If this configuration enables support for the PEP 484-compliant implicit
     #   numeric tower:
     #   * Expand the "float" type hint to the "float | int" union.

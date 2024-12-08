@@ -166,7 +166,6 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.kind.map.utilmapfrozen import FROZEN_DICT_EMPTY
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -269,23 +268,12 @@ def make_check_expr(
     '''
 
     # ..................{ LOCALS ~ hint : root               }..................
-    # Top-level hint, initialized to the passed hint.
-    hint_root: Hint = hint_or_sane  # pyright: ignore
-
-    # Top-level type variable lookup table (i.e., dictionary mapping from each
-    # type variable parametrizing the origin of this top-level hint to the
-    # concrete hint subscripting this top-level hint), initialized to the empty
-    # type variable lookup table.
-    typevar_to_hint_root: TypeVarToHint = FROZEN_DICT_EMPTY
-
-    # If sanifying this hint generated supplementary metadata...
-    if isinstance(hint_or_sane, HintSanifiedData):
-        # Top-level hint encapsulated by this metadata.
-        hint_root = hint_or_sane.hint
-
-        # Top-level type variable lookup table encapsulated by this metadata.
-        typevar_to_hint_root = hint_or_sane.typevar_to_hint
-    # Else, sanifying this hint generated *NO* supplementary metadata.
+    # Unpack the passed sanified hint metadata into:
+    # * "hint_root", the top-level hint to be type-checked.
+    # * "typevar_to_hint_root", the top-level type variable lookup table (i.e.,
+    #   dictionary mapping from each type variable parametrizing the origin of
+    #   this top-level hint to the child hint subscripting this top-level hint).
+    hint_root, typevar_to_hint_root = unpack_hint_or_sane(hint_or_sane)
 
     # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
@@ -2110,6 +2098,7 @@ def make_check_expr(
         # Else, that set converted into a tuple.
         tuple(hint_refs_type_basename)
     )
+    # print(f'func_wrapper_scope: {func_wrapper_scope}')
 
     # Return all metadata required by higher-level callers.
     return (

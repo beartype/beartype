@@ -390,8 +390,8 @@ def get_hint_object_violation(
     #     hint={!r},
     #     conf={!r},
     #     pith_name={!r},
-    #     pith_value={!r}',
-    # )'''.format(func, hint, conf, pith_name, pith_value))
+    #     obj={!r},
+    # )'''.format(func, hint, conf, pith_name, obj))
 
     # ....................{ LOCALS                         }....................
     # Type of violation to be raised.

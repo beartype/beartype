@@ -37,7 +37,7 @@ from beartype._check.error.errget import (
 )
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    # HintSanifiedData,
+    get_hint_or_sane_hint,
 )
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._check._checksnip import (
@@ -190,7 +190,7 @@ def make_func_tester(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
-    hint: Hint,
+    hint_or_sane: HintOrHintSanifiedData,
     conf: BeartypeConf,
     exception_prefix : str,
 ) -> CodeGenerated:
@@ -203,8 +203,9 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    hint : Hint
-        Type hint to be type-checked.
+    hint_or_sane : HintOrHintSanifiedData
+        Either a type hint *or* **sanified type hint metadata** (i.e.,
+        :data:`.HintSanifiedData` object) to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -231,7 +232,7 @@ def make_code_tester_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint, conf)
+    ) = make_check_expr(hint_or_sane, conf)
 
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{CODE_TESTER_CHECK_PREFIX}{code_expr}'
@@ -417,7 +418,7 @@ def make_code_raiser_func_pep484_noreturn_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
-    hint: Hint,
+    hint_or_sane: HintOrHintSanifiedData,
     conf: BeartypeConf,
     exception_prefix: str,
 ) -> CodeGenerated:
@@ -431,8 +432,9 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    hint : Hint
-        Type hint to be type-checked.
+    hint_or_sane : HintOrHintSanifiedData
+        Either a type hint *or* **sanified type hint metadata** (i.e.,
+        :data:`.HintSanifiedData` object) to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -463,7 +465,7 @@ def make_code_raiser_hint_object_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint, conf)
+    ) = make_check_expr(hint_or_sane, conf)
 
     # Code snippet passing the value of the random integer previously generated
     # for the current call to the exception-handling function call embedded in
@@ -481,7 +483,7 @@ def make_code_raiser_hint_object_check(
     # * The passed type hint accessed by this snippet.
     func_scope[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
     func_scope[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
-    func_scope[ARG_NAME_HINT] = hint
+    func_scope[ARG_NAME_HINT] = get_hint_or_sane_hint(hint_or_sane)
 
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
@@ -641,6 +643,7 @@ def _make_func_checker(
                 func_scope,
                 hint_refs_type_basename,
             ) = make_code_check(hint_or_sane, conf, exception_prefix)
+            # print(f'func_scope: {func_scope}')
 
             #FIXME: Actually, nothing below is particularly significant. Users
             #now basically require this. So, let's find a way to do this. The
