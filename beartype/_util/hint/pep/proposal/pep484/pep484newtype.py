@@ -12,14 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
-from beartype.typing import Any
+# from beartype.typing import Any
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from types import FunctionType
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_newtype_ignorable(hint: object) -> bool:
+def is_hint_pep484_newtype_ignorable(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed :pep:`484`-compliant
     :obj:`typing.NewType`-style type alias is ignorable.
@@ -28,7 +29,7 @@ def is_hint_pep484_newtype_ignorable(hint: object) -> bool:
     an ignorable child type hint. Unlike most :mod:`typing` constructs, that
     factory does *not* cache the objects it returns: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from typing import NewType
        >>> NewType('TotallyNotAStr', str) is NewType('TotallyNotAStr', str)
@@ -65,7 +66,7 @@ def is_hint_pep484_newtype_ignorable(hint: object) -> bool:
 # "typing.NewType" type hints as instances of that class, implement this tester
 # unique to prior Python versions to raise an exception.
 if IS_PYTHON_AT_LEAST_3_10:
-    def is_hint_pep484_newtype_pre_python310(hint: object) -> bool:
+    def is_hint_pep484_newtype_pre_python310(hint: Hint) -> bool:
         raise BeartypeDecorHintPep484Exception(
             'is_hint_pep484_newtype_pre_python310() assumes Python < 3.10, '
             'but current Python interpreter targets Python >= 3.10.'
@@ -76,7 +77,7 @@ if IS_PYTHON_AT_LEAST_3_10:
 # require unique detection, implement this tester unique to this obsolete
 # Python version to detect these closures.
 else:
-    def is_hint_pep484_newtype_pre_python310(hint: object) -> bool:
+    def is_hint_pep484_newtype_pre_python310(hint: Hint) -> bool:
 
         # Return true only if...
         return (
@@ -137,7 +138,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
@@ -151,7 +152,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
 #FIXME: Unit test us up, please.
 @callable_cached
 def get_hint_pep484_newtype_alias(
-    hint: Any, exception_prefix: str = '') -> object:
+    hint: Hint, exception_prefix: str = '') -> Hint:
     '''
     Unaliased type hint (i.e., type hint that is *not* a :obj:`typing.NewType`)
     encapsulated by the passed **newtype** (i.e., object created and returned by
@@ -161,7 +162,7 @@ def get_hint_pep484_newtype_alias(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
@@ -169,7 +170,7 @@ def get_hint_pep484_newtype_alias(
 
     Returns
     -------
-    object
+    Hint
         Unaliased type hint encapsulated by this newtype.
 
     Raises
@@ -196,7 +197,7 @@ def get_hint_pep484_newtype_alias(
     while True:
         # Reduce this new type to the type hint encapsulated by this new type,
         # which itself is possibly a nested new type. Oh, it happens.
-        hint = hint.__supertype__
+        hint = hint.__supertype__  # pyright: ignore
 
         # If this type hint is *NOT* a nested new type, break this iteration.
         if get_hint_pep_sign_or_none(hint) is not HintSignNewType:
@@ -209,7 +210,7 @@ def get_hint_pep484_newtype_alias(
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_newtype(
-    hint: object, exception_prefix: str, **kwargs) -> object:
+    hint: Hint, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed **new type** (i.e., object created and returned by the
     :pep:`484`-compliant :func:`typing.NewType` type hint factory) to the
@@ -232,7 +233,7 @@ def reduce_hint_pep484_newtype(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Final type hint to be reduced.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the

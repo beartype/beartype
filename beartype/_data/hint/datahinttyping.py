@@ -13,8 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP] Replace "TypeGuard" with "TypeIs" everywhere across the @beartype
-#codebase, please. "TypeIs" entirely obsoletes "TypeGuard" for all practical
+#FIXME: [PEP] Replace "TypeIs" with "TypeIs" everywhere across the @beartype
+#codebase, please. "TypeIs" entirely obsoletes "TypeIs" for all practical
 #intents and purposes (including ours). See also:
 #    https://peps.python.org/pep-0742
 

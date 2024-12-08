@@ -30,13 +30,11 @@ from beartype.typing import (
     Generic,
     Iterable,
     Tuple,
-    TypeVar,
     overload,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
-    Hint,
     T_Hint,
 )
 from beartype._util.cache.utilcachecall import (
@@ -610,7 +608,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
 
         Examples
         --------
-        .. code-block:: python
+        .. code-block:: pycon
 
            >>> from beartype.door import TypeHint
            >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])

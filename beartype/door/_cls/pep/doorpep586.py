@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype.typing import Tuple
+from beartype.door._cls.doorhint import TupleTypeHints
 
 # ....................{ SUBCLASSES                         }....................
 class LiteralTypeHint(TypeHint):
@@ -24,7 +24,7 @@ class LiteralTypeHint(TypeHint):
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
-    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+    def _args_wrapped_tuple(self) -> TupleTypeHints:
 
         # Return the empty tuple, thus presenting "Literal" type hints as having
         # *NO* child type hints. Why? Because the arguments subscripting a
@@ -66,7 +66,7 @@ class LiteralTypeHint(TypeHint):
             #         for hint_child in self._args_wrapped_tuple
             #     )
             all(
-                TypeHint(type(literal_child)).is_subhint(other)
+                TypeHint(type(literal_child)).is_subhint(other)  # pyright: ignore
                 for literal_child in self._args
             ) or
             # Else, the class of one or more child hints subscripting this

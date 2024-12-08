@@ -199,39 +199,6 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     # alias. Yes. It really is this non-trivial, folks. *sigh*
     return isinstance(hint_origin, HintPep695Type)
 
-
-def is_hint_pep695_unsubscripted_ignorable(hint: HintPep695Type) -> bool:
-    '''
-    :data:`True` only if the passed :pep:`695`-compliant **unsubscripted type
-    alias** (i.e., object created by a statement of the form ``type {alias_name}
-    = {alias_value}``) is ignorable.
-
-    Specifically, this tester ignores the passed unsubscripted type alias if the
-    lower-level type hint aliased by this alias is itself deeply ignorable.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : HintPep695Type
-        Unsubscripted type alias to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this unsubscripted type alias is ignorable.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
-
-    # Return true only if this PEP 695-compliant unsubscripted type alias
-    # recursively aliases an ignorable child type hint. *gulp*
-    return is_hint_ignorable(get_hint_pep695_unsubscripted_alias(hint))
-
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 @callable_cached
@@ -245,7 +212,7 @@ def get_hint_pep695_subscripted_typevar_to_hint(
     '''
     **Type variable lookup table** describing the passed :pep:`695`-compliant
     **subscripted type alias** (i.e., object created by subscripting an object
-    created by a statement of the form ``type {alias_name}[{type_var}] =
+    created by a statement of the form ``type {alias_name}[{typevar_name}] =
     {alias_value}`` by one or more child type hints), defined as an immutable
     dictionary mapping from the :pep:`484`-compliant **type variables** (i.e.,
     :class:`typing.TypeVar` objects) parametrizing the :pep:`695`-compliant
@@ -289,7 +256,7 @@ def get_hint_pep695_subscripted_typevar_to_hint(
     )
 
     # Unsubscripted type alias originating this subscripted type alias.
-    hint_bare = get_hint_pep_origin_or_none(hint)
+    hint_bare = get_hint_pep_origin_or_none(hint)  # pyright: ignore
 
     # If this subscripted type alias does *NOT* originate from an unsubscripted
     # type alias, this is *NOT* actually a subscripted type alias. In this case,
@@ -316,7 +283,7 @@ def get_hint_pep695_subscripted_typevar_to_hint(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hint_typevars = get_hint_pep_typevars(hint_bare)
+    hint_typevars = get_hint_pep_typevars(hint_bare)  # pyright: ignore
 
     #FIXME: *HMM.* For efficiency, the following three operations could be
     #condensed into a single call by refactoring map_pep484_typevars_to_hints()

@@ -111,55 +111,6 @@ def is_hint_pep484_generic(hint: object) -> bool:
 
 # ....................{ GETTERS                            }....................
 @callable_cached
-def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
-    '''
-    Erased superclass originating the passed :pep:`484`-compliant **unerased
-    pseudo-superclass** (i.e., :mod:`typing` object originally listed as a
-    superclass prior to its implicit type erasure by the :mod:`typing` module).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces to
-    an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        :pep:`484`-compliant unerased pseudo-superclass to be reduced to its
-        erased superclass.
-
-    Returns
-    -------
-    type
-        Erased superclass originating this :pep:`484`-compliant unerased
-        pseudo-superclass.
-
-    Raises
-    ------
-    BeartypeDecorHintPep484Exception
-        if this object is *not* a :pep:`484`-compliant unerased
-        pseudo-superclass.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
-
-    # Erased superclass originating this unerased pseudo-superclass if any *OR*
-    # "None" otherwise.
-    hint_origin_type = get_hint_pep_origin_or_none(hint)
-
-    # If this hint originates from *NO* such superclass, raise an exception.
-    if hint_origin_type is None:
-        raise BeartypeDecorHintPep484Exception(
-            f'Unerased PEP 484 generic or PEP 544 protocol {repr(hint)} '
-            f'originates from no erased superclass.'
-        )
-    # Else, this hint originates from such a superclass.
-
-    # Return this superclass.
-    return hint_origin_type
-
-
-@callable_cached
 def get_hint_pep484_generic_bases_unerased(
     # Mandatory parameters.
     hint: Any,

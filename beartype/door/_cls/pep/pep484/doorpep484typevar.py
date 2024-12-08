@@ -13,12 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorhint import TupleTypeHints
 from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 # from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
-    Tuple,
     TypeVar,
 )
 from beartype._util.cache.utilcachecall import property_cached
@@ -59,7 +59,7 @@ class TypeVarTypeHint(UnionTypeHint):
 
     @property  # type: ignore[misc]
     @property_cached
-    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+    def _args_wrapped_tuple(self) -> TupleTypeHints:
 
         #FIXME: Support covariance and contravariance, please. We don't
         #particularly care about either at the moment. Moreover, runtime type
@@ -107,4 +107,4 @@ class TypeVarTypeHint(UnionTypeHint):
         # Return the 1-tuple containing only the "typing.Any" catch-all. Why?
         # Because an unconstrained and unbounded type variable is semantically
         # equivalent to a type variable bounded by "typing.Any".
-        return (TypeHint(Any),)
+        return (TypeHint(Any),)  # pyright: ignore

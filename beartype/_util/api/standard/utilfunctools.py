@@ -21,7 +21,7 @@ from beartype._cave._cavefast import (
     CallableFunctoolsLruCacheType,
     CallableFunctoolsPartialType,
 )
-from beartype._data.hint.datahintpep import TypeGuard
+from beartype._data.hint.datahintpep import TypeIs
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     DictStrToAny,
@@ -31,7 +31,7 @@ from collections.abc import Callable
 from functools import lru_cache
 
 # ....................{ TESTERS                            }....................
-def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
+def is_func_functools_lru_cache(func: Any) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a
     :func:`functools.lru_cache`-memoized **pseudo-callable** (i.e., low-level
@@ -63,7 +63,7 @@ def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
     return isinstance(func, CallableFunctoolsLruCacheType)
 
 
-def is_func_functools_partial(func: Any) -> TypeGuard[
+def is_func_functools_partial(func: Any) -> TypeIs[
     CallableFunctoolsPartialType]:
     '''
     :data:`True` only if the passed object is a **partial** (i.e., pure-Python
@@ -290,7 +290,7 @@ def beartype_functools_lru_cache(
     # Else, this pseudo-callable is a @functools.lru_cache-memoized callable.
 
     # Original pure-Python callable decorated by @functools.lru_cache.
-    func = unwrap_func_once(pseudofunc)
+    func = unwrap_func_once(pseudofunc)  # pyright: ignore
 
     # If the active Python interpreter targets Python 3.8, then this
     # pseudo-callable fails to declare the cache_parameters() lambda function
@@ -346,4 +346,4 @@ def beartype_functools_lru_cache(
     pseudofunc_checked = lru_cache_configured(func_checked)
 
     # Return that new pseudo-callable.
-    return pseudofunc_checked
+    return pseudofunc_checked  # pyright: ignore

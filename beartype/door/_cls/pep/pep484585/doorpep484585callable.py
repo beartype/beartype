@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.door._cls.doorhint import TupleTypeHints
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
@@ -96,7 +97,6 @@ class CallableTypeHint(TypeHint):
             args = (..., Any,)
         else:
             # Parameters type hint(s) subscripting this callable type hint.
-            #
             # Note that this:
             # * May be a special object (e.g., ellipsis) rather than a tuple of
             #   zero or more parameter type hints.
@@ -143,7 +143,7 @@ class CallableTypeHint(TypeHint):
     # ..................{ PRIVATE ~ properties               }..................
     @property
     # @property_cached
-    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+    def _args_wrapped_tuple(self) -> TupleTypeHints:
 
         # Tuple of all child type hints subscripting this callable type hint.
         args = self._args
@@ -153,7 +153,7 @@ class CallableTypeHint(TypeHint):
 
         # Tuple of all child type hint wrappers subscripting this callable type
         # hint wrapper, initialized to the empty tuple for simplicity.
-        args_wrapped_tuple: Tuple[TypeHint, ...] = ()
+        args_wrapped_tuple: TupleTypeHints = ()
 
         # If this type hint is unsubscripted, return the empty tuple.
         if not args_len:
@@ -167,7 +167,7 @@ class CallableTypeHint(TypeHint):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Empty parameter list.
-                TypeHint(Tuple[()]),
+                TypeHint(Tuple[()]),  # pyright: ignore
                 # Return type hint.
                 TypeHint(args[-1]),
             )
@@ -180,7 +180,7 @@ class CallableTypeHint(TypeHint):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Variadic parameter list.
-                TypeHint(Any),
+                TypeHint(Any),  # pyright: ignore
                 # Return type hint.
                 TypeHint(args[-1]),
             )
@@ -196,7 +196,7 @@ class CallableTypeHint(TypeHint):
     # ..................{ PROPERTIES ~ hints                 }..................
     @property  # type: ignore
     @property_cached
-    def param_hints(self) -> Tuple[TypeHint, ...]:
+    def param_hints(self) -> TupleTypeHints:
         '''
         Tuple of the one or more parameter type hints subscripting this
         callable type hint.

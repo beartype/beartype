@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
-from beartype._data.hint.datahintpep import TypeGuard
+from beartype._data.hint.datahintpep import TypeIs
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
@@ -340,7 +340,7 @@ def die_unless_func_staticmethod(
     # Else, this object is a static method descriptor.
 
 # ....................{ TESTERS                            }....................
-def is_func_lambda(func: Any) -> TypeGuard[Callable]:
+def is_func_lambda(func: Any) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
@@ -375,7 +375,7 @@ def is_func_lambda(func: Any) -> TypeGuard[Callable]:
     )
 
 
-def is_func_python(func: object) -> TypeGuard[Callable]:
+def is_func_python(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a **pure-Python callable** (i.e.,
     implemented in Python as either a function or method rather than in C as
@@ -399,7 +399,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
 
 # ....................{ TESTERS ~ descriptor               }....................
 #FIXME: Unit test us up, please.
-def is_func_boundmethod(func: Any) -> TypeGuard[MethodBoundInstanceOrClassType]:
+def is_func_boundmethod(func: Any) -> TypeIs[MethodBoundInstanceOrClassType]:
     '''
     :data:`True` only if the passed object is a **C-based bound instance method
     descriptor** (i.e., callable implicitly instantiated and assigned on the
@@ -434,7 +434,7 @@ def is_func_boundmethod(func: Any) -> TypeGuard[MethodBoundInstanceOrClassType]:
     return isinstance(func, MethodBoundInstanceOrClassType)
 
 
-def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
+def is_func_classmethod(func: Any) -> TypeIs[classmethod]:
     '''
     :data:`True` only if the passed object is a **C-based unbound class method
     descriptor** (i.e., method decorated by the builtin :class:`classmethod`
@@ -470,7 +470,7 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     return isinstance(func, classmethod)
 
 
-def is_func_property(func: Any) -> TypeGuard[property]:
+def is_func_property(func: Any) -> TypeIs[property]:
     '''
     :data:`True` only if the passed object is a **C-based unbound property
     method descriptor** (i.e., method decorated by the builtin :class:`property`
@@ -502,7 +502,7 @@ def is_func_property(func: Any) -> TypeGuard[property]:
     return isinstance(func, property)
 
 
-def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
+def is_func_staticmethod(func: Any) -> TypeIs[staticmethod]:
     '''
     :data:`True` only if the passed object is a **C-based unbound static method
     descriptor** (i.e., method decorated by the builtin :class:`staticmethod`
@@ -536,7 +536,7 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     return isinstance(func, staticmethod)
 
 # ....................{ TESTERS ~ async                    }....................
-def is_func_async(func: object) -> TypeGuard[Callable]:
+def is_func_async(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **asynchronous callable
     factory** (i.e., awaitable factory callable implicitly creating and
@@ -598,7 +598,7 @@ def is_func_async(func: object) -> TypeGuard[Callable]:
     )
 
 
-def is_func_coro(func: object) -> TypeGuard[Callable]:
+def is_func_coro(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **asynchronous coroutine
     factory** (i.e., awaitable callable containing *no* ``yield`` expression
@@ -636,7 +636,7 @@ def is_func_coro(func: object) -> TypeGuard[Callable]:
     )
 
 
-def is_func_async_generator(func: object) -> TypeGuard[Callable]:
+def is_func_async_generator(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **asynchronous generator
     factory** (i.e., awaitable callable containing one or more ``yield``
@@ -674,7 +674,7 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
     )
 
 # ....................{ TESTERS ~ sync                     }....................
-def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
+def is_func_sync_generator(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **synchronous generator
     factory** (i.e., awaitable callable containing one or more ``yield``
@@ -809,7 +809,7 @@ def is_func_nested(func: Callable) -> bool:
     )
 
 # ....................{ TESTERS ~ nested : closure         }....................
-def is_func_closure(func: Any) -> TypeGuard[Callable]:
+def is_func_closure(func: Any) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed callable is a **closure** (i.e., nested
     callable accessing one or more variables declared by the parent callable
@@ -839,7 +839,7 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
     return getattr(func, '__closure__', None) is not None
 
 # ....................{ TESTERS ~ wrapper                  }....................
-def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
+def is_func_wrapper(func: Any) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a **callable wrapper** (i.e.,
     callable decorated by the standard :func:`functools.wraps` decorator for
@@ -880,7 +880,7 @@ def is_func_wrapper_isomorphic(
 
     # Optional parameters.
     wrapper: Optional[Callable] = None,
-) -> TypeGuard[Callable]:
+) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **isomorphic wrapper** (i.e.,
     callable decorated by the standard :func:`functools.wraps` decorator for

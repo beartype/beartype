@@ -38,6 +38,7 @@ from beartype.typing import (
     Dict,
     Type,
 )
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -59,14 +60,14 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 
 # ....................{ GETTERS                            }....................
-def get_typehint_subclass(hint: object) -> Type[TypeHint]:
+def get_typehint_subclass(hint: Hint) -> Type[TypeHint]:
     '''
     Concrete :class:`TypeHint` subclass handling the passed low-level unwrapped
     PEP-compliant type hint if any *or* raise an exception otherwise.
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Low-level type hint to be inspected.
 
     Returns
@@ -88,6 +89,8 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     # this hint is a PEP-noncompliant class).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
+    #FIXME: [SPEED] As a negligible optimization, globalize the
+    #_HINT_SIGN_TO_TYPEHINT_CLS.get() method to avoid repeated lookups here.
     # Private concrete subclass of this ABC handling this hint if any *OR*
     # "None" otherwise (i.e., if no such subclass has been authored yet).
     wrapper_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)  # type: ignore[arg-type]

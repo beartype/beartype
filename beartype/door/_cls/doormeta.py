@@ -13,9 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+import beartype  # <-- required to satisfy static type-checking madness :<>
 from abc import ABCMeta
-from beartype.typing import Any
+from beartype.typing import (
+    MutableMapping,
+    Union,
+)
 from beartype._cave._cavefast import NoneType
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from threading import RLock
@@ -51,7 +56,7 @@ class _TypeHintMeta(ABCMeta):
           instance of that class has *not* yet been instantiated (i.e., if the
           :meth:`__call__` method of this metaclass calling the :meth:`__new__`
           and :meth:`__init__` methods of that class (in that order) has been
-          called), ``None``.
+          called), :data:`None`.
         * Else, the current singleton ABC has been initialized and a singleton
           instance of that class has been instantiated. In this case, that
           instance.
@@ -67,7 +72,16 @@ class _TypeHintMeta(ABCMeta):
     '''
 
     # ..................{ INSTANTIATORS                      }..................
-    def __call__(cls: '_TypeHintMeta', hint: object) -> Any:  # type: ignore[override]
+    # Note that "pyright" currently prohibits us from declaring the vastly more
+    # preferable signature both here and for the _make_wrapper() factory:
+    #     def __call__(cls: '_TypeHintMeta', hint: T_Hint) -> (
+    #         'beartype.door.TypeHint[T_Hint]'):  # type: ignore[override]
+    #
+    # Since  "mypy" has no such deficits *AND* since the message emitted by
+    # "pyright" is nonsensical (i.e., 'error: Cannot access attribute "TypeHint"
+    # for class "object"'), we assume "pyright" to be broken in some subtle
+    # respect. Until fixed, we fallback to this coarse signature. *shrug*
+    def __call__(cls: '_TypeHintMeta', hint: Hint):  # type: ignore[override]
         '''
         Factory constructor magically instantiating and returning a singleton
         instance of the concrete subclass of the :class:`beartype.door.TypeHint`
@@ -78,9 +92,14 @@ class _TypeHintMeta(ABCMeta):
         ----------
         cls : _TypeHintMeta
             The :class:`beartype.door.TypeHint` ABC.
-        hint : object
+        hint : Hint
             Low-level type hint to be wrapped by a singleton
             :class:`beartype.door.TypeHint` instance.
+
+        Returns
+        -------
+        beartype.door.TypeHint
+            :class:`beartype.door.TypeHint` object wrapping this hint.
 
         Raises
         ------
@@ -143,7 +162,7 @@ class _TypeHintMeta(ABCMeta):
         # each hint that evaluates to the same key is wrapped by the same
         # instance of the "TypeHint" class under this Python interpreter.
         wrapper = (
-            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(
+            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[attr-defined]
                 # Cache this wrapper singleton under this key.
                 key=hint_key,
                 # If a wrapper singleton has yet to be instantiated for this
@@ -157,7 +176,7 @@ class _TypeHintMeta(ABCMeta):
         return wrapper
 
     # ..................{ PRIVATE                            }..................
-    def _make_wrapper(cls: '_TypeHintMeta', hint: object) -> object:
+    def _make_wrapper(cls: '_TypeHintMeta', hint: Hint):
         '''
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
@@ -169,9 +188,14 @@ class _TypeHintMeta(ABCMeta):
         ----------
         cls : _TypeHintMeta
             The :class:`beartype.door.TypeHint` ABC.
-        hint : object
+        hint : Hint
             Low-level type hint to be wrapped by a singleton
             :class:`beartype.door.TypeHint` instance.
+
+        Returns
+        -------
+        beartype.door.TypeHint
+            :class:`beartype.door.TypeHint` object wrapping this hint.
 
         Raises
         ------
@@ -208,7 +232,7 @@ class _TypeHintMeta(ABCMeta):
         # The "None" singleton is used to type callables lacking an explicit
         # "return" statement and thus absurdly common. Ergo, detect this early.
         if hint is None:
-            hint = NoneType  # pyright: ignore[reportGeneralTypeIssues]
+            hint = NoneType  # type: ignore[assignment]
         # Else, this is *NOT* the PEP 484-compliant "None" singleton.
 
         # ................{ INSTANTIATION                      }................
@@ -228,9 +252,18 @@ class _TypeHintMeta(ABCMeta):
         return wrapper
 
 # ....................{ PRIVATE ~ mappings                 }....................
+#FIXME: Would've been nice if this had worked, but "pyright" gonna be "pyright".
+# _HINT_KEY_TO_WRAPPER_HINT = MutableMapping[
+#     Union[int, str], 'beartype.door.TypeHint']
+# '''
+# PEP-compliant type hint matching the type hint wrapper cache defined below.
+# '''
+# _HINT_KEY_TO_WRAPPER: _HINT_KEY_TO_WRAPPER_HINT = CacheUnboundedStrong(  # type: ignore[assignment]
+
+
 _HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(
-    # Prefer the slower reentrant lock type for safety. As the subpackage name
-    # implies, the DOOR API is fundamentally recursive and requires reentrancy.
+    # Prefer the slower reentrant lock type for safety. As the subpackage
+    # name implies, the DOOR API is recursive and requires reentrancy.
     lock_type=RLock,
 )
 '''
@@ -240,7 +273,7 @@ of concrete subclasses of the :class:`beartype.door.TypeHint` abstract base
 class (ABC) wrapping those hints).
 
 Design
---------------
+------
 **This dictionary is intentionally thread-safe.** Why? Because this dictionary
 is used to ensure that :class:`beartype.door.TypeHint` instances are singletons,
 enabling callers to reliably implement higher-level abstractions memoized (i.e.,

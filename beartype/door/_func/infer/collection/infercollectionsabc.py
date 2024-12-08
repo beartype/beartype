@@ -165,7 +165,7 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
                 # thus fails to support PEP 585. In this case, the origin type
                 # underlying this hint factory (e.g., "collections.abc.Mapping"
                 # for the hint factory "typing.Mapping").
-                get_hint_pep_origin_type(hint_factory)
+                get_hint_pep_origin_type(hint_factory)  # pyright: ignore
             )
 
             # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')

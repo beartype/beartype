@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`647`-compliant **type hint** (i.e., objects created by
-subscripting the :obj:`typing.Final` type hint factory) utilities.
+Project-wide :pep:`647`-compliant **type guard** (i.e., objects created by
+subscripting the :obj:`typing.TypeGuard` type hint factory) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -16,12 +16,13 @@ from beartype.typing import (
     Optional,
     Type,
 )
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep647(
-    hint: object,
+    hint: Hint,
     pith_name: Optional[str],
     exception_prefix: str,
     **kwargs
@@ -40,7 +41,7 @@ def reduce_hint_pep647(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Final type hint to be reduced.
     pith_name : Optional[str]
         Either:

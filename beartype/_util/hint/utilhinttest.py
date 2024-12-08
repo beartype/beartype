@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -33,7 +34,7 @@ from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
 # ....................{ RAISERS                            }....................
 def die_unless_hint(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -65,7 +66,7 @@ def die_unless_hint(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be validated.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
@@ -153,7 +154,7 @@ def is_hint(hint: object) -> bool:
 
 
 @callable_cached
-def is_hint_ignorable(hint: object) -> bool:
+def is_hint_ignorable(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed type hint is **ignorable** (i.e., conveys
     *no* meaningful semantics despite superficially appearing to do so).
@@ -162,7 +163,7 @@ def is_hint_ignorable(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -218,7 +219,7 @@ def is_hint_ignorable(hint: object) -> bool:
 
 
 #FIXME: Unit test us up, please.
-def is_hint_cacheworthy(hint: object) -> bool:
+def is_hint_cacheworthy(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed type hint is **cache-worthy.**
 
@@ -230,7 +231,7 @@ def is_hint_cacheworthy(hint: object) -> bool:
       accidental oversight in PEP implementations across different CPython
       developers that nobody ever bothered to report: e.g.,
 
-      .. code-block::
+      .. code-block:: pycon
 
          # PEP 585 type hints do *NOT* self-cache and are thus cache-worthy.
          >>> list[int] is list[int]
@@ -255,7 +256,7 @@ def is_hint_cacheworthy(hint: object) -> bool:
         parent type hint sadly renders the *entire* representation of that
         parent type hint ambiguous: e.g.,
 
-        .. code-block::
+        .. code-block:: pycon
 
            >>> from typing import TypeVar
            >>> T_int = TypeVar('T', bound=int)
@@ -278,7 +279,7 @@ def is_hint_cacheworthy(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -333,7 +334,7 @@ def is_hint_cacheworthy(hint: object) -> bool:
 
 # ....................{ TESTERS ~ needs                    }....................
 @callable_cached
-def is_hint_needs_cls_stack(hint: object) -> bool:
+def is_hint_needs_cls_stack(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed type hint is **type stack-dependent** (i.e.,
     if :mod:`beartype` requires the tuple of all classes lexically declaring the
@@ -371,7 +372,7 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
 
     Returns

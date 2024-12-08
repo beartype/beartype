@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     get_hint_pep484_newtype_alias)
@@ -25,7 +26,7 @@ class NewTypeTypeHint(ClassTypeHint):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, hint: object) -> None:
+    def __init__(self, hint: Hint) -> None:
 
         # Initialize the superclass with all passed parameters.
         super().__init__(hint)

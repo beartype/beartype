@@ -183,26 +183,47 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # is_typevars=False,
             # is_typing=False,
             piths_meta=(
-                # Dictionary mapping from arbitrary objects all of the same type
-                # to yet more arbitrary objects all of the same type.
+                # Dictionary mapping from arbitrary objects all of the same
+                # valid type to yet more arbitrary objects all of that type.
                 HintPithSatisfiedMetadata({
                     'When on the threshold': 'of the green recess',
                     "The wanderer's footsteps fell,": 'he knew that death',
                 }),
-                # Frozen set of arbitrary objects all of the same type.
+                # Frozen set of arbitrary objects all of the same valid type.
                 HintPithSatisfiedMetadata(frozenset((
                     'Nor ever more offer at thy dark shrine',
                     'The unheeded tribute of a broken heart.',
                 ))),
-                # List of arbitrary objects all of the same type.
+                # List of arbitrary objects all of the same valid type.
                 HintPithSatisfiedMetadata([
                     'Knowledge and truth and virtue were her theme,',
                     'And lofty hopes of divine liberty,',
                 ]),
-                # Set of arbitrary objects all of the same type.
+                # Set of arbitrary objects all of the same valid type.
                 HintPithSatisfiedMetadata({
                     'Thoughts the most dear to him, and poesy,',
                     'Herself a poet. Soon the solemn mood',
+                }),
+                # Dictionary mapping from arbitrary objects all of the same
+                # invalid type to yet more arbitrary objects all of that type.
+                HintPithSatisfiedMetadata({
+                    b'Was on him.': b'Yet a little, ere it fled,',
+                    b'id he resign': b'his high and holy soul',
+                }),
+                # Frozen set of arbitrary objects all of the same invalid type.
+                HintPithSatisfiedMetadata(frozenset((
+                    b'To images of the majestic past,',
+                    b'That paused within his passive being now,',
+                ))),
+                # List of arbitrary objects all of the same invalid type.
+                HintPithSatisfiedMetadata([
+                    b'Like winds that bear sweet music, when they breathe',
+                    b'Through some dim latticed chamber. He did place',
+                ]),
+                # Set of arbitrary objects all of the same invalid type.
+                HintPithSatisfiedMetadata({
+                    b'His pale lean hand upon the rugged trunk',
+                    b'Of the old pine. Upon an ivied stone',
                 }),
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(
@@ -227,38 +248,3 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
-
-
-def hints_pep695_ignorable_deep() -> list:
-    '''
-    List of :pep:`695`-compliant **deeply ignorable type hints** (i.e.,
-    ignorable only on the non-trivial basis of their nested child type hints).
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    from beartype.typing import Any
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-
-    # If the active Python interpreter targets Python < 3.12, this interpreter
-    # fails to support PEP 695. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_12:
-        return []
-    # Else, this interpreter supports PEP 695.
-
-    # ..................{ LOCALS                             }..................
-    # Type alias whose value is shallowly ignorable. Note that, although this
-    # value is shallowly ignorable, deciding whether or not a type alias is
-    # ignorable requires deep inspection into the value of that alias. Ergo,
-    # *ALL* type aliases that are ignorable are only deeply ignorable; there
-    # exist *NO* shallowly ignorable type aliases.
-    type AliasIgnorableShallow = object
-
-    # Type alias whose value is deeply ignorable.
-    type AliasIgnorableDeep = float | str | Any
-
-    # ..................{ RETURN                             }..................
-    # Return this list of all PEP-specific deeply ignorable type hints.
-    return [
-        AliasIgnorableShallow,
-        AliasIgnorableDeep,
-    ]

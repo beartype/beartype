@@ -16,7 +16,7 @@ from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
-from beartype._data.hint.datahintpep import TypeGuard
+from beartype._data.hint.datahintpep import TypeIs
 from beartype._data.hint.datahinttyping import (
     IsBuiltinOrSubclassableTypes,
     TypeException,
@@ -552,7 +552,7 @@ def is_type_isinstanceable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> TypeGuard[type]:
+) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is an **isinstanceable type** (i.e.,
     class whose metaclass does *not* define an ``__instancecheck__()`` dunder
@@ -666,7 +666,7 @@ def is_object_issubclassable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> TypeGuard[IsBuiltinOrSubclassableTypes]:
+) -> TypeIs[IsBuiltinOrSubclassableTypes]:
     '''
     :data:`True` only if the passed object is **issubclassable** (i.e., valid as
     the second parameter to the :func:`issubclass` builtin).
@@ -785,7 +785,7 @@ def is_type_issubclassable(
 
     # Optional parameters.
     is_forwardref_valid: bool = True,
-) -> TypeGuard[type]:
+) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is an **issubclassable class** (i.e.,
     class whose metaclass does *not* define a ``__subclasscheck__()`` dunder

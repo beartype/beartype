@@ -469,7 +469,7 @@ either may *or* must be passed positionally).
 
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_arg_default_unbearable(
-    decor_meta: BeartypeDecorMeta, arg_default: object, hint: object) -> None:
+    decor_meta: BeartypeDecorMeta, arg_default: object, hint: Hint) -> None:
     '''
     Raise a violation exception if the annotated optional parameter of the
     decorated callable with the passed default value violates the type hint
@@ -485,7 +485,7 @@ def _die_if_arg_default_unbearable(
         * If this parameter is mandatory, the :data:`.ArgMandatory` singleton.
         * If this parameter is optional, the default value of this optional
           parameter to be type-checked.
-    hint : object
+    hint : Hint
         Type hint to type-check against this default value.
 
     Warns

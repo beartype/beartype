@@ -878,7 +878,7 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignUnpack: reduce_hint_pep646692_unpack,
 
     # ..................{ PEP 647                            }..................
-    # Reduce PEP 647-compliant "typing.TypeGuard[...]" type hints to either:
+    # Reduce PEP 647-compliant "typing.TypeIs[...]" type hints to either:
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
     HintSignTypeGuard: reduce_hint_pep647_or_pep742,

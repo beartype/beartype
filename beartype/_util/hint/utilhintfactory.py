@@ -76,10 +76,10 @@ class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
 
     Examples
     --------
-    Consider the :pep:`647`-compliant :attr:`typing.TypeGuard` type hint
+    Consider the :pep:`647`-compliant :attr:`typing.TypeIs` type hint
     factory, which is only available under Python >= 3.10 or from
     :mod:`typing_extensions` if optionally installed; if neither of those two
-    conditions apply, this factory may be trivially used as a fake ``TypeGuard``
+    conditions apply, this factory may be trivially used as a fake ``TypeIs``
     stand-in returning the builtin :class:`bool` type when subscripted --
     exactly as advised by :pep:`647` itself: e.g.,
 
@@ -91,15 +91,15 @@ class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
            import_typing_attr_or_fallback)
 
        if TYPE_CHECKING:
-           from typing_extensions import TypeGuard
+           from typing_extensions import TypeIs
        else:
-           TypeGuard = import_typing_attr_or_fallback(
-               'TypeGuard', TypeHintTypeFactory(bool))
+           TypeIs = import_typing_attr_or_fallback(
+               'TypeIs', TypeHintTypeFactory(bool))
 
        # This signature gracefully reduces to the following at runtime under
        # Python <= 3.10 if "typing_extensions" is *NOT* installed:
        #     def is_obj_list(obj: object) -> bool:
-       def is_obj_list(obj: object) -> TypeGuard[list]:
+       def is_obj_list(obj: object) -> TypeIs[list]:
            return isinstance(obj, list)
 
     Attributes

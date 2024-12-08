@@ -21,7 +21,7 @@ def test_is_hint_pep695_subscripted() -> None:
     '''
     Test the private
     :mod:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_subscripted`
-    iterator.
+    tester.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -47,7 +47,6 @@ def test_is_hint_pep695_subscripted() -> None:
     # subscripted builtins.
     assert is_hint_pep695_subscripted(
         'And thou, colossal Skeleton, that, still') is False
-
 
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep695_subscripted_typevar_to_hint() -> None:

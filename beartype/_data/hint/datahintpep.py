@@ -16,8 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP 647] Replace "TypeGuard" with "TypeIs" everywhere across the
-#@beartype codebase, please. "TypeIs" entirely obsoletes "TypeGuard" for all
+#FIXME: [PEP 647] Replace "TypeIs" with "TypeIs" everywhere across the
+#@beartype codebase, please. "TypeIs" entirely obsoletes "TypeIs" for all
 #practical intents and purposes (including ours). See also:
 #    https://peps.python.org/pep-0742
 
@@ -29,6 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Iterable,
     List,
@@ -65,18 +66,17 @@ from beartype._util.api.standard.utiltyping import (
 # defines this type factory across all Python versions, whereas "typing" only
 # conditionally defines these type factories under particular Python versions.
 if TYPE_CHECKING:
-    # ....................{ PEP 647                        }....................
-    # PEP 647-compliant "TypeGuard[...]" type hints first introduced by Python
-    # >= 3.10 are a high internal priority for @beartype. Hinting the return of
+    # ....................{ PEP 742                        }....................
+    # PEP 742-compliant "TypeIs[...]" type hints first introduced by Python
+    # >= 3.13 are a high internal priority for @beartype. Hinting the return of
     # the is_bearable() tester with a type guard created by this factory
-    # effectively coerces that tester into an arbitrarily complex type narrower
-    # and thus type parser at static analysis time, substantially reducing
-    # complaints from static type-checkers in end user code deferring to that
-    # tester.
+    # effectively coerces that tester into an arbitrarily "smart" type narrower
+    # and thus type parser at static analysis time, reducing complaints from
+    # static type-checkers in downstream code deferring to that tester.
 
-    #FIXME: Unconditionally globalize this *AFTER* dropping Python 3.9: e.g.,
-    #   from typing import TypeGuard as TypeGuard
-    from typing_extensions import TypeGuard as TypeGuard
+    #FIXME: Unconditionally globalize this *AFTER* dropping Python 3.12: e.g.,
+    #   from typing import TypeIs as TypeIs
+    from typing_extensions import TypeIs as TypeIs
 
     # ....................{ PEP 747                        }....................
     # PEP 747-compliant "TypeForm[...]" type hints first introduced by Python
@@ -103,14 +103,15 @@ if TYPE_CHECKING:
 # factories, falling back to various builtin types if none do.
 else:
     # ....................{ PEP 647                        }....................
-    TypeGuard = import_typing_attr_or_fallback(
-        'TypeGuard', TypeHintTypeFactory(bool))
+    TypeIs = import_typing_attr_or_fallback(
+        'TypeIs', TypeHintTypeFactory(bool))
 
     # ....................{ PEP 747                        }....................
     TypeForm = import_typing_attr_or_fallback(
         'TypeForm', TypeHintTypeFactory(object))
 
-    Hint = TypeForm[object]
+
+    Hint = TypeForm[Any]
     '''
     PEP-compliant type hint matching *any* PEP-compliant type hint.
 

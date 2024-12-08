@@ -15,6 +15,10 @@ from beartype.typing import (
     Any,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.datahinttyping import (
     SetTypeVars,
     TupleTypeVars,
@@ -37,7 +41,7 @@ objects against this object via equality tests.
 # ....................{ RAISERS                            }....................
 def die_unless_hint_pep585_generic(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep585Exception,
@@ -50,7 +54,7 @@ def die_unless_hint_pep585_generic(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be validated.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
@@ -75,7 +79,7 @@ def die_unless_hint_pep585_generic(
 # If the active Python interpreter targets at least Python >= 3.9 and thus
 # supports PEP 585, correctly declare this function.
 if IS_PYTHON_AT_LEAST_3_9:
-    def is_hint_pep585_builtin_subscripted(hint: object) -> bool:
+    def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
@@ -92,7 +96,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
 
     @callable_cached
-    def is_hint_pep585_generic(hint: object) -> bool:  # pyright: ignore[reportGeneralTypeIssues]
+    def is_hint_pep585_generic(hint: Hint) -> bool:
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -150,10 +154,10 @@ if IS_PYTHON_AT_LEAST_3_9:
 # fails to support PEP 585. In this case, fallback to declaring this function
 # to unconditionally return False.
 else:
-    def is_hint_pep585_builtin_subscripted(hint: object) -> bool:
+    def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
         return False
 
-    def is_hint_pep585_generic(hint: object) -> bool:
+    def is_hint_pep585_generic(hint: Hint) -> bool:
         return False
 
 # ....................{ TESTERS ~ doc                      }....................
@@ -192,7 +196,7 @@ is_hint_pep585_builtin_subscripted.__doc__ = '''
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
@@ -211,7 +215,7 @@ is_hint_pep585_generic.__doc__ = '''
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
@@ -223,12 +227,12 @@ is_hint_pep585_generic.__doc__ = '''
 # ....................{ GETTERS                            }....................
 def get_hint_pep585_generic_bases_unerased(
     # Mandatory parameters.
-    hint: Any,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep585Exception,
     exception_prefix: str = '',
-) -> tuple:
+) -> TupleHints:
     '''
     Tuple of all unerased :pep:`585`-compliant **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
@@ -242,7 +246,7 @@ def get_hint_pep585_generic_bases_unerased(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
@@ -253,7 +257,7 @@ def get_hint_pep585_generic_bases_unerased(
 
     Returns
     -------
-    Tuple[object]
+    Tuple[Hint, ...]
         Tuple of the one or more unerased pseudo-superclasses of this
         :pep:`585`-compliant generic.
 
@@ -274,7 +278,7 @@ def get_hint_pep585_generic_bases_unerased(
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See the is_hint_pep484_generic() tester for details.
-    hint = get_hint_pep484585_generic_type_or_none(hint)
+    hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
     die_unless_hint_pep585_generic(
@@ -287,11 +291,11 @@ def get_hint_pep585_generic_bases_unerased(
     # While the "__orig_bases__" dunder instance variable is *NOT* guaranteed
     # to exist for PEP 484-compliant generic types, this variable is guaranteed
     # to exist for PEP 585-compliant generic types. Thanks for small favours.
-    return hint.__orig_bases__
+    return hint.__orig_bases__  # pyright: ignore
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(hint: object) -> TupleTypeVars:
+def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed :pep:`585`-compliant generic listed by the caller
@@ -312,7 +316,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypeVars:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
@@ -357,7 +361,7 @@ def get_hint_pep585_generic_typevars(hint: object) -> TupleTypeVars:
 #FIXME: Unit test us up, please.
 #FIXME: Heavily refactor according to the discussion in "convreduce", please.
 def reduce_hint_pep585_builtin_subscripted_unknown(
-    hint: object, **kwargs) -> type:
+    hint: Hint, **kwargs) -> type:
     '''
     Reduce the passed :pep:`585`-compliant **unrecognized subscripted builtin
     type hints** (i.e., C-based type hints that are *not* isinstanceable types,
@@ -373,7 +377,7 @@ def reduce_hint_pep585_builtin_subscripted_unknown(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be reduced.
 
     All remaining passed arguments are silently ignored.

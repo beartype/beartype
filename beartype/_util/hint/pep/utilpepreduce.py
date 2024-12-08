@@ -17,11 +17,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #     Pep484TowerFloat,
 # )
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep_unsigned(
-    hint: object,
+    hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
     **kwargs
@@ -48,7 +49,7 @@ def reduce_hint_pep_unsigned(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Final type hint to be reduced.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the

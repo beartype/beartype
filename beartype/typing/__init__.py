@@ -234,20 +234,20 @@ if _IS_PYTHON_AT_LEAST_3_10:
     # If the active Python interpreter targets Python >= 3.11...
     if _IS_PYTHON_AT_LEAST_3_11:
         from typing import (  # type: ignore[attr-defined]
-               LiteralString as LiteralString,  # pyright: ignore
-               Never as Never,  # pyright: ignore
-               NotRequired as NotRequired,  # pyright: ignore
-               Required as Required,  # pyright: ignore
-               Self as Self,  # pyright: ignore
-               TypeVarTuple as TypeVarTuple,  # pyright: ignore
-               Unpack as Unpack,  # pyright: ignore
-               assert_never as assert_never,  # pyright: ignore
-               assert_type as assert_type,  # pyright: ignore
-               clear_overloads as clear_overloads,  # pyright: ignore
-               dataclass_transform as dataclass_transform,  # pyright: ignore
-               reveal_type as reveal_type,  # pyright: ignore
-               get_overloads as get_overloads,  # pyright: ignore
-               reveal_type as reveal_type,  # pyright: ignore
+           LiteralString as LiteralString,  # pyright: ignore
+           Never as Never,  # pyright: ignore
+           NotRequired as NotRequired,  # pyright: ignore
+           Required as Required,  # pyright: ignore
+           Self as Self,  # pyright: ignore
+           TypeVarTuple as TypeVarTuple,  # pyright: ignore
+           Unpack as Unpack,  # pyright: ignore
+           assert_never as assert_never,  # pyright: ignore
+           assert_type as assert_type,  # pyright: ignore
+           clear_overloads as clear_overloads,  # pyright: ignore
+           dataclass_transform as dataclass_transform,  # pyright: ignore
+           reveal_type as reveal_type,  # pyright: ignore
+           get_overloads as get_overloads,  # pyright: ignore
+           reveal_type as reveal_type,  # pyright: ignore
         )
 
         # If the active Python interpreter targets Python >= 3.12...

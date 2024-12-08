@@ -202,7 +202,7 @@ HintSignSelf            = _HintSign(name='Self')
 # Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
 HintSignTypeAlias       = _HintSign(name='TypeAlias')
-HintSignTypeGuard       = _HintSign(name='TypeGuard')
+HintSignTypeGuard       = _HintSign(name='TypeIs')
 HintSignTypeIs          = _HintSign(name='TypeIs')
 # TypeAliasType  <-- not a unique type hint (merely a C-based type)
 HintSignUnpack          = _HintSign(name='Unpack')
