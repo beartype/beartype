@@ -117,6 +117,21 @@ class HintSanifiedData(object):
         self.hint = hint
         self.typevar_to_hint = typevar_to_hint
 
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this metadata.
+        '''
+
+        # Represent this metadata with just the minimal subset of metadata
+        # needed to reasonably describe this metadata.
+        return (
+            f'HintSanifiedData('
+            f'hint={repr(self.hint)}, '
+            f'typevar_to_hint={repr(self.typevar_to_hint)}'
+            f')'
+        )
+
     # ..................{ PERMUTERS                          }..................
     def permute(self, **kwargs) -> 'HintSanifiedData':
         '''

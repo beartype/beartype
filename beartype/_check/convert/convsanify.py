@@ -19,7 +19,7 @@ from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintOrHintSanifiedDataUnpacked,
     HintSanifiedData,
-    unpack_hint_or_sane,
+    # unpack_hint_or_sane,
 )
 from beartype._check.convert.convcoerce import (
     coerce_func_hint_root,
@@ -381,6 +381,7 @@ def sanify_hint_child_if_unignorable_or_none(
 
         * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
+    # print(f'Sanifying child hint {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
     # This sanifier covers the proper subset of logic performed by the
     # sanify_hint_root_statement() sanifier applicable to child type hints.

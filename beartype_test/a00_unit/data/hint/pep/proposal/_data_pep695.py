@@ -206,22 +206,22 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                 }),
                 # Dictionary mapping from arbitrary objects all of the same
                 # invalid type to yet more arbitrary objects all of that type.
-                HintPithSatisfiedMetadata({
+                HintPithUnsatisfiedMetadata({
                     b'Was on him.': b'Yet a little, ere it fled,',
                     b'id he resign': b'his high and holy soul',
                 }),
                 # Frozen set of arbitrary objects all of the same invalid type.
-                HintPithSatisfiedMetadata(frozenset((
+                HintPithUnsatisfiedMetadata(frozenset((
                     b'To images of the majestic past,',
                     b'That paused within his passive being now,',
                 ))),
                 # List of arbitrary objects all of the same invalid type.
-                HintPithSatisfiedMetadata([
+                HintPithUnsatisfiedMetadata([
                     b'Like winds that bear sweet music, when they breathe',
                     b'Through some dim latticed chamber. He did place',
                 ]),
                 # Set of arbitrary objects all of the same invalid type.
-                HintPithSatisfiedMetadata({
+                HintPithUnsatisfiedMetadata({
                     b'His pale lean hand upon the rugged trunk',
                     b'Of the old pine. Upon an ivied stone',
                 }),

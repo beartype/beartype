@@ -640,6 +640,8 @@ def reduce_hint_pep695_subscripted(
     # Metadata encapsulating this hint and type variable lookup table.
     hint_data = HintSanifiedData(
         hint=hint_aliased, typevar_to_hint=typevar_to_hint)
+    # print(f'Reduced PEP 695 subscripted type alias {repr(hint)} to type hint {repr(hint_aliased)} and...')
+    # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
 
     # Return this metadata.
     return hint_data

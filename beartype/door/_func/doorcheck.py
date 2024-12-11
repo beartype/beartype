@@ -144,7 +144,7 @@ def is_bearable(
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-) -> TypeIs[T]:
+) -> TypeIs[T]:  # pyright: ignore
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
     type hint under the passed beartype configuration.

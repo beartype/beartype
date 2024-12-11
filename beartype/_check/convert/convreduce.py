@@ -254,13 +254,12 @@ def reduce_hint(
     # "None" is a valid type hint reduced to "type(None)" below.
     hint_prev: Hint = SENTINEL  # pyright: ignore
 
-    # Original type variable lookup table, preserved to detect modifications.
-    typevar_to_hint_old = typevar_to_hint
-
     # ....................{ REDUCTION                      }....................
     # Repeatedly reduce this hint to increasingly irreducible hints until this
     # hint is no longer reducible.
     while True:
+        # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
+
         # This possibly contextual hint inefficiently reduced to another hint.
         #
         # Note that we intentionally reduce lower-level contextual hints
@@ -271,11 +270,11 @@ def reduce_hint(
         # we reduce lower-level hints first.
         hint = _reduce_hint_uncached(
             hint=hint,
+            arg_kind=arg_kind,
+            cls_stack=cls_stack,
             conf=conf,
             decor_meta=decor_meta,
             pith_name=pith_name,
-            arg_kind=arg_kind,
-            cls_stack=cls_stack,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
@@ -291,6 +290,7 @@ def reduce_hint(
             hint_or_sane=hint_or_sane,
             typevar_to_hint=typevar_to_hint,
         )
+        # print(f'[reduce_hint] Reduced to {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
         # If the current and previously reduced instances of this hint are
         # identical, the above reductions preserved this hint as is rather than
@@ -309,12 +309,12 @@ def reduce_hint(
     # Either this possibly reduced hint *OR* metadata describing this hint,
     # defined as...
     hint_or_sane = (
-        # If the passed type variable lookup table is unmodified, *NO*
-        # meaningful metadata describes this hint. In this case, this hint.
+        # If this reduction maps *NO* type variables, *NO* supplementary
+        # metadata describes this reduction. In this case, this hint alone.
         hint
-        if typevar_to_hint is typevar_to_hint_old else
-        # Else, this table was modified. In this case, metadata encapsulating
-        # both this hint and this table.
+        if not typevar_to_hint else
+        # Else, this reduction maps one or more type variables. In this case,
+        # metadata describing both this hint and this mapping.
         HintSanifiedData(hint=hint, typevar_to_hint=typevar_to_hint)
     )
 
@@ -403,11 +403,11 @@ def _reduce_hint_cached(
 
 def _reduce_hint_uncached(
     hint: Hint,
+    arg_kind: Optional[ArgKind],
+    cls_stack: TypeStack,
     conf: BeartypeConf,
     decor_meta: Optional[BeartypeDecorMeta],
-    arg_kind: Optional[ArgKind],
     pith_name: Optional[str],
-    cls_stack: TypeStack,
     typevar_to_hint: TypeVarToHint,
     exception_prefix: str,
 ) -> Hint:
@@ -428,6 +428,18 @@ def _reduce_hint_uncached(
     ----------
     hint : Hint
         Type hint to be possibly reduced.
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter of some callable, that parameter's
+          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
+          syntactic class of that parameter, constraining how the callable
+          declaring that parameter requires that parameter to be passed).
+        * Else, :data:`None`.
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -444,18 +456,6 @@ def _reduce_hint_uncached(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    arg_kind : Optional[ArgKind]
-        Either:
-
-        * If this hint annotates a parameter of some callable, that parameter's
-          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
-          syntactic class of that parameter, constraining how the callable
-          declaring that parameter requires that parameter to be passed).
-        * Else, :data:`None`.
-    cls_stack : TypeStack
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
     typevar_to_hint : TypeVarToHint, optional
         **Type variable lookup table** (i.e., immutable dictionary mapping from
         the :pep:`484`-compliant **type variables** (i.e.,
@@ -488,14 +488,14 @@ def _reduce_hint_uncached(
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
     if hint_reducer is not None:  # type: ignore[call-arg]
-        # print(f'Reducing hint {repr(hint)} to...')
+        # print(f'Reducing hint {repr(hint)} with type variable lookup table {repr(typevar_to_hint)} to...')
         hint = hint_reducer(
             hint=hint,  # pyright: ignore
+            arg_kind=arg_kind,
+            cls_stack=cls_stack,
             conf=conf,
             decor_meta=decor_meta,
             pith_name=pith_name,
-            arg_kind=arg_kind,
-            cls_stack=cls_stack,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )

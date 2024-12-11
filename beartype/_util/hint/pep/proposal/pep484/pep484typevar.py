@@ -29,6 +29,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     is_object_issubclassable)
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
+from beartype._util.utilobject import SENTINEL
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -551,20 +552,30 @@ def reduce_hint_pep484_typevar(
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
+    # print(f'Reducing PEP 484 type variable {repr(hint)} by type variable lookup table {repr(typevar_to_hint)}...')
 
     # Concrete hint mapped to by this type variable if one or more transitive
-    # parent hints previously mapped this type variable to a hint *OR* "None".
-    hint_reduced: Optional[Hint] = typevar_to_hint.get(hint)  # pyright: ignore
+    # parent hints previously mapped this type variable to a hint *OR* the
+    # sentinel placeholder otherwise (i.e., if this type variable is unmapped).
+    hint_reduced: Hint = typevar_to_hint.get(hint, SENTINEL)  # pyright: ignore
 
-    # If *NO* transitive parent hints previously mapped this type variable to a
-    # hint, PEP-compliant hint synthesized from all bounded constraints
-    # parametrizing this type variable if any *OR* "None" otherwise.
-    #
-    # Note this call is intentionally passed positional rather positional
-    # keywords due to memoization.
-    if hint_reduced is None:
-        hint_reduced = get_hint_pep484_typevar_bound_or_none(
-            hint, exception_prefix)  # pyright: ignore
+    # If *NO* transitive parent hint previously mapped this type variable to a
+    # hint...
+    if hint_reduced is SENTINEL:
+        # PEP-compliant hint synthesized from all bounded constraints
+        # parametrizing this type variable if any *OR* "None" otherwise (i.e.,
+        # if this type variable is both unbounded *AND* unconstrained).
+        #
+        # Note this call is passed positional parameters due to memoization
+        hint_reduced = get_hint_pep484_typevar_bound_or_none(  # pyright: ignore
+            hint, exception_prefix)
+
+        # If this type variable is both unbounded *AND* unconstrained, set this
+        # local variable to the sentinel placeholder to satisfy logic below.
+        if hint_reduced is None:
+            hint_reduced = SENTINEL
+        # Else, this type variable is either bounded *OR* constrained. In either
+        # case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
         # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
     # Else, one or more transitive parent hints previously mapped this type
@@ -574,7 +585,7 @@ def reduce_hint_pep484_typevar(
     return (
         # If this type variable is irreducible, this type variable preserved;
         hint
-        if hint_reduced is None else
+        if hint_reduced is SENTINEL else
         # Else, this type variable was reduced. In this case, that reduction.
         hint_reduced
     )

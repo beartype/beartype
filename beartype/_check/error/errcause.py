@@ -350,6 +350,7 @@ class ViolationCause(object):
             # this hint did not generate supplementary metadata *OR* that
             # metadata (i.e., if doing so generated supplementary metadata).
             hint_or_sane = self.sanify_hint_if_unignorable_or_none(hint)
+            # print(f'Sanified error parent hint {repr(hint)} to {repr(hint_or_sane)}.')
 
         # Sane hint sanified from this possibly insane hint *AND* the
         # corresponding type variable lookup table unpacked from this metadata.

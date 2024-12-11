@@ -399,7 +399,6 @@ class HintsMeta(FixedList):
         )
 
 
-    #FIXME: Excise us up, please. This should no longer be required.
     def enqueue_hint_child(self, **kwargs) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
@@ -419,6 +418,7 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
+        # print(f'Enqueing child hint {self.index_last+1} with {repr(kwargs)}...')
 
         # Increment the 0-based index of metadata describing the last visitable
         # hint in this list (which also serves as the unique identifier of the

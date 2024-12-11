@@ -428,6 +428,7 @@ def _get_hint_pep484604_union_args_flattened(
         If this tuple is empty.
     '''
     assert isinstance(exception_prefix, str), f'{exception_prefix} not string.'
+    # print(f'[_get_hint_pep4] Received hint {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
     # ....................{ LOCALS                         }....................
     # Tuple of all child hints subscripting this union if any *OR* the empty
@@ -506,7 +507,7 @@ def _get_hint_pep484604_union_args_flattened(
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
-        # print(f'Sanified union child hint to {repr(hint_child)}...')
+        # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
 
         # Child hint encapsulated by this metadata.
         hint_child = get_hint_or_sane_hint(hint_or_sane_child)
@@ -556,6 +557,7 @@ def _get_hint_pep484604_union_args_flattened(
         # this child hint to this parent union.
         else:
             hint_or_sane_childs_new.append(hint_or_sane_child)
+            # print(f'Flattened union child {repr(hint_child)} to {repr(hint_or_sane_child)}...')
 
         # Increment the 0-based index of the currently iterated child hint.
         hint_childs_index += 1
@@ -567,7 +569,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     # Release this list back to its respective pool.
     release_object_typed(hint_or_sane_childs_new)
-    # print(f'Flattened union to {repr(hint_childs)}...')
+    # print(f'Flattened union to {repr(hint_or_sane_childs)}...')
 
     # Return this tuple and corresponding type variable lookup table.
     return hint_or_sane_childs

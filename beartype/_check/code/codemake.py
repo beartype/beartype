@@ -15,8 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: Rename this submodule to "codemake" *AFTER* finalizing this refactoring,
-#please.
+#FIXME: Rename this submodule to "codemake" *AFTER* finalizing this refactoring.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
@@ -25,7 +24,6 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype.typing import Optional
-# from beartype._cave._cavefast import HintPep695Type
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
@@ -57,7 +55,7 @@ from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    HintSanifiedData,
+    # HintSanifiedData,
     get_hint_or_sane_hint,
     unpack_hint_or_sane,
 )
@@ -274,6 +272,7 @@ def make_check_expr(
     #   dictionary mapping from each type variable parametrizing the origin of
     #   this top-level hint to the child hint subscripting this top-level hint).
     hint_root, typevar_to_hint_root = unpack_hint_or_sane(hint_or_sane)
+    # print(f'Received root hint {repr(hint_root)} and type variable lookup table {repr(typevar_to_hint_root)}.')
 
     # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
@@ -1005,7 +1004,8 @@ def make_check_expr(
                         get_hint_pep484585_arg(
                             hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
                     )
-                    # print(f'Sanifying sequence hint {repr(hint_curr)} child hint {repr(hint_child)}...')
+                    # print(f'Sanifying container hint {repr(hint_curr)} child hint {repr(hint_child)}...')
+                    # print(f'...with type variable lookup table {repr(hint_curr_meta.typevar_to_hint)}.')
 
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
