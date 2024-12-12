@@ -113,14 +113,11 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignCounter,
     HintSignForwardRef,
-    HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
     HintSignLiteral,
-    # HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
-    # HintSignTypeVar,
     HintSignUnion,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -1706,67 +1703,7 @@ def make_check_expr(
                 #   pseudo-superclasses) *OR*...
                 #
                 # ...then this hint is a PEP-compliant generic. In this case...
-                elif (
-                    hint_curr_sign is HintSignPep484585GenericUnsubscripted or
-                    #FIXME: Eliminate this "HintSignPep484585GenericSubscripted"
-                    #branch *AFTER* implementing the reducer below, please.
-                    hint_curr_sign is HintSignPep484585GenericSubscripted
-                ):
-                    #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
-                    #*ALL* child type hints subscripting a generic up to *ALL*
-                    #pseudo-superclasses of that generic (e.g., the "int" child
-                    #hint subscripting a parent hint "MuhGeneric[int]" of type
-                    #"class MuhGeneric(list[T]): pass" up to its "list[T]"
-                    #pseudo-superclass).
-                    #
-                    #For now, we just strip *ALL* child type hints subscripting
-                    #a generic with the following call. This suffices, because
-                    #we just need this to work. So it goes, uneasy code
-                    #bedfellows.
-                    #FIXME: To resolve this, consider:
-                    #* Detect whether this generic is subscripted.
-                    #* If so, define a new "typevar_to_hint_child" local
-                    #  uniting the parent "hint_curr_meta.typevar_to_hint" with
-                    #  the new type variable lookup table implied by the
-                    #  concrete hints subscripting this generic. Critically,
-                    #  note that the existing unpack_hint_or_sane() function
-                    #  *ALREADY PERFORMS THIS SORT OF UNITING.*
-                    #
-                    #However, also note that we'll need to perform a similar
-                    #operation in the "beartype.check._error" subpackage. So,
-                    #perhaps we simply want to generalize this common behaviour
-                    #into the existing
-                    #iter_hint_pep484585_generic_bases_unerased() generator
-                    #called both here and there? No idea. *sigh*
-                    #FIXME: *HMM.* Actually, perhaps it would be best to do so
-                    #within a reducer. The idea there would be to:
-                    #* Define a new "HintSignPep484585GenericSubscripted" sign
-                    #  unique to subscripted generics. Trivial, honestly. Just
-                    #  augment the get_hint_pep_sign_or_none() getter.
-                    #* Define a new reduce_hint_pep_484585_generic_subscripted()
-                    #  reducer modelled after the existing
-                    #  reduce_hint_pep_695_type_alias_subscripted() reducer.
-
-                    # Reduce this hint to the object originating this generic
-                    # (if any) by stripping all child type hints subscripting
-                    # this hint from this hint. Why? Because these child type
-                    # hints convey *NO* meaningful semantics and are thus safely
-                    # ignorable. Consider this simple example, in which the
-                    # subscription "[int]" not only conveys *NO* meaningful
-                    # semantics but actually conveys paradoxically conflicting
-                    # semantics contradicting the original generic declaration:
-                    #     class ListOfListsOfStrs(list[list[str]]): pass
-                    #     ListOfListsOfStrs[int]  # <-- *THIS MEANS NOTHING*
-                    #
-                    # Specifically:
-                    # * If this hint is an unsubscripted generic (e.g.,
-                    #   "typing.IO"), preserve this hint as is. In this case,
-                    #   this hint is a standard isinstanceable class.
-                    # * If this hint is a subscripted generic (e.g.,
-                    #   "typing.IO[str]"), reduce this hint to the object
-                    #   originating this generic (e.g., "typing.IO").
-                    hint_curr = get_hint_pep484585_generic_type(  # pyright: ignore
-                        hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
+                elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
                     # print(f'Visiting generic type {repr(hint_curr)}...')
 
                     # Initialize the code type-checking this pith against this

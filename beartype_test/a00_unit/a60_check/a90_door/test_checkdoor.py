@@ -112,6 +112,7 @@ def test_door_is_bearable_warnings(hints_meta) -> None:
 
         # If this tester is expected to emit a warning for this hint...
         if hint_meta.warning_type is not None:
+            # print(f'hint_meta: {hint_meta}')
             # Call this tester under a context manager asserting this tester to
             # emit the expected warning.
             with warns(hint_meta.warning_type):
@@ -167,6 +168,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
 
         # If this pith violates this hint...
         if isinstance(hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
+            # print(f'hint_pith_meta: {hint_pith_meta}')
             # Assert this raiser raises the expected exception when passed this
             # pith and hint.
             with raises(BeartypeDoorHintViolation) as exception_info:

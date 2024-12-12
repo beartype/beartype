@@ -181,13 +181,6 @@ class HintNonpepMetadata(object):
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for this type hint).
-    warning_type : Optional[Type[Warning]]
-        Either:
-
-        * If the :func:`beartype.beartype` decorator unconditionally emits a
-          non-fatal warning when this type hint annotates *any* parameter or
-          return of *any* callable, the type of that warning.
-        * Else, :data:`None`.
     is_ignorable : bool
         :data:`True` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to :data:`False`.
@@ -206,6 +199,13 @@ class HintNonpepMetadata(object):
         arbitrary object either satisfying or violating this hint when passed as
         a parameter *or* returned as a value annotated by this hint. Defaults to
         the empty tuple.
+    warning_type : Optional[Type[Warning]]
+        Either:
+
+        * If the :func:`beartype.beartype` decorator unconditionally emits a
+          non-fatal warning when this type hint annotates *any* parameter or
+          return of *any* callable, the type of that warning.
+        * Else, :data:`None`.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -218,18 +218,16 @@ class HintNonpepMetadata(object):
 
         # Optional keyword-only parameters.
         conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-        warning_type: Optional[Type[Warning]] = None,
         is_ignorable: bool = False,
         is_needs_cls_stack: bool = False,
         is_supported: bool = True,
         piths_meta: Iterable[HintPithSatisfiedMetadata] = (),
+        warning_type: Optional[Type[Warning]] = None,
     ) -> None:
 
         # Validate passed non-variadic parameters.
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
-        assert isinstance(warning_type, _NoneTypeOrType), (
-            f'{repr(warning_type)} neither class nor "None".')
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_needs_cls_stack, bool), (
@@ -245,27 +243,29 @@ class HintNonpepMetadata(object):
             f'{repr(piths_meta)} not iterable of '
             f'"HintPithSatisfiedMetadata" and '
             f'"HintPithUnsatisfiedMetadata" instances.')
+        assert isinstance(warning_type, _NoneTypeOrType), (
+            f'{repr(warning_type)} neither class nor "None".')
 
         # Classify all passed parameters.
         self.hint = hint
         self.conf = conf
-        self.warning_type = warning_type
         self.is_ignorable = is_ignorable
         self.is_needs_cls_stack = is_needs_cls_stack
         self.is_supported = is_supported
         self.piths_meta = piths_meta
+        self.warning_type = warning_type
 
-    # ..................{ STRINGIFIERS                       }..................
+    # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
             f'    conf={repr(self.conf)},',
-            f'    warning_type={repr(self.warning_type)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_needs_cls_stack={repr(self.is_needs_cls_stack)},',
             f'    is_supported={repr(self.is_supported)},',
             f'    piths_meta={repr(self.piths_meta)},',
+            f'    warning_type={repr(self.warning_type)},',
             f')',
         ))
 
@@ -467,7 +467,7 @@ class HintPepMetadata(HintNonpepMetadata):
         self.pep_sign = pep_sign
         self.typehint_cls = typehint_cls
 
-    # ..................{ STRINGIFIERS                       }..................
+    # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
@@ -487,6 +487,7 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_type_typing={repr(self.is_type_typing)},',
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_meta={repr(self.piths_meta)},',
+            f'    warning_type={repr(self.warning_type)},',
             f')',
         ))
 

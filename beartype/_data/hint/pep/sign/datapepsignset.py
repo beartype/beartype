@@ -34,7 +34,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignContextManager,
     HintSignCoroutine,
     HintSignCounter,
-    HintSignPep557DataclassInitVar,
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
@@ -42,9 +41,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
-    HintSignPep484585GenericUnsubscripted,
     HintSignHashable,
-    HintSignIO,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -66,10 +63,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
+    HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
+    HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignTypeAlias,
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
+    HintSignTypeAlias,
     HintSignProtocol,
     HintSignReversible,
     HintSignSelf,
@@ -277,7 +277,7 @@ type hint constraining *all* items contained in that container).
 # PEP-compliant type hints standardized by more recently released PEPs).
 # '''
 
-# ....................{ SIGNS ~ ignorable                  }....................
+# ....................{ SETS ~ ignorable                   }....................
 HINT_SIGNS_BARE_IGNORABLE: _FrozenSetHintSign = frozenset((
     # ..................{ PEP 484                            }..................
     # The "Any" singleton is semantically synonymous with the ignorable
@@ -374,6 +374,17 @@ This set necessarily excludes:
 '''
 
 
+HINT_SIGNS_GENERIC: _FrozenSetHintSign = frozenset((
+    HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
+))
+'''
+Frozen set of all **generic signs** (i.e., arbitrary objects uniquely
+identifying :pep:`484`- or :pep:`585`-compliant type hints describing generic
+types, including both subscripted and unsubscripted variants).
+'''
+
+
 HINT_SIGNS_MAPPING: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignChainMap,
@@ -385,8 +396,8 @@ HINT_SIGNS_MAPPING: _FrozenSetHintSign = frozenset((
     HintSignOrderedDict,
 ))
 '''
-Frozen set of all **standard mapping signs** (i.e., arbitrary objects uniquely
-identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted by
+Frozen set of all **mapping signs** (i.e., arbitrary objects uniquely
+identifying :pep:`484`- or :pep:`585`-compliant type hints subscripted by
 exactly two child type hints constraining *all* key-value pairs of compliant
 mappings, which necessarily satisfy the :class:`collections.abc.Mapping`
 protocol with guaranteed :math:`O(1)` indexation of at least the first key-value
@@ -634,7 +645,6 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
         HintSignAny,
         HintSignBinaryIO,
         HintSignForwardRef,
-        HintSignIO,
         HintSignNewType,
         HintSignNone,
         HintSignTextIO,
@@ -648,6 +658,7 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
         HintSignUnion,
 
         # ..................{ PEP (484|585)                  }..................
+        HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,
         HintSignTupleFixed,
         HintSignType,

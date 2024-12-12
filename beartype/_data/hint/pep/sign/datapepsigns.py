@@ -185,7 +185,7 @@ HintSignMatch = _HintSign(name='Match')
 HintSignPattern = _HintSign(name='Pattern')
 
 # Other concrete type aliases.
-HintSignIO = HintSignPep484585GenericUnsubscripted
+# IO  <-- ambiguous between subscripted and unsubscripted variants
 HintSignBinaryIO = HintSignPep484585GenericUnsubscripted
 HintSignTextIO = HintSignPep484585GenericUnsubscripted
 

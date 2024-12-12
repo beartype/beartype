@@ -44,7 +44,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
-    HintSignIO,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -64,6 +63,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpec,
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
+    # HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
     HintSignPep557DataclassInitVar,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignReversible,
@@ -113,9 +114,9 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
     # PEP 484-compliant abstract base classes (ABCs) requiring non-standard and
     # non-trivial type-checking. Although most types are trivially type-checked
     # by the isinstance() builtin, these types break the mold in various ways.
+    "<class 'typing.IO'>":       HintSignPep484585GenericUnsubscripted,
     "<class 'typing.BinaryIO'>": HintSignBinaryIO,
-    "<class 'typing.IO'>": HintSignIO,
-    "<class 'typing.TextIO'>": HintSignTextIO,
+    "<class 'typing.TextIO'>":   HintSignTextIO,
 }
 '''
 Dictionary mapping from the **possibly unsubscripted PEP-compliant type hint

@@ -32,7 +32,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
+    from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_GENERIC
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -42,13 +42,79 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     # * Rejects concrete PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         assert is_hint_pep484585_generic(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted)
+            hint_pep_meta.pep_sign in HINT_SIGNS_GENERIC)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert is_hint_pep484585_generic(not_hint_pep) is False
 
 
+def test_is_hint_pep484585_generic_unsubscripted(hints_pep_meta) -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_unsubscripted`
+    tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignPep484585GenericUnsubscripted)
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        is_hint_pep484585_generic_unsubscripted)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+
+    # Assert this tester:
+    # * Accepts generic PEP 484-compliant generics.
+    # * Rejects concrete PEP-compliant type hints.
+    for hint_pep_meta in hints_pep_meta:
+        # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
+        assert is_hint_pep484585_generic_unsubscripted(hint_pep_meta.hint) is (
+            hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep484585_generic_unsubscripted(not_hint_pep) is False
+
+
+def test_is_hint_pep484585_generic_subscripted(hints_pep_meta) -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_subscripted`
+    tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignPep484585GenericSubscripted)
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        is_hint_pep484585_generic_subscripted)
+    from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
+
+    # Assert this tester:
+    # * Accepts generic PEP 484-compliant generics.
+    # * Rejects concrete PEP-compliant type hints.
+    for hint_pep_meta in hints_pep_meta:
+        # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
+        assert is_hint_pep484585_generic_subscripted(hint_pep_meta.hint) is (
+            hint_pep_meta.pep_sign is HintSignPep484585GenericSubscripted)
+
+    # Assert this tester rejects non-PEP-compliant type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        assert is_hint_pep484585_generic_subscripted(not_hint_pep) is False
+
+# ....................{ TESTS ~ testers : user             }....................
 def test_is_hint_pep484585_generic_user(hints_pep_meta) -> None:
     '''
     Test the

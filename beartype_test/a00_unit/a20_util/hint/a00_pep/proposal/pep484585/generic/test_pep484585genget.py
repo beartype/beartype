@@ -183,25 +183,28 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
+    from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_GENERIC
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
 
-    # Assert this getter...
+    # For each PEP-compliant hint to be tested...
     for hint_pep_meta in hints_pep_meta:
-        # Returns one or more unerased pseudo-superclasses for PEP-compliant
-        # generics.
-        if hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted:
+        # If this is a generic hint, assert that this getter returns the
+        # expected unerased pseudo-superclasses of this generic.
+        if hint_pep_meta.pep_sign in HINT_SIGNS_GENERIC:
             hint_pep_bases = get_hint_pep484585_generic_bases_unerased(
                 hint_pep_meta.hint)
             assert isinstance(hint_pep_bases, tuple)
             assert hint_pep_bases
-        # Raises an exception for concrete PEP-compliant type hints *NOT*
-        # defined by the "typing" module.
+        # Else, this is *NOT* a generic hint.
+        #
+        # If this hint is *NOT* defined by the "typing" module, assert that this
+        # getter raises the expected exception.
         elif not is_hint_pep_type_typing(hint_pep_meta.hint):
+            # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
             with raises(BeartypeDecorHintPepException):
                 get_hint_pep484585_generic_bases_unerased(hint_pep_meta.hint)
         # Else, this hint is defined by the "typing" module. In this case, this

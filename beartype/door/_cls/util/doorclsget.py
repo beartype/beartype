@@ -44,9 +44,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignAny,
     HintSignCallable,
-    HintSignPep484585GenericUnsubscripted,
     HintSignLiteral,
     HintSignNewType,
+    HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
     HintSignTuple,
     HintSignTupleFixed,
     HintSignTypeVar,
@@ -164,18 +165,18 @@ _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignAnnotated:  AnnotatedTypeHint,
     HintSignAny:        AnyTypeHint,
     HintSignCallable:   CallableTypeHint,
-    HintSignPep484585GenericUnsubscripted:    GenericTypeHint,
     HintSignLiteral:    LiteralTypeHint,
     HintSignNewType:    NewTypeTypeHint,
     HintSignTuple:      TupleVariableTypeHint,
     HintSignTupleFixed: TupleFixedTypeHint,
     HintSignTypeVar:    TypeVarTypeHint,
+    HintSignPep484585GenericSubscripted:   GenericTypeHint,
+    HintSignPep484585GenericUnsubscripted: GenericTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`.TypeHint` subclass handling those hints.
 '''
-
 
 # ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:

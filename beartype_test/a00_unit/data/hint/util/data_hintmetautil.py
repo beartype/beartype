@@ -18,7 +18,7 @@ from pytest import fixture
 class HintPithMetadata(object):
     '''
     Dataclass encapsulating all relevant type hint- and pith-specific metadata
-    iteratively yielded by each iteration of the :func:`iter_hints_piths_meta`
+    iteratively yielded by each iteration of the :func:`.iter_hints_piths_meta`
     generator.
 
     Attributes
@@ -56,6 +56,16 @@ class HintPithMetadata(object):
         self.hint_meta = hint_meta
         self.pith_meta = pith_meta
         self.pith = pith
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    hint_meta={repr(self.hint_meta)},',
+            f'    pith_meta={repr(self.pith_meta)},',
+            f'    pith={repr(self.pith)},',
+            f')',
+        ))
 
 # ....................{ ITERATORS                          }....................
 @fixture(scope='session')

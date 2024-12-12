@@ -3741,14 +3741,18 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         hints_pep_meta.append(
             # ..............{ GENERICS ~ user                    }..............
             # Subscripted generic subclassing a single unsubscripted "typing"
-            # type. Note that these types constitute an edge case supported
-            # *ONLY* under Python >= 3.9, which implements these tests in an
-            # ambiguous (albeit efficient) manner effectively indistinguishable
-            # from PEP 585-compliant type hints.
+            # type. Note that:
+            # * These types constitute an edge case supported *ONLY* under
+            #   Python >= 3.9, which implements these tests in an ambiguous
+            #   (albeit efficient) manner effectively indistinguishable from PEP
+            #   585-compliant type hints.
+            # * Deprecation warnings are already emitted in a memoized fashio
+            #   for the unsubscripted variants tested above and thus *CANNOT* be
+            #   re-tested here.
             HintPepMetadata(
                 hint=_Pep484GenericUnsubscriptedSingle[str],
-                pep_sign=HintSignPep484585GenericUnsubscripted,
-                warning_type=PEP585_DEPRECATION_WARNING,
+                pep_sign=HintSignPep484585GenericSubscripted,
+                # warning_type=PEP585_DEPRECATION_WARNING,
                 generic_type=_Pep484GenericUnsubscriptedSingle,
                 is_type_typing=False,
                 piths_meta=(

@@ -603,8 +603,7 @@ def reduce_hint_pep695_subscripted(
     hint : HintGenericSubscriptedType
         Subscripted type alias to be reduced.
     exception_prefix : str
-        Human-readable substring prefixing exception messages raised by this
-        reducer.
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed keyword parameters are silently ignored.
 

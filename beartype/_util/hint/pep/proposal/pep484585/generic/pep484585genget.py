@@ -836,14 +836,14 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Caveats
     -------
-    **This function should always be called in lieu of attempting to directly
+    **This getter should always be called in lieu of attempting to directly
     access the low-level** ``__orig_bases__`` **dunder instance variable.**
     Most PEP-compliant type hints fail to declare that variable, guaranteeing
     :class:`AttributeError` exceptions from all general-purpose logic
     attempting to directly access that variable. Thus this function, which
     "fills in the gaps" by implementing this oversight.
 
-    **This function returns tuples possibly containing a mixture of actual
+    **This getter returns tuples possibly containing a mixture of actual
     superclasses and pseudo-superclasses superficially masquerading as actual
     superclasses subscripted by one or more PEP-compliant child hints or type
     variables** (e.g., ``(typing.Iterable[T], typing.Sized[T])``). Indeed, most
@@ -910,7 +910,7 @@ def get_hint_pep484585_generic_bases_unerased(
     superclass conveys no meaningful type information. All other superclasses
     are reduced to their non-:mod:`typing` counterparts: e.g.,
 
-        .. code-block:: python
+        .. code-block:: pycon
 
         >>> from typing import TypeVar, Generic, Iterable, List
         >>> T = TypeVar('T')
@@ -932,7 +932,7 @@ def get_hint_pep484585_generic_bases_unerased(
     :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to type
     erasure and thus constitute a notable exception to this heuristic:
 
-        .. code-block:: python
+        .. code-block:: pycon
 
         >>> from typing import Protocol
         >>> class UserDefinedProtocol(Protocol): pass
@@ -972,7 +972,7 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Examples
     --------
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.typing import Container, Iterable, TypeVar
        >>> from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (

@@ -156,7 +156,6 @@ def is_hint_pep484585_generic_user(hint: Hint) -> bool:
     )
 
 # ....................{ TESTERS ~ kind                     }....................
-#FIXME: Excise us up in favour of subscripted and unsubscripted variants.
 @callable_cached
 def is_hint_pep484585_generic(hint: Hint) -> bool:
     '''
@@ -231,7 +230,6 @@ def is_hint_pep484585_generic(hint: Hint) -> bool:
     )
 
 
-#FIXME: Unit test us up, please.
 def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or
@@ -281,7 +279,6 @@ def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
     )
 
 
-#FIXME: Unit test us up, please.
 def is_hint_pep484585_generic_unsubscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or

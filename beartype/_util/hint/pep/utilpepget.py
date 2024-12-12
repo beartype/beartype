@@ -843,6 +843,64 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     return None
 
 # ....................{ GETTERS ~ origin                   }....................
+def get_hint_pep_origin(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    #FIXME: This should probably be a new "BeartypeDecorHintPepOriginException"
+    #type, instead. But it's unclear whether users will even ever see this
+    #exception. So, for now, laziness prevails. Huzzah! *sigh*
+    exception_cls: TypeException = _BeartypeUtilTypeException,
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    **Unsafe origin object** (i.e., arbitrary object originating the passed
+    PEP-compliant type hint but *not* necessarily an isinstanceable class such
+    that all objects satisfying this hint are instances of this class)
+    originating this hint if this hint originates from an origin *or*
+    raise an exception otherwise (i.e., if this hint originates from *no*
+    origin).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTypeException`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Optional[Hint]
+        Either:
+
+        * If this hint originates from an arbitrary object, that object.
+        * Else, :data:`None`.
+    '''
+
+    # Origin originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # If this hint does *NOT* originate from anything, raise an exception.
+    if hint_origin is None:
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'originates from no other object.'
+        )
+    # Else, this hint originates from something.
+
+    # Return that something.
+    return hint_origin
+
+
 def get_hint_pep_origin_or_none(hint: Hint) -> Optional[Hint]:
     '''
     **Unsafe origin object** (i.e., arbitrary object originating the passed
@@ -949,7 +1007,9 @@ def get_hint_pep_origin_type(
     if this hint originates from such a type *or* raise an exception otherwise
     (i.e., if this hint originates from *no* such type).
 
-    This getter is memoized for efficiency.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Parameters
     ----------

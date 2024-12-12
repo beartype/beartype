@@ -35,8 +35,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     from beartype._data.hint.datahinttyping import T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignBinaryIO,
+        HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,
-        HintSignIO,
         HintSignTextIO,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
@@ -80,11 +80,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # interpreter and thus *CANNOT* be defined as a standard tuple.
     binaryio_piths_meta = [
         # Open read-only binary file handle to this submodule.
-        HintPithSatisfiedMetadata(
-            pith=open_file_binary, is_pith_factory=True),
+        HintPithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
         # Bytestring constant.
-        HintPithUnsatisfiedMetadata(
-            b"Of a thieved imagination's reveries"),
+        HintPithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
     ]
 
     # If beartype validators are usable under the active Python interpreter...
@@ -112,8 +110,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         def omega(self) -> str:
             return 'Surfeit need'
 
-    # Instance of this class.
-    protocol_custom_structural = ProtocolCustomStructural()
 
     class ProtocolSupportsInt(object):
         '''
@@ -130,6 +126,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
         def __int__(self) -> int:
             return 42
+
+    # Instance of the custom protocol defined above.
+    protocol_custom_structural = ProtocolCustomStructural()
 
     # ..................{ FACTORIES ~ Protocol               }..................
     # For each PEP-specific type hint factory importable from each currently
@@ -249,7 +248,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # parametrized by the same type variables in the same order.
             HintPepMetadata(
                 hint=ProtocolCustomTypevared[T],
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=ProtocolCustomTypevared,
                 is_typevars=True,
                 is_typing=False,
@@ -266,7 +265,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # parametrized by a concrete type satisfying this type variable.
             HintPepMetadata(
                 hint=ProtocolCustomTypevared[str],
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=ProtocolCustomTypevared,
                 is_typing=False,
                 piths_meta=(
@@ -343,7 +342,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO,
-                pep_sign=HintSignIO,
+                pep_sign=HintSignPep484585GenericUnsubscripted,
                 generic_type=IO,
                 is_typevars=True,
                 piths_meta=(
@@ -363,7 +362,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # All possible subscriptions of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[Any],
-                pep_sign=HintSignIO,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
@@ -379,13 +378,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             ),
             HintPepMetadata(
                 hint=IO[bytes],
-                pep_sign=HintSignIO,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=IO,
                 piths_meta=binaryio_piths_meta,
             ),
             HintPepMetadata(
                 hint=IO[str],
-                pep_sign=HintSignIO,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
@@ -405,7 +404,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Parametrization of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[AnyStr],
-                pep_sign=HintSignIO,
+                pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=IO,
                 is_typevars=True,
                 piths_meta=(

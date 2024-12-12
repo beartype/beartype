@@ -42,12 +42,9 @@ def _init() -> None:
         HintSignForwardRef,
         HintSignLiteral,
         HintSignNoReturn,
-        HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,
-        HintSignPep695TypeAliasSubscripted,
         HintSignTupleFixed,
         HintSignType,
-        HintSignTypeVar,
     )
     from beartype._data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_MAPPING,
@@ -71,7 +68,7 @@ def _init() -> None:
         find_cause_tuple_fixed,
     )
     from beartype._check.error._pep.pep484585.errpep484585generic import (
-        find_cause_generic)
+        find_cause_generic_unsubscripted)
     from beartype._check.error._pep.pep484585.errpep484585mapping import (
         find_cause_mapping)
 
@@ -99,10 +96,7 @@ def _init() -> None:
     HINT_SIGN_TO_GET_CAUSE_FUNC.update({
         HintSignAnnotated: find_cause_pep593_annotated,
         HintSignForwardRef: find_cause_instance_type_forwardref,
-        #FIXME: Eliminate this "HintSignPep484585GenericSubscripted" branch
-        #*AFTER* implementing the appropriate reducer elsewhere, please.
-        HintSignPep484585GenericSubscripted: find_cause_generic,
-        HintSignPep484585GenericUnsubscripted: find_cause_generic,
+        HintSignPep484585GenericUnsubscripted: find_cause_generic_unsubscripted,
         HintSignLiteral: find_cause_pep586_literal,
         HintSignNoReturn: find_cause_pep484_noreturn,
         HintSignTupleFixed: find_cause_tuple_fixed,

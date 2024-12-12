@@ -127,7 +127,18 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     class _Pep585GenericTypevaredSingle(list[T]):
         '''
         :pep:`585`-compliant user-defined generic subclassing a single
-        parametrized builtin type.
+        parametrized builtin type parametrized by a single type variables.
+        '''
+
+        # Redefine this generic's representation for debugging purposes.
+        def __repr__(self) -> str:
+            return f'{self.__class__.__name__}({super().__repr__()})'
+
+
+    class _Pep585GenericTypevaredMultiple(dict[S, T]):
+        '''
+        :pep:`585`-compliant user-defined generic subclassing a single
+        parametrized builtin type parametrized by multiple type variables.
         '''
 
         # Redefine this generic's representation for debugging purposes.
@@ -504,19 +515,19 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Generic subclassing a single parametrized builtin container, itself
-        # parametrized by the same type variables in the same order.
+        # parametrized by the same multiple type variables in the same order.
         HintPepMetadata(
-            hint=_Pep585GenericTypevaredSingle[S, T],
+            hint=_Pep585GenericTypevaredMultiple[S, T],
             pep_sign=HintSignPep484585GenericSubscripted,
-            generic_type=_Pep585GenericTypevaredSingle,
+            generic_type=_Pep585GenericTypevaredMultiple,
             is_pep585_generic=True,
             is_typevars=True,
             piths_meta=(
-                # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(_Pep585GenericTypevaredSingle((
-                    'Bandage‐managed',
-                    'Into Faithless redaction’s didact enactment — crookedly',
-                ))),
+                # Subclass-specific generic dictionary of string constants.
+                HintPithSatisfiedMetadata(_Pep585GenericTypevaredMultiple({
+                    'Bandage‐managed': 'Into Faithless redaction’s',
+                    'didact enactment': '— crookedly',
+                })),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Down‐bound'),
                 # List of string constants.
