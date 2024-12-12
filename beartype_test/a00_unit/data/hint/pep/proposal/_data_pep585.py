@@ -55,7 +55,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignDefaultDict,
         HintSignDeque,
         HintSignDict,
-        HintSignGeneric,
+        HintSignPep484585GenericSubscripted,
+        HintSignPep484585GenericUnsubscripted,
         HintSignItemsView,
         HintSignKeysView,
         HintSignList,
@@ -418,7 +419,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # container type.
         HintPepMetadata(
             hint=_Pep585GenericUntypevaredShallowSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericUntypevaredShallowSingle,
             is_pep585_generic=True,
             piths_meta=(
@@ -444,7 +445,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # type.
         HintPepMetadata(
             hint=_Pep585GenericUntypevaredDeepSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericUntypevaredDeepSingle,
             is_pep585_generic=True,
             piths_meta=(
@@ -481,7 +482,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single parametrized builtin container type.
         HintPepMetadata(
             hint=_Pep585GenericTypevaredSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevars=True,
@@ -506,7 +507,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
             hint=_Pep585GenericTypevaredSingle[S, T],
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=_Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevars=True,
@@ -531,7 +532,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         HintPepMetadata(
             hint=_Pep585GenericUntypevaredMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericUntypevaredMultiple,
             is_pep585_generic=True,
             piths_meta=(
@@ -554,7 +555,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # base classes (ABCs).
         HintPepMetadata(
             hint=_Pep585GenericTypevaredShallowMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredShallowMultiple,
             is_pep585_generic=True,
             is_typevars=True,
@@ -576,7 +577,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # unparametrized "collections.abc" ABC.
         HintPepMetadata(
             hint=_Pep585GenericTypevaredDeepMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredDeepMultiple,
             is_pep585_generic=True,
             is_typevars=True,

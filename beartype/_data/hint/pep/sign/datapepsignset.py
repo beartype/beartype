@@ -42,7 +42,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
-    HintSignGeneric,
+    HintSignPep484585GenericUnsubscripted,
     HintSignHashable,
     HintSignIO,
     HintSignItemsView,
@@ -115,7 +115,7 @@ HINT_SIGNS_UNSUBSCRIPTABLE = frozenset((
     # *ALL* generics are (transitively) semantically subscripted either:
     # * Directly (e.g., "MuhGeneric[int]") *OR*...
     # * Indirectly by one or more of their unerased pseudo-superclasses.
-    HintSignGeneric,
+    HintSignPep484585GenericUnsubscripted,
 
     # ..................{ PEP 612                            }..................
     # PEP 612-compliant parameter specifications (i.e., "typing.ParamSpec"
@@ -291,7 +291,7 @@ HINT_SIGNS_BARE_IGNORABLE: _FrozenSetHintSign = frozenset((
     # singleton including "typing.Generic" semantically expands to that
     # singelton subscripted by an implicit "Any" argument, "Generic"
     # semantically expands to the implicit "Generic[Any]" singleton.
-    HintSignGeneric,
+    HintSignPep484585GenericUnsubscripted,
 
     # The unsubscripted "Optional" singleton semantically expands to the
     # implicit "Optional[Any]" singleton by the same argument. Since PEP
@@ -648,7 +648,7 @@ HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
         HintSignUnion,
 
         # ..................{ PEP (484|585)                  }..................
-        HintSignGeneric,
+        HintSignPep484585GenericUnsubscripted,
         HintSignTupleFixed,
         HintSignType,
 

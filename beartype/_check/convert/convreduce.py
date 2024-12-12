@@ -55,7 +55,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignFinal,
     HintSignFrozenSet,
     HintSignGenerator,
-    HintSignGeneric,
+    HintSignPep484585GenericUnsubscripted,
     HintSignHashable,
     HintSignItemsView,
     HintSignIterable,
@@ -556,7 +556,7 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # under Python < 3.8 (e.g., by explicitly subclassing those classes from
     # third-party classes). Ergo, we can neither safely emit warnings nor raise
     # exceptions on visiting these classes under *ANY* Python version.
-    HintSignGeneric: reduce_hint_pep484_generic,
+    HintSignPep484585GenericUnsubscripted: reduce_hint_pep484_generic,
 
     # If this hint is a PEP 484-compliant new type, reduce this new type to the
     # user-defined class aliased by this new type.

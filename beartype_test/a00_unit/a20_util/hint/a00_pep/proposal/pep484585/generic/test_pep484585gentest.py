@@ -32,7 +32,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -42,7 +42,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     # * Rejects concrete PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         assert is_hint_pep484585_generic(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is HintSignGeneric)
+            hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:

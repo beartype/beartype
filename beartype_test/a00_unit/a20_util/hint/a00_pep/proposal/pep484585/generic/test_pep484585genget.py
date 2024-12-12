@@ -183,7 +183,7 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
@@ -194,7 +194,7 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
     for hint_pep_meta in hints_pep_meta:
         # Returns one or more unerased pseudo-superclasses for PEP-compliant
         # generics.
-        if hint_pep_meta.pep_sign is HintSignGeneric:
+        if hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted:
             hint_pep_bases = get_hint_pep484585_generic_bases_unerased(
                 hint_pep_meta.hint)
             assert isinstance(hint_pep_bases, tuple)
@@ -300,7 +300,7 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_type_or_none)
 
@@ -310,7 +310,7 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     # we assert this getter only returns the expected type origin for a small
     # subset of type hints.
     for hint_pep_meta in hints_pep_meta:
-        if hint_pep_meta.pep_sign is HintSignGeneric:
+        if hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted:
             assert get_hint_pep484585_generic_type_or_none(
                 hint_pep_meta.hint) is hint_pep_meta.generic_type
 

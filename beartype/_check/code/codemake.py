@@ -113,7 +113,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignCounter,
     HintSignForwardRef,
-    HintSignGeneric,
+    HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
     HintSignLiteral,
     # HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
@@ -1705,7 +1706,12 @@ def make_check_expr(
                 #   pseudo-superclasses) *OR*...
                 #
                 # ...then this hint is a PEP-compliant generic. In this case...
-                elif hint_curr_sign is HintSignGeneric:
+                elif (
+                    hint_curr_sign is HintSignPep484585GenericUnsubscripted or
+                    #FIXME: Eliminate this "HintSignPep484585GenericSubscripted"
+                    #branch *AFTER* implementing the reducer below, please.
+                    hint_curr_sign is HintSignPep484585GenericSubscripted
+                ):
                     #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
                     #*ALL* child type hints subscripting a generic up to *ALL*
                     #pseudo-superclasses of that generic (e.g., the "int" child

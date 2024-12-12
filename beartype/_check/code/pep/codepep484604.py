@@ -534,7 +534,6 @@ def _get_hint_pep484604_union_args_flattened(
             hint_child_childs = get_hint_pep_args(hint_child)
             # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
 
-            #FIXME: Unit test us up, please. This is pretty insane. *sigh*
             # If this hint is encapsulated by metadata...
             if isinstance(hint_or_sane_child, HintSanifiedData):
                 # For each child child type subscripting this child union...

@@ -501,7 +501,7 @@ def _init() -> None:
         # The unsubscripted PEP 484-compliant "Generic" superclass is
         # explicitly equivalent under PEP 484 to the "Generic[Any]"
         # subscription and thus slightly conveys meaningful semantics.
-        # 'Generic': HintSignGeneric,
+        # 'Generic': HintSignPep484585GenericUnsubscripted,
 
         # ....................{ PEP 612                    }....................
         # PEP 612-compliant "typing.ParamSpec" type hints as merely instances of
@@ -706,7 +706,7 @@ def _init() -> None:
             #something resembling:
             ## In global scope above:
             #_HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
-            #    HintSignProtocol: HintSignGeneric,
+            #    HintSignProtocol: HintSignPep484585GenericUnsubscripted,
             #}
             #
             #    # In this iteration here:

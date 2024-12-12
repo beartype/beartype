@@ -32,12 +32,20 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
+    from beartype import (
+        BeartypeConf,
+        BeartypeHintOverrides,
+    )
     from beartype.typing import (
+        # Generic,
         Union,
     )
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignPep695TypeAliasSubscripted,
         HintSignPep695TypeAliasUnsubscripted,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Pep484IterableTupleSTContainerTupleST,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -45,13 +53,13 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ LOCALS ~ concrete                  }..................
+    # ..................{ ALIASES ~ concrete                 }..................
     # Simple type alias whose value is a standard type hint containing *NO*
     # syntax or semantics unique to PEP 695-compliant type aliases (e.g., *NO*
     # forward references, recursion, or type variables).
     type AliasSimple = int | list[str]
 
-    # ..................{ LOCALS ~ generic                   }..................
+    # ..................{ ALIASES ~ generic                  }..................
     # Generic type alias support is unavoidably implemented in an *EXTREMELY*
     # fragile manner throughout the @beartype codebase. Recursively "bubbling
     # up" the concrete child type hints subscripting a generic type alias into
@@ -66,7 +74,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # subsequently use below at least one generic type alias for *EACH* other
     # PEP standard supported by @beartype. Non-trivial, thy name is PEP 695.
 
+    #FIXME: Also exercise a PEP 585 generic, please.
+    #FIXME: Actually exercise below, please.
+    # Generic type alias whose value is a PEP 484-compliant generic subscripted
+    # by the same type variables as those parametrizing this alias.
+    type AliasPep484Generic[S, T] = Pep484IterableTupleSTContainerTupleST[S, T]
+
     # Generic type alias whose value is a PEP 604-compliant new union of:
+    # * A PEP-noncompliant type.
     # * Two or more generic type hints parametrized by the same type variable
     #   subscripting this alias *AND*...
     # * A PEP 484-compliant old union of (...waitforit) two or more generic type
@@ -76,6 +91,8 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # 604-compliant unions preserves PEP 484-compliant type variable mappings
     # while also flattening directly nested unions into the top-level union.
     type AliasPep484604[T] = (
+        # PEP-noncompliant type.
+        float |
         # PEP 604-compliant new union of two or more generic type hints
         # parametrized by the same type variable subscripting this alias.
         list[T] | set[T] |
@@ -159,6 +176,9 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
+                        r'\bdict\b',
+                        r'\bfloat\b',
+                        r'\bfrozenset\b',
                         r'\blist\b',
                         r'\bset\b',
                     ),
@@ -179,10 +199,9 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             hint=AliasPep484604[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subscripted=True,
-            # is_type_typing=True,
-            # is_typevars=False,
-            # is_typing=False,
             piths_meta=(
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(70.319),
                 # Dictionary mapping from arbitrary objects all of the same
                 # valid type to yet more arbitrary objects all of that type.
                 HintPithSatisfiedMetadata({
@@ -231,6 +250,46 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
+                        r'\bdict\b',
+                        r'\bfloat\b',
+                        r'\bfrozenset\b',
+                        r'\blist\b',
+                        r'\bset\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # Subscripted generic type alias testing type variable mappings across
+        # PEP 484- and 604-compliant union hints configured by a hint override
+        # recursively mapping a child hint of this union to yet another union of
+        # that child hint and another hint, exercising a subtle edge case.
+        HintPepMetadata(
+            hint=AliasPep484604[complex],
+            conf=BeartypeConf(hint_overrides=BeartypeHintOverrides(
+                {float: int | float})),
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Integer constant.
+                HintPithSatisfiedMetadata(0xBEEFCAFE),
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(70.319),
+                # Complex constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=27 + 4j,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bdict\b',
+                        r'\bfloat\b',
+                        r'\bfrozenset\b',
                         r'\blist\b',
                         r'\bset\b',
                     ),

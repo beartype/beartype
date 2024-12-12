@@ -35,7 +35,8 @@ from beartype._data.hint.pep.datapeprepr import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignGeneric,
+    HintSignPep484585GenericSubscripted,
+    HintSignPep484585GenericUnsubscripted,
     HintSignNewType,
     HintSignTypedDict,
     HintSignPep585BuiltinSubscriptedUnknown,
@@ -49,7 +50,9 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic)
+    is_hint_pep484585_generic_subscripted,
+    is_hint_pep484585_generic_unsubscripted,
+)
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     get_hint_pep484585_sign_tuplefixed_or_same)
 from beartype._util.hint.pep.proposal.pep484604 import (
@@ -218,8 +221,9 @@ if IS_PYTHON_AT_LEAST_3_9:
         if hint_pep_typevars is None:
             # Return either...
             return (
-                # If this hint is a PEP 585-compliant generic, the tuple of all
-                # typevars declared on pseudo-superclasses of this generic.
+                # If this hint is a PEP 585-compliant unsubscripted generic, the
+                # tuple of all type variables parametrizing all
+                # pseudo-superclasses of this generic.
                 get_hint_pep585_generic_typevars(hint)
                 if is_hint_pep585_generic(hint) else
                 # Else, the empty tuple.
@@ -467,8 +471,9 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
       :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`),
       this function returns ::class:`beartype.cave.HintGenericSubscriptedType`.
     * A **generic** (i.e., subclass of the :class:`typing.Generic` abstract
-      base class (ABC)), this function returns :class:`HintSignGeneric`. Note
-      this includes :pep:`544`-compliant **protocols** (i.e., subclasses of the
+      base class (ABC)), this function returns
+      :class:`HintSignPep484585GenericUnsubscripted`. Note this includes
+      :pep:`544`-compliant **protocols** (i.e., subclasses of the
       :class:`typing.Protocol` ABC), which implicitly subclass the
       :class:`typing.Generic` ABC as well.
     * A **forward reference** (i.e., string or instance of the concrete
@@ -528,11 +533,11 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
        >>> class Genericity(typing.Generic[T]): pass
        >>> get_hint_pep_sign_or_none(Genericity)
-       HintSignGeneric
+       HintSignPep484585GenericUnsubscripted
 
        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
        >>> get_hint_pep_sign_or_none(Duplicity)
-       HintSignGeneric
+       HintSignPep484585GenericUnsubscripted
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -725,9 +730,9 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # For minor efficiency gains, the following tests are intentionally ordered
     # in descending likelihood of a match.
 
-    # If this hint is a PEP 484- or 585-compliant generic (i.e., user-defined
-    # class superficially subclassing at least one PEP 484- or 585-compliant
-    # type hint), return that sign. However, note that:
+    # If this hint is a PEP 484- or 585-compliant unsubscripted generic (i.e.,
+    # user-defined class superficially subclassing at least one PEP 484- or
+    # 585-compliant type hint), return that sign. However, note that:
     # * Generics *CANNOT* be detected by the general-purpose logic performed
     #   above, as the "typing.Generic" ABC does *NOT* define a __repr__()
     #   dunder method returning a string prefixed by the "typing." substring.
@@ -759,9 +764,18 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    if is_hint_pep484585_generic(hint):
-        return HintSignGeneric
-    # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.
+    if is_hint_pep484585_generic_unsubscripted(hint):
+        return HintSignPep484585GenericUnsubscripted
+    # Else, this hint is *NOT* a PEP 484- or 585-compliant unsubscripted
+    # generic.
+    #
+    # If this hint is a PEP 484- or 585-compliant subscripted generic (i.e.,
+    # object subscripted by one or more child type hints originating from a
+    # user-defined class superficially subclassing at least one PEP 484- or
+    # 585-compliant type hint), return that sign. See above for commentary.
+    elif is_hint_pep484585_generic_subscripted(hint):
+        return HintSignPep484585GenericSubscripted
+    # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
     #
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):

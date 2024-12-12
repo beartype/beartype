@@ -24,11 +24,9 @@ from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
-    HintSignGeneric,
+    HintSignPep484585GenericSubscripted,
     HintSignOptional,
     HintSignNewType,
-    HintSignPep695TypeAliasSubscripted,
-    HintSignPep695TypeAliasUnsubscripted,
     HintSignProtocol,
     HintSignTypeVar,
     HintSignUnion,
@@ -44,7 +42,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_ignorable)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic_ignorable)
+    is_hint_pep484585_generic_subscripted_ignorable)
 from beartype._util.hint.pep.proposal.pep484604 import (
     is_hint_pep484604_union_ignorable)
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep544_ignorable
@@ -683,7 +681,8 @@ _HINT_SIGN_TO_IS_HINT_IGNORABLE: Dict[HintSign, Callable] = {
 
     # ..................{ PEP (484|585)                      }..................
     # Ignore *ALL* PEP 484- and 585-compliant "Generic[...]" subscriptions.
-    HintSignGeneric: is_hint_pep484585_generic_ignorable,
+    HintSignPep484585GenericSubscripted: (
+        is_hint_pep484585_generic_subscripted_ignorable),
 
     # ..................{ PEP (484|604)                      }..................
     # Ignore *ALL* PEP 484- and 604-compliant unions subscripted by one or more

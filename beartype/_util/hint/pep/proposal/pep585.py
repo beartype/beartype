@@ -11,9 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
-from beartype.typing import (
-    Any,
-)
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -95,17 +92,43 @@ if IS_PYTHON_AT_LEAST_3_9:
         )
 
 
-    @callable_cached
     def is_hint_pep585_generic(hint: Hint) -> bool:
 
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-            get_hint_pep484585_generic_type_or_none)
+        # Return true only if object is either...
+        return (
+            # A PEP 585-compliant unsubscripted generic *OR*...
+            is_hint_pep585_generic_unsubscripted(hint) or
+            # A PEP 585-compliant subscripted generic.
+            is_hint_pep585_generic_subscripted(hint)
+        )
 
-        # If this hint is *NOT* a type, reduce this hint to the object
-        # originating this hint if any. See the comparable
-        # is_hint_pep484_generic() tester for further details.
-        hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
+
+    #FIXME: Unit test us up, please.
+    def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
+
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import (
+            get_hint_pep_origin_or_none)
+
+        # Arbitrary object originating this hint if any *OR* "None" otherwise.
+        hint_origin = get_hint_pep_origin_or_none(hint)
+
+        # Return true only if this origin object is an unsubscripted generic
+        # type, which would then imply this hint to be a subscripted generic. If
+        # this strikes you as insane, you're not alone.
+        return is_hint_pep585_generic_unsubscripted(hint_origin)  # pyright: ignore
+
+
+    #FIXME: Unit test us up, please.
+    @callable_cached
+    def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
+
+        # If this hint is *NOT* a type, this hint *CANNOT* be an unsubscripted
+        # generic. In this case, return false immediately.
+        if not isinstance(hint, type):
+            return False
+        # Else, this hint is a type. Since this hint *COULD* be an unsubscripted
+        # generic, continue testing.
 
         # Tuple of all pseudo-superclasses originally subclassed by the passed
         # hint if this hint is a generic *OR* false otherwise.
@@ -117,6 +140,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             return False
         # Else, this hint subclasses one or more pseudo-superclasses.
 
+        #FIXME: [SPEED] Optimize into a "while" loop for efficiency. *sigh*
         # For each such pseudo-superclass...
         #
         # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
@@ -149,7 +173,6 @@ if IS_PYTHON_AT_LEAST_3_9:
         # Since *NO* such pseudo-superclasses are PEP 585-compliant, this hint
         # is *NOT* a PEP 585-compliant generic. In this case, return false.
         return False
-
 # Else, the active Python interpreter targets at most Python < 3.9 and thus
 # fails to support PEP 585. In this case, fallback to declaring this function
 # to unconditionally return False.
@@ -160,9 +183,16 @@ else:
     def is_hint_pep585_generic(hint: Hint) -> bool:
         return False
 
+    def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
+        return False
+
+    def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
+        return False
+
 # ....................{ TESTERS ~ doc                      }....................
 # Docstring for this function regardless of implementation details.
-is_hint_pep585_builtin_subscripted.__doc__ = '''
+is_hint_pep585_builtin_subscripted.__doc__ = (
+    '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **subscripted builtin type hint** (i.e., C-based type hint instantiated by
     subscripting either a concrete builtin container class like :class:`list` or
@@ -204,12 +234,15 @@ is_hint_pep585_builtin_subscripted.__doc__ = '''
     bool
         :data:`True` only if this object is a :pep:`585`-compliant type hint.
     '''
+)
 
 
-is_hint_pep585_generic.__doc__ = '''
+is_hint_pep585_generic.__doc__ = (
+    '''
     :data:`True` only if the passed object is a :pep:`585`-compliant **generic**
-    (i.e., object that may *not* actually be a class originally subclassing at
-    least one subscripted :pep:`585`-compliant pseudo-superclass).
+    (i.e., either a type originally subclassing at least one subscripted
+    :pep:`585`-compliant pseudo-superclass *or* an object subscripted by one or
+    more child type hints originating from such a type).
 
     This tester is memoized for efficiency.
 
@@ -223,6 +256,52 @@ is_hint_pep585_generic.__doc__ = '''
     bool
         :data:`True` only if this object is a :pep:`585`-compliant generic.
     '''
+)
+
+
+is_hint_pep585_generic_subscripted.__doc__ = (
+    '''
+    :data:`True` only if the passed object is a :pep:`585`-compliant
+    **subscripted generic** (i.e., object subscripted by one or more child type
+    hints originating from a type originally subclassing at least one
+    subscripted :pep:`585`-compliant pseudo-superclass).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : Hint
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a :pep:`585`-compliant subscripted
+        generic.
+    '''
+)
+
+
+is_hint_pep585_generic_unsubscripted.__doc__ = (
+    '''
+    :data:`True` only if the passed object is a :pep:`585`-compliant
+    **unsubscripted generic** (i.e., type originally subclassing at least one
+    subscripted :pep:`585`-compliant pseudo-superclass).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : Hint
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a :pep:`585`-compliant unsubscripted
+        generic.
+    '''
+)
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep585_generic_bases_unerased(

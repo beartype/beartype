@@ -19,6 +19,43 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 
+# ....................{ SIGNS ~ implicit : pep : (484|585) }....................
+# User-defined generics, defined here rather than below to enable explicit
+# "typing" exports signed below to trivially alias these generic signs.
+
+HintSignPep484585GenericUnsubscripted = _HintSign(
+    name='HintSignPep484585GenericUnsubscripted')
+'''
+Sign uniquely identifying all :pep:`484`- or :pep:`585`-compliant
+**unsubscripted generics** (i.e., types subclassing either the
+:pep:`484`-compliant :class:`typing.Generic` superclass, the
+:pep:`544`-compliant :class:`typing.Protocol` superclass, or a
+:pep:`585`-compliant type hint).
+'''
+
+
+HintSignPep484585GenericSubscripted = _HintSign(
+    name='HintSignPep484585GenericSubscripted')
+'''
+Sign uniquely identifying all :pep:`484`- or :pep:`585`-compliant **subscripted
+generics** (i.e., unsubscripted generic types originally parametrized by one or
+more :pep:`484`-compliant type variables subscripted by a corresponding number
+of arbitrary child type hints): e.g.,
+
+.. code-block:: pycon
+
+   >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+
+   # Unsubscripted PEP 585 generic parametrized by a PEP 484 type variable.
+   >>> class MuhGeneric[T](list[T]): pass
+   >>> get_hint_pep_sign_or_none(MuhGeneric)
+   HintSignPep484585GenericUnsubscripted
+
+   # Subscripted PEP 585 generic replacing that type variable with a type.
+   >>> get_hint_pep_sign_or_none(MuhGeneric[int])
+   HintSignPep484585GenericSubscripted
+'''
+
 # ....................{ SIGNS ~ explicit                   }....................
 # Signs with explicit analogues in the stdlib "typing" module.
 #
@@ -60,7 +97,7 @@ HintSignClassVar        = _HintSign(name='ClassVar')
 HintSignConcatenate     = _HintSign(name='Concatenate')
 HintSignFinal           = _HintSign(name='Final')
 HintSignForwardRef      = _HintSign(name='ForwardRef')
-HintSignGeneric         = _HintSign(name='Generic')
+# Generic  <-- ambiguous between subscripted and unsubscripted variants (disambiguated below)
 HintSignLiteral         = _HintSign(name='Literal')
 HintSignOptional        = _HintSign(name='Optional')
 HintSignParamSpec       = _HintSign(name='ParamSpec')
@@ -148,9 +185,9 @@ HintSignMatch = _HintSign(name='Match')
 HintSignPattern = _HintSign(name='Pattern')
 
 # Other concrete type aliases.
-HintSignIO = HintSignGeneric
-HintSignBinaryIO = HintSignGeneric
-HintSignTextIO = HintSignGeneric
+HintSignIO = HintSignPep484585GenericUnsubscripted
+HintSignBinaryIO = HintSignPep484585GenericUnsubscripted
+HintSignTextIO = HintSignPep484585GenericUnsubscripted
 
 # One-off things.
 # AnyStr   <-- not a unique type hint (merely a constrained "TypeVar")
@@ -315,7 +352,7 @@ pure-Python origin classes (which are type-checkable as is).
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 695       }....................
-# "type {alias_name} = {alias_value}" statements under Python >= 3.12.
+# "type {alias_name}[{typevar_name}] = {alias_value}" statements.
 
 HintSignPep695TypeAliasUnsubscripted = _HintSign(
     name='HintSignPep695TypeAliasUnsubscripted')
@@ -337,17 +374,18 @@ Sign uniquely identifying all :pep:`695`-compliant **subscripted type aliases**
 :pep:`484`-compliant type variables subscripted by a corresponding number of
 arbitrary child type hints): e.g.,
 
-```pycon
->>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+.. code-block:: pycon
 
-# Unsubscripted PEP 695 type alias parametrized by a PEP 484 type variable.
->>> MuhTypeAlias[T] = T | float
->>> get_hint_pep_sign_or_none(MuhTypeAlias)
-HintSignPep695TypeAliasUnsubscripted
+   >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
-# Subscripted PEP 695 type alias replacing that type variable with a type.
->>> get_hint_pep_sign_or_none(MuhTypeAlias[int])
-HintSignPep695TypeAliasSubscripted
+   # Unsubscripted PEP 695 type alias parametrized by a PEP 484 type variable.
+   >>> MuhTypeAlias[T] = T | float
+   >>> get_hint_pep_sign_or_none(MuhTypeAlias)
+   HintSignPep695TypeAliasUnsubscripted
+
+   # Subscripted PEP 695 type alias replacing that type variable with a type.
+   >>> get_hint_pep_sign_or_none(MuhTypeAlias[int])
+   HintSignPep695TypeAliasSubscripted
 '''
 
 # ....................{ CLEANUP                            }....................

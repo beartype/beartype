@@ -17,19 +17,64 @@ from beartype.typing import (
     Generic,
 )
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_generic(hint: object) -> bool:
+#FIXME: Unit test us up, please.
+def is_hint_pep484_generic_subscripted(hint: Hint) -> bool:
     '''
-    :data:`True` only if the passed object is a :pep:`484`-compliant **generic**
-    (i.e., object that may *not* actually be a class originally subclassing at
-    least one PEP-compliant type hint defined by the :mod:`typing` module).
+    :data:`True` only if the passed object is a :pep:`484`-compliant
+    **subscripted generic** (i.e., object subscripted by one or more child type
+    hints originating from a :class:`typing.Generic` subclass, typically due to
+    originally subclassing at least one PEP-compliant type hint defined by the
+    standard :mod:`typing` module).
 
-    Specifically, this tester returns :data:`True` only if this object was
-    originally defined as a class subclassing a combination of:
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a :pep:`484`-compliant subscripted
+        generic.
+
+    See Also
+    --------
+    :func:`.is_hint_pep484_generic_unsubscripted`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
+
+    # Arbitrary object originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # Return true only if this origin object is an unsubscripted generic type,
+    # which would then imply this hint to be a subscripted generic. If this
+    # strikes you as insane, you're not alone.
+    return is_hint_pep484_generic_unsubscripted(hint_origin)  # pyright: ignore
+
+
+#FIXME: Unit test us up, please.
+def is_hint_pep484_generic_unsubscripted(hint: Hint) -> bool:
+    '''
+    :data:`True` only if the passed object is a :pep:`484`-compliant
+    **unsubscripted generic** (i.e., :class:`typing.Generic` subclass, typically
+    due to originally subclassing at least one PEP-compliant type hint defined
+    by the standard :mod:`typing` module).
+
+    This tester returns :data:`True` only if this object was originally defined
+    as a class subclassing a combination of:
 
     * At least one of:
 
@@ -46,27 +91,15 @@ def is_hint_pep484_generic(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
     -------
     bool
-        :data:`True` only if this object is a :mod:`typing` generic.
+        :data:`True` only if this object is a :pep:`484`-compliant unsubscripted
+        generic.
     '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_type_or_none)
-
-    # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
-    # generic but could still be a subscripted generic (i.e., generic
-    # subscripted by one or more PEP-compliant child type hints). To
-    # decide, reduce this hint to the object originating this hint if any,
-    # enabling the subsequent test to test whether this origin object is an
-    # unsubscripted generic, which would then imply this hint to be a
-    # subscripted generic. If this strikes you as insane, you're not alone.
-    hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
 
     # Return true only if this hint is a subclass of the "typing.Generic"
     # abstract base class (ABC), in which case this hint is a user-defined
@@ -308,7 +341,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     # If this hint is *NOT* a PEP 484- or 544-compliant generic, raise an
     # exception.
-    if not is_hint_pep484_generic(hint):
+    if not is_hint_pep484_generic_unsubscripted(hint):
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'

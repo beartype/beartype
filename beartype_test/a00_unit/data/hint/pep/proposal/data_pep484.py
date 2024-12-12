@@ -274,7 +274,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignDict,
         HintSignForwardRef,
         HintSignFrozenSet,
-        HintSignGeneric,
         HintSignKeysView,
         HintSignHashable,
         HintSignItemsView,
@@ -289,6 +288,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignOptional,
         HintSignOrderedDict,
         HintSignPattern,
+        HintSignPep484585GenericSubscripted,
+        HintSignPep484585GenericUnsubscripted,
         HintSignSequence,
         HintSignSet,
         HintSignSized,
@@ -774,7 +775,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single unsubscripted "typing" type.
         HintPepMetadata(
             hint=_Pep484GenericUnsubscriptedSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUnsubscriptedSingle,
             is_type_typing=False,
@@ -798,7 +799,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single shallowly unparametrized "typing" type.
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredShallowSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredShallowSingle,
             is_type_typing=False,
@@ -824,7 +825,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single deeply unparametrized "typing" type.
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredDeepSingle,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredDeepSingle,
             is_type_typing=False,
@@ -862,7 +863,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single parametrized "typing" type.
         HintPepMetadata(
             hint=Pep484GenericST,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=Pep484GenericST,
             is_typevars=True,
             is_type_typing=False,
@@ -881,7 +882,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
             hint=Pep484GenericST[S, T],
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=Pep484GenericST,
             is_typevars=True,
             is_type_typing=True,
@@ -901,7 +902,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # non-"typing" abstract base class (ABC).
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredMultiple,
             is_type_typing=False,
@@ -924,7 +925,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple parametrized "typing" types.
         HintPepMetadata(
             hint=_Pep484GenericTypevaredShallowMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericTypevaredShallowMultiple,
             # is_args=False,
@@ -947,7 +948,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # *AND* a non-"typing" abstract base class (ABC).
         HintPepMetadata(
             hint=_Pep484GenericTypevaredDeepMultiple,
-            pep_sign=HintSignGeneric,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericTypevaredDeepMultiple,
             # is_args=False,
@@ -3746,7 +3747,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             # from PEP 585-compliant type hints.
             HintPepMetadata(
                 hint=_Pep484GenericUnsubscriptedSingle[str],
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignPep484585GenericUnsubscripted,
                 warning_type=PEP585_DEPRECATION_WARNING,
                 generic_type=_Pep484GenericUnsubscriptedSingle,
                 is_type_typing=False,

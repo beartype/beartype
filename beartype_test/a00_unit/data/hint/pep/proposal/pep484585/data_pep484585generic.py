@@ -35,6 +35,7 @@ from typing import (
     Container as Pep484Container,
     ContextManager as Pep484ContextManager,
     Iterable as Pep484Iterable,
+    Iterator as Pep484Iterator,
     List as Pep484List,
     Sequence as Pep484Sequence,
     Tuple as Pep484Tuple,
@@ -130,7 +131,7 @@ class Pep484CallableContextManagerStrSequenceStr(
     :mod:`typing` types *and* a non-:mod:`typing` abstract base class (ABC).
     '''
 
-    # ..................{ INITIALIZERS               }..................
+    # ....................{ INITIALIZERS                   }....................
     def __init__(self, sequence: tuple) -> None:
         '''
         Initialize this generic from the passed tuple.
@@ -140,7 +141,7 @@ class Pep484CallableContextManagerStrSequenceStr(
             f'{repr(sequence)} not tuple.')
         self._sequence = sequence
 
-    # ..................{ ABCs                       }..................
+    # ....................{ DUNDERS                        }....................
     # Define all protocols mandated by ABCs subclassed by this generic.
 
     def __call__(self) -> int:
@@ -176,7 +177,7 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     :mod:`typing` types.
     '''
 
-    # ..................{ INITIALIZERS               }..................
+    # ....................{ INITIALIZERS                   }....................
     def __init__(self, iterable: tuple) -> None:
         '''
         Initialize this generic from the passed tuple.
@@ -186,7 +187,7 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
             f'{repr(iterable)} not tuple.')
         self._iterable = iterable
 
-    # ..................{ ABCs                       }..................
+    # ....................{ DUNDERS                        }....................
     # Define all protocols mandated by ABCs subclassed by this generic.
 
     def __contains__(self, obj: object) -> bool:
@@ -204,29 +205,30 @@ class Pep484IterableTupleSTContainerTupleST(
     Pep484Container[Pep484Tuple[S, T]],
 ):
     '''
-    :pep:`484`-compliant generic subclassing multiple indirectly parametrized
-    :mod:`typing` types *and* a non-:mod:`typing` abstract base class (ABC).
+    :pep:`484`-compliant **2-tuple iterable** generic subclassing multiple
+    indirectly parametrized :mod:`typing` types *and* a non-:mod:`typing`
+    abstract base class (ABC).
     '''
 
-    # ..................{ INITIALIZERS               }..................
-    def __init__(self, iterable: tuple) -> None:
+    # ....................{ INITIALIZERS                   }....................
+    def __init__(self, iterable: Pep484Iterable[Pep484Tuple[S, T]]) -> None:
         '''
-        Initialize this generic from the passed tuple.
+        Initialize this generic from the passed iterable of 2-tuples.
         '''
 
         assert isinstance(iterable, tuple), (
             f'{repr(iterable)} not tuple.')
         self._iterable = iterable
 
-    # ..................{ ABCs                       }..................
+    # ....................{ DUNDERS                        }....................
     # Define all protocols mandated by ABCs subclassed by this generic.
     def __contains__(self, obj: object) -> bool:
         return obj in self._iterable
 
-    def __iter__(self) -> bool:
+    def __iter__(self) -> Pep484Iterator[Pep484Tuple[S, T]]:
         return iter(self._iterable)
 
-    def __len__(self) -> bool:
+    def __len__(self) -> int:
         return len(self._iterable)
 
 # ....................{ PEP (484|585)                      }....................
