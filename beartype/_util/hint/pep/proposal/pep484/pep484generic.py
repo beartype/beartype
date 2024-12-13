@@ -21,6 +21,7 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -101,24 +102,24 @@ def is_hint_pep484_generic_unsubscripted(hint: Hint) -> bool:
         generic.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
     # Return true only if this hint is a subclass of the "typing.Generic"
-    # abstract base class (ABC), in which case this hint is a user-defined
-    # generic.
-    #
-    # Note that this test is robust against edge cases, as the "typing"
-    # module guarantees all user-defined classes subclassing one or more
-    # "typing" pseudo-superclasses to subclass the "typing.Generic"
-    # abstract base class (ABC) regardless of whether those classes did so
-    # explicitly. How? By type erasure, of course, the malignant gift that
-    # keeps on giving:
-    #     >>> import typing as t
-    #     >>> class MuhList(t.List): pass
-    #     >>> MuhList.__orig_bases__
-    #     (typing.List)
-    #     >>> MuhList.__mro__
-    #     (__main__.MuhList, list, typing.Generic, object)
+    # superclass, in which case this hint is a generic.
     #
     # Note that:
+    # * This test is robust against edge cases, as the "typing" module
+    #   guarantees all user-defined classes subclassing one or more "typing"
+    #   pseudo-superclasses to subclass the "typing.Generic" abstract base class
+    #   (ABC) regardless of whether those classes did so explicitly. How? By
+    #   type erasure, of course, the malignant gift that keeps on giving:
+    #       >>> import typing as t
+    #       >>> class MuhList(t.List): pass
+    #       >>> MuhList.__orig_bases__
+    #       (typing.List)
+    #       >>> MuhList.__mro__
+    #       (__main__.MuhList, list, typing.Generic, object)
     # * This issubclass() call implicitly performs a surprisingly
     #   inefficient search over the method resolution order (MRO) of all
     #   superclasses of this hint. In theory, the cost of this search might
@@ -140,7 +141,42 @@ def is_hint_pep484_generic_unsubscripted(hint: Hint) -> bool:
     #   "__orig_bases__" dunder attribute formalized by PEP 560, testing
     #   whether that tuple is non-empty or not in no way guarantees this
     #   object to be a PEP-compliant generic.
-    return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
+    return (
+        # If the active Python interpreter targets Python >= 3.11, a subclass
+        # test suffices to detect a PEP 484-compliant unsubscripted generic;
+        is_type_subclass(hint, Generic)  # type: ignore[arg-type]
+        if IS_PYTHON_AT_LEAST_3_11 else
+        # Else, the active Python interpreter targets Python <= 3.10. In this
+        # case, a simple subclass test does *NOT* suffice to detect a PEP
+        # 484-compliant unsubscripted generic. Why? Because Python <= 3.10
+        # implements PEP 484-compliant subscripted generics as types! But
+        # PEP 484-compliant unsubscripted generics are also types, of course:
+        #     $ python3.10
+        #     >>> from typing import List
+        #     >>> class MuhGeneric(List): pass
+        #     >>> isinstance(MuhGeneric, type)
+        #     True  # <-- good
+        #     >>> isinstance(MuhGeneric[str], type)
+        #     True  # <-- *BAD*
+        #
+        #     $ python3.11
+        #     >>> from typing import List
+        #     >>> class MuhGeneric(List): pass
+        #     >>> isinstance(MuhGeneric, type)
+        #     True  # <-- good
+        #     >>> isinstance(MuhGeneric[str], type)
+        #     False  # <-- good
+        #
+        # Disambiguating this edge case requires also detecting whether this PEP
+        # 484-compliant generic is subscripted by one or more child hints.
+        (
+            # This hint is a subclass of the PEP 484-compliant "typing.Generic"
+            # superclass *AND*...
+            is_type_subclass(hint, Generic) and  # type: ignore[arg-type]
+            # This PEP 484-compliant generic is unsubscripted.
+            not get_hint_pep_args(hint)
+        )
+    )
 
 # ....................{ GETTERS                            }....................
 @callable_cached

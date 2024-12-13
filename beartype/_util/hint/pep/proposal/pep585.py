@@ -22,7 +22,10 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_MOST_3_10,
+    IS_PYTHON_AT_LEAST_3_9,
+)
 from beartype._util.utilobject import Iota
 
 # ....................{ HINTS                              }....................
@@ -123,9 +126,45 @@ if IS_PYTHON_AT_LEAST_3_9:
     @callable_cached
     def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
 
-        # If this hint is *NOT* a type, this hint *CANNOT* be an unsubscripted
-        # generic. In this case, return false immediately.
-        if not isinstance(hint, type):
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+        # If either...
+        if (
+            # This hint is not a type *OR*...
+            not isinstance(hint, type) or
+            (
+                # The active Python interpreter targets Python <= 3.10 *AND*...
+                #
+                # In this case, a simple subclass test does *NOT* suffice to
+                # detect a PEP 585-compliant unsubscripted generic. Why? Because
+                # Python <= 3.10 implements PEP 585-compliant subscripted
+                # generics as types! But PEP 585-compliant unsubscripted
+                # generics are also types, of course:
+                #     $ python3.10
+                #     >>> class MuhGeneric(list): pass
+                #     >>> isinstance(MuhGeneric, type)
+                #     True  # <-- good
+                #     >>> isinstance(MuhGeneric[str], type)
+                #     True  # <-- *BAD*
+                #
+                #     $ python3.11
+                #     >>> class MuhGeneric(list): pass
+                #     >>> isinstance(MuhGeneric, type)
+                #     True  # <-- good
+                #     >>> isinstance(MuhGeneric[str], type)
+                #     False  # <-- good
+                #
+                # Disambiguating this edge case requires also detecting whether
+                # this PEP 484-compliant generic is subscripted by one or more
+                # child hints.
+                IS_PYTHON_AT_MOST_3_10 and
+                # This PEP 484-compliant generic is subscripted...
+                get_hint_pep_args(hint)
+            )
+        # Then this hint *CANNOT* be an unsubscripted generic. In this case,
+        # return false immediately.
+        ):
             return False
         # Else, this hint is a type. Since this hint *COULD* be an unsubscripted
         # generic, continue testing.

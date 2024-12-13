@@ -306,6 +306,14 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         IS_PYTHON_AT_LEAST_3_9,
     )
     from beartype_test.a00_unit.data.data_type import sync_generator
+    from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Pep484GenericST,
+        Pep484585SequenceU,
+        Pep484585GenericSTSequenceU,
+        Pep484585GenericIntTSequenceU,
+        Pep484585GenericUUST,
+        Pep585GenericUIntT,
+    )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -771,7 +779,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # require a different syntax to that of standard callables; ergo,
         # generator type hints are tested elsewhere.
 
-        # ................{ GENERICS ~ single                  }................
+        # ................{ GENERICS ~ single : unsubscripted  }................
         # Generic subclassing a single unsubscripted "typing" type.
         HintPepMetadata(
             hint=_Pep484GenericUnsubscriptedSingle,
@@ -877,6 +885,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
+
+        # ................{ GENERICS ~ single : subscripted    }................
+        #FIXME: Leverage all of the other generics imported above here, please
 
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
