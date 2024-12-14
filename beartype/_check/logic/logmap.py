@@ -16,16 +16,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Dict
 from beartype._check.logic.logcls import (
-    HintSignLogicContainerArgs1,
-    HintSignLogicReiterableArgs1,
-    HintSignLogicSequenceArgs1,
+    _HintSignLogicReiterableOrSequenceArgs1,
+    HintLogicReiterableArgs1,
+    HintLogicSequenceArgs1,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ MAPPINGS                           }....................
 # Initialized by the _init() function defined below.
 HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC: (
-    Dict[HintSign, HintSignLogicContainerArgs1]) = {}
+    Dict[HintSign, _HintSignLogicReiterableOrSequenceArgs1]) = {}
 '''
 Dictionary mapping from the sign uniquely identifying each applicable kind of
 **standard single-argument container type hint** (i.e., :pep:`484`- or
@@ -33,6 +33,13 @@ Dictionary mapping from the sign uniquely identifying each applicable kind of
 exactly one child type hint constraining *all* items contained in that
 container) to the hint sign logic dataclass dynamically generating Python code
 snippets type-checking that kind of type hint.
+'''
+
+HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get = (
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get)
+'''
+:meth:`dict.get` method bound to the
+:data:`.HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC` global for efficiency.
 '''
 
 # ..................{ PRIVATE ~ main                         }..................
@@ -44,14 +51,23 @@ def _init() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer function-specific imports.
     from beartype._data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_MONOITERABLE_ARGS_1,
         HINT_SIGNS_REITERABLE_ARGS_1,
         HINT_SIGNS_SEQUENCE_ARGS_1,
     )
 
     # ....................{ DEFINE                         }....................
     # Hint sign logic singletons.
-    HINT_SIGN_LOGIC_REITERABLE_ARGS_1 = HintSignLogicReiterableArgs1()
-    HINT_SIGN_LOGIC_SEQUENCE_ARGS_1 = HintSignLogicSequenceArgs1()
+    HINT_SIGN_LOGIC_REITERABLE_ARGS_1 = HintLogicReiterableArgs1()
+    HINT_SIGN_LOGIC_SEQUENCE_ARGS_1 = HintLogicSequenceArgs1()
+
+    # For each sign identifying a single-argument uniiterable hint...
+    for hint_sign in HINT_SIGNS_MONOITERABLE_ARGS_1:
+        pass
+    #FIXME: Uncomment *AFTER* supported, please.
+    #     # Map this sign to this logic dataclass.
+    #     HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC[hint_sign] = (
+    #         HINT_SIGN_LOGIC_MONOITERABLE_ARGS_1)
 
     # For each sign identifying a single-argument reiterable hint...
     for hint_sign in HINT_SIGNS_REITERABLE_ARGS_1:

@@ -67,7 +67,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericST,
         Pep484GenericSInt,
         Pep484GenericIntInt,
-        Pep484585SequenceT,
+        Pep585SequenceT,
     )
     from collections.abc import (
         Collection as CollectionABC,
@@ -306,15 +306,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # PEP 484- or 585-compliant generic subclasses inheriting PEP 484- or
         # 585-compliant type hints parametrized by one unconstrained type
         # variables.
-        (Pep484585SequenceT, Sequence[T], True),
-        (Pep484585SequenceT, Sequence[int], False),
-        (Pep484585SequenceT[int], Sequence[T], True),
-        (Pep484585SequenceT[int], Sequence[T_sequence], False),
-        (Pep484585SequenceT[list], Sequence[T_sequence], True),
-        (Pep484585SequenceT[list], Sequence[Sequence], True),
-        (Pep484585SequenceT[str], Sequence[T_sequence], True),
-        (Pep484585SequenceT[Sequence], Sequence[list], False),
-        (Pep484585SequenceT[T_sequence], Sequence[T], True),
+        (Pep585SequenceT, Sequence[T], True),
+        (Pep585SequenceT, Sequence[int], False),
+        (Pep585SequenceT[int], Sequence[T], True),
+        (Pep585SequenceT[int], Sequence[T_sequence], False),
+        (Pep585SequenceT[list], Sequence[T_sequence], True),
+        (Pep585SequenceT[list], Sequence[Sequence], True),
+        (Pep585SequenceT[str], Sequence[T_sequence], True),
+        (Pep585SequenceT[Sequence], Sequence[list], False),
+        (Pep585SequenceT[T_sequence], Sequence[T], True),
 
         # ..................{ PEP (484|585) ~ mapping        }..................
         # PEP 484-compliant mapping type hints.

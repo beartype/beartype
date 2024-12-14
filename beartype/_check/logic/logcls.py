@@ -25,13 +25,13 @@ from beartype._data.hint.datahinttyping import (
     Enumerator,
 )
 from beartype._data.code.pep.datacodepep484585 import (
-    CODE_PEP484585_CONTAINER_ARGS_1_format,
+    CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format,
     CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
 )
 
 # ....................{ SUPERCLASSES                       }....................
-class HintSignLogicABC(object, metaclass=ABCMeta):
+class HintLogicABC(object, metaclass=ABCMeta):
     '''
     Abstract base class (ABC) of all **hint sign logic** (i.e., dataclasses
     encapsulating all low-level Python code snippets and associated metadata
@@ -87,7 +87,7 @@ class HintSignLogicABC(object, metaclass=ABCMeta):
         by accessing the local variable named
         :data:`beartype._check.checkmagic.VAR_NAME_RANDOM_INT`. If :data:`True`,
         the body of the current wrapper function will be prefixed by a Python
-        statement assigning such an integer to this local.
+        statement assigning such an integer to that local variable.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -129,7 +129,7 @@ class HintSignLogicABC(object, metaclass=ABCMeta):
         self.is_var_random_int_needed = is_var_random_int_needed
 
 
-class HintSignLogicContainerArgs1(HintSignLogicABC):
+class _HintSignLogicReiterableOrSequenceArgs1(HintLogicABC):
     '''
     **Single-argument container hint sign logic** (i.e., dataclass encapsulating
     all low-level Python code snippets and associated metadata required to
@@ -176,12 +176,12 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
         ----------
         See the class docstring for further details. All remaining passed
         keyword parameters are passed as is to the superclass
-        :meth:`HintSignLogicABC.__init__` method.
+        :meth:`HintLogicABC.__init__` method.
         '''
 
         # Initialize our superclass.
         super().__init__(
-            code_format=CODE_PEP484585_CONTAINER_ARGS_1_format, **kwargs)
+            code_format=CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format, **kwargs)
 
         # Classify all passed parameters.
         self.pith_child_expr_format = pith_child_expr_format
@@ -193,8 +193,8 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
         subset or possibly all items contained in the current pith as configured
         by the beartype configuration of the passed violation cause.
 
-        This configuration configures how many items this iterator enumerates
-        over. In particular, if this configuration enables:
+        That configuration configures how many items this iterator enumerates
+        over. In particular, if that configuration enables:
 
         * The default :math:`O1` constant-time type-checking strategy (i.e., if
           ``conf.strategy is beartype.BeartypeStrategy.O1``), this iterator
@@ -271,7 +271,7 @@ class HintSignLogicContainerArgs1(HintSignLogicABC):
         pass
 
 # ....................{ SUBCLASSES ~ container             }....................
-class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):
+class HintLogicReiterableArgs1(_HintSignLogicReiterableOrSequenceArgs1):
     '''
     **Single-argument reiterable hint sign logic** (i.e., dataclass
     encapsulating all low-level Python code snippets and associated metadata
@@ -309,7 +309,7 @@ class HintSignLogicReiterableArgs1(HintSignLogicContainerArgs1):
         return (item_index, item)
 
 
-class HintSignLogicSequenceArgs1(HintSignLogicContainerArgs1):
+class HintLogicSequenceArgs1(_HintSignLogicReiterableOrSequenceArgs1):
     '''
     **Single-argument sequence hint sign logic** (i.e., dataclass encapsulating
     all low-level Python code snippets and associated metadata required to

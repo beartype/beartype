@@ -29,7 +29,6 @@ set -e
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
 # PYTHON_ARGS=( command python3 -X dev )
-# PYTHON_ARGS=( command python3.8 -X dev )
 # PYTHON_ARGS=( command python3.9 -X dev )
 # PYTHON_ARGS=( command python3.10 -X dev )
 # PYTHON_ARGS=( command python3.11 -X dev )

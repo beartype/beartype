@@ -44,7 +44,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
         Nongeneric,
         Pep484GenericST,
-        Pep484585SequenceU,
+        Pep585SequenceU,
         Pep484585GenericSTSequenceU,
         Pep484585GenericIntTSequenceU,
         Pep484585GenericUUST,
@@ -62,8 +62,8 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     PEP484585_GENERIC_ARGS_FULL = [
         (Pep484GenericST, (S, T,)),
         (Pep484GenericST[int, float], (int, float,)),
-        (Pep484585SequenceU, (U,)),
-        (Pep484585SequenceU[complex], (complex,)),
+        (Pep585SequenceU, (U,)),
+        (Pep585SequenceU[complex], (complex,)),
         (Pep484585GenericSTSequenceU, (bool, int, T, U,)),
         (Pep484585GenericIntTSequenceU, (bool, int, float, U,)),
         (Pep484585GenericUUST, (U, S, T, U,)),
@@ -81,18 +81,18 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (Pep484GenericST, Generic, (S, T,)),
         (Pep484GenericST, Generic[S, T], (S, T,)),
         (Pep484GenericST[int, float], Generic, (int, float,)),
-        (Pep484585SequenceU, Sequence, (U,)),
-        (Pep484585SequenceU[complex], Sequence, (complex,)),
+        (Pep585SequenceU, Sequence, (U,)),
+        (Pep585SequenceU[complex], Sequence, (complex,)),
         (Pep484585GenericSTSequenceU, List, (bool,)),
         (Pep484585GenericSTSequenceU, Pep484GenericST, (int, T,)),
         (Pep484585GenericSTSequenceU, Nongeneric, ()),
-        (Pep484585GenericSTSequenceU, Pep484585SequenceU, (U,)),
+        (Pep484585GenericSTSequenceU, Pep585SequenceU, (U,)),
         (
             Pep484585GenericIntTSequenceU,
             Pep484585GenericSTSequenceU,
             (bool, int, float, U,),
         ),
-        (Pep484585GenericUUST, Pep484585SequenceU, (U,)),
+        (Pep484585GenericUUST, Pep585SequenceU, (U,)),
         (Pep484585GenericUUST, Pep484GenericST, (S, T)),
     ]
 
@@ -117,7 +117,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
             ),
             (
                 Pep484585GenericSTSequenceU[float, complex],
-                Pep484585SequenceU,
+                Pep585SequenceU,
                 (complex,),
             ),
             (
@@ -135,7 +135,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
                 Pep484GenericST,
                 (int, float),
             ),
-            (Pep585GenericUIntT, Pep484585SequenceU, (U,)),
+            (Pep585GenericUIntT, Pep585SequenceU, (U,)),
             (Pep585GenericUIntT, Pep484GenericST, (int, T)),
             (Pep585GenericUIntT[bool, float], List[U], (bool,)),
             (Pep585GenericUIntT[bool, float], Pep484GenericST, (int, float)),

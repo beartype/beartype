@@ -17,11 +17,38 @@ from beartype._check.checkmagic import VAR_NAME_RANDOM_INT
 from beartype._data.hint.datahinttyping import CallableStrFormat
 
 # ....................{ CODE ~ container                   }....................
-CODE_PEP484585_CONTAINER_ARGS_1 = '''(
+CODE_PEP484585_COLLECTION_ARGS_1 = '''(
+{indent_curr}    # True only if this pith is of this collection type *AND*...
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either...
+{indent_curr}    (
+{indent_curr}        # This container is empty *OR*...
+{indent_curr}        not {pith_curr_var_name} or
+{indent_curr}        #FIXME: Can we drop these parens? Investigate.
+{indent_curr}        (
+{indent_curr}            # If this container is a non-empty sequence, true only
+{indent_curr}            # if a pseudo-random item satisfies this hint;
+{indent_curr}            {hint_sequence_child_placeholder}
+{indent_curr}            if isinstance({pith_curr_var_name}, {sequence_abc_expr}) else
+{indent_curr}            # If this container is a non-empty reiterable, true only
+{indent_curr}            # if the first item satisfies this hint.
+{indent_curr}            isinstance({pith_curr_var_name}, {reiterable_abc_expr}) and
+{indent_curr}            {hint_reiterable_child_placeholder}
+{indent_curr}        )
+{indent_curr}    )
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
+current pith against *any* arbitrary kind of single-argument standard
+collection type hint.
+'''
+
+
+CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this container type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this container is empty *OR* this container
-{indent_curr}    # is both non-empty and the first item satisfies this hint.
+{indent_curr}    # is non-empty and the selected item satisfies this hint.
 {indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
 {indent_curr})'''
 '''
@@ -298,8 +325,8 @@ to be a subclass of the subscripted child hint of a :pep:`484`- or
 # ....................{ FORMATTERS                         }....................
 # str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
 # This is an absurd micro-optimization. *fight me, github developer community*
-CODE_PEP484585_CONTAINER_ARGS_1_format: CallableStrFormat = (
-    CODE_PEP484585_CONTAINER_ARGS_1.format)
+CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format: CallableStrFormat = (
+    CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1.format)
 CODE_PEP484585_GENERIC_CHILD_format: CallableStrFormat = (
     CODE_PEP484585_GENERIC_CHILD.format)
 CODE_PEP484585_MAPPING_format: CallableStrFormat = (

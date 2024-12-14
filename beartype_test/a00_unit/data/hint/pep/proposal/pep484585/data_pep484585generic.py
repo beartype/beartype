@@ -13,8 +13,9 @@ cases in unit tests requiring non-trivial generics).
 # Defer fixture-specific imports.
 from beartype.typing import (
     Generic,
-    List,
-    Sequence,
+    Iterator as Pep484Iterator,
+    List as Pep585List,
+    Sequence as Pep585Sequence,
 )
 from beartype._data.hint.datahinttyping import (
     S,
@@ -121,24 +122,23 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
 
     pass
 
-# ....................{ PEP 484 ~ usable : non-T           }....................
+# ....................{ PEP 484 ~ usable                   }....................
 # Generics that are actually instantiable and usable as valid objects.
 
-class Pep484CallableContextManagerStrSequenceStr(
+class Pep484CallableContextManagerSequenceT(
     CallableABC, Pep484ContextManager[str], Pep484Sequence[str]):
     '''
-    :pep:`484`-compliant generic subclassing multiple unparametrized
+    :pep:`484`-compliant generic subclassing multiple parametrized
     :mod:`typing` types *and* a non-:mod:`typing` abstract base class (ABC).
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, sequence: tuple) -> None:
+    def __init__(self, sequence: Pep484Tuple) -> None:
         '''
         Initialize this generic from the passed tuple.
         '''
 
-        assert isinstance(sequence, tuple), (
-            f'{repr(sequence)} not tuple.')
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
         self._sequence = sequence
 
     # ....................{ DUNDERS                        }....................
@@ -168,8 +168,6 @@ class Pep484CallableContextManagerStrSequenceStr(
     def __reversed__(self) -> object:
         return self._sequence.reverse()
 
-# ....................{ PEP 484 ~ usable : T               }....................
-# Generics that are actually instantiable and usable as valid objects.
 
 class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     '''
@@ -178,7 +176,7 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, iterable: tuple) -> None:
+    def __init__(self, iterable: Pep484Tuple[T]) -> None:
         '''
         Initialize this generic from the passed tuple.
         '''
@@ -193,7 +191,7 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     def __contains__(self, obj: object) -> bool:
         return obj in self._iterable
 
-    def __iter__(self) -> bool:
+    def __iter__(self) -> Pep484Iterator[T]:
         return iter(self._iterable)
 
 # ....................{ PEP 484 ~ usable : S, T            }....................
@@ -231,20 +229,20 @@ class Pep484IterableTupleSTContainerTupleST(
     def __len__(self) -> int:
         return len(self._iterable)
 
-# ....................{ PEP (484|585)                      }....................
-class Pep484585SequenceT(Sequence[T]):
+# ....................{ PEP 585                            }....................
+class Pep585SequenceT(Pep585Sequence[T]):
     '''
-    :pep:`484`- or :pep:`585`-compliant generic sequence parametrized by one
-    unconstrained type variable.
+    :pep:`585`-compliant generic sequence parametrized by one unconstrained type
+    variable.
     '''
 
     pass
 
 
-class Pep484585SequenceU(Sequence[U]):
+class Pep585SequenceU(Pep585Sequence[U]):
     '''
-    :pep:`484`- or :pep:`585`-compliant generic sequence parametrized by one
-    unconstrained type variable.
+    :pep:`585`-compliant generic sequence parametrized by one unconstrained type
+    variable.
     '''
 
     pass
@@ -252,10 +250,10 @@ class Pep484585SequenceU(Sequence[U]):
 
 class Pep484585GenericSTSequenceU(
     # Order is *EXTREMELY* significant. Avoid modifying, please.
-    List[bool],
+    Pep585List[bool],
     Pep484GenericST[int, T],
     Nongeneric,
-    Pep484585SequenceU,
+    Pep585SequenceU,
 ):
     '''
     :pep:`484`- or :pep:`585`-compliant generic list parametrized by three
@@ -274,9 +272,8 @@ class Pep484585GenericIntTSequenceU(Pep484585GenericSTSequenceU[float]):
     pass
 
 
-class Pep484585GenericUUST(
-    # Order is *EXTREMELY* significant. Avoid modifying, please.
-    Pep484585SequenceU, Pep484GenericST, List[U]):
+# Subclassing order is *EXTREMELY* significant. Avoid modifying, please.
+class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, Pep585List[U]):
     '''
     :pep:`484`- or :pep:`585`-compliant generic list parametrized by three
     unconstrained type variables, one of which is repeated twice across two
@@ -285,11 +282,11 @@ class Pep484585GenericUUST(
 
     pass
 
-# ..................{ PEP 585                        }..................
-# If the active Python interpreter targets Python >= 3.9 and thus
-# behaves sanely with respect to complex subscripted generics, define
-# complex subscripted generics. For unknown and presumably irrelevant
-# reasons, Python 3.8 raises exceptions here. *shrug*
+
+# If the active Python interpreter targets Python >= 3.9 and thus behaves sanely
+# with respect to complex subscripted generics, define complex subscripted
+# generics. For unknown and presumably irrelevant reasons, Python 3.8 raises
+# exceptions here. *shrug*
 if IS_PYTHON_AT_LEAST_3_9:
     class Pep585GenericUIntT(Pep484585GenericUUST[U, int, T]):
         '''
@@ -299,8 +296,8 @@ if IS_PYTHON_AT_LEAST_3_9:
         '''
 
         pass
-# Else, the active Python interpreter targets Python 3.8 and thus
-# behaves insanely with respect to complex subscripted generics. In this
-# case, fallback to reducing these generics to simply "None". *shrug*
+# Else, the active Python interpreter targets Python 3.8 and thus behaves
+# insanely with respect to complex subscripted generics. In this case, fallback
+# to reducing these generics to simply "None". *shrug*
 else:
     Pep585GenericUIntT = None

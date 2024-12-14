@@ -15,8 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: Rename this submodule to "codemake" *AFTER* finalizing this refactoring.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPep593Exception,
@@ -52,7 +50,7 @@ from beartype._check.code.snip.codesnipstr import (
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 from beartype._check.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     # HintSanifiedData,
@@ -724,8 +722,7 @@ def make_check_expr(
                 #
                 # Note that the "__args__" dunder attribute is *NOT* guaranteed
                 # to exist for arbitrary PEP-compliant type hints. Ergo, we
-                # obtain this attribute via a higher-level utility getter
-                # instead.
+                # obtain this attribute via a higher-level utility getter.
                 hint_childs = get_hint_pep_args(hint_curr)
 
                 # Number of these child hints.
@@ -1022,11 +1019,10 @@ def make_check_expr(
                     # * Deeply type-check an efficiently retrievable item of
                     #   this pith.
                     if hint_or_sane_child is not None:
-                        #FIXME: [SPEED] Optimize away this ".get" lookup. *sigh*
                         # Hint sign logic type-checking this sign if any *OR*
                         # "None" otherwise.
                         hint_sign_logic = (
-                            HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
+                            HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get(
                                 hint_curr_sign))
 
                         # If *NO* hint sign logic type-checks this sign, raise
@@ -1041,6 +1037,12 @@ def make_check_expr(
                                 f'code generation logic not found.'
                             )
                         # Else, some hint sign logic type-checks this sign.
+
+                        # Python expression efficiently yielding some item of
+                        # this pith to be deeply type-checked against this child
+                        # hint.
+                        pith_child_expr = hint_sign_logic.pith_child_expr_format(
+                            pith_curr_var_name=pith_curr_var_name)
 
                         # If this logic requires a pseudo-random integer, record
                         # this to be the case.
@@ -1059,11 +1061,7 @@ def make_check_expr(
                                 hints_meta.enqueue_hint_or_sane_child(
                                     hint_or_sane=hint_or_sane_child,
                                     indent_level=indent_level_child,
-                                    # Python expression efficiently yielding some
-                                    # item of this pith to be deeply type-checked
-                                    # against this child hint.
-                                    pith_expr=hint_sign_logic.pith_child_expr_format(
-                                        pith_curr_var_name=pith_curr_var_name),
+                                    pith_expr=pith_child_expr,
                                     pith_var_name_index=pith_curr_var_name_index,
                                 )),
                         )

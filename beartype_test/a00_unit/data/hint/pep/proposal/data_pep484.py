@@ -13,58 +13,23 @@ Caveats
 Note that:
 
 * The :pep:`484`-compliant annotated builtin containers created and returned by
-  the :func:`typing.NamedTuple` and :func:`typing.TypedDict` factory functions
-  are *mostly* indistinguishable from PEP-noncompliant types and thus
-  intentionally tested in the
+  the :obj:`typing.NamedTuple` and :obj:`typing.TypedDict` factory functions are
+  *mostly* indistinguishable from PEP-noncompliant types and thus intentionally
+  tested in the
   :mod:`beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484`
   submodule rather than here despite being standardized by :pep:`484`.
 * The ``typing.Supports*`` family of abstract base classes (ABCs) are
   intentionally tested in the
-  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep544`
-  submodule rather than here despite being specified by :pep:`484` and
-  available under Python < 3.8. Why? Because the implementation of these ABCs
-  under Python < 3.8 is unusable at runtime, which is nonsensical and awful,
-  but that's :mod:`typing` for you. What you goin' do?
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep544` submodule
+  rather than here despite being specified by :pep:`484` and available under
+  Python < 3.8. Why? Because the implementation of these ABCs under Python < 3.8
+  is unusable at runtime, which is nonsensical and awful, but that's
+  :mod:`typing` for you. What you goin' do?
 '''
 
 # ....................{ IMPORTS                            }....................
-import contextlib, re
-from beartype._cave._cavefast import (
-    RegexMatchType,
-    RegexCompiledType,
-)
-from beartype._data.hint.datahinttyping import S, T
-from beartype_test.a00_unit.data.data_type import (
-    Class,
-    Subclass,
-    SubclassSubclass,
-    OtherClass,
-    OtherSubclass,
-    context_manager_factory,
-    default_dict_int_to_str,
-    default_dict_str_to_str,
-)
-from collections.abc import (
-    Callable as CallableABC,
-    Sequence as SequenceABC,
-    Sized as SizedABC,
-)
-
-# Intentionally import from the standard "typing" module rather than the
-# forward-compatible "beartype.typing" subpackage to ensure PEP 484-compliance.
-from typing import (
-    BinaryIO,
-    Container,
-    ContextManager,
-    Generic,
-    IO,
-    Iterable,
-    List,
-    Sequence,
-    TextIO,
-    Tuple,
-    TypeVar,
-)
+from beartype.typing import TypeVar
+from collections.abc import Sequence as SequenceABC
 
 # ....................{ TYPEVARS ~ bounded                 }....................
 T_int = TypeVar('T_int', bound=int)
@@ -97,150 +62,6 @@ by both the builtin :class:`str` and :class:`bytes` types passed as positional
 arguments).
 '''
 
-
-#FIXME: Obsolete *ALL* of the global attributes defined below in favour of our
-#new pep484585_generics() fixture, please. *sigh*
-#
-#Note, however, that doing so will require refactoring most (or even *ALL*)
-#non-fixtures defined below into proper session-scoped fixtures. This is fine.
-#Just do it, please. Indeed, perhaps we should have *ALWAYS* made everything
-#proper session-scoped fixtures.
-
-# ....................{ GENERICS ~ single                  }....................
-class Pep484GenericST(Generic[S, T]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing a single parametrized
-    :mod:`typing` type.
-    '''
-
-    pass
-
-# ....................{ PRIVATE ~ generics : single        }....................
-class _Pep484GenericUnsubscriptedSingle(List):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing a single
-    unsubscripted :mod:`typing` type.
-    '''
-
-    pass
-
-
-class _Pep484GenericUntypevaredShallowSingle(List[str]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing a single
-    unparametrized :mod:`typing` type.
-    '''
-
-    pass
-
-
-class _Pep484GenericUntypevaredDeepSingle(List[List[str]]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing a single
-    unparametrized :mod:`typing` type, itself subclassing a single
-    unparametrized :mod:`typing` type.
-    '''
-
-    pass
-
-# ....................{ PRIVATE ~ generics : multiple      }....................
-class _Pep484GenericUntypevaredMultiple(
-    CallableABC, ContextManager[str], Sequence[str]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing multiple
-    unparametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
-    class (ABC).
-    '''
-
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(self, sequence: tuple) -> None:
-        '''
-        Initialize this generic from the passed tuple.
-        '''
-
-        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
-        self._sequence = sequence
-
-    # ..................{ ABCs                               }..................
-    # Define all protocols mandated by ABCs subclassed by this generic above.
-
-    def __call__(self) -> int:
-        return len(self)
-
-    def __contains__(self, obj: object) -> bool:
-        return obj in self._sequence
-
-    def __enter__(self) -> object:
-        return self
-
-    def __exit__(self, *args, **kwargs) -> bool:
-        return False
-
-    def __getitem__(self, index: int) -> object:
-        return self._sequence[index]
-
-    def __iter__(self) -> bool:
-        return iter(self._sequence)
-
-    def __len__(self) -> bool:
-        return len(self._sequence)
-
-    def __reversed__(self) -> object:
-        return self._sequence.reverse()
-
-
-class _Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing multiple directly
-    parametrized :mod:`typing` types.
-    '''
-
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(self, iterable: tuple) -> None:
-        '''
-        Initialize this generic from the passed tuple.
-        '''
-
-        assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
-        self._iterable = iterable
-
-    # ..................{ ABCs                               }..................
-    # Define all protocols mandated by ABCs subclassed by this generic above.
-    def __contains__(self, obj: object) -> bool:
-        return obj in self._iterable
-
-    def __iter__(self) -> bool:
-        return iter(self._iterable)
-
-
-class _Pep484GenericTypevaredDeepMultiple(
-    SizedABC, Iterable[Tuple[S, T]], Container[Tuple[S, T]]):
-    '''
-    :pep:`484`-compliant user-defined generic subclassing multiple indirectly
-    parametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
-    class (ABC).
-    '''
-
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(self, iterable: tuple) -> None:
-        '''
-        Initialize this generic from the passed tuple.
-        '''
-
-        assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
-        self._iterable = iterable
-
-    # ..................{ ABCs                               }..................
-    # Define all protocols mandated by ABCs subclassed by this generic above.
-    def __contains__(self, obj: object) -> bool:
-        return obj in self._iterable
-
-    def __iter__(self) -> bool:
-        return iter(self._iterable)
-
-    def __len__(self) -> bool:
-        return len(self._iterable)
-
 # ....................{ FIXTURES                           }....................
 def hints_pep484_meta() -> 'List[HintPepMetadata]':
     '''
@@ -252,6 +73,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
+    import contextlib, re
     from beartype import BeartypeConf
     from beartype.door import (
         CallableTypeHint,
@@ -260,6 +82,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         UnionTypeHint,
     )
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
+    from beartype._cave._cavefast import (
+        RegexMatchType,
+        RegexCompiledType,
+    )
+    from beartype._data.hint.datahinttyping import S, T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAbstractSet,
         HintSignAny,
@@ -305,14 +132,30 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,
     )
-    from beartype_test.a00_unit.data.data_type import sync_generator
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        Subclass,
+        SubclassSubclass,
+        OtherClass,
+        OtherSubclass,
+        context_manager_factory,
+        default_dict_int_to_str,
+        default_dict_str_to_str,
+        sync_generator,
+    )
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Pep484CallableContextManagerSequenceT,
         Pep484GenericST,
-        Pep484585SequenceU,
+        Pep484IterableTContainerT,
+        Pep484IterableTupleSTContainerTupleST,
+        Pep484ListListStr,
+        Pep484ListStr,
+        Pep484ListUnsubscripted,
         Pep484585GenericSTSequenceU,
         Pep484585GenericIntTSequenceU,
         Pep484585GenericUUST,
         Pep585GenericUIntT,
+        Pep585SequenceU,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -327,6 +170,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         deque,
     )
     from collections.abc import (
+        Callable as CallableABC,
         Collection as CollectionABC,
         Hashable as HashableABC,
         ItemsView as ItemsViewABC,
@@ -335,26 +179,36 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         MutableMapping as MutableMappingABC,
         MutableSequence as MutableSequenceABC,
         MutableSet as MutableSetABC,
-        Sequence as SequenceABC,
         Set as SetABC,
+        Sized as SizedABC,
         ValuesView as ValuesViewABC,
     )
+
+    # Intentionally import from the standard "typing" module rather than the
+    # forward-compatible "beartype.typing" subpackage to ensure PEP 484-compliance.
     from typing import (
         AbstractSet,
         Any,
         AnyStr,
+        BinaryIO,
         Callable,
         ChainMap,
         Collection,
+        Container,
+        ContextManager,
         Counter,
         DefaultDict,
         Deque,
         Dict,
         ForwardRef,
         FrozenSet,
+        Generic,
         Hashable,
+        IO,
         ItemsView,
+        Iterable,
         KeysView,
+        List,
         Match,
         Mapping,
         MutableMapping,
@@ -363,8 +217,12 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         NewType,
         OrderedDict,
         Pattern,
+        Sequence,
         Set,
         Sized,
+        TextIO,
+        Tuple,
+        TypeVar,
         Type,
         Optional,
         Union,
@@ -376,10 +234,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
     #
-    # This boolean is true for Python interpreters targeting Python < 3.9.
-    # Prior to Python 3.9, the "typing" module parametrized most unsubscripted
-    # typing attributes by default. Python 3.9 halted that barbaric practice by
-    # leaving unsubscripted typing attributes unparametrized by default.
+    # This boolean is true for Python interpreters targeting Python < 3.9. Prior
+    # to Python 3.9, the "typing" module parametrized most unsubscripted typing
+    # attributes by default. Python 3.9 halted that barbaric practice by leaving
+    # unsubscripted typing attributes unparametrized by default.
     IS_TYPEVARS_HIDDEN = not IS_PYTHON_AT_LEAST_3_9
 
     # True only if unsubscripted typing attributes (i.e., public attributes of
@@ -782,14 +640,14 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # ................{ GENERICS ~ single : unsubscripted  }................
         # Generic subclassing a single unsubscripted "typing" type.
         HintPepMetadata(
-            hint=_Pep484GenericUnsubscriptedSingle,
+            hint=Pep484ListUnsubscripted,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericUnsubscriptedSingle,
+            generic_type=Pep484ListUnsubscripted,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(_Pep484GenericUnsubscriptedSingle((
+                HintPithSatisfiedMetadata(Pep484ListUnsubscripted((
                     'Ibid., incredibly indelible, edible craws a',
                     'Of a liturgically upsurging, Θṙgiast‐ic holiness, and',
                 ))),
@@ -806,15 +664,15 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Generic subclassing a single shallowly unparametrized "typing" type.
         HintPepMetadata(
-            hint=_Pep484GenericUntypevaredShallowSingle,
+            hint=Pep484ListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericUntypevaredShallowSingle,
+            generic_type=Pep484ListStr,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(
-                    _Pep484GenericUntypevaredShallowSingle((
+                    Pep484ListStr((
                         'Forgive our Vocation’s vociferous publications',
                         'Of',
                     ))
@@ -832,15 +690,15 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Generic subclassing a single deeply unparametrized "typing" type.
         HintPepMetadata(
-            hint=_Pep484GenericUntypevaredDeepSingle,
+            hint=Pep484ListListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericUntypevaredDeepSingle,
+            generic_type=Pep484ListListStr,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of list of string constants.
                 HintPithSatisfiedMetadata(
-                    _Pep484GenericUntypevaredDeepSingle([
+                    Pep484ListListStr([
                         [
                             'Intravenous‐averse effigy defamations, traversing',
                             'Intramurally venal-izing retro-',
@@ -860,7 +718,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ]),
                 # Subclass-specific generic list of string constants.
                 HintPithUnsatisfiedMetadata(
-                    _Pep484GenericUntypevaredDeepSingle([
+                    Pep484ListListStr([
                         'Block-house stockade stocks, trailer',
                         'Park-entailed central heating, though those',
                     ])
@@ -908,21 +766,47 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        #FIXME: Undocument *AFTER* we deeply type-check "Iterable". *sigh*
+        # # Generic subclassing a single parametrized "typing" type, itself
+        # # parametrized by the same type variables in the same order.
+        # HintPepMetadata(
+        #     hint=Pep484IterableTContainerT[str],
+        #     pep_sign=HintSignPep484585GenericSubscripted,
+        #     generic_type=Pep484IterableTContainerT,
+        #     # is_typevars=True,
+        #     # is_type_typing=True,
+        #     # is_typing=False,
+        #     piths_meta=(
+        #         # Generic container whose items satisfy this child hint.
+        #         HintPithSatisfiedMetadata(Pep484IterableTContainerT((
+        #             'Reclined his languid head,', 'his limbs did rest,',))),
+        #         # Generic container whose items violate this child hint.
+        #         HintPithUnsatisfiedMetadata(Pep484IterableTContainerT((
+        #             b'Diffused and motionless,', b'on the smooth brink',))),
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             'Token welfare’s malformed keening fare, keenly despaired'
+        #         ),
+        #     ),
+        # ),
+
         # ................{ GENERICS ~ multiple                }................
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         HintPepMetadata(
-            hint=_Pep484GenericUntypevaredMultiple,
+            hint=Pep484CallableContextManagerSequenceT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericUntypevaredMultiple,
+            generic_type=Pep484CallableContextManagerSequenceT,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
-                HintPithSatisfiedMetadata(_Pep484GenericUntypevaredMultiple((
-                    'Into a viscerally Eviscerated eras’ meditative hallways',
-                    'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
-                ))),
+                HintPithSatisfiedMetadata(
+                    Pep484CallableContextManagerSequenceT((
+                        'Into a viscerally Eviscerated eras’ meditative hallways',
+                        'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
+                    ))
+                ),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Initiations'),
                 # 2-tuple of string constants.
@@ -935,17 +819,17 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Generic subclassing multiple parametrized "typing" types.
         HintPepMetadata(
-            hint=_Pep484GenericTypevaredShallowMultiple,
+            hint=Pep484IterableTContainerT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericTypevaredShallowMultiple,
+            generic_type=Pep484IterableTContainerT,
             # is_args=False,
             is_typevars=True,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic iterable of string constants.
                 HintPithSatisfiedMetadata(
-                    _Pep484GenericTypevaredShallowMultiple((
+                    Pep484IterableTContainerT((
                         "Of foliage's everliving antestature —",
                         'In us, Leviticus‐confusedly drunk',
                     )),
@@ -958,10 +842,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple indirectly parametrized "typing" types
         # *AND* a non-"typing" abstract base class (ABC).
         HintPepMetadata(
-            hint=_Pep484GenericTypevaredDeepMultiple,
+            hint=Pep484IterableTupleSTContainerTupleST,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=_Pep484GenericTypevaredDeepMultiple,
+            generic_type=Pep484IterableTupleSTContainerTupleST,
             # is_args=False,
             is_typevars=True,
             is_type_typing=False,
@@ -969,7 +853,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata(
-                    _Pep484GenericTypevaredDeepMultiple((
+                    Pep484IterableTupleSTContainerTupleST((
                         (
                             'Inertially tragicomipastoral, pastel anticandour —',
                             'remanding undemanding',
@@ -987,7 +871,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Nested list of generics.
         HintPepMetadata(
-            hint=List[_Pep484GenericUntypevaredMultiple],
+            hint=List[Pep484CallableContextManagerSequenceT],
             pep_sign=HintSignList,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
@@ -995,11 +879,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
-                    _Pep484GenericUntypevaredMultiple((
+                    Pep484CallableContextManagerSequenceT((
                         'Stalling inevit‐abilities)',
                         'For carbined',
                     )),
-                    _Pep484GenericUntypevaredMultiple((
+                    Pep484CallableContextManagerSequenceT((
                         'Power-over (than',
                         'Power-with)',
                     )),
@@ -3761,15 +3645,15 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             #   for the unsubscripted variants tested above and thus *CANNOT* be
             #   re-tested here.
             HintPepMetadata(
-                hint=_Pep484GenericUnsubscriptedSingle[str],
+                hint=Pep484ListUnsubscripted[str],
                 pep_sign=HintSignPep484585GenericSubscripted,
                 # warning_type=PEP585_DEPRECATION_WARNING,
-                generic_type=_Pep484GenericUnsubscriptedSingle,
+                generic_type=Pep484ListUnsubscripted,
                 is_type_typing=False,
                 piths_meta=(
                     # Subclass-specific generic list of string constants.
                     HintPithSatisfiedMetadata(
-                        _Pep484GenericUnsubscriptedSingle((
+                        Pep484ListUnsubscripted((
                             'Volubly vi‐brant libations',
                             'To blubber‐lubed Bacchus — hustling',
                         ))
@@ -3837,7 +3721,10 @@ def hints_pep484_ignorable_shallow() -> list:
     '''
 
     # Defer fixture-specific imports.
-    from typing import Any
+    from typing import (
+        Any,
+        Generic,
+    )
 
     # Return this list of all PEP-specific shallowly ignorable type hints.
     return [
@@ -3872,10 +3759,12 @@ def hints_pep484_ignorable_deep() -> list:
     # Defer fixture-specific imports.
     from typing import (
         Any,
+        Generic,
         NewType,
         Optional,
         Union,
     )
+    from beartype._data.hint.datahinttyping import S, T
 
     # Return this list of all PEP-specific shallowly ignorable type hints.
     return [

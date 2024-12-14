@@ -6,7 +6,7 @@
 '''
 Beartype :pep:`484`- or :pep:`604`-compliant **union type-checking code
 factories** (i.e., low-level callables dynamically generating pure-Python code
-snippets type-checking arbitrary objects against unions).
+snippets type-checking arbitrary objects against union type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

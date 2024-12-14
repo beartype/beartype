@@ -144,6 +144,34 @@ This frozen set intentionally excludes:
 '''
 
 # ....................{ SETS ~ args : container            }....................
+HINT_SIGNS_MONOITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignContainer,
+    HintSignIterable,
+    HintSignReversible,
+))
+'''
+Frozen set of all **standard single-argument monoiterable signs** (i.e.,
+arbitrary objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type
+fehints subscripted by exactly one child type hint constraining *all* items of
+compliant collections, which necessarily satisfy the
+:class:`collections.abc.Iterable` protocol with guaranteed :math:`O(1)`
+read-only access to *only* the first collection item but which are *not*
+necessarily safely reiterable).
+
+Equivalently, this frozen set only matches the proper subset of all containers
+that are **monoiterable** (i.e., that may *not* necessarily be safely reiterated
+multiple times, where "safely" implies side effect-free idempotency).
+Monoiterable containers may thus be modified (rather than preserved) by
+reiteration such that each call of the:
+
+* :func:`iter` builtin passed the same monoiterable *could* effectively create
+  and return a different iterator.
+* :func:`next` builtin passed the same monoiterable *could* nondeterministically
+  return different items in a different order.
+'''
+
+
 HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignAbstractSet,
@@ -163,7 +191,7 @@ HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
 ))
 '''
 Frozen set of all **standard single-argument reiterable signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type hints
 subscripted by exactly one child type hint constraining *all* items of compliant
 collections, which necessarily satisfy the :class:`collections.abc.Collection`
 protocol with guaranteed :math:`O(1)` read-only access to *only* the first
@@ -175,10 +203,10 @@ structures (e.g., mappings, sequences) are also technically collections but
 *not* matched by this frozen set. Why? Because this frozen set only matches the
 proper subset of all collections *not* matched by any other such frozen set.
 
-Equivalently, this frozen set only matches the proper subset of all collections
+Equivalently, this frozen set only matches the proper subset of all containers
 that are **reiterable** (i.e., that may be safely reiterated multiple times,
-where "safely" implies side effect-free idempotency). Reiterable items are thus
-preserved (rather than modified) by reiteration such that each call of the:
+where "safely" implies side effect-free idempotency). Reiterable containers are
+thus preserved (rather than modified) by reiteration such that each call of the:
 
 * :func:`iter` builtin passed the same reiterable effectively creates and
   returns the same iterator.
@@ -196,7 +224,7 @@ HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
 ))
 '''
 Frozen set of all **standard single-argument sequence signs** (i.e., arbitrary
-objects uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints
+objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type hints
 subscripted by exactly one child type hint constraining *all* items of compliant
 sequences, which necessarily satisfy the :class:`collections.abc.Sequence`
 protocol with guaranteed :math:`O(1)` indexation across all sequence items).

@@ -27,10 +27,10 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484Exception
+    from beartype._data.hint.datahinttyping import T
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        T,
         T_int,
         T_str_or_bytes,
     )
