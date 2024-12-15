@@ -108,6 +108,11 @@ def make_hint_pep484604_check_expr(
     hints_meta : HintsMeta
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -126,11 +131,6 @@ def make_hint_pep484604_check_expr(
         Integer suffixing the name of each local variable assigned the value of
         the current pith in a assignment expression, thus uniquifying this
         variable in the body of the current wrapper function.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.

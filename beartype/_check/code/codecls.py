@@ -24,7 +24,6 @@ from beartype._check.code.snip.codesnipcls import (
     HINT_INDEX_TO_HINT_PLACEHOLDER)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    # HintSanifiedData,
     unpack_hint_or_sane,
 )
 from beartype._data.hint.datahintpep import (

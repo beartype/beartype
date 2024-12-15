@@ -45,21 +45,16 @@ from beartype._util.hint.pep.utilpepget import (
 )
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Actually call this factory, please.
-#FIXME: Revise docstring for the return value, please.
 def make_hint_pep484585_container_check_expr(
-    #FIXME: Do we actually require *ALL* of these parameters? Truncate, please.
-    # Mandatory parameters.
     hint_meta: HintMeta,
     hints_meta: HintsMeta,
     cls_stack: TypeStack,
     conf: BeartypeConf,
     func_wrapper_scope: LexicalScope,
-    pith_curr_expr: str,
     pith_curr_assign_expr: str,
     pith_curr_var_name_index: int,
     exception_prefix: str,
-) -> Tuple[Optional[str], bool]:
+) -> Tuple[Optional[str], str, bool]:
     '''
     Either a Python code snippet type-checking the current pith against the
     passed :pep:`484`- or :pep:`585`-compliant container type hint if this hint
@@ -80,6 +75,11 @@ def make_hint_pep484585_container_check_expr(
     hints_meta : HintsMeta
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -87,10 +87,6 @@ def make_hint_pep484585_container_check_expr(
         Local scope (i.e., dictionary mapping from the name to value of each
         attribute referenced in the signature) of this wrapper function required
         by this Python code snippet.
-    pith_curr_expr : str
-        Full Python expression evaluating to the value of the **current pith**
-        (i.e., possibly nested object of the current parameter or return value
-        to be type-checked against this union type hint).
     pith_curr_assign_expr : str
         Assignment expression assigning this full Python expression to the
         unique local variable assigned the value of this expression.
@@ -98,30 +94,33 @@ def make_hint_pep484585_container_check_expr(
         Integer suffixing the name of each local variable assigned the value of
         the current pith in a assignment expression, thus uniquifying this
         variable in the body of the current wrapper function.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.
 
     Returns
     -------
-    Optional[str]
-        Either:
+    Tuple[Optional[str], str, bool]
+        2-tuple ``(func_curr_code, hint_curr_expr, is_var_random_int_needed)``
+        where:
 
-        * If this union is ignorable, :data:`None`.
-        * Else, a Python code snippet type-checking the current pith against
-          this union.
+        * ``func_curr_code`` is either:
+
+          * If this hint is ignorable, :data:`None`.
+          * Else, a Python code snippet type-checking the current pith against
+            this hint.
+
+        * ``hint_curr_expr`` is a Python expression evaluating to the origin
+          type of this hint as a hidden :mod:`beartype`-specific parameter
+          injected into the signature of the current wrapper function.
+        * ``is_var_random_int_needed`` is :data:`True` only if this hint require
+          a pseudo-random integer. If :data:`True`, logic elsewhere prefixes the
+          body of this wrapper function with code generating this integer.
     '''
     assert isinstance(hint_meta, HintMeta), (
         f'{repr(hint_meta)} not "HintMeta" object.')
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
-    assert isinstance(pith_curr_expr, str), (
-        f'{repr(pith_curr_expr)} not string.')
     assert isinstance(pith_curr_assign_expr, str), (
         f'{repr(pith_curr_assign_expr)} not string.')
     assert isinstance(pith_curr_var_name_index, int), (
@@ -149,6 +148,9 @@ def make_hint_pep484585_container_check_expr(
     )
     # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign(hint)
+
     # Tuple of all child hints subscripting this hint if any *OR* the empty
     # tuple otherwise (e.g., if this hint is its own unsubscripted factory).
     #
@@ -156,9 +158,6 @@ def make_hint_pep484585_container_check_expr(
     # arbitrary PEP-compliant type hints. Ergo, we obtain this attribute via a
     # higher-level utility getter.
     hint_childs = get_hint_pep_args(hint)
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
 
     # Possibly ignorable insane child hint subscripting this parent hint,
     # defined as either...
@@ -209,42 +208,21 @@ def make_hint_pep484585_container_check_expr(
             )
         # Else, some hint sign logic type-checks this sign.
 
-        # 1-based indentation level describing the current level of indentation
-        # appropriate for this child hint.
-        indent_level_child = hint_meta.indent_level + 2
-
-        # Name of this local variable.
-        pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[pith_curr_var_name_index]
-
-        # Python expression efficiently yielding some item of this pith to be
-        # deeply type-checked against this child hint.
-        pith_child_expr = hint_sign_logic.pith_child_expr_format(
-            pith_curr_var_name=pith_curr_var_name)
-
-        # If this logic requires a pseudo-random integer, record this to be the
-        # case.
-        is_var_random_int_needed = (
-            hint_sign_logic.is_var_random_int_needed)
-        # Else, this logic requires *NO* pseudo-random integer.
-
-        # Python expression deeply type-checking this pith against this parent
-        # hint.
-        func_curr_code = hint_sign_logic.code_format(
-            indent_curr=INDENT_LEVEL_TO_CODE[hint_meta.indent_level],
-            pith_curr_assign_expr=pith_curr_assign_expr,
-            pith_curr_var_name=pith_curr_var_name,
+        # Python expression deeply type-checking this pith against this hint.
+        func_curr_code = hint_sign_logic.make_code(
+            hint_meta=hint_meta,
+            hints_meta=hints_meta,
             hint_curr_expr=hint_curr_expr,
-            hint_child_placeholder=(
-                hints_meta.enqueue_hint_or_sane_child(
-                    hint_or_sane=hint_or_sane_child,
-                    indent_level=indent_level_child,
-                    pith_expr=pith_child_expr,
-                    pith_var_name_index=pith_curr_var_name_index,
-                )),
+            hint_or_sane_child=hint_or_sane_child,
+            pith_curr_assign_expr=pith_curr_assign_expr,
+            pith_curr_var_name_index=pith_curr_var_name_index,
         )
+
+        # Record whether this expression requires a pseudo-random integer.
+        is_var_random_int_needed = hint_sign_logic.is_var_random_int_needed
     # Else, this child hint is ignorable. In this case, fallback to trivial code
     # shallowly type-checking this pith as an instance of this origin type.
 
     # ....................{ RETURN                         }....................
     # Return this Python code snippet.
-    return (func_curr_code, is_var_random_int_needed)
+    return (func_curr_code, hint_curr_expr, is_var_random_int_needed)

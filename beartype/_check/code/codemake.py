@@ -42,6 +42,8 @@ from beartype._check.code.codescope import (
 )
 from beartype._check.code.pep.codepep484604 import (
     make_hint_pep484604_check_expr)
+from beartype._check.code.pep.pep484585.codepep484585container import (
+    make_hint_pep484585_container_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
@@ -49,11 +51,8 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
-from beartype._check.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    # HintSanifiedData,
     get_hint_or_sane_hint,
     unpack_hint_or_sane,
 )
@@ -99,7 +98,6 @@ from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahintpep import (
     Hint,
-    TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
@@ -113,7 +111,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignPep484585GenericUnsubscripted,
     HintSignLiteral,
-    HintSignTuple,
     HintSignTupleFixed,
     HintSignType,
     HintSignUnion,
@@ -139,8 +136,6 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg,
     get_hint_pep484585_args,
 )
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_type)
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
@@ -294,10 +289,6 @@ def make_check_expr(
     # sanified child hint metadata** (i.e., "HintSanifiedData" object describing
     # that child hint).
     hint_or_sane_child: HintOrHintSanifiedData = None  # pyright: ignore
-
-    # Type variable lookup table unique to the currently iterated child hint
-    # subscripting the currently visited hint.
-    typevar_to_hint_child: TypeVarToHint = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
@@ -496,6 +487,23 @@ def make_check_expr(
             f'Current hint metadata {repr(hint_curr_meta)} at '
             f'index {hints_meta_index_curr} not hint metadata.'
         )
+
+        #FIXME: Yikes. This is rapidly spiraling into madness. Passing all of
+        #these locals around everywhere below has caused a massive explosion in
+        #code complexity for no particular good reason. Instead:
+        #* Define a new "class CodeMeta(object):" dataclass inside the existing
+        #  "beartype._check.code.codecls" submodule.
+        #* Inside this dataclass, declare literally *ALL* possible slotted
+        #  instance variables that might conceivably be needed by *ANY* of our
+        #  increasing guantlet of code factory functions.
+        #* Efficiently acquire an instance of this dataclass above and release
+        #  that same instance below in our standard way.
+        #* Initialize fields of this instance here (rather than these locals).
+        #* Pass this instance to code factories below (rather than the current
+        #  extreme glut of parameters).
+        #
+        #Trivial, really. Just annoying. The super nice thing about this
+        #approach is that we can roll it out gradually. Let's get goin'! *sigh*
 
         # Localize metadata for both efficiency and f-string purposes.
         hint_curr = hint_curr_meta.hint
@@ -971,103 +979,33 @@ def make_check_expr(
                 # Then this hint is effectively (for all intents and purposes) a
                 # standard single-argument container. In this case...
                 elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:
-                    # Python expression evaluating to the origin type of this
-                    # hint as a hidden beartype-specific parameter injected into
-                    # the signature of this wrapper function.
-                    hint_curr_expr = add_func_scope_type(
-                        # Origin type underlying this hint.
-                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                    (
+                        # Python code snippet type-checking the current pith
+                        # against this hint if the child hint subscripting this
+                        # parent container hint is unignorable *OR* "None"
+                        # otherwise (i.e., if this child hint is ignorable).
+                        func_curr_code,
+                        # Python expression evaluating to the origin type of
+                        # this hint as a hidden beartype-specific parameter
+                        # injected into the signature of this wrapper function.
+                        hint_curr_expr,
+                        # True only if this Python code snippet requires a
+                        # pseudo-random integer to type-check this hint.
+                        is_var_random_int_needed_child,
+                    ) = make_hint_pep484585_container_check_expr(  # type: ignore[assignment]
+                        hint_meta=hint_curr_meta,
+                        hints_meta=hints_meta,
+                        cls_stack=cls_stack,
+                        conf=conf,
+                        func_wrapper_scope=func_wrapper_scope,
+                        pith_curr_assign_expr=pith_curr_assign_expr,
+                        pith_curr_var_name_index=pith_curr_var_name_index,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
-                    # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
-                    # Possibly ignorable insane child hint subscripting this
-                    # parent hint, defined as either...
-                    hint_child = (  # pyright: ignore
-                        # If this parent hint is a variable-length tuple, the
-                        # get_hint_pep_sign() getter called above has already
-                        # validated the contents of this tuple. In this case,
-                        # efficiently get the lone child hint of this parent
-                        # hint *WITHOUT* validation.
-                        hint_childs[0]
-                        if hint_curr_sign is HintSignTuple else
-                        # Else, this hint is a single-argument container, in
-                        # which case the contents of this container have yet to
-                        # be validated. In this case, inefficiently get the lone
-                        # child hint of this parent hint *WITH* validation.
-                        get_hint_pep484585_arg(
-                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
-                    )
-                    # print(f'Sanifying container hint {repr(hint_curr)} child hint {repr(hint_child)}...')
-                    # print(f'...with type variable lookup table {repr(hint_curr_meta.typevar_to_hint)}.')
-
-                    # Unignorable sane child hint sanified from this possibly
-                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
-                    # if this child hint is ignorable).
-                    hint_or_sane_child = (
-                        sanify_hint_child_if_unignorable_or_none(
-                            hint=hint_child,
-                            cls_stack=cls_stack,
-                            conf=conf,
-                            typevar_to_hint=hint_curr_meta.typevar_to_hint,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        ))
-
-                    # If this child hint is unignorable:
-                    # * Shallowly type-check the type of the current pith.
-                    # * Deeply type-check an efficiently retrievable item of
-                    #   this pith.
-                    if hint_or_sane_child is not None:
-                        # Hint sign logic type-checking this sign if any *OR*
-                        # "None" otherwise.
-                        hint_sign_logic = (
-                            HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get(
-                                hint_curr_sign))
-
-                        # If *NO* hint sign logic type-checks this sign, raise
-                        # an exception. Note that this logic should *ALWAYS* be
-                        # non-"None". Nonetheless, assumptions make a donkey.
-                        if hint_sign_logic is None:  # pragma: no cover
-                            raise BeartypeDecorHintPepException(
-                                f'{EXCEPTION_PREFIX}'
-                                f'1-argument container type hint '
-                                f'{repr(hint_curr)} '
-                                f'beartype sign {repr(hint_curr_sign)} '
-                                f'code generation logic not found.'
-                            )
-                        # Else, some hint sign logic type-checks this sign.
-
-                        # Python expression efficiently yielding some item of
-                        # this pith to be deeply type-checked against this child
-                        # hint.
-                        pith_child_expr = hint_sign_logic.pith_child_expr_format(
-                            pith_curr_var_name=pith_curr_var_name)
-
-                        # If this logic requires a pseudo-random integer, record
-                        # this to be the case.
-                        is_var_random_int_needed |= (
-                            hint_sign_logic.is_var_random_int_needed)
-                        # Else, this logic requires *NO* pseudo-random integer.
-
-                        # Python expression deeply type-checking this pith
-                        # against this parent hint.
-                        func_curr_code = hint_sign_logic.code_format(
-                            indent_curr=indent_curr,
-                            pith_curr_assign_expr=pith_curr_assign_expr,
-                            pith_curr_var_name=pith_curr_var_name,
-                            hint_curr_expr=hint_curr_expr,
-                            hint_child_placeholder=(
-                                hints_meta.enqueue_hint_or_sane_child(
-                                    hint_or_sane=hint_or_sane_child,
-                                    indent_level=indent_level_child,
-                                    pith_expr=pith_child_expr,
-                                    pith_var_name_index=pith_curr_var_name_index,
-                                )),
-                        )
-                    # Else, this child hint is ignorable. In this case, fallback
-                    # to trivial code shallowly type-checking this pith as an
-                    # instance of this origin type.
+                    # If type-checking this hint requires a pseudo-random
+                    # integer, record this to be the case.
+                    is_var_random_int_needed |= is_var_random_int_needed_child
                 # Else, this hint is *NOT* a standard single-argument container.
                 #
                 # ............{ SEQUENCES ~ tuple : fixed          }............
