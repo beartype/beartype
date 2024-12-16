@@ -402,15 +402,6 @@ def make_check_expr(
     #   the currently visited hint has *NO* meaningful child hints and is thus
     #   effectively a leaf node with respect to performing this optimization.
 
-    # Full Python expression evaluating to the value of the current pith (i.e.,
-    # possibly nested object of the passed parameter or return value to be
-    # type-checked against the currently visited hint).
-    #
-    # Note that this is intentionally *NOT* an assignment expression but rather
-    # the original inefficient expression provided by the parent type hint of
-    # the currently visited hint.
-    pith_curr_expr = None
-
     # Name of the current pith variable (i.e., local Python variable in the
     # body of the wrapper function whose value is that of the current pith).
     # This name is either:
@@ -507,7 +498,7 @@ def make_check_expr(
 
         # Localize metadata for both efficiency and f-string purposes.
         hint_curr = hint_curr_meta.hint
-        pith_curr_expr = hint_curr_meta.pith_expr
+        hints_meta.pith_curr_expr           = hint_curr_meta.pith_expr
         pith_curr_var_name_index = hint_curr_meta.pith_var_name_index
         # print(f'Visiting type hint {repr(hint_curr)}...')
 
@@ -672,7 +663,7 @@ def make_check_expr(
 
                 # Code type-checking the current pith against this origin type.
                 func_curr_code = CODE_PEP484_INSTANCE_format(
-                    pith_curr_expr=pith_curr_expr,
+                    pith_curr_expr=hints_meta.pith_curr_expr,
                     # Python expression evaluating to this origin type.
                     hint_curr_expr=add_func_scope_type(
                         # Origin type of this hint if any *OR* raise an
@@ -712,7 +703,7 @@ def make_check_expr(
 
                 # Code type-checking the current pith against this class.
                 func_curr_code = CODE_PEP484_INSTANCE_format(
-                    pith_curr_expr=pith_curr_expr,
+                    pith_curr_expr=hints_meta.pith_curr_expr,
                     hint_curr_expr=hint_curr_expr,
                 )
             # Else, this hint is *NOT* a forward reference.
@@ -873,9 +864,9 @@ def make_check_expr(
                     # (i.e., this is the first iteration of the outermost loop).
                     # The subsequent call to the str.isidentifier() method is
                     # *MUCH* more expensive than this object identity test.
-                    pith_curr_expr is VAR_NAME_PITH_ROOT or
+                    hints_meta.pith_curr_expr is VAR_NAME_PITH_ROOT or
                     # A simple Python identifier *NOR*...
-                    pith_curr_expr.isidentifier() or
+                    hints_meta.pith_curr_expr.isidentifier() or
                     # A complex Python expression already containing the
                     # assignment expression-specific walrus operator ":=". Since
                     # this implies this expression to already be an assignment
@@ -898,7 +889,7 @@ def make_check_expr(
                     #   or more PEP-compliant type hints (e.g., "list[str] |
                     #   set[bytes]").
                     # * PEP 695-compliant subscripted type aliases.
-                    ':=' in pith_curr_expr
+                    ':=' in hints_meta.pith_curr_expr
                 ):
                     # Then the current pith is ideally assigned to a unique
                     # local variable via an assignment expression.
@@ -917,7 +908,7 @@ def make_check_expr(
                     # this local variable.
                     pith_curr_assign_expr = CODE_PEP572_PITH_ASSIGN_EXPR_format(
                         pith_curr_var_name=pith_curr_var_name,
-                        pith_curr_expr=pith_curr_expr,
+                        pith_curr_expr=hints_meta.pith_curr_expr,
                     )
                 # Else, the current pith is *NOT* safely assignable to a unique
                 # local variable via an assignment expression. Since the
@@ -947,7 +938,7 @@ def make_check_expr(
 
                     # Preserve the Python code snippet evaluating to the value
                     # of the current pith as is.
-                    pith_curr_assign_expr = pith_curr_expr
+                    pith_curr_assign_expr = hints_meta.pith_curr_expr
 
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
@@ -962,7 +953,7 @@ def make_check_expr(
                         cls_stack=cls_stack,
                         conf=conf,
                         func_wrapper_scope=func_wrapper_scope,
-                        pith_curr_expr=pith_curr_expr,
+                        pith_curr_expr=hints_meta.pith_curr_expr,
                         pith_curr_assign_expr=pith_curr_assign_expr,
                         pith_curr_var_name_index=pith_curr_var_name_index,
                         exception_prefix=EXCEPTION_PREFIX,
@@ -1394,7 +1385,7 @@ def make_check_expr(
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
-                            pith_curr_expr
+                            hints_meta.pith_curr_expr
                             # If this metahint is annotated by only one beartype
                             # validator, the most efficient expression yielding
                             # the value of the current pith is simply the full
@@ -1912,17 +1903,18 @@ def make_check_expr(
 
         # ................{ CLEANUP                            }................
         # If prior logic generated *NO* code snippet type-checking the current
-        # pith against the currently visited hint, fall back to a trivial code
-        # snippet shallowly type-checking this pith as an instance of the origin
-        # type of this hint.
+        # pith against the currently visited hint.
         if func_curr_code is None:
+            # Assert that a branch above defined the code snippet used below.
             assert hint_curr_expr is not None, (
                 f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
                 f'expression undefined.'
             )
 
+            # Fall back to a trivial code snippet shallowly type-checking this
+            # pith as an instance of the origin type of this hint.
             func_curr_code = CODE_PEP484_INSTANCE_format(
-                pith_curr_expr=pith_curr_expr,
+                pith_curr_expr=hints_meta.pith_curr_expr,
                 hint_curr_expr=hint_curr_expr,
             )
         # Else, prior logic generated a code snippet type-checking the current

@@ -26,9 +26,17 @@ from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     unpack_hint_or_sane,
 )
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.error.dataerrmagic import (
+    EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
+)
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    TypeStack,
 )
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -248,10 +256,55 @@ class HintsMeta(FixedList):
 
     Attributes
     ----------
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+    exception_prefix : str
+        Human-readable substring prefixing the representation of this object in
+        the exception message.
+    func_curr_code : Optional[str]
+        Either:
+
+        * If the currently visited hint is deeply type-checkable, the Python
+          code snippet type-checking the current pith against this hint.
+        * If the currently visited hint is only shallowly type-checkable,
+          :data:`None`.
+    func_wrapper_scope : LexicalScope
+        **Local scope** (i.e., dictionary mapping from the name to value of each
+        attribute referenced in the signature) of this wrapper function required
+        by this Python code snippet.
     index_last : int
         0-based index of metadata describing the last visitable hint in this
-        list. For efficiency, this integer also uniquely identifies the
-        current child type hint of the currently visited parent type hint.
+        list. For efficiency, this integer also uniquely identifies the current
+        child type hint of the currently visited parent type hint.
+    is_var_random_int_needed : bool
+        :data:`True` only if one or more child hints of the root hint of this
+        queue require a pseudo-random integer. If :data:`True`, the body of this
+        wrapper function will be prefixed with code generating this integer.
+    pith_curr_expr : str
+        Full Python expression evaluating to the value of the **current pith**
+        (i.e., possibly nested object of the current parameter or return value
+        to be type-checked against this union type hint).
+
+        Note that this is intentionally *not* an assignment expression but
+        rather the original inefficient expression provided by the parent type
+        hint of the currently visited hint.
+    pith_curr_assign_expr : str
+        Assignment expression assigning this full Python expression to the
+        unique local variable assigned the value of this expression.
+    pith_curr_var_name_index : int
+        Integer suffixing the name of each local variable assigned the value of
+        the current pith in a assignment expression, thus uniquifying this
+        variable in the body of the current wrapper function.
+
+        Note that this integer is intentionally incremented as an efficient
+        low-level scalar rather than as an inefficient high-level
+        "itertools.Counter" object. Since both are equally thread-safe in the
+        internal context of this function body, the former is preferable.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -260,13 +313,31 @@ class HintsMeta(FixedList):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        'cls_stack',
+        'conf',
+        'exception_prefix',
+        'func_curr_code',
+        'func_wrapper_scope',
         'index_last',
+        'is_var_random_int_needed',
+        'pith_curr_expr',
+        'pith_curr_assign_expr',
+        'pith_curr_var_name_index',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        cls_stack: TypeStack
+        conf: BeartypeConf
+        exception_prefix: str
+        func_curr_code: str
+        func_wrapper_scope: LexicalScope
         index_last: int
+        is_var_random_int_needed: bool
+        pith_curr_expr: str
+        pith_curr_assign_expr: str
+        pith_curr_var_name_index: int
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
@@ -281,16 +352,41 @@ class HintsMeta(FixedList):
         self.reinit()
 
 
-    def reinit(self) -> None:
+    def reinit(
+        self,
+
+        # Optional parameters. Note that these parameters are optional *ONLY* to
+        # allow the __init__() method to be trivially defined. In all *OTHER*
+        # calls to this method, these parameters should always be passed. Ugh!
+        cls_stack: TypeStack = None,
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    ) -> None:
         '''
         Reinitialize this type-checking metadata queue.
+
+        Parameters
+        ----------
+        See the class docstring for further details on passed parameters.
         '''
+
+        # Classify all passed parameters.
+        self.conf = conf
+        self.cls_stack = cls_stack
 
         # 0-based index of metadata describing the last visitable hint in this
         # queue, initialized to "-1" to ensure that the initial incrementation
         # of this index by the enqueue_hint_child() method initializes index 0
         # of this queue.
         self.index_last = -1
+
+        # Nullify all remaining passed parameters.
+        self.exception_prefix = EXCEPTION_PREFIX
+        self.func_curr_code = None  # type: ignore[assignment]
+        self.func_wrapper_scope = {}
+        self.is_var_random_int_needed = False
+        self.pith_curr_expr = None  # type: ignore[assignment]
+        self.pith_curr_assign_expr = None  # type: ignore[assignment]
+        self.pith_curr_var_name_index = 0
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_index: int) -> HintMeta:  # type: ignore[override]
