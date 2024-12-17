@@ -16,14 +16,10 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._check.code.codecls import (
-    HintMeta,
-    HintsMeta,
-)
+from beartype._check.code.codecls import HintsMeta
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._check.code.codescope import add_func_scope_types
-from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 from beartype._check.metadata.metasane import (
@@ -33,7 +29,6 @@ from beartype._check.metadata.metasane import (
     SetHintOrHintSanifiedData,
     get_hint_or_sane_hint,
 )
-from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_OR
 from beartype._data.code.pep.datacodepep484604 import (
@@ -42,15 +37,7 @@ from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
 )
-from beartype._data.hint.datahintpep import (
-    Hint,
-    TypeVarToHint,
-)
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-    SetTypes,
-    TypeStack,
-)
+from beartype._data.hint.datahinttyping import SetTypes
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
@@ -66,15 +53,17 @@ from beartype._util.hint.pep.utilpeptest import is_hint_pep
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484604_check_expr(
     # Mandatory parameters.
-    hint_meta: HintMeta,
     hints_meta: HintsMeta,
-    cls_stack: TypeStack,
-    conf: BeartypeConf,
-    func_wrapper_scope: LexicalScope,
-    pith_curr_expr: str,
-    pith_curr_assign_expr: str,
-    pith_curr_var_name_index: int,
-    exception_prefix: str,
+
+    #FIXME: Excise *ALL* of these parameters, please.
+    # hint_meta: HintMeta,
+    # cls_stack: TypeStack,
+    # conf: BeartypeConf,
+    # func_wrapper_scope: LexicalScope,
+    # pith_curr_expr: str,
+    # pith_curr_assign_expr: str,
+    # pith_curr_var_name_index: int,
+    # exception_prefix: str,
 ) -> Optional[str]:
     '''
     Either a Python code snippet type-checking the current pith against the
@@ -144,16 +133,8 @@ def make_hint_pep484604_check_expr(
         * Else, a Python code snippet type-checking the current pith against
           this union.
     '''
-    assert isinstance(hint_meta, HintMeta), (
-        f'{repr(hint_meta)} not "HintMeta" object.')
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
-    assert isinstance(pith_curr_expr, str), (
-        f'{repr(pith_curr_expr)} not string.')
-    assert isinstance(pith_curr_assign_expr, str), (
-        f'{repr(pith_curr_assign_expr)} not string.')
-    assert isinstance(pith_curr_var_name_index, int), (
-        f'{repr(pith_curr_var_name_index)} not integer.')
 
     # ....................{ LOCALS                         }....................
     # Python code snippet type-checking the current pith against the currently
@@ -170,13 +151,7 @@ def make_hint_pep484604_check_expr(
     #   "hint_meta" object in entirety. Why? Memoization, of course. Passing the
     #   "hint_meta" object in entirety would effectively inhibit the memoization
     #   of this getter, which entirely defeats the point.
-    hint_or_sane_childs = _get_hint_pep484604_union_args_flattened(
-        hint_meta.hint,
-        cls_stack,
-        conf,
-        hint_meta.typevar_to_hint,
-        exception_prefix,
-    )
+    hint_or_sane_childs = _get_hint_pep484604_union_args_flattened(hints_meta)
 
     # Reuse previously created sets of the following (when available):
     # * "hint_childs_nonpep", the set of all PEP-noncompliant child hints
@@ -199,10 +174,7 @@ def make_hint_pep484604_check_expr(
 
     # 1-based indentation level describing the current level of indentation
     # appropriate for the currently iterated child hint.
-    indent_level_child = hint_meta.indent_level + 1
-
-    # Name of this local variable.
-    pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[pith_curr_var_name_index]
+    indent_level_child = hints_meta.hint_curr_meta.indent_level + 1
 
     # ....................{ FILTER                         }....................
     #FIXME: Optimize by refactoring into a "while" loop. Naturally, profile that
@@ -264,7 +236,7 @@ def make_hint_pep484604_check_expr(
                     # this value to a local variable efficiently reused by
                     # subsequent code generated for those PEP-compliant child
                     # hints.
-                    pith_curr_assign_expr
+                    hints_meta.pith_curr_assign_expr
                     if hint_or_sane_childs_pep else
                     # Else, this union is subscripted by *NO* PEP-compliant
                     # child hints. Since this is the first and only test
@@ -272,7 +244,7 @@ def make_hint_pep484604_check_expr(
                     # the value of the current pith *WITHOUT* assigning this
                     # value to a local variable, which would needlessly go
                     # unused.
-                    pith_curr_expr
+                    hints_meta.pith_curr_expr
                 ),
                 # Python expression evaluating to a tuple of these arguments.
                 #
@@ -293,7 +265,7 @@ def make_hint_pep484604_check_expr(
                 #       https://stackoverflow.com/a/40054478/2809027
                 hint_curr_expr=add_func_scope_types(
                     types=hint_childs_nonpep,
-                    func_scope=func_wrapper_scope,
+                    func_scope=hints_meta.func_wrapper_scope,
                     exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                 ),
             ))
@@ -316,7 +288,7 @@ def make_hint_pep484604_check_expr(
                     # previously assigned to a local variable by either the
                     # above conditional or prior iteration of the current
                     # conditional.
-                    pith_curr_var_name
+                    hints_meta.pith_curr_var_name
                     if (
                         # This union is also subscripted by one or more
                         # PEP-noncompliant child hints *OR*...
@@ -337,9 +309,9 @@ def make_hint_pep484604_check_expr(
                     # child hints. By deduction, those child hints *MUST* be
                     # PEP-compliant. Ergo, we need *NOT* explicitly validate
                     # that constraint here.
-                    pith_curr_assign_expr
+                    hints_meta.pith_curr_assign_expr
                 ),
-                pith_var_name_index=pith_curr_var_name_index,
+                pith_var_name_index=hints_meta.pith_curr_var_name_index,
             ),
         )
 
@@ -361,7 +333,8 @@ def make_hint_pep484604_check_expr(
             f'{CODE_PEP484604_UNION_SUFFIX}'
         # Format the "indent_curr" prefix into this code, deferred above for
         # efficiency.
-        ).format(indent_curr=INDENT_LEVEL_TO_CODE[hint_meta.indent_level])
+        ).format(indent_curr=INDENT_LEVEL_TO_CODE[
+            hints_meta.hint_curr_meta.indent_level])
     # Else, this snippet is its initial value and thus ignorable.
 
     # Return this Python code snippet.
@@ -370,12 +343,7 @@ def make_hint_pep484604_check_expr(
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached
 def _get_hint_pep484604_union_args_flattened(
-    hint: Hint,
-    cls_stack: TypeStack,
-    conf: BeartypeConf,
-    typevar_to_hint: TypeVarToHint,
-    exception_prefix: str,
-) -> Tuple[HintOrHintSanifiedData, ...]:
+    hints_meta: HintsMeta) -> Tuple[HintOrHintSanifiedData, ...]:
     '''
     Flattened tuple of the two or more child hints subscripting the passed
     :pep:`604`- or :pep:`484`-compliant union hint such that *all* nested child
@@ -395,25 +363,12 @@ def _get_hint_pep484604_union_args_flattened(
 
     Parameters
     ----------
-    hint : object
-        Union type hint to be flattened.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        the :pep:`484`-compliant **type variables** (i.e.,
-        :class:`typing.TypeVar` objects) originally parametrizing the origins of
-        all transitive parent hints of this hint to the corresponding child
-        hints subscripting these parent hints).
-    exception_prefix : str
-        Human-readable substring prefixing the representation of this object in
-        the exception message.
+    hints_meta : HintsMeta
+        **Type hint type-checking metadata queue** (i.e., low-level fixed list
+        of metadata describing all visitable type hints currently discovered by
+        the breadth-first search (BFS) dynamically generating pure-Python
+        type-checking code snippets in the
+        :func:`beartype._check.code.codemake.make_check_expr` factory).
 
     Returns
     -------
@@ -427,10 +382,12 @@ def _get_hint_pep484604_union_args_flattened(
     BeartypeDecorHintPep604Exception
         If this tuple is empty.
     '''
-    assert isinstance(exception_prefix, str), f'{exception_prefix} not string.'
     # print(f'[_get_hint_pep4] Received hint {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
     # ....................{ LOCALS                         }....................
+    # This union type hint.
+    hint = hints_meta.hint_curr_meta.hint
+
     # Tuple of all child hints subscripting this union if any *OR* the empty
     # tuple otherwise (e.g., if this union is its own unsubscripted
     # "typing.Optional" or "typing.Union" factory).
@@ -448,7 +405,8 @@ def _get_hint_pep484604_union_args_flattened(
     #       >>> typing.Union[()]
     #       TypeError: Cannot take a Union of no types.
     assert hint_childs, (
-        f'{exception_prefix}union type hint {repr(hint)} unsubscripted.')
+        f'{hints_meta.exception_prefix}'
+        f'union type hint {repr(hint)} unsubscripted.')
     # Else, this union is subscripted by two or more arguments. Why two rather
     # than one? Because the "typing" module reduces unions of one argument to
     # that argument: e.g.,
@@ -502,10 +460,10 @@ def _get_hint_pep484604_union_args_flattened(
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
         hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
             hint=hint_child,
-            conf=conf,
-            cls_stack=cls_stack,
-            typevar_to_hint=typevar_to_hint,
-            exception_prefix=exception_prefix,
+            conf=hints_meta.conf,
+            cls_stack=hints_meta.cls_stack,
+            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
+            exception_prefix=hints_meta.exception_prefix,
         )
         # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
 

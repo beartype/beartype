@@ -13,15 +13,23 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-# All "FIXME:" comments for this submodule reside in this package's "__init__"
-# submodule to improve maintainability and readability here.
+#FIXME: *LOL.* This submodule is already getting long in the tooth. For
+#maintainability, refactor as follows:
+#* Define a new "beartype._check.code.cls" subpackage.
+#* Define two new submodules:
+#  * "beartype._check.code.cls.hintmeta", defining "HintMeta".
+#  * "beartype._check.code.cls.hintmetas", defining "HintMetas".
+#* Excise this obsolete submodule away.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Optional,
 )
 from beartype._check.code.snip.codesnipcls import (
-    HINT_INDEX_TO_HINT_PLACEHOLDER)
+    HINT_INDEX_TO_HINT_PLACEHOLDER,
+    PITH_INDEX_TO_VAR_NAME,
+)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     unpack_hint_or_sane,
@@ -254,6 +262,60 @@ class HintsMeta(FixedList):
     number of hints transitively visitable from this root hint. Ergo, *all*
     indexation into this list performed by this BFS is guaranteed to be safe.
 
+    Design
+    ------
+    Most of the following instance variables are only relevant when the
+    currently visited hint is *not* the root hint. If the currently visited hint
+    is the root hint, the current pith has already been localized to a local
+    variable whose name is the value of the :data:`VAR_NAME_PITH_ROOT` string
+    global and thus need *not* be relocalized to another local variable using an
+    assignment expression.
+    
+    These variables enable a non-trivial runtime optimization eliminating
+    repeated computations to obtain the child pith needed to type-check child
+    hints. For example, if the current hint constrains the current pith to be
+    a standard sequence, the child pith of that parent pith is a random item
+    selected from this sequence; since obtaining this child pith is
+    non-trivial, the computation required to do so is performed only once by
+    assigning this child pith to a unique local variable during type-checking
+    and then repeatedly type-checking that variable rather than the logic
+    required to continually reacquire this child pith: e.g.,
+
+    .. code-block:: python
+
+       # Type-checking conditional for "List[List[str]]" under Python < 3.8.
+       if not (
+           isinstance(__beartype_pith_0, list) and
+           (
+               isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
+               isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)][__beartype_random_int % len(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)])], str) if __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)] else True
+           ) if __beartype_pith_0 else True
+       ):
+
+       # The same conditional under Python >= 3.8.
+       if not (
+           isinstance(__beartype_pith_0, list) and
+           (
+               isinstance(__beartype_pith_1 := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
+               isinstance(__beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str) if __beartype_pith_1 else True
+           ) if __beartype_pith_0 else True
+       ):
+
+    Note that:
+
+    * The random item selected from the root pith (i.e., ``__beartype_pith_1
+      := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)``)
+      only occurs once under Python >= 3.8 but repeatedly under Python < 3.8.
+      In both cases, the same semantic type-checking is performed regardless
+      of optimization.
+    * This optimization implicitly "bottoms out" when the currently visited hint
+      is *not* subscripted by unignorable child hints. If all child hints of the
+      currently visited hint are either ignorable (e.g., :class:`object`,
+      :obj:`typing.Any`) *or* are unignorable isinstanceable types (e.g.,
+      :class:`int`, :class:`str`), the currently visited hint has *no*
+      meaningful child hints and is thus effectively a leaf node with respect to
+      performing this optimization.
+
     Attributes
     ----------
     cls_stack : TypeStack
@@ -277,6 +339,17 @@ class HintsMeta(FixedList):
         **Local scope** (i.e., dictionary mapping from the name to value of each
         attribute referenced in the signature) of this wrapper function required
         by this Python code snippet.
+    hint_curr_expr : Optional[str]
+        Either:
+
+        * If the currently visited hint is deeply type-checkable, :data:`None`.
+        * If the currently visited hint is only shallowly type-checkable, the
+          Python expression evaluating to the origin type underlying this hint
+          as a hidden :mod:`beartype`-specific parameter injected into the
+          signature of the current wrapper function.
+    hint_curr_meta: HintMeta
+        Metadata describing the currently visited hint, appended by the
+        previously visited parent hint to this queue.
     index_last : int
         0-based index of metadata describing the last visitable hint in this
         list. For efficiency, this integer also uniquely identifies the current
@@ -296,6 +369,16 @@ class HintsMeta(FixedList):
     pith_curr_assign_expr : str
         Assignment expression assigning this full Python expression to the
         unique local variable assigned the value of this expression.
+    pith_curr_var_name : str
+        Name of the current pith variable (i.e., local Python variable in the
+        body of the wrapper function whose value is that of the current pith).
+        This name is either:
+
+        * Initially, the name of the currently type-checked parameter or return.
+        * On subsequently type-checking nested items of the parameter or return,
+          the name of the local variable uniquely assigned to by the assignment
+          expression defined by :attr:`pith_curr_assign_expr` (i.e., the
+          left-hand side (LHS) of that assignment expression).
     pith_curr_var_name_index : int
         Integer suffixing the name of each local variable assigned the value of
         the current pith in a assignment expression, thus uniquifying this
@@ -318,10 +401,13 @@ class HintsMeta(FixedList):
         'exception_prefix',
         'func_curr_code',
         'func_wrapper_scope',
+        'hint_curr_expr',
+        'hint_curr_meta',
         'index_last',
         'is_var_random_int_needed',
         'pith_curr_expr',
         'pith_curr_assign_expr',
+        'pith_curr_var_name',
         'pith_curr_var_name_index',
     )
 
@@ -333,10 +419,13 @@ class HintsMeta(FixedList):
         exception_prefix: str
         func_curr_code: str
         func_wrapper_scope: LexicalScope
+        hint_curr_expr : Optional[str]
+        hint_curr_meta : HintMeta
         index_last: int
         is_var_random_int_needed: bool
         pith_curr_expr: str
         pith_curr_assign_expr: str
+        pith_curr_var_name: str
         pith_curr_var_name_index: int
 
     # ..................{ INITIALIZERS                       }..................
@@ -383,16 +472,19 @@ class HintsMeta(FixedList):
         self.exception_prefix = EXCEPTION_PREFIX
         self.func_curr_code = None  # type: ignore[assignment]
         self.func_wrapper_scope = {}
+        self.hint_curr_expr = None
+        self.hint_curr_meta = None  # type: ignore[assignment]
         self.is_var_random_int_needed = False
         self.pith_curr_expr = None  # type: ignore[assignment]
         self.pith_curr_assign_expr = None  # type: ignore[assignment]
+        self.pith_curr_var_name = None  # type: ignore[assignment]
         self.pith_curr_var_name_index = 0
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_index: int) -> HintMeta:  # type: ignore[override]
         '''
         **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object)
-        describing the type hint visited at the passed index by the
+        describing the currently visited type hint at the passed index by the
         breadth-first search (BFS) in the
         :func:`beartype._check.code.codemake.make_check_expr` factory.
 
@@ -436,19 +528,58 @@ class HintsMeta(FixedList):
             f'{hint_index} not in [0, {len(self)}].')
 
         # Type hint type-checking metadata at this hint_index.
-        hint_meta = super().__getitem__(hint_index)  # type: ignore[call-overload]
+        hint_curr_meta = super().__getitem__(hint_index)  # type: ignore[call-overload]
 
         # If this metadata has yet to be instantiated...
-        if hint_meta is None:
+        if hint_curr_meta is None:
             # Instantiate a new "HintMeta" object with all fields initialized
-            # to sane values appropriate for this hint_index.
-            hint_meta = self[hint_index] = HintMeta(hint_index=hint_index)
+            # to sane values appropriate for this index.
+            hint_curr_meta = self[hint_index] = HintMeta(hint_index=hint_index)
         # Else, this metadata has already been instantiated.
 
         # Return this metadata.
-        return hint_meta
+        return hint_curr_meta
 
-    # ..................{ METHODS                            }..................
+    # ..................{ SETTERS                            }..................
+    def set_hint_curr_meta(self, hint_curr_meta: HintMeta) -> None:
+        '''
+        Set the hint encapsulated by the passed metadata as the currently
+        visited hint of the breadth-first search (BFS) iterated by this queue.
+
+        This setter updates instance variables of this queue to reflect that
+        this hint is now the currently visited hint.
+
+        Parameters
+        ----------
+        hint_curr_meta: HintMeta
+            Metadata describing the currently visited hint, appended by the
+            previously visited parent hint to this queue.
+        '''
+        assert isinstance(hint_curr_meta, HintMeta), (
+            f'{repr(hint_curr_meta)} not "HintMeta" object.')
+
+        # Update instance variables of this queue to reflect that this hint is
+        # now the currently visited hint.
+        self.hint_curr_meta           = hint_curr_meta
+        self.pith_curr_expr           = hint_curr_meta.pith_expr
+        self.pith_curr_var_name_index = hint_curr_meta.pith_var_name_index
+        self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
+            self.pith_curr_var_name_index]
+
+        #FIXME: Comment this sanity check out after we're sufficiently
+        #convinced this algorithm behaves as expected. While useful, this check
+        #requires a linear search over the entire code and is thus costly.
+        # assert hint_curr_placeholder in func_wrapper_code, (
+        #     '{} {!r} placeholder {} not found in wrapper body:\n{}'.format(
+        #         hint_curr_exception_prefix, hint, hint_curr_placeholder, func_wrapper_code))
+
+        # Code snippet type-checking the current pith against this hint.
+        self.func_curr_code = None  # type: ignore[assignment]
+
+        # Code expression evaluating to the origin type underlying this hint.
+        self.hint_curr_expr = None
+
+    # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_or_sane_child(
         self,
         hint_or_sane: HintOrHintSanifiedData,
