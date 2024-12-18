@@ -17,15 +17,10 @@ from abc import ABCMeta, abstractmethod
 from beartype.typing import (
     TYPE_CHECKING,
 )
-from beartype._check.code.codecls import (
-    HintMeta,
-    HintsMeta,
-)
-from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
+from beartype._check.code.cls.hintsmeta import HintsMeta
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metasane import HintOrHintSanifiedData
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.hint.datahinttyping import (
     CallableStrFormat,
     EnumeratorItem,
@@ -186,81 +181,46 @@ class _HintSignLogicReiterableOrSequenceArgs1(HintLogicABC):
     #FIXME: Push up an @abstractmethod variant of this as well, please.
     def make_code(
         self,
-        hint_meta: HintMeta,
         hints_meta: HintsMeta,
-        hint_curr_expr: str,
         hint_or_sane_child: HintOrHintSanifiedData,
-        pith_curr_assign_expr: str,
-        pith_curr_var_name_index: int,
-    ) -> str:
+    ) -> None:
         '''
         Python expression deeply type-checking the current pith against the
         currently visited container hint described by the passed parameters.
 
         Parameters
         ----------
-        hint_meta : HintMeta
-            Metadata describing the currently visited hint, appended by the
-            previously visited parent hint to the ``hints_meta`` stack.
         hints_meta : HintsMeta
             Stack of metadata describing all visitable hints currently
             discovered by this breadth-first search (BFS).
-        hint_curr_expr : str
-            Python expression evaluating to the origin type of this hint as a
-            hidden :mod:`beartype`-specific parameter injected into the
-            signature of the current wrapper function.
         hint_or_sane_child : HintOrHintSanifiedData
             Either the sole child hint of this container *or* **sanified child
             hint metadata** (i.e., :data:`.HintSanifiedData` object describing
             this child hint) to be type-checked.
-        pith_curr_assign_expr : str
-            Assignment expression assigning this full Python expression to the
-            unique local variable assigned the value of this expression.
-        pith_curr_var_name_index : int
-            Integer suffixing the name of each local variable assigned the value of
-            the current pith in a assignment expression, thus uniquifying this
-            variable in the body of the current wrapper function.
-
-        Returns
-        -------
-        str
-            Python expression deeply type-checking this pith against this hint.
         '''
-        assert isinstance(hint_meta, HintMeta), (
-            f'{repr(hint_meta)} not "HintMeta" object.')
         assert isinstance(hints_meta, HintsMeta), (
             f'{repr(hints_meta)} not "HintsMeta" object.')
-        assert isinstance(hint_curr_expr, str), (
-            f'{repr(hint_curr_expr)} not string.')
-        assert isinstance(pith_curr_assign_expr, str), (
-            f'{repr(pith_curr_assign_expr)} not string.')
-        assert isinstance(pith_curr_var_name_index, int), (
-            f'{repr(pith_curr_var_name_index)} not integer.')
-
-        # Name of this local variable.
-        pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[pith_curr_var_name_index]
 
         # Python expression efficiently yielding some item of this pith to be
         # deeply type-checked against this child hint.
         pith_child_expr = self._pith_child_expr_format(
-            pith_curr_var_name=pith_curr_var_name)
+            pith_curr_var_name=hints_meta.pith_curr_var_name)
 
         # Python expression deeply type-checking this pith against this hint.
-        func_curr_code = CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format(
-            indent_curr=INDENT_LEVEL_TO_CODE[hint_meta.indent_level],
-            pith_curr_assign_expr=pith_curr_assign_expr,
-            pith_curr_var_name=pith_curr_var_name,
-            hint_curr_expr=hint_curr_expr,
-            hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
-                hint_or_sane=hint_or_sane_child,
-                indent_level=hint_meta.indent_level + 2,
-                pith_expr=pith_child_expr,
-                pith_var_name_index=pith_curr_var_name_index,
-            ),
+        hints_meta.func_curr_code = (
+            CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format(
+                hint_curr_expr=hints_meta.hint_curr_expr,
+                indent_curr=hints_meta.indent_curr,
+                pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
+                pith_curr_var_name=hints_meta.pith_curr_var_name,
+                hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
+                    hint_or_sane=hint_or_sane_child,
+                    indent_level=hints_meta.indent_level_child + 1,
+                    pith_expr=pith_child_expr,
+                    pith_var_name_index=hints_meta.pith_curr_var_name_index,
+                ),
+            )
         )
-
-        # Return this expression.
-        return func_curr_code
 
     # ..................{ ITERATORS                          }..................
     def enumerate_cause_items(self, cause: ViolationCause) -> Enumerator:

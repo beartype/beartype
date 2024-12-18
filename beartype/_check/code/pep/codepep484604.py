@@ -13,10 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Optional,
     Tuple,
 )
-from beartype._check.code.codecls import HintsMeta
+from beartype._check.code.cls.hintsmeta import HintsMeta
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._check.code.codescope import add_func_scope_types
@@ -29,7 +28,6 @@ from beartype._check.metadata.metasane import (
     SetHintOrHintSanifiedData,
     get_hint_or_sane_hint,
 )
-from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_OR
 from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_CHILD_PEP_format,
@@ -51,20 +49,7 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 
 # ....................{ FACTORIES                          }....................
-def make_hint_pep484604_check_expr(
-    # Mandatory parameters.
-    hints_meta: HintsMeta,
-
-    #FIXME: Excise *ALL* of these parameters, please.
-    # hint_meta: HintMeta,
-    # cls_stack: TypeStack,
-    # conf: BeartypeConf,
-    # func_wrapper_scope: LexicalScope,
-    # pith_curr_expr: str,
-    # pith_curr_assign_expr: str,
-    # pith_curr_var_name_index: int,
-    # exception_prefix: str,
-) -> Optional[str]:
+def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     '''
     Either a Python code snippet type-checking the current pith against the
     passed :pep:`484`- or :pep:`604`-compliant union type hint if this union is
@@ -123,24 +108,11 @@ def make_hint_pep484604_check_expr(
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Optional[str]
-        Either:
-
-        * If this union is ignorable, :data:`None`.
-        * Else, a Python code snippet type-checking the current pith against
-          this union.
     '''
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
 
     # ....................{ LOCALS                         }....................
-    # Python code snippet type-checking the current pith against the currently
-    # visited hint (to be returned).
-    func_curr_code: str = None  # type: ignore[assignment]
-
     # Flattened tuple of two or more child hints subscripting this parent union
     # such that *ALL* nested child hints subscripting child unions are expanded
     # directly into this tuple, thus non-destructively eliminating child unions.
@@ -171,10 +143,6 @@ def make_hint_pep484604_check_expr(
     # Clear these sets prior to use below.
     hint_childs_nonpep.clear()
     hint_or_sane_childs_pep.clear()
-
-    # 1-based indentation level describing the current level of indentation
-    # appropriate for the currently iterated child hint.
-    indent_level_child = hints_meta.hint_curr_meta.indent_level + 1
 
     # ....................{ FILTER                         }....................
     #FIXME: Optimize by refactoring into a "while" loop. Naturally, profile that
@@ -219,14 +187,14 @@ def make_hint_pep484604_check_expr(
     # ....................{ NON-PEP                        }....................
     # Initialize the code type-checking the current pith against these arguments
     # to the substring prefixing all such code.
-    func_curr_code = CODE_PEP484604_UNION_PREFIX
+    hints_meta.func_curr_code = CODE_PEP484604_UNION_PREFIX
 
     # If this union is subscripted by one or more PEP-noncompliant child hints,
     # generate and append efficient code type-checking these child hints
     # *BEFORE* less efficient code type-checking any PEP-compliant child hints
     # subscripting this union.
     if hint_childs_nonpep:
-        func_curr_code += (
+        hints_meta.func_curr_code += (
             CODE_PEP484604_UNION_CHILD_NONPEP_format(
                 # Python expression yielding the value of the current pith.
                 # Specifically...
@@ -276,11 +244,11 @@ def make_hint_pep484604_check_expr(
     for hint_or_sane_child_pep_index, hint_or_sane_child_pep in enumerate(
         hint_or_sane_childs_pep):
         # Code deeply type-checking this child hint.
-        func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
+        hints_meta.func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
             # Expression yielding the value of this pith.
             hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
                 hint_or_sane=hint_or_sane_child_pep,
-                indent_level=indent_level_child,
+                indent_level=hints_meta.indent_level_child,
                 pith_expr=(
                     # If either...
                     #
@@ -323,22 +291,18 @@ def make_hint_pep484604_check_expr(
     # If this code is *NOT* its initial value, this union is subscripted by one
     # or more unignorable child hints and the above logic generated code
     # type-checking these child hints. In this case...
-    if func_curr_code is not CODE_PEP484604_UNION_PREFIX:
+    if hints_meta.func_curr_code is not CODE_PEP484604_UNION_PREFIX:
         # Munge this code to...
-        func_curr_code = (
+        hints_meta.func_curr_code = (
             # Strip the erroneous " or" suffix appended by the last child hint
             # from this code.
-            f'{func_curr_code[:LINE_RSTRIP_INDEX_OR]}'
+            f'{hints_meta.func_curr_code[:LINE_RSTRIP_INDEX_OR]}'
             # Suffix this code by the substring suffixing all such code.
             f'{CODE_PEP484604_UNION_SUFFIX}'
         # Format the "indent_curr" prefix into this code, deferred above for
         # efficiency.
-        ).format(indent_curr=INDENT_LEVEL_TO_CODE[
-            hints_meta.hint_curr_meta.indent_level])
+        ).format(indent_curr=hints_meta.indent_curr)
     # Else, this snippet is its initial value and thus ignorable.
-
-    # Return this Python code snippet.
-    return func_curr_code
 
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached

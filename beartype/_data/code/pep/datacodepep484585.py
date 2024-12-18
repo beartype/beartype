@@ -17,33 +17,7 @@ from beartype._check.checkmagic import VAR_NAME_RANDOM_INT
 from beartype._data.hint.datahinttyping import CallableStrFormat
 
 # ....................{ CODE ~ container                   }....................
-CODE_PEP484585_COLLECTION_ARGS_1 = '''(
-{indent_curr}    # True only if this pith is of this collection type *AND*...
-{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either...
-{indent_curr}    (
-{indent_curr}        # This container is empty *OR*...
-{indent_curr}        not {pith_curr_var_name} or
-{indent_curr}        #FIXME: Can we drop these parens? Investigate.
-{indent_curr}        (
-{indent_curr}            # If this container is a non-empty sequence, true only
-{indent_curr}            # if a pseudo-random item satisfies this hint;
-{indent_curr}            {hint_sequence_child_placeholder}
-{indent_curr}            if isinstance({pith_curr_var_name}, {sequence_abc_expr}) else
-{indent_curr}            # If this container is a non-empty reiterable, true only
-{indent_curr}            # if the first item satisfies this hint.
-{indent_curr}            isinstance({pith_curr_var_name}, {reiterable_abc_expr}) and
-{indent_curr}            {hint_reiterable_child_placeholder}
-{indent_curr}        )
-{indent_curr}    )
-{indent_curr})'''
-'''
-:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
-current pith against *any* arbitrary kind of single-argument standard
-collection type hint.
-'''
-
-
+#FIXME: Rename to simply "CODE_PEP484585_REITERABLE_OR_SEQUENCE", please.
 CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this container type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -55,6 +29,78 @@ CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1 = '''(
 :pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
 current pith against *any* arbitrary kind of single-argument standard
 container type hint.
+'''
+
+
+#FIXME: Rename to simply "CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR", please.
+CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR = (
+    '''next(iter({pith_curr_var_name}))''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first item of the current reiterable pith.
+'''
+
+#FIXME: Rename to simply "CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR", please.
+CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
+    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+value of a randomly indexed item of the current sequence pith.
+'''
+
+
+#FIXME: Actually use us up, please.
+CODE_PEP484585_COLLECTION = '''(
+{indent_curr}    # True only if this pith is of this collection type *AND*...
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either this container is empty *OR*...
+{indent_curr}    (not {pith_curr_var_name} or (
+{indent_curr}            # If this collection is a non-empty sequence, localize
+{indent_curr}            # a pseudo-random item of this sequence;
+{indent_curr}            (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
+{indent_curr}             ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
+{indent_curr}            # Else, this collection *MUST* by elimination be a non-empty,
+{indent_curr}            # Reiterable. Localize the first item of this reiterable.
+{indent_curr}            ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
+{indent_curr}        # True only if this item satisfies this hint.
+{indent_curr}        ) and {hint_child_placeholder}
+{indent_curr}    )
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
+current pith against a **collection type hint** (i.e., either a
+:pep:`484`-compliant ``typing.Collection[...]`` type hint *or* a
+:pep:`585`-compliant ``collections.abc.Collection[...]`` type hint).
+'''
+
+
+#FIXME: Actually use us up, please.
+CODE_PEP484585_ITERABLE = '''(
+{indent_curr}    # True only if this pith is of this iterable type *AND*...
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either this iterable is empty *OR*...
+{indent_curr}    (not {pith_curr_var_name} or (
+{indent_curr}            # If this iterable is a non-empty sequence, localize
+{indent_curr}            # a pseudo-random item of this sequence;
+{indent_curr}            (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
+{indent_curr}             ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
+{indent_curr}            # If this iterable is a non-empty reiterable, localize
+{indent_curr}            # the first item of this reiterable;
+{indent_curr}            (isinstance({pith_curr_var_name}, {reiterable_abc_expr}) and
+{indent_curr}             ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR}) is {{pith_child_var_name}})
+{indent_curr}            # Else, this iterable is neither a sequence nor reiterable.
+{indent_curr}            # Since this implies this iterable to *NOT* be safely
+{indent_curr}            # iterable at runtime, silently assume all items of this
+{indent_curr}            # iterable to deeply satisfy this hint. It is what it is.
+{indent_curr}        # True only if this item satisfies this hint.
+{indent_curr}        ) and {hint_child_placeholder}
+{indent_curr}    )
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
+current pith against an **iterable type hint** (i.e., either a
+:pep:`484`-compliant ``typing.Iterable[...]`` type hint *or* a
+:pep:`585`-compliant ``collections.abc.Iterable[...]`` type hint).
 '''
 
 # ....................{ CODE ~ generic                     }....................
@@ -209,22 +255,6 @@ for type-checking mappings with ignorable key or value child type hints (e.g.,
 ``dict[object, str]``, ``dict[str, object]``).
 '''
 
-# ....................{ CODE ~ reiterable                  }....................
-CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR = (
-    '''next(iter({pith_curr_var_name}))''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
-first item of the current reiterable pith.
-'''
-
-# ....................{ CODE ~ sequence                    }....................
-CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
-    f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
-value of a randomly indexed item of the current sequence pith.
-'''
-
 # ....................{ CODE ~ tuple                       }....................
 CODE_PEP484585_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
@@ -327,6 +357,14 @@ to be a subclass of the subscripted child hint of a :pep:`484`- or
 # This is an absurd micro-optimization. *fight me, github developer community*
 CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format: CallableStrFormat = (
     CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1.format)
+CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
+    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR.format)
+CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
+    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format)
+CODE_PEP484585_COLLECTION_format: CallableStrFormat = (
+    CODE_PEP484585_COLLECTION.format)
+CODE_PEP484585_ITERABLE_format: CallableStrFormat = (
+    CODE_PEP484585_ITERABLE.format)
 CODE_PEP484585_GENERIC_CHILD_format: CallableStrFormat = (
     CODE_PEP484585_GENERIC_CHILD.format)
 CODE_PEP484585_MAPPING_format: CallableStrFormat = (
@@ -343,10 +381,6 @@ CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR.format)
 CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR.format)
-CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
-    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR.format)
-CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: CallableStrFormat = (
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format)
 CODE_PEP484585_SUBCLASS_format: CallableStrFormat = (
     CODE_PEP484585_SUBCLASS.format)
 CODE_PEP484585_TUPLE_FIXED_EMPTY_format: CallableStrFormat = (
