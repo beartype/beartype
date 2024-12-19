@@ -26,17 +26,12 @@ from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._check.code.cls.hintsmeta import HintsMeta
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
 )
-from beartype._check.code.codescope import (
-    add_func_scope_type,
-    add_func_scope_types,
-    add_func_scope_type_or_types,
-    express_func_scope_type_ref,
-)
+from beartype._check.code.codescope import express_func_scope_type_ref
 from beartype._check.code.pep.codepep484604 import (
     make_hint_pep484604_check_expr)
 from beartype._check.code.pep.pep484585.codepep484585container import (
@@ -519,14 +514,11 @@ def make_check_expr(
                 hints_meta.func_curr_code = CODE_PEP484_INSTANCE_format(
                     pith_curr_expr=hints_meta.pith_curr_expr,
                     # Python expression evaluating to this origin type.
-                    hint_curr_expr=add_func_scope_type(
+                    hint_curr_expr=hints_meta.add_func_scope_type_or_types(
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this hint
                         # was validated above to be supported.
-                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=hints_meta.func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-                    ),
+                        get_hint_pep_origin_type_isinstanceable(hint_curr)),
                 )
             # Else, this hint is either subscripted, not shallowly
             # type-checkable, *OR* deeply type-checkable.
@@ -931,12 +923,9 @@ def make_check_expr(
                     # Python expression evaluating to the origin type of this
                     # mapping hint as a hidden beartype-specific parameter
                     # injected into the signature of this wrapper function.
-                    hints_meta.hint_curr_expr = add_func_scope_type(
-                        # Origin type of this sequence.
-                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=hints_meta.func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-                    )
+                    hints_meta.hint_curr_expr = (
+                        hints_meta.add_func_scope_type_or_types(
+                            get_hint_pep_origin_type_isinstanceable(hint_curr)))
 
                     # 2-tuple of the possibly ignorable insane child key and
                     # value hints subscripting this mapping hint, defined as
@@ -1048,7 +1037,7 @@ def make_check_expr(
                                 hints_meta.pith_curr_var_name_index += 1
 
                                 # Name of this local variable.
-                                pith_curr_key_var_name = PITH_INDEX_TO_VAR_NAME[
+                                pith_key_var_name = PITH_INDEX_TO_VAR_NAME[
                                     hints_meta.pith_curr_var_name_index]
 
                                 # Placeholder string to be subsequently replaced
@@ -1058,7 +1047,7 @@ def make_check_expr(
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child_key,
                                         indent_level=hints_meta.indent_level_child,
-                                        pith_expr=pith_curr_key_var_name,
+                                        pith_expr=pith_key_var_name,
                                         pith_var_name_index=(
                                             hints_meta.pith_curr_var_name_index),
                                     ))
@@ -1073,7 +1062,7 @@ def make_check_expr(
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=(
                                                 hints_meta.pith_curr_var_name),
-                                            pith_curr_key_var_name=pith_curr_key_var_name,
+                                            pith_key_var_name=pith_key_var_name,
                                         ),
                                         pith_var_name_index=(
                                             hints_meta.pith_curr_var_name_index),
@@ -1084,8 +1073,7 @@ def make_check_expr(
                                 func_curr_code_key_value = (
                                     CODE_PEP484585_MAPPING_KEY_VALUE_format(
                                         indent_curr=hints_meta.indent_curr,
-                                        pith_curr_key_var_name=(  # pyright: ignore
-                                            pith_curr_key_var_name),
+                                        pith_key_var_name=pith_key_var_name,  # pyright: ignore
                                         pith_curr_var_name=(
                                             hints_meta.pith_curr_var_name),
                                         hint_key_placeholder=(
@@ -1404,12 +1392,8 @@ def make_check_expr(
                             # Else, this child hint is an issubclassable object.
 
                             # Python expression evaluating to this child hint.
-                            hint_curr_expr = add_func_scope_type_or_types(
-                                type_or_types=hint_child,  # type: ignore[arg-type]
-                                func_scope=hints_meta.func_wrapper_scope,
-                                exception_prefix=(
-                                    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                            )
+                            hint_curr_expr = hints_meta.add_func_scope_type_or_types(
+                                hint_child)
 
                         # Code type-checking this pith against this superclass.
                         hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
@@ -1501,12 +1485,8 @@ def make_check_expr(
                         indent_curr=hints_meta.indent_curr,
                         pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
                         # Python expression evaluating to this generic type.
-                        hint_curr_expr=add_func_scope_type(
-                            cls=hint_curr,  # pyright: ignore
-                            func_scope=hints_meta.func_wrapper_scope,
-                            exception_prefix=(
-                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                        ),
+                        hint_curr_expr=hints_meta.add_func_scope_type_or_types(
+                            hint_curr),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
                 # Else, this hint is *NOT* a generic.
@@ -1585,21 +1565,16 @@ def make_check_expr(
 
                         # Python expression evaluating to a tuple of the unique
                         # types of all literal objects subscripting this hint.
-                        hint_child_types_expr=add_func_scope_types(
+                        hint_child_types_expr=hints_meta.add_func_scope_type_or_types({
                             #FIXME: Optimize by refactoring into a "while"
                             #loop. Also, this should probably be a "frozenset"
                             #rather than "set". *sigh*
                             # Set comprehension of all unique literal objects
                             # subscripting this hint, implicitly discarding all
                             # duplicate such objects.
-                            types={
-                                type(hint_child)
-                                for hint_child in hint_childs
-                            },
-                            func_scope=hints_meta.func_wrapper_scope,
-                            exception_prefix=(
-                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
-                        ),
+                            type(hint_child)
+                            for hint_child in hint_childs
+                        }),
                     )
 
                     #FIXME: Optimize by refactoring into a "while" loop. *sigh*
@@ -1665,11 +1640,8 @@ def make_check_expr(
         #   faster submodule generating PEP-noncompliant code instead.
         elif isinstance(hint_curr, type):
             # Python expression evaluating to this type.
-            hints_meta.hint_curr_expr = add_func_scope_type(
-                cls=hint_curr,
-                func_scope=hints_meta.func_wrapper_scope,
-                exception_prefix=EXCEPTION_PREFIX_HINT,
-            )
+            hints_meta.hint_curr_expr = hints_meta.add_func_scope_type_or_types(
+                hint_curr)
         # ................{ NON-PEP ~ bad                      }................
         # Else, this hint is neither PEP-compliant *NOR* a class. In this case,
         # raise an exception. Note that:

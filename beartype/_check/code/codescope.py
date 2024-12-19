@@ -67,6 +67,7 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
     Pep484585ForwardRef,
     SetOrTupleTypes,
+    TypeOrSetOrTupleTypes,
     TypeOrTupleTypes,
     TupleTypes,
 )
@@ -145,7 +146,7 @@ def add_func_scope_ref(
 def add_func_scope_type_or_types(
     # Mandatory parameters.
     func_scope: LexicalScope,
-    type_or_types: TypeOrTupleTypes,
+    type_or_types: TypeOrSetOrTupleTypes,
 
     # Optional parameters.
     exception_prefix: str = (
@@ -167,8 +168,12 @@ def add_func_scope_type_or_types(
     ----------
     func_scope : LexicalScope
         Local or global scope to add this class or tuple of classes to.
-    type_or_types : TypeOrTupleTypes
-        Arbitrary class or tuple of classes to be added to this scope.
+    type_or_types : TypeOrSetOrTupleTypes
+        Classes to be added to this scope, defined as either:
+
+        * A single class.
+        * A set of one or more classes.
+        * A tuple of one or more classes.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to a sensible string.
@@ -628,7 +633,7 @@ def express_func_scope_type_ref(
         )
 
     # Return a 2-tuple of this expression and set of unqualified classnames.
-    return ref_expr, refs_type_basename
+    return (ref_expr, refs_type_basename)
 
 # ....................{ PRIVATE ~ globals                  }....................
 _tuple_union_to_tuple_union: Dict[TupleTypes, TupleTypes] = {}

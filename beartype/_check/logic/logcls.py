@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **hint sign logic class hierarchy** (i.e., dataclasses encapsulating
+Beartype **hint logic class hierarchy** (i.e., dataclasses encapsulating
 all low-level Python code snippets and associated metadata required to
 dynamically generate high-level Python code snippets fully type-checking various
 kinds of type hints uniquely identified by common signs).
@@ -13,11 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta, abstractmethod
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 from beartype.typing import (
     TYPE_CHECKING,
+    Callable,
 )
-from beartype._check.code.cls.hintsmeta import HintsMeta
+from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metasane import HintOrHintSanifiedData
 from beartype._conf.confenum import BeartypeStrategy
@@ -27,17 +32,44 @@ from beartype._data.hint.datahinttyping import (
     Enumerator,
 )
 from beartype._data.code.pep.datacodepep484585 import (
-    CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format,
-    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_ITERABLE_format,
+    CODE_PEP484585_REITERABLE_OR_SEQUENCE_format,
+    CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR_format,
 )
+from collections.abc import (
+    Collection as CollectionABC,
+    Sequence as SequenceABC,
+)
+
+# ....................{ PRIVATE ~ hints                    }....................
+_GetCauseEnumeratorItem = Callable[[ViolationCause], EnumeratorItem]
+'''
+PEP-compliant type hint matching an **enumerator item violation cause getter**
+(i.e., callable accepting a :class:`.ViolationCause` object and returning a
+2-tuple ``(item_index, item)`` describing an arbitrary item efficiently accessed
+from the container encapsulated by this violation cause.
+
+This hint matches callables with signatures resembling:
+
+.. code-block:: python
+
+   def _get_cause_enumerator_item(cause: ViolationCause) -> EnumeratorItem:
+
+Callables matched by this hint return 2-tuples of the standard form
+``(item_index, item)`` returned by the :func:`enumerate` builtin, where:
+
+* ``item_index`` is the 0-based index of an arbitrary item efficiently accessed
+  from this container.
+* ``item`` is that item.
+'''
 
 # ....................{ SUPERCLASSES                       }....................
 class HintLogicABC(object, metaclass=ABCMeta):
     '''
-    Abstract base class (ABC) of all **hint sign logic** (i.e., dataclasses
+    Abstract base class (ABC) of all **hint logic** (i.e., dataclasses
     encapsulating all low-level Python code snippets and associated metadata
-    required to dynamically generate a high-level Python code snippet fully
+    required to dynamically generate high-level Python code snippets fully
     type-checking some kind of type hint uniquely identified by a common sign).
 
     Caveats
@@ -55,7 +87,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
 
     .. code-block:: python
 
-       CODE_PEP484585_SEQUENCE_ARGS_1 = \'\'\'(
+       CODE_PEP484585_SEQUENCE = \'\'\'(
        {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
        {indent_curr}    {hint_child_placeholder} if {pith_curr_var_name} else True
        {indent_curr})\'\'\'
@@ -76,6 +108,11 @@ class HintLogicABC(object, metaclass=ABCMeta):
         :data:`beartype._check.checkmagic.VAR_NAME_RANDOM_INT`. If :data:`True`,
         the body of the current wrapper function will be prefixed by a Python
         statement assigning such an integer to that local variable.
+    _get_cause_enumerator_item : _GetCauseEnumeratorItem
+        **Enumerator item violation cause getter** (i.e., callable accepting a
+        :class:`.ViolationCause` object and returning a 2-tuple ``(item_index,
+        item)`` describing an arbitrary item efficiently accessed from the
+        container encapsulated by this violation cause.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -84,143 +121,41 @@ class HintLogicABC(object, metaclass=ABCMeta):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_get_cause_enumerator_item',
         'is_var_random_int_needed',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        _get_cause_enumerator_item: _GetCauseEnumeratorItem
         is_var_random_int_needed : bool
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
+        # Mandatory parameters.
+        get_cause_enumerator_item: _GetCauseEnumeratorItem,
+
         # Optional parameters.
         is_var_random_int_needed: bool = False,
     ) -> None:
         '''
-        Initialize this hint sign logic.
+        Initialize this hint logic.
 
         Parameters
         ----------
         See the class docstring for further details.
         '''
+        assert isinstance(is_var_random_int_needed, bool), (
+            f'{repr(is_var_random_int_needed)} not boolean.')
+        assert callable(get_cause_enumerator_item), (
+            f'{repr(get_cause_enumerator_item)} uncallable.')
 
         # Classify all passed parameters.
+        self._get_cause_enumerator_item = get_cause_enumerator_item
         self.is_var_random_int_needed = is_var_random_int_needed
-
-# ....................{ SUBCLASSES ~ (reiterable|sequence) }....................
-class _HintSignLogicReiterableOrSequenceArgs1(HintLogicABC):
-    '''
-    **Single-argument container hint sign logic** (i.e., dataclass encapsulating
-    all low-level Python code snippets and associated metadata required to
-    dynamically generate a high-level Python code snippet fully type-checking
-    some kind of :pep:`484`- or :pep:`585`-compliant container type hint
-    uniquely identified by a common sign, satisfying at least the
-    :class:`collections.abc.Container` protocol subscripted by exactly one child
-    type hint constraining *all* items contained in that container) subclass.
-
-    Attributes
-    ----------
-    is_var_random_int_needed : bool
-        :data:`True` only if the Python code snippet dynamically generated by
-        calling the :attr:`code_format` method requires a pseudo-random integer
-        by accessing the local variable named
-        :data:`beartype._check.checkmagic.VAR_NAME_RANDOM_INT`. If :data:`True`,
-        the body of the current wrapper function will be prefixed by a Python
-        statement assigning such an integer to that local variable.
-    _pith_child_expr_format : CallableStrFormat
-        :meth:`str.format` method bound to a Python expression efficiently
-        yielding the value of the next item (which will then be type-checked)
-        contained in the **current pith** (which is the parent container
-        currently being type-checked). This snippet is expected to contain
-        exactly these format variables:
-
-        * ``{pith_curr_var_name}``, expanding to the name of the local variable
-          whose value is the current pith.
-    '''
-
-    # ..................{ CLASS VARIABLES                    }..................
-    # Slot all instance variables defined on this object to minimize the time
-    # complexity of both reading and writing variables across frequently called
-    # cache dunder methods. Slotting has been shown to reduce read and write
-    # costs by approximately ~10%, which is non-trivial.
-    __slots__ = (
-        '_pith_child_expr_format',
-    )
-
-    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
-    #     https://github.com/python/mypy/issues/5941
-    if TYPE_CHECKING:
-        _pith_child_expr_format: CallableStrFormat
-
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(
-        self,
-        pith_child_expr_format: CallableStrFormat,
-        **kwargs
-    ) -> None:
-        '''
-        Initialize this hint sign logic.
-
-        Parameters
-        ----------
-        See the class docstring for further details. All remaining passed
-        keyword parameters are passed as is to the superclass
-        :meth:`HintLogicABC.__init__` method.
-        '''
-
-        # Initialize our superclass.
-        super().__init__(**kwargs)
-
-        # Classify all passed parameters.
-        self._pith_child_expr_format = pith_child_expr_format
-
-    # ..................{ FACTORIES                          }..................
-    #FIXME: Push up an @abstractmethod variant of this as well, please.
-    def make_code(
-        self,
-        hints_meta: HintsMeta,
-        hint_or_sane_child: HintOrHintSanifiedData,
-    ) -> None:
-        '''
-        Python expression deeply type-checking the current pith against the
-        currently visited container hint described by the passed parameters.
-
-        Parameters
-        ----------
-        hints_meta : HintsMeta
-            Stack of metadata describing all visitable hints currently
-            discovered by this breadth-first search (BFS).
-        hint_or_sane_child : HintOrHintSanifiedData
-            Either the sole child hint of this container *or* **sanified child
-            hint metadata** (i.e., :data:`.HintSanifiedData` object describing
-            this child hint) to be type-checked.
-        '''
-        assert isinstance(hints_meta, HintsMeta), (
-            f'{repr(hints_meta)} not "HintsMeta" object.')
-
-        # Python expression efficiently yielding some item of this pith to be
-        # deeply type-checked against this child hint.
-        pith_child_expr = self._pith_child_expr_format(
-            pith_curr_var_name=hints_meta.pith_curr_var_name)
-
-        # Python expression deeply type-checking this pith against this hint.
-        hints_meta.func_curr_code = (
-            CODE_PEP484585_REITERABLE_OR_SEQUENCE_ARGS_1_format(
-                hint_curr_expr=hints_meta.hint_curr_expr,
-                indent_curr=hints_meta.indent_curr,
-                pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-                pith_curr_var_name=hints_meta.pith_curr_var_name,
-                hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
-                    hint_or_sane=hint_or_sane_child,
-                    indent_level=hints_meta.indent_level_child + 1,
-                    pith_expr=pith_child_expr,
-                    pith_var_name_index=hints_meta.pith_curr_var_name_index,
-                ),
-            )
-        )
 
     # ..................{ ITERATORS                          }..................
     def enumerate_cause_items(self, cause: ViolationCause) -> Enumerator:
@@ -279,39 +214,195 @@ class _HintSignLogicReiterableOrSequenceArgs1(HintLogicABC):
         # Return this iterator.
         return container_enumerator
 
-    # ..................{ PRIVATE ~ getters                  }..................
+    # ..................{ ABSTRACT                           }..................
     @abstractmethod
-    def _get_cause_enumerator_item(
-        self, cause: ViolationCause) -> EnumeratorItem:
+    def make_code(
+        self,
+        hints_meta: HintsMeta,
+        hint_or_sane_child: HintOrHintSanifiedData,
+    ) -> None:
         '''
-        2-tuple ``(item_index, item)`` describing an arbitrary item efficiently
-        accessed from the passed container, satisfying the format of the items
-        yielded by the :func:`enumerate` iterator.
+        Python expression deeply type-checking the current pith against the
+        currently visited container hint described by the passed parameters.
 
         Parameters
         ----------
-        cause: ViolationCause
-            Type-checking violation cause finder to be inspected.
-
-        Returns
-        -------
-        EnumeratorItem
-            2-tuple of the standard form ``(item_index, item)`` returned by the
-            :func:`enumerate` builtin, where:
-
-            * ``item_index`` is the 0-based index of an arbitrary item
-              efficiently accessed from this container.
-            * ``item`` is that item.
+        hints_meta : HintsMeta
+            Stack of metadata describing all visitable hints currently
+            discovered by this breadth-first search (BFS).
+        hint_or_sane_child : HintOrHintSanifiedData
+            Either the sole child hint of this container *or* **sanified child
+            hint metadata** (i.e., :data:`.HintSanifiedData` object describing
+            this child hint) to be type-checked.
         '''
 
         pass
 
-
-class HintLogicReiterableArgs1(_HintSignLogicReiterableOrSequenceArgs1):
+# ....................{ SUBCLASSES ~ iterable              }....................
+class _HintLogicIterable(HintLogicABC):
     '''
-    **Single-argument reiterable hint sign logic** (i.e., dataclass
+    **Single-argument iterable hint logic** (i.e., dataclass encapsulating
+    all low-level Python code snippets and associated metadata required to
+    dynamically generate high-level Python code snippets fully type-checking
+    some kind of :pep:`484`- or :pep:`585`-compliant iterable type hint
+    uniquely identified by a common sign, satisfying at least the
+    :class:`collections.abc.Iterable` protocol subscripted by exactly one child
+    type hint constraining *all* items contained in that container) subclass.
+    '''
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(self) -> None:
+        '''
+        Initialize this hint logic.
+        '''
+
+        # Initialize our superclass.
+        super().__init__(
+            get_cause_enumerator_item=_get_cause_enumerator_item_collection,
+        )
+
+    # ..................{ FACTORIES                          }..................
+    def make_code(
+        self,
+        hints_meta: HintsMeta,
+        hint_or_sane_child: HintOrHintSanifiedData,
+    ) -> None:
+
+        assert isinstance(hints_meta, HintsMeta), (
+            f'{repr(hints_meta)} not "HintsMeta" object.')
+
+        # Python expression evaluating to the "collections.abc.Collection" ABC
+        # as a hidden parameter passed to the current wrapper function.
+        collection_abc_expr = hints_meta.add_func_scope_type_or_types(
+            CollectionABC)
+
+        # Python expression evaluating to the "collections.abc.Sequence" ABC as
+        # a hidden parameter passed to the current wrapper function.
+        sequence_abc_expr = hints_meta.add_func_scope_type_or_types(
+            SequenceABC)
+
+        # Increment the integer suffixing the name of a unique local variable
+        # storing the value of this child pith *BEFORE* defining this variable.
+        hints_meta.pith_curr_var_name_index += 1
+
+        # Name of this local variable.
+        pith_child_var_name = PITH_INDEX_TO_VAR_NAME[
+            hints_meta.pith_curr_var_name_index]
+
+        # Python expression deeply type-checking this pith against this hint.
+        hints_meta.func_curr_code = CODE_PEP484585_ITERABLE_format(
+            hint_curr_expr=hints_meta.hint_curr_expr,
+            indent_curr=hints_meta.indent_curr,
+            pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
+            pith_curr_var_name=hints_meta.pith_curr_var_name,
+            pith_child_var_name=pith_child_var_name,
+            collection_abc_expr=collection_abc_expr,
+            sequence_abc_expr=sequence_abc_expr,
+            hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
+                hint_or_sane=hint_or_sane_child,
+                indent_level=hints_meta.indent_level_child + 1,
+                pith_expr=pith_child_var_name,
+                pith_var_name_index=hints_meta.pith_curr_var_name_index,
+            ),
+        )
+
+# ....................{ SUBCLASSES ~ (reiterable|sequence) }....................
+class _HintLogicReiterableOrSequence(HintLogicABC):
+    '''
+    **Single-argument container hint logic** (i.e., dataclass encapsulating
+    all low-level Python code snippets and associated metadata required to
+    dynamically generate high-level Python code snippets fully type-checking
+    some kind of :pep:`484`- or :pep:`585`-compliant container type hint
+    uniquely identified by a common sign, satisfying at least the
+    :class:`collections.abc.Container` protocol subscripted by exactly one child
+    type hint constraining *all* items contained in that container) subclass.
+
+    Attributes
+    ----------
+    _pith_child_expr_format : CallableStrFormat
+        :meth:`str.format` method bound to a Python expression efficiently
+        yielding the value of the next item (which will then be type-checked)
+        contained in the **current pith** (which is the parent container
+        currently being type-checked). This snippet is expected to contain
+        exactly these format variables:
+
+        * ``{pith_curr_var_name}``, expanding to the name of the local variable
+          whose value is the current pith.
+    '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently called
+    # cache dunder methods. Slotting has been shown to reduce read and write
+    # costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_pith_child_expr_format',
+    )
+
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        _pith_child_expr_format: CallableStrFormat
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(
+        self,
+        pith_child_expr_format: CallableStrFormat,
+        **kwargs
+    ) -> None:
+        '''
+        Initialize this hint logic.
+
+        Parameters
+        ----------
+        See the class docstring for further details. All remaining passed
+        keyword parameters are passed as is to the superclass
+        :meth:`HintLogicABC.__init__` method.
+        '''
+        assert callable(pith_child_expr_format), (
+            f'{repr(pith_child_expr_format)} uncallable.')
+
+        # Initialize our superclass.
+        super().__init__(**kwargs)
+
+        # Classify all passed parameters.
+        self._pith_child_expr_format = pith_child_expr_format
+
+    # ..................{ FACTORIES                          }..................
+    def make_code(
+        self,
+        hints_meta: HintsMeta,
+        hint_or_sane_child: HintOrHintSanifiedData,
+    ) -> None:
+
+        assert isinstance(hints_meta, HintsMeta), (
+            f'{repr(hints_meta)} not "HintsMeta" object.')
+
+        # Python expression deeply type-checking this pith against this hint.
+        hints_meta.func_curr_code = (
+            CODE_PEP484585_REITERABLE_OR_SEQUENCE_format(
+                hint_curr_expr=hints_meta.hint_curr_expr,
+                indent_curr=hints_meta.indent_curr,
+                pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
+                pith_curr_var_name=hints_meta.pith_curr_var_name,
+                hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
+                    hint_or_sane=hint_or_sane_child,
+                    indent_level=hints_meta.indent_level_child + 1,
+                    # Python expression efficiently yielding some item of this
+                    # pith to be deeply type-checked against this child hint.
+                    pith_expr=self._pith_child_expr_format(
+                        pith_curr_var_name=hints_meta.pith_curr_var_name),
+                    pith_var_name_index=hints_meta.pith_curr_var_name_index,
+                ),
+            )
+        )
+
+
+class HintLogicReiterable(_HintLogicReiterableOrSequence):
+    '''
+    **Single-argument reiterable hint logic** (i.e., dataclass
     encapsulating all low-level Python code snippets and associated metadata
-    required to dynamically generate a high-level Python code snippet fully
+    required to dynamically generate high-level Python code snippets fully
     type-checking some kind of :pep:`484`- or :pep:`585`-compliant reiterable
     type hint uniquely identified by a common sign, satisfying at least the
     :class:`collections.abc.Collection` protocol subscripted by exactly one
@@ -322,34 +413,22 @@ class HintLogicReiterableArgs1(_HintSignLogicReiterableOrSequenceArgs1):
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
         '''
-        Initialize this hint sign logic.
+        Initialize this hint logic.
         '''
 
         # Initialize our superclass.
         super().__init__(
+            get_cause_enumerator_item=_get_cause_enumerator_item_reiterable,
             pith_child_expr_format=(
-                CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format),
+                CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR_format),
         )
 
-    # ..................{ PRIVATE ~ getters                  }..................
-    def _get_cause_enumerator_item(
-        self, cause: ViolationCause) -> EnumeratorItem:
 
-        # First item of this container.
-        item = next(iter(cause.pith))
-
-        # 0-based index of this item for readability purposes.
-        item_index = 0
-
-        # Return a 2-tuple "(item_index, item)" describing this item.
-        return (item_index, item)
-
-
-class HintLogicSequenceArgs1(_HintSignLogicReiterableOrSequenceArgs1):
+class HintLogicSequence(_HintLogicReiterableOrSequence):
     '''
-    **Single-argument sequence hint sign logic** (i.e., dataclass encapsulating
+    **Single-argument sequence hint logic** (i.e., dataclass encapsulating
     all low-level Python code snippets and associated metadata required to
-    dynamically generate a high-level Python code snippet fully type-checking
+    dynamically generate high-level Python code snippets fully type-checking
     some kind of :pep:`484`- or :pep:`585`-compliant sequence type hint
     uniquely identified by a common sign, satisfying at least the
     :class:`collections.abc.Sequence` protocol subscripted by exactly one child
@@ -359,30 +438,123 @@ class HintLogicSequenceArgs1(_HintSignLogicReiterableOrSequenceArgs1):
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
         '''
-        Initialize this hint sign logic.
+        Initialize this hint logic.
         '''
 
         # Initialize our superclass.
         super().__init__(
+            get_cause_enumerator_item=_get_cause_enumerator_item_sequence,
             # Code snippets dynamically generated by this logic require
             # pseudo-random integers to type-check random sequence items.
             is_var_random_int_needed=True,
             pith_child_expr_format=(
-                CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format),
+                CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR_format),
         )
 
-    # ..................{ PRIVATE ~ getters                  }..................
-    def _get_cause_enumerator_item(
-        self, cause: ViolationCause) -> EnumeratorItem:
-        assert cause.random_int is not None, (
-            f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+# ..................{ PRIVATE ~ getters                      }..................
+#FIXME: Shift these into a new private utility class. *shrug*
 
-        # 0-based index of this item calculated from this random integer in the
-        # *SAME EXACT WAY* as in the parent @beartype-generated wrapper.
-        item_index = cause.random_int % len(cause.pith)
+def _get_cause_enumerator_item_collection(
+    cause: ViolationCause) -> EnumeratorItem:
+    '''
+    2-tuple ``(item_index, item)`` describing the first item of the passed
+    collection satisfying the format of the :func:`enumerate` iterator.
 
-        # Pseudo-random item with this index in this sequence.
-        item = cause.pith[item_index]
+    Parameters
+    ----------
+    cause: ViolationCause
+        Type-checking violation cause finder to be inspected.
 
-        # Return a 2-tuple "(item_index, item)" describing this item.
-        return (item_index, item)
+    Returns
+    -------
+    EnumeratorItem
+        2-tuple of the standard form ``(item_index, item)`` returned by the
+        :func:`enumerate` builtin, where:
+
+        * ``item_index`` is the 0-based index of the first item of this
+          collection.
+        * ``item`` is that item.
+    '''
+    assert isinstance(cause.pith, CollectionABC), (
+        f'Violation cause {repr(cause)} pith not collection.')
+
+    # Return either...
+    return (
+        # If this cause describes a sequence, a pseudo-random item of this
+        # sequence;
+        _get_cause_enumerator_item_sequence(cause)
+        if isinstance(cause.pith, SequenceABC) else
+        # Else, this cause does *NOT* describe a sequence. Since this cause
+        # describes a collection, this cause *MUST* necessarily describe a
+        # reiterable by elimination. In this case, the first item of this
+        # reiterable.
+        _get_cause_enumerator_item_reiterable(cause)
+    )
+
+
+def _get_cause_enumerator_item_reiterable(
+    cause: ViolationCause) -> EnumeratorItem:
+    '''
+    2-tuple ``(item_index, item)`` describing the first item of the passed
+    reiterable satisfying the format of the :func:`enumerate` iterator.
+
+    Parameters
+    ----------
+    cause: ViolationCause
+        Type-checking violation cause finder to be inspected.
+
+    Returns
+    -------
+    EnumeratorItem
+        2-tuple of the standard form ``(item_index, item)`` returned by the
+        :func:`enumerate` builtin, where:
+
+        * ``item_index`` is the 0-based index of the first item of this
+          reiterable.
+        * ``item`` is that item.
+    '''
+
+    # First item of this container.
+    item = next(iter(cause.pith))
+
+    # 0-based index of this item for readability purposes.
+    item_index = 0
+
+    # Return a 2-tuple "(item_index, item)" describing this item.
+    return (item_index, item)
+
+
+def _get_cause_enumerator_item_sequence(
+    cause: ViolationCause) -> EnumeratorItem:
+    '''
+    2-tuple ``(item_index, item)`` describing a pseudo-random item of the passed
+    sequence satisfying the format of the :func:`enumerate` iterator.
+
+    Parameters
+    ----------
+    cause: ViolationCause
+        Type-checking violation cause finder to be inspected.
+
+    Returns
+    -------
+    EnumeratorItem
+        2-tuple of the standard form ``(item_index, item)`` returned by the
+        :func:`enumerate` builtin, where:
+
+        * ``item_index`` is the 0-based index of a pseudo-random item of this
+          sequence.
+        * ``item`` is that item.
+    '''
+
+    assert cause.random_int is not None, (
+        f'Violation cause {repr(cause)} pseudo-random integer is "None".')
+
+    # 0-based index of this item calculated from this random integer in the
+    # *SAME EXACT WAY* as in the parent @beartype-generated wrapper.
+    item_index = cause.random_int % len(cause.pith)
+
+    # Pseudo-random item with this index in this sequence.
+    item = cause.pith[item_index]
+
+    # Return a 2-tuple "(item_index, item)" describing this item.
+    return (item_index, item)

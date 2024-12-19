@@ -457,13 +457,19 @@ FrozenSetTypes = FrozenSet[type]
 PEP-compliant type hint matching *any* frozen set of zero or more types.
 '''
 
-# ....................{ SET ~ set                          }....................
+# ....................{ TYPE                               }....................
+AbstractSetTypes = AbstractSet[type]
+'''
+:pep:`585`-compliant type hint matching a set of zero or more classes.
+'''
+
+
 SetTypes = Set[type]
 '''
 PEP-compliant type hint matching *any* set of zero or more types.
 '''
 
-# ....................{ TUPLE : type                       }....................
+
 TupleTypes = Tuple[type, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of zero or more classes.
@@ -487,7 +493,7 @@ Specifically, this hint matches either:
 '''
 
 
-SetOrTupleTypes = Union[AbstractSet[type], TupleTypes]
+SetOrTupleTypes = Union[TupleTypes, AbstractSetTypes]
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
 '''
@@ -496,6 +502,13 @@ PEP-compliant type hint matching a set *or* tuple of zero or more types.
 TypeOrTupleTypes = Union[type, TupleTypes]
 '''
 PEP-compliant type hint matching either a type *or* tuple of zero or more types.
+'''
+
+
+TypeOrSetOrTupleTypes = Union[type, TupleTypes, AbstractSetTypes]
+'''
+PEP-compliant type hint matching either a type *or* set or tuple of zero or more
+types.
 '''
 
 

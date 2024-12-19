@@ -179,7 +179,7 @@ def callable_cached(func: CallableT) -> CallableT:
 
         See Also
         --------
-        :func:`callable_cached`
+        :func:`.callable_cached`
             Further details.
         '''
 
@@ -219,7 +219,7 @@ def callable_cached(func: CallableT) -> CallableT:
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
             if exception:
-                raise exception  # pyright: ignore[reportGeneralTypeIssues]
+                raise exception  # pyright: ignore
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
 
@@ -431,7 +431,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
             if exception:
-                raise exception  # pyright: ignore[reportGeneralTypeIssues]
+                raise exception  # pyright: ignore
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
 

@@ -13,25 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPepException
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
-from beartype._check.code.cls.hintmeta import HintMeta
-from beartype._check.code.cls.hintsmeta import HintsMeta
-from beartype._check.code.codemagic import (
-    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
-from beartype._check.code.codescope import add_func_scope_type
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 from beartype._check.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get)
-from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-)
+    HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
-from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg)
 from beartype._util.hint.pep.utilpepget import (
@@ -88,12 +75,8 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
 
     # Python expression evaluating to the origin type of this hint as a hidden
     # beartype-specific parameter injected into the signature of this wrapper.
-    hints_meta.hint_curr_expr = add_func_scope_type(
-        # Origin type underlying this hint.
-        cls=get_hint_pep_origin_type_isinstanceable(hint),
-        func_scope=hints_meta.func_wrapper_scope,
-        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-    )
+    hints_meta.hint_curr_expr = hints_meta.add_func_scope_type_or_types(
+        get_hint_pep_origin_type_isinstanceable(hint))
     # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
     # Sign uniquely identifying this hint.
@@ -141,28 +124,27 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     # * Shallowly type-check the type of the current pith.
     # * Deeply type-check an efficiently retrievable item of this pith.
     if hint_or_sane_child is not None:
-        # Hint sign logic type-checking this sign if any *OR* "None" otherwise.
-        hint_sign_logic = (
-            HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC_get(hint_sign))
+        # Hint logic type-checking this sign if any *OR* "None" otherwise.
+        hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(hint_sign)
 
-        # If *NO* hint sign logic type-checks this sign, raise an exception.
-        # Note that this logic should *ALWAYS* be non-"None". Nonetheless,
-        # assumptions make a donkey.
-        if hint_sign_logic is None:  # pragma: no cover
+        # If *NO* hint logic type-checks this sign, raise an exception.
+        #
+        # Note that this logic should *ALWAYS* be non-"None". Nonetheless...
+        if hint_logic is None:  # pragma: no cover
             raise BeartypeDecorHintPepException(
                 f'{hints_meta.exception_prefix}'
                 f'1-argument container type hint {repr(hint)} '
                 f'beartype sign {repr(hint_sign)} '
                 f'code generation logic not found.'
             )
-        # Else, some hint sign logic type-checks this sign.
+        # Else, some hint logic type-checks this sign.
 
         # Python expression deeply type-checking this pith against this hint.
-        hint_sign_logic.make_code(
+        hint_logic.make_code(
             hints_meta=hints_meta, hint_or_sane_child=hint_or_sane_child)
 
         # Record whether this expression requires a pseudo-random integer.
         hints_meta.is_var_random_int_needed |= (
-            hint_sign_logic.is_var_random_int_needed)
+            hint_logic.is_var_random_int_needed)
     # Else, this child hint is ignorable. In this case, fallback to trivial code
     # shallowly type-checking this pith as an instance of this origin type.

@@ -144,7 +144,8 @@ This frozen set intentionally excludes:
 '''
 
 # ....................{ SETS ~ args : container            }....................
-HINT_SIGNS_MONOITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
+#FIXME: Reference below, please.
+HINT_SIGNS_MONOITERABLE: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignContainer,
     HintSignIterable,
@@ -154,7 +155,7 @@ HINT_SIGNS_MONOITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
 Frozen set of all **standard single-argument monoiterable signs** (i.e.,
 arbitrary objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type
 fehints subscripted by exactly one child type hint constraining *all* items of
-compliant collections, which necessarily satisfy the
+compliant collections, which may or may not satisfy the
 :class:`collections.abc.Iterable` protocol with guaranteed :math:`O(1)`
 read-only access to *only* the first collection item but which are *not*
 necessarily safely reiterable).
@@ -172,7 +173,7 @@ reiteration such that each call of the:
 '''
 
 
-HINT_SIGNS_REITERABLE_ARGS_1: _FrozenSetHintSign = frozenset((
+HINT_SIGNS_REITERABLE: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignAbstractSet,
     HintSignCollection,
@@ -215,7 +216,7 @@ thus preserved (rather than modified) by reiteration such that each call of the:
 '''
 
 
-HINT_SIGNS_SEQUENCE_ARGS_1: _FrozenSetHintSign = frozenset((
+HINT_SIGNS_SEQUENCE: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignList,
     HintSignMutableSequence,
@@ -280,8 +281,8 @@ This set intentionally excludes the:
 
 
 HINT_SIGNS_CONTAINER_ARGS_1: _FrozenSetHintSign = (
-    HINT_SIGNS_REITERABLE_ARGS_1 |
-    HINT_SIGNS_SEQUENCE_ARGS_1
+    HINT_SIGNS_REITERABLE |
+    HINT_SIGNS_SEQUENCE
 )
 '''
 Frozen set of all **standard single-argument container signs** (i.e., arbitrary
@@ -660,8 +661,8 @@ shallow type-checking code).
 
 HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
     HINT_SIGNS_MAPPING |
-    HINT_SIGNS_REITERABLE_ARGS_1 |
-    HINT_SIGNS_SEQUENCE_ARGS_1 |
+    HINT_SIGNS_REITERABLE |
+    HINT_SIGNS_SEQUENCE |
     frozenset((
         # ..................{ PEP 484                        }..................
         # Note that the "NoReturn" type hint is invalid in almost all possible

@@ -15,10 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Tuple,
 )
-from beartype._check.code.cls.hintsmeta import HintsMeta
-from beartype._check.code.codemagic import (
-    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
-from beartype._check.code.codescope import add_func_scope_types
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none)
 from beartype._check.metadata.metasane import (
@@ -231,11 +228,8 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
                 # doing so by falling back to the usual approach. See also this
                 # relevant self-StackOverflow post:
                 #       https://stackoverflow.com/a/40054478/2809027
-                hint_curr_expr=add_func_scope_types(
-                    types=hint_childs_nonpep,
-                    func_scope=hints_meta.func_wrapper_scope,
-                    exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-                ),
+                hint_curr_expr=hints_meta.add_func_scope_type_or_types(
+                    hint_childs_nonpep),
             ))
 
     # ....................{ PEP                            }....................

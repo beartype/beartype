@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.logic.logmap import (
-    HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC)
+    HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
@@ -29,6 +29,9 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
+from collections.abc import (
+    Collection as CollectionABC,
+)
 
 # ....................{ FINDERS                            }....................
 def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
@@ -98,49 +101,53 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         return cause
     # Else, this container is non-empty *AND* this child hint is unignorable.
 
-    # Hint sign logic type-checking this sign if any *OR* "None" otherwise.
-    hint_sign_logic = HINT_SIGN_PEP484585_CONTAINER_ARGS_1_TO_LOGIC.get(
-        cause.hint_sign)
+    # Hint logic type-checking this sign if any *OR* "None" otherwise.
+    hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(cause.hint_sign)
 
-    # If *NO* hint sign logic type-checks this sign, raise an exception. Note
+    # If *NO* hint logic type-checks this sign, raise an exception. Note
     # that this logic should *ALWAYS* be non-"None". Nonetheless, assumptions.
-    if hint_sign_logic is None:  # pragma: no cover
+    if hint_logic is None:  # pragma: no cover
         raise _BeartypeCallHintPepRaiseException(
             f'{cause.exception_prefix}1-argument container type hint '
             f'{repr(cause.hint)} beartype sign {repr(cause.hint_sign)} '
             f'code generation logic not found.'
         )
-    # Else, some hint sign logic type-checks this sign.
+    # Else, some hint logic type-checks this sign.
 
-    # Arbitrary iterator over this container configured by this beartype
-    # configuration satisfying the enumerate() protocol. This iterator yields
-    # zero or more 2-tuples of the form "(item_index, item)", where:
-    # * "item_index" is the 0-based index of each item.
-    # * "item" is an arbitrary item of this container.
-    pith_enumerator = hint_sign_logic.enumerate_cause_items(cause)
+    # If this pith is a collection, this pith is at least safely reiterable here
+    # and thus deeply introspectable. In this case...
+    if isinstance(cause.pith, CollectionABC):
+        # Arbitrary iterator over this container configured by this beartype
+        # configuration satisfying the enumerate() protocol. This iterator
+        # yields zero or more 2-tuples of the form "(item_index, item)", where:
+        # * "item_index" is the 0-based index of each item.
+        # * "item" is an arbitrary item of this container.
+        pith_enumerator = hint_logic.enumerate_cause_items(cause)
 
-    # For each enumerated item of this container...
-    for pith_item_index, pith_item in pith_enumerator:
-        # Deep output cause describing the failure of this item to satisfy this
-        # child hint if this item violates this child hint *OR* "None" otherwise
-        # (i.e., if this item satisfies this child hint).
-        cause_deep = cause.permute(
-            hint_or_sane=hint_or_sane_child, pith=pith_item).find_cause()
+        # For each enumerated item of this container...
+        for pith_item_index, pith_item in pith_enumerator:
+            # Deep output cause describing the failure of this item to satisfy
+            # this child hint if this item violates this child hint *OR* "None"
+            # otherwise (i.e., if this item satisfies this child hint).
+            cause_deep = cause.permute(
+                hint_or_sane=hint_or_sane_child, pith=pith_item).find_cause()
 
-        # If this item is the cause of this failure...
-        if cause_deep.cause_str_or_none is not None:
-            # Human-readable substring prefixing this failure with metadata
-            # describing this item.
-            cause_deep.cause_str_or_none = (
-                f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
-                f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
-                f'item {cause_deep.cause_str_or_none}'
-            )
+            # If this item is the cause of this failure...
+            if cause_deep.cause_str_or_none is not None:
+                # Human-readable substring prefixing this failure with metadata
+                # describing this item.
+                cause_deep.cause_str_or_none = (
+                    f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
+                    f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
+                    f'item {cause_deep.cause_str_or_none}'
+                )
 
-            # Return this cause.
-            return cause_deep
-        # Else, this item is *NOT* the cause of this failure. Silently continue
-        # to the next item.
+                # Return this cause.
+                return cause_deep
+            # Else, this item is *NOT* the cause of this failure. Silently
+            # continue to the next item.
+    # Else, this pith is *NOT* collection and thus *NOT* safely reiterable here.
+    # We have *NO* recourse but to assume this pith deeply satisfies this hint.
 
     # Return this cause as is; all items of this container are valid, implying
     # this container to deeply satisfy this hint.
