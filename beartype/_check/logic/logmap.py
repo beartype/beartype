@@ -16,7 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Dict
 from beartype._check.logic.logcls import (
-    _HintLogicReiterableOrSequence,
+    HintLogicABC,
+    HintLogicQuasiiterable,
     HintLogicReiterable,
     HintLogicSequence,
 )
@@ -24,8 +25,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 
 # ....................{ MAPPINGS                           }....................
 # Initialized by the _init() function defined below.
-HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC: (
-    Dict[HintSign, _HintLogicReiterableOrSequence]) = {}
+HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC: Dict[HintSign, HintLogicABC] = {}
 '''
 Dictionary mapping from the sign uniquely identifying each applicable kind of
 **standard single-argument container type hint** (i.e., :pep:`484`- or
@@ -51,34 +51,33 @@ def _init() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer function-specific imports.
     from beartype._data.hint.pep.sign.datapepsignset import (
-        HINT_SIGNS_MONOITERABLE,
+        HINT_SIGNS_QUASIITERABLE,
         HINT_SIGNS_REITERABLE,
         HINT_SIGNS_SEQUENCE,
     )
 
     # ....................{ DEFINE                         }....................
     # Hint sign logic singletons.
-    HINT_LOGIC_REITERABLE = HintLogicReiterable()
-    HINT_LOGIC_SEQUENCE = HintLogicSequence()
+    hint_logic_quasiiterable = HintLogicQuasiiterable()
+    hint_logic_reiterable = HintLogicReiterable()
+    hint_logic_sequence = HintLogicSequence()
 
     # For each sign identifying a single-argument uniiterable hint...
-    for hint_sign in HINT_SIGNS_MONOITERABLE:
-        pass
-    #FIXME: Uncomment *AFTER* supported, please.
-    #     # Map this sign to this logic dataclass.
-    #     HINT_PEP484585_CONTAINER_TO_LOGIC[hint_sign] = (
-    #         HINT_LOGIC_MONOITERABLE)
+    for hint_sign in HINT_SIGNS_QUASIITERABLE:
+        # Map this sign to this logic dataclass.
+        HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC[hint_sign] = (
+            hint_logic_quasiiterable)
 
     # For each sign identifying a single-argument reiterable hint...
     for hint_sign in HINT_SIGNS_REITERABLE:
         # Map this sign to this logic dataclass.
         HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC[hint_sign] = (
-            HINT_LOGIC_REITERABLE)
+            hint_logic_reiterable)
 
     # For each sign identifying a single-argument sequence hint...
     for hint_sign in HINT_SIGNS_SEQUENCE:
         # Map this sign to this logic dataclass.
-        HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC[hint_sign] = HINT_LOGIC_SEQUENCE
+        HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC[hint_sign] = hint_logic_sequence
 
 
 # Initialize this submodule.

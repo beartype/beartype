@@ -89,6 +89,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # "None" and an unannotated return with a sentinel.
     hint_insane: Hint = decor_meta.func_arg_name_to_hint_get(  # pyright: ignore
         ARG_NAME_RETURN, SENTINEL)
+    # print(f'func {decor_meta} return hint_insane: {hint_insane}')
 
     # If this return is unannotated, silently reduce to a noop.
     if hint_insane is SENTINEL:

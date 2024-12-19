@@ -104,6 +104,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignKeysView,
         HintSignHashable,
         HintSignItemsView,
+        HintSignIterable,
         HintSignList,
         HintSignMapping,
         HintSignMatch,
@@ -174,6 +175,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Collection as CollectionABC,
         Hashable as HashableABC,
         ItemsView as ItemsViewABC,
+        Iterable as IterableABC,
         KeysView as KeysViewABC,
         Mapping as MappingABC,
         MutableMapping as MutableMappingABC,
@@ -483,7 +485,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ COLLECTION                         }................
+        # ................{ CONTAINER ~ collection             }................
         # Note that:
         # * Beartype type-checks collections in an optimal manner by
         #   explicitly covering the proper subset of collections that are:
@@ -516,10 +518,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPithSatisfiedMetadata(()),
                 # Set of arbitrary items.
                 HintPithSatisfiedMetadata({
-                    'The boat fled on,', '—the boiling torrent drove,—', 82,}),
+                    b'The boat fled on,', '—the boiling torrent drove,—', 82,}),
                 # Tuple of arbitrary items.
                 HintPithSatisfiedMetadata((
-                    'The shattered mountain', 'overhung the sea,', 79,)),
+                    'The shattered mountain', b'overhung the sea,', 79,)),
                 # Integer constant.
                 HintPithUnsatisfiedMetadata(0xFEEDBEEF),
                 # Synchronous generator.
@@ -536,7 +538,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             piths_meta=(
                 # Set of arbitrary objects.
                 HintPithSatisfiedMetadata({
-                    'The crags closed round', 'with black and jaggèd arms,'}),
+                    b'The crags closed round', 'with black and jaggèd arms,'}),
                 # Synchronous generator.
                 HintPithUnsatisfiedMetadata(sync_generator),
             ),
@@ -549,11 +551,30 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=CollectionABC,
             piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Empty tuple.
+                HintPithSatisfiedMetadata(()),
                 # Set of strings.
                 HintPithSatisfiedMetadata({
                     'The shattered mountain', 'overhung the sea,'}),
+                # Tuple of strings.
+                HintPithSatisfiedMetadata((
+                    'Forest on forest', 'hung about his head',)),
                 # Synchronous generator.
                 HintPithUnsatisfiedMetadata(sync_generator),
+                # Set of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith={b"Not so much life as on a summer's day",},
+                    # Match that the exception message raised for this tuple...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves this item as is.
+                        r"\bNot so much life as on a summer's day",
+                    ),
+                ),
                 # Tuple of byte strings.
                 HintPithUnsatisfiedMetadata(
                     pith=(b'And faster still, beyond all human speed,',),
@@ -607,6 +628,160 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                         r'\b[Ll]ist index 0 item\b',
                         r'\b[Tt]uple index 0 item\b',
                         r'\bYawned, and amid its slant and winding depths\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ CONTAINER ~ iterable               }................
+        # Note that:
+        # * Beartype type-checks iterables in an optimal manner by
+        #   explicitly covering the proper subset of iterables that are:
+        #   * Sequences (e.g., lists). If an iterable is a sequence, beartype
+        #     prefers type-checking a random item for maximal coverage.
+        #   * Reiterables (e.g., sets). If an iterable is *NOT* a sequence but
+        #     is a reiterable, beartype falls back to type-checking only the
+        #     first item.
+        #   Ergo, both sequences and reiterables *MUST* be tested below.
+        # * Iterables define *ONLY* the __iter__() dunder method. Reasonable
+        #   candidates for objects that are *NOT* iterables include:
+        #   * Numeric scalars, which fail to define all three dunder methods.
+        #     However, note that textual scalars (including both strings and
+        #     byte strings) are valid sequences and thus valid collections.
+
+        # Unsubscripted "Iterable" attribute.
+        HintPepMetadata(
+            hint=Iterable,
+            pep_sign=HintSignIterable,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=IterableABC,
+            is_args=IS_ARGS_HIDDEN,
+            is_typevars=IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Empty tuple.
+                HintPithSatisfiedMetadata(()),
+                # Set of arbitrary items.
+                HintPithSatisfiedMetadata({
+                    'Deep in the shady sadness of', b'a vale', 24.01}),
+                # Tuple of arbitrary items.
+                HintPithSatisfiedMetadata((
+                    b'Far sunken from', 'the healthy breath of morn,', 5,)),
+                # Synchronous generator.
+                HintPithSatisfiedMetadata(sync_generator),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(0xBEEFBABE),
+            ),
+        ),
+
+        # Iterable of ignorable items.
+        HintPepMetadata(
+            hint=Iterable[object],
+            pep_sign=HintSignIterable,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=IterableABC,
+            piths_meta=(
+                # Set of arbitrary objects.
+                HintPithSatisfiedMetadata({
+                    b'Far from the fiery noon,', "and eve's one star,", 7708}),
+                # Floating-point constant.
+                HintPithUnsatisfiedMetadata(6.9162),
+            ),
+        ),
+
+        # Iterable of unignorable items.
+        HintPepMetadata(
+            hint=Iterable[str],
+            pep_sign=HintSignIterable,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=IterableABC,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Empty tuple.
+                HintPithSatisfiedMetadata(()),
+                # Set of strings.
+                HintPithSatisfiedMetadata({
+                    "Sat gray-hair'd Saturn,", 'quiet as a stone,',}),
+                # Tuple of strings.
+                HintPithSatisfiedMetadata((
+                    'Like cloud on cloud.', 'No stir of air was there,',)),
+                # Synchronous generator.
+                HintPithSatisfiedMetadata(sync_generator),
+                # Set of byte strings.
+                #
+                # Note that sets do *NOT* currently preserve insertion order.
+                # Ergo, the *ONLY* set that can be deterministically tested as
+                # violating a hint is a set containing a single item.
+                HintPithUnsatisfiedMetadata(
+                    pith={b'Robs not one light seed',},
+                    # Match that the exception message raised for this tuple...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves this item as is.
+                        r'\bRobs not one light seed',
+                    ),
+                ),
+                # Tuple of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=(b'Still as the silence round about his lair;',),
+                    # Match that the exception message raised for this tuple...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Tt]uple index 0 item\b',
+                        # Preserves this item as is.
+                        r'\bStill as the silence round about his lair',
+                    ),
+                ),
+                # Boolean constant.
+                HintPithUnsatisfiedMetadata(True),
+            ),
+        ),
+
+        # Generic iterable.
+        HintPepMetadata(
+            hint=Iterable[T],
+            pep_sign=HintSignIterable,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=IterableABC,
+            is_typevars=True,
+            piths_meta=(
+                # Set of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    'But where the dead leaf fell,', 'there did it rest.',}),
+                # Complex constant.
+                HintPithUnsatisfiedMetadata(52 + 8j),
+            ),
+        ),
+
+        # Iterable of nested iterables of unignorable items.
+        HintPepMetadata(
+            hint=Iterable[Iterable[str]],
+            pep_sign=HintSignIterable,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=IterableABC,
+            piths_meta=(
+                # Set of frozen sets of strings.
+                HintPithSatisfiedMetadata({frozenset((
+                    'A stream went voiceless by,', 'still deadened more',)),}),
+                # Synchronous generator.
+                HintPithSatisfiedMetadata(sync_generator),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(0xDEADCAFE),
+                # List of tuples of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[(b'By reason of his fallen divinity',),],
+                    # Match that the exception message raised for this list
+                    # declares all items on the path to the item violating this
+                    # hint.
+                    exception_str_match_regexes=(
+                        r'\b[Ll]ist index 0 item\b',
+                        r'\b[Tt]uple index 0 item\b',
+                        r'\bBy reason of his fallen divinity\b',
                     ),
                 ),
             ),

@@ -28,6 +28,7 @@ from beartype._check.metadata.metasane import (
     unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
@@ -156,13 +157,13 @@ from collections.abc import Callable
 def reduce_hint(
     # Mandatory parameters.
     hint: Hint,
-    conf: BeartypeConf,
 
     # Optional parameters.
-    decor_meta: Optional[BeartypeDecorMeta] = None,
-    pith_name: Optional[str] = None,
     arg_kind: Optional[ArgKind] = None,
     cls_stack: TypeStack = None,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    decor_meta: Optional[BeartypeDecorMeta] = None,
+    pith_name: Optional[str] = None,
     typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     exception_prefix: str = '',
 ) -> HintOrHintSanifiedData:
@@ -188,9 +189,25 @@ def reduce_hint(
     ----------
     hint : Hint
         Type hint to be possibly reduced.
-    conf : BeartypeConf
+    arg_kind : Optional[ArgKind]
+        Either:
+
+        * If this hint annotates a parameter of some callable, that parameter's
+          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
+          syntactic class of that parameter, constraining how the callable
+          declaring that parameter requires that parameter to be passed).
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
+    conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
+        all settings configuring type-checking for the passed object). Defaults
+        to the default beartype configuration.
     decor_meta : Optional[BeartypeDecorMeta], optional
         Either:
 
@@ -207,21 +224,6 @@ def reduce_hint(
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
 
-        Defaults to :data:`None`.
-    arg_kind : Optional[ArgKind]
-        Either:
-
-        * If this hint annotates a parameter of some callable, that parameter's
-          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
-          syntactic class of that parameter, constraining how the callable
-          declaring that parameter requires that parameter to be passed).
-        * Else, :data:`None`.
-
-        Defaults to :data:`None`.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
     typevar_to_hint : TypeVarToHint, optional
         **Type variable lookup table** (i.e., immutable dictionary mapping from

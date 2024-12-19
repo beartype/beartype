@@ -71,34 +71,37 @@ current pith against a **collection type hint** (i.e., either a
 '''
 
 
-#FIXME: Actually use us up, please.
-CODE_PEP484585_ITERABLE = f'''(
+#  this iterable is empty *OR*...
+# {{indent_curr}}    (not {{pith_curr_var_name}} or 
+
+CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # True only if this pith is of this iterable type *AND*...
 {{indent_curr}}    isinstance({{pith_curr_assign_expr}}, {{hint_curr_expr}}) and
-{{indent_curr}}    # True only if either this iterable is empty *OR*...
-{{indent_curr}}    (not {{pith_curr_var_name}} or (
-{{indent_curr}}            # If this iterable is a non-empty sequence, localize
-{{indent_curr}}            # a pseudo-random item of this sequence;
-{{indent_curr}}            (isinstance({{pith_curr_var_name}}, {{sequence_abc_expr}}) and
-{{indent_curr}}             ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
-{{indent_curr}}            # If this iterable is a non-empty collection, this
-{{indent_curr}}            # iterable must by elimination be reiterable. In this
-{{indent_curr}}            # case, localize the first item of this reiterable;
-{{indent_curr}}            (isinstance({{pith_curr_var_name}}, {{collection_abc_expr}}) and
-{{indent_curr}}             ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}})
-{{indent_curr}}            # Else, this iterable is neither a sequence nor reiterable.
-{{indent_curr}}            # Since this implies this iterable to *NOT* be safely
-{{indent_curr}}            # iterable at runtime, silently assume all items of this
-{{indent_curr}}            # iterable to deeply satisfy this hint. It is what it is.
+{{indent_curr}}    # True only if either this iterable is not a collection *OR*...
+{{indent_curr}}    # Iterables that are *NOT* collections are *NOT* safely
+{{indent_curr}}    # reiterable at runtime. Silently assume all items of this
+{{indent_curr}}    # iterable to deeply satisfy this hint. It is what it is.
+{{indent_curr}}    (not isinstance({{pith_curr_var_name}}, {{collection_abc_expr}}) or
+{{indent_curr}}     # This iterable is an empty collection *OR*...
+{{indent_curr}}     not {{pith_curr_var_name}} or (
+{{indent_curr}}        # If this non-empty collection is a sequence, localize a
+{{indent_curr}}        # pseudo-random item of this sequence;
+{{indent_curr}}        (
+{{indent_curr}}            isinstance({{pith_curr_var_name}}, {{sequence_abc_expr}}) and
+{{indent_curr}}            ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
+{{indent_curr}}        # Else, this non-empty collection *MUST* be reiterable. In this
+{{indent_curr}}        # case, localize the first item of this reiterable;
+{{indent_curr}}        ) or ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
 {{indent_curr}}        # True only if this item satisfies this hint.
 {{indent_curr}}        ) and {{hint_child_placeholder}}
 {{indent_curr}}    )
 {{indent_curr}})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
-current pith against an **iterable type hint** (i.e., either a
+current pith against an **quasiiterable type hint** (i.e., either a
 :pep:`484`-compliant ``typing.Iterable[...]`` type hint *or* a
-:pep:`585`-compliant ``collections.abc.Iterable[...]`` type hint).
+:pep:`585`-compliant ``collections.abc.Iterable[...]`` type hint matching a
+potentially unsafe container that is *not* guaranteed to be safely reiterable).
 '''
 
 # ....................{ CODE ~ generic                     }....................
@@ -361,8 +364,8 @@ CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR_format: CallableStrFormat = (
     CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR.format)
 CODE_PEP484585_COLLECTION_format: CallableStrFormat = (
     CODE_PEP484585_COLLECTION.format)
-CODE_PEP484585_ITERABLE_format: CallableStrFormat = (
-    CODE_PEP484585_ITERABLE.format)
+CODE_PEP484585_QUASIITERABLE_format: CallableStrFormat = (
+    CODE_PEP484585_QUASIITERABLE.format)
 CODE_PEP484585_GENERIC_CHILD_format: CallableStrFormat = (
     CODE_PEP484585_GENERIC_CHILD.format)
 CODE_PEP484585_MAPPING_format: CallableStrFormat = (

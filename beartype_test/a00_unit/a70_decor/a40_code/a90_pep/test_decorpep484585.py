@@ -418,13 +418,13 @@ def test_decor_sync_generator() -> None:
         @beartype
         def but_to_jump_forth_into_the_deep(
             said_the: Union[str, float], bigger_greener_bat: Union[str, int],
-        ) -> Pep585Iterable[Union[str, float], None, None]:
+        ) -> Pep585Iterable[Union[str, float]]:
             yield said_the + bigger_greener_bat
 
         @beartype
         def not_to_grind_or_to_bind_or_to_seek(
             said_the: Union[str, float], bigger_greener_bat: Union[str, int],
-        ) -> Pep585Iterator[Union[str, float], None, None]:
+        ) -> Pep585Iterator[Union[str, float]]:
             yield said_the + bigger_greener_bat
 
         # ....................{ PASS                       }....................

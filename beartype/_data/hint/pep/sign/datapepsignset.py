@@ -144,15 +144,14 @@ This frozen set intentionally excludes:
 '''
 
 # ....................{ SETS ~ args : container            }....................
-#FIXME: Reference below, please.
-HINT_SIGNS_MONOITERABLE: _FrozenSetHintSign = frozenset((
+HINT_SIGNS_QUASIITERABLE: _FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignContainer,
     HintSignIterable,
     HintSignReversible,
 ))
 '''
-Frozen set of all **standard single-argument monoiterable signs** (i.e.,
+Frozen set of all **standard single-argument quasi-iterable signs** (i.e.,
 arbitrary objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type
 fehints subscripted by exactly one child type hint constraining *all* items of
 compliant collections, which may or may not satisfy the
@@ -161,15 +160,17 @@ read-only access to *only* the first collection item but which are *not*
 necessarily safely reiterable).
 
 Equivalently, this frozen set only matches the proper subset of all containers
-that are **monoiterable** (i.e., that may *not* necessarily be safely reiterated
-multiple times, where "safely" implies side effect-free idempotency).
-Monoiterable containers may thus be modified (rather than preserved) by
+that are **quasi-iterable** (i.e., that may *not* necessarily be safely
+reiterated multiple times, where "safely" implies side effect-free idempotency).
+Quasi-iterable containers may thus be modified (rather than preserved) by
 reiteration such that each call of the:
 
-* :func:`iter` builtin passed the same monoiterable *could* effectively create
+* :func:`iter` builtin passed the same quasi-iterable *could* effectively create
   and return a different iterator.
-* :func:`next` builtin passed the same monoiterable *could* nondeterministically
-  return different items in a different order.
+* :func:`next` builtin passed the same quasi-iterable *could*
+  nondeterministically return different items in a different order, including
+  *no* items at all in the case of exhaustible one-time-only iterators (e.g.,
+  generators).
 '''
 
 
@@ -281,6 +282,7 @@ This set intentionally excludes the:
 
 
 HINT_SIGNS_CONTAINER_ARGS_1: _FrozenSetHintSign = (
+    HINT_SIGNS_QUASIITERABLE |
     HINT_SIGNS_REITERABLE |
     HINT_SIGNS_SEQUENCE
 )
@@ -661,6 +663,7 @@ shallow type-checking code).
 
 HINT_SIGNS_SUPPORTED_DEEP: _FrozenSetHintSign = (
     HINT_SIGNS_MAPPING |
+    HINT_SIGNS_QUASIITERABLE |
     HINT_SIGNS_REITERABLE |
     HINT_SIGNS_SEQUENCE |
     frozenset((

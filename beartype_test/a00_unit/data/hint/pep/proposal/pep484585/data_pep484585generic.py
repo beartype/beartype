@@ -22,7 +22,6 @@ from beartype._data.hint.datahinttyping import (
     T,
     U,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype_test.a00_unit.data.data_type import Class
 from collections.abc import (
     Callable as CallableABC,
@@ -283,21 +282,11 @@ class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, Pep585List[U]):
     pass
 
 
-# If the active Python interpreter targets Python >= 3.9 and thus behaves sanely
-# with respect to complex subscripted generics, define complex subscripted
-# generics. For unknown and presumably irrelevant reasons, Python 3.8 raises
-# exceptions here. *shrug*
-if IS_PYTHON_AT_LEAST_3_9:
-    class Pep585GenericUIntT(Pep484585GenericUUST[U, int, T]):
-        '''
-        :pep:`585`-compliant generic list parametrized by two unconstrained type
-        variables, one of which is repeated twice across two different
-        pseudo-superclasses at different hierarchical nesting levels.
-        '''
+class Pep585GenericUIntT(Pep484585GenericUUST[U, int, T]):
+    '''
+    :pep:`585`-compliant generic list parametrized by two unconstrained type
+    variables, one of which is repeated twice across two different
+    pseudo-superclasses at different hierarchical nesting levels.
+    '''
 
-        pass
-# Else, the active Python interpreter targets Python 3.8 and thus behaves
-# insanely with respect to complex subscripted generics. In this case, fallback
-# to reducing these generics to simply "None". *shrug*
-else:
-    Pep585GenericUIntT = None
+    pass
