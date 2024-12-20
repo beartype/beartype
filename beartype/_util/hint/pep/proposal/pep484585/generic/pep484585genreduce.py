@@ -59,14 +59,14 @@ def reduce_hint_pep484585_generic_subscripted(
     hint_reduced = _reduce_hint_pep484585_generic_io(
         hint=hint, exception_prefix=exception_prefix)
 
-    # If this hint was *NOT* reduced to a unsubscripted generic from this
+    # If this hint was *NOT* reduced to an unsubscripted generic from this
     # subscripted IO generic...
     if hint is hint_reduced:
         # Unsubscripted generic underlying this subscripted generic.
         hint_reduced = get_hint_pep_origin(
             hint=hint, exception_prefix=exception_prefix)
-    # Else, this hint was reduced an subscripted generic from this subscripted
-    # IO generic. In this case, preserve the above reduction.
+    # Else, this hint was reduced to an unsubscripted generic from this
+    # subscripted IO generic. In this case, preserve this reduction.
 
     #FIXME: "typevar_to_hint" here! See reduce_hint_pep695_subscripted() for
     #inspiration, please.

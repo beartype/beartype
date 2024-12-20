@@ -867,8 +867,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484ListListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=Pep484ListListStr,
+            warning_type=PEP585_DEPRECATION_WARNING,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of list of string constants.
@@ -936,36 +936,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPithSatisfiedMetadata(Pep484GenericST()),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
-                    'Token welfare’s malformed keening fare, keenly despaired'
-                ),
+                    'Token welfare’s malformed keening fare, keenly despaired'),
             ),
         ),
 
-        #FIXME: Undocument *AFTER* we deeply type-check "Iterable". *sigh*
-        # # Generic subclassing a single parametrized "typing" type, itself
-        # # parametrized by the same type variables in the same order.
-        # HintPepMetadata(
-        #     hint=Pep484IterableTContainerT[str],
-        #     pep_sign=HintSignPep484585GenericSubscripted,
-        #     generic_type=Pep484IterableTContainerT,
-        #     # is_typevars=True,
-        #     # is_type_typing=True,
-        #     # is_typing=False,
-        #     piths_meta=(
-        #         # Generic container whose items satisfy this child hint.
-        #         HintPithSatisfiedMetadata(Pep484IterableTContainerT((
-        #             'Reclined his languid head,', 'his limbs did rest,',))),
-        #         # Generic container whose items violate this child hint.
-        #         HintPithUnsatisfiedMetadata(Pep484IterableTContainerT((
-        #             b'Diffused and motionless,', b'on the smooth brink',))),
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata(
-        #             'Token welfare’s malformed keening fare, keenly despaired'
-        #         ),
-        #     ),
-        # ),
-
-        # ................{ GENERICS ~ multiple                }................
+        # ................{ GENERICS ~ multiple : unsubscripted}................
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         HintPepMetadata(
@@ -998,7 +973,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=Pep484IterableTContainerT,
-            # is_args=False,
             is_typevars=True,
             is_type_typing=False,
             piths_meta=(
@@ -1075,6 +1049,29 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ]),
             ),
         ),
+
+        # ................{ GENERICS ~ multiple : subscripted  }................
+        #FIXME: Uncomment *AFTER* worky, please. *sigh*
+        # # Generic subclassing a single parametrized "typing" type, itself
+        # # parametrized by the same type variables in the same order.
+        # HintPepMetadata(
+        #     hint=Pep484IterableTContainerT[str],
+        #     pep_sign=HintSignPep484585GenericSubscripted,
+        #     generic_type=Pep484IterableTContainerT,
+        #     is_type_typing=False,
+        #     is_typing=False,
+        #     piths_meta=(
+        #         # Generic container whose items satisfy this child hint.
+        #         HintPithSatisfiedMetadata(Pep484IterableTContainerT((
+        #             'Reclined his languid head,', 'his limbs did rest,',))),
+        #         # Generic container whose items violate this child hint.
+        #         HintPithUnsatisfiedMetadata(Pep484IterableTContainerT((
+        #             b'Diffused and motionless,', b'on the smooth brink',))),
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             'A stream went voiceless by, still deadened more'),
+        #     ),
+        # ),
 
         # ................{ MAPPING ~ dict                     }................
         # Unsubscripted "Dict" attribute.

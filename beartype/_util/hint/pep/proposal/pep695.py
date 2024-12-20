@@ -199,190 +199,6 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     # alias. Yes. It really is this non-trivial, folks. *sigh*
     return isinstance(hint_origin, HintPep695Type)
 
-# ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
-@callable_cached
-def get_hint_pep695_subscripted_typevar_to_hint(
-    # Mandatory parameters.
-    hint: HintGenericSubscriptedType,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> Tuple[HintPep695Type, TypeVarToHint]:
-    '''
-    **Type variable lookup table** describing the passed :pep:`695`-compliant
-    **subscripted type alias** (i.e., object created by subscripting an object
-    created by a statement of the form ``type {alias_name}[{typevar_name}] =
-    {alias_value}`` by one or more child type hints), defined as an immutable
-    dictionary mapping from the :pep:`484`-compliant **type variables** (i.e.,
-    :class:`typing.TypeVar` objects) parametrizing the :pep:`695`-compliant
-    unsubscripted type alias underlying this subscripted type alias to the
-    corresponding type hints subscripting this subscripted type alias.
-
-    This getter is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint : HintGenericSubscriptedType
-        Subscripted type alias to be inspected.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Tuple[HintPep695Type, TypeVarToHint]
-        2-tuple ``(hint_bare, typevar_to_hint)`` where:
-
-        * ``hint_bare`` is the :pep:`695`-compliant unsubscripted type alias
-          originating this subscripted type alias (e.g., ``muh_type_alias`` when
-          passed the subscripted type alias ``muh_type_alias[str]``).
-        * ``typevar_to_hint`` is the type variable lookup table describing this
-          subscripted type alias.
-
-    Raises
-    ------
-    BeartypeDecorHintPep695Exception
-        If this type hint is *not* a subscripted type alias.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        map_pep484_typevars_to_hints)
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_origin_or_none,
-        get_hint_pep_typevars,
-    )
-
-    # Unsubscripted type alias originating this subscripted type alias.
-    hint_bare = get_hint_pep_origin_or_none(hint)  # pyright: ignore
-
-    # If this subscripted type alias does *NOT* originate from an unsubscripted
-    # type alias, this is *NOT* actually a subscripted type alias. In this case,
-    # raise an exception.
-    if not isinstance(hint_bare, HintPep695Type):
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'not PEP 695 subscripted type alias.'
-        )
-    # Else, this is actually a subscripted type alias.
-
-    # Tuple of all type hints subscripting this subscripted type alias.
-    hint_args = get_hint_pep_args(hint)
-
-    # Tuple of all type variables parametrizing this unsubscripted type alias.
-    #
-    # Note that "type" syntax superficially appears to erroneously permit type
-    # aliases to be parametrized by non-type variables. In truth, "type" syntax
-    # simply permits type aliases to be parametrized by type variables that
-    # ambiguously share the same names as builtin types -- which then silently
-    # shadow those types for the duration of those aliases: e.g.,
-    #     >>> type muh_alias[int] = float | complex  # <-- *gulp*
-    #     >>> muh_alias.__parameters__
-    #     (int,)  # <-- doesn't look good so far
-    #     >>> muh_alias.__parameters__[0] is int
-    #     False  # <-- something good finally happened
-    hint_typevars = get_hint_pep_typevars(hint_bare)  # pyright: ignore
-
-    #FIXME: *HMM.* For efficiency, the following three operations could be
-    #condensed into a single call by refactoring map_pep484_typevars_to_hints()
-    #to create and return the desired "FrozenDict" data structure. That said,
-    #the current approach is certainly more flexible. Let's leave this as is for
-    #the moment and see where this API ends up, eh?
-
-    # Type variable lookup table to be returned, initialized to the empty
-    # dictionary.
-    typevar_to_hint: TypeVarToHint = {}
-
-    # Add key-value pairs to this dictionary mapping from each of these type
-    # variables to the associated type hints.
-    map_pep484_typevars_to_hints(
-        hint_parent=hint,  # pyright: ignore
-        typevar_to_hint=typevar_to_hint,
-        typevars=hint_typevars,
-        hints=hint_args,
-    )
-
-    # This type variable lookup table, coerced into an immutable frozen
-    # dictionary to ensure that this getter remains safely memoizable
-    typevar_to_hint = FrozenDict(typevar_to_hint)
-
-    # Return this unsubscripted type alias and this type variable lookup table.
-    return (hint_bare, typevar_to_hint)
-
-
-#FIXME: Unit test us up, please.
-def get_hint_pep695_unsubscripted_alias(
-    # Mandatory parameters.
-    hint: HintPep695Type,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> Hint:
-    '''
-    **Non-alias type hint** (i.e., type hint that is *not* a
-    :pep:`695`-compliant type alias) encapsulated by the passed
-    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
-    statement of the form ``type {alias_name} = {alias_value}``).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
-    forward references. Notably, memoizing this getter would prevent the
-    external caller of the higher-level
-    :func:`.iter_hint_pep695_unsubscripted_forwardrefs` iterator calling this
-    lower-level getter from externally modifying this type alias by forcefully
-    injecting forward reference proxies into this alias.
-
-    Parameters
-    ----------
-    hint : HintPep695Type
-        Unsubscripted type alias to be inspected.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Hint
-        Unaliased type hint encapsulated by this type alias.
-
-    Raises
-    ------
-    BeartypeDecorHintPep695Exception
-        If this type hint is *not* an unsubscripted type alias.
-    NameError
-        If this unsubscripted type alias contains one or more **unquoted forward
-        references** to undefined types.
-    '''
-
-    # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
-    # an exception.
-    if not isinstance(hint, HintPep695Type):
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'not PEP 695 unsubscripted type alias.'
-        )
-    # Else, this hint is a PEP 695-compliant unsubscripted type alias.
-
-    # While the Universe continues infinitely expanding...
-    while True:
-        # Reduce this type alias to the type hint aliased by this alias, which
-        # itself is possibly a nested type alias. Oh, it happens.
-        #
-        # Note that doing so implicitly raises a "NameError" if this alias
-        # contains one or more unquoted forward references to undefined types.
-        hint = hint.__value__  # type: ignore[attr-defined]
-
-        # If this type hint is *NOT* a nested type alias, break this iteration.
-        if not isinstance(hint, HintPep695Type):
-            break
-        # Else, this type hint is a nested type alias. In this case, continue
-        # iteratively unwrapping this nested type alias.
-
-    # Return this unaliased type alias.
-    return hint
-
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubscripted_forwardrefs(
     # Mandatory parameters.
@@ -443,9 +259,9 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
             #
-            # Note that get_hint_pep695_unsubscripted_alias() is memoized and
+            # Note that _get_hint_pep695_unsubscripted_alias() is memoized and
             # thus intentionally called with positional arguments.
-            get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
+            _get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.
@@ -630,7 +446,7 @@ def reduce_hint_pep695_subscripted(
     #
     # Note that this getter is memoized and thus requires positional parameters.
     hint_unsubscripted, typevar_to_hint = (
-        get_hint_pep695_subscripted_typevar_to_hint(hint, exception_prefix))
+        _get_hint_pep695_subscripted_typevar_to_hint(hint, exception_prefix))
 
     # Reduce this unsubscripted type alias to the hint it refers to.
     hint_aliased = reduce_hint_pep695_unsubscripted(  # type: ignore[misc]
@@ -689,9 +505,9 @@ def reduce_hint_pep695_unsubscripted(
         # contains *NO* forward references to undeclared attributes, this
         # reduction *SHOULD* succeed. Let's pretend we mean that.
         #
-        # Note that get_hint_pep695_unsubscripted_alias() is memoized and thus
+        # Note that _get_hint_pep695_unsubscripted_alias() is memoized and thus
         # intentionally called with positional arguments.
-        hint_aliased = get_hint_pep695_unsubscripted_alias(
+        hint_aliased = _get_hint_pep695_unsubscripted_alias(
             hint, exception_prefix)
     # If doing so raises a builtin "NameError" exception, this alias contains
     # one or more forward references to undeclared attributes. In this case...
@@ -732,3 +548,194 @@ def reduce_hint_pep695_unsubscripted(
 
     # Return this underlying type hint.
     return hint_aliased
+
+# ....................{ PRIVATE ~ getters                  }....................
+#FIXME: Generalize into a new get_hint_pep_subscripted_typevar_to_hint() getter
+#in the existing "beartype._util.hint.pep.utilpepget" submodule. On doing so:
+#* Add a new optional parameter resembling:
+#      typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+#* Union the passed "typevar_to_hint" dictionary with the "typevar_to_hint"
+#  dictionary produced by the map_pep484_typevars_to_hints() algorithm.
+#* Refactor all calls to this this obsolete getter to that new getter.
+#* Excise this obsolete getter.
+@callable_cached
+def _get_hint_pep695_subscripted_typevar_to_hint(
+    # Mandatory parameters.
+    hint: HintGenericSubscriptedType,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Tuple[HintPep695Type, TypeVarToHint]:
+    '''
+    **Type variable lookup table** describing the passed :pep:`695`-compliant
+    **subscripted type alias** (i.e., object created by subscripting an object
+    created by a statement of the form ``type {alias_name}[{typevar_name}] =
+    {alias_value}`` by one or more child type hints), defined as an immutable
+    dictionary mapping from the :pep:`484`-compliant **type variables** (i.e.,
+    :class:`typing.TypeVar` objects) parametrizing the :pep:`695`-compliant
+    unsubscripted type alias underlying this subscripted type alias to the
+    corresponding type hints subscripting this subscripted type alias.
+
+    This getter is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : HintGenericSubscriptedType
+        Subscripted type alias to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Tuple[HintPep695Type, TypeVarToHint]
+        2-tuple ``(hint_bare, typevar_to_hint)`` where:
+
+        * ``hint_bare`` is the :pep:`695`-compliant unsubscripted type alias
+          originating this subscripted type alias (e.g., ``muh_type_alias`` when
+          passed the subscripted type alias ``muh_type_alias[str]``).
+        * ``typevar_to_hint`` is the type variable lookup table describing this
+          subscripted type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type hint is *not* a subscripted type alias.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        map_pep484_typevars_to_hints)
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_origin_or_none,
+        get_hint_pep_typevars,
+    )
+
+    # Unsubscripted type alias originating this subscripted type alias.
+    hint_bare = get_hint_pep_origin_or_none(hint)  # pyright: ignore
+
+    # If this subscripted type alias does *NOT* originate from an unsubscripted
+    # type alias, this is *NOT* actually a subscripted type alias. In this case,
+    # raise an exception.
+    if not isinstance(hint_bare, HintPep695Type):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not PEP 695 subscripted type alias.'
+        )
+    # Else, this is actually a subscripted type alias.
+
+    # Tuple of all type hints subscripting this subscripted type alias.
+    hint_args = get_hint_pep_args(hint)
+
+    # Tuple of all type variables parametrizing this unsubscripted type alias.
+    #
+    # Note that "type" syntax superficially appears to erroneously permit type
+    # aliases to be parametrized by non-type variables. In truth, "type" syntax
+    # simply permits type aliases to be parametrized by type variables that
+    # ambiguously share the same names as builtin types -- which then silently
+    # shadow those types for the duration of those aliases: e.g.,
+    #     >>> type muh_alias[int] = float | complex  # <-- *gulp*
+    #     >>> muh_alias.__parameters__
+    #     (int,)  # <-- doesn't look good so far
+    #     >>> muh_alias.__parameters__[0] is int
+    #     False  # <-- something good finally happened
+    hint_typevars = get_hint_pep_typevars(hint_bare)  # pyright: ignore
+
+    #FIXME: *HMM.* For efficiency, the following three operations could be
+    #condensed into a single call by refactoring map_pep484_typevars_to_hints()
+    #to create and return the desired "FrozenDict" data structure. That said,
+    #the current approach is certainly more flexible. Let's leave this as is for
+    #the moment and see where this API ends up, eh?
+
+    # Type variable lookup table to be returned, initialized to the empty
+    # dictionary.
+    typevar_to_hint: TypeVarToHint = {}
+
+    # Add key-value pairs to this dictionary mapping from each of these type
+    # variables to the associated type hints.
+    map_pep484_typevars_to_hints(
+        hint_parent=hint,  # pyright: ignore
+        typevar_to_hint=typevar_to_hint,
+        typevars=hint_typevars,
+        hints=hint_args,
+    )
+
+    # This type variable lookup table, coerced into an immutable frozen
+    # dictionary to ensure that this getter remains safely memoizable
+    typevar_to_hint = FrozenDict(typevar_to_hint)
+
+    # Return this unsubscripted type alias and this type variable lookup table.
+    return (hint_bare, typevar_to_hint)
+
+
+#FIXME: Unit test us up, please.
+def _get_hint_pep695_unsubscripted_alias(
+    # Mandatory parameters.
+    hint: HintPep695Type,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    **Non-alias type hint** (i.e., type hint that is *not* a
+    :pep:`695`-compliant type alias) encapsulated by the passed
+    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
+    statement of the form ``type {alias_name} = {alias_value}``).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
+    forward references. Notably, memoizing this getter would prevent the
+    external caller of the higher-level
+    :func:`.iter_hint_pep695_unsubscripted_forwardrefs` iterator calling this
+    lower-level getter from externally modifying this type alias by forcefully
+    injecting forward reference proxies into this alias.
+
+    Parameters
+    ----------
+    hint : HintPep695Type
+        Unsubscripted type alias to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Hint
+        Unaliased type hint encapsulated by this type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type hint is *not* an unsubscripted type alias.
+    NameError
+        If this unsubscripted type alias contains one or more **unquoted forward
+        references** to undefined types.
+    '''
+
+    # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
+    # an exception.
+    if not isinstance(hint, HintPep695Type):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not PEP 695 unsubscripted type alias.'
+        )
+    # Else, this hint is a PEP 695-compliant unsubscripted type alias.
+
+    # While the Universe continues infinitely expanding...
+    while True:
+        # Reduce this type alias to the type hint aliased by this alias, which
+        # itself is possibly a nested type alias. Oh, it happens.
+        #
+        # Note that doing so implicitly raises a "NameError" if this alias
+        # contains one or more unquoted forward references to undefined types.
+        hint = hint.__value__  # type: ignore[attr-defined]
+
+        # If this type hint is *NOT* a nested type alias, break this iteration.
+        if not isinstance(hint, HintPep695Type):
+            break
+        # Else, this type hint is a nested type alias. In this case, continue
+        # iteratively unwrapping this nested type alias.
+
+    # Return this unaliased type alias.
+    return hint
