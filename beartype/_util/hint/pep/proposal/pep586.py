@@ -51,9 +51,9 @@ def die_unless_hint_pep586(
     ----------
     hint : object
         Object to be inspected.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep586Exception`.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPep586Exception`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.

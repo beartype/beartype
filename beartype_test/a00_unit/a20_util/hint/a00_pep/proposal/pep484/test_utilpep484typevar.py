@@ -58,12 +58,53 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     with raises(BeartypeDecorHintPep484Exception):
         get_hint_pep484_typevar_bound_or_none(str)
 
-# ....................{ TESTS ~ mapper                     }....................
-def test_map_typevars_to_hints() -> None:
+
+def test_get_hint_pep484_subscripted_typevar_to_hint() -> None:
+    '''
+    Test the public
+    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_subscripted_typevar_to_hint`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484TypeVarException
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        get_hint_pep484_subscripted_typevar_to_hint)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from pytest import raises
+
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695...
+    #
+    # Note that PEP 695-compliant type aliases are used here as a reference
+    # "subscripted hint", due to being the easiest subscripted hints to define,
+    # use, and debug (under Python >= 3.12, anyway). Valid alternatives include:
+    # * PEP 484- or 585-compliant subscripted generics, which are considerably
+    #   more cumbersome to define.
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+            unit_test_get_hint_pep695_subscripted_typevar_to_hint)
+
+        # Perform this test.
+        unit_test_get_hint_pep695_subscripted_typevar_to_hint()
+    # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
+    # 695.
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when passed an object
+    # that is *NOT* a PEP 695-compliant subscripted type alias.
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        get_hint_pep484_subscripted_typevar_to_hint(
+            'In thy devastating omnipotence,')
+
+
+def test_get_hint_pep484_typevars_to_hints() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar.map_typevars_to_hints`
-    mapper.
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar._get_hint_pep484_typevars_to_hints`
+    getter.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -81,7 +122,7 @@ def test_map_typevars_to_hints() -> None:
         T_str_or_bytes,
     )
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        map_pep484_typevars_to_hints)
+        _get_hint_pep484_typevars_to_hints)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -91,62 +132,42 @@ def test_map_typevars_to_hints() -> None:
     # ....................{ PASS                           }....................
     # Assert that this mapper correctly maps a single type variable to a single
     # type hint.
-    map_pep484_typevars_to_hints(
-        typevar_to_hint=typevar_to_hint,
-        typevars=(S,),
-        hints=(int,),
-    )
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+        typevars=(S,), hints=(int,))
     assert typevar_to_hint == {S: int}
-    typevar_to_hint.clear()
 
     # Assert that this mapper correctly maps a single type variable bounded to a
     # type to a single type hint satisfying that type.
-    map_pep484_typevars_to_hints(
-        typevar_to_hint=typevar_to_hint,
-        typevars=(T_sequence,),
-        hints=(list,),
-    )
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+        typevars=(T_sequence,), hints=(list,))
     assert typevar_to_hint == {T_sequence: list}
-    typevar_to_hint.clear()
 
     # Assert that this mapper correctly maps a single type variable constrained
     # to two or more types to a single type hint satisfying at least one of
     # those types.
-    map_pep484_typevars_to_hints(
-        typevar_to_hint=typevar_to_hint,
-        typevars=(T_str_or_bytes,),
-        hints=(bytes,),
-    )
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+        typevars=(T_str_or_bytes,), hints=(bytes,))
     assert typevar_to_hint == {T_str_or_bytes: bytes}
-    typevar_to_hint.clear()
 
     # Assert that this mapper correctly maps multiple type variables to multiple
     # type hints, including to a previously mapped type variable by silently
     # overwriting the type hint previously mapped to that type variable with the
     # corresponding passed hint.
-    map_pep484_typevars_to_hints(
-        typevar_to_hint=typevar_to_hint,
-        typevars=(T, S,),
-        hints=(float, complex,),
-    )
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+        typevars=(T, S,), hints=(float, complex,))
     assert typevar_to_hint == {S: complex, T: float}
-    typevar_to_hint.clear()
 
     # ....................{ FAIL                           }....................
     # Assert that this mapper raises the expected exception when passed *NO*
     # type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        map_pep484_typevars_to_hints(
-            typevar_to_hint=typevar_to_hint,
-            typevars=(),
-            hints=(bool,),
-        )
+        _get_hint_pep484_typevars_to_hints(
+            typevars=(), hints=(bool,))
 
     # Assert that this mapper raises the expected exception when passed a type
     # variable that is *NOT* actually a type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        map_pep484_typevars_to_hints(
-            typevar_to_hint=typevar_to_hint,
+        _get_hint_pep484_typevars_to_hints(
             typevars=(S, 'His brother Death. A rare and regal prey',),
             hints=(int, str,),
         )
@@ -154,29 +175,20 @@ def test_map_typevars_to_hints() -> None:
     # Assert that this mapper raises the expected exception when passed *NO*
     # type hints.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        map_pep484_typevars_to_hints(
-            typevar_to_hint=typevar_to_hint,
-            typevars=(S,),
-            hints=(),
-        )
+        _get_hint_pep484_typevars_to_hints(
+            typevars=(S,), hints=())
 
     # Assert that this mapper raises the expected exception when passed more
     # type hints than type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        map_pep484_typevars_to_hints(
-            typevar_to_hint=typevar_to_hint,
-            typevars=(S, T,),
-            hints=(int, bool, complex,),
-        )
+        _get_hint_pep484_typevars_to_hints(
+            typevars=(S, T,), hints=(int, bool, complex,))
 
     # Assert that this mapper raises the expected violation when passed a type
     # hint violating the bounds of a passed type variable.
     with raises(BeartypeDecorHintPep484TypeVarViolation):
-        map_pep484_typevars_to_hints(
-            typevar_to_hint=typevar_to_hint,
-            typevars=(S, T, T_sequence,),
-            hints=(float, complex, int,),
-        )
+        _get_hint_pep484_typevars_to_hints(
+            typevars=(S, T, T_sequence,), hints=(float, complex, int,))
 
     #FIXME: Uncomment *AFTER* we generalize this mapper to type-check violations
     #against arbitrarily complex constraints.
