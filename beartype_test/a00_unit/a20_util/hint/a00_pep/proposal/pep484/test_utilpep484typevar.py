@@ -59,46 +59,6 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
         get_hint_pep484_typevar_bound_or_none(str)
 
 
-def test_get_hint_pep484_subscripted_typevar_to_hint() -> None:
-    '''
-    Test the public
-    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_subscripted_typevar_to_hint`
-    getter.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPep484TypeVarException
-    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        get_hint_pep484_subscripted_typevar_to_hint)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-    from pytest import raises
-
-    # If the active Python interpreter targets Python >= 3.12 and thus supports
-    # PEP 695...
-    #
-    # Note that PEP 695-compliant type aliases are used here as a reference
-    # "subscripted hint", due to being the easiest subscripted hints to define,
-    # use, and debug (under Python >= 3.12, anyway). Valid alternatives include:
-    # * PEP 484- or 585-compliant subscripted generics, which are considerably
-    #   more cumbersome to define.
-    if IS_PYTHON_AT_LEAST_3_12:
-        # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
-            unit_test_get_hint_pep695_subscripted_typevar_to_hint)
-
-        # Perform this test.
-        unit_test_get_hint_pep695_subscripted_typevar_to_hint()
-    # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
-    # 695.
-
-    # ....................{ FAIL                           }....................
-    # Assert this getter raises the expected exception when passed an object
-    # that is *NOT* a PEP 695-compliant subscripted type alias.
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        get_hint_pep484_subscripted_typevar_to_hint(
-            'In thy devastating omnipotence,')
-
 
 def test_get_hint_pep484_typevars_to_hints() -> None:
     '''
@@ -200,3 +160,62 @@ def test_get_hint_pep484_typevars_to_hints() -> None:
     #         typevars=(S, T, T_str_or_bytes,),
     #         hints=(float, complex, ,),
     #     )
+
+# ....................{ TESTS ~ reduce                     }....................
+def test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
+    '''
+    Test the public
+    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484TypeVarException
+    from beartype.typing import (
+        Generic,
+    )
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        reduce_hint_pep484_subscripted_typevar_to_hint)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+    from beartype._data.hint.datahinttyping import (
+        S,
+        T,
+        # U,
+    )
+    # from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+    #     Pep484GenericST,
+    # )
+    from pytest import raises
+
+    # ....................{ PEP 484                        }....................
+    # Assert that this reducer reduces the PEP 484-compliant "typing.Generic"
+    # superclass subscripted by only type variables to simply that superclass.
+    assert reduce_hint_pep484_subscripted_typevar_to_hint(
+        Generic[S, T]) is Generic
+
+    # ....................{ PEP 695                        }....................
+    # If the active Python interpreter targets Python >= 3.12 and thus supports
+    # PEP 695...
+    #
+    # Note that PEP 695-compliant type aliases are used here as a reference
+    # "subscripted hint", due to being the easiest subscripted hints to define,
+    # use, and debug (under Python >= 3.12, anyway). Valid alternatives include:
+    # * PEP 484- or 585-compliant subscripted generics, which are considerably
+    #   more cumbersome to define.
+    if IS_PYTHON_AT_LEAST_3_12:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+            unit_test_reduce_hint_pep484_subscripted_typevar_to_hint)
+
+        # Perform this test.
+        unit_test_reduce_hint_pep484_subscripted_typevar_to_hint()
+    # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
+    # 695.
+
+    # ....................{ FAIL                           }....................
+    # Assert this reducer raises the expected exception when passed an object
+    # that is *NOT* a PEP 695-compliant subscripted type alias.
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        reduce_hint_pep484_subscripted_typevar_to_hint(
+            'In thy devastating omnipotence,')

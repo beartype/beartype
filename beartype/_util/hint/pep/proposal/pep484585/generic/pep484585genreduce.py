@@ -14,13 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.datahintpep import Hint
+from beartype._check.metadata.metasane import HintOrHintSanifiedData
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subscripted(
     hint: Hint,
     exception_prefix: str,
     **kwargs
-) -> Hint:
+) -> HintOrHintSanifiedData:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subscripted
     generic** (i.e., object subscripted by one or more child type hints
@@ -42,12 +43,20 @@ def reduce_hint_pep484585_generic_subscripted(
 
     Returns
     -------
-    Hint
-        This subscripted generic possibly reduced to a more suitable hint.
+    HintOrHintSanifiedData
+        Either:
+
+        * If the unsubscripted hint (e.g., :class:`typing.Generic`) originating
+          this subscripted hint (e.g., ``typing.Generic[S, T]``) is
+          unparametrized by type variables, that unsubscripted hint as is.
+        * Else, that unsubscripted hint is parametrized by one or more type
+          variables. In this case, the **sanified type hint metadata** (i.e.,
+          :class:`.HintSanifiedData` object) describing this reduction.
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        reduce_hint_pep484_subscripted_typevar_to_hint)
 
     # Useful PEP 544-compliant unsubscripted protocol possibly reduced from this
     # useless PEP 484- or 585-compliant subscripted IO generic if this hint is a
@@ -62,21 +71,25 @@ def reduce_hint_pep484585_generic_subscripted(
     # If this hint was *NOT* reduced to an unsubscripted generic from this
     # subscripted IO generic...
     if hint is hint_reduced:
-        # Unsubscripted generic underlying this subscripted generic.
-        hint_reduced = get_hint_pep_origin(
-            hint=hint, exception_prefix=exception_prefix)
+        # Reduce this subscripted generic to:
+        # * The semantically useful unsubscripted generic originating this
+        #   semantically useless subscripted generic.
+        # * The type variable lookup table mapping all type variables
+        #   parametrizing this unsubscripted generic to all non-type variable
+        #   hints subscripting this subscripted generic.
+        # hint_reduced = reduce_hint_pep484_subscripted_typevar_to_hint(hint)
+
+        #FIXME: Excise in favour of the above. For unknown reasons, the above is
+        #currently inducing an infinite wait under Python 3.9. *sigh*
+        from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
+
+        # Unsubscripted type alias originating this subscripted hint.
+        hint_reduced = get_hint_pep_origin(hint)
     # Else, this hint was reduced to an unsubscripted generic from this
     # subscripted IO generic. In this case, preserve this reduction.
 
-    #FIXME: "typevar_to_hint" here! See reduce_hint_pep695_subscripted() for
-    #inspiration, please.
-
-    # Lower-level hint reduced from this higher-level unsubscripted generic.
-    hint_reduced_reduced = reduce_hint_pep484585_generic_unsubscripted(
-        hint=hint_reduced, exception_prefix=exception_prefix)
-
-    # Return this *REALLY* reduced hint. lolbro
-    return hint_reduced_reduced
+    # Return this reduced hint.
+    return hint_reduced
 
 
 def reduce_hint_pep484585_generic_unsubscripted(

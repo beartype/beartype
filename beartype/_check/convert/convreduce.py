@@ -113,7 +113,9 @@ from beartype._util.hint.pep.proposal.pep484.pep484 import (
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     reduce_hint_pep484_newtype)
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    reduce_hint_pep484_typevar)
+    reduce_hint_pep484_typevar,
+    reduce_hint_pep484_subscripted_typevar_to_hint,
+)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genreduce import (
     reduce_hint_pep484585_generic_subscripted,
     reduce_hint_pep484585_generic_unsubscripted,
@@ -141,9 +143,7 @@ from beartype._util.hint.pep.proposal.pep647742 import (
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
 from beartype._util.hint.pep.proposal.pep695 import (
-    reduce_hint_pep695_subscripted,
-    reduce_hint_pep695_unsubscripted,
-)
+    reduce_hint_pep695_unsubscripted)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from beartype._util.kind.map.utilmapfrozen import (
@@ -742,9 +742,10 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 695-compliant subscripted type alias:
     # * Reduce this alias to the underlying hint referred to by the
     #   unsubscripted type alias underlying this subscripted type alias.
-    # * Map the child hint subscripting this alias to the PEP 484-compliant type
-    #   variable parametrizing that unsubscripted type alias.
-    HintSignPep695TypeAliasSubscripted: reduce_hint_pep695_subscripted,
+    # * Map the child hints subscripting this alias to the PEP 484-compliant
+    #   type variables parametrizing that unsubscripted type alias.
+    HintSignPep695TypeAliasSubscripted: (
+        reduce_hint_pep484_subscripted_typevar_to_hint),
 
     # If this hint is a PEP 695-compliant unsubscripted type alias, reduce this
     # alias to the underlying hint lazily referred to by this alias.

@@ -63,7 +63,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpec,
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
-    # HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
     HintSignPep557DataclassInitVar,
     HintSignPep695TypeAliasUnsubscripted,
@@ -639,8 +638,8 @@ def _init() -> None:
     _HINT_TYPING_TYPE_NAMES_IGNORABLE = {
         # ................{ PEP 484                            }................
         # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the "object" superclass. Since PEP
-        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        # semantically synonymous with the "object" superclass. Since PEP 484
+        # stipulates that *ANY* unsubscripted subscriptable PEP-compliant
         # singleton including "typing.Generic" semantically expands to that
         # singleton subscripted by an implicit "Any" argument, "Generic"
         # semantically expands to the implicit "Generic[Any]" singleton.

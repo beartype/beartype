@@ -1051,7 +1051,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ),
 
         # ................{ GENERICS ~ multiple : subscripted  }................
-        #FIXME: Uncomment *AFTER* worky, please. *sigh*
+        # FIXME: Uncomment *AFTER* worky, please. *sigh*
         # # Generic subclassing a single parametrized "typing" type, itself
         # # parametrized by the same type variables in the same order.
         # HintPepMetadata(

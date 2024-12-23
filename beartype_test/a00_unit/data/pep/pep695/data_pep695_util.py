@@ -66,69 +66,6 @@ def unit_test_is_hint_pep695_subscripted() -> None:
     # yet to be subscripted by a concrete type.
     assert is_hint_pep695_subscripted(colossal_skeleton) is False
 
-# ....................{ TESTS ~ getter                     }....................
-def unit_test_get_hint_pep695_subscripted_typevar_to_hint() -> None:
-    '''
-    Test the public
-    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_subscripted_typevar_to_hint`
-    getter.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPep484TypeVarException
-    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        get_hint_pep484_subscripted_typevar_to_hint)
-    from beartype._util.kind.map.utilmapfrozen import FrozenDict
-    from pytest import raises
-
-    # ....................{ LOCALS                         }....................
-    # Unsubscripted type alias.
-    type guiding_its = int | float
-
-    # Subscriptable type alias correctly parametrized by a single type variable.
-    type irresistible_career[T] = complex | T
-
-    # Subscriptable type alias correctly parametrized by multiple type
-    # variables.
-    type in_thy[S, T] = list[S] | dict[S, T]
-
-    # ....................{ PASS                           }....................
-    # Assert this getter passed PEP 695-compliant subscripted type aliases
-    # returns the expected tuple of all type variables parametrizing the
-    # unsubscripted type aliases underlying these subscripted type aliases.
-    #
-    # Note that these type variables are literally scoped (i.e., isolated) to
-    # these aliases and thus accessible *ONLY* be directly accessing the
-    # "__parameters__" dunder attribute on these aliases. It is what it is.
-    assert get_hint_pep484_subscripted_typevar_to_hint(
-        irresistible_career[int]) == (
-            irresistible_career,
-            FrozenDict({irresistible_career.__parameters__[0]: int,}),
-        )
-    assert get_hint_pep484_subscripted_typevar_to_hint(
-        in_thy[bool, complex]) == (
-            in_thy,
-            FrozenDict({
-                in_thy.__parameters__[0]: bool,
-                in_thy.__parameters__[1]: complex,
-            }),
-        )
-
-    # ....................{ FAIL                           }....................
-    # Assert this getter raises the expected exception when passed an object
-    # that is *NOT* a PEP 695-compliant subscripted type alias.
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        get_hint_pep484_subscripted_typevar_to_hint(
-            'In thy devastating omnipotence,')
-
-    # Assert this getter raises the expected exception when passed a PEP
-    # 695-compliant unsubscripted type alias.
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        get_hint_pep484_subscripted_typevar_to_hint(guiding_its)
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        get_hint_pep484_subscripted_typevar_to_hint(irresistible_career)
-
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
@@ -258,3 +195,68 @@ def unit_test_reduce_hint_pep695_unsubscripted() -> None:
     # alias containing one unquoted forward reference.
     with raises(BeartypeDecorHintPep695Exception):
         reduce_hint_pep695_unsubscripted(hint=floating_in, exception_prefix='')
+
+
+def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
+    '''
+    Test the public
+    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
+    getter with respect to :pep:`695`-compliant subscripted type aliases.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484TypeVarException
+    from beartype._check.metadata.metasane import HintSanifiedData
+    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
+        reduce_hint_pep484_subscripted_typevar_to_hint)
+    from beartype._util.kind.map.utilmapfrozen import FrozenDict
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Unsubscripted type alias.
+    type guiding_its = int | float
+
+    # Subscriptable type alias correctly parametrized by a single type variable.
+    type irresistible_career[T] = complex | T
+
+    # Subscriptable type alias correctly parametrized by multiple type
+    # variables.
+    type in_thy[S, T] = list[S] | dict[S, T]
+
+    # ....................{ PASS                           }....................
+    # Assert this getter passed PEP 695-compliant subscripted type aliases
+    # returns the expected tuple of all type variables parametrizing the
+    # unsubscripted type aliases underlying these subscripted type aliases.
+    #
+    # Note that these type variables are literally scoped (i.e., isolated) to
+    # these aliases and thus accessible *ONLY* be directly accessing the
+    # "__parameters__" dunder attribute on these aliases. It is what it is.
+    assert reduce_hint_pep484_subscripted_typevar_to_hint(
+        irresistible_career[int]) == HintSanifiedData(
+            irresistible_career,
+            FrozenDict({irresistible_career.__parameters__[0]: int,}),
+        )
+    assert reduce_hint_pep484_subscripted_typevar_to_hint(
+        in_thy[bool, complex]) == HintSanifiedData(
+            in_thy,
+            FrozenDict({
+                in_thy.__parameters__[0]: bool,
+                in_thy.__parameters__[1]: complex,
+            }),
+        )
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when passed an object
+    # that is *NOT* a PEP 695-compliant subscripted type alias.
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        reduce_hint_pep484_subscripted_typevar_to_hint(
+            'In thy devastating omnipotence,')
+
+    # Assert this getter raises the expected exception when passed a PEP
+    # 695-compliant unsubscripted type alias.
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        reduce_hint_pep484_subscripted_typevar_to_hint(guiding_its)
+    with raises(BeartypeDecorHintPep484TypeVarException):
+        reduce_hint_pep484_subscripted_typevar_to_hint(irresistible_career)
+

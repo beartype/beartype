@@ -57,6 +57,8 @@ class HintSanifiedData(object):
         variables** (i.e., :class:`typing.TypeVar` objects) originally
         parametrizing the origin of this type hint if any to the corresponding
         child type hints subscripting this type hint.
+    _hash : int
+        Hash identifying this object, precomputed for efficiency.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -67,6 +69,7 @@ class HintSanifiedData(object):
     __slots__ = (
         'hint',
         'typevar_to_hint',
+        '_hash',
     )
 
 
@@ -77,10 +80,18 @@ class HintSanifiedData(object):
         typevar_to_hint: TypeVarToHint
 
 
-    _INIT_PARAM_NAMES = frozenset(__slots__)
+    _INIT_PARAM_NAMES = frozenset((
+        var_name
+        for var_name in __slots__
+        # Ignore private slotted instance variables defined above.
+        if not var_name.startswith('_')
+    ))
     '''
     Frozen set of the names of all parameters accepted by the :meth:`init`
-    method, defined as a set to enable efficient membership testing.
+    method, defined as the frozen set comprehension of all public slotted
+    instance variables of this class.
+
+    This frozen set enables efficient membership testing.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -117,7 +128,62 @@ class HintSanifiedData(object):
         self.hint = hint
         self.typevar_to_hint = typevar_to_hint
 
+        # Hash identifying this object, precomputed for efficiency.
+        self._hash = hash((hint, typevar_to_hint))
+
     # ..................{ DUNDERS                            }..................
+    def __hash__(self) -> int:
+        '''
+        Hash identifying this sanified type hint metadata.
+
+        Returns
+        -------
+        int
+            This hash.
+        '''
+
+        return self._hash
+
+
+    def __eq__(self, other: object) -> bool:
+        '''
+        :data:`True` only if this sanified type hint metadata is equal to the
+        passed arbitrary object.
+
+        Parameters
+        ----------
+        other : object
+            Arbitrary object to be compared for equality against this metadata.
+
+        Returns
+        -------
+        Union[bool, type(NotImplemented)]
+            Either:
+
+            * If this other object is also sanified type hint metadata, either:
+
+              * If these metadatum share equal instance variables, :data:`True`.
+              * Else, :data:`False`.
+
+            * Else, :data:`NotImplemented`.
+        '''
+
+        # Return either...
+        return (
+            # If this other object is also sanified hint metadata, true only
+            # if these metadatum share the same instance variables;
+            (
+                self.hint == other.hint and
+                self.typevar_to_hint == other.typevar_to_hint
+            )
+            if isinstance(other, HintSanifiedData) else
+            # Else, this other object is *NOT* also sanified hint metadata. In
+            # this case, the standard singleton informing Python that this
+            # equality comparator fails to support this comparison.
+            NotImplemented  # type: ignore[return-value]
+        )
+
+
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this metadata.
