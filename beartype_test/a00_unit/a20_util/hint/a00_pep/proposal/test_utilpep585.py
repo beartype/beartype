@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ kind : builtin             }....................
+# ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
     '''
     Test the
@@ -39,7 +39,7 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
         assert is_hint_pep585_builtin_subscripted(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_builtin_subscripted)
 
-# ....................{ TESTS ~ kind : generic            }....................
+
 def test_is_hint_pep585_generic(hints_pep_meta) -> None:
     '''
     Test the
@@ -62,7 +62,7 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
         assert is_hint_pep585_generic(hint_pep_meta.hint) is (
             hint_pep_meta.is_pep585_generic)
 
-
+# ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     '''
     Test the
@@ -76,19 +76,26 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
         cases in the :mod:`beartype` codebase.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._util.hint.pep.proposal.pep585 import (
         get_hint_pep585_generic_typevars)
     from pytest import raises
 
+    # ....................{ ASSERTS                        }....................
     # Assert this getter...
     for hint_pep_meta in hints_pep_meta:
         # If this hint is a PEP 585-compliant generic...
         if hint_pep_meta.is_pep585_generic:
-            # Tuple of all tupe variables returned by this function.
+            # Tuple of all type variables returned by this function.
             hint_pep_typevars = get_hint_pep585_generic_typevars(
                 hint_pep_meta.hint)
+
+            #FIXME: *INSUFFICIENT.* Order is important. What we *REALLY* need
+            #here is a "hint_pep_meta.typevars" instance variable providing the
+            #expected tuple of type variables rather than merely
+            #"hint_pep_meta.is_typevars". Generalize us up, please.
 
             # Returns one or more type variables for typevared PEP
             # 585-compliant generics.

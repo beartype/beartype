@@ -64,74 +64,12 @@ from beartype._util.hint.pep.proposal.pep585 import (
 )
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subscripted
-from beartype._util.py.utilpyversion import (
-    # IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_MOST_3_9,
-    IS_PYTHON_AT_LEAST_3_9,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 from beartype._data.hint.datahinttyping import TupleTypeVars
 
 # ....................{ GETTERS ~ args                     }....................
-# If the active Python interpreter targets Python >= 3.9, implement this
-# getter to directly access the "__args__" dunder attribute.
-if IS_PYTHON_AT_LEAST_3_9:
-    def get_hint_pep_args(hint: object) -> tuple:
-
-        # Tuple of the zero or more child type hints subscripting this hint if
-        # this hint defines of the "__args__" dunder attribute *OR* "None"
-        # otherwise (i.e., if this hint fails to define this attribute).
-        hint_args = getattr(hint, '__args__', None)
-
-        # If this hint does *NOT* define this attribute, return the empty tuple.
-        if hint_args is None:
-            return ()
-        # Else, this hint defines this attribute.
-        #
-        # If this hint is subscripted by zero child type hints, this hint only
-        # superficially appears to be unsubscripted but was actually subscripted
-        # by the empty tuple (e.g., "tuple[()]", "typing.Tuple[()]"). Why?
-        # Because:
-        # * Python 3.11 made the unfortunate decision of ambiguously conflating
-        #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type
-        #   hints subscripted by the empty tuple, preventing downstream
-        #   consumers from reliably distinguishing these two orthogonal cases.
-        # * Python 3.9 made a similar decision but constrained to only PEP
-        #   585-compliant empty tuple type hints (i.e., "tuple[()]"). PEP
-        #   484-compliant empty tuple type hints (i.e., "typing.Tuple[()]")
-        #   continued to correctly declare an "__args__" dunder attribute of
-        #   "((),)" until Python 3.11.
-        #
-        # Disambiguate these two cases on behalf of callers by returning a
-        # 1-tuple containing only the empty tuple (i.e., "((),)") rather than
-        # returning the empty tuple (i.e., "()").
-        elif not hint_args:
-            return _HINT_ARGS_EMPTY_TUPLE
-        # Else, this hint is either subscripted *OR* is unsubscripted but not
-        # PEP 585-compliant.
-
-        # In this case, return this tuple as is.
-        return hint_args
-# Else, the active Python interpreter targets Python < 3.9. In this case,
-# implement this getter to directly access the "__args__" dunder attribute.
-else:
-    def get_hint_pep_args(hint: object) -> tuple:
-
-        # Under Python < 3.9, unparametrized generics have the attribute
-        # "_special" set to True despite the actual "__args__" typically being a
-        # "TypeVar" instance. Because we want to differentiate between
-        # unparametrized and parametrized generics, we check whether this hint
-        # is "_special" and if so, return the empty tuple instead of that
-        # "TypeVar" instance.
-        if getattr(hint, '_special', False):
-            return ()
-
-        # Return the value of the "__args__" dunder attribute if this hint
-        # defines this attribute *OR* the empty tuple otherwise.
-        return getattr(hint, '__args__', ())
-
-
-# Document this function regardless of implementation details above.
-get_hint_pep_args.__doc__ = '''
+def get_hint_pep_args(hint: object) -> tuple:
+    '''
     Tuple of the zero or more **child type hints** subscripting (indexing) the
     passed PEP-compliant type hint if this hint was subscripted *or* the empty
     tuple otherwise (i.e., if this hint is unsubscripted and is thus either an
@@ -205,55 +143,45 @@ get_hint_pep_args.__doc__ = '''
        (int, str, typing.Dict[str, str])
     '''
 
+    # Tuple of the zero or more child type hints subscripting this hint if
+    # this hint defines of the "__args__" dunder attribute *OR* "None"
+    # otherwise (i.e., if this hint fails to define this attribute).
+    hint_args = getattr(hint, '__args__', None)
+
+    # If this hint does *NOT* define this attribute, return the empty tuple.
+    if hint_args is None:
+        return ()
+    # Else, this hint defines this attribute.
+    #
+    # If this hint is subscripted by zero child type hints, this hint only
+    # superficially appears to be unsubscripted but was actually subscripted
+    # by the empty tuple (e.g., "tuple[()]", "typing.Tuple[()]"). Why?
+    # Because:
+    # * Python 3.11 made the unfortunate decision of ambiguously conflating
+    #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type
+    #   hints subscripted by the empty tuple, preventing downstream
+    #   consumers from reliably distinguishing these two orthogonal cases.
+    # * Python 3.9 made a similar decision but constrained to only PEP
+    #   585-compliant empty tuple type hints (i.e., "tuple[()]"). PEP
+    #   484-compliant empty tuple type hints (i.e., "typing.Tuple[()]")
+    #   continued to correctly declare an "__args__" dunder attribute of
+    #   "((),)" until Python 3.11.
+    #
+    # Disambiguate these two cases on behalf of callers by returning a
+    # 1-tuple containing only the empty tuple (i.e., "((),)") rather than
+    # returning the empty tuple (i.e., "()").
+    elif not hint_args:
+        return _HINT_ARGS_EMPTY_TUPLE
+    # Else, this hint is either subscripted *OR* is unsubscripted but not
+    # PEP 585-compliant.
+
+    # In this case, return this tuple as is.
+    return hint_args
+
+
 # ....................{ GETTERS ~ typevars                 }....................
-# If the active Python interpreter targets Python >= 3.9, implement this
-# function to either directly access the "__parameters__" dunder attribute for
-# type hints that are not PEP 585-compliant generics *OR* to synthetically
-# reconstruct that attribute for PEP 585-compliant generics. *sigh*
-if IS_PYTHON_AT_LEAST_3_9:
-    def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
-
-        # Value of the "__parameters__" dunder attribute on this object if this
-        # object defines this attribute *OR* "None" otherwise.
-        hint_pep_typevars = getattr(hint, '__parameters__', None)
-
-        # If this object defines *NO* such attribute...
-        if hint_pep_typevars is None:
-            # Return either...
-            return (
-                # If this hint is a PEP 585-compliant unsubscripted generic, the
-                # tuple of all type variables parametrizing all
-                # pseudo-superclasses of this generic.
-                get_hint_pep585_generic_typevars(hint)
-                if is_hint_pep585_generic(hint) else
-                # Else, the empty tuple.
-                ()
-            )
-        # Else, this object defines this attribute.
-
-        # Return this attribute.
-        return hint_pep_typevars
-# Else, the active Python interpreter targets Python < 3.9. In this case,
-# implement this function to directly access the "__parameters__" dunder
-# attribute.
-else:
-    def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
-
-        # Value of the "__parameters__" dunder attribute on this object if this
-        # object defines this attribute *OR* the empty tuple otherwise. Note:
-        # * The "typing._GenericAlias.__parameters__" dunder attribute tested
-        #   here is defined by the typing._collect_type_vars() function at
-        #   subscription time. Yes, this is insane. Yes, this is PEP 484.
-        # * This trivial test implicitly handles superclass parametrizations.
-        #   Thankfully, the "typing" module percolates the "__parameters__"
-        #   dunder attribute from "typing" pseudo-superclasses to user-defined
-        #   subclasses during PEP 560-style type erasure. Finally: they did
-        #   something slightly right.
-        return getattr(hint, '__parameters__', ())
-
-
-# Document this function regardless of implementation details above.
-get_hint_pep_typevars.__doc__ = '''
+def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
+    '''
     Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
     instances of the passed PEP-compliant type hint listed by the caller at
     hint declaration time ignoring duplicates) if any *or* the empty tuple
@@ -354,6 +282,29 @@ get_hint_pep_typevars.__doc__ = '''
        >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
        (T, S)
     '''
+
+    # Value of the "__parameters__" dunder attribute on this object if this
+    # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
+    # generic) *OR* "None" otherwise (e.g., is such a generic).
+    hint_pep_typevars = getattr(hint, '__parameters__', None)
+
+    # If this object defines *NO* such attribute, synthetically reconstruct
+    # this attribute for PEP 585-compliant generics. Spuecifically...
+    if hint_pep_typevars is None:
+        # Reconstruct this attribute as either...
+        hint_pep_typevars = (
+            # If this hint is a PEP 585-compliant unsubscripted generic, the
+            # tuple of all type variables parametrizing all
+            # pseudo-superclasses of this generic;
+            get_hint_pep585_generic_typevars(hint)
+            if is_hint_pep585_generic(hint) else
+            # Else, the empty tuple.
+            ()
+        )
+    # Else, this object defines this attribute.
+
+    # Return this attribute.
+    return hint_pep_typevars
 
 # ....................{ GETTERS ~ sign                     }....................
 def get_hint_pep_sign(
@@ -1271,6 +1222,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
     )
 
 # ....................{ PRIVATE ~ args                     }....................
+#FIXME: Shift into the "beartype._data.hint" subpackage somewhere, please.
 _HINT_ARGS_EMPTY_TUPLE = ((),)
 '''
 Tuple containing only the empty tuple, to be returned from the

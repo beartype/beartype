@@ -395,11 +395,13 @@ def _reduce_hint_cached(
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
     if hint_reducer is not None:
+        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
         hint = hint_reducer(  # type: ignore[call-arg]
             hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
             exception_prefix=exception_prefix,
         )
+        # print(f'[_reduce_hint_cached] ...to cached hint {repr(hint)}.')
     # Else, *NO* such callable was registered. Preserve this hint as is, you!
 
     # Return this possibly reduced hint.
@@ -493,7 +495,8 @@ def _reduce_hint_uncached(
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
     if hint_reducer is not None:  # type: ignore[call-arg]
-        # print(f'Reducing hint {repr(hint)} with type variable lookup table {repr(typevar_to_hint)} to...')
+        # print(f'[_reduce_hint_uncached] Reducing uncached hint {repr(hint)}...')
+        # print(f'...with type variable lookup table {repr(typevar_to_hint)}...')
         hint = hint_reducer(
             hint=hint,  # pyright: ignore
             arg_kind=arg_kind,
@@ -504,7 +507,7 @@ def _reduce_hint_uncached(
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
-        # print(f'...{repr(hint)}.')
+        # print(f'[_reduce_hint_uncached]...to uncached hint {repr(hint)}.')
     # Else, *NO* such callable was registered. Preserve this hint as is, you!
 
     # Return this possibly reduced hint.

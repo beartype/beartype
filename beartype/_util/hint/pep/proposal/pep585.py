@@ -11,31 +11,29 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype.typing import (
+    Dict,
+    TypeVar,
+)
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,
 )
 from beartype._data.hint.datahinttyping import (
-    SetTypeVars,
+    # SetTypeVars,
     TupleTypeVars,
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_10,
-    IS_PYTHON_AT_LEAST_3_9,
 )
-from beartype._util.utilobject import Iota
 
 # ....................{ HINTS                              }....................
-HINT_PEP585_TUPLE_EMPTY = (
-    tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota())  # type: ignore[misc]
+HINT_PEP585_TUPLE_EMPTY = tuple[()]
 '''
-:pep:`585`-compliant empty fixed-length tuple type hint if the active Python
-interpreter supports at least Python 3.9 and thus :pep:`585` *or* a unique
-placeholder object otherwise to guarantee failure when comparing arbitrary
-objects against this object via equality tests.
+:pep:`585`-compliant empty fixed-length tuple type hint.
 '''
 
 # ....................{ RAISERS                            }....................
@@ -76,161 +74,7 @@ def die_unless_hint_pep585_generic(
     # Else, this object is a PEP 585-compliant generic.
 
 # ....................{ TESTERS                            }....................
-# If the active Python interpreter targets at least Python >= 3.9 and thus
-# supports PEP 585, correctly declare this function.
-if IS_PYTHON_AT_LEAST_3_9:
-    def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-            is_hint_pep484585_generic)
-
-        # Return true only if this hint...
-        return (
-            # Is either a PEP 484- or -585-compliant subscripted generic or
-            # PEP 585-compliant builtin *AND*...
-            isinstance(hint, HintGenericSubscriptedType) and
-            # Is *NOT* a PEP 484- or -585-compliant subscripted generic.
-            not is_hint_pep484585_generic(hint)  # pyright: ignore
-        )
-
-
-    def is_hint_pep585_generic(hint: Hint) -> bool:
-
-        # Return true only if object is either...
-        return (
-            # A PEP 585-compliant unsubscripted generic *OR*...
-            is_hint_pep585_generic_unsubscripted(hint) or
-            # A PEP 585-compliant subscripted generic.
-            is_hint_pep585_generic_subscripted(hint)
-        )
-
-
-    #FIXME: Unit test us up, please.
-    def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import (
-            get_hint_pep_origin_or_none)
-
-        # Arbitrary object originating this hint if any *OR* "None" otherwise.
-        hint_origin = get_hint_pep_origin_or_none(hint)
-
-        # Return true only if this origin object is an unsubscripted generic
-        # type, which would then imply this hint to be a subscripted generic. If
-        # this strikes you as insane, you're not alone.
-        return is_hint_pep585_generic_unsubscripted(hint_origin)  # pyright: ignore
-
-
-    #FIXME: Unit test us up, please.
-    @callable_cached
-    def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-
-        # If either...
-        if (
-            # This hint is not a type *OR*...
-            not isinstance(hint, type) or
-            (
-                # The active Python interpreter targets Python <= 3.10 *AND*...
-                #
-                # In this case, a simple subclass test does *NOT* suffice to
-                # detect a PEP 585-compliant unsubscripted generic. Why? Because
-                # Python <= 3.10 implements PEP 585-compliant subscripted
-                # generics as types! But PEP 585-compliant unsubscripted
-                # generics are also types, of course:
-                #     $ python3.10
-                #     >>> class MuhGeneric(list): pass
-                #     >>> isinstance(MuhGeneric, type)
-                #     True  # <-- good
-                #     >>> isinstance(MuhGeneric[str], type)
-                #     True  # <-- *BAD*
-                #
-                #     $ python3.11
-                #     >>> class MuhGeneric(list): pass
-                #     >>> isinstance(MuhGeneric, type)
-                #     True  # <-- good
-                #     >>> isinstance(MuhGeneric[str], type)
-                #     False  # <-- good
-                #
-                # Disambiguating this edge case requires also detecting whether
-                # this PEP 484-compliant generic is subscripted by one or more
-                # child hints.
-                IS_PYTHON_AT_MOST_3_10 and
-                # This PEP 484-compliant generic is subscripted...
-                get_hint_pep_args(hint)
-            )
-        # Then this hint *CANNOT* be an unsubscripted generic. In this case,
-        # return false immediately.
-        ):
-            return False
-        # Else, this hint is a type. Since this hint *COULD* be an unsubscripted
-        # generic, continue testing.
-
-        # Tuple of all pseudo-superclasses originally subclassed by the passed
-        # hint if this hint is a generic *OR* false otherwise.
-        hint_bases_erased = getattr(hint, '__orig_bases__', False)
-
-        # If this hint subclasses *NO* pseudo-superclasses, this hint *CANNOT*
-        # be a generic. In this case, immediately return false.
-        if not hint_bases_erased:
-            return False
-        # Else, this hint subclasses one or more pseudo-superclasses.
-
-        #FIXME: [SPEED] Optimize into a "while" loop for efficiency. *sigh*
-        # For each such pseudo-superclass...
-        #
-        # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
-        # commonality with PEP 484-compliant generics. While the latter are
-        # trivially detectable as subclassing "typing.Generic" after type
-        # erasure, the former are *NOT*. The only means of deterministically
-        # deciding whether or not a hint is a PEP 585-compliant generic is if:
-        # * That class defines both the __class_getitem__() dunder method *AND*
-        #   the "__orig_bases__" instance variable. Note that this condition in
-        #   and of itself is insufficient to decide PEP 585-compliance as a
-        #   generic. Why? Because these dunder attributes have been standardized
-        #   under various PEPs and may thus be implemented by *ANY* arbitrary
-        #   classes.
-        # * The "__orig_bases__" instance variable is a non-empty tuple.
-        # * One or more objects listed in that tuple are PEP 585-compliant
-        #   C-based subscripted generics (e.g., "list[str]").
-        #
-        # Note we could technically also test that this hint defines the
-        # __class_getitem__() dunder method. Since this condition suffices to
-        # ensure that this hint is a PEP 585-compliant generic, however, there
-        # exists little benefit to doing so.
-        for hint_base_erased in hint_bases_erased:  # type: ignore[union-attr]
-            # If this pseudo-superclass is itself a PEP 585-compliant C-based
-            # subscripted generic (e.g., "list[str]"), return true.
-            if is_hint_pep585_builtin_subscripted(hint_base_erased):
-                return True
-            # Else, this pseudo-superclass is *NOT* PEP 585-compliant. In this
-            # case, continue to the next pseudo-superclass.
-
-        # Since *NO* such pseudo-superclasses are PEP 585-compliant, this hint
-        # is *NOT* a PEP 585-compliant generic. In this case, return false.
-        return False
-# Else, the active Python interpreter targets at most Python < 3.9 and thus
-# fails to support PEP 585. In this case, fallback to declaring this function
-# to unconditionally return False.
-else:
-    def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
-        return False
-
-    def is_hint_pep585_generic(hint: Hint) -> bool:
-        return False
-
-    def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
-        return False
-
-    def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
-        return False
-
-# ....................{ TESTERS ~ doc                      }....................
-# Docstring for this function regardless of implementation details.
-is_hint_pep585_builtin_subscripted.__doc__ = (
+def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **subscripted builtin type hint** (i.e., C-based type hint instantiated by
@@ -273,10 +117,22 @@ is_hint_pep585_builtin_subscripted.__doc__ = (
     bool
         :data:`True` only if this object is a :pep:`585`-compliant type hint.
     '''
-)
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        is_hint_pep484585_generic)
+
+    # Return true only if this hint...
+    return (
+        # Is either a PEP 484- or -585-compliant subscripted generic or
+        # PEP 585-compliant builtin *AND*...
+        isinstance(hint, HintGenericSubscriptedType) and
+        # Is *NOT* a PEP 484- or -585-compliant subscripted generic.
+        not is_hint_pep484585_generic(hint)  # pyright: ignore
+    )
 
 
-is_hint_pep585_generic.__doc__ = (
+def is_hint_pep585_generic(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant **generic**
     (i.e., either a type originally subclassing at least one subscripted
@@ -295,10 +151,18 @@ is_hint_pep585_generic.__doc__ = (
     bool
         :data:`True` only if this object is a :pep:`585`-compliant generic.
     '''
-)
+
+    # Return true only if object is either...
+    return (
+        # A PEP 585-compliant unsubscripted generic *OR*...
+        is_hint_pep585_generic_unsubscripted(hint) or
+        # A PEP 585-compliant subscripted generic.
+        is_hint_pep585_generic_subscripted(hint)
+    )
 
 
-is_hint_pep585_generic_subscripted.__doc__ = (
+#FIXME: Unit test us up, please.
+def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **subscripted generic** (i.e., object subscripted by one or more child type
@@ -318,10 +182,23 @@ is_hint_pep585_generic_subscripted.__doc__ = (
         :data:`True` only if this object is a :pep:`585`-compliant subscripted
         generic.
     '''
-)
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_origin_or_none)
+
+    # Arbitrary object originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # Return true only if this origin object is an unsubscripted generic
+    # type, which would then imply this hint to be a subscripted generic. If
+    # this strikes you as insane, you're not alone.
+    return is_hint_pep585_generic_unsubscripted(hint_origin)  # pyright: ignore
 
 
-is_hint_pep585_generic_unsubscripted.__doc__ = (
+#FIXME: Unit test us up, please.
+@callable_cached
+def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **unsubscripted generic** (i.e., type originally subclassing at least one
@@ -340,7 +217,93 @@ is_hint_pep585_generic_unsubscripted.__doc__ = (
         :data:`True` only if this object is a :pep:`585`-compliant unsubscripted
         generic.
     '''
-)
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # If either...
+    if (
+        # This hint is not a type *OR*...
+        not isinstance(hint, type) or
+        (
+            # The active Python interpreter targets Python <= 3.10 *AND*...
+            #
+            # In this case, a simple subclass test does *NOT* suffice to
+            # detect a PEP 585-compliant unsubscripted generic. Why? Because
+            # Python <= 3.10 implements PEP 585-compliant subscripted
+            # generics as types! But PEP 585-compliant unsubscripted
+            # generics are also types, of course:
+            #     $ python3.10
+            #     >>> class MuhGeneric(list): pass
+            #     >>> isinstance(MuhGeneric, type)
+            #     True  # <-- good
+            #     >>> isinstance(MuhGeneric[str], type)
+            #     True  # <-- *BAD*
+            #
+            #     $ python3.11
+            #     >>> class MuhGeneric(list): pass
+            #     >>> isinstance(MuhGeneric, type)
+            #     True  # <-- good
+            #     >>> isinstance(MuhGeneric[str], type)
+            #     False  # <-- good
+            #
+            # Disambiguating this edge case requires also detecting whether
+            # this PEP 484-compliant generic is subscripted by one or more
+            # child hints.
+            IS_PYTHON_AT_MOST_3_10 and
+            # This PEP 484-compliant generic is subscripted...
+            get_hint_pep_args(hint)
+        )
+    # Then this hint *CANNOT* be an unsubscripted generic. In this case,
+    # return false immediately.
+    ):
+        return False
+    # Else, this hint is a type. Since this hint *COULD* be an unsubscripted
+    # generic, continue testing.
+
+    # Tuple of all pseudo-superclasses originally subclassed by the passed
+    # hint if this hint is a generic *OR* false otherwise.
+    hint_bases_erased = getattr(hint, '__orig_bases__', False)
+
+    # If this hint subclasses *NO* pseudo-superclasses, this hint *CANNOT*
+    # be a generic. In this case, immediately return false.
+    if not hint_bases_erased:
+        return False
+    # Else, this hint subclasses one or more pseudo-superclasses.
+
+    #FIXME: [SPEED] Optimize into a "while" loop for efficiency. *sigh*
+    # For each such pseudo-superclass...
+    #
+    # Unsurprisingly, PEP 585-compliant generics have absolutely *NO*
+    # commonality with PEP 484-compliant generics. While the latter are
+    # trivially detectable as subclassing "typing.Generic" after type
+    # erasure, the former are *NOT*. The only means of deterministically
+    # deciding whether or not a hint is a PEP 585-compliant generic is if:
+    # * That class defines both the __class_getitem__() dunder method *AND*
+    #   the "__orig_bases__" instance variable. Note that this condition in
+    #   and of itself is insufficient to decide PEP 585-compliance as a
+    #   generic. Why? Because these dunder attributes have been standardized
+    #   under various PEPs and may thus be implemented by *ANY* arbitrary
+    #   classes.
+    # * The "__orig_bases__" instance variable is a non-empty tuple.
+    # * One or more objects listed in that tuple are PEP 585-compliant
+    #   C-based subscripted generics (e.g., "list[str]").
+    #
+    # Note we could technically also test that this hint defines the
+    # __class_getitem__() dunder method. Since this condition suffices to
+    # ensure that this hint is a PEP 585-compliant generic, however, there
+    # exists little benefit to doing so.
+    for hint_base_erased in hint_bases_erased:  # type: ignore[union-attr]
+        # If this pseudo-superclass is itself a PEP 585-compliant C-based
+        # subscripted generic (e.g., "list[str]"), return true.
+        if is_hint_pep585_builtin_subscripted(hint_base_erased):
+            return True
+        # Else, this pseudo-superclass is *NOT* PEP 585-compliant. In this
+        # case, continue to the next pseudo-superclass.
+
+    # Since *NO* such pseudo-superclasses are PEP 585-compliant, this hint
+    # is *NOT* a PEP 585-compliant generic. In this case, return false.
+    return False
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep585_generic_bases_unerased(
@@ -427,7 +390,7 @@ def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     The current implementation of :pep:`585` under at least Python 3.9 is
     fundamentally broken with respect to parametrized generics. While
     :pep:`484`-compliant generics properly propagate type variables from
-    pseudo-superclasses to subclasses, :pep:`585` fails to do so. This function
+    pseudo-superclasses to subclasses, :pep:`585` fails to do so. This getter
     "fills in the gaps" by recovering these type variables from parametrized
     :pep:`585`-compliant generics by iteratively constructing a new tuple from
     the type variables parametrizing all pseudo-superclasses of this generic.
@@ -458,22 +421,39 @@ def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     # Tuple of all pseudo-superclasses of this PEP 585-compliant generic.
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)
 
-    # Set of all type variables parametrizing these pseudo-superclasses.
+    # Dictionary mapping from all type variables parametrizing these
+    # pseudo-superclasses to the "None" singleton, thus preserving the ordering
+    # of these type variables while yet discarding duplicate type variables
+    # parametrizing multiple pseudo-superclasses.
     #
-    # Note the following inefficient iteration *CANNOT* be reduced to an
-    # efficient set comprehension, as each get_hint_pep_typevars() call returns
-    # a tuple of type variables rather than a single type variable to be added
-    # to this set.
-    hint_typevars: SetTypeVars = set()
+    # Note that:
+    # * A dictionary rather than set is intentionally leveraged. Why? Ordering.
+    #   Order of type variables is *EXTREMELY* significant (e.g., when mapping
+    #   type variables to child hints in a type variable lookup table). Whereas
+    #   dictionaries preserve insertion order as of Python >= 3.7, sets
+    #   currently do *NOT*. Since this algorithm *ONLY* employs a dictionary to
+    #   preserve insertion order, the values of this dictionary are irrelevant
+    #   and thus unconditionally set to the "None" singleton. I sigh so hard.
+    # * The following inefficient iteration *CANNOT* be trivially reduced to a
+    #   dictionary comprehension, as each get_hint_pep_typevars() call returns a
+    #   tuple of type variables rather than a single type variable to be added
+    #   to this dictionary.
+    hint_typevars_to_none: Dict[TypeVar, None] = dict()
 
-    # For each such pseudo-superclass, add all type variables parametrizing this
-    # pseudo-superclass to this set.
+    # For each such pseudo-superclass...
     for hint_base in hint_bases:
+        # Tuple of the zero or more type variables parametrizing this
+        # pseudo-superclass.
+        hint_base_typevars = get_hint_pep_typevars(hint_base)
         # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typevars(hint_base)}]')
-        hint_typevars.update(get_hint_pep_typevars(hint_base))
 
-    # Return a tuple coerced from this set.
-    return tuple(hint_typevars)
+        # For each such type variable...
+        for hint_base_typevar in hint_base_typevars:
+            # Add this type variable as a new key of this dictionary.
+            hint_typevars_to_none[hint_base_typevar] = None
+
+    # Return a tuple coerced from the keys of this dictionary.
+    return tuple(hint_typevars_to_none.keys())
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.

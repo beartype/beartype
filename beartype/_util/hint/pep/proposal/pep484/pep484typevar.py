@@ -439,23 +439,37 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
     #     False  # <-- something good finally happened
     hint_unsubscripted_typevars = get_hint_pep_typevars(hint_unsubscripted)
 
-    # If this unsubscripted hint is parametrized by *NO* type variables, *NO*
-    # type variable lookup table can be produced by this reduction. In this
-    # case, reduce this subscripted hint to simply this unsubscripted hint.
-    #
-    # Note this this is an uncommon edge case. Examples include:
-    # * Parametrizations of the PEP 484-compliant "typing.Generic" superclass
-    #   (e.g., "typing.Generic[S, T]"). In this case, the unsubscripted
-    #   "typing.Generic" superclass remains unparametrized despite the
-    #   subscripted "typing.Generic" superclass being parametrized.
-    if not hint_unsubscripted_typevars:
+    # Tuple of all child hints subscripting this subscripted hint.
+    hint_args = get_hint_pep_args(hint)
+    # print(f'hint_args: {repr(hint_args)}')
+
+    # If either...
+    if (
+        # This unsubscripted hint is parametrized by *NO* type variables, *NO*
+        # type variable lookup table can be produced by this reduction.
+        #
+        # Note this this is an uncommon edge case. Examples include:
+        # * Parametrizations of the PEP 484-compliant "typing.Generic"
+        #   superclass (e.g., "typing.Generic[S, T]"). In this case, the
+        #   original unsubscripted "typing.Generic" superclass remains
+        #   unparametrized despite that superclass later being parametrized.
+        not hint_unsubscripted_typevars
+        #FIXME: Uncomment after debugging what went wrong here, please.
+        # not hint_unsubscripted_typevars or
+        # This unsubscripted hint is parametrized by the exact same type
+        # variables as this subscripted hint is subscripted by, in which case
+        # the resulting type variable lookup table would uselessly be the
+        # identity mapping from each of these type variables to itself. While an
+        # identity type variable lookup table could trivially be produced, doing
+        # so would convey *NO* meaningful semantics and thus be pointless.
+        # hint_args == hint_unsubscripted_typevars
+    # Then reduce this subscripted hint to simply this unsubscripted hint, as
+    # type variable lookup tables are then irrelevent.
+    ):
         return hint_unsubscripted
     # Else, this unsubscripted hint is parametrized by one or more type
     # variables. In this case, produce a type variable lookup table mapping
     # these type variables to child hints subscripting this subscripted hint.
-
-    # Tuple of all child hints subscripting this subscripted hint.
-    hint_args = get_hint_pep_args(hint)
 
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
@@ -468,13 +482,13 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
     )
 
     # Metadata encapsulating this hint and type variable lookup table.
-    hint_data = HintSanifiedData(
+    hint_or_sane = HintSanifiedData(
         hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')
     # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
 
     # Return this metadata.
-    return hint_data
+    return hint_or_sane
 
 # ....................{ PRIVATE ~ getters                  }....................
 def _get_hint_pep484_typevars_to_hints(
@@ -570,6 +584,7 @@ def _get_hint_pep484_typevars_to_hints(
     # Type variable lookup table to be returned.
     typevar_to_hint: TypeVarToHint = {}
 
+    #FIXME: Optimize into a "while" loop at some point. *sigh*
     # For each passed type variable and corresponding type hint...
     #
     # Note that:
@@ -578,7 +593,9 @@ def _get_hint_pep484_typevars_to_hints(
     # * If more type variables than type hints were passed, zip() silently
     #   ignores type variables with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
+    print(f'Mapping typevars {typevars} -> hints {hints}...')
     for typevar, hint in zip(typevars, hints):
+        print(f'Mapping typevar {typevar} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
         # If this is *NOT* actually a type variable, raise an exception.
