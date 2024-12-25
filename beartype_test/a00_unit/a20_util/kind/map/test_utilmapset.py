@@ -16,42 +16,6 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ updaters                   }....................
-def test_update_mapping() -> None:
-    '''
-    Test the :func:`beartype._util.kind.map.utilmapset.update_mapping` function.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import update_mapping
-    from beartype_test.a00_unit.data.kind.data_kindmap import (
-        FAREWELL_O_HIAWATHA,
-        IN_THE_LODGE_OF_HIAWATHA,
-        IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA,
-        THE_SONG_OF_HIAWATHA,
-        THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA,
-    )
-
-    # Shallow copies of arbitrary mappings to be modified below.
-    farewell_o_hiawatha = FAREWELL_O_HIAWATHA.copy()
-    the_song_of_hiawatha = THE_SONG_OF_HIAWATHA.copy()
-
-    # Assert this updater preserves this mapping when updated from an empty
-    # mapping.
-    update_mapping(farewell_o_hiawatha, {})
-    assert farewell_o_hiawatha == FAREWELL_O_HIAWATHA
-
-    # Assert this updater updates this mapping as expected when updating from a
-    # non-empty mapping containing no key or key-value collisions.
-    update_mapping(the_song_of_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
-    assert the_song_of_hiawatha == (
-        THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA)
-
-    # Assert this updater updates this mapping as expected when updating from a
-    # non-empty mapping containing multiple key but no key-value collisions.
-    update_mapping(farewell_o_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
-    assert farewell_o_hiawatha == IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA
-
 # ....................{ TESTS ~ mergers                    }....................
 def test_merge_mappings_two() -> None:
     '''
@@ -128,3 +92,75 @@ def test_merge_mappings_three() -> None:
         FAREWELL_O_HIAWATHA,
     ) == (
         FROM_THE_BROW_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA)
+
+# ....................{ TESTS ~ updaters                   }....................
+def test_update_mapping() -> None:
+    '''
+    Test the :func:`beartype._util.kind.map.utilmapset.update_mapping` function.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.kind.map.utilmapset import update_mapping
+    from beartype_test.a00_unit.data.kind.data_kindmap import (
+        FAREWELL_O_HIAWATHA,
+        IN_THE_LODGE_OF_HIAWATHA,
+        IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA,
+        THE_SONG_OF_HIAWATHA,
+        THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA,
+    )
+
+    # Shallow copies of arbitrary mappings to be modified below.
+    farewell_o_hiawatha = FAREWELL_O_HIAWATHA.copy()
+    the_song_of_hiawatha = THE_SONG_OF_HIAWATHA.copy()
+
+    # Assert this updater preserves this mapping when updated from an empty
+    # mapping.
+    update_mapping(farewell_o_hiawatha, {})
+    assert farewell_o_hiawatha == FAREWELL_O_HIAWATHA
+
+    # Assert this updater updates this mapping as expected when updating from a
+    # non-empty mapping containing no key or key-value collisions.
+    update_mapping(the_song_of_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
+    assert the_song_of_hiawatha == (
+        THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA)
+
+    # Assert this updater updates this mapping as expected when updating from a
+    # non-empty mapping containing multiple key but no key-value collisions.
+    update_mapping(farewell_o_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
+    assert farewell_o_hiawatha == IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA
+
+
+def test_update_mapping_keys() -> None:
+    '''
+    Test the :func:`beartype._util.kind.map.utilmapset.update_mapping_keys`
+    function.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.kind.map.utilmapset import update_mapping_keys
+
+    # Arbitrary dictionary, initialized to the empty dictionary.
+    spreading_a_shade = {}
+
+    # Assert that this function when passed *NO* keys preserves the passed
+    # dictionary as is.
+    update_mapping_keys(mapping=spreading_a_shade, keys=())
+    assert spreading_a_shade == {}
+
+    # Assert that this function when passed just one key adds a new key-value
+    # pair to the passed dictionary mapping this key to the "None" singleton.
+    update_mapping_keys(mapping=spreading_a_shade, keys=(
+        "the Naiad 'mid her reeds.",))
+    assert spreading_a_shade == {"the Naiad 'mid her reeds.": None}
+
+    # Assert that this function when passed two or more keys adds new key-value
+    # pairs to the passed dictionary mapping these keys to the "None" singleton.
+    update_mapping_keys(mapping=spreading_a_shade, keys=(
+        "Press'd her cold finger",
+        'closer to her lips.',
+    ))
+    assert spreading_a_shade == {
+        "the Naiad 'mid her reeds.": None,
+        "Press'd her cold finger": None,
+        'closer to her lips.': None,
+    }

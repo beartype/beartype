@@ -12,10 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
-from beartype.typing import Sequence
+from beartype.typing import (
+    Collection,
+    Sequence,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import (
+    Hashable,
     Sequence as SequenceABC,
     Mapping,
     MutableMapping,
@@ -260,3 +264,67 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     # Update the former mapping from the latter mapping. Since no unsafe
     # collisions exist, this update is now guaranteed to be safe.
     mapping_trg.update(mapping_src)
+
+
+def update_mapping_keys(
+    # Mandatory parameters.
+    mapping: MutableMapping,
+    keys: Collection[Hashable],
+
+    # Optional parameters.
+    value: object = None,
+) -> None:
+    '''
+    Map the passed keys to the same passed value in the passed mapping.
+
+    This function is an efficient alternative to the standard idiom for adding
+    multiple keys to a mapping when those keys *all* share the same value:
+
+    .. code-block:: python
+
+       # This function effectively does this -- except *WAY* faster. "for" loops
+       # are excrutiatingly slow, due to raising "StopIteration" exceptions on
+       # normal loop termination.
+       for key in keys:
+            mapping[key] = value
+
+    This function is principally useful for efficiently creating and maintaining
+    an **insertion-order mimic set** (i.e., a set-like object that preserves
+    insertion order despite not actually being a set). While neither the builtin
+    :class:`set` nor :class:`frozenset` types preserve insertion order, the
+    builtin :class:`dict` type *does*. An insertion-order mimic set can thus be
+    trivially constructed as a dictionary whose:
+
+    * Keys are the desired ordered-preserving set members.
+    * Values are ignorable (e.g., :data:`None`).
+
+    Parameters
+    ----------
+    mapping : MutableMapping
+        Mapping to add these key-value pairs to.
+    keys : Iterable[Hashable]
+        Collection of all keys to be added to this mapping.
+    value : object, optional
+        Singular value to map *all* of these keys to. Defaults to :data:`None`
+        to trivialize insertion-order sets.
+    '''
+    assert isinstance(mapping, MutableMapping), (
+        f'{repr(mapping)} not mutable mapping.')
+
+    # Efficiently map *ALL* of these keys to this same value in this mapping.
+    # Dismantled, this is:
+    # * "(value,) * len(keys)", a tuple of the same length as the passed
+    #   collection of keys whose items are *ALL* the passed value repeated
+    #   verbatim. Since Python optimizes tuple creation, this operation is
+    #   highly efficient despite superficially appearing to be insane.
+    # * "zip(...)", an iterable pairing each of these keys with each of these
+    #   duplicate values. If this iterable was itself a tuple, its contents
+    #   would resemble:
+    #       ((keys[0], value), (keys[1], value), ..., (keys[N], value))
+    #
+    # Note that this logic also implicitly handles the edge case of the caller
+    # passing an empty iterable of keys. Why? Because the zip() builtin
+    # dynamically generates an iterable whose length is the minimum of the
+    # lengths of the passed iterables. If one of the passed iterables is empty,
+    # the iterable that zip() generates will also be empty. Hallelujah, Python!
+    mapping.update(zip(keys, (value,) * len(keys)))

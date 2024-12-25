@@ -26,6 +26,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.kind.map.utilmapset import update_mapping_keys
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_10,
 )
@@ -447,10 +448,8 @@ def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
         hint_base_typevars = get_hint_pep_typevars(hint_base)
         # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typevars(hint_base)}]')
 
-        # For each such type variable...
-        for hint_base_typevar in hint_base_typevars:
-            # Add this type variable as a new key of this dictionary.
-            hint_typevars_to_none[hint_base_typevar] = None
+        # Efficiently add these type variables as new keys of this dictionary.
+        update_mapping_keys(hint_typevars_to_none, hint_base_typevars)
 
     # Return a tuple coerced from the keys of this dictionary.
     return tuple(hint_typevars_to_none.keys())
