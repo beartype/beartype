@@ -146,6 +146,10 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             hint=AliasPep484604,
             pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_type_typing=True,
+            # PEP 695-compliant parametrized type aliases are parametrized by
+            # type variables implicitly instantiated only "on the fly" by Python
+            # itself. These variables are *NOT* explicitly defined and thus
+            # *NOT* safely accessible here outside of these aliases.
             is_typevars=True,
             is_typing=False,
             piths_meta=(

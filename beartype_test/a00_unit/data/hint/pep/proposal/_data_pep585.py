@@ -378,7 +378,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignCollection,
             isinstanceable_type=Collection,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -504,7 +504,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignIterable,
             isinstanceable_type=Iterable,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -644,7 +644,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(_Pep585GenericTypevaredSingle((
@@ -669,7 +669,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=_Pep585GenericTypevaredMultiple,
             is_pep585_generic=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Subclass-specific generic dictionary of string constants.
                 HintPithSatisfiedMetadata(_Pep585GenericTypevaredMultiple({
@@ -717,7 +717,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredShallowMultiple,
             is_pep585_generic=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic iterable of string constants.
                 HintPithSatisfiedMetadata(
@@ -739,7 +739,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=_Pep585GenericTypevaredDeepMultiple,
             is_pep585_generic=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
@@ -915,7 +915,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignDict,
             isinstanceable_type=dict,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Dictionary mapping keys of one type to values of another.
                 HintPithSatisfiedMetadata({
@@ -1317,7 +1317,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignAbstractSet,
             isinstanceable_type=Set,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -1419,7 +1419,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignDeque,
             isinstanceable_type=deque,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Deque of items all of the same type.
                 HintPithSatisfiedMetadata(deque((
@@ -1528,7 +1528,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignItemsView,
             isinstanceable_type=ItemsView,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Items view of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -1637,7 +1637,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignKeysView,
             isinstanceable_type=KeysView,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Keys view of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -1740,7 +1740,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignValuesView,
             isinstanceable_type=ValuesView,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Values view of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -1839,7 +1839,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignMutableSet,
             isinstanceable_type=MutableSet,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 HintPithSatisfiedMetadata({
@@ -1942,8 +1942,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             hint=list[T],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            is_typevars=True,
             is_pep585_builtin_subscripted=True,
+            typevars=(T,),
             piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
                 HintPithSatisfiedMetadata([]),
@@ -2081,7 +2081,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignDict,
             isinstanceable_type=dict,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Dictionary mapping string keys to integer values.
                 HintPithSatisfiedMetadata({
@@ -2331,7 +2331,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(S, T,),
             piths_meta=(
                 # Tuple containing a floating-point number and string (in that
                 # exact order).
@@ -2386,7 +2386,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Tuple containing arbitrarily many string constants.
                 HintPithSatisfiedMetadata((
@@ -2486,7 +2486,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignType,
             isinstanceable_type=type,
             is_pep585_builtin_subscripted=True,
-            is_typevars=True,
+            typevars=(T,),
             piths_meta=(
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(int),

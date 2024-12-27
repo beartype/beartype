@@ -160,6 +160,18 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         # common sense of that term. Validators, save us from the sins of Guido!
         SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
 
+        # Type variable bounded by a beartype validator defined as a lambda
+        # function.
+        T_IsIntNonZero = TypeVar(
+            'T_IsIntNonZero', bound=Annotated[object, IsIntNonZero])
+
+        # Type variable bounded by two beartype validators, one defined as a
+        # lambda function and one not.
+        T_IsIntNonZero = TypeVar(
+            'T_IsIntNonZero',
+            bound=Annotated[object, IsInstance[int], IsNonEmpty],
+        )
+
         # ................{ TUPLES                             }................
         # Add PEP 593-specific test type hints to this tuple global.
         hints_pep_meta.extend((
@@ -488,12 +500,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # a type variable bounded by a beartype validator defined as a
             # lambda function.
             HintPepMetadata(
-                hint=List[List[TypeVar('AWhirlwindSweptItOn', bound=(
-                    Annotated[object, IsIntNonZero]))]],
+                hint=List[List[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 is_pep585_builtin_subscripted=List is list,
-                is_typevars=True,
+                typevars=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
                     HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
@@ -515,12 +526,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             # a type variable bounded by two beartype validators, one defined as
             # a lambda function and one not.
             HintPepMetadata(
-                hint=List[List[TypeVar('WithFierceGusts', bound=(
-                    Annotated[object, IsInstance[int], IsNonEmpty]))]],
+                hint=List[List[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 is_pep585_builtin_subscripted=List is list,
-                is_typevars=True,
+                typevars=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
                     HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
@@ -685,6 +695,16 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         # "typing.Annotated" type factory supports the "|" operator. In this
         # case, defined unions of annotateds with this operator.
         if IS_PYTHON_AT_LEAST_3_10:
+            # annotated by a type variable bounded by a union of beartype
+            # validators defined as lambda functions.
+            T_IsNumberNonNegativeOrStrNonEmpty = TypeVar(
+                'T_IsNumberNonNegativeOrStrNonEmpty',
+                bound=(
+                    Annotated[Number, IsNonNegative] |
+                    Annotated[str, IsNonEmpty]
+                ),
+            )
+
             # Add PEP 593-specific test type hints to this tuple global.
             hints_pep_meta.extend((
                 # ..............{ ANNOTATED ~ beartype : is : nes}..............
@@ -692,17 +712,15 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 # annotated by a type variable bounded by a union of beartype
                 # validators defined as lambda functions.
                 HintPepMetadata(
-                    hint=List[List[TypeVar('TheStrainingBoat', bound=(
-                        Annotated[Number, IsNonNegative] |
-                        Annotated[str, IsNonEmpty]
-                    ))]],
+                    hint=List[List[T_IsNumberNonNegativeOrStrNonEmpty]],
                     pep_sign=HintSignList,
                     isinstanceable_type=list,
                     is_pep585_builtin_subscripted=List is list,
-                    is_typevars=True,
+                    typevars=(T_IsNumberNonNegativeOrStrNonEmpty,),
                     piths_meta=(
                         # List of lists of positive number constants.
-                        HintPithSatisfiedMetadata([[11, 0.11], [1, 110, 1101100]]),
+                        HintPithSatisfiedMetadata([
+                            [11, 0.11], [1, 110, 1101100]]),
                         # List of lists of non-empty string constants.
                         HintPithSatisfiedMetadata([
                             ['The straining boat.', '—A whirlwind swept it on,'],

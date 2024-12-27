@@ -234,8 +234,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=ProtocolCustomTypevared,
                 pep_sign=HintSignPep484585GenericUnsubscripted,
                 generic_type=ProtocolCustomTypevared,
-                is_typevars=True,
                 is_type_typing=False,
+                typevars=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
                     HintPithSatisfiedMetadata(protocol_custom_structural),
@@ -250,7 +250,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=ProtocolCustomTypevared[T],
                 pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=ProtocolCustomTypevared,
-                is_typevars=True,
+                typevars=(T,),
                 is_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
@@ -344,7 +344,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=IO,
                 pep_sign=HintSignPep484585GenericUnsubscripted,
                 generic_type=IO,
-                is_typevars=True,
+                typevars=(AnyStr,),
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     HintPithSatisfiedMetadata(
@@ -406,7 +406,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 hint=IO[AnyStr],
                 pep_sign=HintSignPep484585GenericSubscripted,
                 generic_type=IO,
-                is_typevars=True,
+                typevars=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     HintPithSatisfiedMetadata(
@@ -432,7 +432,11 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignPep484585GenericUnsubscripted,
                 generic_type=SupportsAbs,
                 # Oddly, some but *NOT* all "typing.Supports*" ABCs are
-                # parametrized by type variables. *shrug*
+                # parametrized by type variables. However, these type variables
+                # have nondescript names (e.g., "T") *NOT* officially exported
+                # as public global variables by the "typing" module. To reduce
+                # the likelihood of unexpected breakage under future Python
+                # versions, we avoid asserting these exact type variables.
                 is_typevars=True,
                 piths_meta=(
                     # Integer constant.
@@ -566,7 +570,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignPep484585GenericUnsubscripted,
                 generic_type=SupportsRound,
                 # Oddly, some but *NOT* all "typing.Supports*" ABCs are
-                # parametrized by type variables. *shrug*
+                # parametrized by type variables. See "SupportsAbs" above.
                 is_typevars=True,
                 piths_meta=(
                     # Floating-point number constant.
@@ -630,7 +634,10 @@ def hints_pep544_ignorable_deep() -> list:
 
     # ..................{ IMPORTS                            }..................
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype._data.hint.datahinttyping import S, T
+    from beartype._data.hint.datahinttyping import (
+        S,
+        T,
+    )
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific deeply ignorable type hints to be returned.

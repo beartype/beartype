@@ -84,28 +84,25 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     from pytest import raises
 
     # ....................{ ASSERTS                        }....................
-    # Assert this getter...
+    # For each PEP-compliant test hint...
     for hint_pep_meta in hints_pep_meta:
         # If this hint is a PEP 585-compliant generic...
         if hint_pep_meta.is_pep585_generic:
             # Tuple of all type variables returned by this function.
-            hint_pep_typevars = get_hint_pep585_generic_typevars(
+            hint_typevars = get_hint_pep585_generic_typevars(
                 hint_pep_meta.hint)
 
-            #FIXME: *INSUFFICIENT.* Order is important. What we *REALLY* need
-            #here is a "hint_pep_meta.typevars" instance variable providing the
-            #expected tuple of type variables rather than merely
-            #"hint_pep_meta.is_typevars". Generalize us up, please.
-
-            # Returns one or more type variables for typevared PEP
-            # 585-compliant generics.
-            if hint_pep_meta.is_typevars:
-                assert isinstance(hint_pep_typevars, tuple)
-                assert hint_pep_typevars
-            # *NO* type variables for untypevared PEP 585-compliant generics.
+            # If this hint is parametrized by one or more type variables, assert
+            # that this getter returns the tuple of these variables.
+            if hint_pep_meta.typevars:
+                assert isinstance(hint_typevars, tuple)
+                assert hint_typevars == hint_pep_meta.typevars
+            # Else, this hint is unparametrized by type variables. In this case,
+            # assert that this getter returns the empty tuple.
             else:
-                assert hint_pep_typevars == ()
-        # Raises an exception for objects *NOT* PEP 585-compliant generics.
+                assert hint_typevars == ()
+        # If this hint is *NOT* a PEP 585-compliant generic, assert that this
+        # getter raises an exception.
         else:
             with raises(BeartypeDecorHintPep585Exception):
                 get_hint_pep585_generic_typevars(hint_pep_meta.hint)
