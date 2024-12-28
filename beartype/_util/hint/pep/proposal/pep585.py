@@ -379,16 +379,20 @@ def get_hint_pep585_generic_bases_unerased(
 @callable_cached
 def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     '''
-    Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
-    instances of the passed :pep:`585`-compliant generic listed by the caller
-    at hint declaration time ignoring duplicates) if any *or* the empty tuple
-    otherwise.
+    Tuple of all **unique type variables** (i.e., non-duplicated
+    :class:`TypeVar` objects) originally parametrizing the passed
+    :pep:`585`-compliant generic if this generic was parametrized by one or more
+    type variables *or* the empty tuple otherwise (i.e., if this generic is
+    unparametrized).
 
     This getter is memoized for efficiency.
 
     Motivation
     ----------
-    The current implementation of :pep:`585` under at least Python 3.9 is
+    This getter mimics the behaviour of the ``__parameters__`` dunder attributes
+    for :pep:`484`-compliant generics, whose values similarly collect the tuples
+    of all unique type variables originally parametrizing those generics. Sadly,
+    the current implementation of :pep:`585` under at least Python 3.9—3.13 is
     fundamentally broken with respect to parametrized generics. While
     :pep:`484`-compliant generics properly propagate type variables from
     pseudo-superclasses to subclasses, :pep:`585` fails to do so. This getter

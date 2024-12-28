@@ -26,7 +26,7 @@ from beartype._check.convert.convcoerce import (
     coerce_hint_any,
     coerce_hint_root,
 )
-from beartype._check.convert.convreduce import reduce_hint
+from beartype._check.convert.reduce.redhint import reduce_hint
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN

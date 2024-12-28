@@ -925,7 +925,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # ................{ GENERICS ~ single : subscripted    }................
         #FIXME: Leverage all of the other generics imported above here, please
 
-        #FIXME: Also test "Pep484GenericST[T, S]" to ensure no infinite loops!
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
@@ -941,6 +940,44 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Token welfare’s malformed keening fare, keenly despaired'),
+            ),
+        ),
+
+        # Generic subclassing a single parametrized "typing" type, itself
+        # parametrized by the same type variables in the *OPPOSITE* order. This
+        # edge case guards against a catastrophic regression in which our
+        # reduction algorithm accidentally induces infinite recursion. *gulp*
+        HintPepMetadata(
+            hint=Pep484GenericST[T, S],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep484GenericST,
+            is_type_typing=True,
+            is_typing=False,
+            typevars=(T, S,),
+            piths_meta=(
+                # Subclass-specific generic.
+                HintPithSatisfiedMetadata(Pep484GenericST()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Along the margin-sand large foot-mark'),
+            ),
+        ),
+
+        # Generic subclassing a single parametrized "typing" type, itself
+        # parametrized by only a single type variable repeated ad nauseam.
+        HintPepMetadata(
+            hint=Pep484GenericST[T, T],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep484GenericST,
+            is_type_typing=True,
+            is_typing=False,
+            typevars=(T,),
+            piths_meta=(
+                # Subclass-specific generic.
+                HintPithSatisfiedMetadata(Pep484GenericST()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "No further than to where his feet had stray'd,"),
             ),
         ),
 

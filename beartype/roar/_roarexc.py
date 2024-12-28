@@ -820,6 +820,20 @@ class BeartypeDecorHintPep484TypeVarException(BeartypeDecorHintPep484Exception):
 
     pass
 
+# ....................{ DECORATOR ~ hint : reduce          }....................
+class BeartypeDecorHintReduceException(BeartypeDecorHintException):
+    '''
+    **Beartype decorator type hint reduction exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more **irreducible type hints** (e.g., hints inducing infinite
+    recursion on attempting to reduce these hints to alternative variants more
+    readily digestible by :mod:`beartype`).
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ param                  }....................
 class BeartypeDecorParamException(BeartypeDecorException):
     '''
