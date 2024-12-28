@@ -203,7 +203,7 @@ class HintMeta(object):
             f'{repr(pith_var_name_index)} not integer.')
         assert isinstance(typevar_to_hint, FrozenDict), (
             f'{repr(typevar_to_hint)} not frozen dictionary.')
-        assert indent_level > 1, f'{repr(indent_level)} <= 1.'
+        assert indent_level >= 1, f'{repr(indent_level)} < 1.'
         assert pith_expr, f'{repr(pith_expr)} empty.'
         assert pith_var_name_index >= 0, f'{repr(pith_var_name_index)} < 0.'
 

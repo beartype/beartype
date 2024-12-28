@@ -21,6 +21,7 @@ from beartype._check.proposal.checkpep484585generic import (
     iter_hint_pep484585_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
+from beartype._util.text.utiltextansi import color_hint
 
 # ....................{ GETTERS                            }....................
 def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
@@ -84,7 +85,8 @@ def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
             # Human-readable string prefixing this failure with additional
             # metadata describing this pseudo-superclass.
             cause_deep.cause_str_or_none = (
-                f'generic base {repr(cause_child.hint)} '
+                f'generic superclass '
+                f'{color_hint(text=repr(cause_child.hint), is_color=cause.conf.is_color)} of '
                 f'{cause_deep.cause_str_or_none}'
             )
 

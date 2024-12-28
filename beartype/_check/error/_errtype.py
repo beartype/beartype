@@ -44,7 +44,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
@@ -161,7 +160,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
         else:
             cause_str_or_none = (
                 f'{represent_pith(pith)} not instance of '
-                f'{color_hint(text=label_type(hint), is_color=cause.conf.is_color)}'
+                f'{label_type(cls=hint, is_color=cause.conf.is_color)}'
             )
     # Else, this pith is an instance of this class.
 
@@ -282,10 +281,8 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     # this case, this pith violates this tuple union.
     else:
         # Machine-readable representation of this tuple union.
-        hint_repr = color_hint(
-            text=join_delimited_disjunction_types(hint),
-            is_color=cause.conf.is_color,
-        )
+        hint_repr = join_delimited_disjunction_types(
+            types=hint, is_color=cause.conf.is_color)
 
         # Output cause to be returned, permuted from this input cause such that
         # the output cause justification is a substring describing this failure.
@@ -383,12 +380,13 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
 
         # Description of this superclasses, defined as either...
         hint_child_label = (
-            # If this superclass is a class, a description of this class;
-            label_type(hint_child)
+            # If this superclass is a type, a description of this type;
+            label_type(cls=hint_child, is_color=cause.conf.is_color)
             if isinstance(hint_child, type) else
-            # Else, this superclass is a tuple of classes. In this case, a
-            # description of these classes...
-            join_delimited_disjunction_types(hint_child)
+            # Else, this superclass is a tuple of types. In this case, a
+            # description of these types...
+            join_delimited_disjunction_types(
+                types=hint_child, is_color=cause.conf.is_color)
         )
 
         # Human-readable string describing this failure.

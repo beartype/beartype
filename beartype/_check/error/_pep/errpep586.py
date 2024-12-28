@@ -16,6 +16,7 @@ from beartype._check.error.errcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.pep586 import (
     get_hint_pep586_literals)
+from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -91,7 +92,9 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
     # Deep output cause to be returned, permuted from this input cause such that
     # the justification is a human-readable string describing this failure.
     cause_deep = cause.permute(cause_str_or_none=(
-        f'{represent_pith(cause.pith)} != {cause_literals_unsatisfied}.'))
+        f'{represent_pith(cause.pith)} != '
+        f'{color_type(text=cause_literals_unsatisfied, is_color=cause.conf.is_color)}.'
+    ))
 
     # Return this cause.
     return cause_deep

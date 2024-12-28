@@ -76,8 +76,7 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
 
 def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
+    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
     getter.
 
     Parameters
@@ -97,19 +96,31 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # ....................{ ASSERTS                        }....................
-    # For each PEP-compliant hint, assert this getter returns...
+    # For each PEP-compliant test hint...
     for hint_pep_meta in hints_pep_meta:
-        # Tuple of all type variables subscripting this hint.
+        # Tuple of all type variables discovered by this getter.
         hint_typevars = get_hint_pep_typevars(hint_pep_meta.hint)
         assert isinstance(hint_typevars, tuple)
 
-        # For typevared hints, one or more type variables.
+        # Assert that all items of this tuple are actually type variables.
+        for hint_typevar in hint_typevars:
+            assert get_hint_pep_sign_or_none(hint_typevar) is HintSignTypeVar
+
+        # If this hint is parametrized by one or more type variables...
         if hint_pep_meta.is_typevars:
+            # Assert that this getter returns one or more type variables.
             assert hint_typevars
-            for hint_typevar in hint_typevars:
-                assert get_hint_pep_sign_or_none(hint_typevar) is (
-                    HintSignTypeVar)
-        # For non-typevared hints, *NO* type variables.
+
+            # If the exact type variables parametrizing this hint are known
+            # at test time...
+            if hint_pep_meta.typevars:
+                # Assert that this getter returns only these type variables.
+                assert hint_pep_meta.typevars == hint_typevars
+            # Else, the exact type variables parametrizing this hint are
+            # unknown at test time. In this case, silently ignore the exact
+            # contents of this tuple.
+        # Else, this hint is unparametrized by type variables. In this case,
+        # assert that this getter returns the empty tuple.
         else:
             assert hint_typevars == ()
 

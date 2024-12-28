@@ -71,22 +71,22 @@ def reduce_hint_pep484585_generic_subscripted(
     # If this hint was *NOT* reduced to an unsubscripted generic from this
     # subscripted IO generic...
     if hint is hint_reduced:
-        # # Reduce this subscripted generic to:
-        # # * The semantically useful unsubscripted generic originating this
-        # #   semantically useless subscripted generic.
-        # # * The type variable lookup table mapping all type variables
-        # #   parametrizing this unsubscripted generic to all non-type variable
-        # #   hints subscripting this subscripted generic.
+        # Reduce this subscripted generic to:
+        # * The semantically useful unsubscripted generic originating this
+        #   semantically useless subscripted generic.
+        # * The type variable lookup table mapping all type variables
+        #   parametrizing this unsubscripted generic to all non-type variable
+        #   hints subscripting this subscripted generic.
         # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-        # hint_reduced = reduce_hint_pep484_subscripted_typevar_to_hint(hint)
+        hint_reduced = reduce_hint_pep484_subscripted_typevar_to_hint(hint)
         # print(f'[reduce_hint_pep484585_generic_subscripted] ...to unsubscripted generic {repr(hint_reduced)}.')
 
         # #FIXME: Excise in favour of the above. For unknown reasons, the above is
-        # #currently inducing an infinite wait under Python 3.9. *sigh*
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
-
-        # Unsubscripted type alias originating this subscripted hint.
-        hint_reduced = get_hint_pep_origin(hint)
+        # # #currently inducing an infinite wait under Python 3.9. *sigh*
+        # from beartype._util.hint.pep.utilpepget import get_hint_pep_origin
+        #
+        # # Unsubscripted type alias originating this subscripted hint.
+        # hint_reduced = get_hint_pep_origin(hint)
     # Else, this hint was reduced to an unsubscripted generic from this
     # subscripted IO generic. In this case, preserve this reduction.
 

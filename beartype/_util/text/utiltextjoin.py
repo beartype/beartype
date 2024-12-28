@@ -11,11 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Iterable as typing_Iterable
-from beartype._data.hint.datahinttyping import IterableStrs
+from beartype._data.hint.datahinttyping import (
+    BoolTristate,
+    IterableStrs,
+    IterableTypes,
+)
 from collections.abc import (
-    Iterable,
-    Sequence,
+    Iterable as IterableABC,
+    Sequence as SequenceABC,
 )
 
 # ....................{ JOINERS                            }....................
@@ -86,7 +89,7 @@ def join_delimited(
         ... )
         'Fulgrim, Perturabo, Angron, and Mortarion'
     '''
-    assert isinstance(strs, Iterable) and not isinstance(strs, str), (
+    assert isinstance(strs, IterableABC) and not isinstance(strs, str), (
         f'{repr(strs)} not non-string iterable.')
     assert isinstance(delimiter_if_two, str), (
         f'{repr(delimiter_if_two)} not string.')
@@ -97,7 +100,7 @@ def join_delimited(
 
     # If this iterable is *NOT* a sequence, internally coerce this iterable
     # into a sequence for subsequent indexing purposes.
-    if not isinstance(strs, Sequence):
+    if not isinstance(strs, SequenceABC):
         strs = tuple(strs)
     # Else, this iterable is already a sequence.
     #
@@ -220,7 +223,13 @@ def join_delimited_disjunction(strs: IterableStrs, **kwargs) -> str:
     )
 
 
-def join_delimited_disjunction_types(types: typing_Iterable[type]) -> str:
+def join_delimited_disjunction_types(
+    # Mandatory parameters.
+    types: IterableTypes,
+
+    # Optional parameters.
+    is_color: BoolTristate = False,
+) -> str:
     '''
     Concatenate the human-readable classname of each class in the passed
     iterable delimited by commas and/or the disjunction "or" (conditionally
@@ -233,6 +242,10 @@ def join_delimited_disjunction_types(types: typing_Iterable[type]) -> str:
     types : Iterable[type]
         Iterable of all classes whose human-readable classnames are to be
         concatenated disjunctively.
+    is_color : BoolTristate, optional
+        Tri-state colouring boolean governing ANSI usage. See the
+        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
+        Defaults to :data:`False`.
 
     Returns
     -------
@@ -244,4 +257,5 @@ def join_delimited_disjunction_types(types: typing_Iterable[type]) -> str:
     from beartype._util.text.utiltextlabel import label_type
 
     # Make it so, ensign.
-    return join_delimited_disjunction(label_type(cls) for cls in types)
+    return join_delimited_disjunction(
+        label_type(cls=cls, is_color=is_color) for cls in types)

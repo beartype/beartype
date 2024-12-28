@@ -175,23 +175,32 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, iterable: Pep484Tuple[T]) -> None:
+    def __init__(self, collection: Pep484Tuple[T]) -> None:
         '''
         Initialize this generic from the passed tuple.
         '''
 
-        assert isinstance(iterable, tuple), (
-            f'{repr(iterable)} not tuple.')
-        self._iterable = iterable
+        assert isinstance(collection, tuple), (
+            f'{repr(collection)} not tuple.')
+        self._collection = collection
 
     # ....................{ DUNDERS                        }....................
-    # Define all protocols mandated by ABCs subclassed by this generic.
+    # Define all protocols mandated by ABCs subclassed by this generic. Also
+    # define all *OTHER* protocols mandated by the "collections.abc.Collection"
+    # ABC to enable @beartype to generate code deeply type-checking one or more
+    # of the items of instances of this generic.
 
     def __contains__(self, obj: object) -> bool:
-        return obj in self._iterable
+        return obj in self._collection
+
+    def __getitem__(self, index: int) -> T:
+        return self._collection[index]
 
     def __iter__(self) -> Pep484Iterator[T]:
-        return iter(self._iterable)
+        return iter(self._collection)
+
+    def __len__(self) -> int:
+        return len(self._collection)
 
 # ....................{ PEP 484 ~ usable : S, T            }....................
 # Generics that are actually instantiable and usable as valid objects.

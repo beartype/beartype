@@ -593,9 +593,9 @@ def _get_hint_pep484_typevars_to_hints(
     # * If more type variables than type hints were passed, zip() silently
     #   ignores type variables with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
-    print(f'Mapping typevars {typevars} -> hints {hints}...')
+    # print(f'Mapping typevars {typevars} -> hints {hints}...')
     for typevar, hint in zip(typevars, hints):
-        print(f'Mapping typevar {typevar} -> hint {hint}...')
+        # print(f'Mapping typevar {typevar} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
         # If this is *NOT* actually a type variable, raise an exception.

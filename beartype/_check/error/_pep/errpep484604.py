@@ -19,7 +19,6 @@ from beartype._check.metadata.metasane import get_hint_or_sane_hint
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
@@ -84,8 +83,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
             # Non-"typing" class originating this child hint if any *OR* "None"
             # otherwise.
             hint_child_origin_type = (
-                get_hint_pep_origin_type_isinstanceable_or_none(
-                    hint_child))
+                get_hint_pep_origin_type_isinstanceable_or_none(hint_child))
 
             # If...
             if (
@@ -168,11 +166,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
         # Human-readable comma-delimited disjunction of the names of these
         # classes (e.g., "bool, float, int, or str").
         cause_types_unsatisfied = join_delimited_disjunction_types(
-            hint_types_violated)
-
-        # This substring coloured for readability.
-        cause_types_unsatisfied_color = color_hint(
-            text=cause_types_unsatisfied, is_color=cause.conf.is_color)
+            types=hint_types_violated, is_color=cause.conf.is_color)
 
         # Prepend this cause as a discrete bullet-prefixed line.
         #
@@ -199,7 +193,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        cause_strs.insert(0, f'not {cause_types_unsatisfied_color}')
+        cause_strs.insert(0, f'not {cause_types_unsatisfied}')
     # Else, this pith shallowly satisfies *ALL* the types of this union.
 
     # If prior logic appended *NO* causes, raise an exception.

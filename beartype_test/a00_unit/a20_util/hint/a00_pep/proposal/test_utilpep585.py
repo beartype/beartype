@@ -79,8 +79,10 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep585Exception
+    from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
     from beartype._util.hint.pep.proposal.pep585 import (
         get_hint_pep585_generic_typevars)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from pytest import raises
 
     # ....................{ ASSERTS                        }....................
@@ -88,15 +90,28 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     for hint_pep_meta in hints_pep_meta:
         # If this hint is a PEP 585-compliant generic...
         if hint_pep_meta.is_pep585_generic:
-            # Tuple of all type variables returned by this function.
-            hint_typevars = get_hint_pep585_generic_typevars(
-                hint_pep_meta.hint)
+            # Tuple of all type variables discovered by this getter.
+            hint_typevars = get_hint_pep585_generic_typevars(hint_pep_meta.hint)
+            assert isinstance(hint_typevars, tuple)
 
-            # If this hint is parametrized by one or more type variables, assert
-            # that this getter returns the tuple of these variables.
-            if hint_pep_meta.typevars:
-                assert isinstance(hint_typevars, tuple)
-                assert hint_typevars == hint_pep_meta.typevars
+            # Assert that all items of this tuple are actually type variables.
+            for hint_typevar in hint_typevars:
+                assert get_hint_pep_sign_or_none(hint_typevar) is (
+                    HintSignTypeVar)
+
+            # If this hint is parametrized by one or more type variables...
+            if hint_pep_meta.is_typevars:
+                # Assert that this getter returns one or more type variables.
+                assert hint_typevars
+
+                # If the exact type variables parametrizing this hint are known
+                # at test time...
+                if hint_pep_meta.typevars:
+                    # Assert that this getter returns only these type variables.
+                    assert hint_pep_meta.typevars == hint_typevars
+                # Else, the exact type variables parametrizing this hint are
+                # unknown at test time. In this case, silently ignore the exact
+                # contents of this tuple.
             # Else, this hint is unparametrized by type variables. In this case,
             # assert that this getter returns the empty tuple.
             else:

@@ -460,13 +460,19 @@ PEP-compliant type hint matching *any* frozen set of zero or more types.
 # ....................{ TYPE                               }....................
 AbstractSetTypes = AbstractSet[type]
 '''
-:pep:`585`-compliant type hint matching a set of zero or more classes.
+:pep:`585`-compliant type hint matching *any* set of zero or more classes.
+'''
+
+
+IterableTypes = Iterable[type]
+'''
+PEP-compliant type hint matching an iterable of zero or more types.
 '''
 
 
 SetTypes = Set[type]
 '''
-PEP-compliant type hint matching *any* set of zero or more types.
+PEP-compliant type hint matching a set of zero or more types.
 '''
 
 

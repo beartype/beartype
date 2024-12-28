@@ -925,6 +925,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # ................{ GENERICS ~ single : subscripted    }................
         #FIXME: Leverage all of the other generics imported above here, please
 
+        #FIXME: Also test "Pep484GenericST[T, S]" to ensure no infinite loops!
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
@@ -1053,27 +1054,26 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ),
 
         # ................{ GENERICS ~ multiple : subscripted  }................
-        # FIXME: Uncomment *AFTER* worky, please. *sigh*
-        # # Generic subclassing a single parametrized "typing" type, itself
-        # # parametrized by the same type variables in the same order.
-        # HintPepMetadata(
-        #     hint=Pep484IterableTContainerT[str],
-        #     pep_sign=HintSignPep484585GenericSubscripted,
-        #     generic_type=Pep484IterableTContainerT,
-        #     is_type_typing=False,
-        #     is_typing=False,
-        #     piths_meta=(
-        #         # Generic container whose items satisfy this child hint.
-        #         HintPithSatisfiedMetadata(Pep484IterableTContainerT((
-        #             'Reclined his languid head,', 'his limbs did rest,',))),
-        #         # Generic container whose items violate this child hint.
-        #         HintPithUnsatisfiedMetadata(Pep484IterableTContainerT((
-        #             b'Diffused and motionless,', b'on the smooth brink',))),
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata(
-        #             'A stream went voiceless by, still deadened more'),
-        #     ),
-        # ),
+        # Generic subclassing a single parametrized "typing" type, itself
+        # parametrized by the same type variables in the same order.
+        HintPepMetadata(
+            hint=Pep484IterableTContainerT[str],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep484IterableTContainerT,
+            is_type_typing=False,
+            is_typing=False,
+            piths_meta=(
+                # Generic container whose items satisfy this child hint.
+                HintPithSatisfiedMetadata(Pep484IterableTContainerT((
+                    'Reclined his languid head,', 'his limbs did rest,',))),
+                # Generic container whose items violate this child hint.
+                HintPithUnsatisfiedMetadata(Pep484IterableTContainerT((
+                    b'Diffused and motionless,', b'on the smooth brink',))),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'A stream went voiceless by, still deadened more'),
+            ),
+        ),
 
         # ................{ MAPPING ~ dict                     }................
         # Unsubscripted "Dict" attribute.

@@ -83,7 +83,7 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # iterable to deeply satisfy this hint. It is what it is.
 {{indent_curr}}    (not isinstance({{pith_curr_var_name}}, {{collection_abc_expr}}) or
 {{indent_curr}}     # This iterable is an empty collection *OR*...
-{{indent_curr}}     not {{pith_curr_var_name}} or (
+{{indent_curr}}     not {{pith_curr_var_name}} or ((
 {{indent_curr}}        # If this non-empty collection is a sequence, localize a
 {{indent_curr}}        # pseudo-random item of this sequence;
 {{indent_curr}}        (
@@ -92,8 +92,8 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}        # Else, this non-empty collection *MUST* be reiterable. In this
 {{indent_curr}}        # case, localize the first item of this reiterable;
 {{indent_curr}}        ) or ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
-{{indent_curr}}        # True only if this item satisfies this hint.
-{{indent_curr}}        ) and {{hint_child_placeholder}}
+{{indent_curr}}     # True only if this item satisfies this hint.
+{{indent_curr}}     ) and {{hint_child_placeholder}})
 {{indent_curr}}    )
 {{indent_curr}})'''
 '''

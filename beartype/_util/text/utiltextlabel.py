@@ -386,58 +386,76 @@ def label_type(
     from beartype._util.cls.utilclstest import is_type_builtin
     from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep544_protocol)
-    from beartype._util.text.utiltextansi import color_attr_name
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        is_hint_pep484585_generic_subscripted)
+    from beartype._util.text.utiltextansi import color_type
 
-    # Label to be returned, initialized to this class' fully-qualified name.
-    classname = get_object_type_name(cls)
-    # print(f'cls {cls} classname: {classname}')
+    # Label to be returned.
+    classname: str = None  # type: ignore[assignment]
 
-    # If this name contains *NO* periods, this class is actually a builtin type
-    # (e.g., "list"). Since builtin types are well-known and thus
-    # self-explanatory, this name requires no additional labelling. In this
-    # case, return this name as is.
-    if '.' not in classname:
-        pass
-    # Else, this name contains one or more periods but could still be a
-    # builtin indirectly accessed via the standard "builtins" module.
-    #
-    # If this name is that of a builtin type uselessly prefixed by the name of
-    # the module declaring all builtin types (e.g., "builtins.list"), reduce
-    # this name to the unqualified basename of this type (e.g., "list").
-    elif is_type_builtin(cls):
-        classname = cls.__name__
-    # Else, this is a non-builtin class. Non-builtin classes are *NOT*
-    # well-known and thus benefit from additional labelling.
-    #
-    # If this class is a PEP 544-compliant protocol supporting structural
-    # subtyping, label this protocol.
-    elif is_hint_pep544_protocol(cls):
-        # print(f'cls {cls} is protocol!')
-        classname = f'<protocol "{classname}">'
-    # Else if this class is a standard abstract base class (ABC) defined by a
-    # standard submodule also known to support structural subtyping (e.g.,
-    # "collections.abc.Hashable", "contextlib.AbstractContextManager"), label
-    # this ABC as a protocol.
-    #
-    # Note that user-defined ABCs do *NOT* generally support structural
-    # subtyping. Doing so requires esoteric knowledge of undocumented and
-    # mostly private "abc.ABCMeta" metaclass internals unlikely to be
-    # implemented by third-party developers. Thanks to the lack of both
-    # publicity and standardization, there exists *NO* general-purpose means of
-    # detecting whether an arbitrary class supports structural subtyping.
-    elif (
-        classname.startswith('collections.abc.') or
-        classname.startswith('contextlib.')
-    ):
-        classname = f'<protocol ABC "{classname}">'
-    # Else, this is a standard class. In this case, label this class as such.
+    # If this type is a PEP 484- or 585-compliant subscripted generic, the best
+    # label is simply the machine-readable representation of this generic (e.g.,
+    # the string "MuhGeneric[str]" given the generic type declaration "class
+    # MuhGeneric[T](typing.Generic[T]):"). Alternative labels defined below fail
+    # to include the child hint subscripting this subscripted generic.
+    if is_hint_pep484585_generic_subscripted(cls):  # pyright: ignore
+        classname = repr(cls)
+    # Else, this type is *NOT* a PEP 484- or 585-compliant subscripted generic.
+    # In this case...
     else:
-        classname = f'<class "{classname}">'
+        # Fully-qualified name of this type.
+        classname = get_object_type_name(cls)
+        # print(f'cls {cls} classname: {classname}')
+
+        # If this name contains *NO* periods, this class is actually a builtin
+        # type (e.g., "list"). Since builtin types are well-known and thus
+        # self-explanatory, this name requires no additional labelling. In this
+        # case, return this name as is.
+        if '.' not in classname:
+            pass
+        # Else, this name contains one or more periods but could still be a
+        # builtin indirectly accessed via the standard "builtins" module.
+        #
+        # If this name is that of a builtin type uselessly prefixed by the name
+        # of the module declaring all builtin types (e.g., "builtins.list"),
+        # reduce this name to the unqualified basename of this type (e.g.,
+        # "list").
+        elif is_type_builtin(cls):
+            classname = cls.__name__
+        # Else, this is a non-builtin class. Non-builtin classes are *NOT*
+        # well-known and thus benefit from additional labelling.
+        #
+        # If this class is a PEP 544-compliant protocol supporting structural
+        # subtyping, label this protocol.
+        elif is_hint_pep544_protocol(cls):
+            # print(f'cls {cls} is protocol!')
+            classname = f'<protocol "{classname}">'
+        # Else if this class is a standard abstract base class (ABC) defined by
+        # a standard submodule also known to support structural subtyping (e.g.,
+        # "collections.abc.Hashable", "contextlib.AbstractContextManager"),
+        # label this ABC as a protocol.
+        #
+        # Note that user-defined ABCs do *NOT* generally support structural
+        # subtyping. Doing so requires esoteric knowledge of undocumented and
+        # mostly private "abc.ABCMeta" metaclass internals unlikely to be
+        # implemented by third-party developers. Thanks to the lack of both
+        # publicity and standardization, there exists *NO* general-purpose means
+        # of detecting whether an arbitrary class supports structural subtyping.
+        elif (
+            classname.startswith('collections.abc.') or
+            classname.startswith('contextlib.')
+        ):
+            classname = f'<protocol ABC "{classname}">'
+        # Else, this is a standard class. In this case, label this class as such.
+        else:
+            classname = f'<class "{classname}">'
 
     # Return this labelled classname, possibly coloured.
-    return color_attr_name(text=classname, is_color=is_color)
+    return color_type(text=classname, is_color=is_color)
 
 
+#FIXME: Silly, honestly. Is this still called anywhere? Simplify to trivial
+#calls to the vastly superior label_type() function defined above, please.
 def label_object_type(obj: object) -> str:
     '''
     Human-readable label describing the class of the passed object.

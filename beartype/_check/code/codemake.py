@@ -330,7 +330,7 @@ def make_check_expr(
         hint=hint_root,
         # 1-based indentation level describing the initial level of indentation
         # appropriate for the root hint.
-        indent_level=2,
+        indent_level=1,
         pith_expr=VAR_NAME_PITH_ROOT,
         pith_var_name_index=hints_meta.pith_curr_var_name_index,
         typevar_to_hint=typevar_to_hint_root,
