@@ -76,7 +76,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignValuesView,
     )
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
-        Pep585CallableContextManagerTSequenceT,
+        Pep585ContextManagerTSequenceT,
         Pep585IterableTContainerT,
         Pep585IterableTupleSTContainerTupleST,
         Pep585DictST,
@@ -683,14 +683,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple unparametrized "collection.abc" abstract
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         HintPepMetadata(
-            hint=Pep585CallableContextManagerTSequenceT,
+            hint=Pep585ContextManagerTSequenceT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=Pep585CallableContextManagerTSequenceT,
+            generic_type=Pep585ContextManagerTSequenceT,
             is_pep585_generic=True,
             typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
-                HintPithSatisfiedMetadata(Pep585CallableContextManagerTSequenceT((
+                HintPithSatisfiedMetadata(Pep585ContextManagerTSequenceT((
                     'Into a viscerally Eviscerated eras’ meditative hallways',
                     'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                 ))),
@@ -751,7 +751,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
         # Nested list of PEP 585-compliant generics.
         HintPepMetadata(
-            hint=list[Pep585CallableContextManagerTSequenceT],
+            hint=list[Pep585ContextManagerTSequenceT],
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_pep585_builtin_subscripted=True,
@@ -759,9 +759,9 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
-                    Pep585CallableContextManagerTSequenceT((
+                    Pep585ContextManagerTSequenceT((
                         'Stalling inevit‐abilities)', 'For carbined',)),
-                    Pep585CallableContextManagerTSequenceT((
+                    Pep585ContextManagerTSequenceT((
                         'Power-over (than', 'Power-with)',)),
                 ]),
                 # String constant.
@@ -774,6 +774,76 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                         'Of a cannabis‐enthroning regency',
                     ),
                 ]),
+            ),
+        ),
+
+        # ................{ GENERICS ~ multiple : subscripted  }................
+        # Generic subclassing multiple "typing" types directly parametrized by
+        # the same type variable, then subscripted by a concrete child hint
+        # mapping to that type variable.
+        HintPepMetadata(
+            hint=Pep585IterableTContainerT[str],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585IterableTContainerT,
+            is_pep585_generic=True,
+            piths_meta=(
+                # Generic container whose items satisfy this child hint.
+                HintPithSatisfiedMetadata(Pep585IterableTContainerT((
+                    'Reclined his languid head,', 'his limbs did rest,',))),
+                # Generic container whose items violate this child hint.
+                HintPithUnsatisfiedMetadata(Pep585IterableTContainerT((
+                    b'Diffused and motionless,', b'on the smooth brink',))),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'A stream went voiceless by, still deadened more'),
+            ),
+        ),
+
+        # Generic subclassing multiple "typing" types directly parametrized by
+        # the same type variable *AND* a non-"typing" abstract base class (ABC),
+        # then subscripted by a concrete child hint mapping to that type
+        # variable.
+        HintPepMetadata(
+            hint=Pep585ContextManagerTSequenceT[bytes],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585ContextManagerTSequenceT,
+            is_pep585_generic=True,
+            piths_meta=(
+                # Generic container whose items satisfy this child hint.
+                HintPithSatisfiedMetadata(Pep585ContextManagerTSequenceT((
+                    b'And slept there since.', b'Upon the sodden ground',))),
+                # Generic container whose items violate this child hint.
+                HintPithUnsatisfiedMetadata(Pep585ContextManagerTSequenceT((
+                    'His old right hand lay nerveless,', 'listless, dead,',))),
+                # Byte string constant.
+                HintPithUnsatisfiedMetadata(
+                    b'Unsceptred; and his realmless eyes were closed;'),
+            ),
+        ),
+
+        # Generic subclassing multiple "typing" types indirectly parametrized by
+        # multiple type variables *AND* a non-"typing" abstract base class
+        # (ABC), then subscripted by multiple concrete child hint mapping to
+        # those type variables.
+        HintPepMetadata(
+            hint=Pep585IterableTupleSTContainerTupleST[str, bytes],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585IterableTupleSTContainerTupleST,
+            is_pep585_generic=True,
+            piths_meta=(
+                # Generic container whose items satisfy this child hint.
+                HintPithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
+                    ("While his bow'd head", b"seem'd list'ning to the",),
+                    ('Earth, His ancient mother,', b'for some comfort yet.',),
+                ))),
+                # Generic container whose items violate this child hint.
+                HintPithUnsatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
+                    (b"It seem'd no force", 'could wake him from his place',),
+                    (b'But there came one,', 'who with a kindred hand',),
+                ))),
+                # Byte string constant.
+                HintPithUnsatisfiedMetadata(
+                    b"Touch'd his wide shoulders, after bending low"),
             ),
         ),
 

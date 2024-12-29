@@ -48,8 +48,12 @@ def die_unless_hint_pep585_generic(
 ) -> None:
     '''
     Raise an exception unless the passed object is a :pep:`585`-compliant
-    **generic** (i.e., class superficially subclassing at least one subscripted
-    :pep:`585`-compliant pseudo-superclass).
+    **generic** (i.e., either a type originally subclassing at least one
+    subscripted :pep:`585`-compliant pseudo-superclass *or* an object
+    subscripted by one or more child type hints originating from such a type).
+
+    This raiser raises an exception unless this object is either a subscripted
+    or unsubscripted :pep:`585`-compliant generic.
 
     Parameters
     ----------
@@ -139,6 +143,9 @@ def is_hint_pep585_generic(hint: Hint) -> bool:
     (i.e., either a type originally subclassing at least one subscripted
     :pep:`585`-compliant pseudo-superclass *or* an object subscripted by one or
     more child type hints originating from such a type).
+
+    This tester returns :data:`True` if this object is either a subscripted or
+    unsubscripted :pep:`585`-compliant generic.
 
     This tester is memoized for efficiency.
 
@@ -368,6 +375,7 @@ def get_hint_pep585_generic_bases_unerased(
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
+    # Else, this hint is a PEP 585-compliant generic.
 
     # Return the tuple of all unerased pseudo-superclasses of this generic.
     # While the "__orig_bases__" dunder instance variable is *NOT* guaranteed
@@ -377,13 +385,20 @@ def get_hint_pep585_generic_bases_unerased(
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
+def get_hint_pep585_generic_typevars(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep585Exception,
+    exception_prefix: str = '',
+) -> TupleTypeVars:
     '''
     Tuple of all **unique type variables** (i.e., non-duplicated
     :class:`TypeVar` objects) originally parametrizing the passed
-    :pep:`585`-compliant generic if this generic was parametrized by one or more
-    type variables *or* the empty tuple otherwise (i.e., if this generic is
-    unparametrized).
+    :pep:`585`-compliant unsubscripted generic if this generic was parametrized
+    by one or more type variables *or* the empty tuple otherwise (i.e., if this
+    generic is unparametrized).
 
     This getter is memoized for efficiency.
 
@@ -404,14 +419,26 @@ def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     ----------
     hint : Hint
         Object to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Returns
     -------
     Tuple[TypeVar, ...]
         Either:
 
-        * If this :pep:`585`-compliant generic defines a ``__parameters__``
-          dunder attribute, the value of that attribute.
+        * If this :pep:`585`-compliant generic is:
+
+          * Subscripted, the empty tuple. This mirrors the behaviour of the
+            ``__parameters__`` dunder attribute defined on :pep:`484`-compliant
+            subscripted generics, which is *always* set to the empty tuple.
+          * Unsubscripted, the tuple of all unique type variables parametrizing
+            this unsubscripted generic
+
         * Else, the empty tuple.
 
     Raises
@@ -423,7 +450,28 @@ def get_hint_pep585_generic_typevars(hint: Hint) -> TupleTypeVars:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
 
-    # Tuple of all pseudo-superclasses of this PEP 585-compliant generic.
+    # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
+    die_unless_hint_pep585_generic(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this hint is a PEP 585-compliant generic.
+
+    # Tuple of all type variables parametrizing this generic if this is a PEP
+    # 585-compliant subscripted generic *OR* "None" otherwise (i.e., is a PEP
+    # 585-compliant unsubscripted generic). For known reasons, the
+    # "__parameters__" dunder attribute is defined correctly for PEP
+    # 585-compliant subscripted (but *NOT* unsubscripted) generics. *shrug*
+    hint_typevars = getattr(hint, '__parameters__', None)
+
+    # If this tuple is defined, return this tuple as is.
+    if hint_typevars is not None:
+        return hint_typevars
+    # Else, this tuple is undefined. In this case, synthetically reconstruct
+    # this tuple for this PEP 585-compliant unsubscripted generic.
+
+    # Tuple of all pseudo-superclasses of this unsubscripted generic.
     hint_bases = get_hint_pep585_generic_bases_unerased(hint)
 
     # Dictionary mapping from all type variables parametrizing these

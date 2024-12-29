@@ -128,11 +128,12 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
 # ....................{ PEP 484 ~ usable : T               }....................
 # Generics that are actually instantiable and usable as valid objects.
 
-class Pep484CallableContextManagerSequenceT(
+class Pep484ContextManagerTSequenceT(
     Nongeneric, Pep484ContextManager[T], Pep484Sequence[T]):
     '''
-    :pep:`484`-compliant generic subclassing multiple parametrized :mod:`typing`
-    types *and* a non-:mod:`typing` abstract base class (ABC).
+    :pep:`484`-compliant generic subclassing multiple :mod:`collection.abc`
+    abstract base classes (ABCs) parametrized by the same unconstrained type
+    variable *and* a normal non-generic class.
     '''
 
     # ....................{ INITIALIZERS                   }....................
@@ -153,7 +154,7 @@ class Pep484CallableContextManagerSequenceT(
     def __contains__(self, obj: object) -> bool:
         return obj in self._sequence
 
-    def __enter__(self) -> 'Pep484CallableContextManagerSequenceT':
+    def __enter__(self) -> 'Pep484ContextManagerTSequenceT':
         return self
 
     def __exit__(self, *args, **kwargs) -> bool:
@@ -356,8 +357,8 @@ class Pep585GenericUIntT(Pep484585GenericUUST[U, int, T]):
 class Pep585IterableTContainerT(Pep585Iterable[T], Pep585Container[T]):
     '''
     :pep:`585`-compliant generic subclassing multiple :mod:`collections.abc`
-    abstract base classes (ABCs) directly parametrized by one unconstrained type
-    variable.
+    abstract base classes (ABCs) directly parametrized by the same unconstrained
+    type variable.
     '''
 
     # ................{ INITIALIZERS                           }................
@@ -384,12 +385,12 @@ class Pep585IterableTContainerT(Pep585Iterable[T], Pep585Container[T]):
         return len(self._sequence)
 
 
-class Pep585CallableContextManagerTSequenceT(
-    Pep585Callable, Pep585AbstractContextManager[T], Pep585Sequence[T]):
+class Pep585ContextManagerTSequenceT(
+    Nongeneric, Pep585AbstractContextManager[T], Pep585Sequence[T]):
     '''
     :pep:`585`-compliant generic subclassing multiple :mod:`collection.abc`
-    abstract base classes (ABCs) parametrized by one unconstrained type variable
-    *and* an unsubscripted :mod:`collection.abc` ABC.
+    abstract base classes (ABCs) parametrized by the same unconstrained type
+    variable *and* a normal non-generic class.
     '''
 
     # ................{ INITIALIZERS                           }................
@@ -410,7 +411,7 @@ class Pep585CallableContextManagerTSequenceT(
     def __contains__(self, obj: object) -> bool:
         return obj in self._sequence
 
-    def __enter__(self) -> 'Pep585CallableContextManagerTSequenceT':
+    def __enter__(self) -> 'Pep585ContextManagerTSequenceT':
         return self
 
     def __exit__(self, *args, **kwargs) -> bool:

@@ -149,7 +149,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         sync_generator,
     )
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
-        Pep484CallableContextManagerSequenceT,
+        Pep484ContextManagerTSequenceT,
         Pep484GenericST,
         Pep484IterableTContainerT,
         Pep484IterableTupleSTContainerTupleST,
@@ -1143,16 +1143,16 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple unparametrized "typing" types *AND* a
         # non-"typing" abstract base class (ABC).
         HintPepMetadata(
-            hint=Pep484CallableContextManagerSequenceT,
+            hint=Pep484ContextManagerTSequenceT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             warning_type=PEP585_DEPRECATION_WARNING,
-            generic_type=Pep484CallableContextManagerSequenceT,
+            generic_type=Pep484ContextManagerTSequenceT,
             is_type_typing=False,
             typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
                 HintPithSatisfiedMetadata(
-                    Pep484CallableContextManagerSequenceT((
+                    Pep484ContextManagerTSequenceT((
                         'Into a viscerally Eviscerated eras’ meditative hallways',
                         'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                     ))
@@ -1219,7 +1219,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Nested list of generics.
         HintPepMetadata(
-            hint=List[Pep484CallableContextManagerSequenceT],
+            hint=List[Pep484ContextManagerTSequenceT],
             pep_sign=HintSignList,
             warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
@@ -1227,11 +1227,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
-                    Pep484CallableContextManagerSequenceT((
+                    Pep484ContextManagerTSequenceT((
                         'Stalling inevit‐abilities)',
                         'For carbined',
                     )),
-                    Pep484CallableContextManagerSequenceT((
+                    Pep484ContextManagerTSequenceT((
                         'Power-over (than',
                         'Power-with)',
                     )),
@@ -1278,18 +1278,18 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # then subscripted by a concrete child hint mapping to that type
         # variable.
         HintPepMetadata(
-            hint=Pep484CallableContextManagerSequenceT[bytes],
+            hint=Pep484ContextManagerTSequenceT[bytes],
             pep_sign=HintSignPep484585GenericSubscripted,
-            generic_type=Pep484CallableContextManagerSequenceT,
+            generic_type=Pep484ContextManagerTSequenceT,
             warning_type=PEP585_DEPRECATION_WARNING,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
-                HintPithSatisfiedMetadata(Pep484CallableContextManagerSequenceT((
+                HintPithSatisfiedMetadata(Pep484ContextManagerTSequenceT((
                     b'And slept there since.', b'Upon the sodden ground',))),
                 # Generic container whose items violate this child hint.
-                HintPithUnsatisfiedMetadata(Pep484CallableContextManagerSequenceT((
+                HintPithUnsatisfiedMetadata(Pep484ContextManagerTSequenceT((
                     'His old right hand lay nerveless,', 'listless, dead,',))),
                 # Byte string constant.
                 HintPithUnsatisfiedMetadata(

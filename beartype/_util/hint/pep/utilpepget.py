@@ -60,7 +60,7 @@ from beartype._util.hint.pep.proposal.pep484604 import (
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_builtin_subscripted,
-    is_hint_pep585_generic,
+    is_hint_pep585_generic_unsubscripted,
 )
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subscripted
@@ -285,20 +285,21 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
 
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
-    # generic) *OR* "None" otherwise (e.g., is such a generic).
+    # unsubscripted generic) *OR* "None" otherwise (e.g., is such a generic).
     hint_pep_typevars = getattr(hint, '__parameters__', None)
 
     # If this object defines *NO* such attribute, synthetically reconstruct
-    # this attribute for PEP 585-compliant generics. Spuecifically...
+    # this attribute for PEP 585-compliant unsubscripted generics. Notably...
     if hint_pep_typevars is None:
         # Reconstruct this attribute as either...
         hint_pep_typevars = (
             # If this hint is a PEP 585-compliant unsubscripted generic, the
-            # tuple of all type variables parametrizing all
-            # pseudo-superclasses of this generic;
+            # tuple of all type variables parametrizing all pseudo-superclasses
+            # of this generic;
             get_hint_pep585_generic_typevars(hint)
-            if is_hint_pep585_generic(hint) else
-            # Else, the empty tuple.
+            if is_hint_pep585_generic_unsubscripted(hint) else
+            # Else, this hint is *NOT* a PEP 585-compliant unsubscripted
+            # generic. In this case, the empty tuple.
             ()
         )
     # Else, this object defines this attribute.
