@@ -13,9 +13,6 @@ cases in unit tests requiring non-trivial generics).
 # Defer fixture-specific imports.
 from beartype.typing import (
     Generic,
-    Iterator as Pep484Iterator,
-    List as Pep585List,
-    Sequence as Pep585Sequence,
 )
 from beartype._data.hint.datahinttyping import (
     S,
@@ -24,8 +21,15 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype_test.a00_unit.data.data_type import Class
 from collections.abc import (
-    Callable as CallableABC,
+    Callable as Pep585Callable,
+    Container as Pep585Container,
+    Iterable as Pep585Iterable,
+    Iterator as Pep585Iterator,
+    Sequence as Pep585Sequence,
     Sized as SizedABC,
+)
+from contextlib import (
+    AbstractContextManager as Pep585AbstractContextManager,
 )
 
 # Intentionally import from the standard "typing" module rather than the
@@ -121,18 +125,18 @@ class Pep484GenericIntInt(Pep484GenericST[int, int]):
 
     pass
 
-# ....................{ PEP 484 ~ usable                   }....................
+# ....................{ PEP 484 ~ usable : T               }....................
 # Generics that are actually instantiable and usable as valid objects.
 
 class Pep484CallableContextManagerSequenceT(
-    CallableABC, Pep484ContextManager[str], Pep484Sequence[str]):
+    Nongeneric, Pep484ContextManager[T], Pep484Sequence[T]):
     '''
-    :pep:`484`-compliant generic subclassing multiple parametrized
-    :mod:`typing` types *and* a non-:mod:`typing` abstract base class (ABC).
+    :pep:`484`-compliant generic subclassing multiple parametrized :mod:`typing`
+    types *and* a non-:mod:`typing` abstract base class (ABC).
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, sequence: Pep484Tuple) -> None:
+    def __init__(self, sequence: Pep484Tuple[T]) -> None:
         '''
         Initialize this generic from the passed tuple.
         '''
@@ -149,22 +153,22 @@ class Pep484CallableContextManagerSequenceT(
     def __contains__(self, obj: object) -> bool:
         return obj in self._sequence
 
-    def __enter__(self) -> object:
+    def __enter__(self) -> 'Pep484CallableContextManagerSequenceT':
         return self
 
     def __exit__(self, *args, **kwargs) -> bool:
         return False
 
-    def __getitem__(self, index: int) -> object:
+    def __getitem__(self, index: int) -> T:
         return self._sequence[index]
 
-    def __iter__(self) -> bool:
+    def __iter__(self) -> Pep484Iterator[T]:
         return iter(self._sequence)
 
-    def __len__(self) -> bool:
+    def __len__(self) -> int:
         return len(self._sequence)
 
-    def __reversed__(self) -> object:
+    def __reversed__(self) -> Pep484Tuple[T]:
         return self._sequence.reverse()
 
 
@@ -175,32 +179,31 @@ class Pep484IterableTContainerT(Pep484Iterable[T], Pep484Container[T]):
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, collection: Pep484Tuple[T]) -> None:
+    def __init__(self, sequence: Pep484Tuple[T]) -> None:
         '''
         Initialize this generic from the passed tuple.
         '''
 
-        assert isinstance(collection, tuple), (
-            f'{repr(collection)} not tuple.')
-        self._collection = collection
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
 
     # ....................{ DUNDERS                        }....................
     # Define all protocols mandated by ABCs subclassed by this generic. Also
-    # define all *OTHER* protocols mandated by the "collections.abc.Collection"
+    # define all *OTHER* protocols mandated by the "sequences.abc.Collection"
     # ABC to enable @beartype to generate code deeply type-checking one or more
     # of the items of instances of this generic.
 
     def __contains__(self, obj: object) -> bool:
-        return obj in self._collection
+        return obj in self._sequence
 
     def __getitem__(self, index: int) -> T:
-        return self._collection[index]
+        return self._sequence[index]
 
     def __iter__(self) -> Pep484Iterator[T]:
-        return iter(self._collection)
+        return iter(self._sequence)
 
     def __len__(self) -> int:
-        return len(self._collection)
+        return len(self._sequence)
 
 # ....................{ PEP 484 ~ usable : S, T            }....................
 # Generics that are actually instantiable and usable as valid objects.
@@ -211,33 +214,69 @@ class Pep484IterableTupleSTContainerTupleST(
     Pep484Container[Pep484Tuple[S, T]],
 ):
     '''
-    :pep:`484`-compliant **2-tuple iterable** generic subclassing multiple
-    indirectly parametrized :mod:`typing` types *and* a non-:mod:`typing`
-    abstract base class (ABC).
+    :pep:`484`-compliant generic subclassing multiple :mod:`typing` types
+    indirectly parametrized (but unsubscripted) by multiple type variables *and*
+    an unsubscripted and unparametrized :mod:`collections.abc` ABC.
     '''
 
     # ....................{ INITIALIZERS                   }....................
-    def __init__(self, iterable: Pep484Iterable[Pep484Tuple[S, T]]) -> None:
+    def __init__(self, sequence: Pep484Tuple[Pep484Tuple[S, T]]) -> None:
         '''
-        Initialize this generic from the passed iterable of 2-tuples.
+        Initialize this generic from the passed tuple of 2-tuples.
         '''
 
-        assert isinstance(iterable, tuple), (
-            f'{repr(iterable)} not tuple.')
-        self._iterable = iterable
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
 
     # ....................{ DUNDERS                        }....................
     # Define all protocols mandated by ABCs subclassed by this generic.
     def __contains__(self, obj: object) -> bool:
-        return obj in self._iterable
+        return obj in self._sequence
 
     def __iter__(self) -> Pep484Iterator[Pep484Tuple[S, T]]:
-        return iter(self._iterable)
+        return iter(self._sequence)
 
     def __len__(self) -> int:
-        return len(self._iterable)
+        return len(self._sequence)
 
-# ....................{ PEP 585                            }....................
+# ....................{ PEP 585 ~ non-T                    }....................
+class Pep585ListStr(list[str]):
+    '''
+    :pep:`585`-compliant generic subclassing the builtin :class:`list` type
+    subscripted (but unparametrized) by one child hint.
+    '''
+
+    # Redefine this generic's representation for debugging purposes.
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({super().__repr__()})'
+
+
+class Pep585ListListStr(list[list[str]]):
+    '''
+    :pep:`585`-compliant generic subclassing the builtin :class:`list` type
+    itself subscripted the builtin :class:`list` type subscripted (but
+    unparametrized) by one child hint.
+    '''
+
+    pass
+
+# ....................{ PEP 585 ~ T                        }....................
+# Note we intentionally do *NOT* declare unsubscripted PEP 585-compliant
+# generics (e.g., "class Pep585List(list):"). Why? Because PEP 585-compliant
+# generics are necessarily subscripted; when unsubscripted, the corresponding
+# subclasses are simply standard types.
+
+class Pep585ListT(list[T]):
+    '''
+    :pep:`585`-compliant generic list subclassing the builtin :class:`list` type
+    parametrized by one unconstrained type variable.
+    '''
+
+    # Redefine this generic's representation for debugging purposes.
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({super().__repr__()})'
+
+
 class Pep585SequenceT(Pep585Sequence[T]):
     '''
     :pep:`585`-compliant generic sequence parametrized by one unconstrained type
@@ -255,10 +294,21 @@ class Pep585SequenceU(Pep585Sequence[U]):
 
     pass
 
+# ....................{ PEP 585 ~ S, T                     }....................
+class Pep585DictST(dict[S, T]):
+    '''
+    :pep:`585`-compliant generic subclassing the builtin :class:`dict` type
+    parametrized by multiple unconstrained type variables.
+    '''
+
+    # Redefine this generic's representation for debugging purposes.
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({super().__repr__()})'
+
 
 class Pep484585GenericSTSequenceU(
     # Order is *EXTREMELY* significant. Avoid modifying, please.
-    Pep585List[bool],
+    list[bool],
     Pep484GenericST[int, T],
     Nongeneric,
     Pep585SequenceU,
@@ -270,7 +320,7 @@ class Pep484585GenericSTSequenceU(
 
     pass
 
-
+# ....................{ PEP 585 ~ S, T, U                  }....................
 class Pep484585GenericIntTSequenceU(Pep484585GenericSTSequenceU[float]):
     '''
     :pep:`484`- or :pep:`585`-compliant generic list parametrized by two
@@ -281,7 +331,7 @@ class Pep484585GenericIntTSequenceU(Pep484585GenericSTSequenceU[float]):
 
 
 # Subclassing order is *EXTREMELY* significant. Avoid modifying, please.
-class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, Pep585List[U]):
+class Pep484585GenericUUST(Pep585SequenceU, Pep484GenericST, list[U]):
     '''
     :pep:`484`- or :pep:`585`-compliant generic list parametrized by three
     unconstrained type variables, one of which is repeated twice across two
@@ -299,3 +349,113 @@ class Pep585GenericUIntT(Pep484585GenericUUST[U, int, T]):
     '''
 
     pass
+
+# ....................{ PEP 585 ~ usable : T               }....................
+# Generics that are actually instantiable and usable as valid objects.
+
+class Pep585IterableTContainerT(Pep585Iterable[T], Pep585Container[T]):
+    '''
+    :pep:`585`-compliant generic subclassing multiple :mod:`collections.abc`
+    abstract base classes (ABCs) directly parametrized by one unconstrained type
+    variable.
+    '''
+
+    # ................{ INITIALIZERS                           }................
+    def __init__(self, sequence: tuple[T]) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
+
+    # ................{ ABCs                                   }................
+    # Define all protocols mandated by ABCs subclassed by this generic.
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._sequence
+
+    def __getitem__(self, index: int) -> T:
+        return self._sequence[index]
+
+    def __iter__(self) -> Pep585Iterator[T]:
+        return iter(self._sequence)
+
+    def __len__(self) -> int:
+        return len(self._sequence)
+
+
+class Pep585CallableContextManagerTSequenceT(
+    Pep585Callable, Pep585AbstractContextManager[T], Pep585Sequence[T]):
+    '''
+    :pep:`585`-compliant generic subclassing multiple :mod:`collection.abc`
+    abstract base classes (ABCs) parametrized by one unconstrained type variable
+    *and* an unsubscripted :mod:`collection.abc` ABC.
+    '''
+
+    # ................{ INITIALIZERS                           }................
+    def __init__(self, sequence: tuple[T]) -> None:
+        '''
+        Initialize this generic from the passed tuple.
+        '''
+
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
+
+    # ................{ ABCs                                   }................
+    # Define all protocols mandated by ABCs subclassed by this generic.
+
+    def __call__(self) -> int:
+        return len(self)
+
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._sequence
+
+    def __enter__(self) -> 'Pep585CallableContextManagerTSequenceT':
+        return self
+
+    def __exit__(self, *args, **kwargs) -> bool:
+        return False
+
+    def __getitem__(self, index: int) -> T:
+        return self._sequence[index]
+
+    def __iter__(self) -> Pep585Iterator[T]:
+        return iter(self._sequence)
+
+    def __len__(self) -> bool:
+        return len(self._sequence)
+
+    def __reversed__(self) -> tuple[T]:
+        return self._sequence.reverse()
+
+# ....................{ PEP 585 ~ usable : S, T            }....................
+# Generics that are actually instantiable and usable as valid objects.
+
+class Pep585IterableTupleSTContainerTupleST(
+    SizedABC, Pep585Iterable[tuple[S, T]], Pep585Container[tuple[S, T]]):
+    '''
+    :pep:`585`-compliant generic subclassing multiple :mod:`collections.abc`
+    abstract base classes (ABCs) indirectly parametrized (but unsubscripted) by
+    multiple type variables *and* an unsubscripted and unparametrized
+    :mod:`collections.abc` ABC.
+    '''
+
+    # ................{ INITIALIZERS                           }................
+    def __init__(self, sequence: tuple[T]) -> None:
+        '''
+        Initialize this generic from the passed tuple of 2-tuples.
+        '''
+
+        assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
+        self._sequence = sequence
+
+    # ................{ ABCs                                   }................
+    # Define all protocols mandated by ABCs subclassed by this generic.
+    def __contains__(self, obj: object) -> bool:
+        return obj in self._sequence
+
+    def __iter__(self) -> bool:
+        return iter(self._sequence)
+
+    def __len__(self) -> bool:
+        return len(self._sequence)

@@ -50,6 +50,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignCallable,
         HintSignChainMap,
         HintSignCollection,
+        HintSignContainer,
         HintSignContextManager,
         HintSignCounter,
         HintSignDefaultDict,
@@ -73,6 +74,15 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignTupleFixed,
         HintSignType,
         HintSignValuesView,
+    )
+    from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+        Pep585CallableContextManagerTSequenceT,
+        Pep585IterableTContainerT,
+        Pep585IterableTupleSTContainerTupleST,
+        Pep585DictST,
+        Pep585ListListStr,
+        Pep585ListStr,
+        Pep585ListT,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -110,7 +120,6 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         MutableSet,
         Sequence,
         Set,
-        Sized,
         ValuesView,
     )
     from contextlib import AbstractContextManager
@@ -118,153 +127,6 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Match,
         Pattern,
     )
-
-    # ..................{ GENERICS ~ single                  }..................
-    # Note we intentionally do *NOT* declare unsubscripted PEP 585-compliant
-    # generics (e.g., "class _Pep585GenericUnsubscriptedSingle(list):"). Why?
-    # Because PEP 585-compliant generics are necessarily subscripted; when
-    # unsubscripted, the corresponding subclasses are simply standard types.
-
-    class _Pep585GenericTypevaredSingle(list[T]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing a single
-        parametrized builtin type parametrized by a single type variables.
-        '''
-
-        # Redefine this generic's representation for debugging purposes.
-        def __repr__(self) -> str:
-            return f'{self.__class__.__name__}({super().__repr__()})'
-
-
-    class _Pep585GenericTypevaredMultiple(dict[S, T]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing a single
-        parametrized builtin type parametrized by multiple type variables.
-        '''
-
-        # Redefine this generic's representation for debugging purposes.
-        def __repr__(self) -> str:
-            return f'{self.__class__.__name__}({super().__repr__()})'
-
-
-    class _Pep585GenericUntypevaredShallowSingle(list[str]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing a single
-        subscripted (but unparametrized) builtin type.
-        '''
-
-        # Redefine this generic's representation for debugging purposes.
-        def __repr__(self) -> str:
-            return f'{self.__class__.__name__}({super().__repr__()})'
-
-
-    class _Pep585GenericUntypevaredDeepSingle(list[list[str]]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing a single
-        unparametrized :mod:`typing` type, itself subclassing a single
-        unparametrized :mod:`typing` type.
-        '''
-
-        pass
-
-    # ..................{ GENERICS ~ multiple                }..................
-    class _Pep585GenericUntypevaredMultiple(
-        Callable, AbstractContextManager[str], Sequence[str]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing multiple
-        subscripted (but unparametrized) :mod:`collection.abc` abstract base
-        classes (ABCs) *and* an unsubscripted :mod:`collection.abc` ABC.
-        '''
-
-        # ................{ INITIALIZERS                       }................
-        def __init__(self, sequence: tuple) -> None:
-            '''
-            Initialize this generic from the passed tuple.
-            '''
-
-            assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
-            self._sequence = sequence
-
-        # ................{ ABCs                               }................
-        # Define all protocols mandated by ABCs subclassed by this generic.
-
-        def __call__(self) -> int:
-            return len(self)
-
-        def __contains__(self, obj: object) -> bool:
-            return obj in self._sequence
-
-        def __enter__(self) -> object:
-            return self
-
-        def __exit__(self, *args, **kwargs) -> bool:
-            return False
-
-        def __getitem__(self, index: int) -> object:
-            return self._sequence[index]
-
-        def __iter__(self) -> bool:
-            return iter(self._sequence)
-
-        def __len__(self) -> bool:
-            return len(self._sequence)
-
-        def __reversed__(self) -> object:
-            return self._sequence.reverse()
-
-
-    class _Pep585GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing multiple directly
-        parametrized :mod:`collections.abc` abstract base classes (ABCs).
-        '''
-
-        # ................{ INITIALIZERS                       }................
-        def __init__(self, iterable: tuple) -> None:
-            '''
-            Initialize this generic from the passed tuple.
-            '''
-
-            assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
-            self._iterable = iterable
-
-        # ................{ ABCs                               }................
-        # Define all protocols mandated by ABCs subclassed by this generic.
-        def __contains__(self, obj: object) -> bool:
-            return obj in self._iterable
-
-        def __iter__(self) -> bool:
-            return iter(self._iterable)
-
-
-    class _Pep585GenericTypevaredDeepMultiple(
-        Sized, Iterable[tuple[S, T]], Container[tuple[S, T]]):
-        '''
-        :pep:`585`-compliant user-defined generic subclassing multiple
-        indirectly parametrized (but unsubscripted) :mod:`collections.abc`
-        abstract base classes (ABCs) *and* an unsubscripted and unparametrized
-        :mod:`collections.abc` ABC.
-        '''
-
-        # ................{ INITIALIZERS                       }................
-        def __init__(self, iterable: tuple) -> None:
-            '''
-            Initialize this generic from the passed tuple.
-            '''
-
-            assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
-            self._iterable = iterable
-
-        # ................{ ABCs                               }................
-        # Define all protocols mandated by ABCs subclassed by this generic.
-        def __contains__(self, obj: object) -> bool:
-            return obj in self._iterable
-
-        def __iter__(self) -> bool:
-            return iter(self._iterable)
-
-        def __len__(self) -> bool:
-            return len(self._iterable)
 
     # ..................{ PRIVATE ~ forwardref               }..................
     # Fully-qualified classname of an arbitrary class guaranteed to be
@@ -293,44 +155,45 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ CONTAINER ~ collection             }................
+        # ................{ CONTAINER ~ container              }................
         # Note that:
-        # * Beartype type-checks collections in an optimal manner by
-        #   explicitly covering the proper subset of collections that are:
-        #   * Sequences (e.g., lists). If a collection is a sequence, beartype
+        # * Beartype type-checks containers in an optimal manner by
+        #   explicitly covering the proper subset of containers that are:
+        #   * Sequences (e.g., lists). If a container is a sequence, beartype
         #     prefers type-checking a random item for maximal coverage.
-        #   * Reiterables (e.g., sets). If a collection is *NOT* a sequence,
-        #     beartype falls back to type-checking only the first item.
+        #   * Reiterables (e.g., sets). If a container is *NOT* a sequence but
+        #     is a reiterable, beartype falls back to type-checking only the
+        #     first item.
         #   Ergo, both sequences and reiterables *MUST* be tested below.
-        # * Collections define the __contains__(), __iter__(), and __len__()
-        #   dunder methods. Reasonable candidates for objects that are *NOT*
-        #   collections include:
-        #   * Numeric scalars, which fail to define all three dunder methods.
-        #     However, note that textual scalars (including both strings and
-        #     byte strings) are valid sequences and thus valid collections.
+        # * Containers must define *ONLY* the __contains__() dunder method.
+        #   Reasonable candidates for objects that are *NOT* containers include:
+        #   * Numeric scalars, which fail to define this and all other dunder
+        #     methods pertaining to containers. However, note that textual
+        #     scalars (including both strings and byte strings) are valid
+        #     sequences and thus valid collections.
         #   * Generators, which define __iter__() but fail to define
         #     __contains__() and __len__().
 
-        # Collection of ignorable items.
+        # Container of ignorable items.
         HintPepMetadata(
-            hint=Collection[object],
-            pep_sign=HintSignCollection,
-            isinstanceable_type=Collection,
+            hint=Container[object],
+            pep_sign=HintSignContainer,
+            isinstanceable_type=Container,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
                 # Set of arbitrary objects.
                 HintPithSatisfiedMetadata({
-                    'The crags closed round', 'with black and jaggèd arms,'}),
-                # Synchronous generator.
-                HintPithUnsatisfiedMetadata(sync_generator),
+                    b'By her in stature', 'the tall Amazon', 813,}),
+                # Floating-point constant.
+                HintPithUnsatisfiedMetadata(26.195),
             ),
         ),
 
-        # Collection of unignorable items.
+        # Container of unignorable items.
         HintPepMetadata(
-            hint=Collection[str],
-            pep_sign=HintSignCollection,
-            isinstanceable_type=Collection,
+            hint=Container[str],
+            pep_sign=HintSignContainer,
+            isinstanceable_type=Container,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
                 # Empty set.
@@ -339,77 +202,85 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 HintPithSatisfiedMetadata(()),
                 # Set of strings.
                 HintPithSatisfiedMetadata({
-                    'The shattered mountain', 'overhung the sea,'}),
+                    "Had stood a pigmy's height;", "she would have ta'en",}),
                 # Tuple of strings.
                 HintPithSatisfiedMetadata((
-                    'Forest on forest', 'hung about his head',)),
+                    'Achilles by the hair and', 'bent his neck;',)),
                 # Synchronous generator.
                 HintPithUnsatisfiedMetadata(sync_generator),
                 # Set of byte strings.
+                #
+                # Note that sets do *NOT* currently preserve insertion order.
+                # Ergo, the *ONLY* set that can be deterministically tested as
+                # violating a hint is a set containing a single item.
                 HintPithUnsatisfiedMetadata(
-                    pith={b"Not so much life as on a summer's day",},
+                    pith={b"Or with a finger stay'd Ixion's wheel.",},
                     # Match that the exception message raised for this tuple...
                     exception_str_match_regexes=(
                         # Declares the index of the first item violating this
                         # hint.
                         r'\b[Ss]et index 0 item\b',
                         # Preserves this item as is.
-                        r"\bNot so much life as on a summer's day",
+                        r"\bOr with a finger stay'd Ixion's wheel.",
                     ),
                 ),
                 # Tuple of byte strings.
                 HintPithUnsatisfiedMetadata(
-                    pith=(b'And faster still, beyond all human speed,',),
+                    pith=(b'Her face was large as that of Memphian sphinx,',),
                     # Match that the exception message raised for this tuple...
                     exception_str_match_regexes=(
                         # Declares the index of the first item violating this
                         # hint.
                         r'\b[Tt]uple index 0 item\b',
                         # Preserves this item as is.
-                        r'\bAnd faster still, beyond all human speed,',
+                        r'\bHer face was large as that of Memphian sphinx,',
                     ),
                 ),
+                # Boolean constant.
+                HintPithUnsatisfiedMetadata(False),
             ),
         ),
 
-        # Generic collection.
+        # Generic container.
         HintPepMetadata(
-            hint=Collection[T],
-            pep_sign=HintSignCollection,
-            isinstanceable_type=Collection,
+            hint=Container[T],
+            pep_sign=HintSignContainer,
+            isinstanceable_type=Container,
             is_pep585_builtin_subscripted=True,
             typevars=(T,),
             piths_meta=(
                 # Set of items all of the same type.
                 HintPithSatisfiedMetadata({
-                    'Suspended on the sweep', 'of the smooth wave,',}),
-                # Synchronous generator.
-                HintPithUnsatisfiedMetadata(sync_generator),
+                    "Pedestal'd haply in", 'a palace court,',}),
+                # Complex constant.
+                HintPithUnsatisfiedMetadata(99 + 2j),
             ),
         ),
 
-        # Collection of nested collections of unignorable items.
+        # Container of nested iterables of unignorable items.
         HintPepMetadata(
-            hint=Collection[Collection[str]],
-            pep_sign=HintSignCollection,
-            isinstanceable_type=Collection,
+            hint=Container[Container[str]],
+            pep_sign=HintSignContainer,
+            isinstanceable_type=Container,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
                 # Set of frozen sets of strings.
                 HintPithSatisfiedMetadata({frozenset((
-                    'The little boat was driven.', 'A cavern there',)),}),
+                    "When sages look'd to", 'Egypt for their lore.',)),}),
                 # Synchronous generator.
                 HintPithUnsatisfiedMetadata(sync_generator),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(0xCAFEDEAD),
                 # List of tuples of byte strings.
                 HintPithUnsatisfiedMetadata(
-                    pith=[(b'Yawned, and amid its slant and winding depths',),],
+                    pith=[(b'But oh! how unlike marble was that face:',),],
                     # Match that the exception message raised for this list
                     # declares all items on the path to the item violating this
                     # hint.
                     exception_str_match_regexes=(
                         r'\b[Ll]ist index 0 item\b',
                         r'\b[Tt]uple index 0 item\b',
-                        r'\bYawned, and amid its slant and winding depths\b',
+                        r'\bBut oh! how unlike marble was that face:',
                     ),
                 ),
             ),
@@ -425,8 +296,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         #     is a reiterable, beartype falls back to type-checking only the
         #     first item.
         #   Ergo, both sequences and reiterables *MUST* be tested below.
-        # * Iterables define *ONLY* the __iter__() dunder method. Reasonable
-        #   candidates for objects that are *NOT* iterables include:
+        # * Iterables must define *ONLY* the __iter__() dunder method.
+        #   Reasonable candidates for objects that are *NOT* iterables include:
         #   * Numeric scalars, which fail to define all three dunder methods.
         #     However, note that textual scalars (including both strings and
         #     byte strings) are valid sequences and thus valid collections.
@@ -543,6 +414,128 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        # ................{ CONTAINER ~ collection             }................
+        # Note that:
+        # * Beartype type-checks collections in an optimal manner by
+        #   explicitly covering the proper subset of collections that are:
+        #   * Sequences (e.g., lists). If a collection is a sequence, beartype
+        #     prefers type-checking a random item for maximal coverage.
+        #   * Reiterables (e.g., sets). If a collection is *NOT* a sequence,
+        #     beartype falls back to type-checking only the first item.
+        #   Ergo, both sequences and reiterables *MUST* be tested below.
+        # * Collections must define the __contains__(), __iter__(), and
+        #   __len__() dunder methods. Reasonable candidates for objects that are
+        #   *NOT* collections include:
+        #   * Numeric scalars, which fail to define all three dunder methods.
+        #     However, note that textual scalars (including both strings and
+        #     byte strings) are valid sequences and thus valid collections.
+        #   * Generators, which define __iter__() but fail to define
+        #     __contains__() and __len__().
+
+        # Collection of ignorable items.
+        HintPepMetadata(
+            hint=Collection[object],
+            pep_sign=HintSignCollection,
+            isinstanceable_type=Collection,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Set of arbitrary objects.
+                HintPithSatisfiedMetadata({
+                    'The crags closed round', 'with black and jaggèd arms,'}),
+                # Synchronous generator.
+                HintPithUnsatisfiedMetadata(sync_generator),
+            ),
+        ),
+
+        # Collection of unignorable items.
+        HintPepMetadata(
+            hint=Collection[str],
+            pep_sign=HintSignCollection,
+            isinstanceable_type=Collection,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Empty set.
+                HintPithSatisfiedMetadata(set()),
+                # Empty tuple.
+                HintPithSatisfiedMetadata(()),
+                # Set of strings.
+                HintPithSatisfiedMetadata({
+                    'The shattered mountain', 'overhung the sea,'}),
+                # Tuple of strings.
+                HintPithSatisfiedMetadata((
+                    'Forest on forest', 'hung about his head',)),
+                # Synchronous generator.
+                HintPithUnsatisfiedMetadata(sync_generator),
+                # Set of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith={b"Not so much life as on a summer's day",},
+                    # Match that the exception message raised for this tuple...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Ss]et index 0 item\b',
+                        # Preserves this item as is.
+                        r"\bNot so much life as on a summer's day",
+                    ),
+                ),
+                # Tuple of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=(b'And faster still, beyond all human speed,',),
+                    # Match that the exception message raised for this tuple...
+                    exception_str_match_regexes=(
+                        # Declares the index of the first item violating this
+                        # hint.
+                        r'\b[Tt]uple index 0 item\b',
+                        # Preserves this item as is.
+                        r'\bAnd faster still, beyond all human speed,',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic collection.
+        HintPepMetadata(
+            hint=Collection[T],
+            pep_sign=HintSignCollection,
+            isinstanceable_type=Collection,
+            is_pep585_builtin_subscripted=True,
+            typevars=(T,),
+            piths_meta=(
+                # Set of items all of the same type.
+                HintPithSatisfiedMetadata({
+                    'Suspended on the sweep', 'of the smooth wave,',}),
+                # Synchronous generator.
+                HintPithUnsatisfiedMetadata(sync_generator),
+            ),
+        ),
+
+        # Collection of nested collections of unignorable items.
+        HintPepMetadata(
+            hint=Collection[Collection[str]],
+            pep_sign=HintSignCollection,
+            isinstanceable_type=Collection,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Set of frozen sets of strings.
+                HintPithSatisfiedMetadata({frozenset((
+                    'The little boat was driven.', 'A cavern there',)),}),
+                # Synchronous generator.
+                HintPithUnsatisfiedMetadata(sync_generator),
+                # List of tuples of byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith=[(b'Yawned, and amid its slant and winding depths',),],
+                    # Match that the exception message raised for this list
+                    # declares all items on the path to the item violating this
+                    # hint.
+                    exception_str_match_regexes=(
+                        r'\b[Ll]ist index 0 item\b',
+                        r'\b[Tt]uple index 0 item\b',
+                        r'\bYawned, and amid its slant and winding depths\b',
+                    ),
+                ),
+            ),
+        ),
+
         # ................{ CONTEXTMANAGER                     }................
         # Context manager yielding strings.
         HintPepMetadata(
@@ -577,14 +570,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single shallowly unparametrized builtin
         # container type.
         HintPepMetadata(
-            hint=_Pep585GenericUntypevaredShallowSingle,
+            hint=Pep585ListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericUntypevaredShallowSingle,
+            generic_type=Pep585ListStr,
             is_pep585_generic=True,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
                 HintPithSatisfiedMetadata(
-                    _Pep585GenericUntypevaredShallowSingle((
+                    Pep585ListStr((
                         'Forgive our Vocation’s vociferous publications',
                         'Of',
                     ))
@@ -603,14 +596,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single deeply unparametrized builtin container
         # type.
         HintPepMetadata(
-            hint=_Pep585GenericUntypevaredDeepSingle,
+            hint=Pep585ListListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericUntypevaredDeepSingle,
+            generic_type=Pep585ListListStr,
             is_pep585_generic=True,
             piths_meta=(
                 # Subclass-specific generic list of list of string constants.
                 HintPithSatisfiedMetadata(
-                    _Pep585GenericUntypevaredDeepSingle([
+                    Pep585ListListStr([
                         [
                             'Intravenous‐averse effigy defamations, traversing',
                             'Intramurally venal-izing retro-',
@@ -630,7 +623,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 ]),
                 # Subclass-specific generic list of string constants.
                 HintPithUnsatisfiedMetadata(
-                    _Pep585GenericUntypevaredDeepSingle([
+                    Pep585ListListStr([
                         'Block-house stockade stocks, trailer',
                         'Park-entailed central heating, though those',
                     ])
@@ -640,14 +633,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
         # Generic subclassing a single parametrized builtin container type.
         HintPepMetadata(
-            hint=_Pep585GenericTypevaredSingle,
+            hint=Pep585ListT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericTypevaredSingle,
+            generic_type=Pep585ListT,
             is_pep585_generic=True,
             typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(_Pep585GenericTypevaredSingle((
+                HintPithSatisfiedMetadata(Pep585ListT((
                     'Pleasurable, Raucous caucuses',
                     'Within th-in cannon’s cynosure-ensuring refectories',
                 ))),
@@ -665,14 +658,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same multiple type variables in the same order.
         HintPepMetadata(
-            hint=_Pep585GenericTypevaredMultiple[S, T],
+            hint=Pep585DictST[S, T],
             pep_sign=HintSignPep484585GenericSubscripted,
-            generic_type=_Pep585GenericTypevaredMultiple,
+            generic_type=Pep585DictST,
             is_pep585_generic=True,
             typevars=(S, T,),
             piths_meta=(
                 # Subclass-specific generic dictionary of string constants.
-                HintPithSatisfiedMetadata(_Pep585GenericTypevaredMultiple({
+                HintPithSatisfiedMetadata(Pep585DictST({
                     'Bandage‐managed': 'Into Faithless redaction’s',
                     'didact enactment': '— crookedly',
                 })),
@@ -690,13 +683,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple unparametrized "collection.abc" abstract
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         HintPepMetadata(
-            hint=_Pep585GenericUntypevaredMultiple,
+            hint=Pep585CallableContextManagerTSequenceT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericUntypevaredMultiple,
+            generic_type=Pep585CallableContextManagerTSequenceT,
             is_pep585_generic=True,
+            typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
-                HintPithSatisfiedMetadata(_Pep585GenericUntypevaredMultiple((
+                HintPithSatisfiedMetadata(Pep585CallableContextManagerTSequenceT((
                     'Into a viscerally Eviscerated eras’ meditative hallways',
                     'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                 ))),
@@ -713,19 +707,17 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic subclassing multiple parametrized "collections.abc" abstract
         # base classes (ABCs).
         HintPepMetadata(
-            hint=_Pep585GenericTypevaredShallowMultiple,
+            hint=Pep585IterableTContainerT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericTypevaredShallowMultiple,
+            generic_type=Pep585IterableTContainerT,
             is_pep585_generic=True,
             typevars=(T,),
             piths_meta=(
                 # Subclass-specific generic iterable of string constants.
-                HintPithSatisfiedMetadata(
-                    _Pep585GenericTypevaredShallowMultiple((
-                        "Of foliage's everliving antestature —",
-                        'In us, Leviticus‐confusedly drunk',
-                    )),
-                ),
+                HintPithSatisfiedMetadata(Pep585IterableTContainerT((
+                    "Of foliage's everliving antestature —",
+                    'In us, Leviticus‐confusedly drunk',
+                ))),
                 # String constant.
                 HintPithUnsatisfiedMetadata("In Usufructose truth's"),
             ),
@@ -735,25 +727,22 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # "collections.abc" abstract base classes (ABCs) *AND* an
         # unparametrized "collections.abc" ABC.
         HintPepMetadata(
-            hint=_Pep585GenericTypevaredDeepMultiple,
+            hint=Pep585IterableTupleSTContainerTupleST,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            generic_type=_Pep585GenericTypevaredDeepMultiple,
+            generic_type=Pep585IterableTupleSTContainerTupleST,
             is_pep585_generic=True,
             typevars=(S, T,),
             piths_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata(
-                    _Pep585GenericTypevaredDeepMultiple((
+                    Pep585IterableTupleSTContainerTupleST((
                         (
                             'Inertially tragicomipastoral, pastel ',
                             'anticandour — remanding undemanding',
                         ),
-                        (
-                            'Of a',
-                            '"hallow be Thy nameless',
-                        ),
-                    )),
+                        ('Of a', '"hallow be Thy nameless',),
+                    ))
                 ),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Invitations'),
@@ -762,7 +751,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
         # Nested list of PEP 585-compliant generics.
         HintPepMetadata(
-            hint=list[_Pep585GenericUntypevaredMultiple],
+            hint=list[Pep585CallableContextManagerTSequenceT],
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_pep585_builtin_subscripted=True,
@@ -770,14 +759,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
-                    _Pep585GenericUntypevaredMultiple((
-                        'Stalling inevit‐abilities)',
-                        'For carbined',
-                    )),
-                    _Pep585GenericUntypevaredMultiple((
-                        'Power-over (than',
-                        'Power-with)',
-                    )),
+                    Pep585CallableContextManagerTSequenceT((
+                        'Stalling inevit‐abilities)', 'For carbined',)),
+                    Pep585CallableContextManagerTSequenceT((
+                        'Power-over (than', 'Power-with)',)),
                 ]),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
