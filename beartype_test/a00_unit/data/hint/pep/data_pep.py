@@ -35,7 +35,6 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata)
     from beartype_test._util.kind.pytkindmake import make_container_from_funcs
@@ -51,6 +50,7 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep695.hints_pep695_meta',
 
         # PEP-noncompliant type hints defined by both standard and third-party
         # packages internally treated by @beartype as PEP-compliant to
@@ -63,23 +63,6 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         'beartype_test.a00_unit.data.hint.pep.api._data_hintmodos.hints_pep_meta_os',
         'beartype_test.a00_unit.data.hint.pep.api._data_hintmodweakref.hints_pep_meta_weakref',
     ))
-
-    # If the active Python interpreter targets Python >= 3.12, this interpreter
-    # supports PEP 695 -- including the PEP 695-specific "type" alias statement
-    # whose syntax is *EXTREMELY* invalid under prior Python versions. Ideally,
-    # this syntax would simply be ignored by older Python versions like all
-    # other PEP-specific syntax developed by newer Python versions (e.g., PEP
-    # 604-style "|"-delimited new unions). Sadly, older Python versions raise
-    # exceptions resembling the following on attempting to import from *ANY*
-    # modules containing even a single PEP 695-specific "type" alias statement
-    # -- even if those older Python versions never even execute that statement:
-    #     SyntaxError: invalid syntax  # <-- uhh, wut
-    if IS_PYTHON_AT_LEAST_3_12:
-        from beartype_test.a00_unit.data.hint.pep.proposal._data_pep695 import (
-            hints_pep695_meta)
-        _hints_pep_meta.extend(hints_pep695_meta())
-    # Else, the active Python interpreter targets Python < 3.12 and thus fails
-    # to support PEP 695.
 
     # ..................{ YIELD                              }..................
     # Assert this list contains *ONLY* instances of the expected dataclass.

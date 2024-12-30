@@ -158,7 +158,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Pep484ListUnsubscripted,
         Pep484585GenericSTSequenceU,
         Pep484585GenericIntTSequenceU,
-        # Pep484585GenericUUST,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -1198,18 +1197,14 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             is_type_typing=False,
             typevars=(S, T,),
             piths_meta=(
-                # Subclass-specific generic iterable of 2-tuples of string
-                # constants.
+                # Instance of this generic containing one or more items.
                 HintPithSatisfiedMetadata(
                     Pep484IterableTupleSTContainerTupleST((
                         (
                             'Inertially tragicomipastoral, pastel anticandour —',
                             'remanding undemanding',
                         ),
-                        (
-                            'Of a',
-                            '"hallow be Thy nameless',
-                        ),
+                        ('Of a', '"hallow be Thy nameless',),
                     )),
                 ),
                 # String constant.

@@ -192,6 +192,78 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     # alias. Yes. It really is this non-trivial, folks. *sigh*
     return isinstance(hint_origin, HintPep695Type)
 
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+def get_hint_pep695_unsubscripted_alias(
+    # Mandatory parameters.
+    hint: HintPep695Type,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Hint:
+    '''
+    **Non-alias type hint** (i.e., type hint that is *not* a
+    :pep:`695`-compliant type alias) encapsulated by the passed
+    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
+    statement of the form ``type {alias_name} = {alias_value}``).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
+    forward references. Notably, memoizing this getter would prevent the
+    external caller of the higher-level
+    :func:`.iter_hint_pep695_unsubscripted_forwardrefs` iterator calling this
+    lower-level getter from externally modifying this type alias by forcefully
+    injecting forward reference proxies into this alias.
+
+    Parameters
+    ----------
+    hint : HintPep695Type
+        Unsubscripted type alias to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Hint
+        Unaliased type hint encapsulated by this type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type hint is *not* an unsubscripted type alias.
+    NameError
+        If this unsubscripted type alias contains one or more **unquoted forward
+        references** to undefined types.
+    '''
+
+    # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
+    # an exception.
+    if not isinstance(hint, HintPep695Type):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not PEP 695 unsubscripted type alias.'
+        )
+    # Else, this hint is a PEP 695-compliant unsubscripted type alias.
+
+    # While the Universe continues infinitely expanding...
+    while True:
+        # Reduce this type alias to the type hint aliased by this alias, which
+        # itself is possibly a nested type alias. Oh, it happens.
+        #
+        # Note that doing so implicitly raises a "NameError" if this alias
+        # contains one or more unquoted forward references to undefined types.
+        hint = hint.__value__  # type: ignore[attr-defined]
+
+        # If this type hint is *NOT* a nested type alias, break this iteration.
+        if not isinstance(hint, HintPep695Type):
+            break
+        # Else, this type hint is a nested type alias. In this case, continue
+        # iteratively unwrapping this nested type alias.
+
+    # Return this unaliased type alias.
+    return hint
+
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubscripted_forwardrefs(
     # Mandatory parameters.
@@ -254,7 +326,7 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
             #
             # Note that _get_hint_pep695_unsubscripted_alias() is memoized and
             # thus intentionally called with positional arguments.
-            _get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
+            get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.
@@ -387,163 +459,3 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
             # Store the unqualified basename of this previously undeclared
             # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
-
-# ....................{ REDUCERS                           }....................
-def reduce_hint_pep695_unsubscripted(
-    hint: HintPep695Type, exception_prefix: str, **kwargs) -> Hint:
-    '''
-    Reduce the passed :pep:`695`-compliant **unsubscripted type alias** (i.e.,
-    object created by a statement of the form ``type {alias_name} =
-    {alias_value}``) to the underlying type hint referred to by this alias.
-
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
-
-    Parameters
-    ----------
-    hint : HintPep695Type
-        Unsubscripted type alias to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing exception messages raised by this
-        reducer.
-
-    All remaining passed keyword parameters are silently ignored.
-
-    Returns
-    -------
-    Hint
-        Underlying type hint referred to by this unsubscripted type alias.
-
-    Raises
-    ------
-    BeartypeDecorHintPep695Exception
-        If this alias contains one or more unquoted relative forward references
-        to undefined attributes. Note that this *only* occurs when callers avoid
-        beartype import hooks in favour of manually decorating callables and
-        classes with the :func:`beartype.beartype` decorator.
-    '''
-
-    # Underlying type hint to be returned.
-    hint_aliased: Hint = None  # pyright: ignore
-
-    # Attempt to...
-    try:
-        # Reduce this alias to the type hint it lazily refers to. If this alias
-        # contains *NO* forward references to undeclared attributes, this
-        # reduction *SHOULD* succeed. Let's pretend we mean that.
-        #
-        # Note that _get_hint_pep695_unsubscripted_alias() is memoized and thus
-        # intentionally called with positional arguments.
-        hint_aliased = _get_hint_pep695_unsubscripted_alias(
-            hint, exception_prefix)
-    # If doing so raises a builtin "NameError" exception, this alias contains
-    # one or more forward references to undeclared attributes. In this case...
-    except NameError as exception:
-        # Unqualified basename of this alias (i.e., name of the global or local
-        # variable assigned to by the left-hand side of this alias).
-        hint_name = repr(hint)
-
-        # Fully-qualified name of the third-party module defining this alias.
-        hint_module_name = hint.__module__
-        # print(f'hint_module_name: {hint_module_name}')
-
-        # Unqualified basename of the next remaining undeclared attribute
-        # contained in this alias relative to that module.
-        hint_ref_name = get_name_error_attr_name(exception)
-        # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
-
-        # Raise a human-readable exception describing this issue.
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}PEP 695 type alias "{hint_name}" '
-            f'unquoted relative forward reference {repr(hint_ref_name)} in '
-            f'module "{hint_module_name}" unsupported outside '
-            f'"beartype.claw" import hooks. Consider either:\n'
-            f'* Quoting this forward reference in this type alias: e.g.,\n'
-            f'      # Instead of an unquoted forward reference...\n'
-            f'      type {hint_name} = ... {hint_ref_name} ...\n'
-            f'\n'
-            f'      # Prefer a quoted forward reference.\n'
-            f'      type {hint_name} = ... "{hint_ref_name}" ...\n'
-            f'* Applying "beartype.claw" import hooks to '
-            f'module "{hint_module_name}": e.g.,\n'
-            f'      # In your "this_package.__init__" submodule:\n'
-            f'      from beartype.claw import beartype_this_package\n'
-            f'      beartype_this_package()'
-        ) from exception
-    # Else, doing so raised *NO* exceptions, implying this alias contains *NO*
-    # forward references to undeclared attributes.
-
-    # Return this underlying type hint.
-    return hint_aliased
-
-# ....................{ PRIVATE ~ getters                  }....................
-#FIXME: Unit test us up, please.
-def _get_hint_pep695_unsubscripted_alias(
-    # Mandatory parameters.
-    hint: HintPep695Type,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> Hint:
-    '''
-    **Non-alias type hint** (i.e., type hint that is *not* a
-    :pep:`695`-compliant type alias) encapsulated by the passed
-    :pep:`695`-compliant **unsubscripted type alias** (i.e., object created by a
-    statement of the form ``type {alias_name} = {alias_value}``).
-
-    This getter is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
-    forward references. Notably, memoizing this getter would prevent the
-    external caller of the higher-level
-    :func:`.iter_hint_pep695_unsubscripted_forwardrefs` iterator calling this
-    lower-level getter from externally modifying this type alias by forcefully
-    injecting forward reference proxies into this alias.
-
-    Parameters
-    ----------
-    hint : HintPep695Type
-        Unsubscripted type alias to be inspected.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Hint
-        Unaliased type hint encapsulated by this type alias.
-
-    Raises
-    ------
-    BeartypeDecorHintPep695Exception
-        If this type hint is *not* an unsubscripted type alias.
-    NameError
-        If this unsubscripted type alias contains one or more **unquoted forward
-        references** to undefined types.
-    '''
-
-    # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
-    # an exception.
-    if not isinstance(hint, HintPep695Type):
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'not PEP 695 unsubscripted type alias.'
-        )
-    # Else, this hint is a PEP 695-compliant unsubscripted type alias.
-
-    # While the Universe continues infinitely expanding...
-    while True:
-        # Reduce this type alias to the type hint aliased by this alias, which
-        # itself is possibly a nested type alias. Oh, it happens.
-        #
-        # Note that doing so implicitly raises a "NameError" if this alias
-        # contains one or more unquoted forward references to undefined types.
-        hint = hint.__value__  # type: ignore[attr-defined]
-
-        # If this type hint is *NOT* a nested type alias, break this iteration.
-        if not isinstance(hint, HintPep695Type):
-            break
-        # Else, this type hint is a nested type alias. In this case, continue
-        # iteratively unwrapping this nested type alias.
-
-    # Return this unaliased type alias.
-    return hint

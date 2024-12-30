@@ -130,7 +130,8 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # Assert that this iterator first yields a forward reference proxy referring
     # to the first unquoted forward reference embedded in a passed type alias
     # containing only that reference.
-    her_glowing_limbs = iter_hint_pep695_unsubscripted_forwardrefs(as_if_her_heart)
+    her_glowing_limbs = iter_hint_pep695_unsubscripted_forwardrefs(
+        as_if_her_heart)
     beneath_the_sinuous_veil = next(her_glowing_limbs)
     assert isinstance(beneath_the_sinuous_veil, BeartypeForwardRefMeta)
     assert beneath_the_sinuous_veil.__name__ == 'ImpatientlyEndured'
@@ -167,14 +168,15 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
 def unit_test_reduce_hint_pep695_unsubscripted() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`
+    :mod:`beartype._check.convert.reduce._pep.redpep695.reduce_hint_pep695_unsubscripted`
     reducer.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.pep695 import reduce_hint_pep695_unsubscripted
+    from beartype._check.convert.reduce._pep.redpep695 import (
+        reduce_hint_pep695_unsubscripted)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -208,6 +210,7 @@ def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484TypeVarException
     from beartype._check.metadata.metasane import HintSanifiedData
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         reduce_hint_pep484_subscripted_typevar_to_hint)
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -224,25 +227,29 @@ def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     # variables.
     type in_thy[S, T] = list[S] | dict[S, T]
 
+    # Tuples of all type variables parametrizing these type aliases.
+    irresistible_career_typevars = get_hint_pep_typevars(irresistible_career)
+    in_thy_typevars = get_hint_pep_typevars(in_thy)
+
     # ....................{ PASS                           }....................
     # Assert this getter passed PEP 695-compliant subscripted type aliases
     # returns the expected tuple of all type variables parametrizing the
     # unsubscripted type aliases underlying these subscripted type aliases.
     #
     # Note that these type variables are literally scoped (i.e., isolated) to
-    # these aliases and thus accessible *ONLY* be directly accessing the
+    # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     assert reduce_hint_pep484_subscripted_typevar_to_hint(
         irresistible_career[int]) == HintSanifiedData(
             irresistible_career,
-            FrozenDict({irresistible_career.__parameters__[0]: int,}),
+            FrozenDict({irresistible_career_typevars[0]: int,}),
         )
     assert reduce_hint_pep484_subscripted_typevar_to_hint(
         in_thy[bool, complex]) == HintSanifiedData(
             in_thy,
             FrozenDict({
-                in_thy.__parameters__[0]: bool,
-                in_thy.__parameters__[1]: complex,
+                in_thy_typevars[0]: bool,
+                in_thy_typevars[1]: complex,
             }),
         )
 

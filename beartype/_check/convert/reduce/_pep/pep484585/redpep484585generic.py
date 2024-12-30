@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **generic type hint
-reducers** (i.e., low-level callables converting various kinds of high-level
-:pep:`484`- and :pep:`585`-compliant generic types to lower-level type hints
-more readily consumable by :mod:`beartype`).
+Project-wide :pep:`484`- and :pep:`585`-compliant **generic reducers** (i.e.,
+low-level callables converting higher-level subscripted and unsubscripted
+generics to lower-level type hints more readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,10 +17,7 @@ from beartype._check.metadata.metasane import HintOrHintSanifiedData
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subscripted(
-    hint: Hint,
-    exception_prefix: str,
-    **kwargs
-) -> HintOrHintSanifiedData:
+    hint: Hint, exception_prefix: str, **kwargs) -> HintOrHintSanifiedData:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subscripted
     generic** (i.e., object subscripted by one or more child type hints

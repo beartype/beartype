@@ -34,7 +34,7 @@ def test_is_hint_pep695_subscripted() -> None:
     # PEP 695...
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
             unit_test_is_hint_pep695_subscripted)
 
         # Perform this test.
@@ -68,7 +68,7 @@ def test_iter_hint_pep695_forwardrefs() -> None:
     # PEP 695...
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
             unit_test_iter_hint_pep695_forwardrefs)
 
         # Perform this test.
@@ -99,7 +99,7 @@ def test_reduce_hint_pep695_unsubscripted() -> None:
     # PEP 695...
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
             unit_test_reduce_hint_pep695_unsubscripted)
 
         # Perform this test.

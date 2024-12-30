@@ -205,7 +205,7 @@ def test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     #   more cumbersome to define.
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.pep695.data_pep695_util import (
+        from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
             unit_test_reduce_hint_pep484_subscripted_typevar_to_hint)
 
         # Perform this test.

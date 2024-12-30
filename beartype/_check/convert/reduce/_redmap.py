@@ -16,6 +16,12 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.convert.reduce._pep.redpep695 import (
+    reduce_hint_pep695_unsubscripted)
+from beartype._check.convert.reduce._pep.pep484585.redpep484585generic import (
+    reduce_hint_pep484585_generic_subscripted,
+    reduce_hint_pep484585_generic_unsubscripted,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
@@ -96,10 +102,6 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     reduce_hint_pep484_typevar,
     reduce_hint_pep484_subscripted_typevar_to_hint,
 )
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genreduce import (
-    reduce_hint_pep484585_generic_subscripted,
-    reduce_hint_pep484585_generic_unsubscripted,
-)
 from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
     reduce_hint_pep484585_itemsview)
 from beartype._util.hint.pep.proposal.pep484585.pep484585type import (
@@ -122,8 +124,6 @@ from beartype._util.hint.pep.proposal.pep647742 import (
     reduce_hint_pep647_or_pep742)
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
-from beartype._util.hint.pep.proposal.pep695 import (
-    reduce_hint_pep695_unsubscripted)
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
 
