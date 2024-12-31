@@ -405,63 +405,6 @@ def is_hint_pep(hint: object) -> bool:
 #     )
 
 
-def is_hint_pep_ignorable(hint: object) -> bool:
-    '''
-    :data:`True` only if the passed PEP-compliant type hint is **deeply
-    ignorable** (i.e., shown to be ignorable only after recursively inspecting
-    the contents of this hint).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
-    This tester is only safely callable by the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : object
-        PEP-compliant type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this PEP-compliant type hint is deeply ignorable.
-
-    Warns
-    -----
-    BeartypeDecorHintPepIgnorableDeepWarning
-        If this object is a deeply ignorable PEP-compliant type hint. Why?
-        Because deeply ignorable PEP-compliant type hints convey *no*
-        meaningful semantics but superficially appear to do so. Consider
-        ``Union[str, List[int], NewType('MetaType', Annotated[object, 53])]``,
-        for example; this PEP-compliant type hint effectively reduces to
-        :obj:`typing.Any` and thus conveys *no* meaningful semantics despite
-        superficially appearing to do so.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-    # print(f'Testing PEP hint {repr(hint)} deep ignorability...')
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
-
-    # Ignorer (i.e., callable testing whether this hint is ignorable) if an
-    # ignorer for hints of this sign was registered *OR* "None" otherwise (i.e.,
-    # if *NO* ignorer was registered, in which case this hint is unignorable).
-    is_hint_ignorable = _HINT_SIGN_TO_IS_HINT_IGNORABLE.get(hint_sign)
-
-    # Return either...
-    return (
-        # If an ignorer for hints of this sign was registered, the boolean
-        # returned when passing this ignorer this hint);
-        is_hint_ignorable(hint)
-        if is_hint_ignorable else
-        # Else, *NO* ignorer for hints of this sign was registered, implying
-        # this hint to be unignorable. Return false.
-        False
-    )
-
-
 #FIXME: Unit test us up, please.
 def is_hint_pep_subscripted(hint: object) -> bool:
     '''

@@ -34,8 +34,10 @@ Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 
 # ..................{ IMPORTS                                }..................
 from beartype.typing import (
+    Annotated,
     Union,
 )
+from beartype.vale import Is
 from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
     Pep585IterableTupleSTContainerTupleST,
 )
@@ -80,3 +82,8 @@ type AliasPep585Generic[S, T] = Pep585IterableTupleSTContainerTupleST[S, T]
 # Type alias aliasing a PEP 585-compliant fixed-length tuple type hint
 # subscripted by the same type variables as those parametrizing this alias.
 type AliasPep585TupleFixed[S, T] = tuple[S, T]
+
+# ..................{ PEP 593                                }..................
+# Type alias aliasing a PEP 593-compliant metahint subscripted by the same
+# type variable as that parametrizing this alias.
+type AliasPep593[T] = Annotated[T | bytes, Is[lambda obj: bool(obj)]]

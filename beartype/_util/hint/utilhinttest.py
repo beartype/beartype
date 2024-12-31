@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
@@ -28,8 +27,6 @@ from beartype._util.hint.pep.utilpeptest import (
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subscripted)
 from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
-# from beartype._util.module.utilmodtest import (
-#     is_object_module_thirdparty_blacklisted)
 
 # ....................{ RAISERS                            }....................
 def die_unless_hint(
@@ -151,71 +148,6 @@ def is_hint(hint: object) -> bool:
         # necessarily supported by @beartype.
         is_hint_nonpep(hint=hint, is_forwardref_valid=True)
     )
-
-
-@callable_cached
-def is_hint_ignorable(hint: Hint) -> bool:
-    '''
-    :data:`True` only if the passed type hint is **ignorable** (i.e., conveys
-    *no* meaningful semantics despite superficially appearing to do so).
-
-    This tester is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this type hint is ignorable.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhintget import get_hint_repr
-
-    # ....................{ TESTS                          }....................
-    # Iteratively test this hint for ignorability against a battery of
-    # increasingly non-trivial tests. For efficiency, tests are intentionally
-    # ordered from most to least efficient.
-
-    #FIXME: Preserved for posterity, as this seems generically useful. *sigh*
-    # # ....................{ TESTS ~ blacklist              }....................
-    # # If this hint is beartype-blacklisted (i.e., defined in a third-party
-    # # package or module that is hostile to runtime type-checking), return true.
-    # # print(f'Testing hint {repr(hint)} third-party blacklisting...')
-    # if is_object_module_thirdparty_blacklisted(hint):
-    #     # print('Blacklisted!')
-    #     return True
-    # # Else, this hint is *NOT* beartype-blacklisted.
-
-    # ....................{ TESTS ~ shallow                }....................
-    # Machine-readable representation of this hint.
-    hint_repr = get_hint_repr(hint)
-
-    # If this hint is shallowly ignorable, return true.
-    if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
-        return True
-    # Else, this hint is *NOT* shallowly ignorable.
-
-    # ....................{ TESTS ~ pep                    }....................
-    # If this hint is PEP-compliant...
-    if is_hint_pep(hint):
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import (
-            is_hint_pep_ignorable)
-
-        # Defer to the function testing whether this hint is an ignorable
-        # PEP-compliant type hint.
-        return is_hint_pep_ignorable(hint)
-    # Else, this hint is PEP-noncompliant and thus *NOT* deeply ignorable.
-
-    # ....................{ RETURN                         }....................
-    # Since this hint is also *NOT* shallowly ignorable, this hint is
-    # unignorable. In this case, return false.
-    return False
 
 
 #FIXME: Unit test us up, please.

@@ -155,7 +155,7 @@ mapping from each sign uniquely identifying various type hints to an unmemoized
 callable reducing those higher- to lower-level hints).
 '''
 
-# ....................{ PRIVATE ~ dict : cached            }....................
+# ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ NON-PEP                            }..................
     # If this hint is identified by *NO* sign, this hint is either an
@@ -417,7 +417,7 @@ Note that:
   efficiency and thus the entire point of memoization).
 '''
 
-# ....................{ PRIVATE ~ dict : uncached          }....................
+# ....................{ MAPPINGS ~ uncached                }....................
 HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # ..................{ PEP 484                            }..................
     # Reduce PEP 484-compliant type variables that have subsequently been
@@ -543,7 +543,7 @@ See Also
     Further details.
 '''
 
-# ....................{ PRIVATE ~ globals : methods        }....................
+# ....................{ METHODS                            }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED_get = HINT_SIGN_TO_REDUCE_HINT_CACHED.get
 '''
 :meth:`_HINT_SIGN_TO_REDUCE_HINT_CACHED.get` method globalized for negligible

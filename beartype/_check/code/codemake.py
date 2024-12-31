@@ -144,7 +144,7 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
 )
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -1171,7 +1171,11 @@ def make_check_expr(
                             cls_stack=cls_stack,
                             typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
                             exception_prefix=EXCEPTION_PREFIX,
-                        ))
+                        )
+                    )
+                    # print(f'[593] metahint: {repr(get_hint_pep593_metahint(hint_curr))}')
+                    # print(f'[593] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
+                    # print(f'[593] hint_curr: {repr(hint_curr)}; hint_or_sane_child: {repr(hint_or_sane_child)}')
 
                     # Tuple of the one or more beartype validators annotating
                     # this metahint.
@@ -1239,7 +1243,6 @@ def make_check_expr(
                                 ),
                             )
                         )
-                    # Else, this metahint is ignorable.
 
                     #FIXME: Optimize by refactoring into a "while" loop. *sigh*
                     # For the 0-based index and each beartype validator

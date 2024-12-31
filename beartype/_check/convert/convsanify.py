@@ -39,7 +39,7 @@ from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     # FrozenDict,
@@ -404,6 +404,7 @@ def sanify_hint_child_if_unignorable_or_none(
         typevar_to_hint=typevar_to_hint,
         exception_prefix=exception_prefix,
     )
+    # print(f'[sanify] Detecting hint {repr(hint)} reduction {repr(hint_or_sane)} ignorability...')
 
     # Return this hint if this hint is unignorable *OR* "None" otherwise.
     return _get_hint_or_sane_unignorable_or_none(hint_or_sane)

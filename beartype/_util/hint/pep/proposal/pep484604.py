@@ -211,7 +211,8 @@ is_hint_pep604.__doc__ = (
     ''')
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484604_union_ignorable(hint: object) -> bool:
+def is_hint_pep484604_union_ignorable(
+    hint: object) -> bool:
     '''
     :data:`True` only if the passed :pep:`484`- or :pep:`604`-compliant union is
     ignorable.
@@ -253,10 +254,11 @@ def is_hint_pep484604_union_ignorable(hint: object) -> bool:
     bool
         :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
     '''
+    # print(f'[484/604] Detecting union {repr(hint)} ignorability...')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 
     # Return true only if one or more child hints of this union are recursively
     # ignorable. See the function docstring.

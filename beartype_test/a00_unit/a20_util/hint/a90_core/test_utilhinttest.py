@@ -112,7 +112,7 @@ def test_is_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 

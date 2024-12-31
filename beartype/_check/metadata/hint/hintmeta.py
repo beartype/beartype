@@ -213,3 +213,21 @@ class HintMeta(object):
         self.pith_expr = pith_expr
         self.pith_var_name_index = pith_var_name_index
         self.typevar_to_hint = typevar_to_hint
+
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this metadata.
+        '''
+
+        # Represent this metadata with just the minimal subset of metadata
+        # needed to reasonably describe this metadata.
+        return (
+            f'HintMeta('
+            f'hint={repr(self.hint)}, '
+            f'indent_level={repr(self.indent_level)}, '
+            f'pith_expr={repr(self.pith_expr)}, '
+            f'pith_var_name_index={repr(self.pith_var_name_index)}, '
+            f'typevar_to_hint={repr(self.typevar_to_hint)}'
+            f')'
+        )

@@ -118,7 +118,7 @@ def is_hint_pep593_ignorable(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
     # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
 
     # Return true only if...

@@ -63,7 +63,7 @@ def reduce_hint_pep484585_type(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 
     # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
     # immediately reduce this hint to the "type" superclass.

@@ -340,7 +340,7 @@ def _get_hint_pep484604_union_args_flattened(
     BeartypeDecorHintPep604Exception
         If this tuple is empty.
     '''
-    # print(f'[_get_hint_pep4] Received hint {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
+    print(f'[484/604] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
 
     # ....................{ LOCALS                         }....................
     # This union type hint.

@@ -56,7 +56,7 @@ def is_hint_pep484_newtype_ignorable(hint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 
     # Return true only if this hint aliases an ignorable child type hint.
     return is_hint_ignorable(get_hint_pep484_newtype_alias(hint))
