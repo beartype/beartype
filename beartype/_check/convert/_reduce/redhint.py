@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintReduceException
 from beartype.typing import Optional
-from beartype._check.convert.reduce._redmap import (
+from beartype._check.convert._reduce._redmap import (
     HINT_SIGN_TO_REDUCE_HINT_CACHED_get,
     HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get,
 )

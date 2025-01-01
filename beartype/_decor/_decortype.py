@@ -406,7 +406,7 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             #   (and thus usually user-defined) classes -- one or more of which
             #   might be this class or other similarly redefined classes.
             # * The type hint coercion cache (i.e., private
-            #   "beartype._check.convert.convcoerce._hint_repr_to_hint"
+            #   "beartype._check.convert._convcoerce._hint_repr_to_hint"
             #   dictionary) is problematic, due to mapping from the
             #   machine-readable representations of previously seen
             #   non-self-cached type hints (e.g., "list[MuhClass]") to the first

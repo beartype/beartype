@@ -17,7 +17,7 @@ from beartype.typing import (
 )
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
+    sanify_hint_if_unignorable_or_none)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     HintSanifiedData,
@@ -416,7 +416,7 @@ def _get_hint_pep484604_union_args_flattened(
         #   | int" type hints (respectively) when the non-default
         #   "conf.is_pep484_tower=True" parameter is enabled.
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-        hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
+        hint_or_sane_child = sanify_hint_if_unignorable_or_none(
             hint=hint_child,
             conf=hints_meta.conf,
             cls_stack=hints_meta.cls_stack,
@@ -438,7 +438,7 @@ def _get_hint_pep484604_union_args_flattened(
         #
         # Note that this edge case currently *ONLY* arises when this child hint
         # has been expanded by the above call to the
-        # sanify_hint_child_if_unignorable_or_none() function from a non-union
+        # sanify_hint_if_unignorable_or_none() function from a non-union
         # (e.g., "float") into a union (e.g., "float | int"). The standard PEP
         # 484-compliant "typing.Union" factory already implicitly flattens
         # nested unions: e.g.,

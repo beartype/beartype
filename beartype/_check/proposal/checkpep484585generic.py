@@ -180,7 +180,7 @@ def iter_hint_pep484585_generic_bases_unerased(
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert.convsanify import (
-        sanify_hint_child_if_unignorable_or_none)
+        sanify_hint_if_unignorable_or_none)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_bases_unerased)
@@ -222,7 +222,7 @@ def iter_hint_pep484585_generic_bases_unerased(
         # pseudo-superclass if sanifying this pseudo-superclass did not generate
         # supplementary metadata *OR* that metadata (i.e., if doing so generated
         # supplementary metadata).
-        hint_or_sane_base = sanify_hint_child_if_unignorable_or_none(
+        hint_or_sane_base = sanify_hint_if_unignorable_or_none(
             hint=hint_bases[hint_bases_index_curr],
             conf=conf,
             typevar_to_hint=typevar_to_hint,

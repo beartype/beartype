@@ -168,14 +168,14 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
 def unit_test_reduce_hint_pep695_unsubscripted() -> None:
     '''
     Test the private
-    :mod:`beartype._check.convert.reduce._pep.redpep695.reduce_hint_pep695_unsubscripted`
+    :mod:`beartype._check.convert._reduce._pep.redpep695.reduce_hint_pep695_unsubscripted`
     reducer.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._check.convert.reduce._pep.redpep695 import (
+    from beartype._check.convert._reduce._pep.redpep695 import (
         reduce_hint_pep695_unsubscripted)
     from pytest import raises
 

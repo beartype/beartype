@@ -13,6 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Dict
+from beartype._check.convert._ignore._pep.ignpep593 import (
+    is_hint_pep593_ignorable)
+from beartype._check.convert._ignore._pep.ignpep484585 import (
+    is_hint_pep484585_generic_subscripted_ignorable)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -25,14 +29,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     is_hint_pep484_typevar_ignorable)
-from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
-    is_hint_pep484_newtype_ignorable)
-from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic_subscripted_ignorable)
 from beartype._util.hint.pep.proposal.pep484604 import (
     is_hint_pep484604_union_ignorable)
 from beartype._util.hint.pep.proposal.pep544 import is_hint_pep544_ignorable
-from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593_ignorable
 from collections.abc import Callable
 
 # ....................{ MAPPINGS                           }....................
@@ -50,10 +49,6 @@ from collections.abc import Callable
 # parameters (e.g., "cls_stack", "pith_name"). Callback protocols suck, frankly.
 HINT_SIGN_TO_IS_HINT_IGNORABLE: Dict[HintSign, Callable] = {
     # ..................{ PEP 484                            }..................
-    # Ignore *ALL* PEP 484-compliant "NewType"-style type aliases aliasing
-    # ignorable type hints.
-    HintSignNewType: is_hint_pep484_newtype_ignorable,
-
     # Ignore *ALL* PEP 484-compliant type variables.
     HintSignTypeVar: is_hint_pep484_typevar_ignorable,
 

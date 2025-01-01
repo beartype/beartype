@@ -298,7 +298,7 @@ parameter.
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_pep612_args_or_kwargs(
     # General-purpose parameters passed by the higher-level
-    # beartype._check.convert.reduce.redhint.reduce_hint() reducer to this
+    # beartype._check.convert._reduce.redhint.reduce_hint() reducer to this
     # lower-level reducer.
     hint: object,
     decor_meta: Optional[BeartypeDecorMeta],
@@ -318,7 +318,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     other_pith_name_label: str,
 
     # Ignorable general-purpose parameters passed by the higher-level
-    # beartype._check.convert.reduce.redhint.reduce_hint() reducer *NOT* required
+    # beartype._check.convert._reduce.redhint.reduce_hint() reducer *NOT* required
     # by this lower-level reducer.
     **kwargs
 ) -> object:

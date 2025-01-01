@@ -221,7 +221,7 @@ def is_hint_cacheworthy(hint: Hint) -> bool:
 
     See Also
     --------
-    :func:`beartype._check.convert.convcoerce.coerce_hint_any`
+    :func:`beartype._check.convert._convcoerce.coerce_hint_any`
         Further details.
     '''
 

@@ -20,48 +20,6 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from types import FunctionType
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_newtype_ignorable(hint: Hint) -> bool:
-    '''
-    :data:`True` only if the passed :pep:`484`-compliant
-    :obj:`typing.NewType`-style type alias is ignorable.
-
-    Specifically, this tester ignores the :obj:`typing.NewType` factory passed
-    an ignorable child type hint. Unlike most :mod:`typing` constructs, that
-    factory does *not* cache the objects it returns: e.g.,
-
-    .. code-block:: pycon
-
-       >>> from typing import NewType
-       >>> NewType('TotallyNotAStr', str) is NewType('TotallyNotAStr', str)
-       False
-
-    Since this implies every call to ``NewType({same_name}, object)`` returns a
-    new closure, the *only* means of ignoring ignorable new type aliases is
-    dynamically within this function.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : object
-        Type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
-
-    # Return true only if this hint aliases an ignorable child type hint.
-    return is_hint_ignorable(get_hint_pep484_newtype_alias(hint))
-
-
 # If the active Python interpreter targets Python >= 3.10 and thus defines
 # "typing.NewType" type hints as instances of that class, implement this tester
 # unique to prior Python versions to raise an exception.
@@ -248,9 +206,7 @@ def reduce_hint_pep484_newtype(
     '''
 
     # Reduce this new type to the non-new type type hint encapsulated by this
-    # new type.
-    #
-    # Note that:
+    # new type. Note that:
     # * This reducer *CANNOT* be reduced to an efficient alias of the
     #   get_hint_pep484_newtype_alias() getter, as this reducer accepts
     #   ignorable arguments *NOT* accepted by that getter.

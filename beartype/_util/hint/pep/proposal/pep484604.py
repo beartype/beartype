@@ -258,7 +258,7 @@ def is_hint_pep484604_union_ignorable(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-    from beartype._check.convert.ignore.ignhint import is_hint_ignorable
+    from beartype._check.convert._ignore.ignhint import is_hint_ignorable
 
     # Return true only if one or more child hints of this union are recursively
     # ignorable. See the function docstring.
@@ -294,7 +294,7 @@ def make_hint_pep484604_union(hints: tuple) -> object:
     arguments. Pragmatically, that caching is slow and thus worth optimizing
     with trivial optimization on our end. Moreover, this factory is called by
     the performance-sensitive
-    :func:`beartype._check.convert.convcoerce.coerce_hint_any` coercer in an
+    :func:`beartype._check.convert._convcoerce.coerce_hint_any` coercer in an
     early-time code path of the :func:`beartype.beartype` decorator. Optimizing
     this factory thus optimizes :func:`beartype.beartype` itself. Even more
     importantly, :pep:`604`-compliant new-style unions are *not* self-caching:

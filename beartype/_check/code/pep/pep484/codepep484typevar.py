@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype.typing import Optional
 # from beartype._check.code.codecls import HintMeta
 # from beartype._check.convert.convsanify import (
-#     sanify_hint_child_if_unignorable_or_none)
+#     sanify_hint_if_unignorable_or_none)
 # from beartype._conf.confcls import BeartypeConf
 # from beartype._data.hint.datahintpep import Hint
 # from beartype._data.hint.datahinttyping import TypeStack
@@ -120,7 +120,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #     if hint_child is not None:
 #         # Unignorable sane hint sanified from this possibly ignorable insane
 #         # hint *OR* "None" otherwise (i.e., if this hint is ignorable).
-#         hint_child = sanify_hint_child_if_unignorable_or_none(
+#         hint_child = sanify_hint_if_unignorable_or_none(
 #             hint=hint_child,
 #             conf=conf,
 #             cls_stack=cls_stack,

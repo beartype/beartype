@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.convert.ignore._ignmap import (
+from beartype._check.convert._ignore._ignmap import (
     HINT_SIGN_TO_IS_HINT_IGNORABLE_get)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
@@ -33,6 +33,16 @@ def is_hint_ignorable(hint_or_sane: HintOrHintSanifiedData) -> bool:
     *no* meaningful semantics despite superficially appearing to do so).
 
     This tester is memoized for efficiency.
+
+    Caveats
+    -------
+    **The higher-level**
+    :func:`beartype._check.convert.convsanify.sanify_hint_if_unignorable_or_none`
+    **function should always be called in lieu of this lower-level function.**
+    Whereas the former reduces this possibly insane hint to a sane hint *before*
+    testing whether that sane hint is ignorable, the latter fails to perform
+    that reduction and thus returns a false negative when the passed hint is
+    insane (i.e., has yet to be reduced to a sane hint).
 
     Parameters
     ----------

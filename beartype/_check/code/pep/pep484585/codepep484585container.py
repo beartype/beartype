@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
+    sanify_hint_if_unignorable_or_none)
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
@@ -111,7 +111,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
 
     # Unignorable sane child hint sanified from this possibly ignorable insane
     # child hint *OR* "None" otherwise (i.e., if this child hint is ignorable).
-    hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
+    hint_or_sane_child = sanify_hint_if_unignorable_or_none(
         hint=hint_child,
         cls_stack=hints_meta.cls_stack,
         conf=hints_meta.conf,

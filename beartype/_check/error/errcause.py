@@ -58,7 +58,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
+    sanify_hint_if_unignorable_or_none)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     TupleHintOrHintSanifiedData,
@@ -628,7 +628,7 @@ class ViolationCause(object):
         :data:`None` otherwise (i.e., if this hint is ignorable).
 
         This method is merely a convenience wrapper for the lower-level
-        :func:`.sanify_hint_child_if_unignorable_or_none` sanifier.
+        :func:`.sanify_hint_if_unignorable_or_none` sanifier.
 
         Parameters
         ----------
@@ -654,14 +654,14 @@ class ViolationCause(object):
 
         See Also
         --------
-        :func:`.sanify_hint_child_if_unignorable_or_none`
+        :func:`.sanify_hint_if_unignorable_or_none`
             Further details.
         '''
 
         # Sane hint sanified from this possibly insane hint if sanifying this
         # hint did not generate supplementary metadata *OR* that metadata
         # otherwise (i.e., if doing so generated supplementary metadata).
-        hint_or_sane_child = sanify_hint_child_if_unignorable_or_none(
+        hint_or_sane_child = sanify_hint_if_unignorable_or_none(
             hint=hint,
             cls_stack=self.cls_stack,
             conf=self.conf,

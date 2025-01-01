@@ -42,7 +42,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
-    sanify_hint_child_if_unignorable_or_none)
+    sanify_hint_if_unignorable_or_none)
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     get_hint_or_sane_hint,
@@ -144,7 +144,7 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
 )
-from beartype._check.convert.ignore.ignhint import is_hint_ignorable
+from beartype._check.convert._ignore.ignhint import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -488,7 +488,7 @@ def make_check_expr(
             #   "pith_curr_expr" accesses this pith extremely inefficiently.
             # * Ignorable type-checking code (i.e., code ignoring this hint but
             #   otherwise unsuitable for implementation as a reducer called by
-            #   the "beartype._check.convert.reduce.redhint" submodule, typically
+            #   the "beartype._check.convert._reduce.redhint" submodule, typically
             #   due to useful side effects intentionally interacting with this
             #   BFS) should follow the design pattern established by the
             #   "HintSignPep695TypeAliasSubscripted" branch below.
@@ -866,7 +866,7 @@ def make_check_expr(
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
                             hint_or_sane_child = (
-                                sanify_hint_child_if_unignorable_or_none(
+                                sanify_hint_if_unignorable_or_none(
                                     hint=hint_child,
                                     cls_stack=cls_stack,
                                     conf=conf,
@@ -1001,7 +1001,7 @@ def make_check_expr(
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
                     hint_or_sane_child_key = (
-                        sanify_hint_child_if_unignorable_or_none(
+                        sanify_hint_if_unignorable_or_none(
                             hint=hint_childs[0],
                             cls_stack=cls_stack,
                             conf=conf,
@@ -1009,7 +1009,7 @@ def make_check_expr(
                             exception_prefix=EXCEPTION_PREFIX,
                         ))
                     hint_or_sane_child_value = (
-                        sanify_hint_child_if_unignorable_or_none(
+                        sanify_hint_if_unignorable_or_none(
                             hint=hint_childs[1],  # type: ignore[has-type]
                             cls_stack=cls_stack,
                             conf=conf,
@@ -1165,7 +1165,7 @@ def make_check_expr(
                     # sanified from this possibly ignorable insane metahint *OR*
                     # "None" otherwise (i.e., if this metahint is ignorable).
                     hint_or_sane_child = (
-                        sanify_hint_child_if_unignorable_or_none(
+                        sanify_hint_if_unignorable_or_none(
                             hint=get_hint_pep593_metahint(hint_curr),
                             conf=conf,
                             cls_stack=cls_stack,
@@ -1329,7 +1329,7 @@ def make_check_expr(
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
                     hint_or_sane_child = (
-                        sanify_hint_child_if_unignorable_or_none(
+                        sanify_hint_if_unignorable_or_none(
                             # Possibly ignorable insane child hint subscripting
                             # this parent hint, validated to be the *ONLY* child
                             # hint subscripting this parent hint.

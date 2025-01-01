@@ -35,7 +35,7 @@ def make_hint_pep484_union(hints: TupleHints) -> Hint:
     arguments. Pragmatically, that caching is slow and thus worth optimizing
     with trivial optimization on our end. Moreover, this factory is called by
     the performance-sensitive
-    :func:`beartype._check.convert.convcoerce.coerce_hint_any` coercer in an
+    :func:`beartype._check.convert._convcoerce.coerce_hint_any` coercer in an
     early-time code path of the :func:`beartype.beartype` decorator. Optimizing
     this factory thus optimizes :func:`beartype.beartype` itself.
 

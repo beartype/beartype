@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.code.codescope import _tuple_union_to_tuple_union
-from beartype._check.convert.convcoerce import _hint_repr_to_hint
+from beartype._check.convert._convcoerce import _hint_repr_to_hint
 from beartype._check.forward.reference.fwdrefmake import (
     _forwardref_args_to_forwardref)
 from beartype._check.forward.reference.fwdrefmeta import (
@@ -38,7 +38,7 @@ def clear_checker_caches() -> None:
       :data:`beartype._check.code.codescope._tuple_union_to_tuple_union`
       dictionary).
     * The **type hint coercion cache** (i.e., private
-      :data:`beartype._check.convert.convcoerce._hint_repr_to_hint`
+      :data:`beartype._check.convert._convcoerce._hint_repr_to_hint`
       dictionary).
     '''
     # print('Clearing all \"beartype._check\" caches...')

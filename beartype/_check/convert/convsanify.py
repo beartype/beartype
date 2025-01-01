@@ -17,17 +17,18 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
-    HintOrHintSanifiedDataUnpacked,
+    # HintOrHintSanifiedDataUnpacked,
     HintSanifiedData,
     # unpack_hint_or_sane,
 )
-from beartype._check.convert.convcoerce import (
+from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
     coerce_hint_root,
 )
-from beartype._check.convert.reduce.redhint import reduce_hint
+from beartype._check.convert._reduce.redhint import reduce_hint
 from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import (
@@ -39,7 +40,7 @@ from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
-from beartype._check.convert.ignore.ignhint import is_hint_ignorable
+from beartype._check.convert._ignore.ignhint import is_hint_ignorable
 from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     # FrozenDict,
@@ -306,16 +307,16 @@ def sanify_hint_root_statement_if_unignorable_or_none(
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
-def sanify_hint_child_if_unignorable_or_none(
+def sanify_hint_if_unignorable_or_none(
     # Mandatory parameters.
     hint: Hint,
-    conf: BeartypeConf,
-    exception_prefix: str,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     pith_name: Optional[str] = None,
     typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+    exception_prefix: str = '',
 ) -> HintOrHintSanifiedData:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child
@@ -337,16 +338,15 @@ def sanify_hint_child_if_unignorable_or_none(
     ----------
     hint : Hint
         Type hint to be sanified.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    exception_prefix : str
-        Substring prefixing exception messages raised by this function.
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object). Defaults
+        to :obj:`.BEARTYPE_CONF_DEFAULT`, the default beartype configuration.
     pith_name : Optional[str], optional
         Either:
 
@@ -364,6 +364,9 @@ def sanify_hint_child_if_unignorable_or_none(
         all transitive parent hints of this hint to the corresponding child
         hints subscripting these parent hints). Defaults to
         :data:`.FROZEN_DICT_EMPTY`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing exception messages raised by this
+        function. Defaults to the empty string.
 
     Returns
     -------

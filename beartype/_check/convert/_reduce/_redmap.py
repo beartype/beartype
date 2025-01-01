@@ -16,9 +16,9 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._check.convert.reduce._pep.redpep695 import (
+from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
-from beartype._check.convert.reduce._pep.pep484585.redpep484585generic import (
+from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subscripted,
     reduce_hint_pep484585_generic_unsubscripted,
 )

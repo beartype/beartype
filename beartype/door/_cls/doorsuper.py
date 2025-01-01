@@ -24,7 +24,7 @@ from beartype.door._func.doorcheck import (
 )
 from beartype.roar import BeartypeDoorIsSubhintException
 from beartype.typing import (
-    TYPE_CHECKING,
+    # TYPE_CHECKING,
     Any,
     FrozenSet,
     Generic,
@@ -32,6 +32,8 @@ from beartype.typing import (
     Tuple,
     overload,
 )
+from beartype._check.convert.convsanify import (
+    sanify_hint_if_unignorable_or_none)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
@@ -46,7 +48,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._check.convert.ignore.ignhint import is_hint_ignorable
 from beartype._util.utilobject import get_object_type_basename
 
 # ....................{ SUPERCLASSES                       }....................
@@ -421,6 +422,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
 
 
     @property
+    @property_cached
     def is_ignorable(self) -> bool:
         '''
         :data:`True` only if this type hint is **ignorable** (i.e., conveys
@@ -501,8 +503,13 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
             :data:`True` only if this type hint is ignorable.
         '''
 
-        # Mechanic: Somebody set up us the bomb.
-        return is_hint_ignorable(self._hint)
+        # Metadata encapsulating this possibly insane hint after sanifying this
+        # possibly insane hint into a sane hint if this sane hint is unignorable
+        # *OR* "None" otherwise (i.e., if this sane hint is ignorable).
+        hint_or_sane = sanify_hint_if_unignorable_or_none(self._hint)
+
+        # Return true only if this hint is ignorable.
+        return hint_or_sane is None
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(
@@ -920,7 +927,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
             # continuing to the next pair of child hints.
         # Else, each child hint of this hint is a subhint of the corresponding
         # child hint of that branch. In this case, this hint is a subhint of
-        # that branch. 
+        # that branch.
 
         # Return true! We have liftoff.
         return True

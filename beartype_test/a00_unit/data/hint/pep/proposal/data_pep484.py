@@ -4176,10 +4176,9 @@ def hints_pep484_ignorable_deep() -> list:
     '''
 
     # Defer fixture-specific imports.
-    from typing import (
+    from beartype.typing import (
         Any,
         Generic,
-        NewType,
         Optional,
         Union,
     )
@@ -4192,10 +4191,6 @@ def hints_pep484_ignorable_deep() -> list:
     return [
         # Parametrizations of the "typing.Generic" abstract base class (ABC).
         Generic[S, T],
-
-        # New type aliasing any ignorable type hint.
-        NewType('TotallyNotAny', Any),
-        NewType('TotallyNotObject', object),
 
         # Optionals containing any ignorable type hint.
         Optional[Any],
