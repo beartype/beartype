@@ -137,7 +137,7 @@ you no longer have to know how to use software to use software. ``\o/``
            abc.Iterable, 'my_package.my_module.MyOtherClass', NoneType),
 
        # Annotate PEP 604 optional types. Note this requires Python ≥ 3.10.
-       param_must_satisfy_pep604_optional: float | bytes = None,
+       param_must_satisfy_pep604_optional: float | bytes | None = None,
 
        # Annotate PEP 484 optional types. All Python versions support this.
        param_must_satisfy_pep484_optional: typing.Optional[float, bytes] = None,
