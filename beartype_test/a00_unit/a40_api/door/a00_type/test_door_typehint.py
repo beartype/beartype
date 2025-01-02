@@ -16,6 +16,7 @@ This submodule unit tests the subset of the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS ~ dunder ~ creation          }....................
 def test_door_typehint_new() -> None:
@@ -370,6 +371,9 @@ def test_door_typehint_len():
 #                 hint_pep_meta.is_ignorable)
 
 
+# Prevent pytest from capturing and displaying all expected non-fatal
+# beartype-specific warnings emitted by this test. Urgh!
+@ignore_warnings(DeprecationWarning)
 def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` property.

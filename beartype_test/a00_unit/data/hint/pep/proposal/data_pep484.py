@@ -409,8 +409,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
-            #FIXME: Remove after fully supporting type variables.
-            is_ignorable=True,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('We were mysteries, unwon'),
@@ -431,8 +429,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=T_str_or_bytes,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
-            #FIXME: Remove after fully supporting type variables.
-            is_ignorable=True,
             is_typing=False,
             piths_meta=(
                 # String constant.
@@ -455,8 +451,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=T_int,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
-            #FIXME: Remove after fully supporting type variables.
-            is_ignorable=True,
             is_typing=False,
             piths_meta=(
                 # Integer constant.

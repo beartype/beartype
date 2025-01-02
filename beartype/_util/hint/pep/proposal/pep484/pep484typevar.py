@@ -52,39 +52,6 @@ def is_hint_pep484_typevar(hint: object) -> bool:
     # CPython version. *shrug*
     return isinstance(hint, TypeVar)
 
-
-#FIXME: Remove this *AFTER* properly supporting type variables. For now,
-#ignoring type variables is required to at least shallowly support generics
-#parametrized by one or more type variables.
-def is_hint_pep484_typevar_ignorable(hint: object) -> bool:
-    '''
-    :data:`True` unconditionally.
-
-    This tester currently unconditionally ignores *all* :pep:`484`-compliant
-    type variables, which require non-trivial and currently unimplemented
-    code generation support.
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : object
-        Type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
-    '''
-
-    #FIXME: *LOL.* Stop ignoring type variables, please.
-    # return False
-    # Ignore *ALL* PEP 484-compliant type variables.
-    return True
-
 # ....................{ GETTERS                            }....................
 #FIXME: *UHM.* We probably shouldn't be treating type variable constraints and
 #upper bounds as semantically equivalent. They're really not at all. We suspect

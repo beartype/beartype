@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-agnostic type hint conversion utility** unit tests.
+Project-wide **PEP-agnostic type hint reduction** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._check.convert._reduce.redhint` submodule.

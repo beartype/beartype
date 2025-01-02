@@ -17,13 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
-#FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
-#"Literal[[]]"). The one notable place where this *IS* feasible is with PEP
-#585-compliant type hints subscripted by unhashable rather than hashable
-#iterables, which can *ALWAYS* be safely rewritten to be hashable (e.g.,
-#coercing "callable[[], None]" to "callable[(), None]").
-
 #FIXME: [PEP 544] coerce_hint() should also coerce PEP 544-compatible protocols
 #*NOT* decorated by @typing.runtime_checkable to be decorated by that decorator,
 #as such protocols are unusable at runtime. Yes, we should always try something
@@ -55,21 +48,19 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Any,
-    # Optional,
     Union,
 )
 from beartype._cave._cavefast import NotImplementedType
 # from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import Hint
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdmain import resolve_hint
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from beartype._util.hint.pep.proposal.pep484.pep484union import (
     make_hint_pep484_union)
+from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
@@ -404,6 +395,16 @@ def coerce_hint_any(hint: Hint) -> Hint:
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_cacheworthy(hint):
         # print(f'Self-caching type hint {repr(hint)}...')
+
+        #FIXME: [SPEED] Globalize the
+        #_hint_repr_to_hint.cache_or_get_cached_value() bound method and call
+        #that globalized bound method here instead as a negligible speedup.
+
+        # Note that we intentionally call the unmemoized low-level repr()
+        # builtin here rather than our memoized higher-level get_hint_repr()
+        # getter. Why? Because the latter would significantly increase the space
+        # consumption of that memoization, as the passed hint has *NOT* yet been
+        # deduplicated by the logic performed here.
         return _hint_repr_to_hint.cache_or_get_cached_value(  # pyright: ignore
             key=repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.

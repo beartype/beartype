@@ -256,6 +256,39 @@ def reduce_hint(
     # Return this possibly reduced hint.
     return hint_or_sane
 
+
+def reduce_hint_child(**kwargs) -> HintOrHintSanifiedData:
+    '''
+    Lower-level child hint reduced (i.e., converted) from the passed
+    higher-level child hint if this child hint is reducible *or* this child hint
+    as is otherwise (i.e., if this child hint is irreducible).
+
+    This reducer is a convenience wrapper for the more general-purpose
+    :func:`.reduce_hint` reducer, simplifying calls to that reducer when passed
+    child hints. Specifically, this reducer silently ignores all passed keyword
+    parameters inapplicable to child hints. This includes:
+
+    * ``arg_kind``, applicable *only* to root hints directly annotating callable
+       parameters.
+    * ``decor_meta``, applicable *only* to root hints directly annotating
+      callable parameters or returns.
+    * ``pith_name``, applicable *only* to root hints directly annotating
+      callable parameters or returns.
+    '''
+
+    # Remove all passed keyword parameters inapplicable to child hints *BEFORE*
+    # reducing this child hint.
+    #
+    # Note that this is the standard idiom for efficiently removing dictionary
+    # key-value pairs where this key is *NOT* guaranteed to exist in this
+    # dictionary. Simplicity and speed supercedes readability, sadly.
+    kwargs.pop('arg_kind', None)
+    kwargs.pop('decor_meta', None)
+    kwargs.pop('pith_name', None)
+
+    # Return this child hint possibly reduced to a lower-level hint.
+    return reduce_hint(**kwargs)
+
 # ....................{ PRIVATE ~ reducers                 }....................
 @callable_cached
 def _reduce_hint_cached(

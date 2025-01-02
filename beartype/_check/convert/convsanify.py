@@ -16,10 +16,8 @@ from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
-    # HintOrHintSanifiedDataUnpacked,
     HintSanifiedData,
-    # unpack_hint_or_sane,
+    HintOrHintSanifiedData,
 )
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
@@ -45,6 +43,54 @@ from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     # FrozenDict,
 )
+from beartype._util.utilobject import SENTINEL
+
+# ....................{ TESTERS                            }....................
+def is_hint_sanified_ignorable(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    hint_or_sane_parent: HintOrHintSanifiedData = SENTINEL,  # type: ignore[assignment]
+) -> bool:
+    '''
+    :data:`True` only if the passed **possibly insane type hint** (i.e.,
+    possibly PEP-noncompliant or otherwise syntactically or semantically
+    unusable hint) is ignorable *after* internally reducing this hint to a
+    **sane hint** (i.e., usable PEP-compliant hint).
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+    hint_or_sane_parent : HintOrHintSanifiedData, optional
+        Either:
+
+        * If this is a child hint of some parent hint, metadata encapsulating
+          this parent hint. Although technically optional, this metadata
+          improves the robustness of this tester against edge cases and is thus
+          strongly recommended if available.
+        * Else, the sentinel placeholder.
+
+        Defaults to the sentinel placeholder.
+    '''
+
+    # Parent type variable lookup table, defined as either...
+    typevar_to_hint = (
+        # If parent hint metadata was explicitly passed by the caller, the table
+        # encapsulated by this metadata.
+        hint_or_sane_parent.typevar_to_hint
+        if isinstance(hint_or_sane_parent, HintSanifiedData) else
+        FROZEN_DICT_EMPTY
+    )
+
+    # Sane hint sanified from this possibly insane hint if this hint is
+    # unignorable *OR* "None" otherwise (i.e., if this hint is ignorable).
+    hint_or_sane_real = sanify_hint_if_unignorable_or_none(
+        hint=hint, typevar_to_hint=typevar_to_hint)
+
+    # Return true only if this hint is ignorable.
+    return hint_or_sane_real is None
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
@@ -314,6 +360,15 @@ def sanify_hint_if_unignorable_or_none(
     # Optional parameters.
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+
+    #FIXME: Unsure what this parameter is doing here, honestly. Ideally, this
+    #should *NEVER* be passed. This parameter is only relevant to
+    #sanify_hint_root_*() functions. Since this function is only applied to
+    #child rather than root hints, this parameter should *ALWAYS* remain
+    #unpassed and thus default to "None" here. Rather silly, honestly. This is
+    #probably a vestigial holdover from an ancient time in which we once
+    #attempted to make this function a general-purpose sanifier applicable to
+    #both child and root hints. It's harmless as is... but annoying. *sigh*
     pith_name: Optional[str] = None,
     typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     exception_prefix: str = '',

@@ -94,43 +94,6 @@ def test_is_hint(hints_pep_meta) -> None:
     for non_hint in NOT_HINTS:
         assert is_hint(non_hint) is False
 
-
-# Prevent pytest from capturing and displaying all expected non-fatal
-# beartype-specific warnings emitted by the is_hint_ignorable() tester.
-# @ignore_warnings(BeartypeDecorHintPepIgnorableDeepWarning)
-def test_is_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
-    '''
-    Test the :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
-        Tuple of type hint metadata describing sample type hints exercising edge
-        cases in the :mod:`beartype` codebase.
-    hints_ignorable : frozenset
-        Frozen set of ignorable PEP-agnostic type hints.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._check.convert._ignore.ignhint import is_hint_ignorable
-    from beartype_test.a00_unit.data.hint.data_hint import (
-        HINTS_NONPEP_UNIGNORABLE)
-
-    # Assert this tester accepts ignorable type hints.
-    for hint_ignorable in hints_ignorable:
-        assert is_hint_ignorable(hint_ignorable) is True
-
-    # Assert this tester rejects unignorable PEP-noncompliant type hints.
-    for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert is_hint_ignorable(hint_unignorable) is False
-
-    # Assert this tester:
-    # * Accepts unignorable PEP-compliant type hints.
-    # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep_meta in hints_pep_meta:
-        assert is_hint_ignorable(hint_pep_meta.hint) is (
-            hint_pep_meta.is_ignorable)
-
 # ....................{ TESTS ~ tester : needs             }....................
 def test_is_hint_needs_cls_stack(hints_pep_meta) -> None:
     '''

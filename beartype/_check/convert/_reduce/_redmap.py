@@ -16,6 +16,8 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.convert._reduce._pep.redpep484604 import (
+    reduce_hint_pep484604)
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
@@ -61,6 +63,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
+    HintSignOptional,
     HintSignOrderedDict,
     HintSignPanderaAny,
     HintSignParamSpecArgs,
@@ -85,6 +88,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeIs,
     HintSignTypeVar,
     HintSignTypedDict,
+    HintSignUnion,
     HintSignUnpack,
     HintSignValuesView,
 )
@@ -473,6 +477,17 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignTupleFixed: reduce_hint_pep484_deprecated,
     HintSignType: reduce_hint_pep484_deprecated,
     HintSignValuesView: reduce_hint_pep484_deprecated,
+
+    # ..................{ PEP (484|604)                      }..................
+    # Reduce PEP 484- and 604-compliant unions subscripted by one or more
+    # ignorable child hints to the ignorable "typing.Any" singleton.
+    #
+    # Note that doing so requires recursively reducing these child hints first.
+    # Since one or more of these child hints may require an uncached reduction
+    # in the worst case, reducing unions *ALSO* requires an uncached reduction
+    # in the worst case. This is that case.
+    HintSignOptional: reduce_hint_pep484604,
+    HintSignUnion:    reduce_hint_pep484604,
 
     # ..................{ PEP 612                            }..................
     #FIXME: Ideally, PEP 612-compliant type hints like "*args: P.args" and

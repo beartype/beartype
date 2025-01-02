@@ -32,8 +32,7 @@ from beartype.typing import (
     Tuple,
     overload,
 )
-from beartype._check.convert.convsanify import (
-    sanify_hint_if_unignorable_or_none)
+from beartype._check.convert.convsanify import is_hint_sanified_ignorable
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
@@ -422,7 +421,6 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
 
 
     @property
-    @property_cached
     def is_ignorable(self) -> bool:
         '''
         :data:`True` only if this type hint is **ignorable** (i.e., conveys
@@ -503,13 +501,8 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
             :data:`True` only if this type hint is ignorable.
         '''
 
-        # Metadata encapsulating this possibly insane hint after sanifying this
-        # possibly insane hint into a sane hint if this sane hint is unignorable
-        # *OR* "None" otherwise (i.e., if this sane hint is ignorable).
-        hint_or_sane = sanify_hint_if_unignorable_or_none(self._hint)
-
         # Return true only if this hint is ignorable.
-        return hint_or_sane is None
+        return is_hint_sanified_ignorable(self._hint)
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

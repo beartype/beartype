@@ -29,7 +29,7 @@ def reduce_hint_pep695_unsubscripted(
     {alias_value}``) to the underlying type hint referred to by this alias.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
+    ``callable_cached`` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------

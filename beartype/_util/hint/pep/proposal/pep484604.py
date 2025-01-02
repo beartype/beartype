@@ -210,65 +210,6 @@ is_hint_pep604.__doc__ = (
         :data:`True` only if this object is a :pep:`604`-compliant union.
     ''')
 
-# ....................{ TESTERS                            }....................
-def is_hint_pep484604_union_ignorable(
-    hint: object) -> bool:
-    '''
-    :data:`True` only if the passed :pep:`484`- or :pep:`604`-compliant union is
-    ignorable.
-
-    This tester ignores all union factories subscripted by one or more ignorable
-    child type hints, including:
-
-    * The :pep:`484`-compliant :obj:`typing.Optional` (e.g.,
-      ``typing.Optional[object]``).
-    * The :pep:`484`-compliant :obj:`typing.Union` (e.g.,
-      ``typing.Union[typing.Any, bool]``).
-    * All :pep:`604`-compliant new-style unions (e.g., ``bool | object``).
-
-    Why? Because unions are by definition only as narrow as their widest child
-    hint. However, shallowly ignorable type hints are ignorable precisely
-    because they are the widest possible hints (e.g., :class:`object`,
-    :attr:`typing.Any`), which are so wide as to constrain nothing and convey no
-    meaningful semantics. A union of one or more shallowly ignorable child hints
-    is thus the widest possible union, which is so wide as to constrain nothing
-    and convey no meaningful semantics. Since there exist a countably infinite
-    number of possible :data:`Union` subscriptions by one or more ignorable type
-    hints, these subscriptions *cannot* be explicitly listed in the
-    :data:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
-    frozenset. Instead, these subscriptions are dynamically detected by this
-    tester at runtime and thus referred to as **deeply ignorable type hints.**
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only safely callable by
-    the memoized parent
-    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
-
-    Parameters
-    ----------
-    hint : object
-        Type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
-    '''
-    # print(f'[484/604] Detecting union {repr(hint)} ignorability...')
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-    from beartype._check.convert._ignore.ignhint import is_hint_ignorable
-
-    # Return true only if one or more child hints of this union are recursively
-    # ignorable. See the function docstring.
-    for hint_child in get_hint_pep_args(hint):
-        if is_hint_ignorable(hint_child):
-            return True
-
-    # Return false as a fallback.
-    return False
-
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 @callable_cached

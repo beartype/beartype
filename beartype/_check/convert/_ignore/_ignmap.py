@@ -15,23 +15,19 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Dict
 from beartype._check.convert._ignore._pep.ignpep593 import (
     is_hint_pep593_ignorable)
+from beartype._check.convert._ignore._pep.ignpep484 import (
+    is_hint_pep484_typevar_ignorable)
 from beartype._check.convert._ignore._pep.ignpep484585 import (
     is_hint_pep484585_generic_subscripted_ignorable)
+from beartype._check.convert._ignore._pep.ignpep544 import (
+    is_hint_pep544_ignorable)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignPep484585GenericSubscripted,
-    HintSignOptional,
-    HintSignNewType,
     HintSignProtocol,
     HintSignTypeVar,
-    HintSignUnion,
 )
-from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    is_hint_pep484_typevar_ignorable)
-from beartype._util.hint.pep.proposal.pep484604 import (
-    is_hint_pep484604_union_ignorable)
-from beartype._util.hint.pep.proposal.pep544 import is_hint_pep544_ignorable
 from collections.abc import Callable
 
 # ....................{ MAPPINGS                           }....................
@@ -56,12 +52,6 @@ HINT_SIGN_TO_IS_HINT_IGNORABLE: Dict[HintSign, Callable] = {
     # Ignore *ALL* PEP 484- and 585-compliant "Generic[...]" subscriptions.
     HintSignPep484585GenericSubscripted: (
         is_hint_pep484585_generic_subscripted_ignorable),
-
-    # ..................{ PEP (484|604)                      }..................
-    # Ignore *ALL* PEP 484- and 604-compliant unions subscripted by one or more
-    # ignorable type hints.
-    HintSignOptional: is_hint_pep484604_union_ignorable,
-    HintSignUnion:    is_hint_pep484604_union_ignorable,
 
     # ..................{ PEP 544                            }..................
     # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
