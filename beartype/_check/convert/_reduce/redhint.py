@@ -18,7 +18,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintReduceException
-from beartype.typing import Optional
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._check.convert._reduce._redmap import (
     HINT_SIGN_TO_REDUCE_HINT_CACHED_get,
     HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get,
@@ -46,6 +49,39 @@ from beartype._util.kind.map.utilmapfrozen import (
 from beartype._util.utilobject import SENTINEL
 
 # ....................{ REDUCERS                           }....................
+def reduce_hint_child(**kwargs) -> HintOrHintSanifiedData:
+    '''
+    Lower-level child hint reduced (i.e., converted) from the passed
+    higher-level child hint if this child hint is reducible *or* this child hint
+    as is otherwise (i.e., if this child hint is irreducible).
+
+    This reducer is a convenience wrapper for the more general-purpose
+    :func:`.reduce_hint` reducer, simplifying calls to that reducer when passed
+    child hints. Specifically, this reducer silently ignores all passed keyword
+    parameters inapplicable to child hints. This includes:
+
+    * ``arg_kind``, applicable *only* to root hints directly annotating callable
+       parameters.
+    * ``decor_meta``, applicable *only* to root hints directly annotating
+      callable parameters or returns.
+    * ``pith_name``, applicable *only* to root hints directly annotating
+      callable parameters or returns.
+    '''
+
+    # Remove all passed keyword parameters inapplicable to child hints *BEFORE*
+    # reducing this child hint.
+    #
+    # Note that this is the standard idiom for efficiently removing dictionary
+    # key-value pairs where this key is *NOT* guaranteed to exist in this
+    # dictionary. Simplicity and speed supercedes readability, sadly.
+    kwargs.pop('arg_kind', None)
+    kwargs.pop('decor_meta', None)
+    kwargs.pop('pith_name', None)
+
+    # Return this child hint possibly reduced to a lower-level hint.
+    return reduce_hint(**kwargs)
+
+
 def reduce_hint(
     # Mandatory parameters.
     hint: Hint,
@@ -193,6 +229,17 @@ def reduce_hint(
             exception_prefix=exception_prefix,
         )
 
+        # If this hint reduces to the PEP 484-compliant "typing.Any" singleton,
+        # this hint is ignorable. In this case, halt reducing.
+        #
+        # Note that this is an optimization avoiding repetitious reductions.
+        # Technically, this optimization is *NOT* required. Pragmatically, this
+        # optimization avoids multiple extraneous reductions for each ignorable
+        # hint.
+        if hint is Any:
+            break
+        # Else, this hint is currently unignorable. Continue reducing.
+
         # Sane hint reduced from this possibly insane hint if reducing this hint
         # did not generate supplementary metadata *OR* that metadata otherwise
         # (i.e., if reducing this hint generated supplementary metadata).
@@ -206,11 +253,17 @@ def reduce_hint(
         )
         # print(f'[reduce_hint] Reduced to {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
-        # If the current and previously reduced instances of this hint are
-        # identical, the above reductions preserved this hint as is rather than
-        # reducing this hint, implying this hint to now be irreducible. In this
-        # case, halt reducing.
-        if hint is hint_prev:
+        # If either...
+        if (
+            # This hint reduces to the PEP 484-compliant "typing.Any" singleton,
+            # this hint is ignorable;
+            hint is Any or
+            # The current and previously reduced instances of this hint are
+            # identical, the above reductions preserved this hint as is rather
+            # than reducing this hint, implying this hint to now be irreducible.
+            hint is hint_prev
+        # Then halt reducing.
+        ):
             break
         # Else, the current and previously reduced instances of this hint
         # differ, implying this hint to still be reducible. In this case,
@@ -242,12 +295,24 @@ def reduce_hint(
 
     # ....................{ RETURN                         }....................
     # Either this possibly reduced hint *OR* metadata describing this hint,
-    # defined as...
+    # defined as either...
     hint_or_sane = (
-        # If this reduction maps *NO* type variables, *NO* supplementary
-        # metadata describes this reduction. In this case, this hint alone.
+        # If either...
+        #
+        # Then *NO* metadata describes this reduction. In this case, ignore this
+        # metadata by reducing to this hint alone.
         hint
-        if not typevar_to_hint else
+        if (
+            # This hint reduces to the PEP 484-compliant "typing.Any" singleton,
+            # this hint is ignorable. Since this hint is ignorable, any
+            # extraneous metadata associated with this hint (e.g., type variable
+            # lookup table) is also ignorable. We intentionally ignore this
+            # metadata by reducing this hint to simply "typing.Any",
+            # trivializing detection of ignorable hints throughout the codebase;
+            hint is Any or
+            # This hint maps *NO* type variables.
+            not typevar_to_hint
+        ) else
         # Else, this reduction maps one or more type variables. In this case,
         # metadata describing both this hint and this mapping.
         HintSanifiedData(hint=hint, typevar_to_hint=typevar_to_hint)
@@ -255,39 +320,6 @@ def reduce_hint(
 
     # Return this possibly reduced hint.
     return hint_or_sane
-
-
-def reduce_hint_child(**kwargs) -> HintOrHintSanifiedData:
-    '''
-    Lower-level child hint reduced (i.e., converted) from the passed
-    higher-level child hint if this child hint is reducible *or* this child hint
-    as is otherwise (i.e., if this child hint is irreducible).
-
-    This reducer is a convenience wrapper for the more general-purpose
-    :func:`.reduce_hint` reducer, simplifying calls to that reducer when passed
-    child hints. Specifically, this reducer silently ignores all passed keyword
-    parameters inapplicable to child hints. This includes:
-
-    * ``arg_kind``, applicable *only* to root hints directly annotating callable
-       parameters.
-    * ``decor_meta``, applicable *only* to root hints directly annotating
-      callable parameters or returns.
-    * ``pith_name``, applicable *only* to root hints directly annotating
-      callable parameters or returns.
-    '''
-
-    # Remove all passed keyword parameters inapplicable to child hints *BEFORE*
-    # reducing this child hint.
-    #
-    # Note that this is the standard idiom for efficiently removing dictionary
-    # key-value pairs where this key is *NOT* guaranteed to exist in this
-    # dictionary. Simplicity and speed supercedes readability, sadly.
-    kwargs.pop('arg_kind', None)
-    kwargs.pop('decor_meta', None)
-    kwargs.pop('pith_name', None)
-
-    # Return this child hint possibly reduced to a lower-level hint.
-    return reduce_hint(**kwargs)
 
 # ....................{ PRIVATE ~ reducers                 }....................
 @callable_cached

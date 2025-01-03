@@ -16,8 +16,14 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
+    reduce_hint_pep484_typevar,
+    reduce_hint_pep484_subscripted_typevar_to_hint,
+)
 from beartype._check.convert._reduce._pep.redpep484604 import (
     reduce_hint_pep484604)
+from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
+from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
@@ -75,6 +81,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignPep695TypeAliasSubscripted,
+    HintSignProtocol,
     HintSignReversible,
     HintSignSelf,
     HintSignSequence,
@@ -102,10 +109,6 @@ from beartype._util.hint.pep.proposal.pep484.pep484 import (
 )
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     reduce_hint_pep484_newtype)
-from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    reduce_hint_pep484_typevar,
-    reduce_hint_pep484_subscripted_typevar_to_hint,
-)
 from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
     reduce_hint_pep484585_itemsview)
 from beartype._util.hint.pep.proposal.pep484585.pep484585type import (
@@ -116,7 +119,6 @@ from beartype._util.hint.pep.proposal.pep585 import (
     reduce_hint_pep585_builtin_subscripted_unknown)
 from beartype._util.hint.pep.proposal.pep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.pep591 import reduce_hint_pep591
-from beartype._util.hint.pep.proposal.pep593 import reduce_hint_pep593
 from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_args,
     reduce_hint_pep612_kwargs,
@@ -223,6 +225,10 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #   as subclass type hints subscripted by ignorable child type hints are
     #   *NOT* ignorable; they're reducible to the "type" superclass.
     HintSignType: reduce_hint_pep484585_type,
+
+    # ..................{ PEP 544                            }..................
+    # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
+    HintSignProtocol: reduce_hint_pep544,
 
     # ..................{ PEP 557                            }..................
     # If this hint is a dataclass-specific initialization-only instance
