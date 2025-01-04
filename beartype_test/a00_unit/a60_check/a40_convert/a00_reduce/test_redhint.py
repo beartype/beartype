@@ -15,6 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS ~ reducers                   }....................
 def test_reduce_hint() -> None:
@@ -42,10 +43,10 @@ def test_reduce_hint() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        T_int,
-        T_str_or_bytes,
-    )
+    # from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+    #     T_int,
+    #     T_str_or_bytes,
+    # )
     from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from beartype_test._util.module.pytmodtest import (
@@ -174,3 +175,46 @@ def test_reduce_hint() -> None:
             # array class "numpy.ndarray" with a non-fatal warning.
             with warns(BeartypeDecorHintNonpepNumpyWarning):
                 assert reduce_hint(hint=NDArray[float64], **kwargs) is ndarray
+
+# ....................{ TESTS ~ raiser                     }....................
+# Prevent pytest from capturing and displaying all expected non-fatal
+# beartype-specific warnings emitted by this test. Urgh!
+@ignore_warnings(DeprecationWarning)
+def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
+    '''
+    Test the private
+    :func:`beartype._check.convert._reduce.redhint.reduce_hint` reducer with
+    respect to ignorable hints.
+
+    Parameters
+    ----------
+    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        Tuple of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
+    hints_ignorable : frozenset
+        Frozen set of ignorable PEP-agnostic type hints.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.typing import Any
+    from beartype._check.convert._reduce.redhint import reduce_hint
+    from beartype_test.a00_unit.data.hint.data_hint import (
+        HINTS_NONPEP_UNIGNORABLE)
+
+    # Assert this tester accepts ignorable type hints.
+    for hint_ignorable in hints_ignorable:
+        assert reduce_hint(hint_ignorable) is Any
+
+    # Assert this tester rejects unignorable PEP-noncompliant type hints.
+    for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
+        assert reduce_hint(hint_unignorable) is not Any
+
+    # Assert this tester:
+    # * Accepts unignorable PEP-compliant type hints.
+    # * Rejects ignorable PEP-compliant type hints.
+    for hint_pep_meta in hints_pep_meta:
+        # True only if this hint reduces to the ignorable "Any" singleton.
+        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is Any
+
+        # Assert this hint is either ignorable or unignorable as expected.
+        assert hint_pep_meta.is_ignorable == is_hint_ignorable

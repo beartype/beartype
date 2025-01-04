@@ -25,6 +25,7 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import (
+    Any,
     Optional,
     Set,
 )
@@ -35,8 +36,7 @@ from beartype._check.metadata.metasane import (
 )
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
-from beartype._check.convert.convsanify import (
-    sanify_hint_root_func_if_unignorable_or_none)
+from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
@@ -266,7 +266,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # sanifying this hint generated no supplementary metadata *OR*
                 # that metadata otherwise. Additionally, if this hint is
                 # unsupported by @beartype, raise an exception.
-                hint_or_sane = sanify_hint_root_func_if_unignorable_or_none(
+                hint_or_sane = sanify_hint_root_func(
                     decor_meta=decor_meta,
                     hint=hint_insane,
                     pith_name=arg_name,
@@ -275,7 +275,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 )
 
                 # If this hint is ignorable, continue to the next parameter.
-                if hint_or_sane is None:
+                if hint_or_sane is Any:
                     # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.

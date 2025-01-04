@@ -39,9 +39,11 @@ from beartype._data.hint.datahintpep import (
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.utilhintget import get_hint_repr
 from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     FrozenDict,
@@ -207,9 +209,45 @@ def reduce_hint(
     # ....................{ REDUCTION                      }....................
     # Repeatedly reduce this hint to increasingly irreducible hints until this
     # hint is no longer reducible.
+    #
+    # Note that this algorithm iteratively reduces this hint with a battery of
+    # increasingly non-trivial reductions. For efficiency, reductions are
+    # intentionally ordered from most to least efficient.
     while True:
         # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
+        # ....................{ PHASE 1 ~ shallow          }....................
+        # Attempt to shallowly reduce this hint to the ignorable "typing.Any"
+        # singleton *BEFORE* attempting reductions that deeply inspect the
+        # contents of this hint. Why? Several reasons:
+        # * This shallow reduction is an O(1) constant-time operation with
+        #   negligible constants and thus *INCREDIBLY* fast.
+        # * Okay. That's all I've got. It's late, people. I exhaustedly sigh.
+
+        # Machine-readable representation of this hint.
+        hint_repr = get_hint_repr(hint)
+
+        #FIXME: Preserved for posterity, as this seems generically useful. *sigh*
+        # # If this hint is beartype-blacklisted (i.e., defined in a third-party
+        # # package or module that is hostile to runtime type-checking), return true.
+        # # print(f'Testing hint {repr(hint)} third-party blacklisting...')
+        # if is_object_module_thirdparty_blacklisted(hint):
+        #     # print('Blacklisted!')
+        #     return True
+        # # Else, this hint is *NOT* beartype-blacklisted.
+
+        # If this hint is shallowly ignorable, reduce this hint to the ignorable
+        # "typing.Any" singleton.
+        #
+        # Note that this reduction efficiently applies to multiple signs
+        # concurrently, including the "None", "HintSignOptional", and
+        # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
+        # implemented as a standard reduction assigned a single sign.
+        if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
+            return Any
+        # Else, this hint is *NOT* shallowly ignorable.
+
+        # ....................{ PHASE 2 ~ uncached         }....................
         # This possibly contextual hint inefficiently reduced to another hint.
         #
         # Note that we intentionally reduce lower-level contextual hints
@@ -237,9 +275,10 @@ def reduce_hint(
         # optimization avoids multiple extraneous reductions for each ignorable
         # hint.
         if hint is Any:
-            break
+            return Any
         # Else, this hint is currently unignorable. Continue reducing.
 
+        # ....................{ PHASE 3 ~ cached           }....................
         # Sane hint reduced from this possibly insane hint if reducing this hint
         # did not generate supplementary metadata *OR* that metadata otherwise
         # (i.e., if reducing this hint generated supplementary metadata).

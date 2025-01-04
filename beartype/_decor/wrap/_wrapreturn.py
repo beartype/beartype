@@ -13,14 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import NoReturn
+from beartype.typing import (
+    Any,
+    NoReturn,
+)
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
-from beartype._check.convert.convsanify import (
-    sanify_hint_root_func_if_unignorable_or_none)
+from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
@@ -130,7 +132,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # * For the exact same reason, this sanitization *CANNOT* be
             #   performed in the low-level make_check_expr() dynamically
             #   generating code type-checking this hint.
-            hint_or_sane = sanify_hint_root_func_if_unignorable_or_none(
+            hint_or_sane = sanify_hint_root_func(
                 decor_meta=decor_meta,
                 hint=hint_insane,
                 pith_name=ARG_NAME_RETURN,
@@ -161,7 +163,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # Else, this is *NOT* "typing.NoReturn".
             #
             # If this hint is unignorable...
-            elif hint_or_sane is not None:
+            elif hint_or_sane is not Any:
                 # Type stack if required by this hint *OR* "None" otherwise.
                 # See is_hint_needs_cls_stack() for details.
                 #

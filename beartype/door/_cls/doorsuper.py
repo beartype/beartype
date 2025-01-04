@@ -32,7 +32,7 @@ from beartype.typing import (
     Tuple,
     overload,
 )
-from beartype._check.convert.convsanify import sanify_hint_if_unignorable_or_none
+from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
@@ -502,7 +502,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
         '''
 
         # Return true only if this hint is ignorable.
-        return sanify_hint_if_unignorable_or_none(self._hint) is Any
+        return sanify_hint_child(self._hint) is Any
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

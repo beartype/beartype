@@ -73,7 +73,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #     if hint_child is not None:
 #         # Unignorable sane hint sanified from this possibly ignorable insane
 #         # hint *OR* "None" otherwise (i.e., if this hint is ignorable).
-#         hint_child = cause.sanify_hint_if_unignorable_or_none(hint_child)
+#         hint_child = cause.sanify_hint_child(hint_child)
 #     # Else, this type variable was neither mapped to another hint by one or more
 #     # transitive parent hints *NOR* parametrized by one or more bounded
 #     # constraints.

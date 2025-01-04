@@ -16,6 +16,8 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.convert._reduce._nonpep.rednonpeptype import (
+    reduce_hint_nonpep_type)
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
     reduce_hint_pep484_typevar,
     reduce_hint_pep484_subscripted_typevar_to_hint,
@@ -130,7 +132,6 @@ from beartype._util.hint.pep.proposal.pep647742 import (
     reduce_hint_pep647_or_pep742)
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
-from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -171,7 +172,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #   numeric tower:
     #   * Expand the "float" type hint to the "float | int" union.
     #   * Expand the "complex" type hint to the "complex | float | int" union.
-    None: reduce_hint_pep_unsigned,
+    None: reduce_hint_nonpep_type,
 
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant subscripted generic:

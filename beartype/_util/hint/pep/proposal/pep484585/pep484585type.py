@@ -16,6 +16,7 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg)
 from beartype._data.hint.datahintpep import Hint
 from typing import (
+    Any,
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
 
@@ -62,9 +63,6 @@ def reduce_hint_pep484585_type(
         type hint.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._check.convert._ignore.ignhint import is_hint_ignorable
-
     # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
     # immediately reduce this hint to the "type" superclass.
     #
@@ -94,13 +92,14 @@ def reduce_hint_pep484585_type(
     # If this argument is either...
     if (
         # An ignorable type hint (e.g., "object", "typing.Any") *OR*...
-        is_hint_ignorable(hint_superclass) or
+        hint_superclass is Any or
 
         #FIXME: *UHM.* What? This isn't the case *AT ALL*, is it? I mean, aren't
         #the only classes that subclass the "type" superclass metaclasses? Don't
         #normal classes just subclass "object"? Aren't normal classes just
         #*INSTANCES* of "type" rather than *SUBCLASSES* of "type"? Pretty sure
         #we were extremely confused when we authored this. *sigh*
+
         # The "type" superclass, which is effectively ignorable in this
         # context of subclasses, as *ALL* classes necessarily subclass
         # that superclass.

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`544`-compliant **type alias reduces** (i.e., low-level
+Project-wide :pep:`544`-compliant **type alias reducers** (i.e., low-level
 callables converting higher-level objects created via the ``type`` statement
 under Python >= 3.12 to lower-level type hints more readily consumable by
 :mod:`beartype`).

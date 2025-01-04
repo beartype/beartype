@@ -4,12 +4,19 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-compliant type hint reducer** (i.e., callable converting a
-PEP-compliant type hint satisfying various constraints into another
-PEP-compliant type hint) utilities.
+Project-wide **PEP-noncompliant type hint reducer** (i.e., low-level callables
+converting higher-level type hints that do *not* comply with any specific PEP
+but are nonetheless shallowly supported by :mod:`beartype` to lower-level type
+hints more readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
+
+# ....................{ TODO                               }....................
+#FIXME: Super-silly. The reduce_hint_nonpep_type() reducer doesn't actually do
+#anything except validate the passed hint to be a valid hint. Surely, there is a
+#better place for that sort of validation than in a "fake reducer" that doesn't
+#actually reduce anything? *sigh*
 
 # ....................{ IMPORTS                            }....................
 # from beartype._data.hint.datahinttyping import (
@@ -21,20 +28,21 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep_unsigned(
+def reduce_hint_nonpep_type(
     hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
     **kwargs
-) -> object:
+) -> Hint:
     '''
-    Reduce the passed **unsigned PEP-compliant type hint** (i.e., type hint
-    compliant with standards but identified by *no* sign, implying this hint to
-    almost certainly be an isinstanceable type) if this hint satisfies various
-    conditions to another (possibly signed) PEP-compliant type hint.
+    Reduce the passed **PEP-noncompliant type** (i.e., type hint identified
+    by *no* sign, implying this hint to almost certainly be an isinstanceable
+    type) if this hint satisfies various conditions to another (possibly signed)
+    PEP-compliant type hint.
 
     Specifically:
 
+    * If the passed hint is **shallowly ignorable**
     * If the passed configuration enables support for the :pep:`484`-compliant
       implicit numeric tower *and* this hint is:
 
@@ -44,23 +52,21 @@ def reduce_hint_pep_unsigned(
         ``complex | float | int`` union of types.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------
     hint : Hint
-        Final type hint to be reduced.
+        PEP-noncompliant hint to be reduced.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 
     Returns
     -------
-    object
-        PEP-compliant type hint reduced from this... PEP-compliant type hint.
+    Hint
+        PEP-compliant hint reduced from this PEP-noncompliant hint.
     '''
 
     # FIXME: Preserved in perpetuity. Although currently unused, this logic will

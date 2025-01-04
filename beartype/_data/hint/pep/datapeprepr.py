@@ -378,6 +378,7 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSetStrs = {  # type: ignore[assignment]
     # ....................{ NON-PEP                        }....................
     # Machine-readable representations of shallowly ignorable type hints
     # published by PEP-noncompliant third-party type hints, including...
+    # ...absolutely nuthin', at the moment. :<>
 }
 '''
 Frozen set of all **shallowly ignorable PEP-compliant type hint
@@ -617,7 +618,6 @@ def _init() -> None:
         #     True
         #
         # This intentionally excludes:
-        #
         # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
         #   module physically reduces:
         #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which

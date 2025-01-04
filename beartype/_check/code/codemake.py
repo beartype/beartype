@@ -21,7 +21,10 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
-from beartype.typing import Optional
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
@@ -41,8 +44,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.convert.convsanify import (
-    sanify_hint_if_unignorable_or_none)
+from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     get_hint_or_sane_hint,
@@ -144,7 +146,6 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
 )
-from beartype._check.convert._ignore.ignhint import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -400,7 +401,7 @@ def make_check_expr(
             # explicitly ignored ignorable root hints, these two guarantees
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
-            assert not is_hint_ignorable(hint_curr), (
+            assert hint_curr is not Any, (
                 f'{EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.'
             )
@@ -866,7 +867,7 @@ def make_check_expr(
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
                             hint_or_sane_child = (
-                                sanify_hint_if_unignorable_or_none(
+                                sanify_hint_child(
                                     hint=hint_child,
                                     cls_stack=cls_stack,
                                     conf=conf,
@@ -876,7 +877,7 @@ def make_check_expr(
                                 ))
 
                             # If this child hint is unignorable...
-                            if hint_or_sane_child is not None:
+                            if hint_or_sane_child is not Any:
                                 # Python expression yielding the value of the
                                 # currently indexed item of this tuple to be
                                 # type-checked against this child hint.
@@ -1001,7 +1002,7 @@ def make_check_expr(
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
                     hint_or_sane_child_key = (
-                        sanify_hint_if_unignorable_or_none(
+                        sanify_hint_child(
                             hint=hint_childs[0],
                             cls_stack=cls_stack,
                             conf=conf,
@@ -1009,7 +1010,7 @@ def make_check_expr(
                             exception_prefix=EXCEPTION_PREFIX,
                         ))
                     hint_or_sane_child_value = (
-                        sanify_hint_if_unignorable_or_none(
+                        sanify_hint_child(
                             hint=hint_childs[1],  # type: ignore[has-type]
                             cls_stack=cls_stack,
                             conf=conf,
@@ -1019,13 +1020,13 @@ def make_check_expr(
 
                     # If at least one of these child hints are unignorable...
                     if not (
-                        hint_or_sane_child_key is None and
-                        hint_or_sane_child_value is None
+                        hint_or_sane_child_key is Any and
+                        hint_or_sane_child_value is Any
                     ):
                         # If this child key hint is unignorable...
-                        if hint_or_sane_child_key is not None:
+                        if hint_or_sane_child_key is not Any:
                             # If this child value hint is also unignorable...
-                            if hint_or_sane_child_value is not None:
+                            if hint_or_sane_child_value is not Any:
                                 # Increase the indentation level of code
                                 # type-checking this child value pith.
                                 hints_meta.indent_level_child += 1
@@ -1165,7 +1166,7 @@ def make_check_expr(
                     # sanified from this possibly ignorable insane metahint *OR*
                     # "None" otherwise (i.e., if this metahint is ignorable).
                     hint_or_sane_child = (
-                        sanify_hint_if_unignorable_or_none(
+                        sanify_hint_child(
                             hint=get_hint_pep593_metahint(hint_curr),
                             conf=conf,
                             cls_stack=cls_stack,
@@ -1183,7 +1184,7 @@ def make_check_expr(
                     # print(f'hints_child: {repr(hints_child)}')
 
                     # If this metahint is ignorable...
-                    if hint_or_sane_child is None:
+                    if hint_or_sane_child is Any:
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
@@ -1328,23 +1329,20 @@ def make_check_expr(
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
-                    hint_or_sane_child = (
-                        sanify_hint_if_unignorable_or_none(
-                            # Possibly ignorable insane child hint subscripting
-                            # this parent hint, validated to be the *ONLY* child
-                            # hint subscripting this parent hint.
-                            hint=get_hint_pep484585_arg(
-                                hint=hint_curr,
-                                exception_prefix=EXCEPTION_PREFIX,
-                            ),
-                            conf=conf,
-                            cls_stack=cls_stack,
-                            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        ))
+                    hint_or_sane_child = sanify_hint_child(
+                        # Possibly ignorable insane child hint subscripting
+                        # this parent hint, validated to be the *ONLY* child
+                        # hint subscripting this parent hint.
+                        hint=get_hint_pep484585_arg(
+                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX),
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
 
                     # If this child hint is unignorable...
-                    if hint_or_sane_child is not None:
+                    if hint_or_sane_child is not Any:
                         # Child hint encapsulated by this metadata.
                         hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 

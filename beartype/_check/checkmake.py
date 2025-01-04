@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    Any,
     Callable,
     Optional,
 )
@@ -29,7 +30,7 @@ from beartype._check.checkmagic import (
     FUNC_CHECKER_NAME_PREFIX,
 )
 from beartype._check.convert.convsanify import (
-    sanify_hint_root_statement_if_unignorable_or_none)
+    sanify_hint_root_statement)
 from beartype._check.code.codemake import make_check_expr
 from beartype._check.error.errget import (
     get_func_pith_violation,
@@ -651,13 +652,13 @@ def _make_func_checker(
             # unsupported by @beartype, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint_or_sane = sanify_hint_root_statement_if_unignorable_or_none(
+            hint_or_sane = sanify_hint_root_statement(
                 hint=hint, conf=conf, exception_prefix=EXCEPTION_PLACEHOLDER)
             # print(f'Reduced tester root hint {repr(hint)} to hint or metadata {repr(hint_or_sane)}.')
 
             # If this hint is ignorable, all objects satisfy this hint. In this
             # case, return a trivial function unconditionally returning true.
-            if hint_or_sane is None:
+            if hint_or_sane is Any:
                 return _func_checker_ignorable
             # Else, this hint is unignorable.
 

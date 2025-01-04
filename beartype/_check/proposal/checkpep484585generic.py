@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import Any
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._check.metadata.metasane import (
     IterableHintOrHintSanifiedData,
@@ -21,7 +22,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,
-    IterableHints,
+    # IterableHints,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeException
@@ -180,7 +181,7 @@ def iter_hint_pep484585_generic_bases_unerased(
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert.convsanify import (
-        sanify_hint_if_unignorable_or_none)
+        sanify_hint_child)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_bases_unerased)
@@ -222,7 +223,7 @@ def iter_hint_pep484585_generic_bases_unerased(
         # pseudo-superclass if sanifying this pseudo-superclass did not generate
         # supplementary metadata *OR* that metadata (i.e., if doing so generated
         # supplementary metadata).
-        hint_or_sane_base = sanify_hint_if_unignorable_or_none(
+        hint_or_sane_base = sanify_hint_child(
             hint=hint_bases[hint_bases_index_curr],
             conf=conf,
             typevar_to_hint=typevar_to_hint,
@@ -233,7 +234,7 @@ def iter_hint_pep484585_generic_bases_unerased(
         # print(f'generic {hint} base: {repr(hint_base)}')
 
         # If this pseudo-superclass is unignorable...
-        if hint_or_sane_base is not None:
+        if hint_or_sane_base is not Any:
             # Pseudo-superclass encapsulated by this metadata.
             hint_base = get_hint_or_sane_hint(hint_or_sane_base)
 
