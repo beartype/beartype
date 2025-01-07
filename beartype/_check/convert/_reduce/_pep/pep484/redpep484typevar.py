@@ -19,7 +19,7 @@ from beartype.roar import (
 from beartype.typing import (
     Any,
     Optional,
-    # TypeVar,
+    TypeVar,
 )
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
@@ -41,7 +41,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     is_hint_pep484_typevar,
 )
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
-from beartype._util.utilobject import SENTINEL
+# from beartype._util.utilobject import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(
@@ -81,24 +81,26 @@ def reduce_hint_pep484_typevar(
     # Concrete hint mapped to by this type variable if one or more transitive
     # parent hints previously mapped this type variable to a hint *OR* the
     # sentinel placeholder otherwise (i.e., if this type variable is unmapped).
-    hint_reduced: Hint = typevar_to_hint.get(hint, SENTINEL)  # pyright: ignore
+    #
+    # Note that this one-liner looks ridiculous, but actually works. More
+    # importantly, this is the fastest way to accomplish this. Flex!
+    hint: Hint = typevar_to_hint.get(hint, hint)  # pyright: ignore
 
-    # If *NO* transitive parent hint previously mapped this type variable to a
-    # another hint...
-    if hint_reduced is SENTINEL:
+    # If this hint is still a type variable (e.g., due to either not being
+    # mapped by this lookup table *OR* being mapped to another type variable)...
+    if isinstance(hint, TypeVar):
         # PEP-compliant hint synthesized from all bounded constraints
         # parametrizing this type variable if any *OR* "None" otherwise (i.e.,
         # if this type variable is both unbounded *AND* unconstrained).
         #
         # Note this call is passed positional parameters due to memoization
-        hint_reduced = get_hint_pep484_typevar_bound_or_none(
-            hint, exception_prefix)  # pyright: ignore
+        hint = get_hint_pep484_typevar_bound_or_none(hint, exception_prefix)  # pyright: ignore
 
         # If this type variable is both unbounded *AND* unconstrained, this type
         # variable is currently *NOT* type-checkable and is thus ignorable.
         # Reduce this type variable to the ignorable "typing.Any" singleton.
-        if hint_reduced is None:
-            hint_reduced = Any
+        if hint is None:
+            hint = Any
         # Else, this type variable is either bounded *OR* constrained. In either
         # case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
@@ -106,8 +108,8 @@ def reduce_hint_pep484_typevar(
     # Else, one or more transitive parent hints previously mapped this type
     # variable to another hint.
 
-    # Returnthis reduced hint.
-    return hint_reduced
+    # Return this reduced hint.
+    return hint
 
 
 def reduce_hint_pep484_subscripted_typevar_to_hint(
@@ -233,16 +235,14 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
         #   superclass (e.g., "typing.Generic[S, T]"). In this case, the
         #   original unsubscripted "typing.Generic" superclass remains
         #   unparametrized despite that superclass later being parametrized.
-        not hint_unsubscripted_typevars
-        #FIXME: Uncomment after debugging what went wrong here, please.
-        # not hint_unsubscripted_typevars or
+        not hint_unsubscripted_typevars or
         # This unsubscripted hint is parametrized by the exact same type
         # variables as this subscripted hint is subscripted by, in which case
         # the resulting type variable lookup table would uselessly be the
         # identity mapping from each of these type variables to itself. While an
         # identity type variable lookup table could trivially be produced, doing
         # so would convey *NO* meaningful semantics and thus be pointless.
-        # hint_args == hint_unsubscripted_typevars
+        hint_args == hint_unsubscripted_typevars
     # Then reduce this subscripted hint to simply this unsubscripted hint, as
     # type variable lookup tables are then irrelevent.
     ):

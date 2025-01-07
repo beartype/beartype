@@ -44,7 +44,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         AliasSimple,
         AliasPep484604,
         AliasPep585Dict,
-        AliasPep585Generic,
+        AliasPep585IterableTupleSTContainerTupleST,
         AliasPep585TupleFixed,
         AliasPep593,
         Pep585IterableTupleSTContainerTupleST,
@@ -262,7 +262,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         # ................{ PEP 585 ~ generic                  }................
         # Unsubscripted type alias aliasing a PEP 585-compliant generic.
         HintPepMetadata(
-            hint=AliasPep585Generic,
+            hint=AliasPep585IterableTupleSTContainerTupleST,
             pep_sign=HintSignPep695TypeAliasUnsubscripted,
             is_type_typing=True,
             # PEP 695-compliant parametrized type aliases are parametrized by
@@ -285,7 +285,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
 
         # Subscripted type alias aliasing a PEP 585-compliant generic.
         HintPepMetadata(
-            hint=AliasPep585Generic[str, bytes],
+            hint=AliasPep585IterableTupleSTContainerTupleST[str, bytes],
             pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subscripted=True,
             piths_meta=(

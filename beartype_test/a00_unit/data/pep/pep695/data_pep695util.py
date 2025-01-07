@@ -202,17 +202,17 @@ def unit_test_reduce_hint_pep695_unsubscripted() -> None:
 def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     '''
     Test the public
-    :mod:`beartype._util.hint.pep.proposal.pep484.pep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
+    :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
     getter with respect to :pep:`695`-compliant subscripted type aliases.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484TypeVarException
+    from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
+        reduce_hint_pep484_subscripted_typevar_to_hint)
     from beartype._check.metadata.metasane import HintSanifiedData
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
-    from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        reduce_hint_pep484_subscripted_typevar_to_hint)
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
     from pytest import raises
 

@@ -36,6 +36,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,
+    SetHints,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeStack
@@ -93,7 +94,9 @@ def reduce_hint(
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
+    hints_overridden: SetHints = None,  # type: ignore[assignment]
     pith_name: Optional[str] = None,
+    reductions_count: int = 0,
     typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
     exception_prefix: str = '',
 ) -> HintOrHintSanifiedData:
@@ -146,6 +149,16 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
+    hints_overridden : set[Hint], optional
+        Mutable set of all previously **overridden hints** (i.e., hints reduced
+        to user-defined hint overrides configured by the
+        :attr:`beartype.BeartypeConf.hint_overrides` dictionary) reduced by a
+        prior call to this function, guarding against accidental infinite
+        recursion between lower-level reducers and this higher-level function.
+        If a hint has already been overridden in the current call stack rooted
+        at the top-most call to this function, this function avoids dangerously
+        re-overriding nested instances of the same hint. Defaults to the empty
+        set.
     pith_name : Optional[str], optional
         Either:
 
@@ -155,6 +168,11 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
+    reductions_count : int, optional
+        Current number of total reductions internally performed by *all* calls
+        to this function rooted at this function in the current call stack,
+        guarding against accidental infinite recursion between lower-level
+        reducers and this higher-level function. Defaults to 0.
     typevar_to_hint : TypeVarToHint, optional
         **Type variable lookup table** (i.e., immutable dictionary mapping from
         the :pep:`484`-compliant **type variables** (i.e.,
@@ -187,6 +205,19 @@ def reduce_hint(
         accidental infinite recursion between lower-level PEP-specific reducers
         internally called by this higher-level reducer.
     '''
+
+    # ....................{ PREAMBLE                       }....................
+    # If passed *NO* hint overrides, default this set to the empty set.
+    if hints_overridden is None:
+        hints_overridden = set()
+    # Else, hint overrides were passed. Preserve these hint overrides as is.
+
+    # Validate passed parameters *AFTER* establishing defaults above.
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(hints_overridden, set), (
+        f'{repr(hints_overridden)} not set.')
+    assert isinstance(reductions_count, int), (
+        f'{repr(reductions_count)} not integer.')
     assert isinstance(typevar_to_hint, FrozenDict), (
         f'{repr(typevar_to_hint)} not frozen dictionary.')
 
@@ -201,10 +232,10 @@ def reduce_hint(
     # "None" is a valid type hint reduced to "type(None)" below.
     hint_prev: Hint = SENTINEL  # pyright: ignore
 
-    # Current number of total reductions internally performed by this call,
-    # guarding against accidental infinite recursion between lower-level
-    # reducers called below.
-    reductions_count = 0
+    # BeartypeHintOverrides.get() method bound to the user-defined
+    # "hint_overrides" dictionary of this beartype configuration, localized as a
+    # negligible efficiency gain.
+    conf_hint_overrides_get = conf.hint_overrides.get
 
     # ....................{ REDUCTION                      }....................
     # Repeatedly reduce this hint to increasingly irreducible hints until this
@@ -216,7 +247,7 @@ def reduce_hint(
     while True:
         # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
-        # ....................{ PHASE 1 ~ shallow          }....................
+        # ....................{ PHASE ~ shallow            }....................
         # Attempt to shallowly reduce this hint to the ignorable "typing.Any"
         # singleton *BEFORE* attempting reductions that deeply inspect the
         # contents of this hint. Why? Several reasons:
@@ -247,22 +278,68 @@ def reduce_hint(
             return Any
         # Else, this hint is *NOT* shallowly ignorable.
 
-        # ....................{ PHASE 2 ~ uncached         }....................
-        # This possibly contextual hint inefficiently reduced to another hint.
+        # ....................{ PHASE ~ override           }....................
+        # Attempt to reduce this hint to another hint configured by a
+        # user-defined hint override *BEFORE* attempting standard reduction.
+        # User preference takes precedence over standard precedent.
+
+        # Attempt to...
         #
-        # Note that we intentionally reduce lower-level contextual hints
-        # *BEFORE* reducing higher-level context-free hints. In theory, order of
-        # reduction *SHOULD* be insignificant; in practice, we suspect
-        # unforeseen and unpredictable interactions between these two
+        # Note that the is_object_hashable() tester is internally implemented
+        # with the same Easier to Ask for Permission than Forgiveness
+        # (EAFP)-based "try-except" block and is thus equally inefficient. In
+        # fact, the current approach avoids an extraneous call to that tester
+        # and is thus marginally faster. (Emphasis on "marginally.")
+        try:
+            # If this hint has *NOT* already been overridden by a previously
+            # performed reduction in this recursive tree of all previously
+            # performed reductions...
+            if hint not in hints_overridden:
+                # User-defined hint overriding this hint if this beartype
+                # configuration overrides this hint *OR* the sentinel placeholder
+                # otherwise (i.e., if this hist is *NOT* overridden).
+                # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
+                hint_reduced = conf_hint_overrides_get(hint, SENTINEL)
+
+                # If this hint was overridden...
+                if hint_reduced is not SENTINEL:
+                    # Record this hint as already having been overridden
+                    # *BEFORE* reducing (and thus obliterating) this hint.
+                    hints_overridden.add(hint)
+
+                    # Reduce this hint to this user-defined hint override.
+                    hint = hint_reduced
+                # Else, this hint was *NOT* overridden. In this case, preserve
+                # this hint as is.
+            # Else, this hint has already been overridden by a previously
+            # performed reduction in this recursive tree of all previously
+            # performed reductions. In this case, avoid overriding this hint yet
+            # again. Doing so would (almost certainly) provoke infinite
+            # recursion (e.g., overriding "float" with "int | float").
+        # If doing so raises a "TypeError", this source hint is unhashable and thus
+        # inapplicable for hint overriding. In this case, silently ignore this hint.
+        except TypeError:
+            pass
+
+        # ....................{ PHASE ~ uncached           }....................
+        # Attempt to deeply reduce this possibly contextual hint to another hint
+        # *BEFORE* attempting to context-free reductions. Why? Because the
+        # former depends on context and is thus "lower-level" than the latter,
+        # which depends on *NO* context and is thus "higher-level" in a sense.
+        #
+        # In theory, order of reduction *SHOULD* be insignificant; in practice,
+        # we suspect unforeseen and unpredictable interactions between these two
         # reductions. To reduce the likelihood of fire-breathing dragons here,
-        # we reduce lower-level hints first.
+        # we reduce contextual hints first.
         hint = _reduce_hint_uncached(
             hint=hint,
             arg_kind=arg_kind,
             cls_stack=cls_stack,
             conf=conf,
             decor_meta=decor_meta,
+            hints_overridden=hints_overridden,
             pith_name=pith_name,
+            reductions_count=reductions_count,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
@@ -278,7 +355,7 @@ def reduce_hint(
             return Any
         # Else, this hint is currently unignorable. Continue reducing.
 
-        # ....................{ PHASE 3 ~ cached           }....................
+        # ....................{ PHASE ` cached             }....................
         # Sane hint reduced from this possibly insane hint if reducing this hint
         # did not generate supplementary metadata *OR* that metadata otherwise
         # (i.e., if reducing this hint generated supplementary metadata).
@@ -401,22 +478,6 @@ def _reduce_hint_cached(
         * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
 
-    # Attempt to...
-    try:
-        # If this beartype configuration coercively overrides this source hint
-        # with a corresponding target hint, do so now *BEFORE* attempting to
-        # reduce this hint via standard reduction heuristics. User preferences
-        # take preference over standards.
-        #
-        # Note that this one-liner looks ridiculous, but actually works. More
-        # importantly, this is the fastest way to accomplish this. Flex!
-        # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
-        hint = conf.hint_overrides.get(hint, hint)
-    # If doing so raises a "TypeError", this source hint is unhashable and thus
-    # inapplicable for hint overriding. In this case, silently ignore this hint.
-    except TypeError:
-        pass
-
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise (e.g., if this hint is merely an isinstanceable class).
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -448,7 +509,9 @@ def _reduce_hint_uncached(
     cls_stack: TypeStack,
     conf: BeartypeConf,
     decor_meta: Optional[BeartypeDecorMeta],
+    hints_overridden: SetHints,
     pith_name: Optional[str],
+    reductions_count: int,
     typevar_to_hint: TypeVarToHint,
     exception_prefix: str,
 ) -> Hint:
@@ -490,6 +553,15 @@ def _reduce_hint_uncached(
         * If this hint annotates a parameter or return of some callable, the
           :mod:`beartype`-specific decorator metadata describing that callable.
         * Else, :data:`None`.
+    hints_overridden : set[Hint]
+        Mutable set of all previously **overridden hints** (i.e., hints reduced
+        to user-defined hint overrides configured by the
+        :attr:`beartype.BeartypeConf.hint_overrides` dictionary) reduced by a
+        prior call to this function, guarding against accidental infinite
+        recursion between lower-level reducers and this higher-level function.
+        If a hint has already been overridden in the current call stack rooted
+        at the top-most call to this function, this function avoids dangerously
+        re-overriding nested instances of the same hint.
     pith_name : Optional[str]
         Either:
 
@@ -497,7 +569,12 @@ def _reduce_hint_uncached(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    typevar_to_hint : TypeVarToHint, optional
+    reductions_count : int
+        Current number of total reductions internally performed by *all* calls
+        to this function rooted at this function in the current call stack,
+        guarding against accidental infinite recursion between lower-level
+        reducers and this higher-level function.
+    typevar_to_hint : TypeVarToHint
         **Type variable lookup table** (i.e., immutable dictionary mapping from
         the :pep:`484`-compliant **type variables** (i.e.,
         :class:`typing.TypeVar` objects) originally parametrizing the origins of
@@ -537,7 +614,9 @@ def _reduce_hint_uncached(
             cls_stack=cls_stack,
             conf=conf,
             decor_meta=decor_meta,
+            hints_overridden=hints_overridden,
             pith_name=pith_name,
+            reductions_count=reductions_count,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )

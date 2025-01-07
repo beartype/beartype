@@ -43,22 +43,14 @@ from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585gener
 )
 
 # ..................{ SIMPLE                                 }..................
-# Simple type alias aliasing a standard type hint containing *NO* syntax or
-# semantics unique to PEP 695-compliant type aliases (e.g., *NO* forward
-# references, recursion, or type variables).
 type AliasSimple = int | list[str]
+'''
+Simple type alias aliasing a standard type hint containing *NO* syntax or
+semantics unique to PEP 695-compliant type aliases (e.g., *NO* forward
+references, recursion, or type variables).
+'''
 
 # ..................{ PEP (484|604)                          }..................
-# Type alias aliasing a PEP 604-compliant new union of:
-# * A PEP-noncompliant type.
-# * Two or more generic type hints parametrized by the same type variable
-#   subscripting this alias *AND*...
-# * A PEP 484-compliant old union of (...waitforit) two or more generic type
-#   hints parametrized by the same type variable subscripting this alias.
-#
-# This alias thus tests that dynamic code generation for PEP 484- and
-# 604-compliant unions preserves PEP 484-compliant type variable mappings while
-# also flattening directly nested unions into the top-level union.
 type AliasPep484604[T] = (
     # PEP-noncompliant type.
     float |
@@ -69,21 +61,44 @@ type AliasPep484604[T] = (
     # hints parametrized by the same type variable subscripting this alias.
     Union[dict[T, T] | frozenset[T]]
 )
+'''
+Type alias aliasing a PEP 604-compliant new union of:
+* A PEP-noncompliant type.
+* Two or more generic type hints parametrized by the same type variable
+  subscripting this alias *AND*...
+* A PEP 484-compliant old union of (...waitforit) two or more generic type
+  hints parametrized by the same type variable subscripting this alias.
+
+This alias thus tests that dynamic code generation for PEP 484- and
+604-compliant unions preserves PEP 484-compliant type variable mappings while
+also flattening directly nested unions into the top-level union.
+'''
 
 # ..................{ PEP 585                                }..................
-# Type alias aliasing a PEP 585-compliant dictionary subscripted by the same
-# type variables as those parametrizing this alias.
 type AliasPep585Dict[S, T] = dict[S, T]
+'''
+Type alias aliasing a PEP 585-compliant dictionary subscripted by the same
+type variables as those parametrizing this alias.
+'''
 
-# Type alias aliasing a PEP 585-compliant generic subscripted by the same type
-# variables as those parametrizing this alias.
-type AliasPep585Generic[S, T] = Pep585IterableTupleSTContainerTupleST[S, T]
 
-# Type alias aliasing a PEP 585-compliant fixed-length tuple type hint
-# subscripted by the same type variables as those parametrizing this alias.
+type AliasPep585IterableTupleSTContainerTupleST[S, T] = (
+    Pep585IterableTupleSTContainerTupleST[S, T])
+'''
+Type alias aliasing a PEP 585-compliant generic subscripted by the same type
+variables as those parametrizing this alias.
+'''
+
+
 type AliasPep585TupleFixed[S, T] = tuple[S, T]
+'''
+Type alias aliasing a PEP 585-compliant fixed-length tuple type hint
+subscripted by the same type variables as those parametrizing this alias.
+'''
 
 # ..................{ PEP 593                                }..................
-# Type alias aliasing a PEP 593-compliant metahint subscripted by the same
-# type variable as that parametrizing this alias.
 type AliasPep593[T] = Annotated[T | bytes, Is[lambda obj: bool(obj)]]
+'''
+Type alias aliasing a PEP 593-compliant metahint subscripted by the same
+type variable as that parametrizing this alias.
+'''
