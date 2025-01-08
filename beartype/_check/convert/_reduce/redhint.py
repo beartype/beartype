@@ -275,7 +275,7 @@ def reduce_hint(
         # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
         # implemented as a standard reduction assigned a single sign.
         if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
-            return Any
+            return Any  # pyright: ignore
         # Else, this hint is *NOT* shallowly ignorable.
 
         # ....................{ PHASE ~ override           }....................

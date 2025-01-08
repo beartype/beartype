@@ -866,15 +866,16 @@ def make_check_expr(
                             # Unignorable sane child hint sanified from this
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
-                            hint_or_sane_child = (
-                                sanify_hint_child(
-                                    hint=hint_child,
-                                    cls_stack=cls_stack,
-                                    conf=conf,
-                                    typevar_to_hint=(
-                                        hints_meta.hint_curr_meta.typevar_to_hint),
-                                    exception_prefix=EXCEPTION_PREFIX,
-                                ))
+                            hint_or_sane_child = sanify_hint_child(
+                                hint=hint_child,
+                                cls_stack=hints_meta.cls_stack,
+                                conf=hints_meta.conf,
+                                typevar_to_hint=(
+                                    hints_meta.hint_curr_meta.typevar_to_hint),
+                                exception_prefix=hints_meta.exception_prefix,
+                            )
+                            # print(f'Sanified fixed tuple {hints_meta.hint_curr_meta}...')
+                            # print(f'...child hint {hint_child} -> {hint_or_sane_child}!')
 
                             # If this child hint is unignorable...
                             if hint_or_sane_child is not Any:

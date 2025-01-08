@@ -418,8 +418,8 @@ def _get_hint_pep484604_union_args_flattened(
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
         hint_or_sane_child = sanify_hint_child(
             hint=hint_child,
-            conf=hints_meta.conf,
             cls_stack=hints_meta.cls_stack,
+            conf=hints_meta.conf,
             typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
             exception_prefix=hints_meta.exception_prefix,
         )

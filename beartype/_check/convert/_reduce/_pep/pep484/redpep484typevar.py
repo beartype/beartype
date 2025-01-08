@@ -40,6 +40,11 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bound_or_none,
     is_hint_pep484_typevar,
 )
+from beartype._util.hint.pep.utilpepget import (
+    get_hint_pep_args,
+    get_hint_pep_origin,
+    get_hint_pep_typevars,
+)
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 # from beartype._util.utilobject import SENTINEL
 
@@ -78,13 +83,71 @@ def reduce_hint_pep484_typevar(
     '''
     # print(f'Reducing PEP 484 type variable {repr(hint)} by type variable lookup table {repr(typevar_to_hint)}...')
 
-    # Concrete hint mapped to by this type variable if one or more transitive
-    # parent hints previously mapped this type variable to a hint *OR* the
-    # sentinel placeholder otherwise (i.e., if this type variable is unmapped).
-    #
-    # Note that this one-liner looks ridiculous, but actually works. More
-    # importantly, this is the fastest way to accomplish this. Flex!
-    hint: Hint = typevar_to_hint.get(hint, hint)  # pyright: ignore
+    # If a parent hint of this type variable maps one or more type variables...
+    if typevar_to_hint:
+        # If a parent hint of this type variable maps exactly one type
+        # variables, prefer a dramatically faster and simpler approach.
+        if len(typevar_to_hint) == 1:
+            # Hint mapped to by this type variable if one or more parent hints
+            # previously mapped this type variable to a hint *OR* this hint as
+            # is otherwise (i.e., if this type variable is unmapped).
+            #
+            # Note that this one-liner looks ridiculous, but actually works.
+            # More importantly, this is the fastest way to accomplish this.
+            hint = typevar_to_hint.get(hint, hint)  # pyright: ignore
+        # Else, a parent hint of this type variable mapped two or more type
+        # variables. In this case, fallback to a slower and more complicated
+        # approach that avoids worst-case edge cases. This includes recursion in
+        # type variable mappings, which arises in non-trivial class hierarchies
+        # involving two or more generics subscripted by two or more type
+        # variables that circularly cycle between one another: e.g.,
+        #     from typing import Generic
+        #     class GenericRoot[T](Generic[T]): pass
+        #
+        #     # This directly maps {T: S}.
+        #     class GenericLeaf[S](GenericStem[S]): pass
+        #
+        #     # This directly maps {S: T}, which then combines with the above
+        #     # mapping to indirectly map {S: T, T: S}. Clearly, this indirect
+        #     # mapping provokes infinite recursion unless explicitly handled.
+        #     GenericLeaf[T]
+
+        #FIXME: Test that this actually *DOES* protect against infinite
+        #recursion, please. *sigh*
+        else:
+            # Shallow copy of this type variable lookup table, coerced from an
+            # immutable frozen dictionary into a mutable standard dictionary.
+            # This enables type variables reduced by the iteration below to be
+            # popped off this copy as a simple (but effective) recursion guard.
+            typevar_to_hint_stack = typevar_to_hint.copy()
+
+            # While...
+            while (
+                # This stack still contains one or more type variables that have
+                # yet to be reduced by this iteration *AND*...
+                typevar_to_hint_stack and
+                # This hint is still a type variable...
+                isinstance(hint, TypeVar)
+            ):
+                # Hint mapped to by this type variable if one or more parent
+                # hints previously mapped this type variable to a hint *OR* this
+                # hint as is otherwise (i.e., if this type variable is
+                # unmapped).
+                #
+                # Note that this one-liner destructively pops this type variable
+                # off this stack to prevent this type variable from being
+                # reduced more than once by an otherwise recursive mapping.
+                hint_reduced: Hint = typevar_to_hint_stack.pop(hint, hint)  # pyright: ignore
+
+                # If this type variable maps to itself, this mapping is both
+                # ignorable *AND* terminates this reduction.
+                if hint_reduced is hint:
+                    break
+                # Else, this type variable does *NOT* map to itself.
+
+                # Map this type variable to this hint.
+                hint = hint_reduced
+    # Else, this type variable is unmapped.
 
     # If this hint is still a type variable (e.g., due to either not being
     # mapped by this lookup table *OR* being mapped to another type variable)...
@@ -192,13 +255,6 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
         If one of these type hints violates the bounds or constraints of one of
         these type variables.
     '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_origin,
-        get_hint_pep_typevars,
-    )
 
     # Unsubscripted type alias originating this subscripted hint.
     hint_unsubscripted = get_hint_pep_origin(

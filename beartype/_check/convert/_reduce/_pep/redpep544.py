@@ -76,7 +76,7 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
             # parametrizations of this superclass are synonymous with the
             # "object" root superclass.
             if hint_repr.startswith(f'{typing_module_name}.Protocol['):
-                return Any
+                return Any  # pyright: ignore
             # Else, this hint is *NOT* such a "Protocol" superclass. In this
             # case, continue to the next typing module.
         # Else, this hint is *NOT* the "Protocol" superclass directly
