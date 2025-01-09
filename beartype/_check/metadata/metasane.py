@@ -192,7 +192,7 @@ class HintSanifiedData(object):
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
         return (
-            f'HintSanifiedData('
+            f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
             f'typevar_to_hint={repr(self.typevar_to_hint)}'
             f')'

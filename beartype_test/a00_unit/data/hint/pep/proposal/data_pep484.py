@@ -151,10 +151,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
         Pep484ContextManagerTSequenceT,
         Pep484GenericST,
+        Pep484GenericSubTToS,
         Pep484IterableTContainerT,
         Pep484IterableTupleSTContainerTupleST,
-        Pep484ListListStr,
         Pep484ListStr,
+        Pep484ListListStr,
         Pep484ListUnsubscripted,
         Pep484585GenericSTSequenceU,
         Pep484585GenericIntTSequenceU,
@@ -967,7 +968,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # generator type hints are tested elsewhere.
 
         # ................{ GENERICS ~ single : unsubscripted  }................
-        # Generic subclassing a single unsubscripted "typing" type.
+        # Generic subclassing a single unsubscripted "typing" type hint factory.
         HintPepMetadata(
             hint=Pep484ListUnsubscripted,
             pep_sign=HintSignPep484585GenericUnsubscripted,
@@ -991,7 +992,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic subclassing a single shallowly unparametrized "typing" type.
+        # Generic subclassing a single unparametrized "typing" type hint factory
+        # subscripted by a single concrete child hint.
         HintPepMetadata(
             hint=Pep484ListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
@@ -1017,7 +1019,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic subclassing a single deeply unparametrized "typing" type.
+        # Generic subclassing a single unparametrized "typing" type hint factory
+        # subscripted by yet another unparametrized "typing" type hint factory
+        # subscripted by a single concrete child hint.
         HintPepMetadata(
             hint=Pep484ListListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
@@ -1055,7 +1059,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic subclassing a single parametrized "typing" type.
+        # Generic subclassing the "typing.Generic" superclass parametrized by
+        # two type variables.
         HintPepMetadata(
             hint=Pep484GenericST,
             pep_sign=HintSignPep484585GenericUnsubscripted,
@@ -1073,9 +1078,25 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ GENERICS ~ single : subscripted    }................
-        #FIXME: Leverage all of the other generics imported above here, please
+        # Generic parametrized by one type variable subclassing another generic
+        # subclassing the "typing.Generic" superclass parametrized by a
+        # different type variable.
+        HintPepMetadata(
+            hint=Pep484GenericSubTToS,
+            pep_sign=HintSignPep484585GenericUnsubscripted,
+            generic_type=Pep484GenericSubTToS,
+            is_type_typing=False,
+            typevars=(S,),
+            piths_meta=(
+                # Subclass-specific generic.
+                HintPithSatisfiedMetadata(Pep484GenericSubTToS()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Saturn, sleep on:—O thoughtless, why did I'),
+            ),
+        ),
 
+        # ................{ GENERICS ~ single : subscripted    }................
         # Generic subclassing a single parametrized "typing" type, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
@@ -1129,6 +1150,36 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     "No further than to where his feet had stray'd,"),
+            ),
+        ),
+
+        # Generic parametrized by one type variable subclassing another generic
+        # subclassing the "typing.Generic" superclass parametrized by a
+        # different type variable, such that the former generic is subscripted
+        # by the latter type variable. While non-trivial to visualize, this
+        # scenario exercises a critical edge case provoking infinite recursion
+        # in naive implementations of type variable mapping: e.g.,
+        #     class Pep484GenericT(Generic[T]): pass
+        #
+        #     # This directly maps {T: S}.
+        #     class Pep484GenericSubTToS(Pep484GenericT[S]): pass
+        #
+        #     # This directly maps {S: T}, which then combines with the above
+        #     # mapping to indirectly map {S: T, T: S}. Clearly, this indirect
+        #     # mapping provokes infinite recursion unless explicitly handled.
+        #     Pep484GenericSubTToS[T]
+        HintPepMetadata(
+            hint=Pep484GenericSubTToS[T],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep484GenericSubTToS,
+            is_typing=False,
+            typevars=(T,),
+            piths_meta=(
+                # Subclass-specific generic.
+                HintPithSatisfiedMetadata(Pep484GenericSubTToS()),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Thus violate thy slumbrous solitude?'),
             ),
         ),
 

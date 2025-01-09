@@ -91,7 +91,16 @@ class Pep484GenericT(Generic[T]):
 class Pep484GenericSubT(Pep484GenericT[T]):
     '''
     :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant
-    generic parametrized by one unconstrained type variable.
+    generic parametrized by the same unconstrained type variable.
+    '''
+
+    pass
+
+
+class Pep484GenericSubTToS(Pep484GenericT[S]):
+    '''
+    :pep:`484`-compliant generic subclass inheriting a :pep:`484`-compliant
+    generic parametrized by a different unconstrained type variable.
     '''
 
     pass

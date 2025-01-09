@@ -223,7 +223,7 @@ class HintMeta(object):
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
         return (
-            f'HintMeta('
+            f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
             f'indent_level={repr(self.indent_level)}, '
             f'pith_expr={repr(self.pith_expr)}, '

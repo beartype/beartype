@@ -511,28 +511,27 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        #FIXME: Uncomment after worky, please.
-        # # Subscripted type alias aliasing a PEP 593-compliant metahint
-        # # annotating an unignorable child hint.
-        # HintPepMetadata(
-        #     hint=AliasPep593[int],
-        #     pep_sign=HintSignPep695TypeAliasSubscripted,
-        #     is_pep585_builtin_subscripted=True,
-        #     piths_meta=(
-        #         # Non-zero integer.
-        #         HintPithSatisfiedMetadata(0xFADEFACE),
-        #         # Non-empty byte string.
-        #         HintPithSatisfiedMetadata(
-        #             b'And press it so upon our weary griefs'),
-        #         # Zero.
-        #         HintPithUnsatisfiedMetadata(0),
-        #         # Empty byte string.
-        #         HintPithUnsatisfiedMetadata(b''),
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata(
-        #             'That unbelief has not a space to breathe.'),
-        #     ),
-        # ),
+        # Subscripted type alias aliasing a PEP 593-compliant metahint
+        # annotating an unignorable child hint.
+        HintPepMetadata(
+            hint=AliasPep593[int],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Non-zero integer.
+                HintPithSatisfiedMetadata(0xFADEFACE),
+                # Non-empty byte string.
+                HintPithSatisfiedMetadata(
+                    b'And press it so upon our weary griefs'),
+                # Zero.
+                HintPithUnsatisfiedMetadata(0),
+                # Empty byte string.
+                HintPithUnsatisfiedMetadata(b''),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'That unbelief has not a space to breathe.'),
+            ),
+        ),
     ))
 
     # ..................{ RETURN                             }..................

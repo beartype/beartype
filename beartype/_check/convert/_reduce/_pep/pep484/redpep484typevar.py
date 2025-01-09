@@ -111,9 +111,6 @@ def reduce_hint_pep484_typevar(
         #     # mapping to indirectly map {S: T, T: S}. Clearly, this indirect
         #     # mapping provokes infinite recursion unless explicitly handled.
         #     GenericLeaf[T]
-
-        #FIXME: Test that this actually *DOES* protect against infinite
-        #recursion, please. *sigh*
         else:
             # Shallow copy of this type variable lookup table, coerced from an
             # immutable frozen dictionary into a mutable standard dictionary.

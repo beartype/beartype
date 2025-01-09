@@ -742,7 +742,7 @@ class BeartypeDecorMeta(object):
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
         return (
-            f'BeartypeDecorMeta('
+            f'{self.__class__.__name__}('
             f'func={repr(self.func_wrappee)}, '
             f'conf={repr(self.conf)}'
             f')'

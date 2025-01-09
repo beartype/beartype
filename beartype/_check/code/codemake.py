@@ -863,6 +863,11 @@ def make_check_expr(
                         # parent tuple...
                         for hint_child_index, hint_child in enumerate(
                             hint_childs):
+                            #FIXME: Refactor most (or even *ALL*) calls to
+                            #sanify_hint_child() to a new
+                            #hints_meta.sanify_hint() method. The repetition
+                            #here is becoming... unnerving.
+
                             # Unignorable sane child hint sanified from this
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
@@ -1166,14 +1171,12 @@ def make_check_expr(
                     # Unignorable sane metahint annotating this parent hint
                     # sanified from this possibly ignorable insane metahint *OR*
                     # "None" otherwise (i.e., if this metahint is ignorable).
-                    hint_or_sane_child = (
-                        sanify_hint_child(
-                            hint=get_hint_pep593_metahint(hint_curr),
-                            conf=conf,
-                            cls_stack=cls_stack,
-                            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        )
+                    hint_or_sane_child = sanify_hint_child(
+                        hint=get_hint_pep593_metahint(hint_curr),
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
                     # print(f'[593] metahint: {repr(get_hint_pep593_metahint(hint_curr))}')
                     # print(f'[593] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
