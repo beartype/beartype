@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import Any
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metasane import get_hint_or_sane_hint
@@ -71,7 +72,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     # For each subscripted argument of this union...
     for hint_or_sane_child in cause.hint_or_sane_childs:
         # If this child hint is ignorable, continue to the next.
-        if hint_or_sane_child is None:
+        if hint_or_sane_child is Any:
             continue
         # Else, this child hint is unignorable.
 

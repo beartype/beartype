@@ -18,20 +18,26 @@ from beartype.typing import (
 )
 from beartype._check.convert._reduce._nonpep.rednonpeptype import (
     reduce_hint_nonpep_type)
+from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+    reduce_hint_pep484_deprecated,
+    reduce_hint_pep484_none,
+)
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
     reduce_hint_pep484_typevar,
     reduce_hint_pep484_subscripted_typevar_to_hint,
 )
+from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
+    reduce_hint_pep484585_generic_subscripted,
+    reduce_hint_pep484585_generic_unsubscripted,
+)
+from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
+    reduce_hint_pep484585_type)
 from beartype._check.convert._reduce._pep.redpep484604 import (
     reduce_hint_pep484604)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
-from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
-    reduce_hint_pep484585_generic_subscripted,
-    reduce_hint_pep484585_generic_unsubscripted,
-)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
@@ -105,16 +111,10 @@ from beartype._util.hint.nonpep.api.utilmodnumpy import (
     reduce_hint_numpy_ndarray)
 from beartype._util.hint.nonpep.api.utilmodpandera import (
     reduce_hint_pandera)
-from beartype._util.hint.pep.proposal.pep484.pep484 import (
-    reduce_hint_pep484_deprecated,
-    reduce_hint_pep484_none,
-)
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     reduce_hint_pep484_newtype)
 from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
     reduce_hint_pep484585_itemsview)
-from beartype._util.hint.pep.proposal.pep484585.pep484585type import (
-    reduce_hint_pep484585_type)
 from beartype._util.hint.pep.proposal.pep557 import (
     reduce_hint_pep557_initvar)
 from beartype._util.hint.pep.proposal.pep585 import (
@@ -214,18 +214,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 484- or 585-compliant items view type hint, reduce
     # this hint to a more trivially consumable PEP 593-compliant type hint.
     HintSignItemsView: reduce_hint_pep484585_itemsview,
-
-    # If this hint is a PEP 484- or 585-compliant subclass type hint subscripted
-    # by an ignorable child type hint (e.g., "object", "typing.Any"), silently
-    # ignore this argument by reducing this hint to the "type" superclass.
-    #
-    # Note that:
-    # * This reduction could be performed elsewhere, but remains here as doing
-    #   so here dramatically simplifies matters elsewhere.
-    # * This reduction *CANNOT* be performed by the is_hint_ignorable() tester,
-    #   as subclass type hints subscripted by ignorable child type hints are
-    #   *NOT* ignorable; they're reducible to the "type" superclass.
-    HintSignType: reduce_hint_pep484585_type,
 
     # ..................{ PEP 544                            }..................
     # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
@@ -482,8 +470,21 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignSized: reduce_hint_pep484_deprecated,
     HintSignTuple: reduce_hint_pep484_deprecated,
     HintSignTupleFixed: reduce_hint_pep484_deprecated,
-    HintSignType: reduce_hint_pep484_deprecated,
     HintSignValuesView: reduce_hint_pep484_deprecated,
+
+    # Note that the reducers for these signs mapped below call this reducer.
+    # HintSignType: reduce_hint_pep484_deprecated,
+
+    # ..................{ PEP (484|585)                      }..................
+    # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
+    # by an ignorable child hint (e.g., "object", "typing.Any"), silently
+    # ignore this child hint by reducing this hint to the "type" superclass.
+    #
+    # Note that doing so requires recursively reducing this child hint first.
+    # Since this child hints may require an uncached reduction in the worst
+    # case, reducing subclass hints *ALSO* requires an uncached reduction in the
+    # worst case. This is that case.
+    HintSignType: reduce_hint_pep484585_type,
 
     # ..................{ PEP (484|604)                      }..................
     # Reduce PEP 484- and 604-compliant unions subscripted by one or more

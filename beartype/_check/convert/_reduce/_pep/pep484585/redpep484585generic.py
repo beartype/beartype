@@ -61,6 +61,11 @@ def reduce_hint_pep484585_generic_subscripted(
 
     Returns
     -------
+    Hint
+        Hint reduced from this subscripted generic.
+
+    Returns
+    -------
     HintOrHintSanifiedData
         Either:
 

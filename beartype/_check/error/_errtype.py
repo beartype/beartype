@@ -17,7 +17,10 @@ from beartype.roar import (
     BeartypePlugInstancecheckStrException,
 )
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._data.hint.datahinttyping import (
     TupleTypes,
     TypeOrTupleTypes,
@@ -326,7 +329,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
 
     # If this superclass is ignorable, then *ALL* types including this pith
     # satisfy this superclass. In this case, return the passed cause as is.
-    if hint_child is None:
+    if hint_child is Any:
         return cause
     # Else, this superclass is unignorable.
 

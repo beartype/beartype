@@ -36,9 +36,17 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         BeartypeConf,
         BeartypeHintOverrides,
     )
+    from beartype.typing import Any
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignPep695TypeAliasSubscripted,
         HintSignPep695TypeAliasUnsubscripted,
+    )
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        Subclass,
+        OtherClass,
+        OtherSubclass,
+        NonIsinstanceableMetaclass,
     )
     from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
         AliasSimple,
@@ -46,6 +54,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         AliasPep585Dict,
         AliasPep585IterableTupleSTContainerTupleST,
         AliasPep585TupleFixed,
+        AliasPep585Type,
         AliasPep593,
         Pep585IterableTupleSTContainerTupleST,
     )
@@ -305,58 +314,6 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ PEP 585 ~ tuple : fixed            }................
-        # Unsubscripted type alias aliasing a PEP 585-compliant fixed-length
-        # tuple type hint.
-        HintPepMetadata(
-            hint=AliasPep585TupleFixed,
-            pep_sign=HintSignPep695TypeAliasUnsubscripted,
-            is_type_typing=True,
-            # PEP 695-compliant parametrized type aliases are parametrized by
-            # type variables implicitly instantiated only "on the fly" by Python
-            # itself. These variables are *NOT* explicitly defined and thus
-            # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
-            is_typing=False,
-            piths_meta=(
-                # 2-tuple of items of arbitrary types.
-                HintPithSatisfiedMetadata((
-                    'Where beats the human heart,', 'as if just there,',)),
-                # Empty tuple.
-                HintPithUnsatisfiedMetadata(()),
-                # 1-tuple of items of arbitrary types.
-                HintPithUnsatisfiedMetadata((
-                    'Though an immortal, she felt cruel pain:',)),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    "The other upon Saturn's bended neck"),
-            ),
-        ),
-
-        # Subscripted type alias aliasing a PEP 585-compliant fixed-length
-        # tuple type hint.
-        HintPepMetadata(
-            hint=AliasPep585TupleFixed[str, bytes],
-            pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
-            piths_meta=(
-                # 2-tuple of items whose types satisfy these child hints.
-                HintPithSatisfiedMetadata((
-                    'She laid,', b'and to the level of his ear,',)),
-                # 2-tuple of items whose types violate these child hints.
-                HintPithUnsatisfiedMetadata((
-                    'Leaning with parted lips,', 'some words she spake',)),
-                # Empty tuple.
-                HintPithUnsatisfiedMetadata(()),
-                # 3-tuple of items of arbitrary types.
-                HintPithUnsatisfiedMetadata((
-                    'In solemn tenour', 'and deep', 'organ tone:',)),
-                # Byte string constant.
-                HintPithUnsatisfiedMetadata(
-                    b"Some mourning words, which in our feeble tongue"),
-            ),
-        ),
-
         # ................{ PEP 585 ~ mapping                  }................
         # Unsubscripted type alias aliasing a PEP 585-compliant dictionary.
         HintPepMetadata(
@@ -449,6 +406,144 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                 # Dictionary mapping strings to strings.
                 HintPithUnsatisfiedMetadata({
                     "Rumbles reluctant o'er our fallen house;": 48,}),
+            ),
+        ),
+
+        # ................{ PEP 585 ~ tuple : fixed            }................
+        # Unsubscripted type alias aliasing a PEP 585-compliant fixed-length
+        # tuple type hint.
+        HintPepMetadata(
+            hint=AliasPep585TupleFixed,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
+            is_type_typing=True,
+            # PEP 695-compliant parametrized type aliases are parametrized by
+            # type variables implicitly instantiated only "on the fly" by Python
+            # itself. These variables are *NOT* explicitly defined and thus
+            # *NOT* safely accessible here outside of these aliases.
+            is_typevars=True,
+            is_typing=False,
+            piths_meta=(
+                # 2-tuple of items of arbitrary types.
+                HintPithSatisfiedMetadata((
+                    'Where beats the human heart,', 'as if just there,',)),
+                # Empty tuple.
+                HintPithUnsatisfiedMetadata(()),
+                # 1-tuple of items of arbitrary types.
+                HintPithUnsatisfiedMetadata((
+                    'Though an immortal, she felt cruel pain:',)),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "The other upon Saturn's bended neck"),
+            ),
+        ),
+
+        # Subscripted type alias aliasing a PEP 585-compliant fixed-length
+        # tuple type hint.
+        HintPepMetadata(
+            hint=AliasPep585TupleFixed[str, bytes],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # 2-tuple of items whose types satisfy these child hints.
+                HintPithSatisfiedMetadata((
+                    'She laid,', b'and to the level of his ear,',)),
+                # 2-tuple of items whose types violate these child hints.
+                HintPithUnsatisfiedMetadata((
+                    'Leaning with parted lips,', 'some words she spake',)),
+                # Empty tuple.
+                HintPithUnsatisfiedMetadata(()),
+                # 3-tuple of items of arbitrary types.
+                HintPithUnsatisfiedMetadata((
+                    'In solemn tenour', 'and deep', 'organ tone:',)),
+                # Byte string constant.
+                HintPithUnsatisfiedMetadata(
+                    b"Some mourning words, which in our feeble tongue"),
+            ),
+        ),
+
+        # ................{ PEP 585 ~ subclass                 }................
+        # Unsubscripted type alias aliasing a PEP 585-compliant arbitrary type.
+        HintPepMetadata(
+            hint=AliasPep585Type,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
+            is_type_typing=True,
+            # PEP 695-compliant parametrized type aliases are parametrized by
+            # type variables implicitly instantiated only "on the fly" by Python
+            # itself. These variables are *NOT* explicitly defined and thus
+            # *NOT* safely accessible here outside of these aliases.
+            is_typevars=True,
+            is_typing=False,
+            piths_meta=(
+                # Arbitrary type.
+                HintPithSatisfiedMetadata(complex),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Why should I ope thy melancholy eyes?'),
+            ),
+        ),
+
+        # Any type, semantically equivalent under PEP 484 to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=AliasPep585Type[Any],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(bool),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Saturn, sleep on! while at thy feet I weep."'),
+            ),
+        ),
+
+        # "type" superclass.
+        HintPepMetadata(
+            hint=AliasPep585Type[type],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary metaclass.
+                HintPithSatisfiedMetadata(NonIsinstanceableMetaclass),
+                # Arbitrary class.
+                HintPithUnsatisfiedMetadata(int),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'As when, upon a tranced summer-night,'),
+            ),
+        ),
+
+        # Specific class.
+        HintPepMetadata(
+            hint=AliasPep585Type[Class],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(Subclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "Those green-rob'd senators of mighty woods,"),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(bytes),
+            ),
+        ),
+
+        # Two or more specific classes.
+        HintPepMetadata(
+            hint=AliasPep585Type[Class | OtherClass],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Arbitrary subclass of one class subscripting this hint.
+                HintPithSatisfiedMetadata(Subclass),
+                # Arbitrary subclass of another class subscripting this hint.
+                HintPithSatisfiedMetadata(OtherSubclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Tall oaks, branch-charmed by the earnest stars,'),
+                # Non-subclass of any classes subscripting this hint.
+                HintPithUnsatisfiedMetadata(frozenset),
             ),
         ),
 

@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant **union reducers** (i.e., low-level callables
-converting :pep:`484`-compliant type hints to lower-level type hints more
-readily consumable by :mod:`beartype`).
+Project-wide :pep:`484`-compliant **type variable reducers** (i.e., low-level
+callables converting :pep:`484`-compliant type variables to lower-level type
+hints more readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

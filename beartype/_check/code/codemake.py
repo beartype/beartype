@@ -1338,11 +1338,13 @@ def make_check_expr(
                         # this parent hint, validated to be the *ONLY* child
                         # hint subscripting this parent hint.
                         hint=get_hint_pep484585_arg(
-                            hint=hint_curr, exception_prefix=EXCEPTION_PREFIX),
+                            hint=hint_curr,
+                            exception_prefix=hints_meta.exception_prefix,
+                        ),
                         conf=conf,
-                        cls_stack=cls_stack,
+                        cls_stack=hints_meta.cls_stack,
                         typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                        exception_prefix=EXCEPTION_PREFIX,
+                        exception_prefix=hints_meta.exception_prefix,
                     )
 
                     # If this child hint is unignorable...

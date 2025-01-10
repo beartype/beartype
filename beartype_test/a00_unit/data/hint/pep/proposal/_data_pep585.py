@@ -90,6 +90,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         SubclassSubclass,
         OtherClass,
         OtherSubclass,
+        NonIsinstanceableMetaclass,
         context_manager_factory,
         default_dict_int_to_str,
         default_dict_str_to_str,
@@ -2470,16 +2471,17 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # "type" superclass, semantically equivalent to the unsubscripted
-        # "Type" singleton.
+        # "type" superclass.
         HintPepMetadata(
             hint=type[type],
             pep_sign=HintSignType,
             isinstanceable_type=type,
             is_pep585_builtin_subscripted=True,
             piths_meta=(
+                # Arbitrary metaclass.
+                HintPithSatisfiedMetadata(NonIsinstanceableMetaclass),
                 # Arbitrary class.
-                HintPithSatisfiedMetadata(complex),
+                HintPithUnsatisfiedMetadata(int),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Had al-'),
             ),

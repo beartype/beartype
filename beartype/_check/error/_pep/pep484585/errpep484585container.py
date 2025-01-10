@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import Any
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._check.error.errcause import ViolationCause
@@ -94,7 +95,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         # are none) are necessarily valid *OR*...
         not cause.pith or
         # This child hint is ignorable...
-        hint_or_sane_child is None
+        hint_or_sane_child is Any
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -226,7 +227,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_or_sane_child is None:
+        if hint_or_sane_child is Any:
             continue
         # Else, this child hint is unignorable.
 

@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeStrategy
 from beartype.typing import (
+    Any,
     Hashable,
     Iterable,
     Tuple,
@@ -96,8 +97,8 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     )
 
     # True only if these hints are unignorable.
-    is_hint_key_unignorable = hint_or_sane_key is not None
-    is_hint_value_unignorable = hint_or_sane_value is not None
+    is_hint_key_unignorable = hint_or_sane_key is not Any
+    is_hint_value_unignorable = hint_or_sane_value is not Any
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:

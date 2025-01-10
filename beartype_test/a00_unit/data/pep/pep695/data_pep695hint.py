@@ -96,6 +96,13 @@ Type alias aliasing a PEP 585-compliant fixed-length tuple type hint
 subscripted by the same type variables as those parametrizing this alias.
 '''
 
+
+type AliasPep585Type[T] = type[T]
+'''
+Type alias aliasing a PEP 585-compliant subclass type hint subscripted by the
+same type variable as that parametrizing this alias.
+'''
+
 # ..................{ PEP 593                                }..................
 type AliasPep593[T] = Annotated[T | bytes, Is[lambda obj: bool(obj)]]
 '''
