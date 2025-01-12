@@ -29,7 +29,7 @@ def test_decor_type() -> None:
     from beartype.roar import BeartypeCallHintParamViolation
     from pytest import raises
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ CLASSES                        }....................
     # Intentionally redecorate a class twice by the @beartype decorator,
     # exercising an edge case in class decoration.
     @beartype
@@ -39,6 +39,7 @@ def test_decor_type() -> None:
         Arbitrary class defining one or more arbitrary annotated methods.
         '''
 
+        # ....................{ METHODS                    }....................
         def his_bloodless_food(self, lured_by_the_gentle_meaning: str) -> int:
             '''
             Arbitrary annotated method.
@@ -46,6 +47,7 @@ def test_decor_type() -> None:
 
             return len(lured_by_the_gentle_meaning)
 
+    # ....................{ LOCALS                         }....................
     # Arbitrary instance of this class.
     of_his_looks = FromHisInnocuousHand()
 

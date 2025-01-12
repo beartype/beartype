@@ -12,6 +12,7 @@ containing *only* annotated classes, mimicking real-world usage of the
 # ....................{ IMPORTS                            }....................
 from beartype import (
     BeartypeConf,
+    # BeartypeStrategy,
     beartype,
 )
 from beartype.roar import (
@@ -28,6 +29,19 @@ from pytest import raises
 
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
+
+# ....................{ CLASSES ~ default                  }....................
+# Classes whose type-checking implicitly accepts the default beartype
+# configuration.
+
+#FIXME: Currently unused, but preserved for posterity.
+# class AndSoDreamAllNight(object):
+#     '''
+#     Arbitrary class explicitly decorated by the :func:`beartype.beartype`
+#     decorator assuming default parameters.
+#     '''
+#
+#     pass
 
 # ....................{ REFERENCES                         }....................
 # Callables annotated by type hints referencing classes that have yet to be
@@ -158,14 +172,16 @@ class HerFirstSweetKisses(object):
         # Look here, you. Just do it yet again!
         return but_still_loved
 
-# ....................{ PASS                               }....................
-# Arbitrary instance of this class.
+# ....................{ LOCALS                             }....................
+# Arbitrary instances of these types defined above.
+# save_from_one_gradual_solitary_gust = AndSoDreamAllNight()
 and_cherished_these_my_kindred = HerFirstSweetKisses()
 
-# Assert that calling the first method passed an arbitrary integer returns that
-# integer as is *WITHOUT* raising an exception.
-assert and_cherished_these_my_kindred.if_no_bright_bird(len(
-    'This boast, belovèd brethren, and withdraw')) == 42
+# ....................{ PASS                               }....................
+# Assert that calling this method of this type passed an invalid parameter
+# returns that parameter as is *WITHOUT* raising an exception.
+assert and_cherished_these_my_kindred.if_no_bright_bird(
+    len('This boast, belovèd brethren, and withdraw')) == 42
 
 # ....................{ FAIL                               }....................
 # Assert that calling the first method passed an invalid parameter raises the

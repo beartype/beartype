@@ -178,7 +178,7 @@ def test_decor_conf_strategy_O0() -> None:
     # @beartype decorator disabling type-checking.
     nobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
 
-    # ..................{ PASS ~ function                    }..................
+    # ..................{ CALLABLES                          }..................
     def in_the_lone_glare_of_day() -> str:
         '''
         Arbitrary **unignorable invalid callable** (i.e., callable defining at
@@ -188,22 +188,14 @@ def test_decor_conf_strategy_O0() -> None:
 
         return b'In the lone glare of day, the snows descend'
 
-    # Assert that this decorator is the identity decorator unconditionally
-    # preserving all passed objects as is.
-    in_the_lone_glare_of_day_unchecked = nobeartype(in_the_lone_glare_of_day)
-    assert in_the_lone_glare_of_day_unchecked is in_the_lone_glare_of_day
-
-    # Assert that calling this decorated callable raises *NO* type-checking
-    # violations despite this underlying callable violating type-checking.
-    assert isinstance(in_the_lone_glare_of_day_unchecked(), bytes)
-
-    # ..................{ PASS ~ class                       }..................
+    # ..................{ CLASSES                            }..................
     @beartype
     class UponThatMountain(object):
         '''
         Arbitrary class decorated by the :func:`beartype.beartype` decorator.
         '''
 
+        # ..................{ METHODS                        }..................
         def none_beholds_them_there(self) -> None:
             '''
             Arbitrary method raising a type-checking violation by definition.
@@ -221,13 +213,41 @@ def test_decor_conf_strategy_O0() -> None:
 
             return 'Nor when the flakes burn in the sinking sun,'
 
+        # ....................{ DESCRIPTORS                }....................
+        # Builtin C-based descriptor decorators exercising various edge cases.
+
+        #FIXME: Exercise class and property methods as well, please. *sigh*
+        # Explicitly disable runtime type-checking for this static method.
+        @nobeartype
+        @staticmethod
+        def without_a_stir(dream: str) -> str:
+            return dream
+
+    # ..................{ LOCALS                             }..................
     # Instance of this class.
     upon_that_mountain = UponThatMountain()
 
+    # ..................{ PASS ~ callable                    }..................
+    # Assert that this decorator is the identity decorator unconditionally
+    # preserving all passed objects as is.
+    in_the_lone_glare_of_day_unchecked = nobeartype(in_the_lone_glare_of_day)
+    assert in_the_lone_glare_of_day_unchecked is in_the_lone_glare_of_day
+
+    # Assert that calling this decorated callable raises *NO* type-checking
+    # violations despite this underlying callable violating type-checking.
+    assert isinstance(in_the_lone_glare_of_day_unchecked(), bytes)
+
+    # ..................{ PASS ~ class                       }..................
     # Assert that calling an invalid method explicitly *NOT* type-checked by
     # @beartype raises *NO* exception.
     assert isinstance(upon_that_mountain.nor_when_the_flakes_burn(), str)
 
+    # Assert that calling a valid method explicitly *NOT* type-checked by
+    # @beartype raises *NO* exception when passed an invalid parameter.
+    assert UponThatMountain.without_a_stir(
+        len('Which comes upon the silence, and dies off,')) == 43
+
+    # ..................{ FAIL ~ class                       }..................
     # Assert that calling an invalid method implicitly type-checked by @beartype
     # raises the expected exception.
     with raises(BeartypeCallHintViolation):

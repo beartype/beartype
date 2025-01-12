@@ -12,7 +12,7 @@ decorator.
 
 See Also
 --------
-:mod:`beartype_test.a00_unit.a70_decor.a40_code.a90_pep.test_decorpep484585`
+:mod:`beartype_test.a00_unit.a70_decor.a20_code.a90_pep.test_decorpep484585`
    Submodule unit testing the subset of :pep:`484` and :pep:`585` support that
    generically applies to both (rather than merely :pep:`585`).
 '''

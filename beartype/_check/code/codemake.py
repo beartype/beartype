@@ -1579,9 +1579,7 @@ def make_check_expr(
                             # Set comprehension of all unique literal objects
                             # subscripting this hint, implicitly discarding all
                             # duplicate such objects.
-                            type(hint_child)
-                            for hint_child in hint_childs
-                        }),
+                            type(hint_child) for hint_child in hint_childs}),
                     )
 
                     #FIXME: Optimize by refactoring into a "while" loop. *sigh*
