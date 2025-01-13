@@ -23,77 +23,6 @@ from beartype_test._util.mark.pytskip import (
 )
 
 # ....................{ TESTS                              }....................
-def test_decor_type_callable_pseudo() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
-    objects defining the pure-Python ``__call__()`` dunder method).
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeCallHintParamViolation
-    from pytest import raises
-
-    # ....................{ CLASSES                        }....................
-    class WildWestWind(object):
-        '''
-        Arbitrary **pseudo-callable** (i.e., object defining the pure-Python
-        ``__call__()`` dunder method).
-        '''
-
-        def __call__(self, leaves_dead: str) -> str:
-            '''Arbitrary docstring.'''
-
-            return f'{leaves_dead}: O thou,'
-
-    # ....................{ LOCALS                         }....................
-    # Arbitrary pseudo-callables instance of this class.
-    autumns_being   = WildWestWind()
-    unseen_presence = WildWestWind()
-
-    # ....................{ PASS                           }....................
-    # Pseudo-callable wrapped with runtime type-checking.
-    autumns_being_typed = beartype(autumns_being)
-
-    # Assert that both the original and new pseudo-callables accept and return
-    # strings.
-    assert autumns_being(
-        "O wild West Wind, thou breath of Autumn's being,") == (
-        "O wild West Wind, thou breath of Autumn's being,: O thou,")
-    assert autumns_being_typed(
-        'Thou, from whose unseen presence the leaves dead') == (
-        'Thou, from whose unseen presence the leaves dead: O thou,')
-    assert unseen_presence(
-        'Pestilence-stricken multitudes: O thou,') == (
-        'Pestilence-stricken multitudes: O thou,: O thou,')
-
-    # ....................{ FAIL                           }....................
-    # Assert that both the original and new pseudo-callables raise the expected
-    # exception when passed invalid parameters.
-    #
-    # Note that the original pseudo-callable has been augmented with runtime
-    # type-checking despite *NOT* being passed to @beartype. Is this expected?
-    # Yes. Is this desirable? Maybe not. Either way, there's nothing @beartype
-    # can particularly do about it. Why? Because Python ignores the __call__()
-    # dunder method defined on objects; Python only respects the __call__()
-    # dunder method defined on the types of objects. Because of this, @beartype
-    # has *NO* recourse but to globally monkey-patch the type of the passed
-    # pseudo-callable (rather than that pseudo-callable itself).
-    with raises(BeartypeCallHintParamViolation):
-        autumns_being_typed(
-            b'Yellow, and black, and pale, and hectic red,')
-
-    #FIXME: Actually, let's *NOT* test either of these. It's unfortunate that
-    #these are being type-checked as well, but... what can you do, huh? *sigh*
-    # with raises(BeartypeCallHintParamViolation):
-    #     autumns_being(
-    #         b'Are driven, like ghosts from an enchanter fleeing,')
-    # with raises(BeartypeCallHintParamViolation):
-    #     unseen_presence(
-    #         b'Who chariotest to their dark wintry bed')
-
-# ....................{ TESTS ~ descriptor                 }....................
 def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
@@ -141,8 +70,8 @@ def test_decor_type_descriptor_builtin() -> None:
             :func:`beartype.beartype` decorator, exercising an edge case in the
             :func:`beartype.beartype` decorator.
 
-            Note that reversing this order of decoration does *not* exercising
-            an edge case in the :func:`beartype.beartype` decorator and is thus
+            Note that reversing this order of decoration does *not* exercise an
+            edge case in the :func:`beartype.beartype` decorator and is thus
             omitted from testing.
             '''
 
@@ -159,8 +88,8 @@ def test_decor_type_descriptor_builtin() -> None:
             :func:`beartype.beartype` decorator, exercising an edge case in the
             :func:`beartype.beartype` decorator.
 
-            Note that reversing this order of decoration does *not* exercising
-            an edge case in the :func:`beartype.beartype` decorator and is thus
+            Note that reversing this order of decoration does *not* exercise an
+            edge case in the :func:`beartype.beartype` decorator and is thus
             omitted from testing.
             '''
 
@@ -176,8 +105,8 @@ def test_decor_type_descriptor_builtin() -> None:
             :func:`beartype.beartype` decorator, exercising an edge case in the
             :func:`beartype.beartype` decorator.
 
-            Note that reversing this order of decoration does *not* exercising
-            an edge case in the :func:`beartype.beartype` decorator and is thus
+            Note that reversing this order of decoration does *not* exercise an
+            edge case in the :func:`beartype.beartype` decorator and is thus
             omitted from testing.
             '''
 
@@ -193,8 +122,8 @@ def test_decor_type_descriptor_builtin() -> None:
             :func:`beartype.beartype` decorator, exercising an edge case in the
             :func:`beartype.beartype` decorator.
 
-            Note that reversing this order of decoration does *not* exercising
-            an edge case in the :func:`beartype.beartype` decorator and is thus
+            Note that reversing this order of decoration does *not* exercise an
+            edge case in the :func:`beartype.beartype` decorator and is thus
             omitted from testing.
             '''
 
@@ -210,8 +139,8 @@ def test_decor_type_descriptor_builtin() -> None:
             :func:`beartype.beartype` decorator, exercising an edge case in the
             :func:`beartype.beartype` decorator.
 
-            Note that reversing this order of decoration does *not* exercising
-            an edge case in the :func:`beartype.beartype` decorator and is thus
+            Note that reversing this order of decoration does *not* exercise an
+            edge case in the :func:`beartype.beartype` decorator and is thus
             omitted from testing.
             '''
 
@@ -323,15 +252,18 @@ def test_decor_type_descriptor_builtin_called() -> None:
         defined by explicitly calling C-based builtin method descriptors.
         '''
 
-        # Augment this user-defined class into a type hint factory via the
-        # standard one-liner leveraged throughout both the standard library and
-        # third-party packages.
-        #
-        # Note that the @classmethod decorator explicitly supports C-based
-        # callable types. Ergo, this one-liner exercises that @beartype supports
-        # both this common idiom *AND* this decorator behaviour without raising
-        # unexpected exceptions at decoration time.
         __class_getitem__ = classmethod(GenericAlias)
+        '''
+        Augment this user-defined class into a type hint factory via the
+        standard one-liner leveraged throughout both the standard library and
+        third-party packages.
+
+        Note that the :class:`classmethod` decorator explicitly supports C-based
+        callable types. Ergo, this one-liner exercises that
+        :func:`beartype.beartype` supports both this common idiom *and* this
+        decorator behaviour without raising unexpected exceptions at decoration
+        time.
+        '''
 
 
 # If the active Python interpreter targets either Python 3.9.x *OR* 3.10.x, then

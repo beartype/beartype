@@ -1441,6 +1441,18 @@ classes) are *not* callable and thus intentionally excluded.
 '''
 
 
+MethodDecoratorClassOrStaticTypes = (
+    MethodDecoratorClassType,
+    MethodDecoratorStaticType,
+)
+'''
+Tuple of all **C-based unbound class or static method decorator types** (i.e.,
+builtin :class:`classmethod` or :class:`staticmethod` decorator types
+implemented in low-level C whose instances are typically uncallable, associated
+with callable methods implemented in pure Python).
+'''
+
+
 MethodDecoratorBuiltinTypes = (
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,

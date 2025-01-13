@@ -4,10 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator noop** unit tests.
+**Beartype decorator class decoration** unit tests.
 
-This submodule unit tests edge cases of the :func:`beartype.beartype` decorator
-efficiently reducing to a noop.
+This submodule unit tests high-level functionality of the
+:func:`beartype.beartype` decorator with respect to decorating **classes**
+irrespective of lower-level type hinting concerns (e.g., PEP-compliance and
+-noncompliance).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -17,10 +19,10 @@ efficiently reducing to a noop.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_decor_type() -> None:
+def test_decor_type_basic() -> None:
     '''
     Test decoration of user-defined classes by the :func:`beartype.beartype`
-    decorator.
+    decorator from the perspective of basic usability.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -302,3 +304,74 @@ def test_decor_subtype() -> None:
     with raises(BeartypeCallHintParamViolation):
         or_jasper_tomb.and_whatsoever_of_strange(len(
             'Stupendous columns, and wild images'))
+
+
+def test_decor_type_pseudocallable() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
+    objects defining the pure-Python ``__call__()`` dunder method).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class WildWestWind(object):
+        '''
+        Arbitrary **pseudo-callable** (i.e., object defining the pure-Python
+        ``__call__()`` dunder method).
+        '''
+
+        def __call__(self, leaves_dead: str) -> str:
+            '''Arbitrary docstring.'''
+
+            return f'{leaves_dead}: O thou,'
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary pseudo-callables instance of this class.
+    autumns_being   = WildWestWind()
+    unseen_presence = WildWestWind()
+
+    # ....................{ PASS                           }....................
+    # Pseudo-callable wrapped with runtime type-checking.
+    autumns_being_typed = beartype(autumns_being)
+
+    # Assert that both the original and new pseudo-callables accept and return
+    # strings.
+    assert autumns_being(
+        "O wild West Wind, thou breath of Autumn's being,") == (
+        "O wild West Wind, thou breath of Autumn's being,: O thou,")
+    assert autumns_being_typed(
+        'Thou, from whose unseen presence the leaves dead') == (
+        'Thou, from whose unseen presence the leaves dead: O thou,')
+    assert unseen_presence(
+        'Pestilence-stricken multitudes: O thou,') == (
+        'Pestilence-stricken multitudes: O thou,: O thou,')
+
+    # ....................{ FAIL                           }....................
+    # Assert that both the original and new pseudo-callables raise the expected
+    # exception when passed invalid parameters.
+    #
+    # Note that the original pseudo-callable has been augmented with runtime
+    # type-checking despite *NOT* being passed to @beartype. Is this expected?
+    # Yes. Is this desirable? Maybe not. Either way, there's nothing @beartype
+    # can particularly do about it. Why? Because Python ignores the __call__()
+    # dunder method defined on objects; Python only respects the __call__()
+    # dunder method defined on the types of objects. Because of this, @beartype
+    # has *NO* recourse but to globally monkey-patch the type of the passed
+    # pseudo-callable (rather than that pseudo-callable itself).
+    with raises(BeartypeCallHintParamViolation):
+        autumns_being_typed(
+            b'Yellow, and black, and pale, and hectic red,')
+
+    #FIXME: Actually, let's *NOT* test either of these. It's unfortunate that
+    #these are being type-checked as well, but... what can you do, huh? *sigh*
+    # with raises(BeartypeCallHintParamViolation):
+    #     autumns_being(
+    #         b'Are driven, like ghosts from an enchanter fleeing,')
+    # with raises(BeartypeCallHintParamViolation):
+    #     unseen_presence(
+    #         b'Who chariotest to their dark wintry bed')

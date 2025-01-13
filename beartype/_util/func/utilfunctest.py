@@ -16,7 +16,10 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._cave._cavefast import MethodBoundInstanceOrClassType
+from beartype._cave._cavefast import (
+    MethodBoundInstanceOrClassType,
+    MethodDecoratorClassOrStaticTypes,
+)
 from beartype._data.hint.datahintpep import TypeIs
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
@@ -176,6 +179,64 @@ def die_unless_func_boundmethod(
     # Else, this object is a bound method descriptor.
 
 
+#FIXME: Unit test us up, please.
+def die_unless_func_class_or_static_method(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **C-based unbound class or
+    static method descriptor** (i.e., method decorated by either the builtin
+    :class:`classmethod` or :class:`staticmethod` decorators, yielding a
+    non-callable instance of that decorator class implemented in low-level C and
+    accessible via the low-level :attr:`object.__dict__` dictionary rather than
+    as class or instance attributes).
+
+    Parameters
+    ----------
+    func : Any
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a class or static method descriptor.
+
+    See Also
+    --------
+    :func:`.is_func_classmethod`
+        Further details.
+    '''
+
+    # If this object is neither a class *NOR* static method descriptor, raise an
+    # exception.
+    if not isinstance(func, MethodDecoratorClassOrStaticTypes):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not '
+            f'C-based unbound @classmethod or @staticmethod descriptor.'
+        )
+    # Else, this object is a class or static method descriptor.
+
+
+#FIXME: Currently unused, but extensively tested. *shrug*
 def die_unless_func_classmethod(
     # Mandatory parameters.
     func: Any,
@@ -285,6 +346,7 @@ def die_unless_func_property(
     # Else, this object is a property method descriptor.
 
 
+#FIXME: Currently unused, but extensively tested. *shrug*
 def die_unless_func_staticmethod(
     # Mandatory parameters.
     func: Any,

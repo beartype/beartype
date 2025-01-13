@@ -30,9 +30,8 @@ def test_decor_functools_lru_cache() -> None:
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintParamViolation,
-        BeartypeDecorWrappeeException,
+        # BeartypeDecorWrappeeException,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_3_8
     from functools import lru_cache
     from pytest import raises
 
@@ -58,38 +57,69 @@ def test_decor_functools_lru_cache() -> None:
         increment_int_goodly('The lone couch of his everlasting sleep:—')
 
     # ....................{ NON-IDEAL                      }....................
-    # If the active Python interpreter targets Python 3.8, then @beartype fails
-    # to support the edge case of non-ideal decoration ordering. In this case,
-    # assert that @beartype raises the expected exception.
-    if IS_PYTHON_3_8:
-        with raises(BeartypeDecorWrappeeException):
-            @beartype
-            @lru_cache(maxsize=3)
-            def increment_int_badly(n: int) -> int:
-                '''
-                Arbitrary :func:`functools.lru_cache`-memoized callable
-                decorated by :func:`beartype.beartype` in a non-ideal order.
-                '''
+    @beartype
+    @lru_cache(maxsize=3)
+    def increment_int_badly(n: int) -> int:
+        '''
+        Arbitrary :func:`functools.lru_cache`-memoized callable decorated by
+        :func:`beartype.beartype` in a non-ideal order.
+        '''
 
-                return n + 1
-    # Else, the active Python interpreter targets Python >= 3.9. In this case,
-    # @beartype supports the edge case of non-ideal decoration ordering.
-    else:
-        @beartype
+        return n + 1
+
+    # Assert that the non-ideal memoized callable when passed a valid parameter
+    # returns the expected value.
+    assert increment_int_badly(24) == 25
+
+    # Assert that the non-ideal memoized callable when passed an invalid
+    # parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        increment_int_badly('Gentle, and brave, and generous,—no lorn bard')
+
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class IntIncrementer(object):
+        '''
+        Arbitrary :func:`beartype.beartype`-decorated class defining various
+        :func:`functools.lru_cache`-memoized methods exercising edge cases.
+        '''
+
+        # ....................{ NON-IDEAL ~ static         }....................
+        @staticmethod
         @lru_cache(maxsize=3)
-        def increment_int_badly(n: int) -> int:
+        def increment_int_badly_statically(n: int) -> int:
             '''
-            Arbitrary :func:`functools.lru_cache`-memoized callable decorated by
-            :func:`beartype.beartype` in a non-ideal order.
+            Arbitrary :func:`functools.lru_cache`-memoized static method
+            implicitly decorated by :func:`beartype.beartype` in a non-ideal
+            order.
+
+            This static method exercises an edge cases, as:
+
+            #. The :func:`.lru_cache` decorator creates and returns a
+               **pseudo-callable object** (i.e., object callable only due to the
+               type of that object defining the ``__call__()`` dunder method)
+               rather than a pure-Python function.
+            #. The builtin :class:`staticmethod` type then creates and returns a
+               C-based descriptor object calling that pseudo-callable object.
+            #. The :func:`beartype.beartype` decorator then:
+
+               #. Unwraps that C-based descriptor object to access that
+                  pseudo-callable object.
+               #. Recreates that C-based descriptor object to instead wrap a
+                  dynamically generated type-checking wrapper function calling
+                  that pseudo-callable object.
+
+            In short, madness.
             '''
 
             return n + 1
 
-        # Assert that the non-ideal memoized callable when passed a valid parameter
-        # returns the expected return.
-        assert increment_int_badly(24) == 25
+    # Assert that the non-ideal memoized callable when passed a valid parameter
+    # returns the expected value.
+    assert IntIncrementer.increment_int_badly_statically(42) == 43
 
-        # Assert that the non-ideal memoized callable when passed an invalid
-        # parameter raises the expected exception.
-        with raises(BeartypeCallHintParamViolation):
-            increment_int_badly('Gentle, and brave, and generous,—no lorn bard')
+    # Assert that the non-ideal memoized callable when passed an invalid
+    # parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        IntIncrementer.increment_int_badly_statically(
+            'As if the ebbing air had but one wave;')
