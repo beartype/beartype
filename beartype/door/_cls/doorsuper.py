@@ -35,9 +35,13 @@ from beartype.typing import (
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahintpep import (
-    T_Hint,
-)
+from beartype._data.hint.datahinttyping import T
+
+#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
+#new stable release.
+# from beartype._data.hint.datahintpep import (
+#     T_Hint,
+# )
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -52,7 +56,11 @@ from beartype._util.utilobject import get_object_type_basename
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
-class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
+
+#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
+#new stable release.
+# class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
+class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically
@@ -118,7 +126,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, hint: T_Hint) -> None:
+    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module
+    #releases a new stable release.
+    # def __init__(self, hint: T_Hint) -> None:
+    def __init__(self, hint: T) -> None:
         '''
         Initialize this type hint wrapper from the passed low-level type hint.
 
@@ -410,7 +421,10 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
 
 
     @property
-    def hint(self) -> T_Hint:
+    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module
+    #releases a new stable release.
+    # def hint(self) -> T_Hint:
+    def hint(self) -> T:
         '''
         **Original type hint** (i.e., low-level PEP-compliant type hint wrapped
         by this wrapper at :meth:`TypeHint.__init__` instantiation time).
@@ -502,7 +516,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
         '''
 
         # Return true only if this hint is ignorable.
-        return sanify_hint_child(self._hint) is Any
+        return sanify_hint_child(self._hint) is Any  # pyright: ignore
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

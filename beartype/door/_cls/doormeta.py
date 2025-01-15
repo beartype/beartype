@@ -20,7 +20,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import NoneType
-from beartype._data.hint.datahintpep import Hint
+# from beartype._data.hint.datahintpep import Hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from threading import RLock
@@ -81,7 +81,10 @@ class _TypeHintMeta(ABCMeta):
     # "pyright" is nonsensical (i.e., 'error: Cannot access attribute "TypeHint"
     # for class "object"'), we assume "pyright" to be broken in some subtle
     # respect. Until fixed, we fallback to this coarse signature. *shrug*
-    def __call__(cls: '_TypeHintMeta', hint: Hint):  # type: ignore[override]
+    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases
+    #a new stable release.
+    # def __call__(cls: '_TypeHintMeta', hint: Hint):  # type: ignore[override]
+    def __call__(cls: '_TypeHintMeta', hint: object):  # type: ignore[override]
         '''
         Factory constructor magically instantiating and returning a singleton
         instance of the concrete subclass of the :class:`beartype.door.TypeHint`
@@ -176,7 +179,10 @@ class _TypeHintMeta(ABCMeta):
         return wrapper
 
     # ..................{ PRIVATE                            }..................
-    def _make_wrapper(cls: '_TypeHintMeta', hint: Hint):
+    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases
+    #a new stable release.
+    # def _make_wrapper(cls: '_TypeHintMeta', hint: Hint):
+    def _make_wrapper(cls: '_TypeHintMeta', hint: object):
         '''
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping
@@ -239,7 +245,7 @@ class _TypeHintMeta(ABCMeta):
         # Concrete "TypeHint" subclass handling this hint if this hint is
         # supported by an existing "TypeHint" subclass *OR* raise an exception
         # otherwise (i.e., if this hint is currently unsupported).
-        wrapper_subclass = get_typehint_subclass(hint)
+        wrapper_subclass = get_typehint_subclass(hint)  # pyright: ignore
         # print(f'!!!!!!!!!!!!! [ in {repr(cls)}.__new__() ] !!!!!!!!!!!!!!!')
 
         # Type hint wrapper wrapping this hint as a new singleton instance of

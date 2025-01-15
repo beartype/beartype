@@ -102,7 +102,7 @@ if TYPE_CHECKING:
 # "typing" module *OR* the third-party "typing_extensions" module declares these
 # factories, falling back to various builtin types if none do.
 else:
-    # ....................{ PEP 647                        }....................
+    # ....................{ PEP 742                        }....................
     TypeIs = import_typing_attr_or_fallback(
         'TypeIs', TypeHintTypeFactory(bool))
 
