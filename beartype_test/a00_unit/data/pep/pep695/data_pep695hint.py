@@ -39,6 +39,7 @@ from beartype.typing import (
 )
 from beartype.vale import Is
 from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+    Pep585IterableTContainerT,
     Pep585IterableTupleSTContainerTupleST,
 )
 
@@ -77,30 +78,41 @@ also flattening directly nested unions into the top-level union.
 # ..................{ PEP 585                                }..................
 type AliasPep585Dict[S, T] = dict[S, T]
 '''
-Type alias aliasing a PEP 585-compliant dictionary subscripted by the same
+Type alias aliasing a :pep:`585`-compliant dictionary subscripted by the same
 type variables as those parametrizing this alias.
-'''
-
-
-type AliasPep585IterableTupleSTContainerTupleST[S, T] = (
-    Pep585IterableTupleSTContainerTupleST[S, T])
-'''
-Type alias aliasing a PEP 585-compliant generic subscripted by the same type
-variables as those parametrizing this alias.
 '''
 
 
 type AliasPep585TupleFixed[S, T] = tuple[S, T]
 '''
-Type alias aliasing a PEP 585-compliant fixed-length tuple type hint
+Type alias aliasing a :pep:`585`-compliant fixed-length tuple type hint
 subscripted by the same type variables as those parametrizing this alias.
 '''
 
 
 type AliasPep585Type[T] = type[T]
 '''
-Type alias aliasing a PEP 585-compliant subclass type hint subscripted by the
+Type alias aliasing a :pep:`585`-compliant subclass type hint subscripted by the
 same type variable as that parametrizing this alias.
+'''
+
+# ..................{ PEP 585 ~ generic                      }..................
+type AliasPep585IterableTupleSTContainerTupleST[S, T] = (
+    Pep585IterableTupleSTContainerTupleST[S, T])
+'''
+Type alias aliasing a :pep:`585`-compliant generic subscripted by the same type
+variables as those parametrizing this alias.
+'''
+
+
+type AliasPep585IterableTContainerT[T] = T | Pep585IterableTContainerT[T] | None
+'''
+Type alias aliasing a :pep:`604`-compliant union over a type variable, a
+:pep:`585`-compliant generic subscripted by that same type variable, and
+:data:`None`.
+
+This alias intentionally exercises an edge case that previously induced infinite
+recursion. Badness lurks below.
 '''
 
 # ..................{ PEP 593                                }..................
