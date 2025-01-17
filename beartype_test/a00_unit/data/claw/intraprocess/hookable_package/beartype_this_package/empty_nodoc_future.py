@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2024 Beartype authors.
+# Copyright (c) 2014-2025 Beartype authors.
 # See "LICENSE" for further details.
 
 # Semantically empty submodule containing only only zero or more whitespace

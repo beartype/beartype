@@ -1,5 +1,5 @@
 .. # ------------------( LICENSE                             )------------------
-.. # Copyright (c) 2014-2024 Beartype authors.
+.. # Copyright (c) 2014-2025 Beartype authors.
 .. # See "LICENSE" for further details.
 .. #
 .. # ------------------( SYNOPSIS                            )------------------
@@ -319,7 +319,7 @@ Procedural API
        Despite their differing child hints, these two hints are broadly similar
        enough to be reasonably comparable.
      * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
-       are *not* semantically related. Whereas the first hints conveys a
+       are *not* semantically related. Whereas the first hint conveys a
        container semantic, the second hint conveys a callable semantic. Since
        these two semantics are unrelated, these two hints are dissimilar
        enough to *not* be reasonably comparable.

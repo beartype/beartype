@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2024 Beartype authors.
+# Copyright (c) 2014-2025 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -66,7 +66,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Pep484GenericSubT,
         Pep484GenericST,
         Pep484GenericSInt,
-        Pep484GenericIntInt,
+        # Pep484GenericIntInt,
         Pep585SequenceT,
     )
     from collections.abc import (
@@ -99,7 +99,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         Tuple,
         Type,
         TypedDict,
-        TypeVar,
+        # TypeVar,
         Union,
     )
 

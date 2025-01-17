@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2024 Beartype authors.
+# Copyright (c) 2014-2025 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -178,7 +178,7 @@ attribution, see the `contributors graph`_ for this project.
 '''
 
 
-COPYRIGHT = '2014-2024 Beartype authors'
+COPYRIGHT = '2014-2025 Beartype authors'
 '''
 Legally binding copyright line excluding the license-specific prefix (e.g.,
 ``"Copyright (c)"``).
