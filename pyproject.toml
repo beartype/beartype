@@ -138,7 +138,7 @@ dynamic = [
 # release of the oldest version of CPython still under active development.
 # Obsolete and insecure versions of CPython that have reached their official End
 # of Life (EoL) (e.g., Python 3.7) are explicitly unsupported.
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 # Mandatory runtime dependencies. This package intentionally requires no
 # mandatory runtime dependencies and hopefully never will.
@@ -304,7 +304,7 @@ test-tox = [
     # Required by optional Sphinx-specific integration tests.
     #
     # Note that Sphinx currently provokes unrelated test failures under Python
-    # 3.7 with  obscure deprecation warnings. Since *ALL* of this only applies
+    # 3.7 with obscure deprecation warnings. Since *ALL* of this only applies
     # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
     # installing Sphinx under Python 3.7. The exception resembles:
     #     FAILED
