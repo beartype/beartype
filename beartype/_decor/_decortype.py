@@ -265,9 +265,20 @@ def beartype_type(
             attr_value_beartyped = beartype_object(
                 obj=attr_value, conf=conf, cls_stack=cls_stack)
 
-            # Replace this undecorated attribute with this decorated attribute.
-            set_type_attr(cls, attr_name, attr_value_beartyped)
-            # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+            # If this decorated attribute differs from the original attribute,
+            # @beartype actually decorated this attribute with type-checking. In
+            # this case...
+            if attr_value_beartyped is not attr_value:
+                # Replace this undecorated attribute with this decorated
+                # attribute.
+                set_type_attr(cls, attr_name, attr_value_beartyped)
+                # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+            # Else, this decorated attribute is the same as the original
+            # attribute, implying that @beartype refused to decorate this
+            # attribute with type-checking (e.g., due to this attribute being
+            # unannotated by type hints). In this case, silently preserve this
+            # attribute as is rather than brutally and uselessly replacing this
+            # attribute with itself.
             # print(f'type: {type(attr_value)}; dir: {dir(attr_value)}')
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
