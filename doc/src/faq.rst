@@ -811,7 +811,7 @@ type is an instance of the type it mocks, though?
 
    >>> from beartype import beartype
    >>> @beartype
-   ... def muh_func(self, muh_arg: OriginalType): print('Yolo, bro.')
+   ... def muh_func(muh_arg: OriginalType): print('Yolo, bro.')
    >>> muh_func(MockType())
    Yolo, bro.
 
