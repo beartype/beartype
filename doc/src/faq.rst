@@ -808,6 +808,9 @@ type is an instance of the type it mocks, though?
    >>> class MockType:
    ...     @property
    ...     def __class__(self) -> type: return OriginalType
+   ...     @__class__.setter
+   ...     def __class__(self, value: type) -> None:
+   ...         super.__class__ = value
 
    >>> from beartype import beartype
    >>> @beartype
