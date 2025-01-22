@@ -22,7 +22,7 @@ from beartype_test._util.mark.pytskip import (
     skip_if_python_version_less_than,
 )
 
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ builtin                    }....................
 def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
@@ -314,3 +314,172 @@ def test_decor_type_descriptor_builtin_chain() -> None:
         to_love_and_wonder.the_varying_roof_of_heaven ==
         'And the green earth lost in his heart its claims'
     )
+
+# ....................{ TESTS ~ python                     }....................
+def test_decor_type_descriptor_python() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **pure-Python method
+    descriptors** (i.e., methods decorated by pure-Python types satisfying the
+    descriptor protocol by declaring at least the ``__get__()`` dunder method).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype.typing import Optional
+    from beartype._util.utilobject import SENTINEL
+    from collections.abc import Callable
+    from functools import wraps
+    from pytest import raises
+
+    # ....................{ DESCRIPTORS                    }....................
+    class flexible_descriptor(object):
+        '''
+        **Flexible class or bound method descriptor** (i.e., pure-Python object
+        whose ``__get__()`` dunder method transparently supports access of the
+        underlying pure-Python callable decorated by this descriptor as both a
+        class method *and* bound method).
+        '''
+
+        def __init__(self, func: Callable) -> None:
+            '''
+            Initialize this method descriptor with the passed function.
+            '''
+
+            # Classify all passed parameters.
+            # self._func = beartype(func)
+            self._func = func
+
+
+        def __get__(
+            self,
+            func_self: object = SENTINEL,
+            func_cls: Optional[type] = SENTINEL,
+        ) -> Callable:
+            '''
+            **Flexible class or bound method descriptor getter** (i.e., method
+            decorating the low-level callable originally decorated by this
+            descriptor by being passed to the :meth:`__init__` method with a
+            higher-level wrapper, which this method then returns).
+            '''
+
+            # First parameter passed to the low-level callable decorated by this
+            # descriptor, conditionally depending on whether this callable is
+            # called as:
+            # * A class method, in which case this parameter is "cls".
+            # * A bound method, in which case this parameter is "self".
+            self_or_cls = func_self if func_self is not None else func_cls
+
+            # @beartype
+            @wraps(self._func)
+            def _func_flexible(*args, **kwargs):
+                '''
+                High-level closure wrapping the low-level callable decorated by
+                this descriptor with:
+
+                * :func:`beartype.beartype`-based type-checking.
+                * Functionality enabling that callable to be flexibly called as
+                  either a class *or* bound method.
+                '''
+
+                return self._func(self_or_cls, *args, **kwargs)
+
+            # Return this closure.
+            return _func_flexible
+
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class AndStillTheseTwo(object):
+        '''
+        Arbitrary :func:`beartype.beartype`-decorated class defining a flexible
+        descriptor.
+        '''
+
+        _in_cathedral_cavern = 'Like natural sculpture in cathedral cavern;'
+        '''
+        Arbitrary class variable.
+        '''
+
+
+        def __init__(self) -> None:
+            '''
+            Initialize this object.
+            '''
+
+            # Arbitrary instance variable.
+            self._the_frozen_god = 'The frozen God still couchant on the earth,'
+
+
+        @flexible_descriptor
+        @beartype
+        def were_postured_motionless(
+            self, like_natural_sculpture: str) -> str:
+            '''
+            Arbitrary flexible method safely callable as either a class *or*
+            bound method, defined via the flexible descriptor defined above.
+
+            Note that this method is *directly* decorated by the
+            :func:`beartype.beartype` decorator. This is non-ideal. Ideally,
+            the ``_func_flexible`` closure dynamically created and returned by
+            the :class:`flexible_descriptor.__get__` dunder method would instead
+            be decorated by the :func:`beartype.beartype` decorator. Sadly, the
+            latter approach fails. Why? Because that closure is *not* explicitly
+            passed the ``self`` parameter passed to this method. However,
+            decorating that closure with :func:`beartype.beartype` would cause
+            :func:`beartype.beartype` to (in order):
+
+            #. Unwrap that closure to this decorated
+               :meth:`were_postured_motionless` method.
+            #. Parse the signature of this decorated method as if that were also
+               the signature of that closure.
+            #. Erroneously generate type-checking code expecting the *second*
+               (rather than *first*) parameter to be this passed
+               ``like_natural_sculpture`` parameter.
+            '''
+
+            # Return the concatenation of the passed string parameter *AND*...
+            return like_natural_sculpture + (
+                # If this flexible method is called as a class method, this
+                # class variable;
+                self._in_cathedral_cavern
+                if self is AndStillTheseTwo else
+                # Else, this flexible method is called as a bound method. In
+                # this case, this bound variable.
+                self._the_frozen_god
+            )
+
+    # ....................{ LOCALS                         }....................
+    # Instance of the above class.
+    still_couchant_on_the_earth = AndStillTheseTwo()
+
+    # ....................{ PASS                           }....................
+    # Assert that calling this flexible method as a class method when passed a
+    # valid parameter returns the expected value.
+    assert AndStillTheseTwo.were_postured_motionless(
+        'And still these two were postured motionless,') == (
+        'And still these two were postured motionless,'
+        'Like natural sculpture in cathedral cavern;'
+    )
+
+    #
+    # Assert that calling this flexible method as a bound method of this
+    # instance when passed a valid parameter returns the expected value.
+    assert still_couchant_on_the_earth.were_postured_motionless(
+        'And the sad Goddess weeping at his feet:') == (
+        'And the sad Goddess weeping at his feet:'
+        'The frozen God still couchant on the earth,'
+    )
+
+    # ....................{ FAIL                           }....................
+    # Assert that calling this flexible method as a class method when passed an
+    # invalid parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        AndStillTheseTwo.were_postured_motionless(
+            b'Until at length old Saturn lifted up')
+
+    # Assert that calling this flexible method as a bound method of this
+    # instance when passed an invalid parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        still_couchant_on_the_earth.were_postured_motionless(
+            b'His faded eyes, and saw his kingdom gone,')

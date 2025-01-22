@@ -160,52 +160,11 @@ def beartype_type(
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
     for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
-        # True only if this attribute is directly beartypeable (e.g., is either
-        # a function, class, or builtin method descriptor).
-        is_attr_beartypeable = isinstance(attr_value, TYPES_BEARTYPEABLE)
-
-        # If this attribute is *NOT* directly beartypeable (e.g., is neither a
-        # function, class, nor builtin method descriptor), this attribute
-        # *COULD* still be indirectly beartypeable. How? By being a non-standard
-        # object implemented by some third-party package wrapping a standard
-        # object that *is* directly beartypeable. Although the original use case
-        # was non-standard function wrappers implemented by the third-party
-        # Equinox package, this logic transparently generalizes to *ALL*
-        # third-party packages. Consequently, *ALL* third-party packages
-        # defining non-standard objects wrapping standard objects should
-        # endeavour to support @beartype by reproducing the general-purpose
-        # solution that Equinox adopted.
-        #
-        # Notably, third-party packages should ideally add "support for such
-        # monkey-patching, by adding a __setattr__() that checks for functions
-        # and wraps them into one of Equinox's function-wrappers." See also:
-        #     https://github.com/patrick-kidger/equinox/issues/584#issuecomment-1806260288
-        #
-        # Specifically, if this attribute is *NOT* directly beartypeable...
-        if not is_attr_beartypeable:
-            # Uncomment to debug this insanity. *sigh*
-            # attr_value_old = attr_value
-
-            # Override the previously retrieved static value of this attribute
-            # (i.e., the direct value of this attribute *WITHOUT* regard to
-            # dynamic descriptor lookup, which in the case of a standard
-            # descriptor builtin like @classmethod is that C-based @classmethod
-            # descriptor itself) with the dynamic value of this attribute
-            # (i.e., the indirect value of this attribute *WITH* regard to
-            # dynamic descriptor lookup, which in the case of a standard
-            # descriptor builtin like @classmethod is the pure-Python function
-            # wrapped by that C-based @classmethod descriptor) if this attribute
-            # supports the descriptor protocol *OR* reduce to a noop otherwise.
-            attr_value = getattr(cls, attr_name)
-
-            # True only if this attribute is directly beartypeable.
-            is_attr_beartypeable = isinstance(attr_value, TYPES_BEARTYPEABLE)
-        # Else, this attribute is directly beartypeable.
-
         # If this attribute is...
         if (
-            # Now directly beartypeable *AND*...
-            is_attr_beartypeable and
+            # True only if this attribute is directly beartypeable (e.g., is either
+            # a function, class, or builtin method descriptor).
+            isinstance(attr_value, TYPES_BEARTYPEABLE) and
             # It is *NOT* the case that...
             #
             # Note that this condition intentionally ignores class variables
@@ -262,7 +221,7 @@ def beartype_type(
         ):
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
-            attr_value_beartyped = beartype_object(
+            attr_value_beartyped = beartype_object(  # type: ignore[type-var]
                 obj=attr_value, conf=conf, cls_stack=cls_stack)
 
             # If this decorated attribute differs from the original attribute,

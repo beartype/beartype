@@ -334,6 +334,7 @@ def beartype_func(
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(decor_meta)
+    # print(f'func_wrapper_code: {func_wrapper_code}')
 
     # If that callable requires *NO* type-checking, silently reduce to a noop
     # and thus the identity decorator by returning that callable as is.
