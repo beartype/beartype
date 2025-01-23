@@ -35,6 +35,7 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
 from beartype._check.convert._reduce._pep.redpep484604 import (
     reduce_hint_pep484604)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
+from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
@@ -119,7 +120,6 @@ from beartype._util.hint.pep.proposal.pep557 import (
     reduce_hint_pep557_initvar)
 from beartype._util.hint.pep.proposal.pep585 import (
     reduce_hint_pep585_builtin_subscripted_unknown)
-from beartype._util.hint.pep.proposal.pep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.pep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_args,
