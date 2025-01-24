@@ -33,6 +33,7 @@ third-party :mod:`equinox` package.
 #         with multithreaded code, and JAX is multithreaded, so this will
 #         likely lead to a deadlock.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS                              }....................
 def test_equinox_filter_jit() -> None:
@@ -144,6 +145,8 @@ def test_equinox_filter_jit() -> None:
         appointed_to_conduct_him('Of those belovèd eyes, the Poet sate')
 
 
+#FIXME: Resurrect this test *AFTER* resurrecting Equinox integration, please.
+@skip('Currently broken due to @beartype temporarily dropping Equinox support.')
 def test_equinox_module_subclass() -> None:
     '''
     Functional test validating that the :mod:`beartype` package successfully
