@@ -110,14 +110,20 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import (
     # HintGenericSubscriptedType,
-    HintPep695Type,
+    HintPep695TypeAlias,
+    Pep695ParameterizableTypes,
 )
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahinttyping import (
+    Pep695Parameterizable,
+    TupleTypeVars,
+)
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep695_subscripted(hint: Hint) -> bool:
@@ -190,13 +196,69 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
 
     # Return true only if this origin is a PEP 695-compliant unsubscripted type
     # alias. Yes. It really is this non-trivial, folks. *sigh*
-    return isinstance(hint_origin, HintPep695Type)
+    return isinstance(hint_origin, HintPep695TypeAlias)
 
 # ....................{ GETTERS                            }....................
+#FIXME: Generalize this return to return a tuple of :pep:`484`-compliant type
+#variables, pep:`612`-compliant parameter specifications, or
+#:pep:`646`-compliant tuple type variables. Too much work for too little gain at
+#the moment, sadly. *sigh*
+def get_hint_pep695_typevars(
+    # Mandatory parameters.
+    obj: Pep695Parameterizable,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> tuple:
+# ) -> TupleTypeVars:
+    '''
+    Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
+    type variables, pep:`612`-compliant parameter specifications, and
+    :pep:`646`-compliant tuple type variables) implicitly instantiated with
+    :pep:`695`-compliant type parameter syntax parametrizing the passed
+    **parameterizable** (i.e., pure-Python class, pure-Python function, or
+    :pep:`695`-compliant type alias).
+
+    Parameters
+    ----------
+    obj : Pep695Parameterizable
+        :pep:`695`-compliant parameterizable to be inspected.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    TupleTypeVars
+        Tuple of all type parameters parametrizing this parameterizable.
+    '''
+
+    # If this object is *NOT* parameterizable under PEP 695, raise an exception.
+    if not isinstance(obj, Pep695ParameterizableTypes):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}{repr(obj)} not PEP 695-parameterizable '
+            f'(i.e., neither pure-Python type, pure-Python function, nor '
+            f'PEP 695-compliant type alias).'
+        )
+    # Else, this object is parameterizable under PEP 695.
+
+    # Return either...
+    return (
+        # If the active Python interpreter targets Python >= 3.12 and thus
+        # supports PEP 695, the PEP 695-compliant tuple of all type parameters
+        # parametrizing this object.
+        obj.__type_params__  # type: ignore[union-attr]
+        if IS_PYTHON_AT_LEAST_3_12 else
+        # Else, the active Python interpreter targets Python <= 3.11 and thus
+        # fails to support PEP 695. In this case, the empty tuple.
+        ()
+    )
+
+
 #FIXME: Unit test us up, please.
 def get_hint_pep695_unsubscripted_alias(
     # Mandatory parameters.
-    hint: HintPep695Type,
+    hint: HintPep695TypeAlias,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -217,11 +279,11 @@ def get_hint_pep695_unsubscripted_alias(
 
     Parameters
     ----------
-    hint : HintPep695Type
+    hint : HintPep695TypeAlias
         Unsubscripted type alias to be inspected.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -239,7 +301,7 @@ def get_hint_pep695_unsubscripted_alias(
 
     # If this hint is *NOT* a PEP 695-compliant unsubscripted type alias, raise
     # an exception.
-    if not isinstance(hint, HintPep695Type):
+    if not isinstance(hint, HintPep695TypeAlias):
         raise BeartypeDecorHintPep695Exception(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 unsubscripted type alias.'
@@ -256,7 +318,7 @@ def get_hint_pep695_unsubscripted_alias(
         hint = hint.__value__  # type: ignore[attr-defined]
 
         # If this type hint is *NOT* a nested type alias, break this iteration.
-        if not isinstance(hint, HintPep695Type):
+        if not isinstance(hint, HintPep695TypeAlias):
             break
         # Else, this type hint is a nested type alias. In this case, continue
         # iteratively unwrapping this nested type alias.
@@ -267,7 +329,7 @@ def get_hint_pep695_unsubscripted_alias(
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubscripted_forwardrefs(
     # Mandatory parameters.
-    hint: HintPep695Type,
+    hint: HintPep695TypeAlias,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -292,7 +354,7 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
 
     Parameters
     ----------
-    hint : HintPep695Type
+    hint : HintPep695TypeAlias
         Unsubscripted type alias to be iterated over.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this

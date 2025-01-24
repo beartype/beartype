@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep695Exception
-from beartype._cave._cavefast import HintPep695Type
+from beartype._cave._cavefast import HintPep695TypeAlias
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.hint.pep.proposal.pep695 import (
@@ -22,7 +22,7 @@ from beartype._util.hint.pep.proposal.pep695 import (
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep695_unsubscripted(
-    hint: HintPep695Type, exception_prefix: str, **kwargs) -> Hint:
+    hint: HintPep695TypeAlias, exception_prefix: str, **kwargs) -> Hint:
     '''
     Reduce the passed :pep:`695`-compliant **unsubscripted type alias** (i.e.,
     object created by a statement of the form ``type {alias_name} =
@@ -33,7 +33,7 @@ def reduce_hint_pep695_unsubscripted(
 
     Parameters
     ----------
-    hint : HintPep695Type
+    hint : HintPep695TypeAlias
         Unsubscripted type alias to be reduced.
     exception_prefix : str
         Human-readable substring prefixing exception messages raised by this

@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2025 Beartype authors.
 # See "LICENSE" for further details.
 
+# ....................{ TESTS                              }....................
 '''
 **Beartype** :pep:`484`-compliant **type variable reduction** unit tests.
 
@@ -19,7 +20,7 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep484_typevars_to_hints() -> None:
     '''
-    Test the
+    Test the private
     :func:`beartype._check.convert._reduce._pep.pep484.redpep484typevar._get_hint_pep484_typevars_to_hints`
     getter.
     '''
@@ -121,9 +122,9 @@ def test_get_hint_pep484_typevars_to_hints() -> None:
 # ....................{ TESTS ~ reduce                     }....................
 def test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     '''
-    Test the public
+    Test the private
     :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
-    getter.
+    reducer.
     '''
 
     # ....................{ IMPORTS                        }....................

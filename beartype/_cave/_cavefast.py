@@ -999,7 +999,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695TypeAlias" is not valid as a type [valid-type]
 #     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
     class HintGenericSubscriptedType(object): pass
@@ -1167,15 +1167,15 @@ objects annotating variadic parameters with syntax resembling
 # type-checker, ignore false positives complaining that this type is not a type.
 # Notably, mypy inexplicably refuses to accept this by emitting "errors"
 # resembling the following wherever this type is accessed:
-#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695Type" is not valid as a type [valid-type]
+#     beartype._util.hint.pep.proposal.pep695.py:120: error: Variable "beartype._cave._cavefast.HintPep695TypeAlias" is not valid as a type [valid-type]
 #     beartype._util.hint.pep.proposal.pep695.py:120: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 if TYPE_CHECKING:
-    class HintPep695Type(object): pass
+    class HintPep695TypeAlias(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
     # Define this type as either...
-    HintPep695Type = (
+    HintPep695TypeAlias = (
         # If the active Python interpreter targets at least Python >= 3.12 and
         # thus supports PEP 695, this type;
         _typing.TypeAliasType
@@ -1192,6 +1192,21 @@ else:
     This type is a version-agnostic generalization of the standard
     :class:`typing.TypeAliasType` type available only under Python >= 3.12.
     '''
+
+
+Pep695ParameterizableTypes = (type, FunctionType, HintPep695TypeAlias)
+'''
+Tuple of all :pep:`695`-compliant **parameterizables** (i.e., objects that may
+be parametrized by :pep:`695`-compliant lists of one or more implicitly
+instantiated :pep:`484`-compliant type variables, pep:`612`-compliant parameter
+specifications, or :pep:`646`-compliant tuple type variables).
+
+Specifically, this tuple matches:
+
+* *Any* pure-Python class.
+* *Any* pure-Python function.
+* *Any* :pep:`695`-compliant type alias.
+'''
 
 # ....................{ TYPES ~ scalar                     }....................
 StrType = str    # Well, isn't that special.

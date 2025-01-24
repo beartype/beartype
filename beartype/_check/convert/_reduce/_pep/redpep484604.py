@@ -61,7 +61,7 @@ def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
 
     Parameters
     ----------
-    hint : HintPep695Type
+    hint : HintPep695TypeAlias
         Union to be reduced.
 
     All remaining passed keyword parameters are passed to the parent

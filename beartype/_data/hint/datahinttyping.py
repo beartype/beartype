@@ -48,7 +48,9 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import (
+    FunctionType,
     HintPep604Type,
+    HintPep695TypeAlias,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -733,6 +735,24 @@ See Also
 --------
 :data:`.HINT_PEP484585_FORWARDREF_TYPES`
     Further details.
+'''
+
+# ....................{ PEP 695                            }....................
+# Type hints required to fully comply with PEP 695.
+
+Pep695Parameterizable = Union[type, FunctionType, HintPep695TypeAlias]
+'''
+:pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**
+(i.e., object that may be parametrized by a :pep:`695`-compliant list of one or
+more implicitly instantiated :pep:`484`-compliant type variables,
+pep:`612`-compliant parameter specifications, or :pep:`646`-compliant tuple type
+variables).
+
+Specifically, this hint matches:
+
+* *Any* pure-Python class.
+* *Any* pure-Python function.
+* *Any* :pep:`695`-compliant type alias.
 '''
 
 # ....................{ TYPE                               }....................

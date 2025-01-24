@@ -66,6 +66,23 @@ def unit_test_is_hint_pep695_subscripted() -> None:
     # yet to be subscripted by a concrete type.
     assert is_hint_pep695_subscripted(colossal_skeleton) is False
 
+# ....................{ TESTS ~ getter                     }....................
+def unit_test_get_hint_pep695_typevars() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_subscripted`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_typevars
+
+    #FIXME: Implement us up, please.
+    # ....................{ LOCALS                         }....................
+    # Parametrized type alias.
+    # type 
+
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
