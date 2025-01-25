@@ -119,7 +119,7 @@ from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     Pep695Parameterizable,
-    TupleTypeVars,
+    TupleTypeParams,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
@@ -199,22 +199,17 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     return isinstance(hint_origin, HintPep695TypeAlias)
 
 # ....................{ GETTERS                            }....................
-#FIXME: Generalize this return to return a tuple of :pep:`484`-compliant type
-#variables, pep:`612`-compliant parameter specifications, or
-#:pep:`646`-compliant tuple type variables. Too much work for too little gain at
-#the moment, sadly. *sigh*
 def get_hint_pep695_typevars(
     # Mandatory parameters.
     obj: Pep695Parameterizable,
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> tuple:
-# ) -> TupleTypeVars:
+) -> TupleTypeParams:
     '''
     Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
     type variables, pep:`612`-compliant parameter specifications, and
-    :pep:`646`-compliant tuple type variables) implicitly instantiated with
+    :pep:`646`-compliant type variable tuples) implicitly instantiated with
     :pep:`695`-compliant type parameter syntax parametrizing the passed
     **parameterizable** (i.e., pure-Python class, pure-Python function, or
     :pep:`695`-compliant type alias).
@@ -229,7 +224,7 @@ def get_hint_pep695_typevars(
 
     Returns
     -------
-    TupleTypeVars
+    TupleTypeParams
         Tuple of all type parameters parametrizing this parameterizable.
     '''
 
@@ -247,7 +242,7 @@ def get_hint_pep695_typevars(
         # If the active Python interpreter targets Python >= 3.12 and thus
         # supports PEP 695, the PEP 695-compliant tuple of all type parameters
         # parametrizing this object.
-        obj.__type_params__  # type: ignore[union-attr]
+        obj.__type_params__  # type: ignore[return-value,union-attr]
         if IS_PYTHON_AT_LEAST_3_12 else
         # Else, the active Python interpreter targets Python <= 3.11 and thus
         # fails to support PEP 695. In this case, the empty tuple.

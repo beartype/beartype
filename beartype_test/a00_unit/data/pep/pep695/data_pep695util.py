@@ -76,12 +76,75 @@ def unit_test_get_hint_pep695_typevars() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from beartype.typing import (
+        Generic,
+        ParamSpec,
+        TypeVar,
+        TypeVarTuple,
+    )
     from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_typevars
 
-    #FIXME: Implement us up, please.
+    # ....................{ CLASSES                        }....................
+    class AndThenSpake[S]:  # <-- this is madness. this is PEP 695.
+        '''
+        Class parametrized by *only* a :pep:`484`-compliant type variable.
+
+        Note that this class intentionally avoids subclassing *any* superclass,
+        including:
+
+        * The root :class:`object` superclass, as doing so raises unreadable
+          low-level Python exceptions resembling:
+
+          TypeError: Cannot create a consistent method resolution order (MRO)
+          for bases object, Generic
+
+        * The :pep:`484`-compliant :class:`typing.Generic` superclass, as doing
+          so raises unreadable low-level Python exceptions resembling:
+
+          TypeError: Cannot inherit from Generic[...] multiple times.
+
+        This is nonsensical and actively obstructs the declaration of generics.
+        Explicit is better than implicit -- especially when implicit stopped
+        making sense 50 PEP standards and 4 CPython minor versions ago.
+        '''
+
+        pass
+
+    # ....................{ CALLABLES                      }....................
+    def as_with_a_palsied_tongue[*Ss, **Q]():
+        '''
+        Function parametrized by *only* a :pep:`612`-compliant parameter
+        specifications and :pep:`646`-compliant tuple type variable.
+        '''
+
+        pass
+
     # ....................{ LOCALS                         }....................
-    # Parametrized type alias.
-    # type 
+    # Type alias parametrized by one of each possible type parameter.
+    type and_that_fair_kneeling_goddess[T, *Ts, **P] = int
+
+    # ....................{ ASSERTS                        }....................
+    # Assert this getter passed a pure-Python class returns the expected tuple.
+    AndThenSpake_typevars = get_hint_pep695_typevars(AndThenSpake)
+    assert len(AndThenSpake_typevars) == 1
+    assert isinstance(AndThenSpake_typevars[0], TypeVar)
+
+    # Assert this getter passed a pure-Python function returns the expected
+    # tuple.
+    as_with_a_palsied_tongue_typevars = get_hint_pep695_typevars(
+        as_with_a_palsied_tongue)
+    assert len(as_with_a_palsied_tongue_typevars) == 2
+    assert isinstance(as_with_a_palsied_tongue_typevars[0], TypeVarTuple)
+    assert isinstance(as_with_a_palsied_tongue_typevars[1], ParamSpec)
+
+    # Assert this getter passed a PEP 695-compliant type alias returns the
+    # expected tuple.
+    and_that_fair_kneeling_goddess_typevars = get_hint_pep695_typevars(
+        and_that_fair_kneeling_goddess)
+    assert len(and_that_fair_kneeling_goddess_typevars) == 3
+    assert isinstance(and_that_fair_kneeling_goddess_typevars[0], TypeVar)
+    assert isinstance(and_that_fair_kneeling_goddess_typevars[1], TypeVarTuple)
+    assert isinstance(and_that_fair_kneeling_goddess_typevars[2], ParamSpec)
 
 # ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:

@@ -199,7 +199,7 @@ def resolve_pep563(
     #
     # For the name of each annotated parameter and return of the passed callable
     # and the type hint annotating that parameter or return...
-    for arg_name, hint in arg_name_to_hint.items():
+    for hint in arg_name_to_hint.values():
         # If this hint is *NOT* stringified, this hint was either:
         # * Never postponed under PEP 563 (i.e., the module defining that
         #   callable did *NOT* import "from __future__ import annotations").
@@ -237,12 +237,9 @@ def resolve_pep563(
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
     decor_meta = make_beartype_call(
-        func=func,
-        conf=conf,
-        cls_stack=cls_stack,
-    )
+        func=func, conf=conf, cls_stack=cls_stack)
 
-    # Make a shallow copy of the dictionary to be returned. Why? Because the
+    # Shallow copy of the dictionary to be returned. Why? Because the
     # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
     # below, as the loop performing that assignment below necessarily iterates
     # over that dictionary. As with most languages, Python containers cannot be
@@ -261,25 +258,13 @@ def resolve_pep563(
     #   no faster or even slower than explicit iteration for small dictionary
     #   sizes, as "func.__annotations__" usually is).
     for arg_name, hint in arg_name_to_hint.items():
-        # If this hint is stringified, resolve this stringified type hint to the
-        # non-string type hint to which this string refers.
-        #
-        # Note that this test could technically yield a false positive in the
-        # unlikely edge case that this hint was previously postponed but has
-        # since been replaced in-place by its referent that is itself a PEP
-        # 484-compliant forward reference matching the PEP 563 format without
-        # actually being a PEP 563-postponed type hint. Since PEP 563 failed to
-        # provide solutions to this or any other outstanding runtime issues with
-        # PEP 563, there is *NOTHING* we can differentiate these two edge cases.
-        # Instead, we pretend everything will be okay. "Trust me, bro!"
-        if isinstance(hint, str):
-            arg_name_to_hint[arg_name] = resolve_hint(
-                hint=hint,
-                decor_meta=decor_meta,
-                exception_cls=BeartypePep563Exception,
-            )
-        # Else, this hint is *NOT* stringified. In this case, preserve this hint
-        # as is.
+        # Resolve this stringified type hint to the non-string type hint to
+        # which this string refers.
+        arg_name_to_hint[arg_name] = resolve_hint(
+            hint=hint,
+            decor_meta=decor_meta,
+            exception_cls=BeartypePep563Exception,
+        )
 
     # ..................{ RETURN                             }..................
     # Release this beartype call metadata back to its object pool.

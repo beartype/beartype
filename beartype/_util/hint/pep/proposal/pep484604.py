@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`604`-compliant **union type hint utilities**.
+Project-wide :pep:`484`- and :pep:`604`-compliant **union type hint utilities**
+(i.e., low-level callables handling union type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

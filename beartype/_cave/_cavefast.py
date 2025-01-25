@@ -47,6 +47,7 @@ from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12,
+    IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9,
 )
@@ -1162,6 +1163,41 @@ objects annotating variadic parameters with syntax resembling
 :obj:`typing.ParamSpec` parent object).
 '''
 
+# ....................{ TYPES ~ hint : pep : 646           }....................
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that these types are not
+# types.
+if TYPE_CHECKING:
+    class HintPep646TypeVarTupleType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker.
+#
+# If the active Python interpreter targets at least Python >= 3.11 and thus
+# supports PEP 646, define these types properly. *sigh*
+elif IS_PYTHON_AT_LEAST_3_11:
+    HintPep646TypeVarTupleType = _typing.TypeVarTuple
+    '''
+    C-based type of all :pep:`646`-compliant **type variable tuples** (i.e.,
+    low-level C-based :obj:`typing.TypeVarTuple` objects) if the active Python
+    interpreter targets Python >= 3.11 *or* :class:`.UnavailableType` otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`typing.TypeVarTuple` type available only under Python >= 3.11.
+    '''
+# Else, the active Python interpreter targets Python < 3.11 and thus fails to
+# support PEP 646. In this case, define these types as placeholders. *sigh*
+else:
+    HintPep646TypeVarTupleType = UnavailableType
+
+
+TypeParamTypes = (
+    _typing.TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType)
+'''
+Tuple of all **type parameters types** (i.e., types of :pep:`484`-compliant type
+variables, pep:`612`-compliant parameter specifications, and
+:pep:`646`-compliant type variable tuples).
+'''
+
 # ....................{ TYPES ~ hint : pep : 695           }....................
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
@@ -1196,10 +1232,10 @@ else:
 
 Pep695ParameterizableTypes = (type, FunctionType, HintPep695TypeAlias)
 '''
-Tuple of all :pep:`695`-compliant **parameterizables** (i.e., objects that may
-be parametrized by :pep:`695`-compliant lists of one or more implicitly
-instantiated :pep:`484`-compliant type variables, pep:`612`-compliant parameter
-specifications, or :pep:`646`-compliant tuple type variables).
+Tuple of all :pep:`695`-compliant **parameterizable types** (i.e., types of
+objects that may be parametrized by :pep:`695`-compliant lists of one or more
+implicitly instantiated :pep:`484`-compliant type variables, pep:`612`-compliant
+parameter specifications, or :pep:`646`-compliant type variable tuples).
 
 Specifically, this tuple matches:
 

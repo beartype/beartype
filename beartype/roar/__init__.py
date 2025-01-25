@@ -76,6 +76,7 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintPep484Exception as BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep484TypeVarException as BeartypeDecorHintPep484TypeVarException,
     BeartypeDecorHintPep484585Exception as BeartypeDecorHintPep484585Exception,
+    BeartypeDecorHintPep484612646Exception as BeartypeDecorHintPep484612646Exception,
     BeartypeDecorHintPep544Exception as BeartypeDecorHintPep544Exception,
     BeartypeDecorHintPep557Exception as BeartypeDecorHintPep557Exception,
     BeartypeDecorHintPep585Exception as BeartypeDecorHintPep585Exception,

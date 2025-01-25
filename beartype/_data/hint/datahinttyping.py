@@ -50,6 +50,8 @@ from beartype.typing import (
 from beartype._cave._cavefast import (
     FunctionType,
     HintPep604Type,
+    HintPep612ParamSpecType,
+    HintPep646TypeVarTupleType,
     HintPep695TypeAlias,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
@@ -737,6 +739,25 @@ See Also
     Further details.
 '''
 
+# ....................{ PEP (484|612|646)                  }....................
+# Type hints required to fully comply with PEP 484, 612, and 646 -- the
+# standards collectively covering type parameters.
+
+TypeParam = Union[TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
+'''
+PEP-compliant type hint matching a **type parameter** (i.e.,
+:pep:`484`-compliant type variable, pep:`612`-compliant parameter specification,
+or :pep:`646`-compliant type variable tuple).
+'''
+
+
+TupleTypeParams = Tuple[TypeParam, ...]
+'''
+:pep:`585`-compliant type hint matching a tuple of zero or more **type
+parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
+parameter specifications, or :pep:`646`-compliant type variable tuples).
+'''
+
 # ....................{ PEP 695                            }....................
 # Type hints required to fully comply with PEP 695.
 
@@ -745,8 +766,8 @@ Pep695Parameterizable = Union[type, FunctionType, HintPep695TypeAlias]
 :pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**
 (i.e., object that may be parametrized by a :pep:`695`-compliant list of one or
 more implicitly instantiated :pep:`484`-compliant type variables,
-pep:`612`-compliant parameter specifications, or :pep:`646`-compliant tuple type
-variables).
+pep:`612`-compliant parameter specifications, or :pep:`646`-compliant type
+variable tuples).
 
 Specifically, this hint matches:
 
