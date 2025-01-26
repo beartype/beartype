@@ -222,13 +222,8 @@ def get_func_locals(
     from beartype._util.module.utilmodget import get_object_module_name_or_none
 
     # ..................{ NOOP                               }..................
-    # Fully-qualified name of the module declaring the passed callable if that
-    # callable was physically declared by an on-disk module *OR* "None"
-    # otherwise (i.e., if that callable was dynamically declared in-memory).
-    func_module_name = get_object_module_name_or_none(func)
-
     # Note that we intentionally return the local scope for this wrapper rather
-    # than wrappee callable, as local scope can *ONLY* be obtained by
+    # than wrappee callable, as a local scope can *ONLY* be obtained by
     # dynamically inspecting local attributes bound to call frames on the
     # current call stack. However, this wrapper was called at a higher call
     # frame than this wrappee. All local attributes declared within the body of
@@ -237,7 +232,12 @@ def get_func_locals(
     # returned the local scope for this wrappee rather than wrapper callable,
     # we would erroneously return local attributes that this wrappee callable
     # originally had no lexical access to. That's bad. So, we don't do that.
-    #
+
+    # Fully-qualified name of the module declaring the passed callable if that
+    # callable was physically declared by an on-disk module *OR* "None"
+    # otherwise (i.e., if that callable was dynamically declared in-memory).
+    func_module_name = get_object_module_name_or_none(func)
+
     # If either...
     if (
         # The passed callable is dynamically declared in-memory...
