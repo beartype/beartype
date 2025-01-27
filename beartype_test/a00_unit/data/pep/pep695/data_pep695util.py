@@ -82,7 +82,7 @@ def unit_test_get_hint_pep695_typevars() -> None:
         TypeVar,
         TypeVarTuple,
     )
-    from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_typevars
+    from beartype._util.hint.pep.proposal.pep695 import _get_hint_pep695_parameterizable_typeparams
 
     # ....................{ CLASSES                        }....................
     class AndThenSpake[S]:  # <-- this is madness. this is PEP 695.
@@ -125,13 +125,13 @@ def unit_test_get_hint_pep695_typevars() -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this getter passed a pure-Python class returns the expected tuple.
-    AndThenSpake_typevars = get_hint_pep695_typevars(AndThenSpake)
+    AndThenSpake_typevars = _get_hint_pep695_parameterizable_typeparams(AndThenSpake)
     assert len(AndThenSpake_typevars) == 1
     assert isinstance(AndThenSpake_typevars[0], TypeVar)
 
     # Assert this getter passed a pure-Python function returns the expected
     # tuple.
-    as_with_a_palsied_tongue_typevars = get_hint_pep695_typevars(
+    as_with_a_palsied_tongue_typevars = _get_hint_pep695_parameterizable_typeparams(
         as_with_a_palsied_tongue)
     assert len(as_with_a_palsied_tongue_typevars) == 2
     assert isinstance(as_with_a_palsied_tongue_typevars[0], TypeVarTuple)
@@ -139,7 +139,7 @@ def unit_test_get_hint_pep695_typevars() -> None:
 
     # Assert this getter passed a PEP 695-compliant type alias returns the
     # expected tuple.
-    and_that_fair_kneeling_goddess_typevars = get_hint_pep695_typevars(
+    and_that_fair_kneeling_goddess_typevars = _get_hint_pep695_parameterizable_typeparams(
         and_that_fair_kneeling_goddess)
     assert len(and_that_fair_kneeling_goddess_typevars) == 3
     assert isinstance(and_that_fair_kneeling_goddess_typevars[0], TypeVar)

@@ -52,14 +52,14 @@ def test_is_hint_pep695_subscripted() -> None:
 def test_get_hint_pep695_typevars() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.get_hint_pep695_typevars`
+    :mod:`beartype._util.hint.pep.proposal.pep695._get_hint_pep695_parameterizable_typeparams`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.pep695 import get_hint_pep695_typevars
+    from beartype._util.hint.pep.proposal.pep695 import _get_hint_pep695_parameterizable_typeparams
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -81,14 +81,14 @@ def test_get_hint_pep695_typevars() -> None:
 
     # Assert this getter returns the empty tuple for pure-Python classes and
     # functions that are *NOT* PEP 695-parametrized.
-    assert get_hint_pep695_typevars(Class) == ()
-    assert get_hint_pep695_typevars(function) == ()
+    assert _get_hint_pep695_parameterizable_typeparams(Class) == ()
+    assert _get_hint_pep695_parameterizable_typeparams(function) == ()
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed an arbitrary
     # object that is *NOT* parameterizable under PEP 695.
     with raises(BeartypeDecorHintPep695Exception):
-        get_hint_pep695_typevars('And all the gloom and sorrow of the place,')
+        _get_hint_pep695_parameterizable_typeparams('And all the gloom and sorrow of the place,')
 
 # ....................{ TESTS ~ iterator                   }....................
 def test_iter_hint_pep695_forwardrefs() -> None:

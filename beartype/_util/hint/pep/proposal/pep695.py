@@ -118,6 +118,7 @@ from beartype._check.forward.reference.fwdrefmake import (
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
+    LexicalScope,
     Pep695Parameterizable,
     TupleTypeParams,
 )
@@ -199,57 +200,6 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     return isinstance(hint_origin, HintPep695TypeAlias)
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep695_typevars(
-    # Mandatory parameters.
-    obj: Pep695Parameterizable,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> TupleTypeParams:
-    '''
-    Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
-    type variables, pep:`612`-compliant parameter specifications, and
-    :pep:`646`-compliant type variable tuples) implicitly instantiated with
-    :pep:`695`-compliant type parameter syntax parametrizing the passed
-    **parameterizable** (i.e., pure-Python class, pure-Python function, or
-    :pep:`695`-compliant type alias).
-
-    Parameters
-    ----------
-    obj : Pep695Parameterizable
-        :pep:`695`-compliant parameterizable to be inspected.
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
-
-    Returns
-    -------
-    TupleTypeParams
-        Tuple of all type parameters parametrizing this parameterizable.
-    '''
-
-    # If this object is *NOT* parameterizable under PEP 695, raise an exception.
-    if not isinstance(obj, Pep695ParameterizableTypes):
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}{repr(obj)} not PEP 695-parameterizable '
-            f'(i.e., neither pure-Python type, pure-Python function, nor '
-            f'PEP 695-compliant type alias).'
-        )
-    # Else, this object is parameterizable under PEP 695.
-
-    # Return either...
-    return (
-        # If the active Python interpreter targets Python >= 3.12 and thus
-        # supports PEP 695, the PEP 695-compliant tuple of all type parameters
-        # parametrizing this object.
-        obj.__type_params__  # type: ignore[return-value,union-attr]
-        if IS_PYTHON_AT_LEAST_3_12 else
-        # Else, the active Python interpreter targets Python <= 3.11 and thus
-        # fails to support PEP 695. In this case, the empty tuple.
-        ()
-    )
-
-
 #FIXME: Unit test us up, please.
 def get_hint_pep695_unsubscripted_alias(
     # Mandatory parameters.
@@ -320,6 +270,123 @@ def get_hint_pep695_unsubscripted_alias(
 
     # Return this unaliased type alias.
     return hint
+
+# ....................{ ADDERS                             }....................
+#FIXME: Unit test us up, please.
+def add_func_scope_hint_pep695_parameterizable_typeparams(
+    # Mandatory parameters.
+    func_scope: LexicalScope,
+    parameterizable: Pep695Parameterizable,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Add one key-value pair mapping from the name to value of each **type
+    parameter** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
+    parameter specifications, and :pep:`646`-compliant type variable tuples)
+    implicitly instantiated with :pep:`695`-compliant type parameter syntax
+    parametrizing the **parameterizable** (i.e., pure-Python class, pure-Python
+    function, or :pep:`695`-compliant type alias) described by the passed
+    lexical scope.
+
+    Caveats
+    -------
+    This function silently overrides existing key-value pairs sharing the same
+    names as type parameters parametrizing this parameterizable. Why? Because
+    doing so mimics lexical scoping implemented by the CPython parser itself,
+    which this function effectively masquerades as.
+
+    Parameters
+    ----------
+    func_scope : LexicalScope
+        Local or global scope to map these type parameters to.
+    parameterizable : Pep695Parameterizable
+        :pep:`695`-compliant parameterizable to be inspected.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this object is *not* a :pep:`695`-compliant parameterizable.
+    '''
+    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484612646 import (
+        get_hint_pep484612646_typeparam_name)
+
+    # Tuple of all type parameters parametrizing this parameterizable.
+    typeparams = _get_hint_pep695_parameterizable_typeparams(
+        parameterizable=parameterizable, exception_prefix=exception_prefix)
+
+    # For each type parameter parametrizing this parameterizable...
+    for typeparam in typeparams:
+        # Unqualified basename of this type parameter.
+        typeparam_name = get_hint_pep484612646_typeparam_name(
+            hint=typeparam, exception_prefix=exception_prefix)
+
+        # Map this basename to this type parameter in this lexical scope.
+        func_scope[typeparam_name] = typeparam
+
+
+def _get_hint_pep695_parameterizable_typeparams(
+    # Mandatory parameters.
+    parameterizable: Pep695Parameterizable,
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> TupleTypeParams:
+    '''
+    Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
+    type variables, pep:`612`-compliant parameter specifications, and
+    :pep:`646`-compliant type variable tuples) implicitly instantiated with
+    :pep:`695`-compliant type parameter syntax parametrizing the passed
+    **parameterizable** (i.e., pure-Python class, pure-Python function, or
+    :pep:`695`-compliant type alias).
+
+    Parameters
+    ----------
+    parameterizable : Pep695Parameterizable
+        :pep:`695`-compliant parameterizable to be inspected.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Returns
+    -------
+    TupleTypeParams
+        Tuple of all type parameters parametrizing this parameterizable.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this object is *not* a :pep:`695`-compliant parameterizable.
+    '''
+
+    # If this object is *NOT* parameterizable under PEP 695, raise an exception.
+    if not isinstance(parameterizable, Pep695ParameterizableTypes):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}'
+            f'{repr(parameterizable)} not PEP 695-parameterizable '
+            f'(i.e., neither pure-Python type, pure-Python function, nor '
+            f'PEP 695-compliant type alias).'
+        )
+    # Else, this object is parameterizable under PEP 695.
+
+    # Return either...
+    return (
+        # If the active Python interpreter targets Python >= 3.12 and thus
+        # supports PEP 695, the PEP 695-compliant tuple of all type parameters
+        # parametrizing this object.
+        parameterizable.__type_params__  # type: ignore[return-value,union-attr]
+        if IS_PYTHON_AT_LEAST_3_12 else
+        # Else, the active Python interpreter targets Python <= 3.11 and thus
+        # fails to support PEP 695. In this case, the empty tuple.
+        ()
+    )
 
 # ....................{ ITERATORS                          }....................
 def iter_hint_pep695_unsubscripted_forwardrefs(

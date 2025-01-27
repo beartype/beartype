@@ -68,7 +68,7 @@ from beartype._data.hint.datahinttyping import (
     Pep484585ForwardRef,
     SetOrTupleTypes,
     TypeOrSetOrTupleTypes,
-    TypeOrTupleTypes,
+    # TypeOrTupleTypes,
     TupleTypes,
 )
 from beartype._util.cls.pep.utilpep3119 import (

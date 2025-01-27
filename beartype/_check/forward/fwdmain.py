@@ -335,10 +335,6 @@ def _resolve_func_scope_forward(
     func = decor_meta.func_wrappee_wrappee
     cls_stack = decor_meta.cls_stack
 
-    # ..................{ PEP 695                            }..................
-    #FIXME: Under Python >= 3.12, even global callables may now have an
-    #implicit PEP 695 type parameter scope. *sigh*
-
     # ..................{ NESTED                             }..................
     # If the decorated callable is nested (rather than global) and thus
     # *MAY* have a non-empty local nested scope...
@@ -519,7 +515,7 @@ def _resolve_func_scope_forward(
     else:
         func_locals = DICT_EMPTY
 
-    # ..................{ LOCALS                             }..................
+    # ..................{ SCOPE                              }..................
     # Fully-qualified name of the module declaring the decorated callable if
     # that callable defines the "__module__" dunder attribute *OR* "None"
     # (i.e., if that callable fails to define that attribute).
@@ -575,6 +571,18 @@ def _resolve_func_scope_forward(
     decor_meta.func_wrappee_scope_forward.update(func_globals)
     decor_meta.func_wrappee_scope_forward.update(func_locals)
     # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
+
+    # ..................{ PEP 695                            }..................
+    # If the decorated callable resides in one or more type parameter scopes
+    # (i.e., lexical scopes defined by parametrizing types and functions with
+    # PEP 695-compliant implicitly instantiated type parameters), composite
+    # these type parameter scopes into this forward scope. Doing so implicitly
+    # overwrites each attribute composited above with each type parameter of the
+    # same name, vaguely replicating the scoping rules established by PEP 695:
+    #     https://peps.python.org/pep-0695/#type-parameter-scopes
+    #FIXME: Implement us up, please.
+    #_resolve_func_scope_pep695(
+    #     decor_meta=decor_meta, exception_prefix=exception_prefix)
 
 
 def _resolve_func_scope_forward_hint(

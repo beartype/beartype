@@ -18,7 +18,7 @@ from beartype._cave._cavefast import TypeParamTypes
 from beartype._data.hint.datahinttyping import TypeParam
 
 # ....................{ FACTORIES                          }....................
-def get_hint_pep484612646_name(
+def get_hint_pep484612646_typeparam_name(
     # Mandatory parameters.
     hint: TypeParam,
 
@@ -46,7 +46,7 @@ def get_hint_pep484612646_name(
     Raises
     ------
     BeartypeDecorHintPep484612646Exception
-        If this hint is *not* a type parameter.
+        If this object is *not* a type parameter.
     '''
 
     # If this hint is *NOT* a type parameter, raise an exception.
