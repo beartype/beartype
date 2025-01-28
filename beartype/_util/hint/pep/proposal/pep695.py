@@ -125,6 +125,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+from beartype._util.utilobject import SENTINEL
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep695_subscripted(hint: Hint) -> bool:
@@ -283,8 +284,8 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
 ) -> None:
     '''
     Add one key-value pair mapping from the name to value of each **type
-    parameter** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
-    parameter specifications, and :pep:`646`-compliant type variable tuples)
+    parameter** (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant
+    parameter specification, or :pep:`646`-compliant type variable tuple)
     implicitly instantiated with :pep:`695`-compliant type parameter syntax
     parametrizing the **parameterizable** (i.e., pure-Python class, pure-Python
     function, or :pep:`695`-compliant type alias) described by the passed
@@ -310,17 +311,32 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     Raises
     ------
     BeartypeDecorHintPep695Exception
-        If this object is *not* a :pep:`695`-compliant parameterizable.
+        If either:
+
+        * This object is *not* a :pep:`695`-compliant parameterizable.
+        * This object is a :pep:`695`-compliant parameterizable parametrized by
+          a type parameter already parametrizing a **parent lexical scope**
+          (e.g., class) of this parameterizable. By :pep:`695`, type parameters
+          are *not* safely reusable across nested lexical scopes:
+
+              Consistent with the scoping rules defined in PEP 484, type
+              checkers should generate an error if inner-scoped generic classes,
+              functions, or type aliases reuse the same type parameter name as
+              an outer scope.
     '''
     assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
+    # print(f'Updating PEP 695 parameterizable {repr(parameterizable)} scope {repr(func_scope)}...')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484612646 import (
-        get_hint_pep484612646_typeparam_name)
+        get_hint_pep484612646_typeparam_name,
+        is_hint_pep484612646_typeparam,
+    )
 
     # Tuple of all type parameters parametrizing this parameterizable.
     typeparams = _get_hint_pep695_parameterizable_typeparams(
         parameterizable=parameterizable, exception_prefix=exception_prefix)
+    # print(f'Adding PEP 695 parameterizable {repr(parameterizable)} type parameters {repr(typeparams)}...')
 
     # For each type parameter parametrizing this parameterizable...
     for typeparam in typeparams:
@@ -328,7 +344,47 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
         typeparam_name = get_hint_pep484612646_typeparam_name(
             hint=typeparam, exception_prefix=exception_prefix)
 
-        # Map this basename to this type parameter in this lexical scope.
+        # Existing attribute sharing the same name already added to this forward
+        # scope by the caller if any *OR* the placeholder sentinel otherwise
+        # (i.e., if this scope contains no attribute with this name).
+        func_scope_attr = func_scope.get(typeparam_name, SENTINEL)
+
+        # If...
+        if (
+            # This scope already contains an attribute with this name *AND*...
+            func_scope_attr is not SENTINEL and
+            # This attribute is also a type parameter...
+            is_hint_pep484612646_typeparam(func_scope_attr)
+        ):
+            assert isinstance(exception_prefix, str), (
+                f'{repr(exception_prefix)} not string.')
+
+            # Then this previously added type parameter conflicts with this
+            # currently iterated type parameter. This common case arises when
+            # callers erroneously reuse the name of a type parameter across
+            # nested lexical scopes, as explicitly prohibited by PEP 695: e.g.,
+            #     class MuhGeneric[T]:       # <-- good
+            #         def muh_func[T](): ... # <-- *BAD* according to PEP 695
+            raise BeartypeDecorHintPep695Exception(
+                f'{exception_prefix}'
+                f'nested {repr(parameterizable)} '
+                f'PEP 695 type parameter {repr(typeparam)} shadows parent '
+                f'PEP 695 type parameter of same name; '
+                f'however, PEP 695 prohibits type parameter reuse across '
+                f'nested lexical scopes.'
+            )
+        # Else, either this scope does not already contain an attribute with
+        # this name *OR* this scope does but this attribute is not also a type
+        # parameter. In either case, this type parameter silently shadows (i.e.,
+        # overrides) this attribute. Although attribute shadowing could be
+        # regarded as a problematic design pattern indicative of a genuine
+        # issue, both CPython and PEP 695 explicitly allow, enable, and arguably
+        # encourage attribute shadowing where the attribute being shadowed is
+        # itself *NOT* also a type parameter. It's not for @beartype to police
+        # valid use cases. That's what static type-checkers do. So, we don't.
+
+        # Map this basename to this type parameter in this lexical scope,
+        # silently shadowing any existing attribute of the same name (if any).
         func_scope[typeparam_name] = typeparam
 
 

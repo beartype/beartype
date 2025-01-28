@@ -21,6 +21,7 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
 from beartype.typing import Optional
+from beartype._cave._cavefast import FunctionType
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahintpep import Hint
@@ -32,10 +33,18 @@ from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
 )
+from beartype._util.hint.pep.proposal.pep695 import (
+    add_func_scope_hint_pep695_parameterizable_typeparams)
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_MOST_3_11,
+    IS_PYTHON_AT_MOST_3_9,
+)
 from beartype._util.text.utiltextansi import color_hint
-from beartype._util.utilobject import get_object_name
+from beartype._util.utilobject import (
+    # SENTINEL,
+    get_object_name,
+)
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 from traceback import format_exc
 
@@ -298,12 +307,9 @@ def resolve_hint(
 
 # ....................{ PRIVATE ~ resolvers                }....................
 def _resolve_func_scope_forward(
-    # Mandatory parameters.
     decor_meta: BeartypeDecorMeta,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
-    exception_prefix: str = '',
+    exception_cls: TypeException,
+    exception_prefix: str,
 ) -> None:
     '''
     Resolve the **forward scope** (i.e., dictionary mapping from the names to
@@ -321,12 +327,10 @@ def _resolve_func_scope_forward(
     ----------
     decor_meta : BeartypeDecorMeta
         Decorated callable to resolve the forward scope of
-    exception_cls : Type[Exception], optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
     '''
 
     # ..................{ LOCALS                             }..................
@@ -573,26 +577,100 @@ def _resolve_func_scope_forward(
     # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
 
     # ..................{ PEP 695                            }..................
-    # If the decorated callable resides in one or more type parameter scopes
-    # (i.e., lexical scopes defined by parametrizing types and functions with
-    # PEP 695-compliant implicitly instantiated type parameters), composite
-    # these type parameter scopes into this forward scope. Doing so implicitly
-    # overwrites each attribute composited above with each type parameter of the
-    # same name, vaguely replicating the scoping rules established by PEP 695:
+    # If the decorated callable resides in one or more PEP 695-compliant type
+    # parameter scopes, composite these scopes into this forward scope *AFTER*
+    # compositing all local and global attributes into this scope above. Doing
+    # so properly overrides these attributes with type parameters of the same
+    # name, vaguely replicating the scoping rules established by PEP 695:
     #     https://peps.python.org/pep-0695/#type-parameter-scopes
-    #FIXME: Implement us up, please.
-    #_resolve_func_scope_pep695(
-    #     decor_meta=decor_meta, exception_prefix=exception_prefix)
+    _resolve_func_scope_pep695(
+        decor_meta=decor_meta, exception_prefix=exception_prefix)
+
+
+#FIXME: Unit test us up, please.
+def _resolve_func_scope_pep695(
+    decor_meta: BeartypeDecorMeta, exception_prefix) -> None:
+    '''
+    Composite all **type parameter scopes** (i.e., lexical scopes induced by
+    parametrizing the decorated callable *and* all lexical parent classes of
+    that callable with :pep:`695`-compliant implicitly instantiated **type
+    parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
+    parameter specifications, and :pep:`646`-compliant type variable tuples))
+    of the decorated callable into the **forward scope** (i.e., dictionary
+    mapping from the names to values of all attributes accessible to the lexical
+    scope of the passed decorated callable where this scope comprises both the
+    global scope and all local lexical scopes enclosing that callable).
+
+    Note that this function implicitly overwrites each global and local
+    attribute previously composited into this forward scope with each type
+    parameter of the same name, vaguely replicating the scoping rules dictated
+    by :pep:`695`.
+
+    Parameters
+    ----------
+    decor_meta : BeartypeDecorMeta
+        Decorated callable to resolve the forward scope of
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+    '''
+
+    # If the active Python interpreter targets Python <= 3.11, this interpreter
+    # fails to support PEP 695. In this case, silently reduce to a noop.
+    if IS_PYTHON_AT_MOST_3_11:
+        return
+    # Else, this interpreter targets Python >= 3.12. In this case, this
+    # interpreter supports PEP 695.
+
+    # If one or more parent classes lexically enclose the decorated callable...
+    if decor_meta.cls_stack:
+        # For each parent class lexically enclosing the decorated callable (in
+        # descending order from outermost to innermost class)...
+        for cls_parent in decor_meta.cls_stack:
+            # Composite all PEP 695-compliant type parameters parametrizing this
+            # class into this forward scope *AFTER* compositing all type
+            # parameters parametrizing the parent class of this class via the
+            # prior iteration. Doing so properly overrides the latter with the
+            # former, vaguely replicating the scoping rules established by PEP
+            # 695:
+            #     https://peps.python.org/pep-0695/#type-parameter-scopes
+            #
+            # Note that, since this class lexically encloses that callable, this
+            # class is guaranteed to be pure-Python and thus support PEP
+            # 695-compliant type parametrization.
+            add_func_scope_hint_pep695_parameterizable_typeparams(
+                func_scope=decor_meta.func_wrappee_scope_forward,  # type: ignore[arg-type]
+                parameterizable=cls_parent,
+                exception_prefix=exception_prefix,
+            )
+    # Else, *NO* parent classes lexically enclose the decorated callable.
+
+    # Decorated callable, localized for negligible efficiency and readability.
+    func = decor_meta.func_wrappee_wrappee
+
+    # If the decorated callable is a pure-Python function, this function
+    # supports PEP 695-compliant type parametrization. In this case...
+    if isinstance(func, FunctionType):
+        # Composite all PEP 695-compliant type parameters parametrizing the
+        # decorated callable into this forward scope *AFTER* compositing all type
+        # parameters parametrizing all parent classes of that callable above. Doing
+        # so properly overrides the latter with the former, vaguely replicating the
+        # scoping rules established by PEP 695:
+        #     https://peps.python.org/pep-0695/#type-parameter-scopes
+        add_func_scope_hint_pep695_parameterizable_typeparams(
+            func_scope=decor_meta.func_wrappee_scope_forward,  # type: ignore[arg-type]
+            parameterizable=func,
+            exception_prefix=exception_prefix,
+        )
+    # Else, the decorated callable is *NOT* a pure-Python function. In this
+    # case, that callable does *NOT* support PEP 695-compliant type
+    # parametrization. Silently ignore that callable, whatever it is.
 
 
 def _resolve_func_scope_forward_hint(
-    # Mandatory parameters.
     hint: str,
     decor_meta: BeartypeDecorMeta,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
-    exception_prefix: str = '',
+    exception_cls: TypeException,
+    exception_prefix: str,
 ) -> Hint:
     '''
     Resolve the passed stringified type hint into a non-string type hint
@@ -609,14 +687,14 @@ def _resolve_func_scope_forward_hint(
 
     Parameters
     ----------
+    hint : str
+        Stringified type hint to be resolved.
     decor_meta : BeartypeDecorMeta
         Decorated callable to resolve the forward scope of
-    exception_cls : Type[Exception], optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exception messages. Defaults
-        to the empty string.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------

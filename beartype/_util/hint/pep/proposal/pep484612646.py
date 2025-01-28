@@ -15,9 +15,35 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
 from beartype._cave._cavefast import TypeParamTypes
+from beartype._data.hint.datahintpep import (
+    # Hint,
+    TypeIs,
+)
 from beartype._data.hint.datahinttyping import TypeParam
 
-# ....................{ FACTORIES                          }....................
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_hint_pep484612646_typeparam(hint: object) -> TypeIs[TypeParam]:
+    '''
+    :data:`True` only if the passed type hint is a **type parameter** (i.e.,
+    :pep:`484`-compliant type variable, pep:`612`-compliant parameter
+    specification, or :pep:`646`-compliant type variable tuples).
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this hint is a type parameter.
+    '''
+
+    # Return true only if this hint is a type parameter.
+    return isinstance(hint, TypeParamTypes)
+
+# ....................{ GETTERS                            }....................
 def get_hint_pep484612646_typeparam_name(
     # Mandatory parameters.
     hint: TypeParam,
@@ -50,7 +76,7 @@ def get_hint_pep484612646_typeparam_name(
     '''
 
     # If this hint is *NOT* a type parameter, raise an exception.
-    if not isinstance(hint, TypeParamTypes):
+    if not is_hint_pep484612646_typeparam(hint):
         assert isinstance(exception_prefix, str), (
             f'{exception_prefix} not string.')
         raise BeartypeDecorHintPep484612646Exception(

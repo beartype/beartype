@@ -27,7 +27,7 @@ from types import (
     FrameType,
     FunctionType,
     GeneratorType,
-    MethodType,
+    # MethodType,
 )
 
 # ....................{ GETTERS                            }....................

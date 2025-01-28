@@ -25,6 +25,7 @@ This submodule unit tests :pep:`563` support implemented in the
 # disable *ALL* PEP 563-specific tests importing from another module containing
 # an "from __future__ import annotations" import.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 from beartype_test._util.mark.pytskip import (
     # skip,
     skip_if_pypy,
@@ -415,6 +416,47 @@ def test_pep563_hint_pep604() -> None:
     with raises(BeartypeCallHintParamViolation):
         WithVoiceFarSweeter(than_thy_dying_notes=(
             'In the deaf air, to the blind earth, and heaven'))
+
+# .....................{ TESTS ~ pep : 695                 }....................
+@skip_if_python_version_less_than('3.12.0')
+def test_pep563_hint_pep695() -> None:
+    '''
+    Test module-scoped :pep:`563` support implemented in the
+    :func:`beartype.beartype` decorator with respect to :pep:`695`-compliant
+    unions annotating :pep:`557`-compliant
+    :obj:`dataclasses.dataclass`-decorated subclasses also decorated by this
+    decorator if the active Python interpreter targets Python >= 3.12 and thus
+    supports :pep:`695`.
+    '''
+
+    # .....................{ IMPORTS                       }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test.a00_unit.data.pep.pep563.pep695.data_pep563_pep695 import (
+        shook_horrid,
+    )
+    from pytest import raises
+
+    # # .....................{ LOCALS                        }....................
+    # # Arbitrary instance of a problematic dataclass subclass annotated by a
+    # # problematic PEP 695-compliant union that had yet to be defined at the time
+    # # that subclass was defined.
+    # wasting_these_surpassing_powers = WithVoiceFarSweeter(
+    #     than_thy_dying_notes=FrameMoreAttuned())
+    # # wasting_these_surpassing_powers = WithVoiceFarSweeter()
+
+    # .....................{ PASS                          }....................
+    # Assert that calling this PEP 695-parametrized callable with valid
+    # parameters returns the expected value.
+    assert shook_horrid(
+        ['Shook', 'horrid', 'with', 'such', 'aspen-malady']) == 'Shook'
+    assert shook_horrid([7, 2, 4, 0]) == 7
+
+    # .....................{ FAIL                          }....................
+    # Assert that calling this PEP 695-parametrized callable with invalid
+    # parameters raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        shook_horrid('"O tender spouse of gold Hyperion,')
 
 # ....................{ TESTS ~ limit                      }....................
 #FIXME: Hilariously, we can't even unit test whether the
