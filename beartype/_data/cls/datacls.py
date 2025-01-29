@@ -126,6 +126,23 @@ Frozen set of all **builtin scalar types** (i.e., globally accessible C-based
 types whose instances are scalar values).
 '''
 
+
+TYPES_BUILTIN_CONTAINER_MUTABLE: FrozenSetTypes = frozenset((
+    bytearray,
+    dict,
+    list,
+    set,
+))
+'''
+Frozen set of all **builtin mutable container types** (i.e., C-based container
+types globally accessible *without* requiring explicit importation, whose items
+may be modified after instantiation).
+
+All builtin mutable container types define these methods:
+
+* ``clear()``, reducing the current object to the empty container.
+'''
+
 # ....................{ TYPES ~ exception                  }....................
 TYPES_EXCEPTION_NAMESPACE = (
     # Standard exception raised when attempting to access a currently undefined

@@ -29,9 +29,9 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeStack,
 )
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    acquire_instance,
+    release_instance,
 )
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
@@ -241,7 +241,7 @@ class BeartypeDecorMeta(object):
     # to be hashed (and thus also cached), since these instances are:
     # * Specific to the decorated callable and thus *NOT* safely cacheable
     #   across functions applying to different decorated callables.
-    # * Already cached via the acquire_object_typed() function called by the
+    # * Already cached via the acquire_instance() function called by the
     #   "beartype._decor.decormain" submodule.
     #
     # See also:
@@ -259,7 +259,7 @@ class BeartypeDecorMeta(object):
         callers are expected to (in order):
 
         #. Acquire cached instances of this class via the
-           :mod:`beartype._util.cache.pool.utilcachepoolobjecttyped` submodule.
+           :mod:`beartype._util.cache.pool.utilcachepoolinstance` submodule.
         #. Call the :meth:`reinit` method on these instances to properly
            initialize these instances.
         '''
@@ -782,7 +782,7 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     instantiating new :class:`.BeartypeDecorMeta` objects.
 
     **The caller must pass the metadata returned by this factory back to the**
-    :func:`beartype._util.cache.pool.utilcachepoolobjecttyped.release_object_typed`
+    :func:`beartype._util.cache.pool.utilcachepoolinstance.release_instance`
     **function.** If accidentally omitted, this metadata will simply be
     garbage-collected rather than available for efficient reuse by this factory.
     Although hardly a worst-case outcome, omitting that explicit call largely
@@ -800,7 +800,7 @@ def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
-    decor_meta = acquire_object_typed(BeartypeDecorMeta)
+    decor_meta = acquire_instance(BeartypeDecorMeta)
 
     # Reinitialize this metadata with the passed keyword parameters.
     decor_meta.reinit(**kwargs)
@@ -826,4 +826,4 @@ def cull_beartype_call(decor_meta: BeartypeDecorMeta) -> None:
     decor_meta.deinit()
 
     # Release this beartype call metadata back to its object pool.
-    release_object_typed(decor_meta)
+    release_instance(decor_meta)

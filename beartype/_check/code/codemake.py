@@ -115,9 +115,9 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_UNION,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    acquire_instance,
+    release_instance,
 )
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_object_issubclassable,
@@ -301,13 +301,10 @@ def make_check_expr(
     # integer maintained by this BFS is strictly less than
     # "FIXED_LIST_SIZE_MEDIUM", as this constraint is already guaranteed to be
     # the case.
-    hints_meta = acquire_object_typed(HintsMeta)
+    hints_meta = acquire_instance(HintsMeta)
 
     # Initialize this fixed list.
-    hints_meta.reinit(
-        cls_stack=cls_stack,
-        conf=conf,
-    )
+    hints_meta.reinit(cls_stack=cls_stack, conf=conf)
 
     # 0-based index of metadata describing the currently visited hint in this
     # fixed list.
@@ -1400,7 +1397,7 @@ def make_check_expr(
 
                             # Python expression evaluating to this child hint.
                             hint_curr_expr = hints_meta.add_func_scope_type_or_types(
-                                hint_child)
+                                hint_child)  # pyright: ignore
 
                         # Code type-checking this pith against this superclass.
                         hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
@@ -1493,7 +1490,7 @@ def make_check_expr(
                         pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
                         # Python expression evaluating to this generic type.
                         hint_curr_expr=hints_meta.add_func_scope_type_or_types(
-                            hint_curr),
+                            hint_curr),  # pyright: ignore
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
                 # Else, this hint is *NOT* a generic.
@@ -1567,7 +1564,7 @@ def make_check_expr(
                         #substantially more types (and thus actually becomes
                         #useful), optimize the construction of the "types" set
                         #below to instead leverage a similar
-                        #"acquire_object_typed(set)" caching solution as that
+                        #"acquire_instance(set)" caching solution as that
                         #currently employed for unions. For now, we only shrug.
 
                         # Python expression evaluating to a tuple of the unique
@@ -1699,7 +1696,7 @@ def make_check_expr(
 
     # ..................{ CLEANUP                            }..................
     # Release the fixed list of all such metadata.
-    release_object_typed(hints_meta)
+    release_instance(hints_meta)
 
     # If the Python code snippet to be returned remains unchanged from its
     # initial value, the breadth-first search above failed to generate code. In

@@ -425,7 +425,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # supported by the standard "typing" module.
         ['Deque']
     )
-    print(f'TYPING_ABC_BASENAMES: {TYPING_ABC_BASENAMES}')
+    # print(f'TYPING_ABC_BASENAMES: {TYPING_ABC_BASENAMES}')
 
     # ..................{ HINTS ~ abcs                       }..................
     # For the unqualified basename of each standard ABCs supported by the

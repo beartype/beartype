@@ -433,17 +433,14 @@ def test_pep563_hint_pep695() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype_test.a00_unit.data.pep.pep563.pep695.data_pep563_pep695 import (
+        # NakedAndBare,
         shook_horrid,
     )
     from pytest import raises
 
-    # # .....................{ LOCALS                        }....................
-    # # Arbitrary instance of a problematic dataclass subclass annotated by a
-    # # problematic PEP 695-compliant union that had yet to be defined at the time
-    # # that subclass was defined.
-    # wasting_these_surpassing_powers = WithVoiceFarSweeter(
-    #     than_thy_dying_notes=FrameMoreAttuned())
-    # # wasting_these_surpassing_powers = WithVoiceFarSweeter()
+    # .....................{ LOCALS                        }....................
+    # Instance of a class parametrized by PEP 695-compliant type parameters.
+    # who_had_power = NakedAndBare()
 
     # .....................{ PASS                          }....................
     # Assert that calling this PEP 695-parametrized callable with valid
@@ -452,11 +449,20 @@ def test_pep563_hint_pep695() -> None:
         ['Shook', 'horrid', 'with', 'such', 'aspen-malady']) == 'Shook'
     assert shook_horrid([7, 2, 4, 0]) == 7
 
+    # # Assert that calling a PEP 695-parametrized method of this instance with
+    # # valid parameters returns the expected value.
+    # assert who_had_power.of_its_great_diadem(
+    #     ['To', 'make', 'me', 'desolate?', 'whence', 'came', 'the', 'strength?']
+    # ) == 'To'
+
     # .....................{ FAIL                          }....................
-    # Assert that calling this PEP 695-parametrized callable with invalid
-    # parameters raises the expected exception.
+    # Assert that calling these PEP 695-parametrized callables with invalid
+    # parameters raise the expected exception.
     with raises(BeartypeCallHintParamViolation):
         shook_horrid('"O tender spouse of gold Hyperion,')
+    # with raises(BeartypeCallHintParamViolation):
+    #     who_had_power.of_its_great_diadem(
+    #         "How was it nurtur'd to such bursting forth,")
 
 # ....................{ TESTS ~ limit                      }....................
 #FIXME: Hilariously, we can't even unit test whether the

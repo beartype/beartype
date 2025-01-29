@@ -26,8 +26,8 @@ from beartype._check.forward.fwdmain import resolve_hint
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import TypeStack
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    release_object_typed)
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    release_instance)
 from beartype._util.func.utilfuncget import get_func_annotations
 from collections.abc import Callable
 
@@ -268,7 +268,7 @@ def resolve_pep563(
 
     # ..................{ RETURN                             }..................
     # Release this beartype call metadata back to its object pool.
-    release_object_typed(decor_meta)
+    release_instance(decor_meta)
 
     # Attempt to...
     try:

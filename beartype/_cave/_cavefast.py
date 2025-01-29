@@ -608,36 +608,10 @@ else:
     strings).
     '''
 
-# ....................{ TYPES ~ kind : concrete            }....................
-# Temporary dictionary to be deleted below.
-_dict: dict = {}
+# ....................{ TYPES ~ container : abc            }....................
+#FIXME: Extremely silly, honestly. Just use "collections.abc" directly. This is
+#an obvious facepalm. We sigh. *sigh*
 
-
-DictItemsViewType: type = type(_dict.items())
-'''
-Type of all **dictionary items views** (i.e., objects created and returned by
-the :meth:`dict.items` method).
-'''
-
-
-DictKeysViewType: type = type(_dict.keys())
-'''
-Type of all **dictionary keys views** (i.e., objects created and returned by the
-:meth:`dict.keys` method).
-'''
-
-
-DictValuesViewType: type = type(_dict.values())
-'''
-Type of all **dictionary values views** (i.e., objects created and returned by
-the :meth:`dict.values` method).
-'''
-
-
-# Delete the dictionary defined above for negligible space gains.
-del _dict
-
-# ....................{ TYPES ~ kind : abc                 }....................
 ContainerType = _Container
 '''
 Type of all **containers** (i.e., concrete instances of the abstract
@@ -793,7 +767,7 @@ See Also
     Further details on structural subtyping.
 '''
 
-# ....................{ TYPES ~ kind : abc : mapping       }....................
+# ....................{ TYPES ~ container : abc : mapping  }....................
 HashableType = _Hashable
 '''
 Type of all **hashable objects** (i.e., both concrete and structural instances
@@ -927,6 +901,35 @@ See Also
 :class:`SequenceType`
     Further details on sequences.
 '''
+
+# ....................{ TYPES ~ container : dict           }....................
+# Temporary dictionary to be deleted below.
+_dict: dict = {}
+
+
+DictItemsViewType: type = type(_dict.items())
+'''
+Type of all **dictionary items views** (i.e., objects created and returned by
+the :meth:`dict.items` method).
+'''
+
+
+DictKeysViewType: type = type(_dict.keys())
+'''
+Type of all **dictionary keys views** (i.e., objects created and returned by the
+:meth:`dict.keys` method).
+'''
+
+
+DictValuesViewType: type = type(_dict.values())
+'''
+Type of all **dictionary values views** (i.e., objects created and returned by
+the :meth:`dict.values` method).
+'''
+
+
+# Delete the dictionary defined above for negligible space gains.
+del _dict
 
 # ....................{ TYPES ~ enum                       }....................
 # Enumeration types are sufficiently obscure to warrant formalization here.
@@ -1651,24 +1654,7 @@ callables implemented in pure Python whose declaration is preceded by the
 ``async`` keyword).
 '''
 
-# ....................{ TUPLES ~ scalar                    }....................
-BoolOrNumberTypes = (BoolType, NumberType,)
-'''
-Tuple of all **boolean** and **number types** (i.e., classes whose instances
-are either numbers or types trivially convertible into numbers).
-
-This tuple matches booleans, integers, rational numbers, irrational numbers,
-real numbers, and complex numbers.
-
-Booleans are trivially convertible into integers. While details differ by
-implementation, common implementations in lower-level languages (e.g., C, C++,
-Perl) typically implicitly convert:
-
-* ``False`` to ``0`` and vice versa.
-* ``True`` to ``1`` and vice versa.
-'''
-
-# ....................{ TUPLES ~ post-init : container     }....................
+# ....................{ TUPLES ~ container : abc           }....................
 # Tuples of types assuming the above initialization to have been performed.
 
 MappingOrSequenceTypes = (MappingType, SequenceType)
@@ -1702,7 +1688,24 @@ Tuple of all numeric types *and* all container base classes conforming to (but
 API.
 '''
 
-# ....................{ TUPLES ~ post-init : scalar        }....................
+# ....................{ TUPLES ~ scalar                    }....................
+BoolOrNumberTypes = (BoolType, NumberType,)
+'''
+Tuple of all **boolean** and **number types** (i.e., classes whose instances
+are either numbers or types trivially convertible into numbers).
+
+This tuple matches booleans, integers, rational numbers, irrational numbers,
+real numbers, and complex numbers.
+
+Booleans are trivially convertible into integers. While details differ by
+implementation, common implementations in lower-level languages (e.g., C, C++,
+Perl) typically implicitly convert:
+
+* ``False`` to ``0`` and vice versa.
+* ``True`` to ``1`` and vice versa.
+'''
+
+
 ScalarTypes = BoolOrNumberTypes + (StrType,)
 '''
 Tuple of all **scalar types** (i.e., classes whose instances are atomic scalar
@@ -1715,7 +1718,7 @@ This tuple matches all:
 * **Textual types** (i.e., types contained in the :class:`StrTypes` tuple).
 '''
 
-# ....................{ TUPLES ~ stdlib                    }....................
+
 RegexTypes = (RegexCompiledType, StrType)
 '''
 Tuple of all **regular expression-like types** (i.e., types either defining

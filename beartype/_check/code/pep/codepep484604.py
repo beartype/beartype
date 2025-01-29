@@ -35,9 +35,9 @@ from beartype._data.code.pep.datacodepep484604 import (
 from beartype._data.hint.datahinttyping import SetTypes
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    acquire_instance,
+    release_instance,
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
@@ -132,14 +132,8 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     # type-checking, prefiltering child hints into these sets *BEFORE*
     # generating code type-checking these child hints improves both efficiency
     # and maintainability.
-    hint_childs_nonpep: SetTypes = (
-        acquire_object_typed(set))
-    hint_or_sane_childs_pep: SetHintOrHintSanifiedData = (
-        acquire_object_typed(set))
-
-    # Clear these sets prior to use below.
-    hint_childs_nonpep.clear()
-    hint_or_sane_childs_pep.clear()
+    hint_childs_nonpep: SetTypes = acquire_instance(set)
+    hint_or_sane_childs_pep: SetHintOrHintSanifiedData = acquire_instance(set)
 
     # ....................{ FILTER                         }....................
     #FIXME: Optimize by refactoring into a "while" loop. Naturally, profile that
@@ -279,8 +273,8 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     # ....................{ RETURN                         }....................
     # Release this pair of sets back to their respective pools.
-    release_object_typed(hint_childs_nonpep)
-    release_object_typed(hint_or_sane_childs_pep)
+    release_instance(hint_childs_nonpep)
+    release_instance(hint_or_sane_childs_pep)
 
     # If this code is *NOT* its initial value, this union is subscripted by one
     # or more unignorable child hints and the above logic generated code
@@ -380,9 +374,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     # For efficiency, reuse a previously created list of all new child hints of
     # this parent union.
-    hint_or_sane_childs_new: ListHintOrHintSanifiedData = (
-        acquire_object_typed(list))
-    hint_or_sane_childs_new.clear()
+    hint_or_sane_childs_new: ListHintOrHintSanifiedData = acquire_instance(list)
 
     # ....................{ SEARCH                         }....................
     # For each subscripted argument of this union...
@@ -483,7 +475,7 @@ def _get_hint_pep484604_union_args_flattened(
     hint_or_sane_childs = tuple(hint_or_sane_childs_new)
 
     # Release this list back to its respective pool.
-    release_object_typed(hint_or_sane_childs_new)
+    release_instance(hint_or_sane_childs_new)
     # print(f'Flattened union to {repr(hint_or_sane_childs)}...')
 
     # Return this tuple and corresponding type variable lookup table.

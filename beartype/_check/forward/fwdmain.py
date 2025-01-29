@@ -25,9 +25,16 @@ from beartype._cave._cavefast import FunctionType
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    TypeException,
+)
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
+from beartype._util.cache.pool.utilcachepoolinstance import (
+    acquire_instance,
+    release_instance,
+)
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
@@ -621,24 +628,34 @@ def _resolve_func_scope_pep695(
     # Else, this interpreter targets Python >= 3.12. In this case, this
     # interpreter supports PEP 695.
 
+    # PEP 695-specific lexical scope. Ideally, we'd simply reuse the existing
+    # "decor_meta.func_wrappee_scope_forward" scope rather than instantiate a
+    # PEP 695-specific lexical scope. Although both trivial and efficient, such
+    # reuse would violate PEP 695. PEP 695 mandates that type-checkers:
+    # * Raise errors when PEP 695-compliant type parameters parametrizing parent
+    #   classes share the same names as those parametrizing either nested
+    #   classes or the decorated callable.
+    # * Silently allow PEP 695-compliant type parameters parametrizing either
+    #   nested classes or the decorated callable to shadow (i.e., override)
+    #   *ALL* other attributes in parent lexical scopes.
+    #
+    # Ergo, this resolver *MUST* differentiate between type parameters and
+    # non-type parameters. The only means of doing so sanely is to isolate type
+    # parameters resolved by this function to this unique dictionary. See also:
+    #     https://peps.python.org/pep-0695/#type-parameter-scopes
+    scope_pep695: LexicalScope = acquire_instance(dict)
+
     # If one or more parent classes lexically enclose the decorated callable...
     if decor_meta.cls_stack:
         # For each parent class lexically enclosing the decorated callable (in
         # descending order from outermost to innermost class)...
         for cls_parent in decor_meta.cls_stack:
             # Composite all PEP 695-compliant type parameters parametrizing this
-            # class into this forward scope *AFTER* compositing all type
-            # parameters parametrizing the parent class of this class via the
-            # prior iteration. Doing so properly overrides the latter with the
-            # former, vaguely replicating the scoping rules established by PEP
-            # 695:
-            #     https://peps.python.org/pep-0695/#type-parameter-scopes
-            #
-            # Note that, since this class lexically encloses that callable, this
-            # class is guaranteed to be pure-Python and thus support PEP
-            # 695-compliant type parametrization.
+            # class into this forward scope. Since this class lexically encloses
+            # that callable, this class is guaranteed to be pure-Python and thus
+            # support PEP 695-compliant type parametrization.
             add_func_scope_hint_pep695_parameterizable_typeparams(
-                func_scope=decor_meta.func_wrappee_scope_forward,  # type: ignore[arg-type]
+                func_scope=scope_pep695,
                 parameterizable=cls_parent,
                 exception_prefix=exception_prefix,
             )
@@ -651,19 +668,22 @@ def _resolve_func_scope_pep695(
     # supports PEP 695-compliant type parametrization. In this case...
     if isinstance(func, FunctionType):
         # Composite all PEP 695-compliant type parameters parametrizing the
-        # decorated callable into this forward scope *AFTER* compositing all type
-        # parameters parametrizing all parent classes of that callable above. Doing
-        # so properly overrides the latter with the former, vaguely replicating the
-        # scoping rules established by PEP 695:
-        #     https://peps.python.org/pep-0695/#type-parameter-scopes
+        # decorated callable into this forward scope.
         add_func_scope_hint_pep695_parameterizable_typeparams(
-            func_scope=decor_meta.func_wrappee_scope_forward,  # type: ignore[arg-type]
+            func_scope=scope_pep695,
             parameterizable=func,
             exception_prefix=exception_prefix,
         )
     # Else, the decorated callable is *NOT* a pure-Python function. In this
     # case, that callable does *NOT* support PEP 695-compliant type
     # parametrization. Silently ignore that callable, whatever it is.
+
+    # Composite all type parameters parametrizing the decorated callable and all
+    # lexical parent classes of that callable into this forward scope.
+    decor_meta.func_wrappee_scope_forward.update(scope_pep695)  # type: ignore[union-attr]
+
+    # Release this PEP 695-specific lexical scope.
+    release_instance(scope_pep695)
 
 
 def _resolve_func_scope_forward_hint(

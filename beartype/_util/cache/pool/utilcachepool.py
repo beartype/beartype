@@ -87,10 +87,7 @@ class KeyPool(object):
     )
 
     # ..................{ INITIALIZER                        }..................
-    def __init__(
-        self,
-        item_maker: Union[type, Callable],
-    ) -> None:
+    def __init__(self, item_maker: Union[type, Callable]) -> None:
         '''
         Initialize this key pool with the passed factory callable.
 
@@ -161,19 +158,19 @@ class KeyPool(object):
         ----------
         key : Optional[HashableType]
             Hashable object associated with the pool item to be acquired.
-            Defaults to ``None``.
+            Defaults to :data:`None`.
         is_debug : bool, optional
-            ``True`` only if enabling inefficient debugging logic. Notably,
+            :data:`True` only if enabling inefficient debugging logic. Notably,
             enabling this option notes this item to have now been acquired.
-            Defaults to ``False``.
+            Defaults to :data:`False`.
 
         Returns
-        ----------
+        -------
         object
             Pool item associated with this hashable object.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is unhashable and thus *not* a key.
         '''
@@ -261,11 +258,11 @@ class KeyPool(object):
             Arbitrary object previously associated with this key.
         key : Optional[HashableType]
             Hashable object previously associated with this pool item. Defaults
-            to ``None``.
+            to :data:`None`.
         is_debug : bool, optional
-            ``True`` only if enabling inefficient debugging logic. Notably,
+            :data:`True` only if enabling inefficient debugging logic. Notably,
             enabling this option raises an exception if this item was *not*
-            previously acquired. Defaults to ``False``.
+            previously acquired. Defaults to :data:`False`.
 
         Raises
         ----------

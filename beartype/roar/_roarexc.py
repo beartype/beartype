@@ -1616,22 +1616,6 @@ class _BeartypeUtilCachedFixedListException(_BeartypeUtilCachedException):
 
     pass
 
-
-class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
-    '''
-    **Beartype decorator typed object exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator when an internal callable erroneously
-    acquires a **pooled typed object** (i.e., object internally cached to a
-    pool of all objects of that type).
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
 # ....................{ PRIVATE ~ util : call                }..................
 class _BeartypeCallHintRaiseException(_BeartypeUtilException):
     '''
