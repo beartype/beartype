@@ -151,6 +151,12 @@ class BeartypeForwardScope(LexicalScope):
         self._scope_name = scope_name
 
     # ..................{ DUNDERS                            }..................
+    #FIXME: Additionally:
+    #* If the caller resides in a "beartype."-prefixed submodule, do what we
+    #  currently do.
+    #* Else, raise an "AttributeError" as we currently do in the
+    #  fwdrefmeta.__getattr__() method. Consider factoring out that
+    #  exception-raising functionality, which is surprisingly non-trivial.
     def __missing__(self, hint_name: str) -> Type[
         _BeartypeForwardRefIndexableABC]:
         '''
@@ -159,19 +165,98 @@ class BeartypeForwardScope(LexicalScope):
         ``]``-delimited attempt to access an **unresolved type hint** (i.e.,
         *not* currently defined in this scope) with the passed name.
 
-        This method transparently replaces this unresolved type hint with a
-        **forward reference proxy** (i.e., concrete subclass of the private
+        This dunder method transparently replaces this unresolved type hint with
+        a **forward reference proxy** (i.e., concrete subclass of the private
         :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
         abstract base class (ABC), which resolves this type hint on the first
         call to the :func:`isinstance` builtin whose second argument is that
         subclass).
 
-        This method assumes that:
+        This dunder method assumes that:
 
         * This scope is only partially initialized.
         * This type hint has yet to be declared in this scope.
         * This type hint will be declared in this scope by the later time that
-          this method is called.
+          this dunder method is called.
+
+        Caveats
+        -------
+        **This dunder method is susceptible to misuse by third-party frameworks
+        that perform call stack inspection.** The higher-level
+        :func:`beartype._check.forward.fwdmain.resolve_hint` internally invokes
+        this dunder method by calling the :func:`eval` builtin, which then adds
+        a new stack frame to the call stack whose ``f_locals`` and ``f_globals``
+        attributes are this dictionary. If a third-party framework introspects
+        the call stack containing this new stack frame, this dictionary's
+        failure to conform to the behavior of a lexical scope could induce
+        failure in that third-party framework. Does this edge case arise in
+        real-world usage, though? It does.
+
+        Consider ``pytest``, which detects whether each frame on the call stack
+        defines the ``pytest``-specific ``__tracebackhide__`` dunder attribute:
+
+        .. code-block:: python
+
+           def ishidden(self, excinfo: ExceptionInfo[BaseException] | None) -> bool:
+               """Return True if the current frame has a var __tracebackhide__
+               resolving to True.
+
+               If __tracebackhide__ is a callable, it gets called with the
+               ExceptionInfo instance and can decide whether to hide the traceback.
+
+               Mostly for internal use.
+               """
+               tbh: bool | Callable[[ExceptionInfo[BaseException] | None], bool] = False
+               for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
+                   # in normal cases, f_locals and f_globals are dictionaries
+                   # however via `exec(...)` / `eval(...)` they can be other types
+                   # (even incorrect types!).
+                   # as such, we suppress all exceptions while accessing __tracebackhide__
+                   try:
+                       tbh = maybe_ns_dct["__tracebackhide__"]
+                   except Exception:
+                       pass
+                   else:
+                       break
+               if tbh and callable(tbh):
+                   return tbh(excinfo)
+
+        In obscure edge cases involving :mod:`beartype`, ``pytest``, and
+        :pep:`563`, one or both of the ``self.frame.f_locals`` and/or
+        ``self.frame.f_globals`` dictionaries are instances of the
+        :class:`beartype._check.forward.fwdscope.BeartypeForwardScope`
+        dictionary subclass. The ``tbh = maybe_ns_dct["__tracebackhide__"]``
+        statement then implicitly invokes this dunder method, which then creates
+        and returns a new forward reference proxy encapsulating the missing
+        ``__tracebackhide__`` attribute: e.g.,
+
+        .. code-block:: python
+
+           tbh = <forwardref__tracebackhide__(
+                     __name_beartype__='__tracebackhide__',
+                     __scope_name_beartype__='beartype_test.a00_unit.data.pep.pep563.pep695.data_pep563_pep695'
+           )>
+
+        Since forward reference proxies are types *and* since types are callable
+        (in the sense that "calling" a type instantiates that type), forward
+        reference proxies are callable. However, they're not. The
+        :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+        superclass prohibits instantiation by defining a ``__new__()`` dunder
+        method that unconditionally raises exceptions, which then induces the
+        ``pytest`` to raise the same exceptions on attempting to
+        ``return tbh(excinfo)``.
+
+        This dunder method avoids that specific issue by blacklisting the
+        ``__tracebackhide__`` attribute, where "blacklisting" means:
+
+        * Explicitly detecting when that attribute is requested.
+        * Explicitly raising a standard :class:`AttributeError` in that case
+          rather than creating and returning a forward reference proxy.
+
+        However, this only handles that specific issue. Similar issues will
+        probably arise with similar third-party frameworks in the future. When
+        this occurs, the problematic attributes *must* be manually blacklisted
+        in a similar manner.
 
         Parameters
         ----------

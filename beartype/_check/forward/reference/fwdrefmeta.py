@@ -51,8 +51,25 @@ class BeartypeForwardRefMeta(type):
     '''
 
     # ....................{ DUNDERS                        }....................
-    def __getattr__(cls: BeartypeForwardRef, hint_name: str) -> (  # type: ignore[misc]
-        BeartypeForwardRef):
+    #FIXME: Improve as follows, please:
+    #* If this referee has already been resolved, then do *NOT* do what we're
+    #  currently doing (i.e., unconditionally create and return a new nested
+    #  forward reference). Instead, just proxy the __getattr__() of this referee
+    #  by calling getattr() against this referee. Note that we need to define a
+    #  new private global tester function for deciding whether a referee has
+    #  already been resolved: e.g., something resembling...
+    #      # Trivial, but critical.
+    #      def _is_forwardref_referee(cls: BeartypeForwardRef) -> bool:
+    #          return cls in _forwardref_to_referee
+    #* Else, do what we're currently doing.
+    #FIXME: That's great, but still insufficient. Additionally:
+    #* If the caller resides in a "beartype."-prefixed submodule, do what we
+    #  currently do.
+    #* Else, immediately resolve the referee by accessing "__type_beartype__"
+    #  and then (as above) proxy the __getattr__() of this referee by calling
+    #  getattr() against this referee.
+    def __getattr__(  # type: ignore[misc]
+        cls: BeartypeForwardRef, hint_name: str) -> BeartypeForwardRef:
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
@@ -67,6 +84,127 @@ class BeartypeForwardRefMeta(type):
            to by the passed forward reference subclass.
         #. The passed unqualified basename, presumably referring to a
            subpackage, submodule, or class of that external package or module.
+
+        Design
+        ------
+        The syntactic implementation of this dunder method is largely trivial.
+        The semantic justification for this implementation is, however, anything
+        but. Indeed, justifying this implementation warrants a full-length
+        dissertation on runtime resolution of forward references. This is that
+        dissertation.
+
+        Broadly speaking, there are two use cases for which CPython implicitly
+        invokes this dunder method: two use cases whose intentions and
+        requirements are so at odds with one another that seamlessly satisfying
+        both is an exercise in code torture.
+
+        The first use case is the intended (and also most common) use case:
+        **absolute forward reference resolution deferral.** Given a
+        :pep:`484`-compliant stringified absolute forward reference to a
+        subscripted generic that has yet to be defined (e.g.,
+        ``"some_package.some_submodule.SomeType[T]"``), how *exactly* does
+        :mod:`beartype` resolve that subscripted generic in a manner consistent
+        with efficient runtime type-checking? Is such resolution even feasible?
+        The answers, of course, are: "Carefully." and "Yuppers."
+
+        One brute-force approach to resolving stringified forward references
+        containing arbitrarily complex Python expressions at runtime would be to
+        parse those references through a Python-specific Parser Expression
+        Grammar (PEG). Although technically feasible, embedding a full-blown
+        Python parser within :mod:`beartype` would be so fragile and inefficient
+        as to be effectively infeasible. Consequently, :mod:`beartype` does
+        *not* do that. Instead, :mod:`beartype` is clever.
+
+        The clever approach is to charm Python itself into parsing those
+        references. After all, Python clearly knows how to parse Python.
+        :mod:`beartype` simply needs to transform those references into some
+        format readily digestible by Python's builtin Python parser. Our
+        solution? The :func:`eval` builtin coupled with our non-standard
+        :class:`beartype._check.forward.fwdscope.BeartypeForwardScope`
+        dictionary subclass, which overrides the ``__missing__`` dunder method
+        explicitly called by the superclass :meth:`dict.__getitem__` method
+        implicitly called on each ``[``- and ``]``-delimited attempt to access a
+        forward reference whose type has yet to be resolved by mapping the name
+        of that reference to an actual **forward reference proxy** (i.e.,
+        instance of this metaclass). The :func:`eval` builtin then implicitly
+        instantiates one forward reference proxy encapsulating each undefined
+        top-level attribute inside the passed absolute forward reference. Given
+        ``"some_package.some_submodule.SomeType[T]"``, :func:`eval` then first
+        instantiates one forward reference proxy encapsulating the undefined
+        top-level attribute ``"some_package"``. Clearly, a forward reference
+        proxy for ``"some_package"`` does *not* suffice to proxy the entire
+        ``"some_package.some_submodule.SomeType[T]"`` forward reference.
+
+        Cue this dunder method. :func:`eval` then attempts to access the
+        ``"some_submodule"`` attribute of the forward reference proxy for
+        ``"some_package"``. Doing so implicitly invokes this dunder method,
+        which then instantiates another forward reference proxy encapsulating
+        the undefined mid-level attribute ``"some_submodule"``. :func:`eval`
+        then attempts to access the ``"SomeType[T]"`` attribute of the forward
+        reference proxy for ``"some_submodule"``. Doing so implicitly invokes
+        this dunder method, which then instantiates a final forward reference
+        proxy encapsulating the undefined leaf-level attribute
+        ``"SomeType[T]"``. Lastly, :func:`eval` then evaluates the expression
+        ``"some_package.some_submodule.SomeType[T]"`` to the proxy for
+        ``"SomeType[T]"``, which :func:`eval` then returns as its value. The
+        intermediate proxies for both ``"some_package"`` and
+        ``"some_submodule"`` are now irrelevant and thus garbage-collectable.
+
+        This scheme is simple, effective, and (most importantly) efficient. But
+        it's also prone to overly permissive proxying that intersects poorly
+        with the second use case. Why? Because this scheme naively assumes that
+        each invocation of this dunder method is **trustworthy**: that is, that
+        each invocation of this dunder method is an attempt to access some valid
+        module attribute that is known *a priori* to exist. This assumption
+        holds for stringified absolute forward references used as type hints by
+        the caller internally proxied by :mod:`beartype`. This assumption breaks
+        when an invocation of this dunder method is **untrustworthy**: that is,
+        when an invocation of this dunder method is merely an attempt to decide
+        whether a module contains an attribute that is not known *a priori* to
+        exist. In short, the second use case is the :func:`hasattr` builtin.
+
+        The :func:`hasattr` builtin is actually implemented in terms of the
+        :func:`getattr` builtin via the Easier to Ask for Permission than
+        Forgiveness (EAFP) principle, implying that :func:`hasattr` internally
+        invokes this dunder method. Although implemented in low-level C, a
+        pure-Python implementation of :func:`hasattr` might vaguely resemble:
+
+        .. code-block:: python
+
+           def hasattr(obj: object, attr_name: str) -> bool:
+               try:
+                   getattr(obj, attr_name)
+               except AttributeError:
+                   return False
+               return True
+
+        The :func:`hasattr` builtin thus expects this dunder method to raise the
+        :exc:`AttributeError` exception when the module proxied by this forward
+        reference proxy fails to define an attribute with the passed name.
+        However, this expectation conflicts with the overly permissive proxying
+        performed by the scheme outlined above. In that first use case,
+        :mod:`beartype` encapsulates an external module that is *not* safely
+        importable with this forward reference proxy. Since :mod:`beartype` has
+        *no* safe means of deciding whether that module actually defines an
+        attribute with the passed name or not, :mod:`beartype` naively assumes
+        that module to define that attribute. Under the scheme outlined above,
+        this dunder method would *never* raise the :exc:`AttributeError` and the
+        :func:`hasattr` attribute would *always* return :data:`True` when passed
+        a forward reference proxy.
+
+        Does this second use case arise in practice? In theory, it shouldn't.
+        After all, forward reference proxies are mostly isolated to private
+        subpackages in the :mod:`beartype` codebase... *mostly.* In practice,
+        this second use case commonly arises. For efficiency, :mod:`beartype`
+        replaces unusable stringified absolute forward references that are root
+        type hints annotating the parameters and returns of
+        :func:`beartype.beartype`-decorated callable with usable forward
+        reference proxies. Popular third-party frameworks like ``pytest`` and
+        Django then introspect those forward reference proxies during their
+        non-trivial workloads. This introspection either directly calls the
+        :func:`hasattr` builtin *or* replicates that builtin in pure-Python to
+        detect whether those forward reference proxies define framework-specific
+        dunder attributes of relevance to those frameworks.
 
         Parameters
         ----------
@@ -286,6 +424,7 @@ class BeartypeForwardRefMeta(type):
                 circularly proxies itself.
         '''
 
+        #FIXME: [SPEED] Optimize away this method lookup, please. *sigh*
         # Forward referee referred to by this forward reference proxy if a prior
         # access of this property has already resolved this referee *OR* "None"
         # otherwise (i.e., if this is the first access of this property).

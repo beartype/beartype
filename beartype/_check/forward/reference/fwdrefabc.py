@@ -29,6 +29,7 @@ from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 # CAUTION: The names of *ALL* class variables declared below *MUST* be both:
 # * Prefixed by "__beartype_".
 # * Suffixed by "__".
+#
 # If this is *NOT* done, these variables could induce a namespace conflict with
 # user-defined subpackages, submodules, and classes of the same names
 # concatenated via the BeartypeForwardRefMeta.__getattr__() dunder method.
