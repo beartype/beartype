@@ -39,6 +39,10 @@ from beartype._check.forward.reference.fwdrefabc import (
     _BeartypeForwardRefIndexableABC)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
+from beartype._util.func.utilfuncframe import (
+    get_frame_caller_module_name_or_none,
+    is_frame_caller_beartype,
+)
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ SUBCLASSES                         }....................
@@ -246,17 +250,15 @@ class BeartypeForwardScope(LexicalScope):
         ``pytest`` to raise the same exceptions on attempting to
         ``return tbh(excinfo)``.
 
-        This dunder method avoids that specific issue by blacklisting the
-        ``__tracebackhide__`` attribute, where "blacklisting" means:
+        This dunder method avoids that and all similar issues by:
 
-        * Explicitly detecting when that attribute is requested.
-        * Explicitly raising a standard :class:`AttributeError` in that case
-          rather than creating and returning a forward reference proxy.
-
-        However, this only handles that specific issue. Similar issues will
-        probably arise with similar third-party frameworks in the future. When
-        this occurs, the problematic attributes *must* be manually blacklisted
-        in a similar manner.
+        * Detecting whether this dunder method is called by a caller defined
+          inside or outside the :mod:`beartype` codebase.
+        * If this dunder method is called by a caller defined inside the
+          :mod:`beartype` codebase, creating and returning a forward reference
+          proxy.
+        * If this dunder method is called by a caller defined outside the
+          :mod:`beartype` codebase, raising a standard :class:`AttributeError`.
 
         Parameters
         ----------
@@ -284,6 +286,79 @@ class BeartypeForwardScope(LexicalScope):
             exception_prefix='Forward reference ',
         )
         # Else, this type hint name is syntactically valid.
+
+        # If it is *NOT* the case that...
+        if not (
+            # The caller directly resides inside the "beartype" package *OR*...
+            is_frame_caller_beartype(ignore_frames=1) or
+            # The caller indirectly resides inside the "beartype" package. This
+            # common edge cases arises when the parent
+            # beartype._check.forward.fwdmain.resolve_hint() function calls the
+            # eval() builtin to dynamically evaluate the passed stringified type
+            # hint: e.g.,
+            #     # This is the eval() call triggering this call.
+            #     hint_resolved = eval(hint, decor_meta.func_wrappee_scope_forward)
+            #
+            # In this case, the prior call to the is_frame_caller_beartype()
+            # tester tested the stack frame of that eval() call and,
+            # specifically, the "__name__" attribute of the global namespace of
+            # the external user-defined module proxied by this forward scope.
+            # Naturally, that module is external and thus *NOT* inside the
+            # "beartype" package. Ignore this stack frame in the hopes that the
+            # parent stack frame of that eval() call will be the
+            # "beartype._check.forward.fwdmain" submodule performing that call.
+            # Look. We don't like this fragility any more than you do, but
+            # Python shenanigans leave us little choice. Our paws are tied!
+            is_frame_caller_beartype(ignore_frames=2)
+        ):
+            # Then the caller is a third-party. In this case, assume this
+            # erroneous attempt to access a non-existent attribute of this
+            # forward scope to *ACTUALLY* be an Easier to Ask for Permission
+            # than Forgiveness (EAFP)-driven to detect whether this forward
+            # scope defines this attribute ala the hasattr() builtin. In this
+            # case, raise the expected "AttributeError." See the "Caveats"
+            # subsection of this dunder method's docstring for commentary.
+
+            # print(f'caller+1: {get_frame_caller_module_name_or_none(ignore_frames=1)}')
+            # print(f'caller+2: {get_frame_caller_module_name_or_none(ignore_frames=2)}')
+            # print(f'caller+3: {get_frame_caller_module_name_or_none(ignore_frames=3)}')
+
+            # Exception message to be raised.
+            exception_message = (
+                f'Forward reference scope "{self._scope_name}" '
+                f'attribute "{hint_name}" '
+            )
+
+            # Fully-qualified name of the module declaring the caller if any
+            # *OR* "None" otherwise (e.g., if declared in an interactive REPL).
+            frame_caller_module_name = get_frame_caller_module_name_or_none()
+
+            # If the caller has a module, append the fully-qualified name of
+            # that module to this exception message to improve debuggability.
+            if frame_caller_module_name:
+                exception_message += (
+                    f'via third-party module "{frame_caller_module_name}" ')
+            # Else, the caller has *NO* module.
+
+            # Raise this exception message. Note that we intentionally avoid
+            # suffixing the exception message by a "." character here. Why?
+            # Because Python treats "AttributeError" exceptions as special.
+            # Notably, Python appears to actually:
+            # 1. Parse apart the messages of these exceptions for the
+            #    double-quoted attribute name embedded in these messages.
+            # 2. Suffix these messages by a "." character followed by a sentence
+            #    suggesting an existing attribute with a similar name to that of
+            #    the attribute name previously parsed from these messages.
+            #
+            # For example, given an erroneous lookup of a non-existent dunder
+            # attribute "__nomnom_beartype__", Python expands the exception
+            # message raised below into:
+            #     AttributeError: Forward reference scope "MuhRef" dunder
+            #     attribute "__nomnom_beartype__" not found. Did you mean:
+            #     '__name_beartype__'?
+            raise AttributeError(f'{exception_message}not found')
+        # Else, the caller resides inside the "beartype" package and is thus
+        # assumed to be trustworthy. Don't let us down, @beartype! Not again!
 
         # Forward reference proxy to be returned.
         forwardref_subtype = make_forwardref_indexable_subtype(

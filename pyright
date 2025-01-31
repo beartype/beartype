@@ -67,7 +67,7 @@ pushd "${script_dirname}" >/dev/null
 #explicitly requests we do so, please. This has dragged on long enough! *HURK*
 # Statically type-check this project's codebase with all passed arguments.
 # command pyright beartype "${@}"
-# command pyright --pythonversion 3.8 beartype "${@}"
+# command pyright --pythonversion 3.9 beartype "${@}"
 # command pyright --pythonversion 3.10 beartype "${@}"
 # command pyright --pythonversion 3.11 beartype "${@}"
 command pyright --pythonversion 3.13 beartype "${@}"

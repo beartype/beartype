@@ -244,8 +244,8 @@ class BeartypeForwardRefMeta(type):
         #     '__name_beartype__'?
         if is_dunder(hint_name):
             raise AttributeError(
-                f'Forward reference proxy "{cls.__name__}" dunder attribute '
-                f'"{hint_name}" not found'
+                f'Forward reference proxy "{cls.__name__}" '
+                f'dunder attribute "{hint_name}" not found'
             )
         # Else, this unqualified basename is *NOT* that of a non-existent dunder
         # attribute.

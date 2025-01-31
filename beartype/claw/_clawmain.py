@@ -31,8 +31,8 @@ from beartype._data.api.standard.datamodpy import SCRIPT_MODULE_NAME
 from beartype._util.func.utilfuncfile import get_func_filename_or_none
 from beartype._util.func.utilfuncframe import (
     get_frame,
-    get_frame_module_name,
-    get_frame_package_name,
+    get_frame_module_name_or_none,
+    get_frame_package_name_or_none,
 )
 from pathlib import PurePath
 
@@ -184,7 +184,7 @@ def beartype_this_package(
     # that caller if that module resides in some package *OR* the empty string
     # otherwise (i.e., if that module is a top-level module or script residing
     # outside any package structure).
-    frame_package_name = get_frame_package_name(frame_caller)
+    frame_package_name = get_frame_package_name_or_none(frame_caller)
     # print(f'beartype_this_package: {frame_caller_package_name}')
     # print(f'beartype_this_package: {repr(frame_caller)}')
 
@@ -202,10 +202,7 @@ def beartype_this_package(
         exception_message: str = None  # type: ignore[assignment]
 
         # Fully-qualified name of the module encapsulating the caller.
-        frame_module_name = get_frame_module_name(
-            frame=frame_caller,
-            exception_cls=BeartypeClawHookUnpackagedException,
-        )
+        frame_module_name = get_frame_module_name_or_none(frame_caller)
 
         # If the caller is a script rather than a module, this name is the
         # useless magic string "__main__". In this case...

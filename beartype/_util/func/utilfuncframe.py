@@ -22,9 +22,158 @@ from beartype.typing import (
 from beartype._cave._cavefast import CallableFrameType
 from beartype._data.hint.datahinttyping import TypeException
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_frame_caller_beartype(
+    # Optional parameters.
+    ignore_frames: int = 1,
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+) -> bool:
+    '''
+    :data:`True` only if the **caller** (i.e., callable directly calling this
+    getter) resides inside the :mod:`beartype` codebase.
+
+    This tester implicitly ignores the current call to this getter by
+    unconditionally adding ``1`` to the passed number of stack frames.
+
+    Parameters
+    ----------
+    ignore_frames : int
+        Number of stack frames on the current call stack to ignore (excluding
+        the stack frame encapsulating the call to this getter). Defaults to 1,
+        signifying the stack frame of the **caller** directly calling this
+        getter.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallFrameException`.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if the caller is in the :mod:`beartype` codebase.
+    '''
+
+    # Fully-qualified name of the (sub)module declaring the caller (i.e.,
+    # callable directly calling this dunder method) if that callable has a
+    # (sub)module *or* "None" otherwise (e.g., if that callable resides outside
+    # a module, usually due to being declared in an interactive REPL).
+    frame_caller_module_name = get_frame_caller_module_name_or_none(
+        ignore_frames=ignore_frames + 1, exception_cls=exception_cls)
+
+    # Return true only if
+    return (
+        # The caller resides inside a module structure *AND*...
+        frame_caller_module_name is not None and
+        # The caller resides inside the "beartype" package...
+        frame_caller_module_name.startswith('beartype.')
+    )
+
 # ....................{ GETTERS                            }....................
-#FIXME: Mypy insists this getter can return "None" in certain edge cases. But...
-#what are those? Official documentation is seemingly silent on the issue. *sigh*
+def get_frame_or_none(
+    # Optional parameters.
+    ignore_frames: int = 1,
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+) -> Optional[CallableFrameType]:
+    '''
+    **Stack frame** (i.e., :class:`.CallableFrameType` object) on the current
+    call stack *after* ignoring the passed number of stack frames.
+
+    This getter implicitly ignores the current call to this getter by
+    unconditionally adding ``1`` to the passed number of stack frames, implying
+    this semantic interpretation of the passed number:
+
+    * If ``ignore_frames == 0``, this getter returns the stack frame of the
+      **caller** directly calling this getter. Since callers already know
+      their own syntactic and semantic context, this is generally useless.
+      Instead, callers typically want to ensure that ``ignore_frames >= 1``.
+    * If ``ignore_frames == 1``, this getter returns the stack frame of the
+      **parent caller** calling the caller directly calling this getter.
+      Unsurprisingly, this is the standard use case and thus the default.
+    * If ``ignore_frames == 2``, this getter returns the stack frame of the
+      **parent parent caller** calling the parent caller calling the caller
+      directly calling this getter.
+
+    Caveats
+    -------
+    **This higher-level getter should typically be called in lieu of the
+    lower-level** :func:`.get_frame` **getter.** The former handles edge cases
+    and validates the passed input, whereas the latter is lower-level and thus
+    more fragile with respect to both edge cases and input.
+
+    Parameters
+    ----------
+    ignore_frames : int
+        Number of stack frames on the current call stack to ignore (excluding
+        the stack frame encapsulating the call to this getter). Defaults to 1,
+        signifying the stack frame of the **parent caller** calling the caller
+        directly calling this getter.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallFrameException`.
+
+    Returns
+    -------
+    Optional[CallableFrameType]
+        Either:
+
+        * If the active Python interpreter defines the private low-level
+          :func:`sys._getframe` getter *and*...
+
+          * If a stack frame exists on the current call stack *after* ignoring
+            the passed number of stack frames, that frame.
+          * Else, the requested frame exceeds the **frame height** (i.e., total
+            number of stack frames) of the current call stack. In this case,
+            :data:`None`.
+
+        * Else, :data:`None`.
+
+    Raises
+    ------
+    exception_cls
+        If either:
+
+        * ``ignore_frames`` is *not* an integer.
+        * ``ignore_frames`` is a negative integer.
+    '''
+
+    # If the passed number of stack frames to ignore is *NOT* a non-negative
+    # integer, raise an exception.
+    if not isinstance(ignore_frames, int):
+        raise exception_cls(f'{repr(ignore_frames)} not integer.')
+    if ignore_frames < 0:
+        raise exception_cls(f'{repr(ignore_frames)} not non-negative integer.')
+
+    # If the active Python interpreter defines the private low-level
+    # sys._getframe() getter...
+    if get_frame is not None:
+        # Attempt to return the stack frame on the current call stack *AFTER*
+        # ignoring the passed number of stack frames (as well as the current
+        # call to this getter).
+        try:
+            return get_frame(ignore_frames + 1)
+        # If the above call to sys._getframe() raised a "ValueError" exception,
+        # then "ignore_frames + 1 >= frame_height" where "frame_height" is the
+        # total number of stack frames on the current call stack. In this case,
+        # return "None" instead.
+        except ValueError:
+            pass
+        # If the above call to sys._getframe() raised an "OverflowError"
+        # exception, then "ignore_frames + 1 >= frame_height" is almost
+        # certainly the case. This case thus reduces to the prior case. Ergo,
+        # return "None" instead. This exception message resembles:
+        #     OverflowError: Python int too large to convert to C int
+        except OverflowError:
+            pass
+    # Else, this interpreter fails to define that getter. In this case, return
+    # "None" instead.
+
+    # Return "None" as a latch-ditch fallback.
+    return None
+
+
+#FIXME: Mypy insists the sys._getframe() getter can return "None" in certain
+#edge cases. But... what are those? Official documentation is seemingly silent
+#on the issue. *sigh*
 get_frame: Optional[Callable[[int], Optional[CallableFrameType]]] = getattr(
     sys, '_getframe', None)
 '''
@@ -59,6 +208,13 @@ under CPython resembles:
         f_locals        local namespace seen by this frame
         f_trace         tracing function for this frame, or None
 
+Caveats
+-------
+**The higher-level** :func:`.get_frame_or_none` **getter should typically be
+called in lieu of this lower-level getter.** The former handles edge cases and
+validates the passed input, whereas the latter is lower-level and thus more
+fragile with respect to both edge cases and input.
+
 Parameters
 ----------
 depth : int
@@ -74,43 +230,25 @@ CallableFrameType
 Raises
 ------
 ValueError
-     If this index exceeds the **height** (i.e., total number of stack frames)
-     of the current call stack.
+    If this index exceeds the **height** (i.e., total number of stack frames)
+    of the current call stack.
 '''
 
-#FIXME: Preserve until we inevitably require this getter, please.
-#def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
-#    try:
-#        return get_frame(ignore_frames + 1)
-#    except ValueError:
-#        return None
-#def get_frame_caller_or_none() -> Optional[FrameType]:
-#    return get_frame_or_none(ignore_frames=2)
-
-# ....................{ GETTERS ~ name                     }....................
+# ....................{ GETTERS ~ name : package           }....................
 #FIXME: Unit test us up, please.
-def get_frame_package_name(
-    # Mandatory parameters.
-    frame: CallableFrameType,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallFrameException,
-) -> Optional[str]:
+def get_frame_package_name_or_none(frame: CallableFrameType) -> Optional[str]:
     '''
-    Fully-qualified name of the parent package of the child module declaring the
+    Fully-qualified name of the (sub)package of the (sub)module declaring the
     callable whose code object is that of the passed **stack frame** (i.e.,
-    :class:`types.CallableFrameType` instance encapsulating all metadata
-    describing a single call on the current call stack) if module has a parent
-    package *or* the empty string otherwise (e.g., if that module is either a
-    top-level module or script residing outside any parent package structure).
+    :class:`.CallableFrameType` instance encapsulating all metadata describing a
+    single call on the current call stack) if that (sub)module has a
+    (sub)package *or* :data:`None` otherwise (e.g., if that (sub)module is
+    either a top-level module or script residing outside any package structure).
 
     Parameters
     ----------
     frame : CallableFrameType
         Stack frame to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallFrameException`.
 
     Returns
     -------
@@ -144,25 +282,84 @@ def get_frame_package_name(
     # Return the name of this parent package.
     return frame_package_name
 
-
+# ....................{ GETTERS ~ name : module            }....................
 #FIXME: Unit test us up, please.
-def get_frame_module_name(
-    # Mandatory parameters.
-    frame: CallableFrameType,
-
+def get_frame_caller_module_name_or_none(
     # Optional parameters.
+    ignore_frames: int = 1,
     exception_cls: TypeException = _BeartypeUtilCallFrameException,
 ) -> Optional[str]:
     '''
-    Fully-qualified name of the module declaring the callable whose code object
-    is that of the passed **stack frame** (i.e.,
-    :class:`types.CallableFrameType` instance encapsulating all metadata
-    describing a single call on the current call stack).
+    Fully-qualified name of the (sub)module declaring the **caller** (i.e.,
+    callable directly calling this getter) if that callable has a (sub)module
+    *or* :data:`None` (e.g., if that callable resides outside any module
+    structure, typically due to being declared directly in an interactive REPL).
+
+    This getter implicitly ignores the current call to this getter by
+    unconditionally adding ``1`` to the passed number of stack frames.
+
+    Parameters
+    ----------
+    ignore_frames : int
+        Number of stack frames on the current call stack to ignore (excluding
+        the stack frame encapsulating the call to this getter). Defaults to 1,
+        signifying the stack frame of the **caller** directly calling this
+        getter.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallFrameException`.
+
+    Returns
+    -------
+    Optional[str]
+        Either:
+
+        * If the callable described by this frame resides in a module, the
+          fully-qualified name of that module.
+        * Else, :data:`None`.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj_basename`
+        Related getter getting the unqualified basename of that callable.
+    '''
+
+    # Stack frame of the caller directly calling this getter, obtained by
+    # ignoring the stack frame of the current call to this getter.
+    frame_caller = get_frame_or_none(
+        ignore_frames=ignore_frames + 1, exception_cls=exception_cls)
+
+    # Return either...
+    return (
+        # If this stack frame exists, return either the fully-qualified name of
+        # the module defining the caller if the caller resides in a module *OR*
+        # "None" otherwise (e.g., if the caller was defined in a REPL).
+        get_frame_module_name_or_none(frame_caller)
+        if frame_caller is not None else
+        # Else, *NO* such stack frame exists, implying this getter was probably
+        # directly called from an interactive REPL (e.g., "ipython"). In this
+        # case, return "None".
+        None
+    )
+
+
+#FIXME: Unit test us up, please.
+def get_frame_module_name_or_none(frame: CallableFrameType) -> Optional[str]:
+    '''
+    Fully-qualified name of the (sub)module declaring the callable whose code
+    object is that of the passed **stack frame** (i.e.,
+    :class:`.CallableFrameType` instance encapsulating all metadata describing a
+    single call on the current call stack) if that callable has a (sub)module
+    *or* :data:`None` otherwise (e.g., if that callable resides outside any
+    module structure, typically due to being declared directly in an interactive
+    REPL).
 
     Parameters
     ----------
     frame : CallableFrameType
         Stack frame to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised in = _BeartypeUtilCallFrameException,
 
     Returns
     -------
@@ -221,7 +418,7 @@ def get_frame_module_name(
 #
 #     # Fully-qualified name of the module declaring the callable described by
 #     # this frame.
-#     frame_module_name = get_frame_module_name(
+#     frame_module_name = get_frame_module_name_or_none(
 #         frame=frame, exception_cls=exception_cls)
 #
 #     # Unqualified basename of that callable.

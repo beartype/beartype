@@ -17,6 +17,89 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getters                    }....................
+def test_get_frame_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncframe.get_frame_or_none` getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallFrameException
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from beartype._util.func.utilfuncframe import get_frame_or_none
+    from pytest import raises
+    from sys import maxsize
+
+    # ....................{ CALLABLES                      }....................
+    def while_fate() -> None:
+        '''
+        Arbitrary callable calling another callable calling another callable.
+        '''
+
+        seemd_strangled()
+
+
+    def seemd_strangled() -> None:
+        '''
+        Arbitrary callable calling another callable.
+        '''
+
+        in_my_nervous_grasp()
+
+
+    def in_my_nervous_grasp() -> None:
+        '''
+        Arbitrary callable calling *no* other callable but instead validating
+        the stack frames on the current call stack are as expected.
+        '''
+
+        # ....................{ PASS                       }....................
+        # Assert this getter returns the parent stack frame when passed *NO*
+        # parameters.
+        seemd_strangled_frame = get_frame_or_none()
+        assert (
+            get_func_codeobj(seemd_strangled_frame) is
+            get_func_codeobj(seemd_strangled)
+        )
+
+        # Assert this getter returns the current stack frame when passed 0.
+        in_my_nervous_grasp_frame = get_frame_or_none(0)
+        assert (
+            get_func_codeobj(in_my_nervous_grasp_frame) is
+            get_func_codeobj(in_my_nervous_grasp)
+        )
+
+        # Assert this getter returns the parent parent stack frame when passed
+        # 2.
+        while_fate_frame = get_frame_or_none(2)
+        assert (
+            get_func_codeobj(while_fate_frame) is
+            get_func_codeobj(while_fate)
+        )
+
+    # ....................{ PASS                           }....................
+    # Call an arbitrary callable calling another callable calling another
+    # callable validating the stack frames on the current call stack.
+    while_fate()
+
+    # Assert this getter returns "None" when the passed number of stack frames
+    # to ignore is an absurdly large positive integer guaranteed to either:
+    # * Trigger a C-based integer overflow.
+    # * *NOT* trigger such an overflow but still exceed the total number of
+    #   stack frames on the current call stack.
+    assert get_frame_or_none(maxsize) is None  # <-- overflow!
+    assert get_frame_or_none(9999) is None  # <-- no overflow!
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when the passed number of
+    # stack frames to ignore is *NOT* a non-negative integer.
+    with raises(_BeartypeUtilCallFrameException):
+        get_frame_or_none("While Fate seem'd strangled in my nervous grasp?")
+    with raises(_BeartypeUtilCallFrameException):
+        get_frame_or_none(-1)
+
+
 def test_get_frame() -> None:
     '''
     Test the
