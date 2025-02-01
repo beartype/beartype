@@ -342,10 +342,10 @@ def get_func_args_flexible_len(
         get_func_functools_partial_args_flexible_len,
         is_func_functools_partial,
     )
-    from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.utilfunctest import is_func_codeobjable
 
     # If the passed callable is pure-Python...
-    if is_func_python(func):
+    if is_func_codeobjable(func):
         # Number of various kinds of parameters accepted by that callable.
         func_args_lens = get_func_args_lens(
             func=func,

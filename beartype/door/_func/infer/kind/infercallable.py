@@ -86,7 +86,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.func.utilfuncget import get_func_annotations
-from beartype._util.func.utilfunctest import is_func_python
+from beartype._util.func.utilfunctest import is_func_codeobjable
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.proposal.pep612 import (
@@ -244,7 +244,7 @@ def infer_hint_callable(func: CallableABC) -> object:
     # __call__() dunder method enabling this object to be called like a standard
     # callable). In this case, trivially return the unsubscripted
     # "collections.abc.Callable" protocol.
-    if not is_func_python(func):
+    if not is_func_codeobjable(func):
         return Callable
     # Else, this callable is pure-Python.
 

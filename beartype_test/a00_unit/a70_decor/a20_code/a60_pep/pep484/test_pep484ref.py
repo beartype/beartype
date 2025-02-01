@@ -98,7 +98,7 @@ def test_pep484_ref_data() -> None:
 def test_pep484_ref_arg_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
-    callable passed a parameter annotated with a PEP-noncompliant
+    callable passed a parameter annotated with a :pep:`484`-compliant
     fully-qualified forward reference referencing an existing attribute of an
     external module.
     '''

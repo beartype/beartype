@@ -409,7 +409,7 @@ def unwrap_func_all_isomorphic(
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import (
         # is_func_boundmethod,
-        is_func_python,
+        is_func_codeobjable,
         is_func_wrapper_isomorphic,
     )
 
@@ -476,7 +476,7 @@ def unwrap_func_all_isomorphic(
         # classes. Nonetheless, C-based classes like "list" have *NO* such
         # analogues. The *ONLY* sane approach here is to pretend that we never
         # saw this pathological edge case.
-        if not is_func_python(func_wrapped):
+        if not is_func_codeobjable(func_wrapped):
             break
         # Else, this lower-level callable is pure-Python.
 

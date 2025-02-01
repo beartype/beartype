@@ -46,7 +46,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         is_func_async,
         is_func_async_generator,
         is_func_coro,
-        is_func_python,
+        is_func_codeobjable,
         is_func_sync_generator,
     )
     from beartype._util.func.arg.utilfuncargget import (
@@ -60,7 +60,7 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     # Else, this object is *NOT* a pure-Python class.
     #
     # If this object is a pure-Python callable...
-    elif is_func_python(obj):
+    elif is_func_codeobjable(obj):
         # Human-readable prefix describing the exotic nature of this callable if
         # this is callable is exotic (e.g., coroutine or generator factory)
         # suffixed by trailing whitespace *OR* the empty string otherwise.

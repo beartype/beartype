@@ -51,7 +51,7 @@ from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfunctest import (
     is_func_boundmethod,
-    is_func_python,
+    is_func_codeobjable,
     is_func_wrapper,
 )
 from beartype._util.func.utilfuncwrap import (
@@ -186,7 +186,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # bound method descriptor of the type of this object implementing the
     # __call__() dunder method with a comparable descriptor calling a
     # @beartype-generated runtime type-checking wrapper function. Go with it.
-    elif not is_func_python(obj):
+    elif not is_func_codeobjable(obj):
         return _beartype_pseudofunc(obj, **kwargs)  # type: ignore[return-value]
     # Else, this object is a pure-Python function.
 

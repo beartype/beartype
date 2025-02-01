@@ -352,7 +352,7 @@ def get_object_filename_or_none(obj: object) -> Optional[str]:
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclsget import get_type_filename_or_none
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
-    from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.utilfunctest import is_func_codeobjable
 
     # Return either...
     return (
@@ -367,7 +367,7 @@ def get_object_filename_or_none(obj: object) -> Optional[str]:
         # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
         # callable was defined in-memory);
         get_func_filename_or_none(obj)
-        if is_func_python(obj) else
+        if is_func_codeobjable(obj) else
         # Else, "None".
         None
     )

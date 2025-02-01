@@ -288,7 +288,7 @@ class BeartypeForwardScope(LexicalScope):
         # Else, this type hint name is syntactically valid.
 
         # If it is *NOT* the case that...
-        if not (
+        if not (  # pragma: no cover
             # The caller directly resides inside the "beartype" package *OR*...
             is_frame_caller_beartype(ignore_frames=1) or
             # The caller indirectly resides inside the "beartype" package. This

@@ -30,7 +30,7 @@ def test_claw_api() -> None:
         beartype_this_package,
         beartyping,
     )
-    from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.utilfunctest import is_func_codeobjable
 
     # Tuple of all import hooks exported by the "beartype.claw" API.
     BEARTYPE_CLAW_FUNCS = (
@@ -43,4 +43,4 @@ def test_claw_api() -> None:
 
     # Assert that these imports are all pure-Python functions.
     for beartype_claw_func in BEARTYPE_CLAW_FUNCS:
-        assert is_func_python(beartype_claw_func) is True
+        assert is_func_codeobjable(beartype_claw_func) is True

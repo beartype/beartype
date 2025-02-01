@@ -401,20 +401,20 @@ def test_die_unless_func_python() -> None:
             die_unless_func_python(callable_c)
 
 
-def test_is_func_python() -> None:
+def test_is_func_codeobjable() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfunctest.is_func_python` tester.
+    :func:`beartype._util.func.utilfunctest.is_func_codeobjable` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.utilfunctest import is_func_codeobjable
 
     # Assert this tester accepts pure-Python callables.
-    assert is_func_python(lambda: True) is True
+    assert is_func_codeobjable(lambda: True) is True
 
     # Assert this tester rejects C-based callables.
-    assert is_func_python(iter) is False
+    assert is_func_codeobjable(iter) is False
 
 # ....................{ TESTS ~ nested : closure           }....................
 def test_is_func_closure() -> None:

@@ -99,12 +99,12 @@ def die_unless_func_python(
 
     See Also
     --------
-    :func:`.is_func_python`
+    :func:`.is_func_codeobjable`
         Further details.
     '''
 
     # If that callable is *NOT* pure-Python, raise an exception.
-    if not is_func_python(func):
+    if not is_func_codeobjable(func):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
         assert issubclass(exception_cls, Exception), (
@@ -402,6 +402,33 @@ def die_unless_func_staticmethod(
     # Else, this object is a static method descriptor.
 
 # ....................{ TESTERS                            }....................
+def is_func_codeobjable(func: object) -> TypeIs[Callable]:
+    '''
+    :data:`True` only if the passed object is **code-objectable** (i.e., either
+    a pure-Python callable, low-level code object underlying a pure-Python
+    callable, or related object encapsulating such a low-level code object).
+
+    This tester effectively tests whether this object is a **pure-Python
+    callable** (i.e., implemented in Python as either a function or method
+    rather than in C as either a builtin bundled with the active Python
+    interpreter *or* third-party C extension function).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is code-objectable.
+    '''
+
+    # Return true only if a pure-Python code object underlies this object.
+    # C-based callables are associated with *NO* code objects.
+    return get_func_codeobj_or_none(func) is not None
+
+
 def is_func_lambda(func: Any) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is a **pure-Python lambda function**
@@ -422,7 +449,7 @@ def is_func_lambda(func: Any) -> TypeIs[Callable]:
     # Return true only if this both...
     return (
         # This callable is pure-Python *AND*...
-        is_func_python(func) and
+        is_func_codeobjable(func) and
         # This callable's name is the lambda-specific placeholder name
         # initially given by Python to *ALL* lambda functions. Technically,
         # this name may be externally changed by malicious third parties after
@@ -435,29 +462,6 @@ def is_func_lambda(func: Any) -> TypeIs[Callable]:
         # substantial caveats, concerns, and edge cases.
         func.__name__ == FUNC_NAME_LAMBDA
     )
-
-
-def is_func_python(func: object) -> TypeIs[Callable]:
-    '''
-    :data:`True` only if the passed object is a **pure-Python callable** (i.e.,
-    implemented in Python as either a function or method rather than in C as
-    either a builtin bundled with the active Python interpreter *or*
-    third-party C extension function).
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a pure-Python callable.
-    '''
-
-    # Return true only if a pure-Python code object underlies this object.
-    # C-based callables are associated with *NO* code objects.
-    return get_func_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ descriptor               }....................
 #FIXME: Unit test us up, please.

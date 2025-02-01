@@ -17,7 +17,7 @@ from beartype._check.convert._convcoerce import _hint_repr_to_hint
 from beartype._check.forward.reference.fwdrefmake import (
     _forwardref_args_to_forwardref)
 from beartype._check.forward.reference.fwdrefmeta import (
-    _forwardref_to_referee)
+    _forwardref_to_referent)
 
 # ....................{ CLEARERS                           }....................
 def clear_checker_caches() -> None:
@@ -32,7 +32,7 @@ def clear_checker_caches() -> None:
       :data:`beartype._check.forward.reference.fwdrefmake._forwardref_args_to_forwardref`
       dictionary).
     * The **forward reference referee cache** (i.e., private
-      :data:`beartype._check.forward.reference.fwdrefmeta._forwardref_to_referee`
+      :data:`beartype._check.forward.reference.fwdrefmeta._forwardref_to_referent`
       dictionary).
     * The **tuple union cache** (i.e., private
       :data:`beartype._check.code.codescope._tuple_union_to_tuple_union`
@@ -44,7 +44,7 @@ def clear_checker_caches() -> None:
     # print('Clearing all \"beartype._check\" caches...')
 
     # Clear all relevant caches used throughout this subpackage.
-    _forwardref_to_referee.clear()
+    _forwardref_to_referent.clear()
     _forwardref_args_to_forwardref.clear()
     _hint_repr_to_hint.clear()
     _tuple_union_to_tuple_union.clear()

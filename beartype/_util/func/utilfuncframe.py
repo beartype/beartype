@@ -27,6 +27,7 @@ from beartype._data.hint.datahinttyping import TypeException
 def is_frame_caller_beartype(
     # Optional parameters.
     ignore_frames: int = 1,
+    is_beartype_test: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallFrameException,
 ) -> bool:
     '''
@@ -38,11 +39,17 @@ def is_frame_caller_beartype(
 
     Parameters
     ----------
-    ignore_frames : int
+    ignore_frames : int, optional
         Number of stack frames on the current call stack to ignore (excluding
         the stack frame encapsulating the call to this getter). Defaults to 1,
         signifying the stack frame of the **caller** directly calling this
         getter.
+    is_beartype_test : bool, optional
+        :data:`True` only if this tester additionally returns :data:`True` when
+        the caller resides inside the related :mod:`beartype_test` codebase.
+        Defaults to :data:`False`; thus, this tester returns :data:`False` when
+        the caller resides inside the related :mod:`beartype_test` codebase by
+        default and treats :mod:`beartype_test` as an external third-party.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallFrameException`.
@@ -52,6 +59,9 @@ def is_frame_caller_beartype(
     bool
         :data:`True` only if the caller is in the :mod:`beartype` codebase.
     '''
+    assert isinstance(ignore_frames, int), f'{repr(ignore_frames)} not integer.'
+    assert isinstance(is_beartype_test, bool), (
+        f'{repr(is_beartype_test)} not bool.')
 
     # Fully-qualified name of the (sub)module declaring the caller (i.e.,
     # callable directly calling this dunder method) if that callable has a
@@ -64,8 +74,18 @@ def is_frame_caller_beartype(
     return (
         # The caller resides inside a module structure *AND*...
         frame_caller_module_name is not None and
-        # The caller resides inside the "beartype" package...
-        frame_caller_module_name.startswith('beartype.')
+        # Either...
+        (
+            # The caller resides inside the "beartype" package *OR*...
+            frame_caller_module_name.startswith('beartype.') or
+            (
+                # The caller requests that the "beartype_test" package be
+                # conflated with the "beartype" package *AND*...
+                is_beartype_test and
+                # The caller resides inside the "beartype_test" package...
+                frame_caller_module_name.startswith('beartype_test.')
+            )
+        )
     )
 
 # ....................{ GETTERS                            }....................

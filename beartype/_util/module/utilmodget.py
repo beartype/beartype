@@ -162,7 +162,7 @@ def get_object_module_line_number_begin(obj: object) -> int:
     # callable *OR* "None" otherwise.
     #
     # Note this is the canonical means of deciding whether an arbitrary object
-    # is a pure-Python callable, as our is_func_python() function demonstrates.
+    # is a pure-Python callable, as our is_func_codeobjable() function demonstrates.
     func_codeobj = get_func_codeobj_or_none(obj)
 
     # If this object is a pure-Python callable, return the line number of the
