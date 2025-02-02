@@ -57,7 +57,8 @@ FORWARDREF_RELATIVE_CIRCULAR = make_forwardref_indexable_subtype(
     # Fully-qualified name of the current test module.
     SCOPE_NAME,
     # Unqualified basename of this global currently being declared.
-    'FORWARDREF_RELATIVE_CIRCULAR')
+    'FORWARDREF_RELATIVE_CIRCULAR',
+)
 '''
 **Circular forward reference proxy** (i.e., invalid proxy circularly and thus
 recursively referring to the same forward reference proxy).

@@ -64,7 +64,8 @@ def test_make_forwardref_indexable_subtype() -> None:
     assert FORWARDREF_ABSOLUTE.__module__ == MODULE_NAME
     assert FORWARDREF_RELATIVE.__module__ == MODULE_NAME
     assert FORWARDREF_MODULE_ABSOLUTE.__module__ == PACKAGE_NAME
-    assert FORWARDREF_MODULE_CLASS.__module__ == f'{PACKAGE_NAME}.{MODULE_BASENAME}'
+    assert FORWARDREF_MODULE_CLASS.__module__ == (
+        f'{PACKAGE_NAME}.{MODULE_BASENAME}')
 
     # Assert that these proxies have the expected hint names.
     assert FORWARDREF_ABSOLUTE.__name_beartype__ == CLASS_NAME
@@ -79,13 +80,13 @@ def test_make_forwardref_indexable_subtype() -> None:
     assert FORWARDREF_MODULE_CLASS.__scope_name_beartype__ == SCOPE_NAME
 
     # ....................{ PASS ~ check                   }....................
-    # Assert that an arbitrary instance of a subclass of that class is also an
-    # instance of both of these proxies.
+    # Assert that an instance of a subclass of that class is also an instance of
+    # these proxies.
     assert isinstance(obj_subclass, FORWARDREF_ABSOLUTE)
     assert isinstance(obj_subclass, FORWARDREF_RELATIVE)
     assert isinstance(obj_subclass, FORWARDREF_MODULE_CLASS)
 
-    # Assert that subclass is also a subclass of both of these proxies.
+    # Assert that that subclass is also a subclass of both of these proxies.
     assert issubclass(Subclass, FORWARDREF_ABSOLUTE)
     assert issubclass(Subclass, FORWARDREF_RELATIVE)
     assert issubclass(Subclass, FORWARDREF_MODULE_CLASS)
@@ -142,3 +143,10 @@ def test_make_forwardref_indexable_subtype() -> None:
     # circular forward reference proxy raises the expected exception.
     with raises(BeartypeCallHintForwardRefException):
         issubclass(Subclass, FORWARDREF_RELATIVE_CIRCULAR)
+
+    # Assert that attempting to test an undefined *NON-DUNDER* attribute of a
+    # forward reference proxy raises the expected exception *AFTER* that same
+    # forward reference proxy has already resolved its referent due to a prior
+    # call to the isinstance() or issubclass() builtins against this proxy.
+    with raises(AttributeError):
+        FORWARDREF_MODULE_CLASS.and_buried_from_all_godlike_exercise

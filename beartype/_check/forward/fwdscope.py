@@ -155,12 +155,6 @@ class BeartypeForwardScope(LexicalScope):
         self._scope_name = scope_name
 
     # ..................{ DUNDERS                            }..................
-    #FIXME: Additionally:
-    #* If the caller resides in a "beartype."-prefixed submodule, do what we
-    #  currently do.
-    #* Else, raise an "AttributeError" as we currently do in the
-    #  fwdrefmeta.__getattr__() method. Consider factoring out that
-    #  exception-raising functionality, which is surprisingly non-trivial.
     def __missing__(self, hint_name: str) -> Type[
         _BeartypeForwardRefIndexableABC]:
         '''
