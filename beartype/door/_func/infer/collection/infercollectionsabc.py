@@ -58,6 +58,7 @@ standard :mod:`collections.abc` protocols).
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Annotated,
     Dict,
     Optional,
     Set,
@@ -66,12 +67,10 @@ from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.hint.datahinttyping import (
     FrozenSetStrs,
 )
-from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.utilobjattr import (
-    get_object_methods_name_to_value_explicit)
+from beartype._util.utilobjattr import get_object_methods_name_to_value_explicit
 from collections.abc import (
     Collection as CollectionABC,
 )
@@ -146,6 +145,9 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
 
     # If at least one "collections.abc" protocol validates this type...
     if hint_factory:
+        # Defer heavyweight imports.
+        from beartype.vale import IsInstance
+
         # If this object is a collection...
         if isinstance(obj, CollectionABC):
             # Avoid circular import dependencies.
@@ -198,30 +200,19 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
         #  full-blown PEP 593-compliant "Annotated[...]" parent type hint
         #  encapsulating this "hint" as a child type hint.
 
-        # PEP 593-compliant "Annotated" type hint factory imported from either
-        # the standard "typing" or third-party "typing_extensions" modules if
-        # importable from at least one of those modules *OR* "None" otherwise.
-        Annotated = import_typing_attr_or_none('Annotated')
-
-        # If "typing(|_extensions).Annotated" is importable...
-        if Annotated is not None:
-            # Defer heavyweight imports.
-            from beartype.vale import IsInstance
-
-            # Generalize this possibly subscripted "collections.abc" protocol
-            # into a PEP 593-compliant "Annotated[...]" hint annotating this
-            # protocol to additionally require that arbitrary objects satisfying
-            # this hint also be instances of the same type as the passed object.
-            #
-            # Doing so avoids false positives, as the original "hint" (i.e.,
-            # possibly subscripted "collections.abc" protocol) widely matches
-            # *ANY* object of *ANY* type that simply satisfies that protocol.
-            # However, the type of the passed object (probably) encapsulates
-            # other attributes and behaviours *NOT* described by this protocol.
-            # In and of itself, this protocol fails to fully validate other
-            # objects of the same type.
-            hint = Annotated[hint, IsInstance[obj_type]]
-        # Else, "typing(|_extensions).Annotated" is unimportable.
+        # Generalize this possibly subscripted "collections.abc" protocol
+        # into a PEP 593-compliant "Annotated[...]" hint annotating this
+        # protocol to additionally require that arbitrary objects satisfying
+        # this hint also be instances of the same type as the passed object.
+        #
+        # Doing so avoids false positives, as the original "hint" (i.e.,
+        # possibly subscripted "collections.abc" protocol) widely matches
+        # *ANY* object of *ANY* type that simply satisfies that protocol.
+        # However, the type of the passed object (probably) encapsulates
+        # other attributes and behaviours *NOT* described by this protocol.
+        # In and of itself, this protocol fails to fully validate other
+        # objects of the same type.
+        hint = Annotated[hint, IsInstance[obj_type]]
     # Else, *NO* "collections.abc" protocol validates this type. In this
     # case, fallback to returning "None".
 

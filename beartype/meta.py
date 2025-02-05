@@ -57,7 +57,7 @@ Human-readable name of the license this package is licensed under.
 # expected type of this dictionary. While awful, this is (probably) the least
 # awful approach. All alternatives invite deprecation concerns.
 if TYPE_CHECKING:
-    _package_metadata = {'Requires-Python': '>=3.8'}
+    _package_metadata = {'Requires-Python': '>=3.9'}
 # Else, static type-checking is *NOT* being performed. In this case...
 else:
     # Dictionary mapping from the name to value of all core packaging metadata

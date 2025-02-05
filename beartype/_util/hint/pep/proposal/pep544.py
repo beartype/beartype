@@ -312,12 +312,13 @@ def _init() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer function-specific imports.
-    from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
     from beartype.typing import (
+        Annotated,
         AnyStr,
         List,
         Protocol,
     )
+    from beartype.vale import IsInstance
 
     # ..................{ GLOBALS                            }..................
     # Global attributes to be redefined below.
@@ -327,10 +328,7 @@ def _init() -> None:
         _Pep544TextIO
 
     # ..................{ PROTOCOLS ~ protocol               }..................
-    # Note that these classes are intentionally *NOT* declared at global scope;
-    # instead, these classes are declared *ONLY* if the active Python
-    # interpreter targets Python >= 3.8.
-
+    #FIXME: Declare these protocols at global scope, please.
     # PEP-compliant type hint matching file handles opened in either text or
     # binary mode.
     # @runtime_checkable
@@ -468,25 +466,14 @@ def _init() -> None:
 
     # ..................{ PROTOCOLS ~ validator              }..................
     # PEP-compliant type hint matching file handles opened in binary rather
-    # than text mode.
-    #
-    # If PEP 593 (e.g., "typing.Annotated") and thus beartype validators are
-    # unusable, this hint falls back to ambiguously matching the abstract
-    # "typing.IO" protocol ABC. This will yield false positives (i.e., fail to
-    # raise exceptions) for @beartype-decorated callables annotated as
-    # accepting binary file handles erroneously passed text file handles, which
-    # is non-ideal but certainly preferable to raising exceptions at decoration
-    # time on each such callable.
-    #
-    # If PEP 593 (e.g., "typing.Annotated") and thus beartype validators are
-    # usable, this hint matches the abstract "typing.IO" protocol ABC but *NOT*
-    # the concrete "typing.TextIO" subprotocol subclassing that ABC. Whereas
-    # the concrete "typing.TextIO" subprotocol unambiguously matches *ONLY*
-    # file handles opened in text mode, the concrete "typing.BinaryIO"
-    # subprotocol ambiguously matches file handles opened in both text *AND*
-    # binary mode. As the following hypothetical "_Pep544BinaryIO" subclass
-    # demonstrates, the "typing.IO" and "typing.BinaryIO" APIs are identical
-    # except for method annotations:
+    # than text mode. Specifically, this hint matches the abstract "typing.IO"
+    # protocol ABC but *NOT* the concrete "typing.TextIO" subprotocol
+    # subclassing that ABC. Whereas the concrete "typing.TextIO" subprotocol
+    # unambiguously matches *ONLY* file handles opened in text mode, the
+    # concrete "typing.BinaryIO" subprotocol ambiguously matches file handles
+    # opened in both text *AND* binary mode. As the following hypothetical
+    # "_Pep544BinaryIO" subclass demonstrates, the "typing.IO" and
+    # "typing.BinaryIO" APIs are identical except for method annotations:
     #     class _Pep544BinaryIO(_Pep544IO[bytes], Protocol):
     #         # The body of this class is copied wholesale from the existing
     #         # non-functional "typing.BinaryIO" class.
@@ -512,26 +499,7 @@ def _init() -> None:
     # (i.e., object matching the "typing.IO" protocol) *NOT* opened in text mode
     # (i.e., not matching the "typing.TextIO" protocol) must necessarily be
     # opened in binary mode instead.
-    _Pep544BinaryIO = _Pep544IO
-
-    #FIXME: Safely replace this with "from typing import Annotated" after
-    #dropping Python 3.8 support.
-    # "typing.Annotated" type hint factory safely imported from whichever of
-    # the "typing" or "typing_extensions" modules declares this attribute if
-    # one or more do *OR* "None" otherwise (i.e., if none do).
-    typing_annotated = import_typing_attr_or_none('Annotated')
-
-    # If this factory is importable...
-    if typing_annotated is not None:
-        # Defer heavyweight imports.
-        from beartype.vale import IsInstance
-
-        # Expand this hint to unambiguously match binary file handles by
-        # subscripting this factory with a beartype validator doing so.
-        _Pep544BinaryIO = typing_annotated[
-            _Pep544IO, ~IsInstance[_Pep544TextIO]]
-    # Else, this factory is unimportable. In this case, accept this hint's
-    # default ambiguously matching both binary and text files.
+    _Pep544BinaryIO = Annotated[_Pep544IO, ~IsInstance[_Pep544TextIO]]
 
     # ..................{ MAPPINGS                           }..................
     # Dictionary mapping from each "typing" IO generic base class to the

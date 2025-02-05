@@ -256,22 +256,6 @@ class BeartypeDecorHintNonpepWarning(BeartypeWarning):
 
     pass
 
-
-class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
-    '''
-    **Beartype decorator PEP-noncompliant NumPy type hint warning.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by an
-    suspicious NumPy type hint, including:
-
-    * **Typed NumPy arrays** (i.e., ``numpy.typed.NDArray[...]`` type hints)
-      under Python < 3.8, which this decorator currently reduces to
-      **untyped NumPy arrays** (i.e., :class:`numpy.ndarray`).
-    '''
-
-    pass
-
 # ....................{ MODULE                             }....................
 class BeartypeModuleWarning(BeartypeWarning):
     '''

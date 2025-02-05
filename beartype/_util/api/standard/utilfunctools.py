@@ -278,7 +278,6 @@ def beartype_functools_lru_cache(
     # Avoid circular and third-party import dependencies.
     from beartype._decor._decornontype import beartype_func
     from beartype._util.func.utilfuncwrap import unwrap_func_once
-    from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
     # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
     # callable, raise an exception.
@@ -291,35 +290,6 @@ def beartype_functools_lru_cache(
 
     # Original pure-Python callable decorated by @functools.lru_cache.
     func = unwrap_func_once(pseudofunc)  # pyright: ignore
-
-    # If the active Python interpreter targets Python 3.8, then this
-    # pseudo-callable fails to declare the cache_parameters() lambda function
-    # called below to recover the keyword parameters originally passed by the
-    # caller to that decorator. In this case, we have *NO* recourse but to
-    # explicitly inform the caller of this edge case by raising a human-readable
-    # exception providing a pragmatic workaround.
-    if IS_PYTHON_3_8:
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'@functools.lru_cache-memoized callable {repr(func)} not '
-            f'decoratable by @beartype under Python 3.8. '
-            f'Consider manually decorating this callable by '
-            f'@beartype first and then by @functools.lru_cache to preserve '
-            f'Python 3.8 compatibility: e.g.,\n'
-            f'    # Do this...\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    @beartype\n'
-            f'    def muh_func(...) -> ...: ...\n'
-            f'\n'
-            f'    # Rather than either this...\n'
-            f'    @beartype\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    def muh_func(...) -> ...: ...\n'
-            f'\n'
-            f'    # Or this (if you use "beartype.claw", which you really should).\n'
-            f'    @lru_cache(maxsize=42)\n'
-            f'    def muh_func(...) -> ...: ...\n'
-        )
-    # Else, the active Python interpreter targets Python >= 3.9.
 
     # Decorate that callable with type-checking.
     func_checked = beartype_func(func=func, **kwargs)

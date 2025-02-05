@@ -50,7 +50,6 @@ def test_api_typing() -> None:
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_13,
-        IS_PYTHON_AT_LEAST_3_9,
     )
 
     # ..................{ MAGIC                              }..................
@@ -107,6 +106,49 @@ def test_api_typing() -> None:
     # module whose *VALUES* differ from those declared by the "beartype.typing"
     # submodule.
     TYPING_ATTR_UNEQUAL_NAMES = {
+        # Names of all PEP 484-specific "typing" type hint factories obsoleted
+        # by equivalent PEP 585-specific type hint factories.
+        'AbstractSet',
+        'AsyncContextManager',
+        'AsyncGenerator',
+        'AsyncIterable',
+        'AsyncIterator',
+        'Awaitable',
+        'ByteString',
+        'Callable',
+        'ChainMap',
+        'Collection',
+        'Container',
+        'ContextManager',
+        'Coroutine',
+        'Counter',
+        'DefaultDict',
+        'Deque',
+        'Dict',
+        'FrozenSet',
+        'Generator',
+        'Hashable',
+        'ItemsView',
+        'Iterable',
+        'Iterator',
+        'KeysView',
+        'List',
+        'Mapping',
+        'MappingView',
+        'Match',
+        'Pattern',
+        'MutableMapping',
+        'MutableSequence',
+        'MutableSet',
+        'OrderedDict',
+        'Reversible',
+        'Set',
+        'Sized',
+        'Tuple',
+        'Type',
+        'Sequence',
+        'ValuesView',
+
         # Names of all inefficient PEP 544-specific "typing" attributes
         # overridden by efficient "beartype.typing" variants of the same name.
         'Protocol',
@@ -120,64 +162,20 @@ def test_api_typing() -> None:
     }
 
     # ..................{ MAGIC ~ version                    }..................
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585, add all "typing" attributes deprecated by PEP 585 to this set.
-    if IS_PYTHON_AT_LEAST_3_9:
-        TYPING_ATTR_UNEQUAL_NAMES.update({
-            'AbstractSet',
-            'AsyncContextManager',
-            'AsyncGenerator',
-            'AsyncIterable',
-            'AsyncIterator',
-            'Awaitable',
-            'ByteString',
-            'Callable',
-            'ChainMap',
-            'Collection',
-            'Container',
-            'ContextManager',
-            'Coroutine',
-            'Counter',
-            'DefaultDict',
-            'Deque',
-            'Dict',
-            'FrozenSet',
-            'Generator',
-            'ItemsView',
-            'Iterable',
-            'Iterator',
-            'KeysView',
-            'List',
-            'Mapping',
-            'MappingView',
-            'Match',
-            'Pattern',
-            'MutableMapping',
-            'MutableSequence',
-            'MutableSet',
-            'OrderedDict',
-            'Reversible',
-            'Set',
-            'Tuple',
-            'Type',
-            'Sequence',
-            'ValuesView',
-        })
-
-        # If the active Python interpreter targets Python >= 3.13...
-        if IS_PYTHON_AT_LEAST_3_13:
-            # Add all soft-deprecated public "typing" attributes only
-            # dynamically defined by the typing.__getattr__() dunder method and
-            # thus inaccessible to the introspection performed above.
-            TYPING_ATTR_PUBLIC_DYNAMIC_NAMES.add(
-                # This is an odd one, frankly. The typing.__getattr__() dunder
-                # method now dynamically exports both the "AsyncContextManager"
-                # and "ContextManager" ABCs. For unknown reasons, the
-                # introspection performed below *ONLY* detects the former as
-                # undefined by the "typing" module. Why? No idea. Clearly, both
-                # are defined. *shrug*
-                'AsyncContextManager',  # <-- no idea, but just go with it
-            )
+    # If the active Python interpreter targets Python >= 3.13...
+    if IS_PYTHON_AT_LEAST_3_13:
+        # Add all soft-deprecated public "typing" attributes only
+        # dynamically defined by the typing.__getattr__() dunder method and
+        # thus inaccessible to the introspection performed above.
+        TYPING_ATTR_PUBLIC_DYNAMIC_NAMES.add(
+            # This is an odd one, frankly. The typing.__getattr__() dunder
+            # method now dynamically exports both the "AsyncContextManager"
+            # and "ContextManager" ABCs. For unknown reasons, the
+            # introspection performed below *ONLY* detects the former as
+            # undefined by the "typing" module. Why? No idea. Clearly, both
+            # are defined. *shrug*
+            'AsyncContextManager',  # <-- no idea, but just go with it
+        )
 
     # ..................{ LOCALS                             }..................
     # Set of the names of *ALL* attributes (both public and private) declared by
@@ -197,7 +195,7 @@ def test_api_typing() -> None:
         if (
             beartype_typing_attr_name[0] not in {
                 # Prefixed by "_", this is a private rather than public
-                # attribute. 
+                # attribute.
                 '_',
                 # Prefixed by "@", this is most likely either the "@pytest_ar"
                 # or "@py_builtins" attribute inserted from pytest during test
@@ -258,8 +256,8 @@ def test_api_typing() -> None:
     # output, we expand this assertion to identify all differing attributes.
     assert DIFFERENT_TYPING_ATTR_NAMES == set()
 
-    # For the basename of each typing attribute whose values are identical
-    # across these two modules...
+    # For the basename of each typing attribute whose values *SHOULD* be
+    # identical across these two modules...
     for typing_attr_equal_name in TYPING_ATTR_EQUAL_NAMES:
         # Assert these values are indeed identical.
         assert (

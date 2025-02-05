@@ -16,19 +16,20 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ attr : typing              }....................
+# ....................{ TESTS                              }....................
 def test_import_typing_attr() -> None:
     '''
     Test the :func:`beartype._util.api.standard.utiltyping.import_typing_attr`
     importer.
     '''
 
-    # ....................{ IMPORTS                            }....................
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.api.standard.utiltyping import import_typing_attr
-    from beartype._util.module.utilmodimport import import_module_attr_or_sentinel
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype._util.module.utilmodimport import (
+        import_module_attr_or_sentinel)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
     from beartype._util.utilobject import SENTINEL
     from pytest import raises
     from typing import Union
@@ -46,34 +47,30 @@ def test_import_typing_attr() -> None:
         import_typing_attr('FromMyWingsAreShakenTheDewsThatWaken')
 
     # ....................{ VERSION                        }....................
-    #FIXME: On retiring Python 3.8, refactor everything below to import a newer
-    #"typing" attribute introduced with a bleeding-edge Python version.
-    # If the active Python interpreter targets Python >= 3.9, the
-    # "typing.Annotated" attribute is guaranteed to exist. In this case...
-    if IS_PYTHON_AT_LEAST_3_9:
+    # If the active Python interpreter targets Python >= 3.13, the
+    # "typing.TypeIs" attribute is guaranteed to exist. In this case...
+    if IS_PYTHON_AT_LEAST_3_13:
         # Defer Python version-specific imports.
-        from typing import Annotated
+        from typing import TypeIs
 
         # Assert that dynamically importing the "typing.Annotated" attribute
         # (guaranteed to be importable under this Python version) is that
         # attribute.
-        assert import_typing_attr('Annotated') is Annotated
-    # Else, the active Python interpreter targets Python < 3.9 and the
-    # "typing.Annotated" attribute is guaranteed to *NOT* exist. In this
-    # case...
+        assert import_typing_attr('TypeIs') is TypeIs
+    # Else, the active Python interpreter targets Python < 3.13 and the
+    # "typing.TypeIs" attribute is guaranteed to *NOT* exist. In this case...
     else:
-        # The "typing_extensions.Annotated" attribute if the third-party
+        # The "typing_extensions.TypeIs" attribute if the third-party
         # "typing_extensions" module is both installed and declares that
         # attribute *OR* "None" otherwise.
-        typing_extensions_annotated = import_module_attr_or_sentinel(
-            'typing_extensions.Annotated')
+        typing_extensions_factory = import_module_attr_or_sentinel(
+            'typing_extensions.TypeIs')
 
         # If that attribute exists...
-        if typing_extensions_annotated is not SENTINEL:
+        if typing_extensions_factory is not SENTINEL:
             # Assert that dynamically importing the
-            # "typing_extensions.Annotated" attribute (guaranteed to be
+            # "typing_extensions.TypeIs" attribute (guaranteed to be
             # importable by this condition) is that attribute.
-            assert import_typing_attr('Annotated') is (
-                typing_extensions_annotated)
+            assert import_typing_attr('TypeIs') is typing_extensions_factory
         # Else, safely reduce to a noop. This should typically *NEVER* happen,
         # as all sane versions of that module declare that attribute. *shrug*

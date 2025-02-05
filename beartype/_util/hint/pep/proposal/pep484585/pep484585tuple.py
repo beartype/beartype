@@ -22,10 +22,6 @@ from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
-from beartype._util.py.utilpyversion import (
-    # IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_9,
-)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Docstring us up, please.
@@ -196,12 +192,6 @@ def make_hint_pep484585_tuple_fixed_hint(hints: tuple) -> object:
         # if IS_PYTHON_AT_LEAST_3_11 else
         # Else, the active Python interpreter targets Python <= 3.10.
         #
-        # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585, dynamically subscript the builtin "tuple" type;
+        # Dynamically subscript the builtin "tuple" type.
         Tuple.__class_getitem__(hints)  # type: ignore[attr-defined]
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, the active Python interpreter targets Python <= 3.8 and thus
-        # supports fails to PEP 585. In this case, dynamically subscript the
-        # standard "typing.tuple" type.
-        Tuple.__getitem__(hints)  # pyright: ignore
     )

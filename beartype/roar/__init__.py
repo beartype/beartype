@@ -137,7 +137,6 @@ from beartype.roar._roarwarn import (
     BeartypeDecorHintPep585DeprecationWarning as BeartypeDecorHintPep585DeprecationWarning,
     BeartypeDecorHintPep613DeprecationWarning as BeartypeDecorHintPep613DeprecationWarning,
     BeartypeDecorHintNonpepWarning as BeartypeDecorHintNonpepWarning,
-    BeartypeDecorHintNonpepNumpyWarning as BeartypeDecorHintNonpepNumpyWarning,
     BeartypeDoorWarning as BeartypeDoorWarning,
     BeartypeDoorInferHintWarning as BeartypeDoorInferHintWarning,
     BeartypeDoorInferHintRecursionWarning as BeartypeDoorInferHintRecursionWarning,

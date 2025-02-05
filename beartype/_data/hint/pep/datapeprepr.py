@@ -413,7 +413,6 @@ def _init() -> None:
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_3_11,
         IS_PYTHON_AT_LEAST_3_9,
-        IS_PYTHON_3_8,
     )
 
     # ..................{ GLOBALS                            }..................
@@ -470,19 +469,6 @@ def _init() -> None:
         HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
             'typing']['_UnpackGenericAlias'] = HintSignUnpack
     # Else, the active Python interpreter does *NOT* target Python 3.11.x.
-    #
-    # If the active Python interpreter targets Python 3.8.x, resynchronize the
-    # unqualified names and representations of desynchronized typing attributes.
-    # Bizarrely:
-    # * Python 3.7.0 first desynchronized these attributes, despite the
-    #   otherwise insane Python 3.6.x series having actually gotten this right.
-    # * Python 3.8.x preserved this bad behaviour.
-    # * Python 3.9.0 rectified this issue finally. *sigh*
-    elif IS_PYTHON_3_8:
-        _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.update({
-            'AsyncContextManager': 'AbstractAsyncContextManager',
-            'ContextManager': 'AbstractContextManager',
-        })
 
     # ..................{ HINTS ~ types                      }..................
     # Dictionary mapping from the unqualified names of all classes defined by

@@ -16,6 +16,8 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
+    reduce_hint_numpy_ndarray)
 from beartype._check.convert._reduce._nonpep.rednonpeptype import (
     reduce_hint_nonpep_type)
 from beartype._check.convert._reduce._pep.pep484.redpep484 import (
@@ -37,6 +39,7 @@ from beartype._check.convert._reduce._pep.redpep484604 import (
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
+from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_unsubscripted)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -108,8 +111,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnpack,
     HintSignValuesView,
 )
-from beartype._util.hint.nonpep.api.utilmodnumpy import (
-    reduce_hint_numpy_ndarray)
 from beartype._util.hint.nonpep.api.utilmodpandera import (
     reduce_hint_pandera)
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
@@ -131,7 +132,6 @@ from beartype._util.hint.pep.proposal.pep646692 import (
 from beartype._util.hint.pep.proposal.pep647742 import (
     reduce_hint_pep647_or_pep742)
 from beartype._util.hint.pep.proposal.pep673 import reduce_hint_pep673
-from beartype._util.hint.pep.proposal.pep675 import reduce_hint_pep675
 from collections.abc import Callable
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -183,16 +183,9 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     HintSignPep484585GenericSubscripted: (
         reduce_hint_pep484585_generic_subscripted),
 
-    # If this hint is a PEP 484-compliant IO generic base class *AND* the active
-    # Python interpreter targets Python >= 3.8 and thus supports PEP
-    # 544-compliant protocols, reduce this functionally useless hint to the
-    # corresponding functionally useful beartype-specific PEP 544-compliant
-    # protocol implementing this hint.
-    #
-    # Note that PEP 484-compliant IO generic base classes are technically usable
-    # under Python < 3.8 (e.g., by explicitly subclassing those classes from
-    # third-party classes). Ergo, we can neither safely emit warnings nor raise
-    # exceptions on visiting these classes under *ANY* Python version.
+    # If this hint is a PEP 484-compliant IO generic base class, reduce this
+    # functionally useless hint to the corresponding functionally useful
+    # beartype-specific PEP 544-compliant protocol implementing this hint.
     HintSignPep484585GenericUnsubscripted: (
         reduce_hint_pep484585_generic_unsubscripted),
 

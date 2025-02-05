@@ -190,24 +190,6 @@ IS_PYTHON_AT_LEAST_3_9 = IS_PYTHON_AT_LEAST_3_10 or version_info >= (3, 9)
 3.9.0.
 '''
 
-
-#FIXME: After dropping Python 3.8 support:
-#* Remove all code conditionally testing this global.
-#* Remove this global.
-IS_PYTHON_AT_MOST_3_8 = not IS_PYTHON_AT_LEAST_3_9
-'''
-:data:`True` only if the active Python interpreter targets at most Python 3.8.x.
-'''
-
-
-#FIXME: After dropping Python 3.8 support:
-#* Refactor all code conditionally testing this global to be unconditional.
-#* Remove this global.
-IS_PYTHON_3_8 = version_info[:2] == (3, 8)
-'''
-:data:`True` only if the active Python interpreter targets exactly Python 3.8.x.
-'''
-
 # ....................{ GETTERS                            }....................
 def get_python_version_major_minor() -> str:
     '''

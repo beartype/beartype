@@ -197,25 +197,16 @@ def _reduce_hint_pep484585_generic_io(
         This subscripted generic possibly reduced to a more suitable hint.
     '''
 
-    # If this hint is a PEP 484-compliant IO generic base class *AND* the active
-    # Python interpreter targets Python >= 3.8 and thus supports PEP
-    # 544-compliant protocols, reduce this functionally useless hint to the
-    # corresponding functionally useful beartype-specific PEP 544-compliant
-    # protocol implementing this hint.
-    #
-    # Note that PEP 484-compliant IO generic base classes are technically
-    # usable under Python < 3.8 (e.g., by explicitly subclassing those classes
-    # from third-party classes). Ergo, we can neither safely emit warnings nor
-    # raise exceptions on visiting these classes under *ANY* Python version.
+    # If this hint is a PEP 484-compliant IO generic base class, reduce this
+    # functionally useless hint to the corresponding functionally useful
+    # beartype-specific PEP 544-compliant protocol implementing this hint.
     if is_hint_pep484_generic_io(hint):
         # print(f'Reducing IO generic {repr(hint)}...')
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
             hint=hint, exception_prefix=exception_prefix)
         # print(f'...{repr(hint)}.')
-    # Else, this hint is either *NOT* a PEP 484-compliant IO generic base class
-    # *OR* is but the active Python interpreter targets Python < 3.8 and thus
-    # fails to support PEP 544-compliant protocols. In either case, preserve
-    # this hint as is.
+    # Else, this hint is *NOT* a PEP 484-compliant IO generic base class.
+    # Preserve this hint as is.
 
     # Return this possibly reduced hint.
     return hint

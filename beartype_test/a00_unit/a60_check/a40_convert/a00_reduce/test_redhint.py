@@ -26,9 +26,9 @@ def test_reduce_hint() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype.roar import (
-        BeartypeDecorHintNonpepNumpyException,
-        BeartypeDecorHintNonpepNumpyWarning,
+    from beartype.roar import BeartypeDecorHintNonpepNumpyException
+    from beartype.typing import (
+        Annotated,
     )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
@@ -47,14 +47,11 @@ def test_reduce_hint() -> None:
     #     T_int,
     #     T_str_or_bytes,
     # )
-    from beartype_test._util.module.pytmodtyping import (
-        import_typing_attr_or_none_safe)
-    from beartype_test._util.module.pytmodtest import (
-        is_package_numpy,
-        is_package_numpy_typing_ndarray_deep,
-    )
+    from beartype_test._util.module.pytmodtest import is_package_numpy
     from dataclasses import InitVar
-    from pytest import raises, warns
+    from pytest import raises
+
+    # Intentionally import PEP 484-specific type hint factories.
     from typing import Protocol
 
     # ..................{ LOCALS                             }..................
@@ -129,52 +126,35 @@ def test_reduce_hint() -> None:
     assert reduce_hint(hint=InitVar[str], **kwargs) is str
 
     # ..................{ PEP 593                            }..................
-    # "typing.Annotated" type hint factory imported from either the "typing" or
-    # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_typing_attr_or_none_safe('Annotated')
+    # Assert this reducer reduces a beartype-agnostic metahint to the
+    # lower-level hint it annotates.
+    assert reduce_hint(hint=Annotated[int, 42], **kwargs) is int
 
-    # If the "typing.Annotated" type hint factory is importable, the active
-    # Python interpreter supports PEP 593. In this case...
-    if Annotated is not None:
-        # Assert this reducer reduces a beartype-agnostic metahint to the
-        # lower-level hint it annotates.
-        assert reduce_hint(hint=Annotated[int, 42], **kwargs) is int
-
-        # Assert this reducer preserves a beartype-specific metahint as is.
-        leaves_when_laid = Annotated[str, IsEqual['In their noonday dreams.']]
-        assert reduce_hint(hint=leaves_when_laid, **kwargs) is leaves_when_laid
+    # Assert this reducer preserves a beartype-specific metahint as is.
+    leaves_when_laid = Annotated[str, IsEqual['In their noonday dreams.']]
+    assert reduce_hint(hint=leaves_when_laid, **kwargs) is leaves_when_laid
 
     # ..................{ NUMPY                              }..................
     # If a recent version of NumPy is importable...
     if is_package_numpy():
         # Defer third party imports.
-        from numpy import float64, ndarray
+        from numpy import float64
         from numpy.typing import NDArray
 
-        # If beartype deeply supports "numpy.typing.NDArray" type hints under
-        # the active Python interpreter...
-        if is_package_numpy_typing_ndarray_deep():
-            # Beartype validator reduced from such a hint.
-            ndarray_reduced = reduce_hint(hint=NDArray[float64], **kwargs)
+        # Beartype validator reduced from such a hint.
+        ndarray_reduced = reduce_hint(hint=NDArray[float64], **kwargs)
 
-            # Assert this validator is a "typing{_extensions}.Annotated" hint.
-            assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
+        # Assert this validator is a "typing{_extensions}.Annotated" hint.
+        assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
 
-            # Assert that reducing a "numpy.typing.NDArray" type hint
-            # erroneously subscripted by an object *NOT* reducible to a data
-            # type raises the expected exception.
-            with raises(BeartypeDecorHintNonpepNumpyException):
-                reduce_hint(
-                    hint=NDArray['From_my_wings_are_shaken_the_dews_that_waken'],
-                    **kwargs
-                )
-        # Else, beartype only shallowly supports "numpy.typing.NDArray" type
-        # hints under the active Python interpreter. In this case...
-        else:
-            # Assert this reducer reduces such a hint to the untyped NumPy
-            # array class "numpy.ndarray" with a non-fatal warning.
-            with warns(BeartypeDecorHintNonpepNumpyWarning):
-                assert reduce_hint(hint=NDArray[float64], **kwargs) is ndarray
+        # Assert that reducing a "numpy.typing.NDArray" type hint
+        # erroneously subscripted by an object *NOT* reducible to a data
+        # type raises the expected exception.
+        with raises(BeartypeDecorHintNonpepNumpyException):
+            reduce_hint(
+                hint=NDArray['From_my_wings_are_shaken_the_dews_that_waken'],
+                **kwargs
+            )
 
 # ....................{ TESTS ~ raiser                     }....................
 # Prevent pytest from capturing and displaying all expected non-fatal

@@ -21,25 +21,20 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING
 
-# If either a pure-static type-checker is currently statically type-checking
-# @beartype *OR* the active Python interpreter targets Python >= 3.9, PEP 585 is
-# supported. In this case, embrace non-deprecated PEP 585-compliant type hints.
-if TYPE_CHECKING or IS_PYTHON_AT_LEAST_3_9:
-    from collections.abc import Callable
-    Dict = dict
-# Else, the active Python interpreter targets Python < 3.9 and thus fails to
-# support PEP 585. Note that we intentionally avoid importing these type hint
-# factories from "beartype.typing", as that would induce a circular import
-# dependency. Instead, we manually import the relevant type hint factories
-# conditionally depending on the version of the active Python interpreter.
-else:
-    from typing import Callable, Dict
+# ....................{ PRIVATE ~ globals                  }....................
+# Note that we intentionally avoid importing these type hint factories from
+# "beartype.typing", as that would induce a circular import dependency. Instead,
+# we manually import the relevant type hint factories
 
-# ....................{ CONSTANTS                          }....................
+_Dict = dict
+'''
+PEP 585-compliant non-deprecated dictionary type hint factory.
+'''
+
+
 _SENTINEL = object()
 '''
 Sentinel object of arbitrary value.
@@ -73,7 +68,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
     # call if any (i.e., if that call did *NOT* raise an exception).
-    params_flat_to_return_value: Dict[tuple, object] = {}
+    params_flat_to_return_value: _Dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.
     params_flat_to_return_value_get = params_flat_to_return_value.get
@@ -81,7 +76,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
-    params_flat_to_exception: Dict[tuple, Exception] = {}
+    params_flat_to_exception: _Dict[tuple, Exception] = {}
 
     # get() method of this dictionary, localized for efficiency.
     params_flat_to_exception_get = params_flat_to_exception.get
@@ -92,7 +87,7 @@ def callable_cached_minimal(func: Callable) -> Callable:
         Memoized variant of the {func.__name__}() callable.
 
         See Also
-        ----------
+        --------
         :func:`callable_cached`
             Further details.
         '''

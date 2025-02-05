@@ -49,7 +49,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9,
 )
 from collections import deque as _deque
 from collections.abc import (
@@ -1010,28 +1009,18 @@ if TYPE_CHECKING:
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
-    # Define this type as either...
-    HintGenericSubscriptedType: type = (
-        # If the active Python interpreter targets at least Python >= 3.9 and thus
-        # supports PEP 585, this type;
-        type(list[str])  # type: ignore[misc]
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, a placeholder type.
-        UnavailableType
-    )
+    HintGenericSubscriptedType: type = type(list[str])  # type: ignore[misc]
     '''
-    C-based type of all subscripted generics if the active Python interpreter
-    targets Python >= 3.9 *or* :class:`.UnavailableType` otherwise.
+    C-based type of all subscripted generics.
 
     This type is a version-agnostic generalization of the standard
-    :class:`types.GenericAlias` type available only under Python >= 3.9.
-    Subscripted generics include:
+    :class:`types.GenericAlias` type. Subscripted generics include:
 
     * :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
-      instantiated by subscripting either a concrete builtin container class like
-      :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
-      the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-      or :class:`collections.abc.Sequence`).
+      instantiated by subscripting either a concrete builtin container class
+      like :class:`list` or :class:`tuple` *or* an abstract base class (ABC)
+      declared by the :mod:`collections.abc` submodule like
+      :class:`collections.abc.Iterable` or :class:`collections.abc.Sequence`).
     * :pep:`484`-compliant **subscripted generics** (i.e., user-defined classes
       subclassing one or more :pep:`484`-compliant type hints subsequently
       subscripted by one or more PEP-compliant type hints).

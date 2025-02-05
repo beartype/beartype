@@ -16,7 +16,6 @@ from beartype.typing import (
     SupportsIndex,
     Tuple,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
 
@@ -146,28 +145,12 @@ class FrozenDict(dict):
             )
         # Else, the passed dictionary is a dictionary.
 
+        # Standard dictionary uniting this and the passed dictionaries, defined
+        # by trivially deferring to the builtin dict.__or__() dunder method.
+        dict_united: dict = super().__or__(dict(other))  # type: ignore[misc]
+
         # Type of immutable dictionary to be created and returned.
         cls = type(self)
-
-        # Standard dictionary uniting this and the passed dictionaries.
-        dict_united: dict = None  # type: ignore[assignment]
-
-        # If the active Python interpreter targets Python >= 3.9, the standard
-        # "dict" class defines the __or__() dunder method. In this case...
-        if IS_PYTHON_AT_LEAST_3_9:
-            # Trivially defer to that method to implement this method.
-            dict_united = super().__or__(dict(other))  # type: ignore[misc]
-        # Else, the active Python interpreter targets Python 3.8. In this case,
-        # implement this operation manually via a dictionary merger.
-        else:
-            # Mutable dictionary uniting these two immutable dictionaries,
-            # initialized to the contents of the current immutable dictionary.
-            dict_united = dict(self)
-
-            # For each key-value pair in the passed immutable dictionary...
-            for other_key, other_value in other.items():
-                # Add this key-value pair to this mutable dictionary.
-                dict_united[other_key] = other_value
 
         # Create and return a new immutable dictionary wrapping this dictionary.
         return cls(dict_united)

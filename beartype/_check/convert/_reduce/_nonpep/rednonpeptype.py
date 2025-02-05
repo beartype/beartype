@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-noncompliant type hint reducer** (i.e., low-level callables
+Project-wide **PEP-noncompliant type hint reducers** (i.e., low-level callables
 converting higher-level type hints that do *not* comply with any specific PEP
 but are nonetheless shallowly supported by :mod:`beartype` to lower-level type
 hints more readily consumable by :mod:`beartype`).

@@ -4,8 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`675`-compliant **literal string type hint** (i.e., objects
-created by subscripting the :obj:`typing.Final` type hint factory) utilities.
+Project-wide :pep:`675`-compliant **literal string type hint reducers** (i.e.,
+low-level callables converting objects created by by subscripting the
+:obj:`typing.Final` type hint factory to lower-level type hints more readily
+consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,11 +24,11 @@ def reduce_hint_pep675(**kwargs) -> Type[str]:
     advised by :pep:`675` when performing runtime type-checking.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
+    ``callable_cached`` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------
-    All passed arguments are silently ignored.
+    All passed keyword parameters are silently ignored.
 
     Returns
     -------

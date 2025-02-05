@@ -18,6 +18,7 @@ from ast import (
     AnnAssign,
     Attribute,
     Name,
+    unparse,
 )
 from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -29,7 +30,6 @@ from beartype._util.ast.utilastmake import (
     make_node_object_attr_load,
     make_node_str,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextansi import color_attr_name
 
 # ....................{ SUBCLASSES                         }....................
@@ -252,29 +252,16 @@ class BeartypeNodeTransformerPep526Mixin(object):
                 node_sibling=node,
             )
 
-            # If the Python interpreter targets Python >= 3.9, the standard
-            # "ast" module provides the unparse() function "unparsing" (i.e.,
-            # obtaining the machine-readable representations of) arbitrary
-            # nodes. In this case...
-            if IS_PYTHON_AT_LEAST_3_9:
-                # Defer version-specific imports.
-                from ast import unparse  # type: ignore[attr-defined]
-
-                # Unqualified basename of this variable in this lexical scope,
-                # defined by "unparsing" this child node.
-                #
-                # Note that the parent object of this attribute is described by
-                # the external node "node_target.value", encapsulating an
-                # arbitrarily complex Python expression. "Unparsing" this
-                # expression manually is *ABSOLUTELY* infeasible.
-                var_basename = unparse(node_target.value)
-            # Else, the Python interpreter targets Python 3.8. In this case,
-            # "ast" fails to provides the unparse() function. Therefore...
-            else:
-                # Unqualified basename of this variable in this lexical scope,
-                # defined by trivially ignoring the arbitrarily complex Python
-                # expression providing the parent object of this attribute.
-                var_basename = node_target.attr
+            # Unqualified basename of this variable in this lexical scope,
+            # defined by "unparsing" this child node. The standard
+            # ast.unparse() function "unparses" (i.e., obtains the
+            # machine-readable representations of) arbitrary nodes.
+            #
+            # Note that the parent object of this attribute is described by
+            # the external node "node_target.value", encapsulating an
+            # arbitrarily complex Python expression. "Unparsing" this
+            # expression manually is *ABSOLUTELY* infeasible.
+            var_basename = unparse(node_target.value)
         # Else, this target variable is *NOT* an instance or class variable. In
         # this case, this target variable is currently unsupported by this node
         # transformer for automated type-checking. Simply preserve and return

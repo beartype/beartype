@@ -140,8 +140,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9  as _IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_MOST_3_8   as _IS_PYTHON_AT_MOST_3_8,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -162,12 +160,12 @@ from beartype._util.py.utilpyversion import (
 from typing import (
     TYPE_CHECKING as TYPE_CHECKING,
     Any as Any,
+    Annotated as Annotated,
     BinaryIO as BinaryIO,
     ClassVar as ClassVar,
     Final as Final,  # pyright: ignore
     ForwardRef as ForwardRef,
     Generic as Generic,
-    Hashable as Hashable,
     IO as IO,
     Literal as Literal,  # pyright: ignore
     NewType as NewType,
@@ -175,8 +173,6 @@ from typing import (
     NoReturn as NoReturn,
     Optional as Optional,
     Reversible as Reversible,  # pyright: ignore
-    Sized as Sized,
-    SupportsIndex as SupportsIndex,  # pyright: ignore
     TypedDict as TypedDict,  # pyright: ignore
     Text as Text,
     TextIO as TextIO,
@@ -245,7 +241,6 @@ if _IS_PYTHON_AT_LEAST_3_10:
            assert_type as assert_type,  # pyright: ignore
            clear_overloads as clear_overloads,  # pyright: ignore
            dataclass_transform as dataclass_transform,  # pyright: ignore
-           reveal_type as reveal_type,  # pyright: ignore
            get_overloads as get_overloads,  # pyright: ignore
            reveal_type as reveal_type,  # pyright: ignore
         )
@@ -285,16 +280,9 @@ if _IS_PYTHON_AT_MOST_3_15:
         # scheduled for removal under Python 3.14 by upstream CPython issue:
         #     https://github.com/python/cpython/issues/91896
         #
-        # If this interpreter is either performing static type-checking (e.g., via mypy)
-        # *OR* targets Python 3.8 and thus fails to support PEP 585, import the
-        # "typing.ByteString" attribute since deprecated by PEP 585.
-        if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
-            from typing import ByteString as ByteString
-        # Else, the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585. In this case, import the non-deprecated
-        # "collections.abc.ByteString" attribute.
-        else:
-            from collections.abc import ByteString as ByteString
+        # Import the PEP 585-compliant "collections.abc.ByteString" attribute
+        # under 3.9 <= Python <= 3.13.
+        from collections.abc import ByteString as ByteString
 
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is performing static type-checking (e.g., via mypy), defer
@@ -327,17 +315,15 @@ else:
     )
 
 # ....................{ PEP ~ 585                          }....................
-# If this interpreter is either performing static type-checking (e.g., via mypy)
-# *OR* targets Python 3.8 and thus fails to support PEP 585, import *ALL*
-# public attributes of the "typing" module deprecated by PEP 585 as their
-# original values.
+# If the active Python interpreter is performing static type-checking (e.g.,
+# "mypy"), import *ALL* public attributes of the "typing" module deprecated by
+# PEP 585 as their original values.
 #
-# This is intentionally performed *BEFORE* the corresponding "else:" branch
-# below handling the Python >= 3.9 case. Why? Because mypy. If the order of
-# these two branches is reversed, mypy emits errors under Python 3.8 when
-# attempting to subscript any of the builtin types (e.g., "Tuple"): e.g.,
+# This is intentionally performed *BEFORE* the corresponding "else:" branch.
+# Why? Because "mypy". If the order of these two branches is reversed, "mypy"
+# emits errors when attempting to subscript *ANY* builtin type: e.g.,
 #     error: "tuple" is not subscriptable  [misc]
-if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
+if TYPE_CHECKING:
     from typing import (
         AbstractSet as AbstractSet,
         AsyncContextManager as AsyncContextManager,
@@ -357,6 +343,7 @@ if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
         Dict as Dict,
         FrozenSet as FrozenSet,
         Generator as Generator,
+        Hashable as Hashable,
         ItemsView as ItemsView,
         Iterable as Iterable,
         Iterator as Iterator,
@@ -372,15 +359,15 @@ if TYPE_CHECKING or _IS_PYTHON_AT_MOST_3_8:
         Pattern as Pattern,
         Reversible as Reversible,
         Set as Set,
+        Sized as Sized,
         Tuple as Tuple,
         Type as Type,
         Sequence as Sequence,
         ValuesView as ValuesView,
     )
-# Else, the active Python interpreter targets Python >= 3.9 and thus supports
-# PEP 585. In this case, alias *ALL* public attributes of the "typing" module
-# deprecated by PEP 585 to their equivalent values elsewhere in the standard
-# library.
+# Else, the active Python interpreter is *NOT* performing static type-checking.
+# In this case, alias *ALL* public attributes of the "typing" module deprecated
+# by PEP 585 to their equivalent values elsewhere in the standard library.
 else:
     from collections import (
         ChainMap as ChainMap,
@@ -399,6 +386,7 @@ else:
         Container as Container,
         Coroutine as Coroutine,
         Generator as Generator,
+        Hashable as Hashable,
         ItemsView as ItemsView,
         Iterable as Iterable,
         Iterator as Iterator,
@@ -410,6 +398,7 @@ else:
         MutableSet as MutableSet,
         Reversible as Reversible,
         Sequence as Sequence,
+        Sized as Sized,
         ValuesView as ValuesView,
         Set as AbstractSet,
     )
@@ -420,9 +409,6 @@ else:
     from re import (
         Match as Match,
         Pattern as Pattern,
-    )
-    from typing import (  # type: ignore[attr-defined]
-        Annotated,
     )
 
     Dict = dict  # type: ignore[misc]

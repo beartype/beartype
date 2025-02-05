@@ -45,8 +45,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
-    from beartype_test._util.module.pytmodtest import (
-        is_package_beartype_vale_usable)
     from pathlib import Path
 
     # ..................{ LOCALS                             }..................
@@ -83,19 +81,14 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintPithSatisfiedMetadata(pith=open_file_binary, is_pith_factory=True),
         # Bytestring constant.
         HintPithUnsatisfiedMetadata(b"Of a thieved imagination's reveries"),
-    ]
-
-    # If beartype validators are usable under the active Python interpreter...
-    if is_package_beartype_vale_usable():
-        # Add a "HintPithUnsatisfiedMetadata" instance validating open
+        # "HintPithUnsatisfiedMetadata" instance validating open
         # read-only text file handles to violate both "typing.BinaryIO" *AND*
         # "typing.IO[bytes]" type hints. This validation requires beartype
         # validators, as the only means of differentiating objects satisfying
         # the "typing.BinaryIO" protocol from those satisfying the "typing.IO"
         # protocol is with an inverted instance check. Cue beartype validators.
-        binaryio_piths_meta.append(
-            HintPithUnsatisfiedMetadata(
-                pith=open_file_text, is_pith_factory=True))
+        HintPithUnsatisfiedMetadata(pith=open_file_text, is_pith_factory=True),
+    ]
 
     # ..................{ PROTOCOLS ~ structural             }..................
     class ProtocolCustomStructural(object):

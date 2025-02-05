@@ -4,8 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-noncompliant NumPy type hint** (i.e., type hint defined by
-the third-party :mod:`numpy` package) utilities.
+Project-wide **PEP-noncompliant NumPy type hint reducers** (i.e., low-level
+callables converting higher-level type hints defined by the third-party
+:mod:`numpy` package that do *not* comply with any specific PEP but are
+nonetheless shallowly supported by :mod:`beartype` to lower-level type hints
+more readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,17 +21,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar import (
-    BeartypeDecorHintNonpepNumpyException,
-    BeartypeDecorHintNonpepNumpyWarning,
+from beartype.roar import BeartypeDecorHintNonpepNumpyException
+from beartype.typing import (
+    Annotated,
+    Any,
 )
-from beartype.typing import Any
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
-from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
-from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobject import is_object_hashable
 
@@ -37,10 +39,7 @@ from beartype._util.utilobject import is_object_hashable
 #By splitting this function up into smaller functions -- each of which is
 #actually cached by @callable_cached and thus called with positional arguments.
 def reduce_hint_numpy_ndarray(
-    hint: Any,
-    exception_prefix: str,
-    *args, **kwargs
-) -> Any:
+    hint: Hint, exception_prefix: str, *args, **kwargs) -> Hint:
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
     subscription of the third-party :attr:`numpy.typing.NDArray` type hint
@@ -60,7 +59,7 @@ def reduce_hint_numpy_ndarray(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         PEP-noncompliant typed NumPy array to be reduced.
     exception_prefix : str
         Human-readable label prefixing raised exception messages.
@@ -69,38 +68,29 @@ def reduce_hint_numpy_ndarray(
 
     Returns
     -------
-    object
+    Hint
         This PEP-noncompliant typed NumPy array reduced to a PEP-compliant type
         hint supported by :mod:`beartype`.
 
     Raises
     ------
     BeartypeDecorHintNonpepNumpyException
-        If either:
+        If this hint is a typed NumPy array but either:
 
-        * The active Python interpreter targets Python < 3.9 and either:
+        * *Not* subscripted by exactly two arguments.
+        * Subscripted by exactly two arguments but whose second argument is
+          neither:
 
-          * The third-party :mod:`typing_extensions` module is unimportable.
-          * The third-party :mod:`typing_extensions` module is importable but
-            sufficiently old that it fails to declare the
-            :attr:`typing_extensions.Annotated` attribute.
-
-        * This hint is a typed NumPy array but either:
-
-          * *Not* subscripted by exactly two arguments.
-          * Subscripted by exactly two arguments but whose second argument is
-            neither:
-
-            * A **NumPy data type** (i.e., :class:`numpy.dtype` instance).
-            * An object coercible into a NumPy data type by passing to the
-              :meth:`numpy.dtype.__init__` method.
+          * A **NumPy data type** (i.e., :class:`numpy.dtype` instance).
+          * An object coercible into a NumPy data type by passing to the
+            :meth:`numpy.dtype.__init__` method.
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports until *AFTER* validating this hint to be a
-    # typed NumPy array. Why? Because these imports are *ONLY* safely
-    # importable if this hint is a typed NumPy array. Why? Because
-    # instantiating this hint required these imports. QED.
+    # Defer heavyweight imports until *AFTER* validating this hint to be a typed
+    # NumPy array. Why? Because these imports are *ONLY* safely importable if
+    # this hint is a typed NumPy array. Why? Because instantiating this hint
+    # required these imports. QED.
     #
     # Note that third-party packages should typically *ONLY* be imported via
     # utility functions raising human-readable exceptions when those packages
@@ -196,35 +186,9 @@ def reduce_hint_numpy_ndarray(
     #
     # Note the similar test matching the unsubscripted "NDArray" hint above.
     if hint_dtype_like is Any:
-        return ndarray
+        return ndarray  # pyright: ignore
 
     # ..................{ REDUCTION                          }..................
-    #FIXME: Safely replace this with "from typing import Annotated" after
-    #dropping Python 3.8 support.
-    # "typing.Annotated" type hint factory safely imported from whichever of
-    # the "typing" or "typing_extensions" modules declares this attribute if
-    # one or more do *OR* "None" otherwise (i.e., if none do).
-    typing_annotated = import_typing_attr_or_none('Annotated')
-
-    # If this factory is unimportable, this typed NumPy array *CANNOT* be
-    # reduced to a subscription of this factory by one or more semantically
-    # equivalent beartype validators. In this case...
-    if typing_annotated is None:
-        # Emit a non-fatal warning informing the user of this issue.
-        issue_warning(
-            cls=BeartypeDecorHintNonpepNumpyWarning,
-            message=(
-                f'{exception_prefix}typed NumPy array {repr(hint)} '
-                f'reduced to untyped NumPy array {repr(ndarray)} '
-                f'(i.e., as neither "typing.Annotated" nor '
-                f'"typing_extensions.Annotated" importable).'
-            ),
-        )
-
-        # Reduce this hint to the untyped "ndarray" class with apologies.
-        return ndarray
-    # Else, this factory is importable.
-
     # Equivalent nested beartype validator reduced from this hint.
     hint_validator = None  # type: ignore[assignment]
 
@@ -276,4 +240,4 @@ def reduce_hint_numpy_ndarray(
     hint_validator.get_repr = repr(hint)
 
     # Return this validator annotating the NumPy array type.
-    return typing_annotated[ndarray, hint_validator]
+    return Annotated[ndarray, hint_validator]  # pyright: ignore

@@ -12,12 +12,12 @@ objects such as NumPy arrays and PyTorch tensors).
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    Annotated,
     Callable,
     Dict,
     Optional,
 )
 from beartype._util.api.external.utilnumpy import reduce_numpy_dtype
-from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 
 # ....................{ INFERERS                           }....................
@@ -117,6 +117,10 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
 
     # ....................{ IMPORTS                        }....................
     # Defer package-specific imports.
+    from beartype.vale import (
+        IsAttr,
+        IsEqual,
+    )
     from numpy import ndarray  # pyright: ignore
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
@@ -134,23 +138,10 @@ def _infer_hint_thirdparty_numpy_ndarray(obj: object, **kwargs) -> object:
     hint: object = NDArray[numpy_dtype]  # type: ignore[misc,valid-type]
 
     # ....................{ SHAPE                          }....................
-    # PEP 593-compliant "Annotated" type hint factory imported from either the
-    # standard "typing" or third-party "typing_extensions" modules if importable
-    # from at least one of those modules *OR* "None" otherwise.
-    Annotated = import_typing_attr_or_none('Annotated')
-
-    # If "typing(|_extensions).Annotated" is importable...
-    if Annotated is not None:
-        # Defer heavyweight imports.
-        from beartype.vale import (
-            IsAttr,
-            IsEqual,
-        )
-
-        # Generalize this hint to additionally validate the dimensionality
-        # (i.e., number of dimensions equivalent to the length of the
-        # "obj.shape" property) to be that of this array.
-        hint = Annotated[hint, IsAttr['ndim', IsEqual[obj.ndim]]]  # type: ignore[name-defined]
+    # Generalize this hint to additionally validate the dimensionality
+    # (i.e., number of dimensions equivalent to the length of the
+    # "obj.shape" property) to be that of this array.
+    hint = Annotated[hint, IsAttr['ndim', IsEqual[obj.ndim]]]  # type: ignore[name-defined]
     # Else, "typing(|_extensions).Annotated" is unimportable. In this case...
 
     # ....................{ RETURN                         }....................

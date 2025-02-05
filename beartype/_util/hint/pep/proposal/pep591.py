@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep591Exception
-# from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
