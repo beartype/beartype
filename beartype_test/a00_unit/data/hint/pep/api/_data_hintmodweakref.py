@@ -27,26 +27,9 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
-    # ..................{ IMPORTS ~ early                    }..................
-    # Defer early-time imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-
-    # ..................{ LOCALS                             }..................
-    # List of all module-specific type hint metadata to be returned.
-    hints_pep_meta = []
-
-    # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 585. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_9:
-        return hints_pep_meta
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 585.
-
     # ..................{ IMPORTS                            }..................
     # Defer version-specific imports.
-    from beartype.typing import (
-        Any,
-    )
+    from beartype.typing import Any
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignPep585BuiltinSubscriptedUnknown)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
@@ -91,8 +74,8 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     collect()
 
     # ..................{ LISTS                              }..................
-    # Add module-specific type hint metadata to this list.
-    hints_pep_meta.extend((
+    # List of all module-specific type hint metadata to be returned.
+    hints_pep_meta = [
         # ................{ REF                                }................
         # Weak reference to *ANY* arbitrary object.
         HintPepMetadata(
@@ -132,7 +115,7 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
                     'Like woven sounds of streams and breezes, held'),
             ),
         ),
-    ))
+    ]
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

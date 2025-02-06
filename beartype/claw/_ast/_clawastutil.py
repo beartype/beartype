@@ -13,10 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
-    # Attribute,
     Call,
     ClassDef,
-    Index,
     Name,
     Subscript,
     expr,
@@ -24,7 +22,6 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
-    # BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
     BEARTYPE_CLAW_STATE_OBJ_NAME,
     BEARTYPE_DECORATOR_FUNC_NAME,
 )
@@ -35,12 +32,10 @@ from beartype._conf.confenum import BeartypeDecorationPosition
 from beartype._data.hint.datahinttyping import NodeDecoratable
 from beartype._util.ast.utilastmake import (
     make_node_kwarg,
-    # make_node_name_load,
     make_node_object_attr_load,
     make_node_str,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -200,27 +195,12 @@ class BeartypeNodeTransformerUtilityMixin(object):
             node_sibling=node_sibling,
         )
 
-        # Expression node encapsulating the indexation of a dictionary by the
-        # fully-qualified name of the current module.
         node_module_name_index: expr = None  # type: ignore[assignment]
 
-        # If the active Python interpreter targets Python >= 3.9...
-        if IS_PYTHON_AT_LEAST_3_9:
-            # Reuse this node in a manner specific to Python >= 3.9, which
-            # fundamentally broke backward compatibility with Python 3.8 with
-            # respect to dictionary subscription.
-            node_module_name_index = node_module_name
-        # Else, the active Python interpreter targets Python 3.8. In this case..
-        else:
-            # Create this node in a manner specific to Python 3.8, which
-            # requires an additional intermediary node *NOT* required under
-            # Python >= 3.9.
-            node_module_name_index = Index(value=node_module_name)  # type: ignore
-
-            # Copy all source code metadata (e.g., line numbers) from this
-            # sibling node onto this new node.
-            copy_node_metadata(
-                node_src=node_sibling, node_trg=node_module_name_index)
+        # Expression node encapsulating the indexation of a dictionary by the
+        # fully-qualified name of the current module. For simplicity, simply
+        # reuse this node.
+        node_module_name_index = node_module_name
 
         # Node encapsulating a reference to this beartype configuration,
         # indirectly (and efficiently) accessed via a dictionary lookup into

@@ -33,7 +33,6 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
     from beartype._data.hint.pep.sign.datapepsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
     # ....................{ ASSERTS                        }....................
     # For each sign uniquely identifying an official type hint factory
@@ -70,19 +69,9 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
         ARGS_LEN_MAX_BELIEF = args_len_range.stop - 1
 
         # Maximum number of arguments actually accepted by this factory.
-        ARGS_LEN_MAX_ACTUAL: int = None  # type: ignore[assignment]
-
-        # If the active Python interpreter targets Python >= 3.9, this
-        # type hint factory conveniently defines a private "_nparams"
+        # Thankfully, this factory conveniently defines a private "_nparams"
         # instance variable providing this maximum number.
-        if IS_PYTHON_AT_LEAST_3_9:
-            ARGS_LEN_MAX_ACTUAL = hint_factory._nparams
-        # Else, this interpreter targets Python < 3.9. In this case, this
-        # type hint factory only defines a private "__args__" instance variable
-        # providing the tuple of all "TypeVar" instances constraining the
-        # arguments accepted by this factory.
-        else:
-            ARGS_LEN_MAX_ACTUAL = len(hint_factory.__args__)
+        ARGS_LEN_MAX_ACTUAL: int = hint_factory._nparams
 
         # Assert that these numbers of arguments correspond.
         assert ARGS_LEN_MAX_BELIEF == ARGS_LEN_MAX_ACTUAL, (

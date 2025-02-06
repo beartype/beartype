@@ -228,9 +228,6 @@ def test_decor_type_descriptor_builtin() -> None:
     assert exception_message == 'And their place is not known.'
 
 
-# If the active Python interpreter targets Python < 3.9 and thus fails to
-# declare the PEP 585-compliant "types.GenericAlias" superclass, skip this test.
-@skip_if_python_version_less_than('3.9.0')
 def test_decor_type_descriptor_builtin_called() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **explicitly called C-based

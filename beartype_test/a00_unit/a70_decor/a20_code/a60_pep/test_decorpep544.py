@@ -15,7 +15,6 @@ This submodule unit tests :pep:`544` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
 def test_decor_pep544() -> None:
@@ -389,6 +388,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
@@ -402,6 +402,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     )
     from pytest import raises
 
+    # ....................{ CLASSES                        }....................
     # Arbitrary direct protocol.
     class SupportsFish(Protocol):
         @abstractmethod
@@ -441,21 +442,12 @@ def test_typingpep544_protocol_custom_indirect() -> None:
         def berry_punny(self) -> str:
             return 'Had a girlfriend, I lobster. But then I flounder!'
 
+    # ....................{ CALLABLES                      }....................
     # Arbitrary @beartype-decorated callable validating both parameters and
     # returns to be instances of arbitrary classes satisfying this protocol.
     @beartype
     def _supports_cod_identity(arg: SupportsCod) -> SupportsCod:
         return arg
-
-    # Assert that instances of classes satisfying this protocol *WITHOUT*
-    # subclassing this protocol satisfy @beartype validation as expected.
-    assert isinstance(_supports_cod_identity(OneCod()), SupportsCod)
-    assert isinstance(_supports_cod_identity(TwoCod()), SupportsCod)
-
-    # Assert that instances of classes violating this protocol violate
-    # @beartype validation as expected.
-    with raises(BeartypeCallHintParamViolation):
-        _supports_cod_identity(PacificSnapper())  # type: ignore [arg-type]
 
     # Arbitrary @beartype-decorated callable guaranteed to *ALWAYS* raise a
     # violation by returning an object that *NEVER* satisfies its type hint.
@@ -463,23 +455,31 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     def _lies_all_lies(arg: SupportsCod) -> Tuple[int]:
         return (arg.dear_cod(),)  # type: ignore [return-value]
 
+    # ....................{ PASS                           }....................
+    # Assert that instances of classes satisfying this protocol *WITHOUT*
+    # subclassing this protocol satisfy @beartype validation as expected.
+    assert isinstance(_supports_cod_identity(OneCod()), SupportsCod)
+    assert isinstance(_supports_cod_identity(TwoCod()), SupportsCod)
+
+    # ....................{ FAIL                           }....................
+    # Assert that instances of classes violating this protocol violate
+    # @beartype validation as expected.
+    with raises(BeartypeCallHintParamViolation):
+        _supports_cod_identity(PacificSnapper())  # type: ignore [arg-type]
+
     # Assert this callable raises the expected exception when passed an
     # instance of a class otherwise satisfying this protocol.
     with raises(BeartypeCallHintReturnViolation):
         _lies_all_lies(OneCod())
 
 # ....................{ TESTS ~ pep 593                    }....................
-# If the active Python interpreter targets Python < 3.9 and thus fails to
-# support PEP 593, skip all PEP 593-specific tests declared below.
-
-#FIXME: Generalize to support "typing_extensions.Annotated" as well. *sigh*
-@skip_if_python_version_less_than('3.9.0')
 def test_typingpep544_pep593_integration() -> None:
     '''
     Test the public :class:`beartype.typing.Protocol` subclass when nested
-    within a :pep:`593`-compliant .
+    within a :pep:`593`-compliant :obj:`typing.Annotated` type hint.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
@@ -491,6 +491,7 @@ def test_typingpep544_pep593_integration() -> None:
     from beartype.vale import Is
     from pytest import raises
 
+    # ....................{ CLASSES                        }....................
     class SupportsOne(Protocol):
         @abstractmethod
         def one(self) -> int:
@@ -508,6 +509,7 @@ def test_typingpep544_pep593_integration() -> None:
         def two(self) -> str:
             return "two"
 
+    # ....................{ CALLABLES                      }....................
     @beartype
     def _there_can_be_only_one(
         n: Annotated[SupportsOne, Is[lambda x: x.one() == 1]],  # type: ignore[name-defined]
@@ -516,8 +518,10 @@ def test_typingpep544_pep593_integration() -> None:
         assert val == 1  # <-- should never fail because it's caught by beartype first
         return val
 
+    # ....................{ PASS                           }....................
     _there_can_be_only_one(TallCoolOne())
 
+    # ....................{ FAIL                           }....................
     with raises(BeartypeException):
         _there_can_be_only_one(FalseOne())
 

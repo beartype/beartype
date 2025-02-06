@@ -56,8 +56,6 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintSignTupleFixed,
     )
     from beartype._util.api.standard.utiltyping import import_typing_attr
-    # from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -94,10 +92,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray,
             pep_sign=HintSignNumpyArray,
-            # "NDArray" is implemented as:
-            # * Under Python >= 3.9, a PEP 585-compliant generic.
-            # * Under Python >= 3.8, a pure-Python generic backport.
-            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=True,
             is_type_typing=False,
             is_typing=False,
             # Oddly, NumPy implicitly parametrizes the "NDArray[Any]" type hint
@@ -127,7 +122,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[Any],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -156,7 +151,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[dtype(float64)],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -186,7 +181,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[float64],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -215,7 +210,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[floating],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable source code utility unit tests.**
+Project-wide **callable source code utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.func.utilfunccode` submodule.
@@ -30,7 +30,6 @@ def test_get_func_code_or_none() -> None:
     from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
     from beartype._util.func.utilfunccode import get_func_code_or_none
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_9,
         IS_PYTHON_AT_LEAST_3_11,
     )
     from beartype_test.a00_unit.data.util.func.data_utilfunccode import (
@@ -92,10 +91,6 @@ def test_get_func_code_or_none() -> None:
             # prefixed by an assignment statement globalizing this lambda but
             # nonetheless has an accidental space inserted inappropriately.
             r'lambda : '
-            if IS_PYTHON_AT_LEAST_3_9 else
-            # Under Python < 3.9, this code is typically erroneously prefixed
-            # by an assignment statement globalizing this lambda.
-            r'(.*? = )lambda: '
         )
 
         # Regular expression matching this prefix followed by this body,
@@ -110,38 +105,23 @@ def test_get_func_code_or_none() -> None:
         # passed body of this lambda.
         assert search(pattern=func_code_regex, string=func_code) is not None
 
+    # ..................{ PASS                               }..................
+    # Assert this getter accepts a physically declared pure-Python lambda
+    # function in which only one lambda is declared on its source code line
+    # with the embedded definition of that function.
+    _assert_lambda_args_0_body_is(
+        func=thou_dirge,
+        func_code_body="'Of the dying year, to which this closing night'",
+    )
 
-    # If the active Python interpreter targets Python >= 3.9 and thus defines
-    # requisite AST machinery enabling this getter to return exact rather than
-    # inexact definitions for lambda functions...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Assert this getter accepts a physically declared pure-Python lambda
-        # function in which only one lambda is declared on its source code line
-        # with the embedded definition of that function.
+    # ..................{ FAIL                               }..................
+    # Assert this getter accepts a physically declared pure-Python lambda
+    # functions in which multiple lambdas are declared on the same source code
+    # line with the embedded definition of the first such function and a
+    # non-fatal warning disclosing this inconvenience to the caller.
+    with warns(_BeartypeUtilCallableWarning):
         _assert_lambda_args_0_body_is(
-            func=thou_dirge,
-            func_code_body="'Of the dying year, to which this closing night'",
-        )
-
-        # Assert this getter accepts a physically declared pure-Python lambda
-        # functions in which multiple lambdas are declared on the same source
-        # code line with the embedded definition of the first such function and
-        # a non-fatal warning disclosing this inconvenience to the caller.
-        with warns(_BeartypeUtilCallableWarning):
-            _assert_lambda_args_0_body_is(
-                func=yellow[0],
-                func_code_body="'and black,'",
-            )
-    # Else, the active Python interpreter targets only Python < 3.9 and thus
-    # does *NOT* define that machinery. In this case...
-    else:
-        # Assert this getter accepts a physically declared pure-Python lambda
-        # function in which only one lambda is declared on its source code line
-        # with the entire line.
-        _assert_lambda_args_0_body_is(
-            func=thou_dirge,
-            func_code_body="'Of the dying year, to which this closing night'\n",
-        )
+            func=yellow[0], func_code_body="'and black,'")
 
 # ....................{ TESTS ~ label                      }....................
 #FIXME: This getter no longer has a sane reason to exist. Consider excising.

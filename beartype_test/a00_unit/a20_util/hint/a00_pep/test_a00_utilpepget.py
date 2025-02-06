@@ -38,7 +38,6 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
         get_hint_pep_args,
         _HINT_ARGS_EMPTY_TUPLE,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # ....................{ ASSERTS                        }....................
@@ -67,11 +66,9 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
     # hint returns a tuple containing an empty tuple for disambiguity.
     assert get_hint_pep_args(Tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
 
-    # If Python >= 3.9, the active Python interpreter supports PEP 585. In this
-    # case, assert that this getter when passed a PEP 585-compliant empty tuple
-    # type hint returns a tuple containing an empty tuple for disambiguity.
-    if IS_PYTHON_AT_LEAST_3_9:
-        assert get_hint_pep_args(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
+    # Assert that this getter when passed a PEP 585-compliant empty tuple type
+    # hint returns a tuple containing an empty tuple for disambiguity.
+    assert get_hint_pep_args(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
 
 
 def test_get_hint_pep_typevars(hints_pep_meta) -> None:

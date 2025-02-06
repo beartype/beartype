@@ -47,7 +47,11 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype.typing import Annotated
+    from collections.abc import (
+        Awaitable as AwaitableABC,
+        Sequence as SequenceABC,
+    )
     from numbers import Number
 
     # Intentionally import from "typing" rather than "beartype.typing" to
@@ -61,19 +65,19 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ LISTS                              }..................
     HINT_EQUALITY_CASES = [
-        # ..................{ HINTS ~ argless : bare         }..................
+        # ..................{ PEP 484 ~ argless : bare       }..................
         # PEP 484-compliant unsubscripted type hints, which are necessarily
         # equal to themselves.
         (tuple, Tuple, True),
         (list, list, True),
         (list, List, True),
 
-        # ..................{ HINTS ~ arg : sequence         }..................
+        # ..................{ PEP 484 ~ arg : sequence       }..................
         # PEP 484-compliant sequence type hints.
         (list, List[Any], True),
         (tuple, Tuple[Any, ...], True),
 
-        # ..................{ HINTS ~ arg : union            }..................
+        # ..................{ PEP 484 ~ arg : union          }..................
         # PEP 484-compliant union type hints.
         (Union[int, str], Union[str, list], False),
         (Union[Number, int], Union[Number, float], True),
@@ -90,29 +94,19 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
         #   "Union[int]" to simply "int" at runtime.
         (Union[bool, int], Union[int], True),
         (Union[int], Union[bool, int], True),
+
+        # ..................{ PEP 585                        }..................
+        # PEP 585-compliant type hints.
+        (tuple[str, ...], Tuple[str, ...], True),
+        (list[str], List[str], True),
+        (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
+
+        # ..................{ PEP 593                        }..................
+        # PEP 593-compliant type hints.
+        (Annotated[int, "hi"], Annotated[int, "hi"], True),
+        (Annotated[int, "hi"], Annotated[int, "low"], False),
+        (Annotated[int, "hi"], Annotated[int, "low"], False),
     ]
-
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # both PEP 585 and 593...
-    if IS_PYTHON_AT_LEAST_3_9:
-        from beartype.typing import Annotated
-        from collections.abc import (
-            Awaitable as AwaitableABC,
-            Sequence as SequenceABC,
-        )
-
-        # Append cases exercising version-specific relations.
-        HINT_EQUALITY_CASES.extend((
-            # PEP 585-compliant type hints.
-            (tuple[str, ...], Tuple[str, ...], True),
-            (list[str], List[str], True),
-            (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
-
-            # PEP 593-compliant type hints.
-            (Annotated[int, "hi"], Annotated[int, "hi"], True),
-            (Annotated[int, "hi"], Annotated[int, "low"], False),
-            (Annotated[int, "hi"], Annotated[int, "low"], False),
-        ))
 
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_EQUALITY_CASES)

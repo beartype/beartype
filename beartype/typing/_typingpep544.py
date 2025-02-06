@@ -35,7 +35,6 @@ performance improvements.
 from beartype.typing._typingcache import callable_cached_minimal
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12,
-    IS_PYTHON_AT_LEAST_3_9,
 )
 from typing import (  # type: ignore[attr-defined]
     EXCLUDED_ATTRIBUTES,  # pyright: ignore
@@ -53,28 +52,6 @@ from typing import (  # type: ignore[attr-defined]
     TypeVar,
     runtime_checkable,
 )
-
-# If either *NO* pure-static type-checker is currently statically type-checking
-# @beartype *OR* the active Python interpreter targets Python < 3.9, the active
-# Python interpreter targets Python < 3.9 and thus fails to support PEP 585. In
-# this case, embrace non-deprecated PEP 585-compliant type hints.
-if not (TYPE_CHECKING or IS_PYTHON_AT_LEAST_3_9):
-    from typing import Dict, Tuple, Type
-# Else, the active Python interpreter targets Python < 3.9 and thus fails to
-# support PEP 585.
-#
-# Note that we intentionally:
-# * Avoid importing these type hint factories from "beartype.typing", as that
-#   would induce a circular import dependency. Instead, we manually import the
-#   relevant type hint factories conditionally depending on the version of the
-#   active Python interpreter. *sigh*
-# * Test the negation of this condition first. Why? Because mypy quietly
-#   defecates all over itself if the order of these two branches is reversed.
-#   Yeah. It's as bad as it sounds.
-else:
-    Dict = dict
-    Tuple = tuple
-    Type = type
 
 # If the active Python interpreter was invoked by a static type checker (e.g.,
 # mypy), violate privacy encapsulation. Doing so invites breakage under newer
@@ -194,7 +171,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
     '''
 
     # ................{ CLASS VARIABLES                        }................
-    _abc_inst_check_cache: Dict[type, bool]  # pyright: ignore
+    _abc_inst_check_cache: dict[type, bool]
     '''
     :func:`isinstance` **cache** (i.e., dictionary mapping from each type of any
     object previously passed as the first parameter to the :func:`isinstance`
@@ -204,10 +181,10 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
     # ................{ DUNDERS                                }................
     def __new__(
-        mcls: Type[_TT],  # pyright: ignore
+        mcls: type[_TT],
         name: str,
-        bases: Tuple[type, ...],  # pyright: ignore
-        namespace: Dict[str, Any],  # pyright: ignore
+        bases: tuple[type, ...],
+        namespace: dict[str, object],
         **kw: Any,
     ) -> _TT:
 
@@ -334,19 +311,21 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
             return cls._abc_inst_check_cache[inst_t]
 
+# ....................{ PRIVATE ~ globals                  }....................
+_EMPTY_DICT: dict[str, object] = {}
+'''
+Empty dictionary.
+'''
+
 # ....................{ PRIVATE ~ functions                }....................
 #FIXME: Docstring us up, please.
 #FIXME: Comment us up, please.
-def _check_only_my_attrs(cls, inst: Any, _EMPTY_DICT = {}) -> bool:
+def _check_only_my_attrs(cls, inst: object) -> bool:
 
     cls_attr_name_to_value = cls.__dict__
     cls_attr_name_to_hint = cls_attr_name_to_value.get(
         '__annotations__', _EMPTY_DICT)
-    cls_attr_names = (
-        cls_attr_name_to_value | cls_attr_name_to_hint
-        if IS_PYTHON_AT_LEAST_3_9 else
-        dict(cls_attr_name_to_value, **cls_attr_name_to_hint)
-    )
+    cls_attr_names = cls_attr_name_to_value | cls_attr_name_to_hint
 
     # For the name of each attribute declared by this protocol class...
     for cls_attr_name in cls_attr_names:

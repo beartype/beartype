@@ -79,7 +79,6 @@ def door_cases_infer_hint() -> (
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
-        IS_PYTHON_AT_LEAST_3_9,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -512,18 +511,9 @@ def door_cases_infer_hint() -> (
                 b'Threw their thin shadows': 'down the rugged slope',
                 b'And nought but': 'gnarlèd roots of ancient pines',
             }),
-            (
-                # If the active Python interpreter targets Python >= 3.9 and
-                # thus supports PEP 585, this user-defined dictionary
-                # subscripted by these child key and value type hints.
-                ClassDict[bytes, str]
-                if IS_PYTHON_AT_LEAST_3_9 else
-                # Else, the active Python interpreter targets Python < 3.9 and
-                # thus fails to support PEP 585. In this case, the standard
-                # "typing.Dict" factory subscripted by these child key and value
-                # type hints.
-                Dict[bytes, str]
-            ),
+            # This user-defined dictionary subscripted by these child key and
+            # value type hints.
+            ClassDict[bytes, str],
         ),
 
         # A user-defined list of items all of the same class is annotated as the
@@ -531,17 +521,8 @@ def door_cases_infer_hint() -> (
         (
             ClassList((
                 b'The struggling brook:', b'tall spires of windlestrae',)),
-            (
-                # If the active Python interpreter targets Python >= 3.9 and
-                # thus supports PEP 585, this user-defined list subscripted by
-                # this child type hint.
-                ClassList[bytes]
-                if IS_PYTHON_AT_LEAST_3_9 else
-                # Else, the active Python interpreter targets Python < 3.9 and
-                # thus fails to support PEP 585. In this case, the standard
-                # "typing.List" factory subscripted by this child type hint.
-                List[bytes]
-            ),
+            # This user-defined list subscripted by this child type hint.
+            ClassList[bytes],
         ),
     ]
 

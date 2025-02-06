@@ -64,12 +64,8 @@ from beartype.typing import (
     Set,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._data.hint.datahinttyping import (
-    FrozenSetStrs,
-)
+from beartype._data.hint.datahinttyping import FrozenSetStrs
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobjattr import get_object_methods_name_to_value_explicit
 from collections.abc import (
     Collection as CollectionABC,
@@ -154,23 +150,12 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
             from beartype.door._func.infer.collection.infercollectionitems import (
                 infer_hint_collection_items)
 
-            # "collections.abc" protocol validating this type, defined as
-            # either...
-            origin_type: type = (
-                # If the active Python interpreter targets Python >= 3.9 and
-                # thus supports PEP 585, this hint factory as is. Why? Because
-                # this hint factory is already its own origin type due to being
-                # a valid "collections.abc" superclass;
-                hint_factory  # type: ignore[assignment]
-                if IS_PYTHON_AT_LEAST_3_9 else
-                # Else, the active Python interpreter targets Python < 3.9 and
-                # thus fails to support PEP 585. In this case, the origin type
-                # underlying this hint factory (e.g., "collections.abc.Mapping"
-                # for the hint factory "typing.Mapping").
-                get_hint_pep_origin_type(hint_factory)  # pyright: ignore
-            )
-
+            # "collections.abc" protocol validating this type, defined this hint
+            # factory itself. Why? Because this hint factory is already its own
+            # origin type due to being a valid "collections.abc" superclass.
+            origin_type: type = hint_factory  # type: ignore[assignment]
             # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
+
             # Hint recursively validating this iterable (including *ALL* items
             # transitively reachable from this iterable), defined by
             # subscripting this "collections.abc" protocol by the union of the

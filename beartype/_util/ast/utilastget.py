@@ -18,7 +18,6 @@ from ast import (
     parse as ast_parse,
 )
 from beartype.roar._roarexc import _BeartypeUtilAstException
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ GETTERS ~ node                     }....................
 #FIXME: Unit test us up, please.
@@ -39,17 +38,8 @@ def get_node_repr_indented(node: AST) -> str:
     '''
     assert isinstance(node, AST), f'{repr(node)} not AST.'
 
-    # Return either...
-    return (
-        # If the active Python interpreter targets Python >= 3.9, the
-        # pretty-printed contents of this AST. Sadly, the "indent=4" parameter
-        # pretty-printing this AST was first introduced by Python 3.9.
-        ast_dump(node, indent=4)  # type: ignore[call-arg]
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, the active Python interpreter targets Python < 3.9. In this
-        # case, the non-pretty-printed contents of this AST as a single line.
-        ast_dump(node)
-    )
+    # Return the pretty-printed contents of this AST.
+    return ast_dump(node, indent=4)  # type: ignore[call-arg]
 
 # ....................{ GETTERS ~ node                     }....................
 #FIXME: Unit test us up, please. When we do, remove the "pragma: no cover" from

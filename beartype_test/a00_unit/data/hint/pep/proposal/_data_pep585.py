@@ -21,19 +21,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     # Defer early-time imports.
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_11,
-        IS_PYTHON_AT_LEAST_3_9,
     )
-
-    # ..................{ LOCALS                             }..................
-    # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
-
-    # If the active Python interpreter targets Python < 3.9, this interpreter
-    # fails to support PEP 585. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_9:
-        return hints_pep_meta
-    # Else, the active Python interpreter targets Python >= 3.9 and thus
-    # supports PEP 585.
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
@@ -139,8 +127,8 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     _TEST_PEP585_FORWARDREF_TYPE = Subclass
 
     # ..................{ LISTS                              }..................
-    # Add PEP-specific type hint metadata to this list.
-    hints_pep_meta.extend((
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = [
         # ................{ CALLABLE                           }................
         # Callable accepting no parameters and returning a string.
         HintPepMetadata(
@@ -2703,7 +2691,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
-    ))
+    ]
 
     # ....................{ VERSION                        }....................
     # PEP-compliant type hints conditionally dependent on the major version of

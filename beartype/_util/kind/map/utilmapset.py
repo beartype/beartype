@@ -16,7 +16,6 @@ from beartype.typing import (
     Collection,
     Sequence,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import (
     Hashable,
@@ -131,24 +130,13 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
     die_if_mappings_two_items_collide(mapping_a, mapping_b)
     # Else, these mappings contain *NO* key-value collisions.
 
-    # Merge these mappings. Since no unsafe collisions exist, the order in
-    # which these mappings are merged is irrelevant.
-    #
-    # If the active Python interpreter targets Python >= 3.9 and thus
-    # supports "PEP 584 -- Add Union Operators To dict", merge these
-    # mappings with the faster and terser dict union operator.
-    if IS_PYTHON_AT_LEAST_3_9:
-        return mapping_a | mapping_b  # type: ignore[operator]
-    # Else, merge these mappings by creating and returning a new mapping of
-    # the same type as that of the first mapping initialized from a slower
-    # and more verbose dict unpacking operation.
-    mapping_merged = (
-        mapping_a.copy()
-        if isinstance(mapping_a, dict) else
-        type(mapping_a)(mapping_a)  # type: ignore[call-arg]
-    )
-    mapping_merged.update(mapping_b)  # type: ignore[attr-defined]
-    return mapping_merged
+    # Merge these mappings. Note that:
+    # * No unsafe collisions exist. Ergo, the order in which these mappings are
+    #   merged is irrelevant.
+    # * The active Python interpreter targets Python >= 3.9 and thus supports
+    #   "PEP 584 -- Add Union Operators To dict". Ergo, these mappings are
+    #   optimally mappable with the faster and terser dict union operator.
+    return mapping_a | mapping_b  # type: ignore[operator]
 
 
 def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:

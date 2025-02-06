@@ -32,7 +32,6 @@ from beartype._data.hint.datahinttyping import (
     DictTypeToAny,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections import (
     ChainMap as ChainMapType,
     Counter as CounterType,
@@ -174,50 +173,21 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     # all builtin collection types.
     types_collection_builtin = types & _COLLECTION_BUILTIN_TYPES
 
-    # If this intersection is empty, this class does *NOT* subclass a builtin
-    # collection type. In this case, silently reduce to a noop.
-    if not types_collection_builtin:
-        return None
-    # Else, this intersection is non-empty. In this case, this class subclasses
-    # one or more builtin collection types.
-
-    # First builtin collection type subclassed by this class, which should
-    # ideally be the only such type. In theory, *ALL* user-defined classes
-    # subclassing a builtin collection type subclass only one such type.
-    # Attempting to subclass multiple builtin collection types raises a
-    # non-human-readable exception resembling:
-    #     >>> class Ugh(list, dict): pass
-    #     TypeError: multiple bases have instance lay-out conflict
-    #
-    # Although we could raise a readable exception here on detecting a class
-    # subclassing multiple builtin collection types, it is probably best to
-    # avoid raising exceptions *AT ALL* during type hint inference. Instead,
-    # type hint inference should permissively accept all possible objects --
-    # including pathological classes that defy norms and expectations.
-    type_collection_builtin = next(iter(types_collection_builtin))
-
-    # Hint factory validating this type, defined as either...
-    hint_factory = (
-        # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585, this class as is. Since *ALL* builtin containers
-        # types are PEP 585-compliant subscriptable type hint factories under
-        # Python >= 3.9 (e.g., "list[str]") and since this class subclasses a
-        # builtin container type, this subclass is necessarily also implicitly a
-        # PEP 585-compliant subscriptable type hint factory.
+    # Return either...
+    return (
+        # If this intersection is non-empty, this class subclasses one or more
+        # builtin collection types. In this case, reduce to this class as is.
+        # Since *ALL* builtin containers types are PEP 585-compliant
+        # subscriptable type hint factories under Python >= 3.9 (e.g.,
+        # "list[str]") and since this class subclasses a builtin container type,
+        # this subclass is necessarily also implicitly a PEP 585-compliant
+        # subscriptable type hint factory.
         cls
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, the active Python interpreter targets Python < 3.9 and thus
-        # fails to support PEP 585. In this case, the hint factory validating
-        # this builtin container type (e.g., "typing.List").
-        #
-        # Note that this key is guaranteed to exist, by the above logic and the
-        # derivation of the "_COLLECTION_BUILTIN_TYPES" set from the keys of the
-        # "_COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY" dictionary.
-        _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY[type_collection_builtin]
+        if types_collection_builtin else
+        # Else, this intersection is empty, implying this class does *NOT*
+        # subclass a builtin collection type. In this case, reduce to a noop.
+        None
     )
-
-    # Return this hint factory and type.
-    return hint_factory
 
 # ....................{ PRIVATE ~ mappings                 }....................
 #FIXME: Also add:

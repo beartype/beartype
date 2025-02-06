@@ -56,7 +56,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     )
     from beartype._util.cls.utilclstest import is_type_subclass_proper
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         T_sequence,
         T_int_or_str,
@@ -77,6 +76,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # Intentionally import from "beartype.typing" rather than "typing" to
     # guarantee PEP 544-compliant caching protocol type hints.
     from beartype.typing import (
+        Annotated,
         Any,
         Awaitable,
         ByteString,
@@ -374,6 +374,11 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (MuhNutherThing, MuhThingP, False),
         (MuhThingP, MuhThing, False),
 
+        # ..................{ PEP 585                        }..................
+        # PEP 585-compliant type hints.
+        (tuple, Tuple, True),
+        (tuple[()], Tuple[()], True),
+
         # ..................{ PEP 586                        }..................
         # PEP 586-compliant type hints.
         (Literal[7], int, True),
@@ -388,6 +393,15 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # ..................{ PEP 589                        }..................
         # PEP 589-compliant type hints.
         (MuhDict, dict, True),
+
+        # ..................{ PEP 593                        }..................
+        # PEP 593-compliant type hints.
+        (Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
+        (int, Annotated[int, "a note"], False),  # but not vice versa
+        (Annotated[list, True], Annotated[Sequence, True], True),
+        (Annotated[list, False], Annotated[Sequence, True], False),
+        (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
+        (Annotated[List[int], "metadata"], List[int], True),
     ]
 
     # ..................{ LISTS ~ typing                     }..................
@@ -447,20 +461,11 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
             continue
         # Else, "typing" publishes this type hint factory.
 
-        # Number of type variables parametrizing this ABC, defined as either...
-        typing_abc_typevars_len = (
-            # If the active Python interpreter targets Python >= 3.9, a private
-            # instance variable of this type hint factory yielding this
-            # metadata. Under Python >= 3.9, unsubscripted type hint factories
-            # are *NOT* parametrized by type variables.
-            typing_abc._nparams
-            # getattr(typing_abc, '_nparams', 0)
-            if IS_PYTHON_AT_LEAST_3_9 else
-            # Else, the active Python interpreter targets Python < 3.9. In this
-            # case, the number of type variables directly parametrizing this
-            # ABC.
-            len(get_hint_pep_typevars(typing_abc))
-        )
+        # Number of type variables parametrizing this ABC, defined as a private
+        # instance variable of this type hint factory yielding this metadata.
+        # Under Python >= 3.9, unsubscripted type hint factories are *NOT*
+        # parametrized by type variables.
+        typing_abc_typevars_len = typing_abc._nparams
 
         # If this ABC is parametrized by one or more type variables, exercise
         # that this ABC subscripted by one or more arbitrary concrete types is a
@@ -479,27 +484,6 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # actually a subhint of this superhint.
         HINT_SUBHINT_CASES.append((subhint, superhint, True))
 
-    # ..................{ HINTS ~ version                    }..................
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # both PEP 585 and 593...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Defer version-specific imports.
-        from beartype.typing import Annotated
-
-        # Append cases exercising version-specific relations.
-        HINT_SUBHINT_CASES.extend((
-            # PEP 585-compliant type hints.
-            (tuple, Tuple, True),
-            (tuple[()], Tuple[()], True),
-
-            # PEP 593-compliant type hints.
-            (Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
-            (int, Annotated[int, "a note"], False),  # but not vice versa
-            (Annotated[list, True], Annotated[Sequence, True], True),
-            (Annotated[list, False], Annotated[Sequence, True], False),
-            (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
-            (Annotated[List[int], "metadata"], List[int], True),
-        ))
-
+    # ..................{ RETURN                             }..................
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_SUBHINT_CASES)

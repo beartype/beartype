@@ -412,7 +412,6 @@ def _init() -> None:
     from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_3_11,
-        IS_PYTHON_AT_LEAST_3_9,
     )
 
     # ..................{ GLOBALS                            }..................
@@ -517,56 +516,52 @@ def _init() -> None:
     # ..................{ HINTS ~ deprecated                 }..................
     # Set of the unqualified names of all deprecated PEP 484-compliant typing
     # attributes.
-    _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED: Set[str] = set()
-
-    # If the active Python interpreter targets Python >= 3.9 and thus
-    # supports PEP 585, add the names of all deprecated PEP 484-compliant
-    # typing attributes (e.g., "typing.List") that have since been obsoleted by
-    # equivalent bare PEP 585-compliant builtin classes (e.g., "list").
-    if IS_PYTHON_AT_LEAST_3_9:
-        _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED.update((
-            # ..............{ PEP 484                            }..............
-            'AbstractSet',
-            'AsyncContextManager',
-            'AsyncGenerator',
-            'AsyncIterable',
-            'AsyncIterator',
-            'Awaitable',
-            'ByteString',
-            'Callable',
-            'ChainMap',
-            'Collection',
-            'Container',
-            'ContextManager',
-            'Coroutine',
-            'Counter',
-            'DefaultDict',
-            'Deque',
-            'Dict',
-            'FrozenSet',
-            'Generator',
-            'Hashable',
-            'ItemsView',
-            'Iterable',
-            'Iterator',
-            'KeysView',
-            'List',
-            'MappingView',
-            'Mapping',
-            'Match',
-            'MutableMapping',
-            'MutableSequence',
-            'MutableSet',
-            'OrderedDict',
-            'Pattern',
-            'Reversible',
-            'Sequence',
-            'Set',
-            'Sized',
-            'Tuple',
-            'Type',
-            'ValuesView',
-        ))
+    _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED: Set[str] = {
+        # ..................{ PEP ~ 484                      }..................
+        # Unqualified basenames of all deprecated PEP 484-compliant
+        # typing attributes (e.g., "typing.List") that have since been obsoleted
+        # by equivalent bare PEP 585-compliant builtin classes (e.g., "list").
+        'AbstractSet',
+        'AsyncContextManager',
+        'AsyncGenerator',
+        'AsyncIterable',
+        'AsyncIterator',
+        'Awaitable',
+        'ByteString',
+        'Callable',
+        'ChainMap',
+        'Collection',
+        'Container',
+        'ContextManager',
+        'Coroutine',
+        'Counter',
+        'DefaultDict',
+        'Deque',
+        'Dict',
+        'FrozenSet',
+        'Generator',
+        'Hashable',
+        'ItemsView',
+        'Iterable',
+        'Iterator',
+        'KeysView',
+        'List',
+        'MappingView',
+        'Mapping',
+        'Match',
+        'MutableMapping',
+        'MutableSequence',
+        'MutableSet',
+        'OrderedDict',
+        'Pattern',
+        'Reversible',
+        'Sequence',
+        'Set',
+        'Sized',
+        'Tuple',
+        'Type',
+        'ValuesView',
+    }
 
     # ..................{ HINTS ~ ignorable                  }..................
     # Set of the unqualified names of all shallowly ignorable typing non-class

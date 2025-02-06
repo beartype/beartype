@@ -27,21 +27,6 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
     metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
-    # ..................{ IMPORTS ~ early                    }..................
-    # Defer early-time imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-
-    # ..................{ LOCALS                             }..................
-    # List of all module-specific type hint metadata to be returned.
-    hints_pep_meta = []
-
-    # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 585. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_9:
-        return hints_pep_meta
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 585.
-
     # ..................{ IMPORTS                            }..................
     # Defer version-specific imports.
     from beartype.typing import (
@@ -91,8 +76,8 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
     this_path_bytes = PathBytes(b'/home/leycec/cackles/while/laying/low/')
 
     # ..................{ LISTS                              }..................
-    # Add module-specific type hint metadata to this list.
-    hints_pep_meta.extend((
+    # List of all module-specific type hint metadata to be returned.
+    hints_pep_meta = [
         # ................{ PATHLIKE                           }................
         # Object whose __fspath__() dunder method returns a string.
         HintPepMetadata(
@@ -168,7 +153,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
                     b'Her voice was like the voice of his own soul'),
             ),
         ),
-    ))
+    ]
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

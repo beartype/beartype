@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484` and :pep:`585` **type hint utility unit tests.**
+Project-wide :pep:`484` and :pep:`585` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.pep484585.pep484585` submodule.
@@ -27,7 +27,6 @@ def test_is_hint_pep484585_tuple_empty() -> None:
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
         is_hint_pep484585_tuple_empty)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
 
     # Assert this tester returns true for PEP 484-compliant empty tuple type
@@ -38,18 +37,13 @@ def test_is_hint_pep484585_tuple_empty() -> None:
     # type hints.
     assert is_hint_pep484585_tuple_empty(Tuple[int, ...]) is False
 
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Assert this tester returns true for PEP 585-compliant empty tuple type
-        # hints.
-        assert is_hint_pep484585_tuple_empty(tuple[()]) is True
+    # Assert this tester returns true for PEP 585-compliant empty tuple type
+    # hints.
+    assert is_hint_pep484585_tuple_empty(tuple[()]) is True
 
-        # Assert this tester returns false for PEP 585-compliant non-empty tuple
-        # type hints.
-        assert is_hint_pep484585_tuple_empty(tuple[int, ...]) is False
-    # Else, the active Python interpreter targets Python 3.8 and thus fails to
-    # support PEP 585.
+    # Assert this tester returns false for PEP 585-compliant non-empty tuple
+    # type hints.
+    assert is_hint_pep484585_tuple_empty(tuple[int, ...]) is False
 
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep484585_args() -> None:
@@ -68,7 +62,6 @@ def test_get_hint_pep484585_args() -> None:
     )
     from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
         get_hint_pep484585_args)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -99,14 +92,9 @@ def test_get_hint_pep484585_args() -> None:
             exception_prefix='',
         )
 
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Assert this tester raises the expected exception for a PEP
-        # 585-compliant dictionary type hint improperly subscripted by an
-        # unexpected number of child type hints.
-        with raises(BeartypeDecorHintPep585Exception):
-            get_hint_pep484585_args(
-                hint=Dict[str], args_len=2, exception_prefix='')
-    # Else, the active Python interpreter targets Python 3.8 and thus fails to
-    # support PEP 585.
+    # Assert this tester raises the expected exception for a PEP
+    # 585-compliant dictionary type hint improperly subscripted by an
+    # unexpected number of child type hints.
+    with raises(BeartypeDecorHintPep585Exception):
+        get_hint_pep484585_args(
+            hint=Dict[str], args_len=2, exception_prefix='')

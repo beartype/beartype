@@ -135,7 +135,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
-        IS_PYTHON_AT_LEAST_3_9,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -236,6 +235,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     )
 
     # ....................{ CONSTANTS                      }....................
+    #FIXME: Excise this, please. This is now irrelevant.
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
@@ -244,8 +244,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # to Python 3.9, the "typing" module parametrized most unsubscripted typing
     # attributes by default. Python 3.9 halted that barbaric practice by leaving
     # unsubscripted typing attributes unparametrized by default.
-    IS_TYPEVARS_HIDDEN = not IS_PYTHON_AT_LEAST_3_9
+    IS_TYPEVARS_HIDDEN = False
 
+    #FIXME: Excise this, please. This is now irrelevant.
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are actually subscripted by one or
     # more type variables under the active Python interpreter.
@@ -254,17 +255,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
     IS_ARGS_HIDDEN = False
 
+    #FIXME: Just reference this directly below, please. *sigh*
     # Type of warning emitted by the @beartype decorator for PEP 484-compliant
-    # type hints obsoleted by PEP 585, defined as either...
-    PEP585_DEPRECATION_WARNING = (
-        # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585 deprecating these hints, this warning type;
-        BeartypeDecorHintPep585DeprecationWarning
-        if IS_PYTHON_AT_LEAST_3_9 else
-        # Else, the active Python interpreter targets Python < 3.9 and thus
-        # fails to support PEP 585. In this case, "None".
-        None
-    )
+    # type hints obsoleted by PEP 585.
+    PEP585_DEPRECATION_WARNING = BeartypeDecorHintPep585DeprecationWarning
 
     # ....................{ CONSTANTS ~ forwardref         }....................
     # Fully-qualified classname of an arbitrary class guaranteed to be
@@ -276,10 +270,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ LISTS                              }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
-
-    # Add PEP-specific type hint metadata to this list.
-    hints_pep_meta.extend((
+    hints_pep_meta = [
         # ................{ UNSUBSCRIPTED                      }................
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
@@ -1363,6 +1354,40 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # Byte string constant.
                 HintPithUnsatisfiedMetadata(
                     b"Touch'd his wide shoulders, after bending low"),
+            ),
+        ),
+
+        # ..............{ GENERICS ~ user                        }..............
+        # Subscripted generic subclassing a single unsubscripted "typing" type.
+        # Note that:
+        # * These types constitute an edge case supported *ONLY* under Python >=
+        #   3.9, which implements these tests in an ambiguous (albeit efficient)
+        #   manner effectively indistinguishable from PEP 585-compliant type
+        #   hints.
+        # * Deprecation warnings are already emitted in a memoized fashio for
+        #   the unsubscripted variants tested above and thus *CANNOT* be
+        #   re-tested here.
+        HintPepMetadata(
+            hint=Pep484ListUnsubscripted[str],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            # warning_type=PEP585_DEPRECATION_WARNING,
+            generic_type=Pep484ListUnsubscripted,
+            is_type_typing=False,
+            piths_meta=(
+                # Subclass-specific generic list of string constants.
+                HintPithSatisfiedMetadata(
+                    Pep484ListUnsubscripted((
+                        'Volubly vi‐brant libations',
+                        'To blubber‐lubed Bacchus — hustling',
+                    ))
+                ),
+                # String constant.
+                HintPithUnsatisfiedMetadata('O’ the frock'),
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'O’ Friday’s squealing — Sounding',
+                    'Freedom’s unappealing, Passive delights',
+                ]),
             ),
         ),
 
@@ -3963,17 +3988,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Optional[Sequence[str]],
             # Subscriptions of the "Optional" attribute reduce to
             # fundamentally different unsubscripted typing attributes depending
-            # on Python version. Specifically, under:
-            # * Python >= 3.9, the "Optional" and "Union" attributes are
-            #   distinct.
-            # * Python < 3.9, the "Optional" and "Union" attributes are *NOT*
-            #   distinct. The "typing" module implicitly reduces *ALL*
-            #   subscriptions of the "Optional" attribute by the corresponding
-            #   "Union" attribute subscripted by both that argument and
-            #   "type(None)". Ergo, there effectively exists *NO*
-            #   "Optional" attribute under older Python versions.
-            pep_sign=(
-                HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
+            # on Python version.
+            pep_sign=HintSignOptional,
             warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
@@ -4091,89 +4107,51 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
-    ))
+    ]
 
     # ....................{ VERSION                        }....................
     # PEP-compliant type hints conditionally dependent on the major version of
     # Python targeted by the active Python interpreter.
 
-    # If the active Python interpreter targets at least Python <= 3.9...
-    if IS_PYTHON_AT_LEAST_3_9:
+    # If the active Python interpreter targets at most Python <= 3.11...
+    if IS_PYTHON_AT_MOST_3_11:
+        # ..................{ IMPORTS                        }..................
+        # Defer importation of standard PEP 484-specific type hint factories
+        # deprecated under Python >= 3.12.
+        from collections.abc import ByteString as ByteStringABC
+        from typing import ByteString
+
+        # ..................{ LISTS                          }..................
+        # Add Python <= 3.11-specific type hint metadata to this list.
         hints_pep_meta.append(
-            # ..............{ GENERICS ~ user                    }..............
-            # Subscripted generic subclassing a single unsubscripted "typing"
-            # type. Note that:
-            # * These types constitute an edge case supported *ONLY* under
-            #   Python >= 3.9, which implements these tests in an ambiguous
-            #   (albeit efficient) manner effectively indistinguishable from PEP
-            #   585-compliant type hints.
-            # * Deprecation warnings are already emitted in a memoized fashio
-            #   for the unsubscripted variants tested above and thus *CANNOT* be
-            #   re-tested here.
+            # ................{ UNSUBSCRIPTED                  }................
+            # Unsubscripted "ByteString" singleton. Bizarrely, note that:
+            # * "collections.abc.ByteString" is subscriptable under PEP 585.
+            # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
+            #
+            # Since neither PEP 484 nor 585 comment on "ByteString" in
+            # detail (or at all, really), this non-orthogonality remains
+            # inexplicable, frustrating, and utterly unsurprising. We elect
+            # to merely shrug.
             HintPepMetadata(
-                hint=Pep484ListUnsubscripted[str],
-                pep_sign=HintSignPep484585GenericSubscripted,
-                # warning_type=PEP585_DEPRECATION_WARNING,
-                generic_type=Pep484ListUnsubscripted,
-                is_type_typing=False,
+                hint=ByteString,
+                pep_sign=HintSignByteString,
+                warning_type=PEP585_DEPRECATION_WARNING,
+                isinstanceable_type=ByteStringABC,
                 piths_meta=(
-                    # Subclass-specific generic list of string constants.
+                    # Byte string constant.
                     HintPithSatisfiedMetadata(
-                        Pep484ListUnsubscripted((
-                            'Volubly vi‐brant libations',
-                            'To blubber‐lubed Bacchus — hustling',
-                        ))
-                    ),
+                        b'By nautical/particle consciousness'),
+                    # Byte array initialized from a byte string constant.
+                    HintPithSatisfiedMetadata(
+                        bytearray(
+                            b"Hour's straight fates, (distemperate-ly)")),
                     # String constant.
-                    HintPithUnsatisfiedMetadata('O’ the frock'),
-                    # List of string constants.
-                    HintPithUnsatisfiedMetadata([
-                        'O’ Friday’s squealing — Sounding',
-                        'Freedom’s unappealing, Passive delights',
-                    ]),
+                    HintPithUnsatisfiedMetadata(
+                        'At that atom-nestled canticle'),
                 ),
             )
         )
-
-        # If the active Python interpreter targets at most Python <= 3.11...
-        if IS_PYTHON_AT_MOST_3_11:
-            # ..................{ IMPORTS                    }..................
-            # Defer importation of standard PEP 484-specific type hint factories
-            # deprecated under Python >= 3.12.
-            from collections.abc import ByteString as ByteStringABC
-            from typing import ByteString
-
-            # ..................{ LISTS                      }..................
-            # Add Python <= 3.11-specific type hint metadata to this list.
-            hints_pep_meta.append(
-                # ................{ UNSUBSCRIPTED              }................
-                # Unsubscripted "ByteString" singleton. Bizarrely, note that:
-                # * "collections.abc.ByteString" is subscriptable under PEP 585.
-                # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
-                #
-                # Since neither PEP 484 nor 585 comment on "ByteString" in
-                # detail (or at all, really), this non-orthogonality remains
-                # inexplicable, frustrating, and utterly unsurprising. We elect
-                # to merely shrug.
-                HintPepMetadata(
-                    hint=ByteString,
-                    pep_sign=HintSignByteString,
-                    warning_type=PEP585_DEPRECATION_WARNING,
-                    isinstanceable_type=ByteStringABC,
-                    piths_meta=(
-                        # Byte string constant.
-                        HintPithSatisfiedMetadata(
-                            b'By nautical/particle consciousness'),
-                        # Byte array initialized from a byte string constant.
-                        HintPithSatisfiedMetadata(
-                            bytearray(
-                                b"Hour's straight fates, (distemperate-ly)")),
-                        # String constant.
-                        HintPithUnsatisfiedMetadata(
-                            'At that atom-nestled canticle'),
-                    ),
-                )
-            )
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

@@ -40,7 +40,6 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     )
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_args_full)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
         Nongeneric,
         Pep484GenericST,
@@ -60,6 +59,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     # * "trg_args" is the output tuple returned by this getter when passed that
     #   input generic.
     PEP484585_GENERIC_ARGS_FULL = [
+        # ....................{ PEP ~ 484                  }....................
         (Pep484GenericST, (S, T,)),
         (Pep484GenericST[int, float], (int, float,)),
         (Pep585SequenceU, (U,)),
@@ -67,6 +67,13 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (Pep484585GenericSTSequenceU, (bool, int, T, U,)),
         (Pep484585GenericIntTSequenceU, (bool, int, float, U,)),
         (Pep484585GenericUUST, (U, S, T, U,)),
+
+        # ....................{ PEP ~ 585                  }....................
+        (Pep484585GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
+        (Pep484585GenericIntTSequenceU[complex], (bool, int, float, complex,)),
+        (Pep484585GenericUUST[bool, int, float], (bool, int, float, bool,)),
+        (Pep585GenericUIntT, (U, int, T, U,)),
+        (Pep585GenericUIntT[bool, float], (bool, int, float, bool,)),
     ]
 
     # List of all generic argument cases, each of which is a 2-tuple of the
@@ -78,6 +85,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     # * "trg_args" is the output tuple returned by this getter when passed that
     #   input generic and target pseudo-superclass.
     PEP484585_GENERIC_BASE_TARGET_ARGS_FULL = [
+        # ....................{ PEP ~ 484                  }....................
         (Pep484GenericST, Generic, (S, T,)),
         (Pep484GenericST, Generic[S, T], (S, T,)),
         (Pep484GenericST[int, float], Generic, (int, float,)),
@@ -87,59 +95,21 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         (Pep484585GenericSTSequenceU, Pep484GenericST, (int, T,)),
         (Pep484585GenericSTSequenceU, Nongeneric, ()),
         (Pep484585GenericSTSequenceU, Pep585SequenceU, (U,)),
-        (
-            Pep484585GenericIntTSequenceU,
-            Pep484585GenericSTSequenceU,
-            (bool, int, float, U,),
-        ),
+        (Pep484585GenericIntTSequenceU, Pep484585GenericSTSequenceU, (bool, int, float, U,)),
         (Pep484585GenericUUST, Pep585SequenceU, (U,)),
         (Pep484585GenericUUST, Pep484GenericST, (S, T)),
+
+        # ....................{ PEP ~ 585                  }....................
+        (Pep484585GenericSTSequenceU[float, complex], Pep484GenericST, (int, float,)),
+        (Pep484585GenericSTSequenceU[float, complex], Pep585SequenceU, (complex,)),
+        (Pep484585GenericIntTSequenceU[complex], Pep484585GenericSTSequenceU, (bool, int, float, complex,)),
+        (Pep484585GenericUUST[bool, int, float], List[U], (bool,)),
+        (Pep484585GenericUUST[bool, int, float], Pep484GenericST, (int, float)),
+        (Pep585GenericUIntT, Pep585SequenceU, (U,)),
+        (Pep585GenericUIntT, Pep484GenericST, (int, T)),
+        (Pep585GenericUIntT[bool, float], List[U], (bool,)),
+        (Pep585GenericUIntT[bool, float], Pep484GenericST, (int, float)),
     ]
-
-    # If the active Python interpreter targets Python >= 3.9 and thus behaves
-    # sanely with respect to complex subscripted generics, extend this list with
-    # cases covering complex subscripted generics. For unknown and presumably
-    # irrelevant reasons, Python 3.8 raises exceptions here. *shrug*
-    if IS_PYTHON_AT_LEAST_3_9:
-        PEP484585_GENERIC_ARGS_FULL.extend((
-            (Pep484585GenericSTSequenceU[float, complex], (bool, int, float, complex,)),
-            (Pep484585GenericIntTSequenceU[complex], (bool, int, float, complex,)),
-            (Pep484585GenericUUST[bool, int, float], (bool, int, float, bool,)),
-            (Pep585GenericUIntT, (U, int, T, U,)),
-            (Pep585GenericUIntT[bool, float], (bool, int, float, bool,)),
-        ))
-
-        PEP484585_GENERIC_BASE_TARGET_ARGS_FULL.extend((
-            (
-                Pep484585GenericSTSequenceU[float, complex],
-                Pep484GenericST,
-                (int, float,),
-            ),
-            (
-                Pep484585GenericSTSequenceU[float, complex],
-                Pep585SequenceU,
-                (complex,),
-            ),
-            (
-                Pep484585GenericIntTSequenceU[complex],
-                Pep484585GenericSTSequenceU,
-                (bool, int, float, complex,),
-            ),
-            (
-                Pep484585GenericUUST[bool, int, float],
-                List[U],
-                (bool,),
-            ),
-            (
-                Pep484585GenericUUST[bool, int, float],
-                Pep484GenericST,
-                (int, float),
-            ),
-            (Pep585GenericUIntT, Pep585SequenceU, (U,)),
-            (Pep585GenericUIntT, Pep484GenericST, (int, T)),
-            (Pep585GenericUIntT[bool, float], List[U], (bool,)),
-            (Pep585GenericUIntT[bool, float], Pep484GenericST, (int, float)),
-        ))
 
     # ....................{ PASS                           }....................
     # Assert that this getter returns the expected tuples for the passed

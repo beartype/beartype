@@ -46,10 +46,18 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     )
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_10,
-        IS_PYTHON_AT_LEAST_3_9,
     )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
+
+    # Intentionally import the callable type hint factory from "typing" rather
+    # than "beartype.typing" to guarantee PEP 484-compliance.
+    from typing import Callable as Pep484Callable
+
+    # Intentionally import the callable type hint factory from
+    # "collections.abc" rather than "beartype.typing" to guarantee PEP
+    # 585-compliance.
+    from collections.abc import Callable as Pep585Callable
 
     # ..................{ GENERIC                            }..................
     # General-purpose logic generically exercising these getters against all
@@ -82,11 +90,7 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
         with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_callable_return(not_hint_pep)
 
-    # ..................{ PEP ~ 484                          }..................
-    # Intentionally import the callable type hint factory from "typing" rather
-    # than "beartype.typing" to guarantee PEP 484-compliance.
-    from typing import Callable
-
+    # ..................{ CASES                              }..................
     # List of 3-tuples "(callable_hint, callable_hint_params,
     # callable_hint_return)", where:
     # * "callable_hint" is a PEP-compliant callable type hint to be tested.
@@ -95,38 +99,29 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     # * "callable_hint_return" is the return type hint subscripting that
     #   callable type hint.
     CALLABLE_HINT_PARAMS_RETURN_CASES = [
+        # ..................{ PEP ~ 484                      }..................
         # PEP 484-compliant callable type hints.
-        (Callable[[], Any], (), Any),
-        (Callable[[int], bool], (int,), bool),
-        (Callable[[int, bool], float], (int, bool), float),
-        (Callable[..., bytes], Ellipsis, bytes),
-    ]
+        (Pep484Callable[[], Any], (), Any),
+        (Pep484Callable[[int], bool], (int,), bool),
+        (Pep484Callable[[int, bool], float], (int, bool), float),
+        (Pep484Callable[..., bytes], Ellipsis, bytes),
 
-    # ..................{ PEP ~ 585                          }..................
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # PEP 585...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Intentionally import the callable type hint factory from
-        # "collections.abc" rather than "beartype.typing" to guarantee PEP
-        # 585-compliance.
-        from collections.abc import Callable
-
+        # ..................{ PEP ~ 585                      }..................
         # Extend this list with PEP 585-compliant callable type hints.
-        CALLABLE_HINT_PARAMS_RETURN_CASES.extend((
-            (Callable[[], Any], (), Any),
-            (Callable[[int], bool], (int,), bool),
-            (Callable[[int, bool], float], (int, bool), float),
-            (Callable[..., bytes], Ellipsis, bytes),
+        (Pep585Callable[[], Any], (), Any),
+        (Pep585Callable[[int], bool], (int,), bool),
+        (Pep585Callable[[int, bool], float], (int, bool), float),
+        (Pep585Callable[..., bytes], Ellipsis, bytes),
 
-            # Note this edge case is intentionally *NOT* tested above as a
-            # PEP 484-compliant callable type hint, as the "typing.Callable"
-            # factory refuses to accept the empty tuple here: e.g.,
-            #     >>> from typing import Callable
-            #     >>> Callable[[()], str]
-            #     TypeError: Callable[[arg, ...], result]: each arg must be a
-            #     type. Got ().
-            (Callable[[()], str], (), str),
-        ))
+        # Note this edge case is intentionally *NOT* tested above as a
+        # PEP 484-compliant callable type hint, as the "typing.Callable"
+        # factory refuses to accept the empty tuple here: e.g.,
+        #     >>> from typing import Callable
+        #     >>> Callable[[()], str]
+        #     TypeError: Callable[[arg, ...], result]: each arg must be a
+        #     type. Got ().
+        (Pep585Callable[[()], str], (), str),
+    ]
 
     # ..................{ PEP ~ 612                          }..................
     # If the active Python interpreter targets Python >= 3.10 and thus supports
@@ -144,8 +139,8 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
 
         # Extend this list with PEP 585-compliant callable type hints.
         CALLABLE_HINT_PARAMS_RETURN_CASES.extend((
-            (Callable[P, Any], P, Any),
-            (Callable[str_plus_P, int], str_plus_P, int),
+            (Pep585Callable[P, Any], P, Any),
+            (Pep585Callable[str_plus_P, int], str_plus_P, int),
         ))
 
     # ..................{ PEP                                }..................
