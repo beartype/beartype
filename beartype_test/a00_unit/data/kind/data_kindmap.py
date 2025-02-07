@@ -10,7 +10,7 @@ This submodule predefines low-level dictionary singletons exercising known edge
 cases on behalf of higher-level unit test submodules.
 '''
 
-# ....................{ DICTIONARIES                       }....................
+# ....................{ MAPPINGS                           }....................
 THE_SONG_OF_HIAWATHA = {
     'By the shore': 'of Gitche Gumee',
     'By the shining': 'Big-Sea-Water',
@@ -85,7 +85,7 @@ Arbitrary dictionary to be merged, intentionally containing two key-value
 collisions with the :data:`.THE_SONG_OF_HIAWATHA` dictionary.
 '''
 
-
+# ....................{ MAPPINGS ~ merged                  }....................
 THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA = {
     'By the shore': 'of Gitche Gumee',
     'By the shining': 'Big-Sea-Water',
@@ -99,7 +99,7 @@ THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA = {
     'Of the Northwest-Wind,': 'Keewaydin.',
 }
 '''
-Dictionary produced by merging the :data:`THE_SONG_OF_HIAWATHA` and
+Dictionary produced by merging the :data:`.THE_SONG_OF_HIAWATHA` and
 :data:`.IN_THE_LODGE_OF_HIAWATHA` dictionaries.
 '''
 
@@ -140,4 +140,17 @@ FROM_THE_BROW_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA = {
 Dictionary produced by merging the :data:`.FROM_THE_BROW_OF_HIAWATHA`,
 :data:`.IN_THE_LODGE_OF_HIAWATHA`, and :data:`.FAREWELL_O_HIAWATHA`
 dictionaries.
+'''
+
+# ....................{ MAPPINGS ~ removed                 }....................
+FAREWELL_O_HIAWATHA_MINUS_THE_SONG_OF_HIAWATHA = {
+    'Thus departed': 'Hiawatha,',
+    'In the purple': 'mists of evening,',
+    'To the regions': 'of the home-wind,',
+    'Of the Northwest-Wind,': 'Keewaydin.',
+}
+'''
+Dictionary produced by removing all key-value pairs from the
+:data:`.IN_THE_LODGE_OF_HIAWATHA` dictionary whose keys are also keys of the
+the :data:`.THE_SONG_OF_HIAWATHA` dictionary.
 '''

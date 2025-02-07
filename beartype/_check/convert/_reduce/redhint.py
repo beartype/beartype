@@ -39,7 +39,10 @@ from beartype._data.hint.datahintpep import (
     SetHints,
     TypeVarToHint,
 )
-from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
+    TypeStack,
+)
 from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncargiter import ArgKind
@@ -49,40 +52,58 @@ from beartype._util.kind.map.utilmapfrozen import (
     FROZEN_DICT_EMPTY,
     FrozenDict,
 )
+from beartype._util.kind.map.utilmapset import remove_mapping_keys
 from beartype._util.utilobject import SENTINEL
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_child(**kwargs) -> HintOrHintSanifiedData:
+def reduce_hint_child(
+    hint: Hint, kwargs: DictStrToAny) -> HintOrHintSanifiedData:
     '''
-    Lower-level child hint reduced (i.e., converted) from the passed
-    higher-level child hint if this child hint is reducible *or* this child hint
-    as is otherwise (i.e., if this child hint is irreducible).
+    Lower-level child type hint reduced (i.e., converted) from the passed
+    higher-level child type hint if reducible *or* this child type hint as
+    is otherwise (i.e., if this child type hint is irreducible).
 
     This reducer is a convenience wrapper for the more general-purpose
     :func:`.reduce_hint` reducer, simplifying calls to that reducer when passed
-    child hints. Specifically, this reducer silently ignores all passed keyword
-    parameters inapplicable to child hints. This includes:
+    child hints.
 
-    * ``arg_kind``, applicable *only* to root hints directly annotating callable
-       parameters.
-    * ``decor_meta``, applicable *only* to root hints directly annotating
-      callable parameters or returns.
-    * ``pith_name``, applicable *only* to root hints directly annotating
-      callable parameters or returns.
+    Parameters
+    ----------
+    hint : Hint
+        Child type hint to be reduced.
+    kwargs : DictStrToAny
+        Keyword parameters to be passed after being unpacked to the lower-level
+        :func:`.reduce_hint` reducer. For safety, this reducer silently ignores
+        keyword parameters inapplicable to child hints. This includes:
+
+        * ``arg_kind``, applicable *only* to root hints directly annotating
+          callable parameters.
+        * ``decor_meta``, applicable *only* to root hints directly annotating
+          callable parameters or returns.
+        * ``pith_name``, applicable *only* to root hints directly annotating
+          callable parameters or returns.
+
+    Returns
+    -------
+    HintOrHintSanifiedData
+        Either:
+
+        * If this hint is reducible, either:
+
+          * If reducing this hint to a lower-level hint generates supplementary
+            metadata, that metadata including that lower-level hint.
+          * Else, that lower-level hint alone.
+
+        * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
 
-    # Remove all passed keyword parameters inapplicable to child hints *BEFORE*
-    # reducing this child hint.
-    #
-    # Note that this is the standard idiom for efficiently removing dictionary
-    # key-value pairs where this key is *NOT* guaranteed to exist in this
-    # dictionary. Simplicity and speed supercedes readability, sadly.
-    kwargs.pop('arg_kind', None)
-    kwargs.pop('decor_meta', None)
-    kwargs.pop('pith_name', None)
+    # Remove all unsafe keyword parameters (i.e., parameters that are
+    # inapplicable to child hints and thus *NOT* safely passable to the
+    # subsequently called reduce_hint() function) from this dictionary.
+    remove_mapping_keys(kwargs, _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE)
 
     # Return this child hint possibly reduced to a lower-level hint.
-    return reduce_hint(**kwargs)
+    return reduce_hint(hint=hint, **kwargs)
 
 
 def reduce_hint(
@@ -189,7 +210,7 @@ def reduce_hint(
     HintOrHintSanifiedData
         Either:
 
-        * If the passed hint is reducible, either:
+        * If this hint is reducible, either:
 
           * If reducing this hint to a lower-level hint generates supplementary
             metadata, that metadata including that lower-level hint.
@@ -635,4 +656,21 @@ Maximum number of total reductions internally performed by each call of the
 This constant is a relatively arbitrary magic number selected so as to guard
 against accidental infinite recursion between lower-level PEP-specific reducers
 internally called by :func:`reduce_hint`.
+'''
+
+
+_REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE = frozenset((
+    # Applicable *ONLY* to root hints directly annotating callable parameters.
+    'arg_kind',
+
+    # Applicable *ONLY* to root hints directly annotating callable parameters
+    # or returns.
+    'decor_meta',
+    'pith_name',
+))
+'''
+Frozen set of the names of all **unsafe child type hint reducer keyword
+parameters** (i.e., keyword parameters inapplicable to child type hints and thus
+*not* safely passable from the higher-level :func:`.reduce_hint_child` to
+lower-level :func:`.reduce_hint` reducer.
 '''

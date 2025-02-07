@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
 from beartype.typing import (
+    AbstractSet,
     Collection,
     Sequence,
 )
@@ -22,6 +23,7 @@ from collections.abc import (
     Sequence as SequenceABC,
     Mapping,
     MutableMapping,
+    Set,  # <-- equivalent to "typing.AbstractSet", interestingly
 )
 
 # ....................{ MERGERS                            }....................
@@ -200,6 +202,68 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
 
     # Return this merged mapping.
     return mapping_merged
+
+# ....................{ REMOVERS                           }....................
+def remove_mapping_keys(mapping: MutableMapping, keys: AbstractSet) -> None:
+    '''
+    Safely remove all keys from the passed mapping that are items of the passed
+    set, silently ignoring any keys that are *not* already in this mapping.
+
+    This method is thread-safe against concurrent mutation by competing threads.
+
+    Parameters
+    ----------
+    mapping : MutableMapping
+        Mapping to remove these keys from.
+    keys : AbstractSet
+        Set of all keys to be removed.
+    '''
+    assert isinstance(mapping, MutableMapping), (
+        f'{repr(mapping)} not mutable mapping.')
+    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+
+    # Set of all existing keys to be removed from this mapping, efficiently
+    # defined as the intersection of the keys of this mapping with the passed
+    # set of keys.
+    mapping_keys = mapping.keys() & keys
+
+    # If this mapping contains *NONE* of these keys, silently reduce to a noop.
+    #
+    # Note that this is an optimization. However, "for" loops internally raise
+    # "StopIteration" exceptions on halt and thus incur a non-trivial cost.
+    # Ergo, this is a non-trivial (read: valuable) optimization.
+    if not mapping_keys:
+        return
+    # Else, this mapping contains one or more of these keys.
+
+    # dict.pop() method bound to this mapping, localized for efficiency.
+    mapping_pop = mapping.pop
+
+    #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
+    # For each of these existing keys to be removed...
+    #
+    # Note that CPython currently provides *NO* efficient means of removing
+    # multiple keys from a mapping in a single expression. This is known to be
+    # the best approach, but it still requires manual iteration over these keys.
+    for mapping_key in mapping_keys:
+        # Safely remove the key-value pair from this mapping whose key is this
+        # key if this mapping contains this key *OR* silently reduce to a noop
+        # otherwise (i.e., if this mapping does *NOT* contain this key).
+        #
+        # Note that:
+        # * By the prior validation, this key *SHOULD* be guaranteed to exist in
+        #   this mapping. However, CPython now allows end users to externally
+        #   disable the Global Interpreter Lock (GIL). If an external thread is
+        #   concurrently mutating this mapping, this guarantee of key existence
+        #   no longer holds. Since the dict.__del__() and dict.pop() methods
+        #   mostly exhibit similar performance, there is *NO* practical benefit
+        #   to increasing the fragility of this function by adopting the
+        #   dict.__del__() dunder method over the dict.pop() method. Ergo, we
+        #   prefer this least fragile approach.
+        # * This is the standard idiom for efficiently removing key-value pairs
+        #   where this key is *NOT* guaranteed to exist in this mapping.
+        #   Simplicity and speed supercedes readability, sadly.
+        mapping_pop(mapping_key, None)
 
 # ....................{ UPDATERS                           }....................
 def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:

@@ -97,14 +97,25 @@ def reduce_hint_pep484585_type(
             hint=hint, exception_prefix=exception_prefix)
 
         # Lower-level child hint reduced from this higher-level child hint.
-        hint_child_reduced = reduce_hint_child(hint=hint_child, **kwargs)
+        hint_child_reduced = reduce_hint_child(hint_child, kwargs)
 
         # If this child hint is ignorable, reduce this subclass hint to merely
         # the "type" superclass.
         if hint_child_reduced is Any:
             # print(f'Reducing subclass hint {hint} to "type"...')
             hint = type  # pyright: ignore
-        # Else, this child hint is unignorable and thus irreducible.
+        # Else, this child hint is unignorable. Preserve this hint as is.
+
+        #FIXME: [SPEED] Consider uncommenting this optimization at a later date.
+        #Doing so is complicated by the fact that it's currently insufficient;
+        #we'd also need to consider the case in which "hint_child_reduced" is
+        #metadata encapsulating a child hint reduction. *sigh*
+        # # If this child hint was reduced to a different hint, preserve this
+        # # reduction by re-subscripting this type hint factory by this reduction.
+        # elif hint_child_reduced is not hint_child:
+        #     hint = type[hint_child_reduced]
+        # # Else, this child hint is irreducible. In this case, preserve this
+        # # hint as is.
 
     # Return this possibly reduced hint.
     return hint

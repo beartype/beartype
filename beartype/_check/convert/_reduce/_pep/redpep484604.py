@@ -90,12 +90,8 @@ def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
         # print(f'Recursively reducing {hint} child {hint_child}...')
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
-        #FIXME: [SPEED] Inefficient. Each call to reduce_hint_child()
-        #repetitiously removes the same three keys from "**kwargs". Given how
-        #common unions are, this gets non-negligible kinda fast. *sigh*
-
         # Lower-level child hint reduced from this higher-level child hint.
-        hint_child_reduced = reduce_hint_child(hint=hint_child, **kwargs)
+        hint_child_reduced = reduce_hint_child(hint_child, kwargs)
 
         # If this reduced child hint is "Any", this child hint is ignorable.
         # However, by set logic, a union subscripted by one or more ignorable
