@@ -337,146 +337,216 @@ def _get_hint_pep484604_union_args_flattened(
     # print(f'[484/604] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
 
     # ....................{ LOCALS                         }....................
-    # This union type hint.
+    # Metadata localized from this dataclass for both usability and efficiency.
     hint = hints_meta.hint_curr_meta.hint
+    cls_stack = hints_meta.cls_stack
+    conf = hints_meta.conf
+    typevar_to_hint = hints_meta.hint_curr_meta.typevar_to_hint
+    exception_prefix = hints_meta.exception_prefix
 
-    # Tuple of all child hints subscripting this union if any *OR* the empty
-    # tuple otherwise (e.g., if this union is its own unsubscripted
-    # "typing.Optional" or "typing.Union" factory).
+    # ....................{ LOCALS ~ child                 }....................
+    # Tuple of the two or more child hints subscripting this union.
     hint_childs = get_hint_pep_args(hint)
 
-    # Assert this union to be subscripted by one or more child hints.
+    # Number of these child hints.
+    hint_childs_len = len(hint_childs)
+
+    # Assert this union to be subscripted by two or more child hints.
     #
     # Note this should *ALWAYS* be the case, as:
-    # * The unsubscripted "typing.Union" object is explicitly listed in the
-    #   "HINTS_REPR_IGNORABLE_SHALLOW" set and should thus have already been
-    #   ignored when present.
+    # * The unsubscripted "typing.Union" type hint factory is explicitly listed
+    #   in the "HINTS_REPR_IGNORABLE_SHALLOW" set and should thus have already
+    #   been ignored when present.
     # * The "typing" module explicitly prohibits empty union subscription: e.g.,
     #       >>> typing.Union[]
     #       SyntaxError: invalid syntax
     #       >>> typing.Union[()]
     #       TypeError: Cannot take a Union of no types.
-    assert hint_childs, (
-        f'{hints_meta.exception_prefix}'
-        f'union type hint {repr(hint)} unsubscripted.')
-    # Else, this union is subscripted by two or more arguments. Why two rather
-    # than one? Because the "typing" module reduces unions of one argument to
-    # that argument: e.g.,
+    # * The "typing" module reduces unions of one child hint to that hint: e.g.,
     #     >>> import typing
     #     >>> typing.Union[int]
     #     int
+    assert hint_childs_len >= 2, (
+        f'{hints_meta.exception_prefix}'
+        f'PEP 484 or 604 union type hint {repr(hint)} either unsubscripted '
+        f'or subscripted by only one child type hint.'
+    )
 
-    # 0-based index of the currently iterated child hint.
-    hint_childs_index = 0
+    # ....................{ LOCALS ~ list                  }....................
+    # List of all currently sanified child hints from which to reconstitute this
+    # union, sanified by the current iteration of the loop performed below.
+    hint_or_sane_childs: ListHintOrHintSanifiedData = acquire_instance(
+        list)
 
-    # Number of these child hints.
-    hint_childs_len = len(hint_childs)
+    # list.append() and list.extend() methods bound to this list, localized as a
+    # negligible microoptimization.
+    hint_or_sane_childs_append = hint_or_sane_childs.append
+    hint_or_sane_childs_extend = hint_or_sane_childs.extend
 
-    # For efficiency, reuse a previously created list of all new child hints of
-    # this parent union.
-    hint_or_sane_childs_new: ListHintOrHintSanifiedData = acquire_instance(list)
+    # ....................{ FLATTEN                        }....................
+    # Repeatedly flatten this union into an increasingly flat union until this
+    # union can no longer be flattened.
+    while True:
+        # 0-based index of the currently iterated child hint.
+        hint_childs_index = 0
 
-    # ....................{ SEARCH                         }....................
-    # For each subscripted argument of this union...
-    #
-    # Note that this preliminary iteration:
-    # * Modifies the "hint_childs" container being iterated over and is thus
-    #   intentionally implemented as a cumbersome "while" loop rather than a
-    #   convenient "for" loop.
-    # * Exists for the sole purpose of explicitly flattening *ALL* child unions
-    #   nested in this parent union. This iteration *CANNOT* be efficiently
-    #   combined with the iteration performed below for that reason.
-    # * Does *NOT* recursively flatten arbitrarily nested child unions
-    #   regardless of nesting depth in this parent union. Doing so is
-    #   non-trivial and currently *NOT* required by any existing edge cases.
-    while hint_childs_index < hint_childs_len:
-        # Current child hint of this union.
-        hint_child = hint_childs[hint_childs_index]
+        #FIXME: *NOPE.* What's needed instead is to:
+        #* Define a new "hint_or_sane_childs_unflattened_indices" stack of
+        #  2-tuples "(hint_or_sane_childs_unflattened_index_first,
+        #  hint_or_sane_childs_unflattened_index_last)", initialized above as:
+        #      hint_or_sane_childs_unflattened_indices: List[Tuple[int, int]] = [
+        #          (0, hint_childs_len-1)]
+        #* Refactor the outermost "while" loop above to instead iterate over the
+        #  2-tuples embedded inside "hint_or_sane_childs_unflattened_indices".
+        #* Refactor the innermost "while" loop below to instead iterate over the
+        #  range of all indices between the
+        #  "hint_or_sane_childs_unflattened_index_first" and
+        #  "hint_or_sane_childs_unflattened_index_last" indices embedded inside
+        #  the currently iterated 2-tuple.
+        #* To unflatten each union child hint, simply:
+        #  * Append the items of that union onto "hint_or_sane_childs" (as we
+        #    currently do).
+        #  * Append onto the "hint_or_sane_childs_unflattened_indices" stack a
+        #    new 2-tuple "(len(hint_or_sane_childs), len(hint_child_childs))".
+        #    This performs the recursive unflattening of deeply nested unions.
+        #* Note that our passing of "typevar_to_hint=typevar_to_hint," below
+        #  must now become more nuanced to account for the fact that a prior
+        #  sanification of this child hint may have defined a child
+        #  hint-specific ""typevar_to_hint" mapping. If so, that mapping should
+        #  be passed instead of the root "typevar_to_hint" mapping passed to
+        #  this private getter. Ugh!
 
-        # Sane child hint sanified from this possibly insane child hint if
-        # sanifying this child hint did not generate supplementary metadata *OR*
-        # that metadata otherwise (i.e., if sanifying this child hint generated
-        # supplementary metadata).
+        # # True only if the current iteration flattened one or more child unions
+        # # into this parent union.
+        # is_hint_childs_flattened = False
+
+        # For each child hint of this union...
         #
-        # Note that this sanification is intentionally performed *BEFORE* this
-        # child hint is tested as being either PEP-compliant or -noncompliant.
-        # Why? Because a small subset of low-level reduction routines performed
-        # by this high-level sanification actually expand a PEP-noncompliant
-        # type into a PEP-compliant type hint. This includes:
-        # * The PEP-noncompliant "float' and "complex" types, implicitly
-        #   expanded to the PEP 484-compliant "float | int" and "complex | float
-        #   | int" type hints (respectively) when the non-default
-        #   "conf.is_pep484_tower=True" parameter is enabled.
-        # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-        hint_or_sane_child = sanify_hint_child(
-            hint=hint_child,
-            cls_stack=hints_meta.cls_stack,
-            conf=hints_meta.conf,
-            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-            exception_prefix=hints_meta.exception_prefix,
-        )
-        # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
+        # Note that this iteration:
+        # * Modifies the "hint_childs" container being iterated over and is thus
+        #   intentionally implemented as a cumbersome "while" loop rather than a
+        #   convenient "for" loop. Of course, the former is more efficient than
+        #   the latter and thus preferable regardless.
+        # * Exists for the sole purpose of explicitly flattening *ALL* child
+        #   unions nested in this parent union. This iteration *CANNOT* be
+        #   efficiently combined with the iteration performed above for that
+        #   reason.
+        # * Recursively flattens arbitrarily nested child unions regardless of
+        #   nesting depth in this parent union. Although rare in real-world
+        #   code, PEP 695-compliant type aliases do technically enable users to
+        #   deeply nest type aliases and thus unions: e.g.,
+        #       # After reduction, the PEP 695-compliant "Level3" type alias
+        #       # effectively resembles:
+        #       #     type Level3 = ((int | complex) | str) | float
+        #       type Level1 = int | complex
+        #       type Level2 = Level1 | str
+        #       type Level3 = Level2 | float
+        while hint_childs_index < hint_childs_len:
+            # Current child hint of this union.
+            hint_child = hint_childs[hint_childs_index]
 
-        # Child hint encapsulated by this metadata.
-        hint_child = get_hint_or_sane_hint(hint_or_sane_child)
+            # Sane child hint sanified from this possibly insane child hint if
+            # sanifying this child hint did not generate supplementary metadata
+            # *OR* that metadata otherwise (i.e., if sanifying this child hint
+            # generated supplementary metadata).
+            #
+            # Note that this sanification is intentionally performed *BEFORE*
+            # the sign of this child hint is tested. Why? Because some
+            # reductions expand an arbitrary hint into a union. This includes:
+            # * PEP 695-compliant type aliases aliased to unions. See above!
+            # * The PEP-noncompliant "float' and "complex" types, implicitly
+            #   expanded to the PEP 484-compliant "float | int" and "complex |
+            #   float | int" type hints (respectively) when the non-default
+            #   "conf.is_pep484_tower=True" parameter is enabled.
+            # * User-defined "BeartypeHintOverrides", similar to the prior item.
+            # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
+            hint_or_sane_child = sanify_hint_child(
+                hint=hint_child,
+                cls_stack=cls_stack,
+                conf=conf,
+                typevar_to_hint=typevar_to_hint,
+                exception_prefix=exception_prefix,
+            )
+            # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
 
-        # Sign of this sanified child hint if this hint is PEP-compliant *OR*
-        # "None" otherwise (i.e., if this hint is PEP-noncompliant).
-        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+            # Child hint encapsulated by this metadata.
+            hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 
-        # If this child hint is itself a child union nested in this parent
-        # union, explicitly flatten this nested union by appending *ALL* child
-        # child hints subscripting this child union onto this parent union.
-        #
-        # Note that this edge case currently *ONLY* arises when this child hint
-        # has been expanded by the above call to the
-        # sanify_hint_child() function from a non-union
-        # (e.g., "float") into a union (e.g., "float | int"). The standard PEP
-        # 484-compliant "typing.Union" factory already implicitly flattens
-        # nested unions: e.g.,
-        #     >>> from typing import Union
-        #     >>> Union[float, Union[int, str]]
-        #     typing.Union[float, int, str]
-        if hint_child_sign in HINT_SIGNS_UNION:
-            # Tuple of all child child hints subscripting this child union.
-            hint_child_childs = get_hint_pep_args(hint_child)
-            # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
+            # Sign of this sanified child hint if this hint is PEP-compliant *OR*
+            # "None" otherwise (i.e., if this hint is PEP-noncompliant).
+            hint_child_sign = get_hint_pep_sign_or_none(hint_child)
 
-            # If this hint is encapsulated by metadata...
-            if isinstance(hint_or_sane_child, HintSanifiedData):
-                # For each child child type subscripting this child union...
-                for hint_child_child in hint_child_childs:
-                    # Metadata encapsulating the sanification of this child
-                    # child hint.
-                    hint_or_sane_child_child = hint_or_sane_child.permute(
-                        hint=hint_child_child)
+            # If this child hint is itself a child union nested in this parent
+            # union, explicitly flatten this nested union by appending *ALL*
+            # child child hints subscripting this child union onto this parent
+            # union.
+            #
+            # Note that this edge case currently *ONLY* arises when this child
+            # hint has been expanded by the above call to the
+            # sanify_hint_child() function from a non-union (e.g., "float") into
+            # a union (e.g., "float | int"). The standard PEP 484-compliant
+            # "typing.Union" type hint factory already implicitly flattens
+            # nested unions: e.g.,
+            #     >>> from typing import Union
+            #     >>> Union[float, Union[int, str]]
+            #     typing.Union[float, int, str]
+            if hint_child_sign in HINT_SIGNS_UNION:
+                #FIXME: Excise us up, please.
+                # Note that the current iteration flattened at least this child
+                # union into this parent union.
+                # is_hint_childs_flattened = True
 
-                    # Inefficiently append this child child hint to this parent
-                    # union in a manner preserving this metadata.
-                    hint_or_sane_childs_new.append(hint_or_sane_child_child)
-            # Else, this is a bare hint *NOT* encapsulated by metadata. In this
-            # case...
+                # Tuple of all child child hints subscripting this child union.
+                hint_child_childs = get_hint_pep_args(hint_child)
+                # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
+
+                # If this hint is encapsulated by metadata...
+                if isinstance(hint_or_sane_child, HintSanifiedData):
+                    # For each child child type subscripting this child union...
+                    for hint_child_child in hint_child_childs:
+                        # Metadata encapsulating the sanification of this child
+                        # child hint.
+                        hint_or_sane_child_child = hint_or_sane_child.permute(
+                            hint=hint_child_child)
+
+                        # Inefficiently append this child child hint to this
+                        # parent union in a manner preserving this metadata.
+                        hint_or_sane_childs_append(
+                            hint_or_sane_child_child)
+                # Else, this is a bare hint *NOT* encapsulated by metadata. In
+                # this case...
+                else:
+                    # Efficiently append these child child hints to this parent
+                    # union while ignoring this non-existent metadata.
+                    hint_or_sane_childs_extend(hint_child_childs)
+            # Else, this child hint is *NOT* itself a union. In this case,
+            # append this child hint to this parent union.
             else:
-                # Efficiently append these child child hints to this parent
-                # union while ignoring this non-existent metadata.
-                hint_or_sane_childs_new.extend(hint_child_childs)
-        # Else, this child hint is *NOT* itself a union. In this case, append
-        # this child hint to this parent union.
-        else:
-            hint_or_sane_childs_new.append(hint_or_sane_child)
-            # print(f'Flattened union child {repr(hint_child)} to {repr(hint_or_sane_child)}...')
+                hint_or_sane_childs_append(hint_or_sane_child)
+                # print(f'Flattened union child {repr(hint_child)} to {repr(hint_or_sane_child)}...')
 
-        # Increment the 0-based index of the currently iterated child hint.
-        hint_childs_index += 1
+            # Increment the 0-based index of the currently iterated child hint.
+            hint_childs_index += 1
+
+        #FIXME: Excise us up, please.
+        # # If the current iteration flattened *NO* child unions into this parent
+        # # union, the above flattening preserved this union as is rather than
+        # # flattening this union. Since this implies this union to now be
+        # # maximally flat, immediately halt iteration.
+        # if not is_hint_childs_flattened:
+        #     break
+        # # Else, the lists of all currently and previously sanified child hints
+        # # still differ, implying the above flattening to have flattened this
+        # # union still further. In this case, continue flattening.
+        break
 
     # ....................{ RETURN                         }....................
-    # Freeze this temporary list back to this permanent tuple, replacing the
-    # prior unflattened contents of this tuple.
-    hint_or_sane_childs = tuple(hint_or_sane_childs_new)
+    # Tuple coerced from this list.
+    hint_or_sane_childs_tuple = tuple(hint_or_sane_childs)
 
     # Release this list back to its respective pool.
-    release_instance(hint_or_sane_childs_new)
+    release_instance(hint_or_sane_childs)
     # print(f'Flattened union to {repr(hint_or_sane_childs)}...')
 
     # Return this tuple and corresponding type variable lookup table.
-    return hint_or_sane_childs
+    return hint_or_sane_childs_tuple

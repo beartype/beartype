@@ -392,9 +392,16 @@ def reduce_hint(
 
         # If either...
         if (
+            #FIXME: Pretty sure this can be shifted above the
+            #unpack_hint_or_sane() call, as a minor optimization: e.g.,
+            #    if hint_or_sane is Any:
+            #        return Any
             # This hint reduces to the PEP 484-compliant "typing.Any" singleton,
             # this hint is ignorable;
             hint is Any or
+            #FIXME: This doesn't quite seem right. Is it technically possible
+            #for a hint to reduce to itself yet produce a different
+            #"typevar_to_hint" mapping? If so, this test is insufficient. *sigh*
             # The current and previously reduced instances of this hint are
             # identical, the above reductions preserved this hint as is rather
             # than reducing this hint, implying this hint to now be irreducible.

@@ -67,12 +67,11 @@ def reduce_hint_pep484_typevar(
     ----------
     hint : Hint
         Type variable to be reduced.
-    typevar_to_hint : TypeVarToHint, optional
+    typevar_to_hint : TypeVarToHint
         **Type variable lookup table** (i.e., dictionary mapping from type
         variables to the arbitrary type hints those type variables map to).
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 

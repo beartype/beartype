@@ -17,7 +17,7 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
 # ....................{ TESTERS                            }....................
-def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
+def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the
     ignorable :obj:`typing.Any` singleton if this union is subscripted by one or
@@ -37,8 +37,8 @@ def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
     reduction in the worst case, reducing unions *also* requires an uncached
     reduction in the worst case. This is that case.
 
-    This reducer ignores all union factories subscripted by one or more
-    ignorable child hints, including:
+    This reducer ignores all union type hint factories subscripted by one or
+    more ignorable child hints, including:
 
     * The :pep:`484`-compliant :obj:`typing.Optional` (e.g.,
       ``typing.Optional[object]``).
@@ -46,23 +46,25 @@ def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
       ``typing.Union[typing.Any, bool]``).
     * All :pep:`604`-compliant new-style unions (e.g., ``bool | object``).
 
-    Why? Because unions are by definition only as narrow as their widest child
-    hint. However, shallowly ignorable type hints are ignorable precisely
-    because they are the widest possible hints (e.g., :class:`object`,
-    :attr:`typing.Any`), which are so wide as to constrain nothing and convey no
-    meaningful semantics. A union of one or more shallowly ignorable child hints
-    is thus the widest possible union, which is so wide as to constrain nothing
-    and convey no meaningful semantics. Since there exist a countably infinite
-    number of possible :data:`Union` subscriptions by one or more ignorable type
-    hints, these subscriptions *cannot* be explicitly listed in the
+    Why? Because unions are only as narrow as their widest child type hints.
+    Shallowly ignorable hints are ignorable exactly because they are the widest
+    possible hints (e.g., :class:`object`, :attr:`typing.Any`), which are so
+    wide as to constrain nothing and convey no meaningful semantics. A union of
+    one or more shallowly ignorable child hints is thus the widest possible
+    union, which is so wide as to constrain nothing and convey no meaningful
+    semantics. There exist a countably infinite number of possible unions
+    subscripted by one or more ignorable child hints. Ergo, these subscriptions
+    *cannot* be explicitly listed in the
     :data:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
-    frozenset. Instead, these subscriptions are dynamically detected by this
-    tester at runtime and thus referred to as **deeply ignorable type hints.**
+    set. Instead, these subscriptions are dynamically detected by this tester at
+    runtime and thus referred to as **deeply ignorable unions.**
 
     Parameters
     ----------
     hint : HintPep695TypeAlias
-        Union to be reduced.
+        Union hint to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed keyword parameters are passed to the parent
     :func:`beartype._check.convert._reduce.redhint.reduce_hint` function
@@ -79,30 +81,69 @@ def reduce_hint_pep484604(hint: Hint, **kwargs) -> Hint:
     '''
     # print(f'[484/604] Detecting union {repr(hint)} ignorability...')
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce.redhint import reduce_hint_child
 
+    # ....................{ LOCALS                         }....................
     # Tuple of the two or more child hints subscripting this union.
     hint_childs = get_hint_pep_args(hint)
 
-    # For each child hint subscripting this union...
-    for hint_child in hint_childs:
+    # 0-based index of the currently iterated child hint.
+    hint_childs_index = 0
+
+    # Number of these child hints.
+    hint_childs_len = len(hint_childs)
+
+    # Assert this union to be subscripted by two or more child hints.
+    #
+    # Note this should *ALWAYS* be the case, as:
+    # * The unsubscripted "typing.Union" type hint factory is explicitly listed
+    #   in the "HINTS_REPR_IGNORABLE_SHALLOW" set and should thus have already
+    #   been ignored when present.
+    # * The "typing" module explicitly prohibits empty union subscription: e.g.,
+    #       >>> typing.Union[]
+    #       SyntaxError: invalid syntax
+    #       >>> typing.Union[()]
+    #       TypeError: Cannot take a Union of no types.
+    # * The "typing" module reduces unions of one child hint to that hint: e.g.,
+    #     >>> import typing
+    #     >>> typing.Union[int]
+    #     int
+    assert hint_childs_len >= 2, (
+        f'{exception_prefix}'
+        f'PEP 484 or 604 union type hint {repr(hint)} either unsubscripted '
+        f'or subscripted by only one child type hint.'
+    )
+
+    # ....................{ REDUCE                         }....................
+    # For each child hint of this union...
+    while hint_childs_index < hint_childs_len:
+        # Currently visited child hint of this union.
+        hint_child = hint_childs[hint_childs_index]
         # print(f'Recursively reducing {hint} child {hint_child}...')
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
-        # Lower-level child hint reduced from this higher-level child hint.
-        hint_child_reduced = reduce_hint_child(hint_child, kwargs)
+        # Sane child hint sanified from this possibly insane child hint if
+        # sanifying this child hint did not generate supplementary metadata *OR*
+        # that metadata otherwise (i.e., if sanifying this child hint generated
+        # supplementary metadata).
+        hint_or_sane_child = reduce_hint_child(hint_child, kwargs)
 
-        # If this reduced child hint is "Any", this child hint is ignorable.
-        # However, by set logic, a union subscripted by one or more ignorable
-        # child hints is itself ignorable. In this case, reduce this entire
-        # union to "Any" as well.
-        if hint_child_reduced is Any:
-            return Any  # pyright: ignore
-        # Else, this reduced child hint is *NOT* "Any". In this case, continue
-        # to the next child hint.
-    # Else, this union is subscripted by *NO* ignorable child hints. Ergo, this
-    # union is unignorable.
+        # If this sanified child hint is "Any", this child hint is ignorable. By
+        # set logic, a union subscripted by one or more ignorable child hints is
+        # itself ignorable. In this case...
+        if hint_or_sane_child is Any:
+            # Reduce this entire union to the ignorable "Any" singleton.
+            hint = Any  # pyright: ignore
 
-    # Return this union unmodified.
+            # Immediately halt this iteration.
+            break
+        # Else, this sanified child hint is unignorable.
+
+        # Increment the 0-based index of the currently iterated child hint.
+        hint_childs_index += 1
+
+    # ....................{ RETURN                         }....................
+    # Return this possibly reduced union.
     return hint
