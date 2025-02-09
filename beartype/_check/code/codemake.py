@@ -35,9 +35,9 @@ from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_HINT,
 )
 from beartype._check.code.codescope import express_func_scope_type_ref
-from beartype._check.code.pep.codepep484604 import (
+from beartype._check.code._pep.codepep484604 import (
     make_hint_pep484604_check_expr)
-from beartype._check.code.pep.pep484585.codepep484585container import (
+from beartype._check.code._pep.pep484585.codepep484585container import (
     make_hint_pep484585_container_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (

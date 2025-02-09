@@ -337,8 +337,8 @@ def reduce_hint(
             # performed reductions. In this case, avoid overriding this hint yet
             # again. Doing so would (almost certainly) provoke infinite
             # recursion (e.g., overriding "float" with "int | float").
-        # If doing so raises a "TypeError", this source hint is unhashable and thus
-        # inapplicable for hint overriding. In this case, silently ignore this hint.
+        # If doing so raises a "TypeError", this hint is unhashable and thus
+        # inapplicable for hint overriding. In this case, ignore this hint.
         except TypeError:
             pass
 
@@ -376,7 +376,7 @@ def reduce_hint(
             return Any
         # Else, this hint is currently unignorable. Continue reducing.
 
-        # ....................{ PHASE ` cached             }....................
+        # ....................{ PHASE ~ cached             }....................
         # Sane hint reduced from this possibly insane hint if reducing this hint
         # did not generate supplementary metadata *OR* that metadata otherwise
         # (i.e., if reducing this hint generated supplementary metadata).
@@ -385,9 +385,7 @@ def reduce_hint(
         # This possibly context-free hint efficiently reduced to another hint
         # and the resulting type variable lookup table.
         hint, typevar_to_hint = unpack_hint_or_sane(
-            hint_or_sane=hint_or_sane,
-            typevar_to_hint=typevar_to_hint,
-        )
+            hint_or_sane=hint_or_sane, typevar_to_hint=typevar_to_hint)
         # print(f'[reduce_hint] Reduced to {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
         # If either...
