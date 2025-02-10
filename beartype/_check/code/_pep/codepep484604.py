@@ -33,7 +33,7 @@ from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
 )
-from beartype._data.hint.datahintpep import SetHints
+# from beartype._data.hint.datahintpep import SetHints
 from beartype._data.hint.datahinttyping import SetTypes
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.pool.utilcachepoolinstance import (
@@ -373,10 +373,7 @@ def _get_hint_pep484604_union_args_flattened(
     # ....................{ LOCALS                         }....................
     # Metadata localized from this dataclass for both usability and efficiency.
     hint = hints_meta.hint_curr_meta.hint
-    cls_stack = hints_meta.cls_stack
-    conf = hints_meta.conf
     typevar_to_hint = hints_meta.hint_curr_meta.typevar_to_hint
-    exception_prefix = hints_meta.exception_prefix
 
     # ....................{ LOCALS ~ child                 }....................
     # Tuple of the two or more child hints subscripting this union.
@@ -469,6 +466,10 @@ def _get_hint_pep484604_union_args_flattened(
         # previously performed sanifications. For safety, assume insanity.
         is_hint_child_insane = True
 
+        # True only if this child hint was sanified via a hint override
+        # externally configured by the user. For safety, assume *NO* override.
+        is_hint_child_overridden = False
+
         # Attempt to...
         #
         # Note that the is_object_hashable() tester is internally implemented
@@ -483,9 +484,24 @@ def _get_hint_pep484604_union_args_flattened(
             is_hint_child_insane = (
                 hint_or_insane_child not in hint_or_insane_childs_sanified)
 
-            # Record this child hint as now having been sanified *AFTER*
-            # detecting whether this child hint requires sanification. Ugh!
-            hint_or_insane_childs_sanified.add(hint_or_insane_child)
+            # If this child hint has yet to be sanified...
+            if is_hint_child_insane:
+                # Record this child hint as now having been sanified *AFTER*
+                # detecting whether this child hint requires sanification. Ugh!
+                #
+                # Note that adding an item to a set requires that item to be
+                # hashable. For safety, this addition is intentionally isolated
+                # to this "try" branch.
+                hint_or_insane_childs_sanified.add(hint_or_insane_child)
+            # Else, this child hint has already been sanified. In this case...
+            else:
+                # Sane child hint encapsulated by this metadata.
+                hint_child_sane = get_hint_or_sane_hint(hint_or_insane_child)
+
+                # True only if this child hint was sanified via a hint override
+                # externally configured by the end user.
+                is_hint_child_overridden = (
+                    hint_child_sane in hints_meta.conf.hint_overrides)
         # If doing so raises a "TypeError", this child hint is unhashable. In
         # this case, assume this child hint to be insane. You know who you are.
         except TypeError:
@@ -520,21 +536,56 @@ def _get_hint_pep484604_union_args_flattened(
             # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
             hint_or_sane_child = sanify_hint_child(
                 hint=hint_child,
-                cls_stack=cls_stack,
-                conf=conf,
+                cls_stack=hints_meta.cls_stack,
+                conf=hints_meta.conf,
                 typevar_to_hint=hint_child_typevar_to_hint,
-                exception_prefix=exception_prefix,
+                exception_prefix=hints_meta.exception_prefix,
             )
             # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
-        # Else, this child hint has already been sanified. In this case, reuse
-        # this previously sanified child hint as is.
-        else:
+        # Else, this child hint has already been sanified by a previously
+        # performed sanification in this recursive tree of all previously
+        # performed sanifications.
+        #
+        # There now exist two divergent edge cases. Either:
+        # * This child hint has intrinsic value and *MUST* thus be preserved as
+        #   a member of this union. This edge case currently arises *ONLY*
+        #   through hint overrides. Consider overriding the child hint "float"
+        #   with the PEP 604-compliant union "int | float". In this case:
+        #   * The initial sanification of the child hint "float" performed above
+        #     will expand that hint to "int | float".
+        #   * The unflattening performed below will then append the child hints
+        #     "int" and "float" for subsequent iteration by this "while" loop.
+        #   * The child hint "float" will then be detected as having been
+        #     previously sanified. This child hint *CANNOT* be removed or
+        #     ignored, as doing so would omit this child hint from this union.
+        #     This child hint thus has intrinsic value and *MUST* thus be
+        #     preserved as a member of this union.
+        # * This child hint lacks intrinsic value and *MUST* thus be removed as
+        #   a member of this union. This edge case currently arises *ONLY*
+        #   through PEP 695-compliant recursive type aliases. Consider:
+        #       type RecursiveAlias = int | RecursiveAlias
+        #
+        #   The recursive type alias "RecursiveAlias" merely has symbolic value
+        #   and thus lacks intrinsic value. This type alias is semantically
+        #   equivalent to the non-recursive type alias:
+        #       type NonrecursiveAlias = int
+        #
+        #   Similar logic as with the prior edge case then applies, except that
+        #   this hild *SHOULD* be removed and ignored (rather than preserved).
+        #
+        # If this child hint was overridden by an external hint override, this
+        # child hint has itrinsic value and *MUST* thus be preserved. Avoid
+        # sanifying this child hint yet again, as doing so would provoke
+        # infinite recursion. Reuse this previously sanified child hint as is.
+        elif is_hint_child_overridden:
             hint_or_sane_child = hint_or_insane_child
-        # Else, this hint has already been sanified by a previously performed
-        # sanification in this recursive tree of all previously performed
-        # sanifications. In this case, avoid sanifying this hint yet again.
-        # Doing so would (almost certainly) provoke infinite recursion (e.g.,
-        # overriding "float" with "int | float").
+        # Else, this child hint was *NOT* overridden by an external hint
+        # override. In this case, this child hint lacks intrinsic value.
+        # Fortunately, this child hint has already been sanified and thus
+        # appended to this union as a member. In this case, ignoring this
+        # extraneous child hint here is both safe and desirable.
+        else:
+            continue
 
         # ....................{ UNION                      }....................
         # Sane child hint encapsulated by this metadata.
