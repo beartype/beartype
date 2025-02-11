@@ -63,16 +63,72 @@ type AliasPep484604[T] = (
     Union[dict[T, T] | frozenset[T]]
 )
 '''
-Type alias aliasing a PEP 604-compliant new union of:
+Type alias aliasing a :pep:`604`-compliant new union of:
+
 * A PEP-noncompliant type.
 * Two or more generic type hints parametrized by the same type variable
-  subscripting this alias *AND*...
-* A PEP 484-compliant old union of (...waitforit) two or more generic type
-  hints parametrized by the same type variable subscripting this alias.
+  subscripting this alias.
+* A :pep:`484`-compliant old union of two or more generic type hints
+  parametrized by the same type variable subscripting this alias.
 
-This alias thus tests that dynamic code generation for PEP 484- and
-604-compliant unions preserves PEP 484-compliant type variable mappings while
-also flattening directly nested unions into the top-level union.
+This alias thus tests that dynamic code generation for both :pep:`484`- and
+:pep:`604`-compliant unions preserves :pep:`484`-compliant type variable
+mappings while also flattening directly nested unions into the top-level union.
+'''
+
+# ..................{ PEP (484|604) ~ depth ~ unparametrized }..................
+type AliasPep484604Depth1 = _AliasPep484604Depth2 | float
+'''
+Type alias aliasing a :pep:`604`-compliant new union of a PEP-noncompliant type
+and another type alias aliasing a :pep:`484`-compliant old union of
+another PEP-noncompliant type and another type alias aliasing (...waitforit)
+another PEP-noncompliant type.
+
+This alias thus tests that dynamic code generation for both :pep:`484`- and
+:pep:`604`-compliant unions recursively unflattens deeply nested unions into the
+top-level union.
+'''
+
+
+type _AliasPep484604Depth2 = Union[str, _AliasPep484604Depth3]
+'''
+Type alias aliasing a :pep:`484`-compliant old union of a PEP-noncompliant type
+and another type alias aliasing another PEP-noncompliant type.
+'''
+
+
+type _AliasPep484604Depth3 = int
+'''
+Type alias aliasing a PEP-noncompliant type.
+'''
+
+# ..................{ PEP (484|604) ~ depth ~ parametrized   }..................
+type AliasPep484604Depth1T[T] = _AliasPep484604Depth2T[T] | float
+'''
+Type alias aliasing a :pep:`604`-compliant new union of a PEP-noncompliant type
+and another type alias subscripted by the same type variable parametrizing this
+alias aliasing a :pep:`484`-compliant old union of another PEP-noncompliant type
+and another type alias subscripted by the same type variable parametrizing this
+alias aliasing that type parameter.
+
+This alias thus tests that dynamic code generation for both :pep:`484`- and
+:pep:`604`-compliant unions recursively unflattens deeply nested unions into the
+top-level union.
+'''
+
+
+type _AliasPep484604Depth2T[T] = Union[str, _AliasPep484604Depth3T[T]]
+'''
+Type alias aliasing a :pep:`484`-compliant old union of a PEP-noncompliant type
+and another type alias subscripted by the same type variable parametrizing this
+alias aliasing another PEP-noncompliant type .
+'''
+
+
+type _AliasPep484604Depth3T[T] = T
+'''
+**Identity type alias** isomorphically aliasing the type parameter parametrizing
+this alias.
 '''
 
 # ..................{ PEP 585                                }..................

@@ -51,6 +51,8 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     from beartype_test.a00_unit.data.pep.pep695.data_pep695hint import (
         AliasSimple,
         AliasPep484604,
+        AliasPep484604Depth1,
+        AliasPep484604Depth1T,
         AliasPep585Dict,
         AliasPep585IterableTContainerT,
         AliasPep585IterableTupleSTContainerTupleST,
@@ -67,7 +69,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     )
 
     # ..................{ LISTS                              }..................
-    # Add PEP 604-specific test type hints to this list.
+    # Add PEP 695-specific test type hints to this list.
     hints_pep_meta.extend((
         # ................{ NON-PEP                            }................
         # Unsubscripted non-generic type alias aliasing a standard type hint
@@ -265,6 +267,84 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                     exception_str_not_match_regexes=(
                         r'\n',
                         r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ PEP (484|604) ~ depth : unparam    }................
+        # Unsubscripted type alias aliasing a PEP 604-compliant union deeply
+        # nesting a PEP 484-compliant union deeply nesting a non-union hint.
+        HintPepMetadata(
+            hint=AliasPep484604Depth1,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
+            is_type_typing=True,
+            is_typing=False,
+            piths_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    'Of influence benign on planets pale,'),
+                # Integer constant.
+                HintPithSatisfiedMetadata(0xDEAFCAFE),
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(85.94701),
+                # Byte string constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'Of admonitions to the winds and seas',
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bstr\b',
+                        r'\bint\b',
+                        r'\bfloat\b',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ PEP (484|604) ~ depth : param      }................
+        # Unsubscripted type alias aliasing a PEP 604-compliant union deeply
+        # nesting a PEP 484-compliant union deeply nesting a non-union hint, all
+        # parametrized by a single type variable.
+        HintPepMetadata(
+            hint=AliasPep484604Depth1T,
+            pep_sign=HintSignPep695TypeAliasUnsubscripted,
+            is_type_typing=True,
+            # PEP 695-compliant parametrized type aliases are parametrized by
+            # type variables implicitly instantiated only "on the fly" by Python
+            # itself. These variables are *NOT* explicitly defined and thus
+            # *NOT* safely accessible here outside of these aliases.
+            is_typevars=True,
+            is_typing=False,
+            # This unsubscripted alias transitively aliases an ignorable type
+            # variable and is thus itself ignorable.
+            is_ignorable=True,
+        ),
+
+        # Subscripted type alias aliasing a PEP 604-compliant union deeply
+        # nesting a PEP 484-compliant union deeply nesting a non-union hint, all
+        # parametrized by a single type variable.
+        HintPepMetadata(
+            hint=AliasPep484604Depth1T[int],
+            pep_sign=HintSignPep695TypeAliasSubscripted,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    "Of peaceful sway above man's harvesting,"),
+                # Integer constant.
+                HintPithSatisfiedMetadata(0xBEEFDEAF),
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(1.074958),
+                # Byte string constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=b'And all those acts which Deity supreme',
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bstr\b',
+                        r'\bint\b',
+                        r'\bfloat\b',
                     ),
                 ),
             ),

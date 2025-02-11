@@ -251,7 +251,7 @@ def reduce_hint(
     # guarantee that the passed hint is *NEVER* equal to the previously reduced
     # instance of this hint unless actually reduced below. This is necessary, as
     # "None" is a valid type hint reduced to "type(None)" below.
-    hint_prev: Hint = SENTINEL  # pyright: ignore
+    hint_or_sane_prev: HintOrHintSanifiedData = SENTINEL  # pyright: ignore
 
     # BeartypeHintOverrides.get() method bound to the user-defined
     # "hint_overrides" dictionary of this beartype configuration, localized as a
@@ -368,10 +368,8 @@ def reduce_hint(
         # If this hint reduces to the PEP 484-compliant "typing.Any" singleton,
         # this hint is ignorable. In this case, halt reducing.
         #
-        # Note that this is an optimization avoiding repetitious reductions.
-        # Technically, this optimization is *NOT* required. Pragmatically, this
-        # optimization avoids multiple extraneous reductions for each ignorable
-        # hint.
+        # Note that this is an optional short-circuiting optimization avoiding
+        # multiple repetitious reductions for each ignorable hint.
         if hint is Any:
             return Any
         # Else, this hint is currently unignorable. Continue reducing.
@@ -382,34 +380,29 @@ def reduce_hint(
         # (i.e., if reducing this hint generated supplementary metadata).
         hint_or_sane = _reduce_hint_cached(hint, conf, exception_prefix)
 
+        # If this hint reduces to the PEP 484-compliant "typing.Any" singleton,
+        # this hint is ignorable. In this case, halt reducing.
+        #
+        # Note that, unlike the similar test above, this test is required rather
+        # than merely an optimization.
+        if hint_or_sane is Any:
+            return Any  # pyright: ignore
+        # Else, this hint is currently unignorable. Continue reducing.
+        #
+        # If the current and previously reduced instances of this hint are
+        # identical, the above reductions all preserved this hint as is rather
+        # than reducing this hint. This implies this hint to now be irreducible.
+        # Halt reducing.
+        elif hint_or_sane is hint_or_sane_prev:
+            break
+        # Else, the current and previously reduced instances of this hint
+        # differ, implying this hint to still be reducible. Continue reducing.
+
         # This possibly context-free hint efficiently reduced to another hint
         # and the resulting type variable lookup table.
         hint, typevar_to_hint = unpack_hint_or_sane(
             hint_or_sane=hint_or_sane, typevar_to_hint=typevar_to_hint)
         # print(f'[reduce_hint] Reduced to {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
-
-        # If either...
-        if (
-            #FIXME: Pretty sure this can be shifted above the
-            #unpack_hint_or_sane() call, as a minor optimization: e.g.,
-            #    if hint_or_sane is Any:
-            #        return Any
-            # This hint reduces to the PEP 484-compliant "typing.Any" singleton,
-            # this hint is ignorable;
-            hint is Any or
-            #FIXME: This doesn't quite seem right. Is it technically possible
-            #for a hint to reduce to itself yet produce a different
-            #"typevar_to_hint" mapping? If so, this test is insufficient. *sigh*
-            # The current and previously reduced instances of this hint are
-            # identical, the above reductions preserved this hint as is rather
-            # than reducing this hint, implying this hint to now be irreducible.
-            hint is hint_prev
-        # Then halt reducing.
-        ):
-            break
-        # Else, the current and previously reduced instances of this hint
-        # differ, implying this hint to still be reducible. In this case,
-        # continue reducing.
 
         # Increment the current number of total reductions internally performed
         # by this call *BEFORE* detecting accidental recursion below.
@@ -423,7 +416,7 @@ def reduce_hint(
             raise BeartypeDecorHintReduceException(
                 f'{exception_prefix}type hint {repr(hint_old)} irreducible; '
                 f'recursion detected when reducing between reduced type hints '
-                f'{repr(hint_prev)} and {repr(hint)}. Please open a new issue '
+                f'{repr(hint_or_sane_prev)} and {repr(hint)}. Please open a new issue '
                 f'on our friendly issue tracker providing this full traceback:\n'
                 f'\t{URL_ISSUES}\n'
                 f'Beartype thanks you for your noble (yet ultimately tragic) '
@@ -433,7 +426,7 @@ def reduce_hint(
         # by this call is still less than the maximum. In this case, continue.
 
         # Previously reduced instance of this hint.
-        hint_prev = hint
+        hint_or_sane_prev = hint
 
     # ....................{ RETURN                         }....................
     # Either this possibly reduced hint *OR* metadata describing this hint,
