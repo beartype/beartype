@@ -73,6 +73,7 @@ from beartype._data.hint.datahintpep import (
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
@@ -83,10 +84,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign_or_none,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.kind.map.utilmapfrozen import (
-    FROZEN_DICT_EMPTY,
-    FrozenDict,
-)
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import SENTINEL
 from beartype._util.utilobjmake import permute_object
 
@@ -267,7 +265,7 @@ class ViolationCause(object):
         hint: Hint = SENTINEL,  # type: ignore[arg-type]
         hint_or_sane: HintOrHintSanifiedData = SENTINEL,  # type: ignore[arg-type]
         cause_str_or_none: Optional[str] = None,
-        typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+        typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     ) -> None:
         '''
         Initialize this type-checking violation cause finder.

@@ -44,7 +44,7 @@ def resolve_pep563(
     Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
     on the passed callable to their **referents** (i.e., the actual annotations
-    to which those postponed annotations evaluate) if `PEP 563`_ is active for
+    to which those postponed annotations evaluate) if :pep:`563` is active for
     that callable *or* silently reduce to a noop otherwise (i.e., if :pep:`563`
     is *not* active for that callable).
 
@@ -135,7 +135,7 @@ def resolve_pep563(
         lexically nesting the current class. In short, just pass everything.
 
     Raises
-    ----------
+    ------
     BeartypePep563Exception
         If either:
 

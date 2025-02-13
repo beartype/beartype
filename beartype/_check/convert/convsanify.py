@@ -31,14 +31,11 @@ from beartype._data.hint.datahintpep import (
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
-from beartype._util.kind.map.utilmapfrozen import (
-    FROZEN_DICT_EMPTY,
-    # FrozenDict,
-)
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
@@ -319,7 +316,7 @@ def sanify_hint_child(
     #attempted to make this function a general-purpose sanifier applicable to
     #both child and root hints. It's harmless as is... but annoying. *sigh*
     pith_name: Optional[str] = None,
-    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
 ) -> HintOrHintSanifiedData:
     '''
@@ -367,7 +364,7 @@ def sanify_hint_child(
         :class:`typing.TypeVar` objects) originally parametrizing the origins of
         all transitive parent hints of this hint to the corresponding child
         hints subscripting these parent hints). Defaults to
-        :data:`.FROZEN_DICT_EMPTY`.
+        :data:`.FROZENDICT_EMPTY`.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         function. Defaults to the empty string.

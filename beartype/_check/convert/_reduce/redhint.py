@@ -44,14 +44,12 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
 )
 from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhintget import get_hint_repr
-from beartype._util.kind.map.utilmapfrozen import (
-    FROZEN_DICT_EMPTY,
-    FrozenDict,
-)
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.kind.map.utilmapset import remove_mapping_keys
 from beartype._util.utilobject import SENTINEL
 
@@ -118,7 +116,7 @@ def reduce_hint(
     hints_overridden: SetHints = None,  # type: ignore[assignment]
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
-    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
 ) -> HintOrHintSanifiedData:
     '''
@@ -200,7 +198,7 @@ def reduce_hint(
         :class:`typing.TypeVar` objects) originally parametrizing the origins of
         all transitive parent hints of this hint to the corresponding child
         hints subscripting these parent hints). Defaults to
-        :data:`.FROZEN_DICT_EMPTY`.
+        :data:`.FROZENDICT_EMPTY`.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         reducer. Defaults to the empty string.

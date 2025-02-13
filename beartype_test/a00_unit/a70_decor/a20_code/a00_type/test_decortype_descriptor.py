@@ -312,10 +312,10 @@ def test_decor_type_descriptor_builtin_chain() -> None:
         'And the green earth lost in his heart its claims'
     )
 
-# ....................{ TESTS ~ python                     }....................
-def test_decor_type_descriptor_python() -> None:
+# ....................{ TESTS ~ custom                     }....................
+def test_decor_type_descriptor_custom() -> None:
     '''
-    Test the :func:`beartype.beartype` decorator on **pure-Python method
+    Test the :func:`beartype.beartype` decorator on **custom pure-Python method
     descriptors** (i.e., methods decorated by pure-Python types satisfying the
     descriptor protocol by declaring at least the ``__get__()`` dunder method).
     '''
@@ -480,3 +480,158 @@ def test_decor_type_descriptor_python() -> None:
     with raises(BeartypeCallHintParamViolation):
         still_couchant_on_the_earth.were_postured_motionless(
             b'His faded eyes, and saw his kingdom gone,')
+
+
+def test_decor_type_descriptor_custom_pep487() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on :pep:`487`-compliant
+    **custom pure-Python method descriptors** (i.e., methods decorated by
+    pure-Python types satisfying the :pep:`487`-compliant descriptor protocol by
+    declaring at least the ``__set_name__()`` dunder method).
+
+    This unit test exercises an inscrutable `edge case`_ induced by
+    :func:`beartype.beartype`-decorated classes defining at least two kinds of
+    seemingly unrelated methods that nonetheless *could* interact harmfully:
+
+    * A method decorated by a :pep:`487`-compliant custom pure-Python method
+      descriptor declaring at least the ``__set_name__()`` dunder method.
+    * A method annotated by a stringified forward reference to a currently
+      undefined type, which :func:`beartype.beartype` then internally coerces
+      into a **forward reference proxy** (i.e.,
+      :class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+      subclass) encapsulating that undefined type.
+
+    For obscure reasons that are difficult to fully explain within the expected
+    lifetime of the Universe, this interaction causes the ``__set_name__()``
+    dunder method of the descriptor decorating the first method to be
+    erroneously called multiple times with erroneous owners. Although seemingly
+    innocuous, this issue is indicative of an explosive increase in the space
+    and time complexity associated with forward reference proxies. Ergo, this
+    issue is actually quite serious. It is imperative this *never* happen again.
+
+    .. _edge case:
+       https://github.com/beartype/beartype/issues/488#issuecomment-2650865299
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.typing import Optional
+    from collections.abc import Callable
+
+    # ....................{ DESCRIPTORS                    }....................
+    class setname_descriptor(object):
+        '''
+        **Setname method descriptor** (i.e., pure-Python object whose
+        :pep:`487`-compliant :meth:`__set_name__` dunder method raises an
+        exception when called more than once as a regression check against this
+        issue silently reverting).
+
+        Attributes
+        ----------
+        _is_set_name_called : bool
+            :data:`True` only if Python has already called the
+            :pep:`487`-compliant :meth:`__set_name__` dunder method.
+        '''
+
+        def __init__(self, func: Callable) -> None:
+            '''
+            Initialize this method descriptor by doing... absolutely nothing.
+            '''
+
+            # Record that Python has yet to call __set_name__().
+            self._is_set_name_called = False
+
+
+        def __call__(self) -> None:
+            '''
+            Call this method descriptor by doing... absolutely nothing.
+            '''
+
+            # Doing nothing never felt so good, so right, so... clean.
+            pass
+
+
+        def __set_name__(self, owner: type, name: str) -> None:
+            '''
+            :pep:`487`-compliant callback called by Python itself with metadata
+            describing the current decoration of an external method by this
+            descriptor.
+
+            Parameters
+            ----------
+            owner : type
+                Parent class declaring that external method.
+            name : str
+                Unqualified basename of that external method.
+            '''
+
+            # If Python has already called this dunder method, this issue has
+            # reverted. In this case, raise an exception.
+            if self._is_set_name_called:
+                raise ValueError(
+                    'PEP 487 setname_descriptor.__set_name__() dunder method '
+                    'already called.'
+                )
+            # Else, this is Python's first call of this dunder method.
+
+            # Record that Python has already called this dunder method.
+            self._is_set_name_called = True
+
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class AndAllThoseActs(object):
+        '''
+        Arbitrary :func:`beartype.beartype`-decorated class defining:
+
+        * A method decorated by a :pep:`487`-compliant custom pure-Python method
+          descriptor declaring at least the ``__set_name__()`` dunder method.
+        * A method annotated by a stringified forward reference to a currently
+          undefined type.
+
+        Note that the mere act of decorating this class by
+        :func:`beartype.beartype` suffices to fully exercise this issue.
+        Instantiating this class below is incidental to that.
+        '''
+
+        @setname_descriptor
+        def which_deity_supreme(self) -> None:
+            '''
+            Arbitrary method decorated by a :pep:`487`-compliant custom
+            pure-Python method descriptor declaring at least the
+            ``__set_name__()`` dunder method.
+            '''
+
+            # Sometimes, nothing is the best thing.
+            pass
+
+
+        def doth_ease_its(self) -> 'Optional[HeartOfLove]':
+            '''
+            Arbitrary method annotated by a stringified forward reference to a
+            currently undefined type.
+            '''
+
+            # Nothing: still is the best thing after all these lines of code.
+            pass
+
+
+    class HeartOfLove(object):
+        '''
+        Arbitrary class referred to by a stringified forward reference
+        annotating a method of the previously defined class.
+        '''
+
+        pass
+
+    # ....................{ LOCALS                         }....................
+    # Instance of the above class.
+    i_am_gone = AndAllThoseActs()
+
+    # ....................{ PASS                           }....................
+    # Assert that calling this descriptor-decorated method behaves as expected.
+    assert i_am_gone.which_deity_supreme() is None
+
+    # Assert that calling this forward reference-annotated method behaves as
+    # expected.
+    assert i_am_gone.doth_ease_its() is None

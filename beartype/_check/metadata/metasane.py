@@ -24,10 +24,8 @@ from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
 )
-from beartype._util.kind.map.utilmapfrozen import (
-    FROZEN_DICT_EMPTY,
-    FrozenDict,
-)
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
@@ -102,7 +100,7 @@ class HintSanifiedData(object):
         hint: Hint,
 
         # Optional parameters.
-        typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+        typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     ) -> None:
         '''
         Initialize this sanified type hint metadata with the passed parameters.
@@ -314,7 +312,7 @@ def unpack_hint_or_sane(
     hint_or_sane: HintOrHintSanifiedData,
 
     # Optional parameters.
-    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
 ) -> HintOrHintSanifiedDataUnpacked:
     '''
     2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
@@ -333,7 +331,7 @@ def unpack_hint_or_sane(
         :class:`typing.TypeVar` objects) originally parametrizing the origins of
         all transitive parent hints of this hint to the corresponding child
         hints subscripting these parent hints). Defaults to
-        :class:`.FROZEN_DICT_EMPTY`.
+        :class:`.FROZENDICT_EMPTY`.
 
     Returns
     -------

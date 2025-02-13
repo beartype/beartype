@@ -45,7 +45,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
-from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
@@ -549,7 +549,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # package is recognized *OR* the empty dictionary otherwise (i.e., if the
     # package defining this hint is unrecognized).
     hint_type_name_to_sign = HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN.get(
-        hint_type.__module__, DICT_EMPTY)
+        hint_type.__module__, FROZENDICT_EMPTY)
 
     # Sign identifying this hint if this hint is identifiable by its classname
     # *OR* "None" otherwise.

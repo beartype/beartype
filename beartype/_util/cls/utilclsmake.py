@@ -19,7 +19,7 @@ from beartype._data.hint.datahinttyping import (
     TupleTypes,
     TypeException,
 )
-from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ MAKERS                             }....................
@@ -29,8 +29,8 @@ def make_type(
 
     # Optional arguments.
     type_module_name: Optional[str] = None,
-    type_bases: Optional[TupleTypes] = None,
-    type_scope: Optional[LexicalScope] = None,
+    type_bases: TupleTypes = (),
+    type_scope: LexicalScope = FROZENDICT_EMPTY,
     type_doc: Optional[str] = None,
     exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
@@ -46,7 +46,7 @@ def make_type(
     type_module_name : Optional[str]
         Fully-qualified name of the module declaring this class. Defaults to
         :data:`None`, in which case this class remains undeclared by any module.
-    type_bases : Optional[Tuple[type, ...]]
+    type_bases : Tuple[type, ...]
         Tuple of all base classes to be inherited by this class. Defaults to
         the empty tuple, equivalent to the 1-tuple ``(object,)`` inheriting this
         class from only the root base class :class:`object` of all classes.
@@ -83,6 +83,8 @@ def make_type(
     assert isinstance(type_name, str), f'{repr(type_name)} not string.'
     assert isinstance(type_module_name, NoneTypeOr[str]), (
         f'{repr(type_module_name)} neither string nor "None".')
+    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
+    assert isinstance(type_scope, dict), f'{repr(type_scope)} not dictionary.'
     assert isinstance(type_doc, NoneTypeOr[str]), (
         f'{repr(type_doc)} neither string nor "None".')
 
@@ -97,16 +99,6 @@ def make_type(
         raise exception_cls(
             f'{exception_prefix}class name {repr(type_name)} invalid.')
     # Else, this classname is a valid unqualified Python identifier.
-
-    # Default all unpassed parameters.
-    if type_bases is None:
-        type_bases = ()  # type: ignore[assignment]
-    if type_scope is None:
-        type_scope = DICT_EMPTY  # type: ignore[assignment]
-    assert isinstance(type_bases, tuple), (
-        f'{repr(type_bases)} neither tuple nor "None".')
-    assert isinstance(type_scope, dict), (
-        f'{repr(type_scope)} neither dictionary nor "None".')
 
     # Thank you, bizarre 3-parameter variant of the type.__init__() constructor.
     cls = type(type_name, type_bases, type_scope)

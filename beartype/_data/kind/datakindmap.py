@@ -16,25 +16,27 @@ from beartype.typing import (
     Any,
     Dict,
 )
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ DICTS                              }....................
 # Note that this exact type annotation is required to avoid mypy complaints. :O
-DICT_EMPTY: Dict[Any, Any] = {}
+FROZENDICT_EMPTY: Dict[Any, Any] = FrozenDict()
 '''
-**Empty dictionary singleton.**
+**Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
+key-value pairs).
 
 Whereas Python guarantees the **empty tuple** (i.e., ``()``) to be a singleton,
 Python does *not* extend that guarantee to dictionaries. This empty dictionary
 singleton amends that oversight, providing efficient reuse of empty
 dictionaries: e.g.,
 
-.. code-block::
+.. code-block:: pycon
 
    >>> () is ()
    True  # <-- good. this is good.
    >>> {} is {}
    False  # <-- bad. this is bad.
-   >>> from beartype._data.kind.datakinddict import DICT_EMPTY
-   >>> DICT_EMPTY is DICT_EMPTY
+   >>> from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+   >>> FROZENDICT_EMPTY is FROZENDICT_EMPTY
    True  # <-- good. this is good, because we made it so.
 '''

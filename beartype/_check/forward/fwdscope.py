@@ -155,8 +155,8 @@ class BeartypeForwardScope(LexicalScope):
         self._scope_name = scope_name
 
     # ..................{ DUNDERS                            }..................
-    def __missing__(self, hint_name: str) -> Type[
-        _BeartypeForwardRefIndexableABC]:
+    def __missing__(
+        self, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on each ``[``- and

@@ -25,7 +25,7 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
 )
-from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from collections.abc import Callable
 from types import CodeType
 
@@ -247,7 +247,7 @@ def get_func_locals(
     # Then silently reduce to a noop by treating this nested callable as
     # module-scoped by preserving "func_locals" as the empty dictionary.
     ):
-        return DICT_EMPTY
+        return FROZENDICT_EMPTY
     # Else, all of the following constraints hold:
     # * The passed callable is physically declared on-disk.
     # * The passed callable is nested.
@@ -356,7 +356,7 @@ def get_func_locals(
     # implying that there is *NO* parent lexical scope to search for. In this
     # case, silently reduce to a noop by returning the empty dictionary.
     if func_scope_names_search_len == 0:
-        return DICT_EMPTY
+        return FROZENDICT_EMPTY
     # If a *NEGATIVE* number of unignorable lexical scopes encapsulate that
     # callable, the caller erroneously insists that there exist more ignorable
     # lexical scopes encapsulating that callable than there actually exist

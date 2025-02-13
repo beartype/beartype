@@ -21,7 +21,7 @@ from beartype.typing import (
 from beartype._data.hint.datahinttyping import (
     TypeException,
 )
-from beartype._data.kind.datakinddict import DICT_EMPTY
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
 from beartype._util.utilobject import Iota
 from collections.abc import Callable
@@ -418,7 +418,7 @@ def iter_func_args(
     #     True
     #     >>> {} is {}
     #     False
-    args_defaults_kwonly = func.__kwdefaults__ or DICT_EMPTY  # type: ignore[attr-defined]
+    args_defaults_kwonly = func.__kwdefaults__ or FROZENDICT_EMPTY  # type: ignore[attr-defined]
 
     # ..................{ LOCALS ~ len                       }..................
     # Number of both optional and mandatory positional-only parameters accepted

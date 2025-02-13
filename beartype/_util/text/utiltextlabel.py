@@ -223,7 +223,7 @@ def label_callable(
 
         # Substring preceding the string to be returned.
         func_label_prefix = (
-            f'lambda function of '
+            f'lambda function accepting '
             f'{get_func_args_flexible_len(func_codeobj)} argument(s)'
         )
 

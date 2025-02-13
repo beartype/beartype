@@ -85,21 +85,21 @@ def get_func_code_lines_or_none(
     **Line-oriented callable source code** (i.e., string concatenating the
     subset of all lines of the on-disk Python script or module declaring the
     passed pure-Python callable) if that callable was declared on-disk *or*
-    ``None`` otherwise (i.e., if that callable was dynamically declared
+    :data:`None` otherwise (i.e., if that callable was dynamically declared
     in-memory).
 
     Caveats
-    ----------
-    **The higher-level** :func:`get_func_code_or_none` **getter should
-    typically be called instead.** Why? Because this lower-level getter
-    inexactly returns all lines embedding the declaration of the passed
-    callable rather than the exact substring of those lines declaring that
-    callable. Although typically identical for non-lambda functions, those two
-    strings typically differ for lambda functions. Lambda functions are
-    expressions embedded in larger statements rather than full statements.
+    -------
+    **The higher-level** :func:`get_func_code_or_none` **getter should typically
+    be called instead.** Why? Because this lower-level getter inexactly returns
+    all lines embedding the declaration of the passed callable rather than the
+    exact substring of those lines declaring that callable. Although typically
+    identical for non-lambda functions, those two strings typically differ for
+    lambda functions. Lambda functions are expressions embedded in larger
+    statements rather than full statements.
 
     **This getter is excruciatingly slow.** See the
-    :func:`get_func_code_or_none` getter for further commentary.
+    :func:`.get_func_code_or_none` getter for further commentary.
 
     Parameters
     ----------
@@ -107,23 +107,24 @@ def get_func_code_lines_or_none(
         Callable to be inspected.
     warning_cls : TypeWarning, optional
         Type of warning to be emitted in the event of a non-fatal error.
-        Defaults to :class:`_BeartypeUtilCallableWarning`.
+        Defaults to :exc:`._BeartypeUtilCallableWarning`.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
         * If the passed callable was physically declared by a file, a string
           concatenating the subset of lines of that file declaring that
           callable.
-        * If the passed callable was dynamically declared in-memory, ``None``.
+        * If the passed callable was dynamically declared in-memory,
+          :data:`None`.
 
     Warns
-    ----------
-    :class:`warning_cls`
-         If the passed callable is defined by a pure-Python source code file
-         but is *not* parsable from that file. While we could allow any parser
+    -----
+    warning_cls
+         If the passed callable is defined by a pure-Python source code file but
+         is *not* parsable from that file. While we could allow any parser
          exception to percolate up the call stack and halt the active Python
          process when left unhandled, doing so would render :mod:`beartype`
          fragile -- gaining us little and costing us much.
@@ -164,13 +165,14 @@ def get_func_file_code_lines_or_none(
     '''
     **Line-oriented callable source file code** (i.e., string concatenating
     *all* lines of the on-disk Python script or module declaring the passed
-    pure-Python callable) if that callable was declared on-disk *or* ``None``
-    otherwise (i.e., if that callable was dynamically declared in-memory).
+    pure-Python callable) if that callable was declared on-disk *or*:
+    :data:`None` otherwise (i.e., if that callable was dynamically declared
+    in-memory).
 
     Caveats
-    ----------
+    -------
     **This getter is excruciatingly slow.** See the
-    :func:`get_func_code_or_none` getter for further commentary.
+    :func:`.get_func_code_or_none` getter for further commentary.
 
     Parameters
     ----------
@@ -178,19 +180,20 @@ def get_func_file_code_lines_or_none(
         Callable to be inspected.
     warning_cls : TypeWarning, optional
         Type of warning to be emitted in the event of a non-fatal error.
-        Defaults to :class:`_BeartypeUtilCallableWarning`.
+        Defaults to :exc:`._BeartypeUtilCallableWarning`.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
         * If the passed callable was physically declared by an file, a string
           concatenating *all* lines of that file.
-        * If the passed callable was dynamically declared in-memory, ``None``.
+        * If the passed callable was dynamically declared in-memory,
+          :data:`None`.
 
     Warns
-    ----------
+    -----
     :class:`warning_cls`
          If the passed callable is defined by a pure-Python source code file
          but is *not* parsable from that file. While we could allow any parser
@@ -263,7 +266,7 @@ def get_func_code_or_none(
     '''
     **Callable source code** (i.e., substring of all lines of the on-disk Python
     script or module declaring the passed pure-Python callable) if that callable
-    was declared on-disk *or* ``None`` otherwise (i.e., if that callable was
+    was declared on-disk *or* :data:`None` otherwise (i.e., if that callable was
     dynamically declared in-memory).
 
     Specifically, this getter returns:
@@ -367,7 +370,7 @@ def get_func_code_or_none(
         # @beartype little and cost @beartype much.
         try:
             # String concatenating all lines of the file defining that lambda if
-            # that lambda is defined by a file *OR* "None".
+            # that lambda is defined by a file *OR* "None" otherwise.
             lambda_file_code = get_func_file_code_lines_or_none(
                 func=func, warning_cls=warning_cls)
 

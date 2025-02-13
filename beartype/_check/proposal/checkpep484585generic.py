@@ -26,15 +26,13 @@ from beartype._data.hint.datahintpep import (
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
 )
-from beartype._util.kind.map.utilmapfrozen import (
-    FROZEN_DICT_EMPTY,
-    FrozenDict,
-)
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
@@ -44,7 +42,7 @@ def iter_hint_pep484585_generic_bases_unerased(
 
     # Optional parameters.
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    typevar_to_hint: TypeVarToHint = FROZEN_DICT_EMPTY,
+    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> IterableHintOrHintSanifiedData:

@@ -202,10 +202,3 @@ class FrozenDict(dict):
             f'not updatable from positional arguments {repr(args)} '
             f'and keyword arguments {repr(kwargs)}.'
         )
-
-# ....................{ CONSTANTS                          }....................
-FROZEN_DICT_EMPTY = FrozenDict()
-'''
-**Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
-key-value pairs).
-'''
