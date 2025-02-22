@@ -197,19 +197,19 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._package.clawpkghook` submodule (e.g., by a call to the
-        :func:`beartype.claw.beartype_package` function). Specifically:
+        :mod:`beartype.claw._package.clawpkghook` submodule (e.g., by a call to
+        the :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been
           registered, this method fully defers to the superclass
-          :meth:`SourceLoader.get_code` method.
+          :meth:`.SourceLoader.get_code` method.
         * Else, one or more parent packages transitively containing that module
           have been registered. In this case, this method (in order):
 
           #. Temporarily monkey-patches (i.e., replaces) the
              private :func:`importlib._bootstrap_external.cache_from_source`
              function with our beartype-specific
-             :func:`_cache_from_source_beartype` variant.
+             :func:`cache_from_source_beartype` variant.
           #. Calls the superclass :meth:`SourceLoader.get_code` method, which:
 
              #. Calls our override of the lower-level superclass

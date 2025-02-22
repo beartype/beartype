@@ -516,16 +516,15 @@ def get_func_locals(
             #   currently just a readable alias for "DictStrToAny", which is
             #   itself an efficiency alias for "Dict[Str, object]". Ergo, static
             #   type-checkers expect this getter to return "dict" instances.
-            # * Under Python <= 3.12, the "func_frame.f_locals" instance
+            # * Under Python < 3.12, the "func_frame.f_locals" instance
             #   variable actually is a "dict" instance.
             # * Under Python >= 3.12, the "func_frame.f_locals" instance
             #   variable actually is instead a "mappingproxy" instance. Although
-            #   interchangeable for many purposes, "dict" and "mappingproxy"
+            #   interchangeable for most purposes, "dict" and "mappingproxy"
             #   instances are *NOT* perfectly interchangeable. In particular,
             #   callers of this function frequently pass this local scope to
             #   the dict.update() method -- which expects the passed mapping to
             #   also be a "dict" instance: e.g.,
-            #
             #       cls_curr_locals = get_type_locals(
             #           cls=cls_curr, exception_cls=exception_cls)
             #   >   func_locals.update(cls_curr_locals)
