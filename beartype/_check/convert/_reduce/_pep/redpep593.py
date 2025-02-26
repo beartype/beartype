@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`593`-compliant **type alias reducers** (i.e., low-level
-callables converting higher-level objects created via the ``type`` statement
-under Python >= 3.12 to lower-level type hints more readily consumable by
-:mod:`beartype`).
+Project-wide :pep:`593`-compliant **type metahint reducers** (i.e., low-level
+low-level callables converting higher-level type hints created by subscripting
+the :obj:`typing.Annotated` type hint factory to lower-level type hints more
+readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

@@ -5,9 +5,8 @@
 
 '''
 Project-wide :pep:`589`-compliant **type alias reducers** (i.e., low-level
-callables converting higher-level objects created via the ``type`` statement
-under Python >= 3.12 to lower-level type hints more readily consumable by
-:mod:`beartype`).
+low-level callables converting higher-level :class:`typing.TypedDict` subclasses
+to lower-level type hints more readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

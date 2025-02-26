@@ -37,6 +37,8 @@ from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
 from beartype._check.convert._reduce._pep.redpep484604 import (
     reduce_hint_pep484604)
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
+from beartype._check.convert._reduce._pep.redpep557 import (
+    reduce_hint_pep557_initvar)
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
@@ -117,8 +119,6 @@ from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     reduce_hint_pep484_newtype)
 from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
     reduce_hint_pep484585_itemsview)
-from beartype._util.hint.pep.proposal.pep557 import (
-    reduce_hint_pep557_initvar)
 from beartype._util.hint.pep.proposal.pep585 import (
     reduce_hint_pep585_builtin_subscripted_unknown)
 from beartype._util.hint.pep.proposal.pep591 import reduce_hint_pep591

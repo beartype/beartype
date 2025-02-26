@@ -14,6 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype.typing import (
     TYPE_CHECKING,
+    Any,
+    Dict,
     Iterable,
     List,
     Set,
@@ -242,6 +244,13 @@ PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
 returned by the :func:`.unpack_hint_or_sane` unpacker.
 '''
 
+# ....................{ HINTS ~ container                  }....................
+DictHintOrHintSanifiedDataToAny = Dict[HintOrHintSanifiedData, Any]
+'''
+PEP-compliant type hint matching a dictionary mapping from keys that are either
+type hints *or* **sanified type hint metadata** (i.e.,
+:class:`.HintSanifiedData` objects) to arbitrary objects.
+'''
 
 IterableHintOrHintSanifiedData = Iterable[HintOrHintSanifiedData]
 '''

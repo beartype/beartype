@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep557DataclassInitVar)
@@ -18,12 +19,12 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 # ....................{ GETTERS                            }....................
 def get_hint_pep557_initvar_arg(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep557Exception,
     exception_prefix: str = '',
-) -> object:
+) -> Hint:
     '''
     PEP-compliant child type hint subscripting the passed :pep:`557`-compliant
     **dataclass initialization-only instance variable type hint** (i.e.,
@@ -35,18 +36,18 @@ def get_hint_pep557_initvar_arg(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep557Exception`.
     exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
-    object
+    Hint
         PEP-compliant child type hint subscripting this parent type hint.
 
     Raises
@@ -78,37 +79,3 @@ def get_hint_pep557_initvar_arg(
     # hint exposes this child via a non-standard instance variable rather than
     # the "__args__" dunder tuple standardized by PEP 484.
     return hint.type  # type: ignore[attr-defined]
-
-# ....................{ REDUCERS                           }....................
-def reduce_hint_pep557_initvar(
-    hint: object, exception_prefix: str, **kwargs) -> object:
-    '''
-    Reduce the passed :pep:`557`-compliant **dataclass initialization-only
-    instance variable type hint** (i.e., subscription of the
-    :class:`dataclasses.InitVar` type hint factory) to the child type hint
-    subscripting this parent hint -- which is otherwise functionally useless
-    from the admittedly narrow perspective of runtime type-checking.
-
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Type variable to be reduced.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    All remaining passed arguments are silently ignored.
-
-    Returns
-    -------
-    object
-        Lower-level type hint currently supported by :mod:`beartype`.
-    '''
-
-    # Reduce this "typing.InitVar[{hint}]" type hint to merely "{hint}".
-    return get_hint_pep557_initvar_arg(
-        hint=hint, exception_prefix=exception_prefix)

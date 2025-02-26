@@ -14,6 +14,9 @@ build:
   # Build under the most recent Long Term Service (LTS) release of Ubuntu.
   os: ubuntu-22.04
   tools:
+    #FIXME: *CAUTION.* Our use of antiquated "pydata-sphinx-theme" versions
+    #currently requires equally antiquated CPython versions ≤ 3.12. It is sad.
+    #Attempting to bump this to CPython ≥ 3.13 provokes build failures.
     # Build under the most recently released minor version of CPython.
     python: '3.12'
 

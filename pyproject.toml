@@ -295,24 +295,11 @@ test-tox = [
     # ....................{ APP ~ cli                      }....................
     # Command line interface (CLI)-centric optional test-time dependencies.
 
-    # Required by optional Click-specific integration tests.
-    "click",
-
     # ....................{ DOCOS                          }....................
     # Documentation-centric optional test-time dependencies.
 
     # Required by optional Sphinx-specific integration tests.
-    #
-    # Note that Sphinx currently provokes unrelated test failures under Python
-    # 3.7 with obscure deprecation warnings. Since *ALL* of this only applies
-    # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
-    # installing Sphinx under Python 3.7. The exception resembles:
-    #     FAILED
-    #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
-    #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module
-    #     "pkg_resources.__init__" importation exception DeprecationWarning:
-    #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
-    "sphinx; python_version >= '3.8.0'",
+    "sphinx",
 
     # ....................{ DOOR                           }....................
     # DOOR-specific optional test-time dependencies required to exercise all
@@ -320,6 +307,19 @@ test-tox = [
 
     # Required by optional beartype.door.infer_hint()-specific unit tests.
     "pygments",
+
+    # ....................{ ETC                            }....................
+    # Miscellaneous optional test-time dependencies.
+
+    # Required by optional Click-specific integration tests.
+    "click",
+
+    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
+    #Actions-hosted continuous integration (CI) for the moment. Doing so is
+    #non-trivial enough under local testing workflows. *sigh*
+    # Required by optional nuitka-specific integration tests if the current
+    # platform is a Linux distribution.
+    "nuitka >=1.2.6; sys_platform == 'linux'",
 
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
@@ -385,25 +385,26 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : jax      }....................
     # JAX-specific optional test-time dependencies.
 
-    # Required by optional Equinox-specific integration tests. Note that Equinox
-    # requires JAX.
-    "equinox; sys_platform == 'linux'",
-
     # Required by optional JAX-specific integration tests and JAX-dependent
-    # packages (e.g., Equinox). Note that JAX *MUST* be installed with one or
-    # more subscripted extras. Omitting extras installs only the high-level
-    # pure-Python "jax" package *WITHOUT* also installing a low-level
-    # hardware-specific variant of the typically C-based "jaxlib" package, which
-    # results in the "jax" package being unimportable and thus non-working.
-    # In this case, specifying the "cpu" extra also installs a low-level
-    # CPU-specific variant of the typically C-based "jaxlib" package. Since
-    # GitHub Actions-based continuous integration (CI) workflows are unlikely to
-    # reliably provide GPU or TPU compute hardware or APIs, the only safe and
-    # reliable alternative is CPU-specific.
+    # packages (e.g., Equinox) if the current platform is a Linux distribution.
+    #
+    # Note that JAX *MUST* be installed with one or more subscripted extras.
+    # Omitting extras installs only the high-level pure-Python "jax" package
+    # *WITHOUT* also installing a low-level hardware-specific variant of the
+    # typically C-based "jaxlib" package, which results in the "jax" package
+    # being unimportable and thus non-working. Listing the "cpu" extra also
+    # installs a low-level CPU-specific variant of the C-based "jaxlib" package.
+    # Since GitHub Actions-based continuous integration (CI) workflows are
+    # unlikely to reliably provide GPU or TPU compute hardware or APIs, the only
+    # safe and reliable alternative is CPU-specific.
     "jax[cpu]; sys_platform == 'linux'",
 
     # Required by optional JAX- and Equinox-specific integration tests.
     "jaxtyping; sys_platform == 'linux'",
+
+    # Required by optional Equinox-specific integration tests. Note that Equinox
+    # requires JAX.
+    "equinox; sys_platform == 'linux'",
 
     #FIXME: Temporarily disabled for sanity.
     # Required by optional PyTorch-specific integration tests.
@@ -455,15 +456,6 @@ test-tox = [
     #   attributes unavailable under older Python interpreters supported by the
     #   @beartype decorator.
     'typing-extensions >=3.10.0.0',
-
-    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
-    #Actions-hosted continuous integration (CI) for the moment. Doing so is
-    #non-trivial enough under local testing workflows. *sigh*
-    # Require a reasonably recent version of nuitka if the current platform is a
-    # Linux distribution *AND* the active Python interpreter targets Python >=
-    # 3.8. For questionable reasons best ignored, nuitka fails to compile
-    # beartype under Python <= 3.7.
-    # "nuitka >=1.2.6; sys_platform == 'linux' and python_version >= '3.8.0'",
 ]
 
 # Tox-specific test-time coverage dependencies required to measure test coverage
