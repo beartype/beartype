@@ -4,8 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`673`-compliant **self type hint** (i.e., the
-:obj:`typing.Self` type hint singleton) utilities.
+Project-wide :pep:`673`-compliant **literal string type hint reducers** (i.e.,
+low-level callables converting higher-level type hints created by subscripting
+the :obj:`typing.Self` type hint factory to lower-level type hints more readily
+consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -13,12 +15,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeStack
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
 def reduce_hint_pep673(
-    hint: object,
+    hint: Hint,
     cls_stack: TypeStack,
     exception_prefix: str,
     **kwargs
@@ -38,13 +41,12 @@ def reduce_hint_pep673(
     ----------
     hint : object
         Self type hint to be reduced.
-    cls_stack : TypeStack, optional
+    cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
         :data:`None`). Defaults to :data:`None`. See also the
         :func:`beartype._decor.decormain.beartype_object` decorator.
-    exception_prefix : str, optional
-        Human-readable substring prefixing exception messages raised by this
-        reducer.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 

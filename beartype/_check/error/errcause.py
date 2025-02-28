@@ -56,6 +56,7 @@ from beartype.typing import (
     Any,
     Callable,
     Optional,
+    Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convsanify import (
@@ -85,7 +86,10 @@ from beartype._util.hint.pep.utilpepget import (
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
-from beartype._util.utilobject import SENTINEL
+from beartype._util.utilobject import (
+    SENTINEL,
+    Iota,
+)
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
@@ -262,8 +266,8 @@ class ViolationCause(object):
         random_int: Optional[int],
 
         # Optional parameters.
-        hint: Hint = SENTINEL,  # type: ignore[arg-type]
-        hint_or_sane: HintOrHintSanifiedData = SENTINEL,  # type: ignore[arg-type]
+        hint: Union[Hint, Iota] = SENTINEL,
+        hint_or_sane: Union[HintOrHintSanifiedData, Iota] = SENTINEL,
         cause_str_or_none: Optional[str] = None,
         typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     ) -> None:
@@ -355,7 +359,7 @@ class ViolationCause(object):
             # Sane hint sanified from this possibly insane hint if sanifying
             # this hint did not generate supplementary metadata *OR* that
             # metadata (i.e., if doing so generated supplementary metadata).
-            hint_or_sane = self.sanify_hint_child(hint)
+            hint_or_sane = self.sanify_hint_child(hint)  # pyright: ignore
             # print(f'Sanified error parent hint {repr(hint)} to {repr(hint_or_sane)}.')
         # Else, the caller passed a sanified hint. In this case...
         else:
@@ -373,7 +377,7 @@ class ViolationCause(object):
 
         # Sane hint sanified from this possibly insane hint *AND* the
         # corresponding type variable lookup table unpacked from this metadata.
-        self.hint, self.typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
+        self.hint, self.typevar_to_hint = unpack_hint_or_sane(hint_or_sane)  # pyright: ignore
 
         # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
         # "None" otherwise (i.e., if this hint is PEP-noncompliant).

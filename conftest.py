@@ -65,7 +65,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
         being run.
 
     Returns
-    ----------
+    -------
     Optional[bool]
         Either:
 
@@ -73,7 +73,7 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
         * If this hook did *not* run this test, :data:`None`.
 
     See Also
-    ----------
+    --------
     https://github.com/ansible/pytest-mp/issues/15#issuecomment-1342682418
         GitHub comment by @pelson (Phil Elson) strongly inspiring this hook.
     '''
@@ -150,7 +150,7 @@ class _UnbufferedOutputStream(object):
     writes to that stream).
 
     See Also
-    ----------
+    --------
     https://github.com/ansible/pytest-mp/issues/15#issuecomment-1342682418
         GitHub comment by @pelson (Phil Elson) strongly inspiring this class.
     '''
@@ -181,7 +181,7 @@ def _test_func_in_subprocess(test_func: Callable) -> object:
         Test function to be run.
 
     Returns
-    ----------
+    -------
     object
         Arbitrary object returned by this test if any *or* :data:`None`.
     '''

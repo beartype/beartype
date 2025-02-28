@@ -113,7 +113,7 @@ def reduce_hint(
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
-    hints_overridden: SetHints = None,  # type: ignore[assignment]
+    hints_overridden: Optional[SetHints] = None,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,

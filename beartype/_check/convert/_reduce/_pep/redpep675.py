@@ -6,8 +6,8 @@
 '''
 Project-wide :pep:`675`-compliant **literal string type hint reducers** (i.e.,
 low-level callables converting higher-level type hints created by subscripting
-the :obj:`typing.Final` type hint factory to lower-level type hints more readily
-consumable by :mod:`beartype`).
+the :obj:`typing.LiteralString` type hint factory to lower-level type hints more
+readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

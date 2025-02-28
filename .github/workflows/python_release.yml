@@ -15,15 +15,6 @@
 # * https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows
 #   Official PyPA workflow also inspiring this configuration.
 
-# ....................{ TODO                               }....................
-#FIXME: This workflow, while technically working, now emits this warning:
-#    Trusted Publishers allows publishing packages to PyPI from automated
-#    environments like GitHub Actions without needing to use username/password
-#    combinations or API tokens to authenticate with PyPI. Read more:
-#    https://docs.pypi.org/trusted-publishers
-#
-#Seems quite reasonable. Let's dig a bit deeper into this when time permits.
-
 # ....................{ METADATA                           }....................
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.

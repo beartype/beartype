@@ -37,9 +37,9 @@ name = "beartype"
 # Human-readable single-line synopsis of this project.
 #
 # Note that, by PyPI design, this string *MUST*:
-# * Not span multiple lines or paragraphs.
 # * Prefix each newline in this string with a continuation character, which then
 #   forces line wrapping.
+# * Otherwise not span multiple lines or paragraphs.
 description = """\
 Unbearably fast near-real-time hybrid runtime-static type-checking in pure Python.
 """
@@ -291,9 +291,6 @@ test-tox = [
     # A relatively modern version of "pytest" is required. It's probably quite
     # old by now. I feel depressed just reading comments like this...
     "pytest >=4.0.0",
-
-    # ....................{ APP ~ cli                      }....................
-    # Command line interface (CLI)-centric optional test-time dependencies.
 
     # ....................{ DOCOS                          }....................
     # Documentation-centric optional test-time dependencies.
