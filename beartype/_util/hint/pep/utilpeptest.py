@@ -90,7 +90,7 @@ def die_unless_hint_pep(
     hint** (i.e., :mod:`beartype`-agnostic annotation compliant with
     annotation-centric PEPs).
 
-    This validator is effectively (but technically *not*) memoized. See the
+    This validator is effectively (but technically *not*) memoized. See also the
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
@@ -101,8 +101,8 @@ def die_unless_hint_pep(
         Type of the exception to be raised by this function. Defaults to
         :class:`.BeartypeDecorHintPepException`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -121,10 +121,6 @@ def die_unless_hint_pep(
             f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
 
 # ....................{ EXCEPTIONS ~ supported             }....................
-#FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
-#all or most calls to this function into calls to the
-#warn_if_hint_pep_unsupported() function; then, consider excising this as well
-#as exception classes (e.g., "BeartypeDecorHintPepUnsupportedException").
 def die_if_hint_pep_unsupported(
     # Mandatory parameters.
     hint: object,
@@ -156,8 +152,8 @@ def die_if_hint_pep_unsupported(
     hint : object
         Object to be validated.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------

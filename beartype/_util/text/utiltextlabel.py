@@ -41,25 +41,37 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         Human-readable label describing the kind of this beartypeable.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import (
         is_func_async,
         is_func_async_generator,
+        is_func_classmethod,
         is_func_coro,
         is_func_codeobjable,
+        is_func_property,
+        is_func_staticmethod,
         is_func_sync_generator,
     )
     from beartype._util.func.arg.utilfuncargget import (
         get_func_arg_name_first_or_none)
 
-    #FIXME: Globalize magic strings for efficiency, please.
+
+    # ....................{ LOCALS                         }....................
+    # String to be returned, defaulting to a sensible placeholder.
+    obj_label = 'object'
+
+    # ....................{ TYPE                           }....................
+    #FIXME: [SPEED] Globalize all magic strings below for efficiency, please.
+    #Actually, is there any point? Does Python itself automatically intern?
 
     # If this object is a pure-Python class, return an appropriate string.
     if isinstance(obj, type):
-        return 'class'
+        obj_label = 'class'
     # Else, this object is *NOT* a pure-Python class.
     #
-    # If this object is a pure-Python callable...
+    # ....................{ CODEOBJABLE                    }....................
+    # If this object is (or encapsulates) a pure-Python callable...
     elif is_func_codeobjable(obj):
         # Human-readable prefix describing the exotic nature of this callable if
         # this is callable is exotic (e.g., coroutine or generator factory)
@@ -131,17 +143,38 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
         elif arg_first_name == 'cls':
             func_suffix = 'class method'
         # Else, this is neither the canonical first "self" nor "cls" parameter.
-        # In this case, this is assumed to be a non-method callable.
+        # In this case, assume this to be a non-method callable.
         else:
             func_suffix = 'function'
 
         # Return the concatenation of these substrings.
         # print(f'func_prefix: {func_prefix}; func_suffix: {func_suffix}')
-        return f'{func_prefix}{func_suffix}'
-    # Else, this object is neither a pure-Python class *NOR* callable.
+        obj_label = f'{func_prefix}{func_suffix}'
+    # Else, this object is *NOT* a pure-Python callable.
+    #
+    # ....................{ DESCRIPTOR                     }....................
+    # If this object is a C-based uncallable class method descriptor, return an
+    # appropriate string.
+    elif is_func_classmethod(obj):
+        obj_label = 'class method descriptor'
+    # Else, this object is *NOT* a C-based uncallable class method descriptor.
+    #
+    # If this object is a C-based uncallable property method descriptor, return
+    # an appropriate string.
+    elif is_func_property(obj):
+        obj_label = 'property method descriptor'
+    # Else, this object is *NOT* a C-based uncallable property method
+    # descriptor.
+    #
+    # If this object is a C-based uncallable static method descriptor, return
+    # an appropriate string.
+    elif is_func_staticmethod(obj):
+        obj_label = 'static method descriptor'
+    # Else, this object is *NOT* a C-based uncallable static method descriptor.
 
-    # Return a sane placeholder.
-    return 'object'
+    # ....................{ RETURN                         }....................
+    # Return this label.
+    return obj_label
 
 # ....................{ LABELLERS ~ callable               }....................
 #FIXME: Unit test up the "is_context" parameter, which is currently untested.

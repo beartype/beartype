@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.meta import URL_ISSUES
+from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep,
@@ -55,19 +58,19 @@ def die_unless_hint(
     ``exception_prefix`` parameter is usually unique to each call to this
     validator; memoizing this validator would uselessly consume excess space
     *without* improving time efficiency. Instead, this validator first calls the
-    memoized :func:`is_hint_pep` tester. If that tester returns ``True``, this
-    validator immediately returns ``True`` and is thus effectively memoized;
-    else, this validator inefficiently raises a human-readable exception without
-    memoization. Since efficiency is mostly irrelevant in exception handling,
-    this validator remains effectively memoized.
+    memoized :func:`.is_hint_pep` tester. If that tester returns :data:`True`,
+    this validator immediately returns :data:`True` and is thus effectively
+    memoized; else, this validator inefficiently raises a human-readable
+    exception without memoization. Since efficiency is mostly irrelevant in
+    exception handling, this validator remains effectively memoized.
 
     Parameters
     ----------
     hint : Hint
         Object to be validated.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -101,6 +104,62 @@ def die_unless_hint(
     # If this PEP-noncompliant hint is currently unsupported by @beartype, raise
     # an exception.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
+
+
+#FIXME: This same exception message is repeated ad naseum throughout the
+#codebase at least three or four times. Reduce DRY by instead deferring to this
+#function, please. *sigh*
+def die_as_hint_unsupported(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintNonpepException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Unconditionally raise an exception describing the failure of the passed
+    object to be a **supported type hint** (i.e., object supported by the
+    :func:`beartype.beartype` decorator as a valid type hint annotating callable
+    parameters and return values).
+
+    This low-level raiser is intended to be called only after this object has
+    already been validated to *not* be a supported type hint. This raiser
+    centralizes similar logic previously duplicated throughout the codebase.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    exception_cls : type[Exception]
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintNonpepException`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the raised exception message.
+        Defaults to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        Unconditionally.
+    '''
+    assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
+
+    # Raise this generic exception message.
+    raise exception_cls(
+        f'{exception_prefix}type hint {repr(hint)} invalid or unrecognized. '
+        f'This hint is either:\n'
+        f'* PEP-noncompliant (and thus invalid). '
+        f"This is your bad. Rejoice! @beartype isn't to blame for once.\n"
+        f'* PEP-compliant but currently unsupported by @beartype '
+        f'(and thus unrecognized). '
+        f'This is our bad. Disaster! @beartype is to blame like always. '
+        f'You suddenly feel encouraged to submit a feature request '
+        f'for this unsupported hint to our friendly issue tracker at:\n'
+        f'\t{URL_ISSUES}'
+    )
 
 # ....................{ TESTERS                            }....................
 @callable_cached

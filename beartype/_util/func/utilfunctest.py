@@ -18,11 +18,16 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
+    MethodDecoratorBuiltinTypes,
     MethodDecoratorClassOrStaticTypes,
+    MethodDecoratorClassType,
+    MethodDecoratorPropertyType,
+    MethodDecoratorStaticType,
 )
 from beartype._data.hint.datahintpep import TypeIs
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
+    MethodDescriptorBuiltin,
     TypeException,
 )
 # from beartype._util.cache.utilcachecall import callable_cached
@@ -202,10 +207,10 @@ def die_unless_func_class_or_static_method(
         Object to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :class:`._BeartypeUtilCallableException`.
+        :exc:`._BeartypeUtilCallableException`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -499,15 +504,44 @@ def is_func_boundmethod(func: Any) -> TypeIs[MethodBoundInstanceOrClassType]:
     # Only the penitent one-liner shall pass.
     return isinstance(func, MethodBoundInstanceOrClassType)
 
+# ....................{ TESTERS ~ descriptor : uncallable  }....................
+#FIXME: Unit test us up, please.
+#FIXME: Currently unused but preserved for posterity. We'll want this someday!
+# def is_func_class_property_or_static_method(func: Any)  -> TypeIs[
+#     MethodDescriptorBuiltin]:
+#     '''
+#     :data:`True` only if the passed object is an **unbound class, property, or
+#     static method descriptor** (i.e., C-based decorator type builtin to Python
+#     whose instance is typically uncallable but encapsulates a callable
+#     pure-Python method).
+#
+#     These method objects are *not* callable, as their implementations fail to
+#     define the ``__call__()`` dunder method.
+#
+#     Parameters
+#     ----------
+#     func : object
+#         Object to be inspected.
+#
+#     Returns
+#     -------
+#     bool
+#         :data:`True` only if this object is an unbound class, property, or
+#         static method descriptor.
+#     '''
+#
+#     # Line up for the one-liner you never knew you needed in your life.
+#     return isinstance(func, MethodDecoratorBuiltinTypes)
 
-def is_func_classmethod(func: Any) -> TypeIs[classmethod]:
+
+def is_func_classmethod(func: Any) -> TypeIs[MethodDecoratorClassType]:
     '''
-    :data:`True` only if the passed object is a **C-based unbound class method
+    :data:`True` only if the passed object is an **unbound class method
     descriptor** (i.e., method decorated by the builtin :class:`classmethod`
     decorator, yielding a non-callable instance of that :class:`classmethod`
-    decorator class implemented in low-level C and accessible via the
-    low-level :attr:`object.__dict__` dictionary rather than as class or
-    instance attributes).
+    decorator class implemented in low-level C and accessible via the low-level
+    :attr:`object.__dict__` dictionary rather than as class or instance
+    attributes).
 
     Caveats
     -------
@@ -528,15 +562,14 @@ def is_func_classmethod(func: Any) -> TypeIs[classmethod]:
     Returns
     -------
     bool
-        :data:`True` only if this object is a C-based unbound class method
-        descriptor.
+        :data:`True` only if this object is an unbound class method descriptor.
     '''
 
     # Now you too have seen the pure light of the one-liner.
-    return isinstance(func, classmethod)
+    return isinstance(func, MethodDecoratorClassType)
 
 
-def is_func_property(func: Any) -> TypeIs[property]:
+def is_func_property(func: Any) -> TypeIs[MethodDecoratorPropertyType]:
     '''
     :data:`True` only if the passed object is a **C-based unbound property
     method descriptor** (i.e., method decorated by the builtin :class:`property`
@@ -565,10 +598,10 @@ def is_func_property(func: Any) -> TypeIs[property]:
     '''
 
     # We rejoice in the shared delight of one-liners.
-    return isinstance(func, property)
+    return isinstance(func, MethodDecoratorPropertyType)
 
 
-def is_func_staticmethod(func: Any) -> TypeIs[staticmethod]:
+def is_func_staticmethod(func: Any) -> TypeIs[MethodDecoratorStaticType]:
     '''
     :data:`True` only if the passed object is a **C-based unbound static method
     descriptor** (i.e., method decorated by the builtin :class:`staticmethod`
@@ -599,7 +632,7 @@ def is_func_staticmethod(func: Any) -> TypeIs[staticmethod]:
     '''
 
     # Does the one-liner have Buddhahood? Mu.
-    return isinstance(func, staticmethod)
+    return isinstance(func, MethodDecoratorStaticType)
 
 # ....................{ TESTERS ~ async                    }....................
 def is_func_async(func: object) -> TypeIs[Callable]:

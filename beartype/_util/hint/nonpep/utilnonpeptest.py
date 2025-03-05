@@ -58,11 +58,11 @@ def die_if_hint_nonpep(
           forward references.
         * :data:`False`, this object is valid only when containing classes.
     exception_cls : type[Exception]
-        Type of the exception to be raised by this function. Defaults to
+        Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -121,7 +121,7 @@ def die_unless_hint_nonpep(
     hint** (i.e., :mod:`beartype`-specific annotation *not* compliant with
     annotation-centric PEPs).
 
-    This validator is effectively (but technically *not*) memoized. See the
+    This validator is effectively (but technically *not*) memoized. See also the
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Parameters
@@ -136,11 +136,11 @@ def die_unless_hint_nonpep(
           forward references.
         * :data:`False`, this object is valid only when containing classes.
     exception_cls : type[Exception], optional
-        Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonpepException`.
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -174,21 +174,22 @@ def die_unless_hint_nonpep(
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
 
-    # If this object is a class...
+    # If this object is a type...
     if isinstance(hint, type):
-        # If this class is *NOT* PEP-noncompliant (e.g., is either PEP-compliant
-        # *OR* not isinstanceable), raise an exception.
+        # If this type is *NOT* PEP-noncompliant (e.g., is either PEP-compliant
+        # *OR* is not an isinstanceable type), raise an exception.
         die_unless_hint_nonpep_type(
             hint=hint,
             is_forwardref_valid=is_forwardref_valid,
             exception_prefix=exception_prefix,
             exception_cls=exception_cls,
         )
-        # If this class is PEP-noncompliant and thus isinstanceable.
+        # Else, this type is PEP-noncompliant and thus isinstanceable by
+        # definition.
 
-        # Silently accept this isinstanceable class as is.
+        # Silently accept this isinstanceable type as is.
         return
-    # Else, this object is *NOT* a class.
+    # Else, this object is *NOT* a type.
     #
     # If this object is a tuple, raise a tuple-specific exception.
     elif isinstance(hint, tuple):
@@ -198,16 +199,16 @@ def die_unless_hint_nonpep(
             exception_prefix=exception_prefix,
             exception_cls=exception_cls,
         )
-    # Else, this object is neither a type nor type tuple.
+    # Else, this object is neither a type *NOR* tuple.
 
-    # Raise a generic exception.
-    raise exception_cls(
-        f'{exception_prefix}type hint {repr(hint)} either '
-        f'PEP-noncompliant or PEP-compliant but currently '
-        f'unsupported by @beartype. '
-        f'You suddenly feel encouraged to submit a feature request '
-        f'for this hint to our friendly issue tracker at:\n'
-        f'\t{URL_ISSUES}'
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhinttest import die_as_hint_unsupported
+
+    # Raise a generic exception message as a fallback.
+    die_as_hint_unsupported(
+        hint=hint,
+        exception_prefix=exception_prefix,
+        exception_cls=exception_cls,
     )
 
 # ....................{ VALIDATORS ~ kind                  }....................

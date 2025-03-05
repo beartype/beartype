@@ -1502,9 +1502,9 @@ MethodDecoratorBuiltinTypes = (
     MethodDecoratorStaticType,
 )
 '''
-Tuple of all **C-based unbound method decorator types** (i.e., builtin decorator
-types implemented in low-level C whose instances are typically uncallable,
-associated with callable methods implemented in pure Python).
+Tuple of all **builtin unbound method decorator types** (i.e., C-based decorator
+types builtin to Python whose instances are typically uncallable but encapsulate
+callable pure-Python methods).
 '''
 
 

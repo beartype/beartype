@@ -12,12 +12,6 @@ documentation purposes).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: [PEP] Replace "TypeIs" with "TypeIs" everywhere across the @beartype
-#codebase, please. "TypeIs" entirely obsoletes "TypeIs" for all practical
-#intents and purposes (including ours). See also:
-#    https://peps.python.org/pep-0742
-
 # ....................{ IMPORTS                            }....................
 import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
@@ -58,8 +52,8 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
@@ -155,21 +149,21 @@ BeartypeableT = TypeVar(
     'BeartypeableT',
     # The @beartype decorator decorates objects that are either...
     bound=Union[
-        # An arbitrary class *OR*...
+        # Arbitrary class *OR*...
         type,
 
-        # An arbitrary callable *OR*...
+        # Arbitrary callable *OR*...
         CallableAny,
 
-        # A C-based unbound class method descriptor (i.e., a pure-Python unbound
+        # C-based unbound class method descriptor (i.e., a pure-Python unbound
         # function decorated by the builtin @classmethod decorator) *OR*...
         MethodDecoratorClassType,
 
-        # A C-based unbound property method descriptor (i.e., a pure-Python
+        # C-based unbound property method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @property decorator) *OR*...
         MethodDecoratorPropertyType,
 
-        # A C-based unbound static method descriptor (i.e., a pure-Python
+        # C-based unbound static method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @staticmethod decorator).
         MethodDecoratorStaticType,
 
@@ -216,6 +210,13 @@ constraint *or* :data:`False` otherwise).
 '''
 
 
+CallableStrFormat = Callable[..., str]
+'''
+PEP-compliant type hint matching the signature of the standard
+:meth:`str.format` method.
+'''
+
+
 CallableTester = Callable[[object], bool]
 '''
 PEP-compliant type hint matching a **tester callable** (i.e., arbitrary callable
@@ -237,27 +238,6 @@ Specifically, this hint matches:
 * Pure-Python callables, including generators (but *not* C-based callables,
   which lack code objects).
 * Pure-Python callable stack frames.
-'''
-
-
-MethodDescriptorNondata = Union[
-    # A C-based unbound class method descriptor (i.e., a pure-Python unbound
-    # function decorated by the builtin @classmethod decorator) *OR*...
-    MethodDecoratorClassType,
-
-    # A C-based unbound static method descriptor (i.e., a pure-Python
-    # unbound function decorated by the builtin @staticmethod decorator).
-    MethodDecoratorStaticType,
-
-    # A C-based bound method descriptor (i.e., a pure-Python unbound
-    # function bound to an object instance on Python's instantiation of that
-    # object) *OR*...
-    MethodBoundInstanceOrClassType,
-]
-'''
-PEP-compliant type hint matching any **builtin method non-data descriptor**
-(i.e., C-based descriptor builtin to Python defining only the ``__get__()``
-dunder method, encapsulating read-only access to some kind of method).
 '''
 
 # ....................{ CALLABLE ~ args                    }....................
@@ -284,11 +264,44 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
-# ....................{ CALLABLE ~ decorator               }....................
-CallableStrFormat = Callable[..., str]
+# ....................{ CALLABLE ~ descriptor              }....................
+MethodDescriptorBuiltin = Union[
+    # C-based unbound class method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @classmethod decorator).
+    MethodDecoratorClassType,
+
+    # C-based unbound property method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @property decorator).
+    MethodDecoratorPropertyType,
+
+    # C-based unbound static method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @staticmethod decorator).
+    MethodDecoratorStaticType,
+]
 '''
-PEP-compliant type hint matching the signature of the standard
-:meth:`str.format` method.
+PEP-compliant type hint matching any **builtin unbound method descriptor**
+(i.e., C-based decorator type builtin to Python whose instance is typically
+uncallable but encapsulates a callable pure-Python method).
+'''
+
+
+MethodDescriptorNondata = Union[
+    # C-based unbound class method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @classmethod decorator).
+    MethodDecoratorClassType,
+
+    # C-based unbound static method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @staticmethod decorator).
+    MethodDecoratorStaticType,
+
+    # C-based bound method descriptor (i.e., a pure-Python unbound function
+    # bound to an object instance on Python's instantiation of that object).
+    MethodBoundInstanceOrClassType,
+]
+'''
+PEP-compliant type hint matching any **builtin method non-data descriptor**
+(i.e., C-based descriptor builtin to Python defining only the ``__get__()``
+dunder method, encapsulating read-only access to some kind of method).
 '''
 
 # ....................{ COLLECTION                         }....................

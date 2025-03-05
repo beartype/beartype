@@ -18,8 +18,6 @@ from beartype.typing import (
 )
 from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
     reduce_hint_numpy_ndarray)
-from beartype._check.convert._reduce._nonpep.rednonpeptype import (
-    reduce_hint_nonpep_type)
 from beartype._check.convert._reduce._pep.pep484.redpep484 import (
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
@@ -164,16 +162,6 @@ callable reducing those higher- to lower-level hints).
 
 # ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
-    # ..................{ NON-PEP                            }..................
-    # If this hint is identified by *NO* sign, this hint is either an
-    # isinstanceable type *OR* a hint unrecognized by beartype. In either case,
-    # apply the following reductions:
-    # * If this configuration enables support for the PEP 484-compliant implicit
-    #   numeric tower:
-    #   * Expand the "float" type hint to the "float | int" union.
-    #   * Expand the "complex" type hint to the "complex | float | int" union.
-    None: reduce_hint_nonpep_type,
-
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant subscripted generic:
     # * Reduce this alias to the unsubscripted generic underlying this

@@ -159,15 +159,16 @@ beartype.__doc__ = (
     ----------
     obj : Optional[BeartypeableT]
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-        Defaults to ``None``, in which case this decorator is in configuration
-        rather than decoration mode. In configuration mode, this decorator
-        creates and returns an efficiently cached private decorator that
-        generically applies the passed beartype configuration to any
+        Defaults to :data:`None`, in which case this decorator is in
+        configuration rather than decoration mode. In configuration mode, this
+        decorator creates and returns an efficiently cached private decorator
+        that generically applies the passed beartype configuration to any
         beartypeable object passed to that decorator. Look... It just works.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        to ``BeartypeConf()``, the default :math:`O(1)` constant-time
+        configuration.
 
     Returns
     ----------
@@ -175,15 +176,15 @@ beartype.__doc__ = (
         Either:
 
         * If in decoration mode (i.e., ``obj`` is *not* ``None` while ``conf``
-          is ``None``) *and*:
+          is :data:`None`) *and*:
 
           * If ``obj`` is a callable, a new callable wrapping that callable
             with dynamically generated type-checking.
           * If ``obj`` is a class, this existing class embellished with
             dynamically generated type-checking.
 
-        * If in configuration mode (i.e., ``obj`` is ``None` while ``conf`` is
-          *not* ``None``), a new beartype decorator enabling this
+        * If in configuration mode (i.e., ``obj`` is :data:`None` while ``conf``
+          is *not* :data:`None`), a new beartype decorator enabling this
           configuration.
 
     Raises
