@@ -310,6 +310,7 @@ test-tox = [
 
     # Required by optional Click-specific integration tests.
     "click",
+    "rich-click",
 
     #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
     #Actions-hosted continuous integration (CI) for the moment. Doing so is

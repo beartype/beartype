@@ -17,6 +17,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._cave._cavefast import ModuleType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.hint.datahinttyping import TypeException
@@ -24,7 +25,6 @@ from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.utilobject import SENTINEL
 from importlib import import_module as importlib_import_module
-from types import ModuleType
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.

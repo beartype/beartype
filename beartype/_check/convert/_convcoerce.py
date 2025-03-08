@@ -129,6 +129,7 @@ def coerce_func_hint_root(
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
+        # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)}...')
         hint = resolve_hint(  # pyright: ignore
             hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)
     # Else, this hint is *NOT* stringified.

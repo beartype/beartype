@@ -345,6 +345,8 @@
 .. # ------------------( LINKS ~ py : package : click        )------------------
 .. _click:
    https://click.palletsprojects.com
+.. _rich_click:
+   https://ewels.github.io/rich-click
 
 .. # ------------------( LINKS ~ py : package : equinox      )------------------
 .. _equinox:

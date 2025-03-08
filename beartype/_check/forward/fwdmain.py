@@ -242,6 +242,7 @@ def resolve_hint(
     #
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
     if hint in decor_meta.func_wrappee_scope_nested_names:  # type: ignore[operator]
+        # print(f'Preserving string hint {repr(hint)}...')
         return hint  # pyright: ignore
     # Else, this hint is *NOT* the unqualified name of a parent callable or
     # class of the decorated callable. In this case, this hint *COULD* require
@@ -304,6 +305,8 @@ def resolve_hint(
     # In either case, this forward scope should now all have been decided.
 
     # ..................{ RESOLVE                            }..................
+    # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)} to forward reference proxy...')
+
     # Return a non-string type hint resolved from this stringified type hint.
     return _resolve_func_scope_forward_hint(
         hint=hint,
@@ -732,6 +735,7 @@ def _resolve_func_scope_forward_hint(
         type hint is a :pep:`604`-compliant new-style union, which requires
         Python >= 3.10.
     '''
+    # print(f'Resolving string hint {repr(hint)} against {repr(decor_meta.func_wrappee_scope_forward)}...')
 
     # Attempt to resolve this stringified type hint into a non-string type hint
     # against both the global and local scopes of the decorated callable.

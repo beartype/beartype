@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Dict,
+    # Dict,
     BinaryIO,
     ForwardRef,
     Generic,

@@ -219,6 +219,8 @@ def beartype_type(
                 not attr_value.__qualname__.startswith(cls.__qualname__)
             )
         ):
+            # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
             attr_value_beartyped = beartype_object(  # type: ignore[type-var]
@@ -231,7 +233,7 @@ def beartype_type(
                 # Replace this undecorated attribute with this decorated
                 # attribute.
                 set_type_attr(cls, attr_name, attr_value_beartyped)
-                # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+                # print(f'Decorated {repr(cls)} attribute "{attr_name}".')
             # Else, this decorated attribute is the same as the original
             # attribute, implying that @beartype refused to decorate this
             # attribute with type-checking (e.g., due to this attribute being

@@ -132,13 +132,14 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # * For the exact same reason, this sanitization *CANNOT* be
             #   performed in the low-level make_check_expr() dynamically
             #   generating code type-checking this hint.
+            # print(f'Sanifying {repr(decor_meta)} return hint {repr(hint_insane)}...')
             hint_or_sane = sanify_hint_root_func(
                 decor_meta=decor_meta,
                 hint=hint_insane,
                 pith_name=ARG_NAME_RETURN,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
-            # print(f'Sanified {repr(decor_meta.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
+            # print(f'Sanified {repr(decor_meta)} return hint {repr(hint_insane)} to {repr(hint_or_sane)}.')
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # allowed *ONLY* as a return annotation...
