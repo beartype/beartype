@@ -23,7 +23,7 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeWarning,
 )
-from beartype._decor._decornontype import beartype_nontype
+from beartype._decor._nontype.decornontype import beartype_nontype
 from beartype._decor._decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.error.utilerrwarn import issue_warning

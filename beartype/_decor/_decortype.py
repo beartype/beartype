@@ -230,7 +230,7 @@ def beartype_type(
             # @beartype actually decorated this attribute with type-checking. In
             # this case...
             if attr_value_beartyped is not attr_value:
-                # Replace this undecorated attribute with this decorated
+                # Safely replace this undecorated attribute with this decorated
                 # attribute.
                 set_type_attr(cls, attr_name, attr_value_beartyped)
                 # print(f'Decorated {repr(cls)} attribute "{attr_name}".')

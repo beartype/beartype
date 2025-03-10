@@ -165,6 +165,20 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             #
             # If this hint is unignorable...
             elif hint_or_sane is not Any:
+                #FIXME: DRY violation. The same logic appears in "_wrapargs" as
+                #well. It looks like what we *PROBABLY* want to do here is:
+                #* Rename the existing make_code_raiser_func_pith_check()
+                #  factory to _make_code_raiser_func_pith_check_cached().
+                #* Define a new make_code_raiser_func_pith_check() factory that
+                #  is unmemoized and has a simpler public API. Notably, this new
+                #  factory should:
+                #  * Accept a new "decor_meta" parameter.
+                #  * Drop the existing "conf" and "cls_stack" parameters.
+                #  * Pass parameters by keyword rather than positionally. This
+                #    would be especially useful for the "is_param" parameter,
+                #    which would suddenly become readable below.
+                #  * Internally compute the "cls_stack" as given below.
+
                 # Type stack if required by this hint *OR* "None" otherwise.
                 # See is_hint_needs_cls_stack() for details.
                 #
@@ -178,11 +192,6 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     None
                 )
                 # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
-
-                #FIXME: Uhh... wat? This shouldn't be necessary at all. Excise!
-                # # Empty tuple, passed below to satisfy the
-                # # unmemoize_func_wrapper_code() API.
-                # hint_refs_type_basename = ()
 
                 # Code snippet type-checking any arbitrary return.
                 (

@@ -52,7 +52,7 @@ def _beartype_descriptor_boundmethod(
         f'{repr(descriptor)} not builtin bound method descriptor.')
 
     # Avoid circular import dependencies.
-    from beartype._decor._decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_func
 
     # Possibly C-based callable wrappee object encapsulated by this descriptor.
     descriptor_wrappee = unwrap_func_boundmethod_once(descriptor)
@@ -135,7 +135,7 @@ def _beartype_descriptor_decorator_builtin_property(
         f'{repr(descriptor)} not builtin @property method descriptor.')
 
     # Avoid circular import dependencies.
-    from beartype._decor._decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_func
 
     # Pure-Python unbound getter, setter, and deleter functions wrapped by
     # this descriptor if any *OR* "None" otherwise (i.e., for each such

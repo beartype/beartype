@@ -276,7 +276,7 @@ def beartype_functools_lru_cache(
     '''
 
     # Avoid circular and third-party import dependencies.
-    from beartype._decor._decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_func
     from beartype._util.func.utilfuncwrap import unwrap_func_once
 
     # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized

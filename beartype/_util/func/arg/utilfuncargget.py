@@ -272,7 +272,7 @@ def get_func_arg_names(
 
         * This getter to transparently support bound method descriptors, which
           then enables...
-        * The private :func:`beartype._decor._decornontype.beartype_pseudofunc`
+        * The private :func:`beartype._decor._nontype.decornontype.beartype_pseudofunc`
           decorator to type-check the bound ``__call__()`` method descriptor
           encapsulating the unbound ``__call__()`` dunder method defined on the
           class of pseudo-callable objects, which then enables...

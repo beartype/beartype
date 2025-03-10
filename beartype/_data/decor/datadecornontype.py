@@ -5,7 +5,7 @@
 
 '''
 Project-wide **non-class decoration globals** (i.e., global constants required
-by the private :mod:`beartype._decor._decornontype` submodule to decorate
+by the private :mod:`beartype._decor._nontype.decornontype` submodule to decorate
 non-class objects with runtime type-checking).
 
 This private submodule is *not* intended for importation by downstream callers.

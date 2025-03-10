@@ -405,10 +405,12 @@ def make_code_raiser_func_pith_check(
         If the code snippet generated and returned by this factory is
         type-checking a previously localized:
 
-        * Parameter of a decorated callable, :data:`True`.
-        * Return of a decorated callable, :data:`False`.
+        * Parameter of a decorated callable, this parameter should be
+          :data:`True`.
+        * Return of a decorated callable, this parameter should be
+          :data:`False`.
         * Arbitrary object passed to the :func:`beartype.door.die_if_unbearable`
-          type-checker, :data:`None`.
+          type-checker,  this parameter should be :data:`None`.
 
         Defaults to :data:`None`.
 
@@ -451,6 +453,8 @@ def make_code_raiser_func_pith_check(
     # parameter passed to this wrapper function.
     func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
+    #FIXME: [SPEED] Globalize CODE_GET_FUNC_PITH_VIOLATION.format() as
+    #"CODE_GET_FUNC_PITH_VIOLATION_format". *sigh*
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(

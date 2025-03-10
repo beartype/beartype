@@ -236,8 +236,7 @@ def resolve_pep563(
 
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
-    decor_meta = make_beartype_call(
-        func=func, conf=conf, cls_stack=cls_stack)
+    decor_meta = make_beartype_call(func=func, conf=conf, cls_stack=cls_stack)
 
     # Shallow copy of the dictionary to be returned. Why? Because the
     # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
@@ -270,6 +269,8 @@ def resolve_pep563(
     # Release this beartype call metadata back to its object pool.
     release_instance(decor_meta)
 
+    #FIXME: Shift this logic into a new set_object_annotations() function. Under
+    #Python >= 3.14, this logic is likely to require delicate surgery. *sigh*
     # Attempt to...
     try:
         # Atomically (i.e., all-at-once) replace that callable's postponed

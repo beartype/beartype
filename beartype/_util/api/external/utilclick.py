@@ -85,7 +85,7 @@ def beartype_click_command(
     '''
 
     # Avoid circular and third-party import dependencies.
-    from beartype._decor._decornontype import beartype_func
+    from beartype._decor._nontype.decornontype import beartype_func
     from click.core import Command
 
     # If this Click command is *NOT* actually a @click.command()-decorated

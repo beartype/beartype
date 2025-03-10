@@ -340,6 +340,20 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # Else, this kind of parameter is supported. Ergo, this code is
                 # non-"None".
 
+                #FIXME: DRY violation. The same logic appears in "_wrapreturn"
+                #as well. It looks like what we *PROBABLY* want to do here is:
+                #* Rename the existing make_code_raiser_func_pith_check()
+                #  factory to _make_code_raiser_func_pith_check_cached().
+                #* Define a new make_code_raiser_func_pith_check() factory that
+                #  is unmemoized and has a simpler public API. Notably, this new
+                #  factory should:
+                #  * Accept a new "decor_meta" parameter.
+                #  * Drop the existing "conf" and "cls_stack" parameters.
+                #  * Pass parameters by keyword rather than positionally. This
+                #    would be especially useful for the "is_param" parameter,
+                #    which would suddenly become readable below.
+                #  * Internally compute the "cls_stack" as given below.
+
                 # Type stack if required by this hint *OR* "None" otherwise. See
                 # the is_hint_needs_cls_stack() tester for further discussion.
                 #
@@ -462,123 +476,121 @@ _ARG_KINDS_POSITIONAL = frozenset((
     ArgKind.POSITIONAL_OR_KEYWORD,
 ))
 '''
-Frozen set of all **positional parameter kinds** (i.e.,
-:attr:`ArgKind` enumeration members signifying that a callable parameter
-either may *or* must be passed positionally).
+Frozen set of all **positional parameter kinds** (i.e., :class:`.ArgKind`
+enumeration members signifying that a callable parameter either may *or* must be
+passed positionally).
 '''
 
 # ....................{ PRIVATE ~ raisers                  }....................
-def _die_if_arg_default_unbearable(
-    decor_meta: BeartypeDecorMeta, arg_default: object, hint: Hint) -> None:
-    '''
-    Raise a violation exception if the annotated optional parameter of the
-    decorated callable with the passed default value violates the type hint
-    annotating that parameter at decoration time.
-
-    Parameters
-    ----------
-    decor_meta : BeartypeDecorMeta
-        Decorated callable to be type-checked.
-    arg_default : object
-        Either:
-
-        * If this parameter is mandatory, the :data:`.ArgMandatory` singleton.
-        * If this parameter is optional, the default value of this optional
-          parameter to be type-checked.
-    hint : Hint
-        Type hint to type-check against this default value.
-
-    Warns
-    -----
-    BeartypeDecorHintParamDefaultForwardRefWarning
-        If this type hint contains one or more forward references that *cannot*
-        be resolved at decoration time. While this does *not* necessarily
-        constitute a fatal error from the end user perspective, this does
-        constitute a non-fatal issue worth informing the end user of.
-
-    Raises
-    ------
-    BeartypeDecorHintParamDefaultViolation
-        If this default value violates this type hint.
-    '''
-
-    # ..................{ PREAMBLE                           }..................
-    # If this parameter is mandatory, silently reduce to a noop.
-    if arg_default is ArgMandatory:
-        return
-    # Else, this parameter is optional and thus defaults to a default value.
-
-    assert isinstance(decor_meta, BeartypeDecorMeta), (
-        f'{repr(decor_meta)} not beartype call.')
-
-    # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports prohibited at global scope.
-    from beartype.door import (
-        die_if_unbearable,
-        is_bearable,
-    )
-
-    # ..................{ MAIN                               }..................
-    # Attempt to...
-    try:
-        # If this default value satisfies this hint, silently reduce to a noop.
-        #
-        # Note that this is a non-negligible optimization. Technically, this
-        # preliminary test is superfluous: only the call to the
-        # die_if_unbearable() raiser below is required. Pragmatically, this
-        # preliminary test avoids a needlessly expensive dictionary copy in the
-        # common case that this value satisfies this hint.
-        if is_bearable(
-            obj=arg_default,
-            hint=hint,
-            conf=decor_meta.conf,
-        ):
-            return
-        # Else, this default value violates this hint.
-    # If doing so raises a forward hint exception, this hint contains one or
-    # more unresolvable forward references to user-defined objects that have yet
-    # to be defined. In all likelihood, these objects are subsequently defined
-    # after the definition of this decorated callable. While this does *NOT*
-    # necessarily constitute a fatal error from the end user perspective, this
-    # does constitute a non-fatal issue worth informing the end user of. In this
-    # case, we coerce this exception into a warning.
-    except _BeartypeHintForwardRefExceptionMixin as exception:
-        # Forward hint exception message raised above. To readably embed this
-        # message in the longer warning message emitted below, the first
-        # character of this message is lowercased as well.
-        exception_message = lowercase_str_char_first(str(exception))
-
-        # Emit this non-fatal warning.
-        issue_warning(
-            cls=BeartypeDecorHintParamDefaultForwardRefWarning,
-            message=(
-                f'{EXCEPTION_PREFIX_DEFAULT}value '
-                f'{prefix_pith_value(pith=arg_default, is_color=decor_meta.conf.is_color)}'
-                f'uncheckable at @beartype decoration time, as '
-                f'{exception_message}'
-            ),
-        )
-
-        # Loudly reduce to a noop. Since this forward reference is unresolvable,
-        # further type-checking attempts are entirely fruitless.
-        return
-
-    # Modifiable keyword dictionary encapsulating this beartype configuration.
-    conf_kwargs = decor_meta.conf.kwargs.copy()
-
-    #FIXME: This should probably be configurable as well. For now, this is fine.
-    #We shrug noncommittally. We shrug, everyone! *shrug*
-    # Set the type of violation exception raised by the subsequent call to the
-    # die_if_unbearable() function to the expected type.
-    conf_kwargs['violation_door_type'] = BeartypeDecorHintParamDefaultViolation
-
-    # New beartype configuration initialized by this dictionary.
-    conf = BeartypeConf(**conf_kwargs)
-
-    # Raise this type of violation exception.
-    die_if_unbearable(
-        obj=arg_default,
-        hint=hint,
-        conf=conf,
-        exception_prefix=EXCEPTION_PREFIX_DEFAULT,
-    )
+#FIXME: Preserved for posterity. We'll almost certainly want to restore this at
+#some future date. Until then, we sigh. *sigh*
+# def _die_if_arg_default_unbearable(
+#     decor_meta: BeartypeDecorMeta, arg_default: object, hint: Hint) -> None:
+#     '''
+#     Raise a violation exception if the annotated optional parameter of the
+#     decorated callable with the passed default value violates the type hint
+#     annotating that parameter at decoration time.
+#
+#     Parameters
+#     ----------
+#     decor_meta : BeartypeDecorMeta
+#         Decorated callable to be type-checked.
+#     arg_default : object
+#         Either:
+#
+#         * If this parameter is mandatory, the :data:`.ArgMandatory` singleton.
+#         * If this parameter is optional, the default value of this optional
+#           parameter to be type-checked.
+#     hint : Hint
+#         Type hint to type-check against this default value.
+#
+#     Warns
+#     -----
+#     BeartypeDecorHintParamDefaultForwardRefWarning
+#         If this type hint contains one or more forward references that *cannot*
+#         be resolved at decoration time. While this does *not* necessarily
+#         constitute a fatal error from the end user perspective, this does
+#         constitute a non-fatal issue worth informing the end user of.
+#
+#     Raises
+#     ------
+#     BeartypeDecorHintParamDefaultViolation
+#         If this default value violates this type hint.
+#     '''
+#     assert isinstance(decor_meta, BeartypeDecorMeta), (
+#         f'{repr(decor_meta)} not beartype call.')
+#
+#     # ..................{ PREAMBLE                           }..................
+#     # If this parameter is mandatory, silently reduce to a noop.
+#     if arg_default is ArgMandatory:
+#         return
+#     # Else, this parameter is optional and thus defaults to a default value.
+#
+#     # ..................{ IMPORTS                            }..................
+#     # Defer heavyweight imports prohibited at global scope.
+#     from beartype.door import (
+#         die_if_unbearable,
+#         is_bearable,
+#     )
+#
+#     # ..................{ MAIN                               }..................
+#     # Attempt to...
+#     try:
+#         # If this default value satisfies this hint, silently reduce to a noop.
+#         #
+#         # Note that this is a non-negligible optimization. Technically, this
+#         # preliminary test is superfluous: only the call to the
+#         # die_if_unbearable() raiser below is required. Pragmatically, this
+#         # preliminary test avoids a needlessly expensive dictionary copy in the
+#         # common case that this value satisfies this hint.
+#         if is_bearable(obj=arg_default, hint=hint, conf=decor_meta.conf):
+#             return
+#         # Else, this default value violates this hint.
+#     #FIXME: Probably generalize this to *ANY* exception whatsoever, no?
+#     # If doing so raises a forward hint exception, this hint contains one or
+#     # more unresolvable forward references to user-defined objects that have yet
+#     # to be defined. In all likelihood, these objects are subsequently defined
+#     # after the definition of this decorated callable. While this does *NOT*
+#     # necessarily constitute a fatal error from the end user perspective, this
+#     # does constitute a non-fatal issue worth informing the end user of. In this
+#     # case, we coerce this exception into a warning.
+#     except _BeartypeHintForwardRefExceptionMixin as exception:
+#         # Forward hint exception message raised above. To readably embed this
+#         # message in the longer warning message emitted below, the first
+#         # character of this message is lowercased as well.
+#         exception_message = lowercase_str_char_first(str(exception))
+#
+#         # Emit this non-fatal warning.
+#         issue_warning(
+#             cls=BeartypeDecorHintParamDefaultForwardRefWarning,
+#             message=(
+#                 f'{EXCEPTION_PREFIX_DEFAULT}value '
+#                 f'{prefix_pith_value(pith=arg_default, is_color=decor_meta.conf.is_color)}'
+#                 f'uncheckable at @beartype decoration time, as '
+#                 f'{exception_message}'
+#             ),
+#         )
+#
+#         # Loudly reduce to a noop. Since this forward reference is unresolvable,
+#         # further type-checking attempts are entirely fruitless.
+#         return
+#
+#     # Modifiable keyword dictionary encapsulating this beartype configuration.
+#     conf_kwargs = decor_meta.conf.kwargs.copy()
+#
+#     #FIXME: This should probably be configurable as well. For now, this is fine.
+#     #We shrug noncommittally. We shrug, everyone! *shrug*
+#     # Set the type of violation exception raised by the subsequent call to the
+#     # die_if_unbearable() function to the expected type.
+#     conf_kwargs['violation_door_type'] = BeartypeDecorHintParamDefaultViolation
+#
+#     # New beartype configuration initialized by this dictionary.
+#     conf = BeartypeConf(**conf_kwargs)
+#
+#     # Raise this type of violation exception.
+#     die_if_unbearable(
+#         obj=arg_default,
+#         hint=hint,
+#         conf=conf,
+#         exception_prefix=EXCEPTION_PREFIX_DEFAULT,
+#     )
