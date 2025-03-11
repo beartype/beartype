@@ -28,8 +28,8 @@ from beartype._check.metadata.metadecor import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.decor.datadecornontype import (
-    _MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get,
-    _MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get,
+    MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get,
+    MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get,
 )
 from beartype._data.hint.datahinttyping import BeartypeableT
 from beartype._decor.wrap.wrapmain import generate_code
@@ -138,7 +138,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
         # dynamically generated type-checking if any *OR* "None" (i.e., if this
         # type is *NOT* defined by such a well-known dispatchable module).
         obj_type_name_to_beartype_decorator = (
-            _MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get(
+            MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get(
                 obj_type_module_name))
 
         # If this type is defined by a well-known dispatchable module...
@@ -196,7 +196,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
             # any *OR* "None" (i.e., if this superclass is *NOT* defined by such
             # a well-known dispatchable module).
             obj_base_name_to_beartype_decorator = (
-                _MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get(
+                MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get(
                     obj_base_module_name))
 
             # If this superclass is defined by a well-known dispatchable

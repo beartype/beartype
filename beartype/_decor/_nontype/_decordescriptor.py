@@ -25,8 +25,8 @@ from beartype._util.func.utilfuncwrap import (
     unwrap_func_class_or_static_method_once,
 )
 
-# ....................{ PRIVATE ~ decorators : descriptor  }....................
-def _beartype_descriptor_boundmethod(
+# ....................{ DECORATORS                         }....................
+def beartype_descriptor_boundmethod(
     descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **builtin bound method object** (i.e., C-based bound
@@ -110,7 +110,7 @@ def _beartype_descriptor_boundmethod(
     return descriptor_new  # type: ignore[return-value]
 
 
-def _beartype_descriptor_decorator_builtin_property(
+def beartype_descriptor_decorator_builtin_property(
     descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **builtin property decorator object** (i.e., C-based
@@ -174,7 +174,7 @@ def _beartype_descriptor_decorator_builtin_property(
     )
 
 
-def _beartype_descriptor_decorator_builtin_class_or_static_method(
+def beartype_descriptor_decorator_builtin_class_or_static_method(
     descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **builtin class or static method decorator object**

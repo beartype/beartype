@@ -13,24 +13,24 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._decor._nontype._decordescriptor import (
-    _beartype_descriptor_decorator_builtin_class_or_static_method,
-    _beartype_descriptor_decorator_builtin_property,
+    beartype_descriptor_decorator_builtin_class_or_static_method,
+    beartype_descriptor_decorator_builtin_property,
 )
 from beartype._util.api.external.utilclick import beartype_click_command
 
 # ....................{ MAPPINGS                           }....................
 # Note that this dispatch table is effectively untypeable, thanks to the general
 # insanity of pure-static type-checkers (e.g., mypy, pyright). We sigh. *sigh*
-_MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR = {
+MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR = {
     # ....................{ BUILTINS                       }....................
     # Standard builtins globally accessible *WITHOUT* requiring importation.
     'builtins': {
         'classmethod': (
-            _beartype_descriptor_decorator_builtin_class_or_static_method),
+            beartype_descriptor_decorator_builtin_class_or_static_method),
         'staticmethod': (
-            _beartype_descriptor_decorator_builtin_class_or_static_method),
+            beartype_descriptor_decorator_builtin_class_or_static_method),
         'property': (
-            _beartype_descriptor_decorator_builtin_property),
+            beartype_descriptor_decorator_builtin_property),
     },
 }
 '''
@@ -60,7 +60,7 @@ See Also
 '''
 
 
-_MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR = {
+MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR = {
     # ....................{ THIRD-PARTY                    }....................
     # Non-standard types declared by external third-party packages.
 
@@ -87,8 +87,8 @@ See Also
 '''
 
 # ....................{ METHODS                            }....................
-_MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get = (
-    _MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR.get)
+MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get = (
+    MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR.get)
 '''
 :meth:`dict.get` method bound to the
 :data:`._MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR` global dictionary,
@@ -96,8 +96,8 @@ globalized as an attribute to reduce lookup costs elsewhere.
 '''
 
 
-_MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get = (
-    _MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR.get)
+MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get = (
+    MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR.get)
 '''
 :meth:`dict.get` method bound to the
 :data:`._MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR` global dictionary,
