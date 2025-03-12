@@ -32,7 +32,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._check.error.errcause import ViolationCause
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.cls.pep.utilpep3119 import (
+from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_issubclassable,
     die_unless_type_isinstanceable,
 )

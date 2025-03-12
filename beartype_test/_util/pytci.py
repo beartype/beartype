@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**:mod:`pytest` context manager utilities.**
+:mod:`pytest` **continuous integration (CI) utilities.**
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,7 +16,7 @@
 # ....................{ TESTERS                            }....................
 def is_ci() -> bool:
     '''
-    ``True`` only if the active Python process is running under a remote
+    :data:`True` only if the active Python process is running under a remote
     continuous integration (CI) workflow.
     '''
 
@@ -26,7 +26,7 @@ def is_ci() -> bool:
 
 def is_ci_github_actions() -> bool:
     '''
-    ``True`` only if the active Python process is running under a GitHub
+    :data:`True` only if the active Python process is running under a GitHub
     Actions-based continuous integration (CI) workflow.
     '''
 

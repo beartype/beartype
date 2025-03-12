@@ -26,7 +26,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.cls.pep.utilpep3119 import (
+from beartype._util.cls.pep.clspep3119 import (
     die_unless_type_isinstanceable,
     die_unless_object_isinstanceable,
     die_unless_type_issubclassable,

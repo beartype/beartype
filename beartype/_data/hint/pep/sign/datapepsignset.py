@@ -28,6 +28,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignByteString,
     HintSignCallable,
     HintSignChainMap,
+    HintSignClassVar,
     HintSignCollection,
     HintSignConcatenate,
     HintSignContainer,
@@ -153,7 +154,7 @@ HINT_SIGNS_QUASIITERABLE: _FrozenSetHintSign = frozenset((
 '''
 Frozen set of all **standard single-argument quasi-iterable signs** (i.e.,
 arbitrary objects uniquely identifying :pep:`484`- or :pep:`585`-compliant type
-fehints subscripted by exactly one child type hint constraining *all* items of
+hints subscripted by exactly one child type hint constraining *all* items of
 compliant collections, which may or may not satisfy the
 :class:`collections.abc.Iterable` protocol with guaranteed :math:`O(1)`
 read-only access to *only* the first collection item but which are *not*
@@ -386,25 +387,6 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 '''
 
 # ....................{ SETS ~ kind                        }....................
-HINT_SIGNS_CALLABLE_PARAMS: _FrozenSetHintSign = frozenset((
-    # ..................{ PEP 612                            }..................
-    HintSignConcatenate,
-    HintSignParamSpec,
-))
-'''
-Frozen set of all **callable argument signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant child type hints typing the argument lists of parent
-:class:`collections.abc.Callable` type hints).
-
-This set necessarily excludes:
-
-* **Standard callable argument lists** (e.g., ``Callable[[bool, int], str]``),
-  which are specified as standard lists and thus identified by *no* signs.
-* **Ellipsis callable argument lists** (e.g., ``Callable[..., str]``), which are
-  specified as the ellipsis singleton and thus identified by *no* signs.
-'''
-
-
 HINT_SIGNS_GENERIC: _FrozenSetHintSign = frozenset((
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
@@ -619,6 +601,45 @@ Notably, this set contains the signs of:
   outlier edge cases that are probably lurking about.
 
 I have no code and I must scream.
+'''
+
+# ....................{ SETS ~ pep : 557                   }....................
+HINT_SIGNS_DATACLASS_NONFIELDS: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP 526                            }..................
+    # PEP 526-compliant "typing.ClassVar[...]" type hints, signifying class
+    # variables to actually be class variables rather than dataclass fields.
+    HintSignClassVar,
+
+    # ..................{ PEP 557                            }..................
+    # PEP 557-compliant "dataclasses.InitVar[...]" type hints, signifying class
+    # variables to actually be parameters to be passed to the __init__() method
+    # dynamically generated for a dataclass rather than dataclass fields.
+    HintSignPep557DataclassInitVar,
+))
+'''
+Frozen set of all **dataclass non-field signs** (i.e., arbitrary objects
+uniquely identifying PEP-compliant root type hints annotating attributes defined
+at class scope in dataclasses decorated by the :pep:`557`-compliant
+:func:`dataclasses.dataclass` decorator to *not* be fields of those dataclasses).
+'''
+
+# ....................{ SETS ~ pep : 612                   }....................
+HINT_SIGNS_CALLABLE_PARAMS: _FrozenSetHintSign = frozenset((
+    # ..................{ PEP 612                            }..................
+    HintSignConcatenate,
+    HintSignParamSpec,
+))
+'''
+Frozen set of all **callable argument signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant child type hints typing the argument lists of parent
+:class:`collections.abc.Callable` type hints).
+
+This set necessarily excludes:
+
+* **Standard callable argument lists** (e.g., ``Callable[[bool, int], str]``),
+  which are specified as standard lists and thus identified by *no* signs.
+* **Ellipsis callable argument lists** (e.g., ``Callable[..., str]``), which are
+  specified as the ellipsis singleton and thus identified by *no* signs.
 '''
 
 # ....................{ SETS ~ supported                   }....................

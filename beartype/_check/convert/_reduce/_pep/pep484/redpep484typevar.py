@@ -34,7 +34,7 @@ from beartype._data.hint.datahinttyping import (
     TupleTypeVars,
     TypeException,
 )
-from beartype._util.cls.pep.utilpep3119 import is_object_issubclassable
+from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     get_hint_pep484_typevar_bound_or_none,

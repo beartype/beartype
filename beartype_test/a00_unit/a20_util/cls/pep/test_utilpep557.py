@@ -8,7 +8,7 @@ Project-wide :pep:`557`-compliant **class-specific utility function** unit
 tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cls.pep.utilpep557` submodule.
+:mod:`beartype._util.cls.pep.clspep557` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,16 +18,16 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_is_type_pep557() -> None:
+def test_is_type_pep557_dataclass() -> None:
     '''
     Test the
-    :func:`beartype._util.cls.pep.utilpep557.is_type_pep557` tester.
+    :func:`beartype._util.cls.pep.clspep557.is_type_pep557_dataclass` tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilTypeException
-    from beartype._util.cls.pep.utilpep557 import is_type_pep557
+    from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
     from dataclasses import dataclass
     from pytest import raises
 
@@ -42,12 +42,12 @@ def test_is_type_pep557() -> None:
 
     # ....................{ PASS                           }....................
     # Assert this tester returns true when passed a dataclass type.
-    assert is_type_pep557(WhichTeachesAwfulDoubtOrFaithSoMild) is True
+    assert is_type_pep557_dataclass(WhichTeachesAwfulDoubtOrFaithSoMild) is True
 
     # Assert this tester returns false when passed a non-dataclass type.
-    assert is_type_pep557(str) is False
+    assert is_type_pep557_dataclass(str) is False
 
     # ....................{ FAIL                           }....................
     # Assert this tester raises the expected exception when passed a non-type.
     with raises(_BeartypeUtilTypeException):
-        is_type_pep557('The wilderness has a mysterious tongue')
+        is_type_pep557_dataclass('The wilderness has a mysterious tongue')

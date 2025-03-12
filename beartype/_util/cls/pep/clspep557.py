@@ -11,10 +11,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from dataclasses import is_dataclass
+from beartype._data.hint.datahinttyping import DictStrToAny
+from dataclasses import (  # type: ignore[attr-defined]
+    # Public attributes of the "dataclasses" module.
+    is_dataclass,
 
-# ....................{ TESTERS                           }....................
-def is_type_pep557(cls: type) -> bool:
+    # Private attributes of the "dataclasses" module. Although non-ideal, the
+    # extreme non-triviality of this module leaves us little choice. *shrug*
+    _PARAMS,  # pyright: ignore
+)
+
+# ....................{ TESTERS                            }....................
+def is_type_pep557_dataclass(cls: type) -> bool:
     '''
     :data:`True` only if the passed class is a **dataclass** (i.e.,
     :pep:`557`-compliant class decorated by the standard
@@ -30,12 +38,12 @@ def is_type_pep557(cls: type) -> bool:
         Class to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this class is a dataclass.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTypeException
         If this object is *not* a class.
     '''
@@ -55,3 +63,29 @@ def is_type_pep557(cls: type) -> bool:
     # latter, this call unambiguously returns true *ONLY* if this object is
     # an actual dataclass. (Dodged a misfired bullet there, folks.)
     return is_dataclass(cls)
+
+# ....................{ GETTERS                            }....................
+#FIXME: Implement us up, please.
+#FIXME: Unit test us up, please.
+def get_pep557_dataclass_kwargs(datacls: type) -> DictStrToAny:
+    '''
+    Dictionary of all keyword arguments originally passed to the
+    :pep:`557`-compliant :func:`dataclasses.dataclass` decorator decorating the
+    passed dataclass.
+
+    Parameters
+    ----------
+    datacls: type
+        Dataclass to be inspected.
+
+    Returns
+    -------
+    DictStrToAny
+        Keyword arguments originally configuring this dataclass.
+    '''
+
+    #FIXME: Insufficient. Also:
+    #* Define a new die_unless_pep557_dataclass() raiser, please.
+    #* Call that raiser here first, please.
+    dataclass_kwargs = getattr(datacls, _PARAMS)
+    return dataclass_kwargs

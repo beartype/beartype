@@ -12,10 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintParamDefaultViolation
+from beartype.roar import BeartypeCallHintDataclassFieldViolation
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.hint.datahintpep import DictStrToHint
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_DATACLASS_NONFIELDS)
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.func.utilfuncget import get_func_annotations
+from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.utilobject import (
     SENTINEL,
     get_object_type_name,
@@ -24,6 +28,9 @@ from beartype._util.utilobject import (
 # ....................{ DECORATORS                         }....................
 #FIXME: As a mandatory prerequisite *BEFORE* integrating this into the @beartype
 #codebase, we first need to:
+#* Define a new "BeartypeConf(is_check_pep557_dataclass_fields: bool = False)"
+#  configuration option. Eventually, we'll flip that to "True". For now,
+#  "False".
 #* Generalize both is_bearable() and die_if_unbearable() to support quoted
 #  relative forward references. As always, the algorithm should iteratively
 #  search up the callstack for the first stack frame residing *OUTSIDE*
@@ -34,15 +41,37 @@ from beartype._util.utilobject import (
 #* "frozen=True".
 #* "slots=True".
 #* "frozen=True, slots=True".
-#* "ClassVar[...]".
-#* "InitVar[...]".
+#* Dataclasses defining their own __setattr__() methods.
 #* PEP 563.
 #* Quoted relative forward references (e.g., "list['MuhUndefinedType']").
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
 #  accept an optional "cls_stack" parameter. We should probably generalize both
 #  of those functions to accept that parameter, huh? *sigh*
-
+#* Dataclass subclasses. Does each dataclass subclass in a hierarchy have its
+#  own unique "__annotations__" dunder dictionary *OR* does each such subclass
+#  composite the "__annotations__" of both itself and its superclasses? Probably
+#  the former, huh? Yikes. This implies that our trivial attempt to directly use
+#  "__annotations__" fails to suffice. We'll actually have to iteratively crawl
+#  up "datacls.__mro__" and composite the full "__annotations__" from the
+#  "__annotations__" of all dataclass superclasses.
+#
+#  Note, however, that there exists a critical optimization here: we
+#  *ABSOLUTELY* need to stop iterating up "datacls.__mro__" when we visit the
+#  first superclass that is *NOT* also a dataclass. Is that even possible? No
+#  idea. If it is, we halt iteration at that first non-dataclass. This is
+#  essential, as the class attributes of that first non-dataclass (and all
+#  superclasses of that non-dataclass) *CANNOT* by definition by fields.
+#
+#  *WAIT.* Halting iteration doesn't work, because "datacls.__mro__" doesn't
+#  exactly correspond to superclass relations. Consider diamond inheritance, for
+#  example. Ergo, we'll instead have to inefficiently *IGNORE* all superclasses
+#  in "datacls.__mro__" that are *NOT* themselves dataclasses. Fine. No worries.
+#  We can certainly do that. Nonetheless, we sigh. *sigh*
+#
+#  Oh -- and note that we'll need to iteratively resolve PEP 563-postponed
+#  stringified type hints against each such superclass "__annotations__" as
+#  well. Jeez. This sure got ugly fast, huh? So much sighing! *sigh sigh*
 def beartype_pep557_dataclass(
     # Note that dataclasses do *NOT* have a more specific superclass than merely
     # the root "type" superclass of *ALL* types, sadly:
@@ -67,7 +96,7 @@ def beartype_pep557_dataclass(
     class attribute of this dataclass annotated by *any* type hint other than
     either:
 
-    * A :pep:`557`-compliant ``dataclasses.ClassVar[...]`` type hint.
+    * A :pep:`526`-compliant ``dataclasses.ClassVar[...]`` type hint.
     * A :pep:`557`-compliant ``dataclasses.InitVar[...]`` type hint.
 
     This decorator safely monkey-patches the ``__setattr__()`` dunder method of
@@ -76,7 +105,8 @@ def beartype_pep557_dataclass(
     dataclass; else, this decorator wraps the existing ``__setattr__()`` already
     directly defined on this dataclass by a new ``__setattr__()`` internally
     deferring to that existing ``__setattr__()``. In either case, this new
-    ``__setattr__()`` type-checks each dataclass field on both:
+    ``__setattr__()`` type-checks that each dataclass field satisfies the type
+    hint annotating that field on both:
 
     * **Dataclass object initialization** (i.e., at early ``__init__()`` time).
     * **Dataclass field assignment** (i.e., when each field is subsequently
@@ -99,6 +129,16 @@ def beartype_pep557_dataclass(
     assert isinstance(conf, BeartypeConf), (
         f'{repr(conf)} not beartype configuration.')
 
+    # ..................{ PREAMBLE                           }..................
+    #FIXME: Ho, ho, ho! Looks like we have a significant issue here: frozen
+    #dataclasses. Technically, we should *DEFINETELY* be type-checking their
+    #fields on dataclass assignment. But... we're not quite sure how to do that
+    #at the moment. Certainly, doing so requires special handling.
+    #
+    #For the moment, let's just ignore frozen dataclasses altogether. Consider:
+    #* Define a new is_dataclass_frozen() tester in "clspep557".
+    #* Call that here. If true, silently reduce to a noop by returning. Guh!
+
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports prohibited at global scope.
     from beartype.door import (
@@ -107,6 +147,21 @@ def beartype_pep557_dataclass(
     )
 
     # ..................{ LOCALS                             }..................
+    # *HORRIBLE HACK*. For unknown reasons, the super() function called below
+    # requires the "__class__" attribute to be defined as a cell (i.e., closure)
+    # variable. If this is *NOT* the case, then that call raises the unreadable
+    # low-level exception:
+    #     RuntimeError: super(): __class__ cell not found
+    __class__ = datacls
+
+    # Existing __setattr__() dunder method directly defined on this dataclass if
+    # any *OR* "None" otherwise (i.e., if this dataclass fails to directly
+    # define that method).
+    datacls_setattr = datacls.__dict__.get('__setattr__')
+
+    # ..................{ SANIFICATION                       }..................
+    # Sanify (i.e., sanitize) this dictionary of type hints.
+
     #FIXME: Inappropriate. Obviously, "dataclass" is an uncallable type rather
     #than a callable. Instead:
     #* Define a new "Annotationsable" type hint in the
@@ -131,68 +186,19 @@ def beartype_pep557_dataclass(
     #optional "is_copy: bool = False" parameter to this get_object_annotations()
     #getter. If "is_copy" is true, then that getter performs the copy for us.
 
-    # Dictionary mapping from the name of each field of this dataclass to the
-    # type hint annotating that parameter *AFTER* resolving all PEP
-    # 563-postponed type hints above.
-    field_name_to_hint = get_func_annotations(datacls)
+    # Unsanified (i.e., original) dictionary mapping from the name of each
+    # possible field of this dataclass to the possibly insane type hint
+    # annotating that field *AFTER* resolving all PEP 563-postponed type hints.
+    attr_name_to_hint_insane = get_func_annotations(datacls)
+
+    # Sanified (i.e., sanitized) dictionary mapping from the name of each
+    # guaranteable field of this dataclass to the ostensibly sane type hint
+    # annotating that field, initialized to the empty dictionary.
+    field_name_to_hint: DictStrToHint = {}
 
     # dict.get() method bound to this dictionary as a negligible optimization.
     field_name_to_hint_get = field_name_to_hint.get
 
-    #FIXME: Insufficient. We also need to immediately sanify *ALL* of these
-    #hints right here *OUTSIDE* of the closure defined below. Yet again, issues
-    #arise. Why? Because the sanify_hint_root_func() function is inappropriate
-    #here. Instead:
-    #* Define a new sanify_hint_root_type() getter. This could prove
-    #  non-trivial. sanify_hint_root_func() accepts a "decor_meta" parameter,
-    #  which currently only applies to decorated *CALLABLES* rather than
-    #  *TYPES*. We probably want to generalize "decor_meta" to support both...
-    #  maybe? Maybe not? To do this properly, we probably first want to:
-    #  * Create a new "decor_meta" type hierarchy resembling:
-    #        class BeartypeDecorMetaABC(metaclass=ABCMeta): ...
-    #        class BeartypeDecorMetaFunc(BeartypeDecorMetaABC): ...
-    #        class BeartypeDecorMetaType(BeartypeDecorMetaABC): ...
-    #  * Refactor references to "BeartypeDecorMeta" to either
-    #    "BeartypeDecorMetaABC" *OR* ""BeartypeDecorMetaFunc" depending on
-    #    context. Most probably require the latter. Any that don't should simply
-    #    reference "BeartypeDecorMetaABC" for generality.
-    #  * Remove all references to "BeartypeDecorMeta".
-    #* Iterate over the items of the "field_name_to_hint" dictionary here.
-    #* For each such key-value pair:
-    #  * *BEFORE* sanifying this hint:
-    #    * If this hint is either a "dataclasses.ClassVar[...]" *OR*
-    #      "dataclasses.InitVar[...]" hint (as detectable via
-    #      get_hint_pep_sign_or_none()), remove this hint from this dictionary
-    #      entirely. The corresponding dataclass attribute is *NOT* actually a
-    #      field and is thus ignorable for type-checking purposes. Although
-    #      attempting to detect hint types *BEFORE* sanification is almost
-    #      always a bad idea, this might be the one and only case where doing so
-    #      is not only reasonable but desirable. Why? PEP 557. The standard
-    #      pretty explicitly states that both "dataclasses.ClassVar[...]" *AND*
-    #      "dataclasses.InitVar[...]" hints are only valid as root type hints.
-    #      Why? Because the @dataclasses.dataclass decorator itself explicitly
-    #      detects these root type hints with a crude detection scheme that only
-    #      works because these hints are required to be root. Since PEP
-    #      563-postponed stringified type hints are guaranteed to be resolved by
-    #      the "FIXME:" below at an earlier decoration-time phase, these hints
-    #      are guaranteed to be both non-stringified and root type hints. W00t!
-    #  * Sanify this hint.
-    #  * If doing so reduced this hint to "Any", remove this hint from this
-    #    dictionary entirely. Doing so speeds up closure logic below.
-    #  * Actually... this could be a problematic approach. Why? "hint_or_sane",
-    #    of course. is_bearable() and die_if_unbearable() only accept actual
-    #    type hints. But "hint_or_sane" could be a @beartype-specific type hint
-    #    dataclass! So... that doesn't quite work. I suppose what we could do
-    #    is an optimization resembling:
-    #    * If sanifying this hint produced a different type hint than the
-    #      original type hint *AND* this new type hint is *NOT* simply a
-    #      "HintSanifiedData" object, replace this old hint with this new hint
-    #      in the "field_name_to_hint" dictionary.
-    #    * Else, preserve this existing hint in this dictionary as is. If a
-    #      "HintSanifiedData" object was produced, we'll just have to throw that
-    #      away for the moment. Alternately, we could *TRY* to generalize
-    #      is_bearable() and die_if_unbearable() to accept these objects. But...
-    #      probably not worth it for the moment. It is what it is.
     #FIXME: Note that an edge case could arise here under Python >= 3.12 due to
     #the intersection of PEP 563 and 695:
     #    from __future__ import annotations  # <-- PEP 563
@@ -214,17 +220,87 @@ def beartype_pep557_dataclass(
     #* Generalize this function to accept an "obj" parameter resembling:
     #      obj: Annotationsable
 
-    # Existing __setattr__() dunder method directly defined on this dataclass if
-    # any *OR* "None" otherwise (i.e., if this dataclass fails to directly
-    # define that method).
-    datacls_setattr = datacls.__dict__.get('__setattr__')
+    # For the name and unsanified hint of each class attribute of this
+    # dataclass...
+    for field_name, field_hint in attr_name_to_hint_insane.items():
+        # Sign uniquely identifying this unsanified hint.
+        field_hint_sign = get_hint_pep_sign_or_none(field_hint)
 
-    # *HORRIBLE HACK*. For unknown reasons, the super() function called below
-    # requires the "__class__" attribute to be defined as a cell (i.e., closure)
-    # variable. If this is *NOT* the case, then that call raises the unreadable
-    # low-level exception:
-    #     RuntimeError: super(): __class__ cell not found
-    __class__ = datacls
+        # If this sign signifies this class attribute to *NOT* be a dataclass
+        # field, remove this attribute from consideration by ignoring this
+        # attribute rather than adding this attribute back to this dictionary.
+        #
+        # Note that attempting to identify unsanified hints is often a bad idea.
+        # Only sanified hints are safely identifiable, usually. This might be
+        # the one and only edge case where identifying an unsanified hint is not
+        # only reasonable but desirable. Why? PEP 557, which explicitly states
+        # that both PEP 526-compliant "type.ClassVar[...]" *AND* PEP
+        # 557-compliant "dataclasses.InitVar[...]" hints are only valid as root
+        # hints directly annotating class variables of dataclasses. Why? Because
+        # the PEP 557-compliant @dataclasses.dataclass decorator itself
+        # explicitly detects these root hints with a crude detection scheme that
+        # only works because these hints are required to be root. Since PEP
+        # 563-postponed stringified type hints are guaranteed to have already
+        # been resolved above, these hints are guaranteed to be both
+        # non-stringified and root hints. W00t!
+        if field_hint_sign in HINT_SIGNS_DATACLASS_NONFIELDS:
+            continue
+        # Else, this sign signifies this class attribute to actually be a field.
+
+        #FIXME: Insufficient. We also need to immediately sanify *ALL* of these
+        #hints right here *OUTSIDE* of the closure defined below. Yet again,
+        #issues arise. Why? Because the sanify_hint_root_func() function is
+        #inappropriate here. Instead:
+        #* Define a new sanify_hint_root_type() getter. This could prove
+        #  non-trivial. sanify_hint_root_func() accepts a "decor_meta"
+        #  parameter, which currently only applies to decorated *CALLABLES*
+        #  rather than *TYPES*. We probably want to generalize "decor_meta" to
+        #  support both... maybe? Maybe not? To do this properly, we probably
+        #  first want to:
+        #  * Create a new "decor_meta" type hierarchy resembling:
+        #        class BeartypeDecorMetaABC(metaclass=ABCMeta): ...
+        #        class BeartypeDecorMetaFunc(BeartypeDecorMetaABC): ...
+        #        class BeartypeDecorMetaType(BeartypeDecorMetaABC): ...
+        #  * Refactor references to "BeartypeDecorMeta" to either
+        #    "BeartypeDecorMetaABC" *OR* ""BeartypeDecorMetaFunc" depending on
+        #    context. Most probably require the latter. Any that don't should
+        #    simply reference "BeartypeDecorMetaABC" for generality.
+        #  * Remove all references to "BeartypeDecorMeta".
+        #FIXME: Consider:
+        #* If sanifying this hint so reduced this hint to "Any", remove this
+        #  hint from this dictionary entirely. Doing so speeds up closure logic
+        #  below, which is critical.
+        #* Actually... this could be a problematic approach. Why?
+        #  "hint_or_sane", of course. is_bearable() and die_if_unbearable() only
+        #  accept actual type hints. But "hint_or_sane" could be a
+        #  @beartype-specific type hint dataclass! So... that doesn't quite
+        #  work. I suppose what we could do is an optimization resembling:
+        #  * If sanifying this hint produced a different type hint than the
+        #    original type hint *AND* this new type hint is *NOT* simply a
+        #    "HintSanifiedData" object, replace this old hint with this new hint
+        #    in the "field_name_to_hint" dictionary.
+        #  * Else, preserve this existing hint in this dictionary as is. If a
+        #    "HintSanifiedData" object was produced, we'll just have to throw
+        #    that away for the moment. Alternately, we could *TRY* to generalize
+        #    is_bearable() and die_if_unbearable() to accept these objects.
+        #    But... probably not worth it for the moment. It is what it is.
+        #* Actually... we can do something even better! There's no particular
+        #  reason we have to call the public-facing is_bearable() and
+        #  die_if_unbearable() functions. Instead:
+        #  * Define new private-facing variants of those functions transparently
+        #    accepting a "hint: HintOrHintSanifiedData" parameter. Call them:
+        #    * is_hint_or_sane_bearable().
+        #    * die_if_hint_or_sane_unbearable().
+        #    In theory, this shouldn't be *TOO* hard. Indeed, we should be able
+        #    to refactor:
+        #    * is_bearable() to internally call is_hint_or_sane_bearable().
+        #    * die_if_unbearable() to internally call
+        #      die_if_hint_or_sane_unbearable().
+        #  * Call these private- rather than public-facing variants below.
+        #    Voila! Problem transparently resolved.
+
+        # Add this field back to this sanified dictionary.
+        field_name_to_hint[field_name] = field_hint
 
     # ..................{ CLOSURES                           }..................
     def check_pep557_dataclass_field(
@@ -257,6 +333,30 @@ def beartype_pep557_dataclass(
             # preliminary test avoids various needlessly expensive operations in
             # the common case that this value satisfies this hint.
             if not is_bearable(obj=attr_value, hint=attr_hint, conf=conf):
+                #FIXME: *UGLY LOGIC.* Sure. Technically, this works. But we
+                #repeat the *EXACT* same logic in our currently unused
+                #_die_if_arg_default_unbearable() validator, which we will
+                #almost certainly re-enable at some point. Instead:
+                #* Just add a new optional "exception_cls" parameter to the
+                #  die_if_unbearable() validator called below. If necessary, the
+                #  initial implementation of this parameter could just do what
+                #  we currently do here. Not great, but at least that logic
+                #  would be centralized away from prying eyes in the same API.
+
+                # Modifiable keyword dictionary encapsulating this beartype
+                # configuration.
+                conf_kwargs = conf.kwargs.copy()
+
+                #FIXME: This should probably be configurable as well. For now,
+                #this is fine. We shrug noncommittally. We shrug, everyone!
+                # Set the type of violation exception raised by the subsequent
+                # call to the die_if_unbearable() function to the expected type.
+                conf_kwargs['violation_door_type'] = (
+                    BeartypeCallHintDataclassFieldViolation)
+
+                # New beartype configuration initialized by this dictionary.
+                conf_new = BeartypeConf(**conf_kwargs)
+
                 # Machine-readable representation of this dataclass instance.
                 self_repr: str = ''
 
@@ -290,34 +390,6 @@ def beartype_pep557_dataclass(
                     f'attribute {repr(attr_name)} new value {repr(attr_value)} '
                 )
 
-                #FIXME: *UGLY LOGIC.* Sure. Technically, this works. But we
-                #repeat the *EXACT* same logic in our currently unused
-                #_die_if_arg_default_unbearable() validator, which we will
-                #almost certainly re-enable at some point. Instead:
-                #* Just add a new optional "exception_cls" parameter to the
-                #  die_if_unbearable() validator called below. If necessary, the
-                #  initial implementation of this parameter could just do what
-                #  we currently do here. Not great, but at least that logic
-                #  would be centralized away from prying eyes in the same API.
-
-                # Modifiable keyword dictionary encapsulating this beartype
-                # configuration.
-                conf_kwargs = conf.kwargs.copy()
-
-                #FIXME: This should probably be configurable as well. For now,
-                #this is fine. We shrug noncommittally. We shrug, everyone!
-                #FIXME: "BeartypeDecorHintParamDefaultViolation" obviously isn't
-                #right. Define a new "BeartypeDecorHintDataclassFieldViolation"
-                #exception subclass, please.
-
-                # Set the type of violation exception raised by the subsequent
-                # call to the die_if_unbearable() function to the expected type.
-                conf_kwargs['violation_door_type'] = (
-                    BeartypeDecorHintParamDefaultViolation)
-
-                # New beartype configuration initialized by this dictionary.
-                conf_new = BeartypeConf(**conf_kwargs)
-
                 # Raise this type of violation exception.
                 die_if_unbearable(
                     obj=attr_value,
@@ -342,6 +414,7 @@ def beartype_pep557_dataclass(
             # dunder method is *GUARANTEED* to exist on all objects.
             super().__setattr__  # type: ignore[misc]
         )
+        # print(f'datacls: {repr(self)}')
 
         # Defer to the superclass __setattr__() implementation.
         datacls_superclass_setattr(attr_name, attr_value)

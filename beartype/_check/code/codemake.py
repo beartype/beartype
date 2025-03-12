@@ -119,7 +119,7 @@ from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
 )
-from beartype._util.cls.pep.utilpep3119 import (
+from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_issubclassable,
     is_object_issubclassable,
 )

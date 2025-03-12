@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.pep.utilpep3119 import (
+from beartype._util.cls.pep.clspep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )

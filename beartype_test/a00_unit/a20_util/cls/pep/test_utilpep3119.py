@@ -8,7 +8,7 @@ Project-wide :pep:`3119`-compliant **class-specific utility function** unit
 tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.cls.pep.utilpep3119` submodule.
+:mod:`beartype._util.cls.pep.clspep3119` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,14 +21,14 @@ This submodule unit tests the public API of the private
 def test_die_unless_object_isinstanceable() -> None:
     '''
     Test the
-    :func:`beartype._util.cls.pep.utilpep3119.die_unless_object_isinstanceable`
+    :func:`beartype._util.cls.pep.clspep3119.die_unless_object_isinstanceable`
     validator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype._util.cls.pep.utilpep3119 import (
+    from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_isinstanceable)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
@@ -76,14 +76,14 @@ def test_die_unless_object_isinstanceable() -> None:
 def test_die_unless_type_isinstanceable() -> None:
     '''
     Test the
-    :func:`beartype._util.cls.pep.utilpep3119.die_unless_type_isinstanceable`
+    :func:`beartype._util.cls.pep.clspep3119.die_unless_type_isinstanceable`
     validator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype._util.cls.pep.utilpep3119 import (
+    from beartype._util.cls.pep.clspep3119 import (
         die_unless_type_isinstanceable)
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -110,14 +110,14 @@ def test_die_unless_type_isinstanceable() -> None:
 def test_die_unless_object_issubclassable() -> None:
     '''
     Test the
-    :func:`beartype._util.cls.pep.utilpep3119.die_unless_object_issubclassable`
+    :func:`beartype._util.cls.pep.clspep3119.die_unless_object_issubclassable`
     validator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype._util.cls.pep.utilpep3119 import (
+    from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_issubclassable)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
@@ -165,14 +165,14 @@ def test_die_unless_object_issubclassable() -> None:
 def test_die_unless_type_issubclassable() -> None:
     '''
     Test the
-    :func:`beartype._util.cls.pep.utilpep3119.die_unless_type_issubclassable`
+    :func:`beartype._util.cls.pep.clspep3119.die_unless_type_issubclassable`
     validator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype._util.cls.pep.utilpep3119 import (
+    from beartype._util.cls.pep.clspep3119 import (
         die_unless_type_issubclassable)
     from beartype_test.a00_unit.data.data_type import (
         Class,
