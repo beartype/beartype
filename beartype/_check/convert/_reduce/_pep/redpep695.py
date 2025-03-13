@@ -21,6 +21,10 @@ from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_unsubscripted_alias)
 
 # ....................{ REDUCERS                           }....................
+# Note that PEP 695-compliant subscripted type aliases are generically reduced
+# by the reduce_hint_pep484_subscripted_typevars_to_hints() reducer, which also
+# applies to PEP 484- and 585-compliant subscripted generics.
+
 def reduce_hint_pep695_unsubscripted(
     hint: HintPep695TypeAlias, exception_prefix: str, **kwargs) -> Hint:
     '''
@@ -64,8 +68,8 @@ def reduce_hint_pep695_unsubscripted(
         # contains *NO* forward references to undeclared attributes, this
         # reduction *SHOULD* succeed. Let's pretend we mean that.
         #
-        # Note that _get_hint_pep695_unsubscripted_alias() is memoized and thus
-        # intentionally called with positional arguments.
+        # Note that this getter is memoized and thus intentionally called with
+        # positional arguments.
         hint_aliased = get_hint_pep695_unsubscripted_alias(
             hint, exception_prefix)
     # If doing so raises a builtin "NameError" exception, this alias contains

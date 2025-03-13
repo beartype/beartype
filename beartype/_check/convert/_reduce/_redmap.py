@@ -24,7 +24,7 @@ from beartype._check.convert._reduce._pep.pep484.redpep484 import (
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
     reduce_hint_pep484_typevar,
-    reduce_hint_pep484_subscripted_typevar_to_hint,
+    reduce_hint_pep484_subscripted_typevars_to_hints,
 )
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subscripted,
@@ -339,10 +339,11 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 695-compliant subscripted type alias:
     # * Reduce this alias to the underlying hint referred to by the
     #   unsubscripted type alias underlying this subscripted type alias.
-    # * Map the child hints subscripting this alias to the PEP 484-compliant
-    #   type variables parametrizing that unsubscripted type alias.
+    # * Map the PEP 484-compliant type variables parametrizing that
+    #   unsubscripted type alias to the child hints subscripting this
+    #   subscripted type alias.
     HintSignPep695TypeAliasSubscripted: (
-        reduce_hint_pep484_subscripted_typevar_to_hint),
+        reduce_hint_pep484_subscripted_typevars_to_hints),
 
     # If this hint is a PEP 695-compliant unsubscripted type alias, reduce this
     # alias to the underlying hint lazily referred to by this alias.

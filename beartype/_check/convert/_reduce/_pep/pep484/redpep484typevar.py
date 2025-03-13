@@ -146,13 +146,14 @@ def reduce_hint_pep484_typevar(
     # Else, this type variable is unmapped.
 
     # If this hint is still a type variable (e.g., due to either not being
-    # mapped by this lookup table *OR* being mapped to another type variable)...
+    # mapped by this lookup table *OR* being mapped by this lookup table to yet
+    # another type variable)...
     if isinstance(hint, TypeVar):
         # PEP-compliant hint synthesized from all bounded constraints
         # parametrizing this type variable if any *OR* "None" otherwise (i.e.,
         # if this type variable is both unbounded *AND* unconstrained).
         #
-        # Note this call is passed positional parameters due to memoization
+        # Note this call is passed positional parameters due to memoization.
         hint = get_hint_pep484_typevar_bound_or_none(hint, exception_prefix)  # pyright: ignore
 
         # If this type variable is both unbounded *AND* unconstrained, this type
@@ -171,15 +172,15 @@ def reduce_hint_pep484_typevar(
     return hint
 
 
-def reduce_hint_pep484_subscripted_typevar_to_hint(
+def reduce_hint_pep484_subscripted_typevars_to_hints(
     hint: Hint, exception_prefix: str = '', **kwargs) -> HintOrHintSanifiedData:
     '''
     Reduce the passed :pep:`484`-compliant **subscripted hint** (i.e., object
     produced by subscripting an unsubscripted hint originally parametrized by
-    one or more :pep:`484`-compliant type variables by one or more child hints)
-    to that unsubscripted hint and corresponding **type variable lookup table**
-    (i.e., immutable dictionary mapping from those same type variables to those
-    same child hints).
+    one or more :pep:`484`-compliant type variables with one or more child
+    hints) to that unsubscripted hint and corresponding **type variable lookup
+    table** (i.e., immutable dictionary mapping from those same type variables
+    to those same child hints).
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.
@@ -261,7 +262,7 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
 
     # Tuple of all type variables parametrizing this unsubscripted hint.
     #
-    # Note that PEP 695-compliant "type" syntax superficially appears to
+    # Note that PEP 695-compliant "type" alias syntax superficially appears to
     # erroneously permit type aliases to be parametrized by non-type variables.
     # In truth, "type" syntax simply permits type aliases to be parametrized by
     # type variables that ambiguously share the same names as builtin types --
@@ -305,7 +306,7 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
 
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
-    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+    typevars_to_hints = _get_hint_pep484_typevars_to_hints(
         hint_parent=hint,
         hints=hint_args,
         typevars=hint_unsubscripted_typevars,
@@ -315,7 +316,7 @@ def reduce_hint_pep484_subscripted_typevar_to_hint(
 
     # Metadata encapsulating this hint and type variable lookup table.
     hint_or_sane = HintSanifiedData(
-        hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
+        hint=hint_unsubscripted, typevar_to_hint=typevars_to_hints)
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')
     # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
 
@@ -338,10 +339,10 @@ def _get_hint_pep484_typevars_to_hints(
     **type variables** (i.e., :class:`.TypeVar` objects) to the associated
     passed type hints as key-value pairs of this table.
 
-    Specifically, this function efficiently adds one or more key-value pairs to
-    this dictionary mapping each type variable in the passed tuple of type
-    variables to the associated type hint in the passed tuple of type hints with
-    the same 0-based tuple index as that type variable.
+    This getter efficiently creates and returns a dictionary mapping each type
+    variable in the passed tuple of type variables to the associated type hint
+    in the passed tuple of type hints with the same 0-based tuple index as that
+    type variable.
 
     Parameters
     ----------

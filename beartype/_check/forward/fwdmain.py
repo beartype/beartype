@@ -604,13 +604,14 @@ def _resolve_func_scope_pep695(
     parametrizing the decorated callable *and* all lexical parent classes of
     that callable with :pep:`695`-compliant implicitly instantiated **type
     parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
-    parameter specifications, and :pep:`646`-compliant type variable tuples))
+    parameter specifications, and :pep:`646`-compliant type variable tuples)
     of the decorated callable into the **forward scope** (i.e., dictionary
     mapping from the names to values of all attributes accessible to the lexical
     scope of the passed decorated callable where this scope comprises both the
-    global scope and all local lexical scopes enclosing that callable).
+    global scope and all local lexical scopes enclosing that callable) of the
+    passed decorator metadata.
 
-    Note that this function implicitly overwrites each global and local
+    Note that this resolver implicitly overwrites each global and local
     attribute previously composited into this forward scope with each type
     parameter of the same name, vaguely replicating the scoping rules dictated
     by :pep:`695`.
@@ -618,7 +619,7 @@ def _resolve_func_scope_pep695(
     Parameters
     ----------
     decor_meta : BeartypeDecorMeta
-        Decorated callable to resolve the forward scope of
+        Decorated callable to resolve the forward scope of.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
     '''

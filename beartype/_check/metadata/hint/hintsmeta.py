@@ -277,6 +277,10 @@ class HintsMeta(FixedList):
         self.conf = conf
         self.cls_stack = cls_stack
 
+        # 1-based indentation level describing the initial level of indentation
+        # appropriate for the root hint.
+        self.indent_level_child = 1
+
         # 0-based index of metadata describing the last visitable hint in this
         # queue, initialized to "-1" to ensure that the initial incrementation
         # of this index by the enqueue_hint_child() method initializes index 0
@@ -291,7 +295,6 @@ class HintsMeta(FixedList):
         self.hint_curr_meta = None  # type: ignore[assignment]
         self.indent_curr = None  # type: ignore[assignment]
         self.indent_child = None  # type: ignore[assignment]
-        self.indent_level_child: int = None  # type: ignore[assignment]
         self.is_var_random_int_needed = False
         self.pith_curr_expr = None  # type: ignore[assignment]
         self.pith_curr_assign_expr = None  # type: ignore[assignment]
@@ -449,10 +452,23 @@ class HintsMeta(FixedList):
     # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_or_sane_child(
         self,
+
+        # Mandatory parameters.
         hint_or_sane: HintOrHintSanifiedData,
-        indent_level: int,
         pith_expr: str,
+
+        #FIXME: Either remove this entirely or render this optional as well! OoO
         pith_var_name_index: int,
+
+        # Optional parameters.
+        #
+        # Note that these parameters *COULD* simply be passed by "**kwargs", but
+        # that doing so would render the calling conventions for this method
+        # even more opaque. Notably, the caller should *NOT* explicitly pass the
+        # "typevar_to_hint" parameter. Explicit parameters emphasize this.
+
+        #FIXME: Actually, *NO* code passes this anywhere anymore.
+        # indent_level: Optional[int] = None,
     ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
@@ -460,6 +476,13 @@ class HintsMeta(FixedList):
         describing the currently iterated child type hint with the passed
         metadata, enabling this hint to be visited by the ongoing breadth-first
         search (BFS) traversing over this queue.
+
+
+        Callers are expected to modify this metadata by modifying these instance
+        variables of this higher-level parent object:
+
+        * :attr:`indent_level_child`, the 1-based indentation level describing
+          the current level of indentation appropriate for this child hint.
 
         Parameters
         ----------
@@ -476,6 +499,12 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
+        # assert isinstance(indent_level, NoneTypeOr[int]), (
+        #     f'{repr(indent_level)} neither integer nor "None".')
+
+        # # Default all unpassed parameters to sane defaults.
+        # if indent_level is None:
+        #     indent_level = hints_meta.indent_level_child
 
         # Child hint and type variable lookup table encapsulated by this data.
         hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
@@ -483,16 +512,16 @@ class HintsMeta(FixedList):
         # Return the placeholder string to be subsequently replaced by code
         # type-checking this child pith against this child hint, produced by
         # enqueueing new type-checking metadata describing this child hint.
-        return self.enqueue_hint_child(
+        return self._enqueue_hint_child(
             hint=hint,
-            indent_level=indent_level,
+            indent_level=self.indent_level_child,
             pith_expr=pith_expr,
             pith_var_name_index=pith_var_name_index,
             typevar_to_hint=typevar_to_hint,
         )
 
-
-    def enqueue_hint_child(self, **kwargs) -> str:
+    # ..................{ PRIVATE ~ enqueuers                }..................
+    def _enqueue_hint_child(self, **kwargs) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
         **type-checking metadata** (i.e., a :class:`.HintMeta` object)

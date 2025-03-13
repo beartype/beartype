@@ -13,15 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    TYPE_CHECKING,
-)
-from beartype._check.code.snip.codesnipcls import (
-    HINT_INDEX_TO_HINT_PLACEHOLDER)
+from beartype.typing import TYPE_CHECKING
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
 from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
 )
+from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import SENTINEL
 
@@ -56,6 +56,16 @@ class HintMeta(object):
         dictionary singleton by this integer efficiently yields the current
         **indendation string** suitable for prefixing each line of code
         type-checking the current pith against the current type hint.
+    parent_hint_ids : FrozenSetInts
+        **Recursion guard** (i.e., frozen set of the integers uniquely
+        identifying all transitive parent hints of this child hint). If the
+        integer identifying a subsequently visited child child hint subscripting
+        this child hint already resides in this recursion guard, that child
+        child hint has already been visited by prior iteration and is thus a
+        recursive hint. Since recursive hints are valid (rather than
+        constituting an unexpected error), the caller is expected to detect this
+        use case and silently short-circuit infinite recursion by avoiding
+        revisiting that already visited hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value
         of) the current **pith** (i.e., possibly nested object of the passed
@@ -122,6 +132,7 @@ class HintMeta(object):
         'hint',
         'hint_placeholder',
         'indent_level',
+        'parent_hint_ids',
         'pith_expr',
         'pith_var_name_index',
         'typevar_to_hint',
@@ -133,6 +144,7 @@ class HintMeta(object):
         hint: Hint
         hint_placeholder: str
         indent_level: int
+        parent_hint_ids: FrozenSetInts
         pith_expr: str
         pith_var_name_index: int
         typevar_to_hint: TypeVarToHint
@@ -155,9 +167,10 @@ class HintMeta(object):
         # current pith against this hint.
         self.hint_placeholder = HINT_INDEX_TO_HINT_PLACEHOLDER[hint_index]
 
-        # Nullify all instance variables for safety.
+        # Nullify all remaining instance variables for safety.
         self.hint = SENTINEL  # type: ignore[assignment]
         self.indent_level = SENTINEL  # type: ignore[assignment]
+        self.parent_hint_ids = SENTINEL  # type: ignore[assignment]
         self.pith_expr = SENTINEL  # type: ignore[assignment]
         self.pith_var_name_index = SENTINEL  # type: ignore[assignment]
         self.typevar_to_hint = SENTINEL  # type: ignore[assignment]
@@ -170,21 +183,35 @@ class HintMeta(object):
         pith_expr: str,
         pith_var_name_index: int,
         typevar_to_hint: TypeVarToHint,
+
+        #FIXME: Make mandatory, please.
+        parent_hint_ids: FrozenSetInts = FROZENSET_EMPTY,
     ) -> None:
         '''
-        Reinitialize this type-checking metadata.
+        Reinitialize this type-checking metadata to reflect the currently
+        iterated child type hint subscripting the currently visited type hint.
 
         Parameters
         ----------
         hint : Hint
-            Currently iterated child type hint subscripting the currently
-            visited type hint.
+            Currently iterated child hint subscripting the currently visited
+            hint.
         indent_level : int
             1-based indentation level describing the current level of
-            indentation appropriate for the currently iterated child hint.
+            indentation appropriate for this child hint.
+        parent_hint_ids : FrozenSetInts
+            **Recursion guard** (i.e., frozen set of the integers uniquely
+            identifying all transitive parent hints of this child hint). If the
+            integer identifying a subsequently visited child child hint
+            subscripting this child hint already resides in this recursion
+            guard, that child child hint has already been visited by prior
+            iteration and is thus a recursive hint. Since recursive hints are
+            valid (rather than constituting an unexpected error), the caller is
+            expected to detect this use case and silently short-circuit infinite
+            recursion by avoiding revisiting that already visited hint.
         pith_expr : str
             Python code snippet evaluating to the child pith to be type-checked
-            against the currently iterated child type hint.
+            against this child hint.
         pith_var_name_index : int
             0-based integer suffixing the name of each local variable assigned
             the value of the current pith in an assignment expression.
@@ -193,10 +220,12 @@ class HintMeta(object):
             from the :pep:`484`-compliant **type variables** (i.e.,
             :class:`typing.TypeVar` objects) originally parametrizing the
             origins of all transitive parent hints of this hint to the
-            corresponding child hints subscripting these parent hints).
+            corresponding child hints subscripting those parent hints).
         '''
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
+        assert isinstance(parent_hint_ids, frozenset), (
+            f'{repr(parent_hint_ids)} not frozen set.')
         assert isinstance(pith_expr, str), (
             f'{repr(pith_expr)} not string.')
         assert isinstance(pith_var_name_index, int), (
@@ -210,6 +239,7 @@ class HintMeta(object):
         # Classify all passed parameters.
         self.hint = hint
         self.indent_level = indent_level
+        self.parent_hint_ids = parent_hint_ids
         self.pith_expr = pith_expr
         self.pith_var_name_index = pith_var_name_index
         self.typevar_to_hint = typevar_to_hint
@@ -226,6 +256,7 @@ class HintMeta(object):
             f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
             f'indent_level={repr(self.indent_level)}, '
+            f'parent_hint_ids={repr(self.parent_hint_ids)}, '
             f'pith_expr={repr(self.pith_expr)}, '
             f'pith_var_name_index={repr(self.pith_var_name_index)}, '
             f'typevar_to_hint={repr(self.typevar_to_hint)}'

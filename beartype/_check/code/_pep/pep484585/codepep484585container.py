@@ -140,6 +140,9 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
             )
         # Else, some hint logic type-checks this sign.
 
+        # Increase the indentation level of code type-checking this pith.
+        hints_meta.indent_level_child += 1
+
         # Python expression deeply type-checking this pith against this hint.
         hint_logic.make_code(
             hints_meta=hints_meta, hint_or_sane_child=hint_or_sane_child)

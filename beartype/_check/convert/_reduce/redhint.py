@@ -415,8 +415,9 @@ def reduce_hint(
             raise BeartypeDecorHintReduceException(
                 f'{exception_prefix}type hint {repr(hint_old)} irreducible; '
                 f'recursion detected when reducing between reduced type hints '
-                f'{repr(hint_or_sane_prev)} and {repr(hint)}. Please open a new issue '
-                f'on our friendly issue tracker providing this full traceback:\n'
+                f'{repr(hint_or_sane_prev)} and {repr(hint)}. '
+                f'Please submit this exception traceback as a new issue '
+                f'on our friendly issue tracker:\n'
                 f'\t{URL_ISSUES}\n'
                 f'Beartype thanks you for your noble (yet ultimately tragic) '
                 f'sacrifice.'

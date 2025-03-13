@@ -48,7 +48,6 @@ from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     get_hint_or_sane_hint,
-    unpack_hint_or_sane,
 )
 from beartype._check.proposal.checkpep484585generic import (
     iter_hint_pep484585_generic_bases_unerased)
@@ -114,6 +113,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
 )
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
@@ -139,7 +139,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
     get_hint_pep_sign_or_none,
-    # get_hint_pep_origin_or_none,
     get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
@@ -247,15 +246,6 @@ def make_check_expr(
         object have been deprecated by :pep:`585`.
     '''
 
-    # ..................{ LOCALS ~ hint : root               }..................
-    # Unpack the passed sanified hint metadata into:
-    # * "hint_root", the top-level hint to be type-checked.
-    # * "typevar_to_hint_root", the top-level type variable lookup table (i.e.,
-    #   dictionary mapping from each type variable parametrizing the origin of
-    #   this top-level hint to the child hint subscripting this top-level hint).
-    hint_root, typevar_to_hint_root = unpack_hint_or_sane(hint_or_sane)
-    # print(f'Received root hint {repr(hint_root)} and type variable lookup table {repr(typevar_to_hint_root)}.')
-
     # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
     hint_curr: Hint = None  # pyright: ignore
@@ -324,14 +314,12 @@ def make_check_expr(
     #   Python code snippet to be returned (i.e., "func_wrapper_code") by a
     #   Python code snippet type-checking the root pith expression (i.e.,
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
-    func_root_code = hints_meta.enqueue_hint_child(
-        hint=hint_root,
-        # 1-based indentation level describing the initial level of indentation
-        # appropriate for the root hint.
-        indent_level=1,
+    func_root_code = hints_meta.enqueue_hint_or_sane_child(
+        hint_or_sane=hint_or_sane,
+        #FIXME: Instead, default this inside the HintsMeta.reinit() method! OoO
+        # parent_hint_ids=FROZENSET_EMPTY,
         pith_expr=VAR_NAME_PITH_ROOT,
         pith_var_name_index=hints_meta.pith_curr_var_name_index,
-        typevar_to_hint=typevar_to_hint_root,
     )
 
     # Python code snippet to be returned, seeded with a placeholder to be
@@ -719,7 +707,7 @@ def make_check_expr(
                     #
                     # Note that this edge case is induced by method calls
                     # performed below of the form:
-                    #    hints_meta.enqueue_hint_child(
+                    #    hints_meta.enqueue_hint_or_sane_child(
                     #        ..., pith_expr=pith_curr_assign_expr, ...)
                     #
                     # As of this writing, the only such edge cases are:
@@ -897,7 +885,6 @@ def make_check_expr(
                                         hint_child_placeholder=(
                                             hints_meta.enqueue_hint_or_sane_child(
                                                 hint_or_sane=hint_or_sane_child,
-                                                indent_level=hints_meta.indent_level_child,
                                                 pith_expr=pith_child_expr,
                                                 pith_var_name_index=(
                                                     hints_meta.pith_curr_var_name_index),
@@ -1004,22 +991,20 @@ def make_check_expr(
                     # Unignorable sane child key and value hints sanified from
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
-                    hint_or_sane_child_key = (
-                        sanify_hint_child(
-                            hint=hint_childs[0],
-                            cls_stack=cls_stack,
-                            conf=conf,
-                            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        ))
-                    hint_or_sane_child_value = (
-                        sanify_hint_child(
-                            hint=hint_childs[1],  # type: ignore[has-type]
-                            cls_stack=cls_stack,
-                            conf=conf,
-                            typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        ))
+                    hint_or_sane_child_key = sanify_hint_child(
+                        hint=hint_childs[0],
+                        cls_stack=cls_stack,
+                        conf=conf,
+                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+                    hint_or_sane_child_value = sanify_hint_child(
+                        hint=hint_childs[1],  # type: ignore[has-type]
+                        cls_stack=cls_stack,
+                        conf=conf,
+                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
 
                     # If at least one of these child hints are unignorable...
                     if not (
@@ -1050,7 +1035,6 @@ def make_check_expr(
                                 hint_key_placeholder = (
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child_key,
-                                        indent_level=hints_meta.indent_level_child,
                                         pith_expr=pith_key_var_name,
                                         pith_var_name_index=(
                                             hints_meta.pith_curr_var_name_index),
@@ -1062,7 +1046,6 @@ def make_check_expr(
                                 hint_value_placeholder = (
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child_value,
-                                        indent_level=hints_meta.indent_level_child,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=(
                                                 hints_meta.pith_curr_var_name),
@@ -1100,7 +1083,6 @@ def make_check_expr(
                                             hints_meta.enqueue_hint_or_sane_child(
                                                 hint_or_sane=(
                                                     hint_or_sane_child_key),
-                                                indent_level=hints_meta.indent_level_child,
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
                                                     pith_curr_var_name=(
                                                         hints_meta.pith_curr_var_name)),
@@ -1125,7 +1107,6 @@ def make_check_expr(
                                     hint_value_placeholder=(
                                         hints_meta.enqueue_hint_or_sane_child(
                                             hint_or_sane=hint_or_sane_child_value,
-                                            indent_level=hints_meta.indent_level_child,
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
                                                     hints_meta.pith_curr_var_name)),
@@ -1237,7 +1218,6 @@ def make_check_expr(
                                 hint_child_placeholder=(
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child,
-                                        indent_level=hints_meta.indent_level_child,
                                         pith_expr=hints_meta.pith_curr_assign_expr,
                                         pith_var_name_index=(
                                             hints_meta.pith_curr_var_name_index),
@@ -1462,7 +1442,6 @@ def make_check_expr(
                                 hint_child_placeholder=(
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child,
-                                        indent_level=hints_meta.indent_level_child,
                                         # Python expression efficiently reusing
                                         # the value of this pith previously
                                         # assigned to a local variable by the
@@ -1702,13 +1681,15 @@ def make_check_expr(
     # initial value, the breadth-first search above failed to generate code. In
     # this case, raise an exception.
     #
-    # Note that this test is inexpensive, as the third character of the
-    # "func_root_code" code snippet is guaranteed to differ from that of
-    # "func_wrapper_code" code snippet if this function behaved as expected,
-    # which it should have... but may not have, which is why we're testing.
+    # Note that:
+    # * This should *NEVER* happen. Nonetheless, this just happened.
+    # * This test is inexpensive, as the third character of the "func_root_code"
+    #   code snippet is guaranteed to differ from that of "func_wrapper_code"
+    #   code snippet if this function behaved as expected, which it should
+    #   have... but may not have. This is why we're testing.
     if func_wrapper_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.')
+            f'{EXCEPTION_PREFIX_HINT}{repr(hint_or_sane)} unchecked.')
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ scope                       }..................

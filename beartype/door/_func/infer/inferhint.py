@@ -10,10 +10,8 @@ hints best describing arbitrary objects).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer.kind.infercallable import (
-    infer_hint_callable)
-from beartype.door._func.infer.kind.inferthirdparty import (
-    infer_hint_thirdparty)
+from beartype.door._func.infer.kind.infercallable import infer_hint_callable
+from beartype.door._func.infer.kind.inferthirdparty import infer_hint_thirdparty
 from beartype.door._func.infer.collection.infercollectionbuiltin import (
     infer_hint_collection_builtin)
 from beartype.door._func.infer.collection.infercollectionsabc import (
@@ -29,9 +27,8 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import get_beartype_conf_strategy_on
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR
-from beartype._data.hint.datahinttyping import (
-    FrozenSetInts,
-)
+from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.text.utiltextrepr import represent_object
@@ -57,7 +54,7 @@ def infer_hint(
     conf: Optional[BeartypeConf] = None,
 
     # Optional keyword-only hidden parameters. *GULP*
-    __beartype_obj_ids_seen__: FrozenSetInts = frozenset(),
+    __beartype_obj_ids_seen__: FrozenSetInts = FROZENSET_EMPTY,
 ) -> object:
     '''
     Type hint annotating the passed object.
@@ -136,12 +133,12 @@ def infer_hint(
         **Recursion guard** (i.e., frozen set of the integers uniquely
         identifying all previously visited containers passed as the ``obj``
         parameter to some recursive parent call of this same function on the
-        current call stack). If the object identifier (ID) of passed object
-        already resides in this recursion guard, then that object has already
-        been visited by a prior call to this function in the same call stack
-        and is thus a recursive container; in that case, this function
-        short-circuits infinite recursion by returning a placeholder instance of
-        the :class:`.BeartypeInferHintRecursion` class describing this issue.
+        current call stack). If the integer identifying a passed object already
+        resides in this recursion guard, that object has already been visited by
+        a prior call to this function in the same call stack and is thus a
+        recursive container; in that case, this function short-circuits infinite
+        recursion by returning a placeholder instance of the
+        :class:`.BeartypeInferHintRecursion` class describing this issue.
 
     Returns
     -------

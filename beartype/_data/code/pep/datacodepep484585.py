@@ -52,15 +52,15 @@ CODE_PEP484585_COLLECTION = '''(
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this container is empty *OR*...
 {indent_curr}    (not {pith_curr_var_name} or (
-{indent_curr}            # If this collection is a non-empty sequence, localize
-{indent_curr}            # a pseudo-random item of this sequence;
-{indent_curr}            (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
-{indent_curr}             ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
-{indent_curr}            # Else, this collection *MUST* by elimination be a non-empty,
-{indent_curr}            # Reiterable. Localize the first item of this reiterable.
-{indent_curr}            ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
-{indent_curr}        # True only if this item satisfies this hint.
-{indent_curr}        ) and {hint_child_placeholder}
+{indent_curr}         # If this collection is a non-empty sequence, localize
+{indent_curr}         # a pseudo-random item of this sequence;
+{indent_curr}         (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
+{indent_curr}          ({{pith_child_var_name}} := {CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}) or
+{indent_curr}         # Else, this collection *MUST* by elimination be a non-empty,
+{indent_curr}         # Reiterable. Localize the first item of this reiterable.
+{indent_curr}         ({{pith_child_var_name}} := {CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR}) is {{pith_child_var_name}}
+{indent_curr}     # True only if this item satisfies this hint.
+{indent_curr}     ) and {hint_child_placeholder}
 {indent_curr}    )
 {indent_curr})'''
 '''

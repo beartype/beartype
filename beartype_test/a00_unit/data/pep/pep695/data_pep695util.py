@@ -279,10 +279,10 @@ def unit_test_reduce_hint_pep695_unsubscripted() -> None:
         reduce_hint_pep695_unsubscripted(hint=floating_in, exception_prefix='')
 
 
-def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
+def unit_test_reduce_hint_pep484_subscripted_typevars_to_hints() -> None:
     '''
     Test the public
-    :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar.reduce_hint_pep484_subscripted_typevar_to_hint`
+    :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar.reduce_hint_pep484_subscripted_typevars_to_hints`
     getter with respect to :pep:`695`-compliant subscripted type aliases.
     '''
 
@@ -290,7 +290,7 @@ def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484TypeVarException
     from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-        reduce_hint_pep484_subscripted_typevar_to_hint)
+        reduce_hint_pep484_subscripted_typevars_to_hints)
     from beartype._check.metadata.metasane import HintSanifiedData
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -319,12 +319,12 @@ def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     # Note that these type variables are literally scoped (i.e., isolated) to
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
-    assert reduce_hint_pep484_subscripted_typevar_to_hint(
+    assert reduce_hint_pep484_subscripted_typevars_to_hints(
         irresistible_career[int]) == HintSanifiedData(
             irresistible_career,
             FrozenDict({irresistible_career_typevars[0]: int,}),
         )
-    assert reduce_hint_pep484_subscripted_typevar_to_hint(
+    assert reduce_hint_pep484_subscripted_typevars_to_hints(
         in_thy[bool, complex]) == HintSanifiedData(
             in_thy,
             FrozenDict({
@@ -337,13 +337,13 @@ def unit_test_reduce_hint_pep484_subscripted_typevar_to_hint() -> None:
     # Assert this getter raises the expected exception when passed an object
     # that is *NOT* a PEP 695-compliant subscripted type alias.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subscripted_typevar_to_hint(
+        reduce_hint_pep484_subscripted_typevars_to_hints(
             'In thy devastating omnipotence,')
 
     # Assert this getter raises the expected exception when passed a PEP
     # 695-compliant unsubscripted type alias.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subscripted_typevar_to_hint(guiding_its)
+        reduce_hint_pep484_subscripted_typevars_to_hints(guiding_its)
     with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subscripted_typevar_to_hint(irresistible_career)
+        reduce_hint_pep484_subscripted_typevars_to_hints(irresistible_career)
 

@@ -43,6 +43,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #        subclass whose is_instance() tester method recursively calls itself
 #        indefinitely. If doing so generates a "RecursionError", @beartype
 #        considers that the user's problem. *wink*
+#      * Note that this is_instance() tester method should guard itself against
+#        recursion by accepting an optional "obj_ids: FrozenSetInts =
+#        FROZEN_SET_EMPTY" parameter recording the IDs of all previously tested
+#        objects. Consider infinite containers: e.g.,
+#            infinite_list = []
+#            infinite_list.append(infinite_list)
 #
 #Done and done. Phew!
 

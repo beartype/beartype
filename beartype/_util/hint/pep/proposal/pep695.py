@@ -283,13 +283,12 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Add one key-value pair mapping from the name to value of each **type
-    parameter** (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant
-    parameter specification, or :pep:`646`-compliant type variable tuple)
-    implicitly instantiated with :pep:`695`-compliant type parameter syntax
-    parametrizing the **parameterizable** (i.e., pure-Python class, pure-Python
-    function, or :pep:`695`-compliant type alias) described by the passed
-    lexical scope.
+    Add one key-value pair mapping the name to value of each **type parameter**
+    (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant parameter
+    specification, or :pep:`646`-compliant type variable tuple) implicitly
+    instantiated with :pep:`695`-compliant type parameter syntax parametrizing
+    the **parameterizable** (i.e., pure-Python class, pure-Python function, or
+    :pep:`695`-compliant type alias) described by the passed lexical scope.
 
     Caveats
     -------
@@ -327,17 +326,20 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
     # print(f'Updating PEP 695 parameterizable {repr(parameterizable)} scope {repr(func_scope)}...')
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484612646 import (
         get_hint_pep484612646_typeparam_name,
         is_hint_pep484612646_typeparam,
     )
 
+    # ....................{ LOCALS                         }....................
     # Tuple of all type parameters parametrizing this parameterizable.
     typeparams = _get_hint_pep695_parameterizable_typeparams(
         parameterizable=parameterizable, exception_prefix=exception_prefix)
     # print(f'Adding PEP 695 parameterizable {repr(parameterizable)} type parameters {repr(typeparams)}...')
 
+    # ....................{ LOOP                           }....................
     # For each type parameter parametrizing this parameterizable...
     for typeparam in typeparams:
         # Unqualified basename of this type parameter.

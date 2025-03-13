@@ -485,9 +485,6 @@ Beartype is releasable to all supported platforms as follows:
      See also the `conda-forge FAQ`_ entry `"Using a fork vs a branch when
      updating a recipe." <conda-forge update recipe_>`__
 
-   * Our official `Gentoo Linux ebuild`_, currently hosted at the `raiagent
-     overlay`_ maintained by the maintainer of beartype.
-
 Thus begins the dawn of a new scientific epoch.
 
 .. [#tags]
@@ -539,13 +536,7 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _tarballs:
    https://github.com/beartype/beartype/releases
 .. _PyPI beartype:
-   https://pypi.python.org/pypi/beartype
-
-.. # ------------------( LINKS ~ beartype : gentoo           )------------------
-.. _Gentoo Linux ebuild:
-   https://github.com/leycec/raiagent/tree/master/dev-python/beartype
-.. _raiagent overlay:
-   https://github.com/leycec/raiagent
+   https://pypi.org/project/beartype
 
 .. # ------------------( LINKS ~ beartype : conda            )------------------
 .. _Anaconda package:

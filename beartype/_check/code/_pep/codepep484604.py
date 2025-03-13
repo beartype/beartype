@@ -262,7 +262,6 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
             # Expression yielding the value of this pith.
             hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
                 hint_or_sane=hint_or_sane_child_pep,
-                indent_level=hints_meta.indent_level_child,
                 pith_expr=(
                     # If either...
                     #

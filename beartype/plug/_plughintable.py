@@ -30,7 +30,7 @@ class BeartypeHintable(object):
     :meth:`__beartype_hint__` method).
 
     Usage
-    ----------
+    -----
     **You are encouraged but not required to subclass this mixin.** Doing so
     publicly declares your intention to implement this abstract method and then
     raises a :exc:`NotImplementedError` exception when you fail to do so,
@@ -169,9 +169,16 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #  * coerce_*_hint(), because coerce_*_hint() is permanently applied to
 #    "__annotations__" but transform_hint_beartypehintable() should *NEVER* be.
 #
+#  Actually, that's no longer true. reduce_hint() *ABSOLUTELY* performs both
+#  cached and uncached reductions now. It has to. So,
+#  transform_hint_beartypehintable() should *ABSOLUTELY* be implemented as an
+#  uncached reduction.
+#
 #Altogether, this suggests that:
 #* All sanify_*() functions *MUST* call transform_hint_beartypehintable()
 #  directly, outside of calls to either reduce_hint() and coerce_*_hint().
+#  * Actually, don't do this. See above. Reduce "BeartypeHintable" objects in a
+#    reducer now, please.
 #* Frozensets should be used. Doing so enables memoization, if we wanted.
 #* Call transform_hint_beartypehintable() from sanify_hint_child(), whose
 #  signature *MUST* be augmented accordingly (i.e., to both accept and return
