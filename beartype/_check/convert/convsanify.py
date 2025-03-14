@@ -306,15 +306,6 @@ def sanify_hint_child(
     # Optional parameters.
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-
-    #FIXME: Unsure what this parameter is doing here, honestly. Ideally, this
-    #should *NEVER* be passed. This parameter is only relevant to
-    #sanify_hint_root_*() functions. Since this function is only applied to
-    #child rather than root hints, this parameter should *ALWAYS* remain
-    #unpassed and thus default to "None" here. Rather silly, honestly. This is
-    #probably a vestigial holdover from an ancient time in which we once
-    #attempted to make this function a general-purpose sanifier applicable to
-    #both child and root hints. It's harmless as is... but annoying. *sigh*
     pith_name: Optional[str] = None,
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
@@ -327,18 +318,10 @@ def sanify_hint_child(
     hint unmodified if this hint is both irreducible and unignorable, or
     :obj:`typing.Any` otherwise (i.e., if this hint is ignorable).
 
-    Note that a :data:`None` return unambiguously signifies this hint to be
-    ignorable, even if the passed hint was itself :data:`None`. Why? Because if
-    the passed hint were :data:`None`, then a :pep:`484`-compliant reducer would
-    have already internally reduced this hint to ``type(None)``. This implies
-    that *all* hints are guaranteed to be non-:data:`None` after reduction,
-    which then implies that a return value of :data:`None` unambiguously
-    signifies ignorability.
-
     Parameters
     ----------
     hint : Hint
-        Type hint to be sanified.
+        Child type hint to be sanified.
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
@@ -357,6 +340,14 @@ def sanify_hint_child(
           hint of that return), the magic string ``"return"``.
         * Else, :data:`None`.
 
+        Note that:
+
+        * This parameter should only be passed during exception raising (i.e.,
+          from within the :func:`beartype._check.error` subpackage).
+        * This parameter should *never* be passed during code generation (i.e.,
+          by the :func:`beartype._check.code.codemain.make_check_expr` code
+          factory).
+
         Defaults to :data:`None`.
     typevar_to_hint : TypeVarToHint, optional
         **Type variable lookup table** (i.e., immutable dictionary mapping from
@@ -366,8 +357,8 @@ def sanify_hint_child(
         hints subscripting these parent hints). Defaults to
         :data:`.FROZENDICT_EMPTY`.
     exception_prefix : str, optional
-        Human-readable substring prefixing exception messages raised by this
-        function. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------

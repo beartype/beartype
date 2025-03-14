@@ -59,8 +59,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.convert.convsanify import (
-    sanify_hint_child)
+from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     TupleHintOrHintSanifiedData,
@@ -420,8 +419,7 @@ class ViolationCause(object):
                 # safely sanitized. Why? Because arbitrary arguments are *NOT*
                 # necessarily valid hints. Consider the hint "tuple[()]", where
                 # the argument "()" is invalid as a hint but valid an argument
-                # to that hint. Else, this child hint is PEP-noncompliant. In
-                # this case, preserve this child hint as is.
+                # to that hint.
                 if is_hint_pep(hint_child_insane):
                     # Sanify this child hint into this metadata.
                     hint_or_sane_child_sane = self.sanify_hint_child(
@@ -699,11 +697,6 @@ class ViolationCause(object):
 
             * Else, this hint is irreducible. In this case, this hint
               unmodified.
-
-        See Also
-        --------
-        :func:`.sanify_hint_child`
-            Further details.
         '''
 
         # Sane hint sanified from this possibly insane hint if sanifying this

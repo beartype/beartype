@@ -17,11 +17,13 @@ from beartype.typing import (
     TYPE_CHECKING,
     Optional,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._check.code.codescope import add_func_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import (
     PITH_INDEX_TO_VAR_NAME)
+from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
@@ -32,15 +34,23 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeVarToHint,
+)
 from beartype._data.hint.datahinttyping import (
+    FrozenSetInts,
     LexicalScope,
     TypeStack,
     TypeOrSetOrTupleTypes,
 )
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
 )
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -126,8 +136,7 @@ class HintsMeta(FixedList):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
-        Human-readable substring prefixing the representation of this object in
-        the exception message.
+        Human-readable substring prefixing raised exception messages.
     func_curr_code : Optional[str]
         Either:
 
@@ -196,7 +205,7 @@ class HintsMeta(FixedList):
         Note that this integer is intentionally incremented as an efficient
         low-level scalar rather than as an inefficient high-level
         "itertools.Counter" object. Since both are equally thread-safe in the
-        internal context of this function body, the former is preferable.
+        internal context of this dataclass, the former is preferable.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -456,19 +465,6 @@ class HintsMeta(FixedList):
         # Mandatory parameters.
         hint_or_sane: HintOrHintSanifiedData,
         pith_expr: str,
-
-        #FIXME: Either remove this entirely or render this optional as well! OoO
-        pith_var_name_index: int,
-
-        # Optional parameters.
-        #
-        # Note that these parameters *COULD* simply be passed by "**kwargs", but
-        # that doing so would render the calling conventions for this method
-        # even more opaque. Notably, the caller should *NOT* explicitly pass the
-        # "typevar_to_hint" parameter. Explicit parameters emphasize this.
-
-        #FIXME: Actually, *NO* code passes this anywhere anymore.
-        # indent_level: Optional[int] = None,
     ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
@@ -477,21 +473,26 @@ class HintsMeta(FixedList):
         metadata, enabling this hint to be visited by the ongoing breadth-first
         search (BFS) traversing over this queue.
 
-
         Callers are expected to modify this metadata by modifying these instance
         variables of this higher-level parent object:
 
         * :attr:`indent_level_child`, the 1-based indentation level describing
           the current level of indentation appropriate for this child hint.
+        * :attr:`pith_curr_var_name_index`, the integer suffixing the name of
+          each local variable assigned the value of the current pith in a
+          assignment expression, thus uniquifying this variable in the body of
+          the current wrapper function.
 
         Parameters
         ----------
         hint_or_sane : HintOrHintSanifiedData
             Either a type hint *or* **sanified type hint metadata** (i.e.,
             :data:`.HintSanifiedData` object) to be type-checked.
-
-        All remaining passed keyword parameters are passed as is to the
-        lower-level :meth:`.HintMeta.reinit` method.
+        pith_expr : str
+            **Pith expression** (i.e., Python code snippet evaluating to the
+            value of) the current **pith** (i.e., possibly nested object of the
+            passed parameter or return to be type-checked against the currently
+            visited type hint).
 
         Returns
         -------
@@ -499,15 +500,38 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
-        # assert isinstance(indent_level, NoneTypeOr[int]), (
-        #     f'{repr(indent_level)} neither integer nor "None".')
-
-        # # Default all unpassed parameters to sane defaults.
-        # if indent_level is None:
-        #     indent_level = hints_meta.indent_level_child
 
         # Child hint and type variable lookup table encapsulated by this data.
         hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
+
+        # Recursion guard (i.e., frozen set of the integers uniquely identifying
+        # *ALL* transitive parent hints of this hint), defined as either...
+        parent_hint_ids: FrozenSetInts = (
+            # If there is *NO* currently visited hint, then the passed hint is
+            # the root hint and thus has *NO* parent hint. In this case,
+            # initialize this recursion guard to the empty frozen set. The first
+            # iteration of the parent make_check_expr() code factory calling
+            # this method will then ensure that the follownig "else" branch will
+            # produce the first non-empty recursion guard resembling:
+            #     FROZENSET_EMPTY | {id(root_hint)} ==
+            #     frozenset((id(root_hint),))
+            FROZENSET_EMPTY
+            if self.hint_curr_meta is None else
+            # Else, a parent hint of this child hint is currently being visited.
+            # In this case, produce the frozen set of the integers uniquely
+            # identifying *ALL* transitive parent hints of this child hint
+            # (including this parent hint of this child hint) by:
+            # * Efficiently extending the frozen set of the integers uniquely
+            #   identifying *ALL* transitive parent hints of this parent hint by
+            #   the integer uniquely identifying this parent hint.
+            #
+            # Note that OR-ing a "frozenset" with a "set" produces yet another
+            # "frozenset" and is, indeed, the most efficient means of doing so:
+            #     >>> frozenset(('ok',)) | {'ko',}
+            #     frozenset({'ok', 'ko'})
+            self.hint_curr_meta.parent_hint_ids | {id(
+                self.hint_curr_meta.hint),}
+        )
 
         # Return the placeholder string to be subsequently replaced by code
         # type-checking this child pith against this child hint, produced by
@@ -515,12 +539,15 @@ class HintsMeta(FixedList):
         return self._enqueue_hint_child(
             hint=hint,
             indent_level=self.indent_level_child,
+            parent_hint_ids=parent_hint_ids,
             pith_expr=pith_expr,
-            pith_var_name_index=pith_var_name_index,
+            pith_var_name_index=self.pith_curr_var_name_index,
             typevar_to_hint=typevar_to_hint,
         )
 
-    # ..................{ PRIVATE ~ enqueuers                }..................
+
+    #FIXME: Possibly just inline into the above method call. Previously, we
+    #required these to be separate methods. Now we no longer do. We sigh. *sigh*
     def _enqueue_hint_child(self, **kwargs) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
@@ -560,3 +587,79 @@ class HintsMeta(FixedList):
 
         # Return the placeholder substring associated with this type hint.
         return hint_meta.hint_placeholder
+
+    # ..................{ SANIFIERS                          }..................
+    def sanify_hint_child(
+        self,
+
+        # Mandatory parameters.
+        hint: Hint,
+
+        # Optional parameters.
+        typevar_to_hint: Optional[TypeVarToHint] = None,
+    ) -> HintOrHintSanifiedData:
+        '''
+        Type hint sanified (i.e., sanitized) from the passed **possibly insane
+        child type hint** (i.e., possibly PEP-noncompliant hint transitively
+        subscripting the root type hint annotating a parameter or return of the
+        currently decorated callable) if this hint is both reducible and
+        unignorable, this hint unmodified if this hint is both irreducible and
+        unignorable, or :obj:`typing.Any` otherwise (i.e., if this hint is
+        ignorable).
+
+        This method is merely a convenience wrapper for the lower-level
+        :func:`.sanify_hint_child` sanifier.
+
+        Parameters
+        ----------
+        hint : Hint
+            Child type hint to be sanified.
+        typevar_to_hint : TypeVarToHint, optional
+            **Type variable lookup table** (i.e., immutable dictionary mapping
+            from the :pep:`484`-compliant **type variables** (i.e.,
+            :class:`typing.TypeVar` objects) originally parametrizing the
+            origins of all transitive parent hints of this hint to the
+            corresponding child hints subscripting these parent hints). Defaults
+            to :data:`None`, in which case this table actually defaults to that
+            of the currently visited parent hint of this child hint (i.e.,
+            ``self.hint_curr_meta.typevar_to_hint``).
+
+        Returns
+        -------
+        HintOrHintSanifiedData
+            Either:
+
+            * If the passed hint is reducible to:
+
+              * An ignorable lower-level hint, :obj:`typing.Any`.
+              * An unignorable lower-level hint, either:
+
+                * If reducing this hint to that lower-level hint generates
+                  supplementary metadata, that metadata.
+                * Else, that lower-level hint alone.
+
+            * Else, this hint is irreducible. In this case, this hint unmodified.
+        '''
+        assert isinstance(typevar_to_hint, NoneTypeOr[FrozenDict]), (
+            f'{repr(typevar_to_hint)} neither frozen dictionary nor "None".')
+
+        # If *NO* type variable lookup table was passed, default this table to
+        # that of of the currently visited parent hint of this child hint.
+        if typevar_to_hint is None:
+            typevar_to_hint = self.hint_curr_meta.typevar_to_hint
+        # Else, a type variable lookup table was passed. In this case, preserve
+        # this table as is.
+
+        # Sane hint sanified from this possibly insane hint if sanifying this
+        # hint did not generate supplementary metadata *OR* that metadata
+        # otherwise (i.e., if doing so generated supplementary metadata).
+        hint_or_sane_child = sanify_hint_child(
+            hint=hint,
+            cls_stack=self.cls_stack,
+            conf=self.conf,
+            typevar_to_hint=typevar_to_hint,
+            exception_prefix=self.exception_prefix,
+        )
+
+        # Return this metadata.
+        return hint_or_sane_child

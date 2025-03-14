@@ -170,7 +170,7 @@ def iter_hint_pep484585_generic_bases_unerased(
 
     See Also
     --------
-    :func:`get_hint_pep484585_generic_type_or_none`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
     assert isinstance(typevar_to_hint, FrozenDict), (
@@ -223,10 +223,10 @@ def iter_hint_pep484585_generic_bases_unerased(
         # supplementary metadata).
         hint_or_sane_base = sanify_hint_child(
             hint=hint_bases[hint_bases_index_curr],
-            conf=conf,
-            typevar_to_hint=typevar_to_hint,
             #FIXME: Possibly also pass this, please. Ignorable for now. *shrug*
             # cls_stack=cls_stack,
+            conf=conf,
+            typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
         )
         # print(f'generic {hint} base: {repr(hint_base)}')

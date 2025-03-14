@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
-from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
@@ -292,7 +291,6 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
                     # that constraint here.
                     hints_meta.pith_curr_assign_expr
                 ),
-                pith_var_name_index=hints_meta.pith_curr_var_name_index,
             ),
         )
 
@@ -533,26 +531,19 @@ def _get_hint_pep484604_union_args_flattened(
             # metadata *OR* that metadata otherwise (i.e., if sanifying this
             # child hint generated supplementary metadata).
             #
-            # Note that this sanification is intentionally performed
-            # *BEFORE* the sign of this child hint is tested. Why? Because
-            # some reductions expand an arbitrary hint into a union. This
-            # includes:
+            # Note that this sanification is intentionally performed *BEFORE*
+            # the sign of this child hint is tested. Why? Because some
+            # reductions expand an arbitrary hint into a union. This includes:
             # * PEP 695-compliant type aliases aliased to unions. See above!
             # * The PEP-noncompliant "float' and "complex" types, implicitly
-            #   expanded to the PEP 484-compliant "float | int" and "complex
-            #   | float | int" type hints (respectively) when the
-            #   non-default "conf.is_pep484_tower=True" parameter is
-            #   enabled.
-            # * User-defined "BeartypeHintOverrides", a generalization of
-            #   the prior item.
+            #   expanded to the PEP 484-compliant "float | int" and "complex |
+            #   float | int" type hints (respectively) when the non-default
+            #   "conf.is_pep484_tower=True" parameter is enabled.
+            # * User-defined "BeartypeHintOverrides", a generalization of the
+            #   prior item.
             # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-            hint_or_sane_child = sanify_hint_child(
-                hint=hint_child,
-                cls_stack=hints_meta.cls_stack,
-                conf=hints_meta.conf,
-                typevar_to_hint=hint_child_typevar_to_hint,
-                exception_prefix=hints_meta.exception_prefix,
-            )
+            hint_or_sane_child = hints_meta.sanify_hint_child(
+                hint=hint_child, typevar_to_hint=hint_child_typevar_to_hint)
             # print(f'Sanified union child hint to {repr(hint_or_sane_child)}.')
         # Else, this child hint has already been sanified by a previously
         # performed sanification in this recursive tree of all previously

@@ -44,7 +44,6 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.metasane import (
     HintOrHintSanifiedData,
     get_hint_or_sane_hint,
@@ -113,7 +112,6 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
 )
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
@@ -145,6 +143,7 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
 )
+from beartype._util.hint.utilhinttest import die_as_hint_unsupported
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
@@ -315,12 +314,7 @@ def make_check_expr(
     #   Python code snippet type-checking the root pith expression (i.e.,
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
     func_root_code = hints_meta.enqueue_hint_or_sane_child(
-        hint_or_sane=hint_or_sane,
-        #FIXME: Instead, default this inside the HintsMeta.reinit() method! OoO
-        # parent_hint_ids=FROZENSET_EMPTY,
-        pith_expr=VAR_NAME_PITH_ROOT,
-        pith_var_name_index=hints_meta.pith_curr_var_name_index,
-    )
+        hint_or_sane=hint_or_sane, pith_expr=VAR_NAME_PITH_ROOT)
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
@@ -417,8 +411,8 @@ def make_check_expr(
             #object-oriented logic is itself slow -- so we only do this if we
             #can sufficiently memoize that logic. Consideration!
 
-            # Switch on (as in, pretend Python provides a "case" statement)
-            # the sign identifying this hint to decide which type of code to
+            # Switch on (as in, pretend Python provides a "case" statement) the
+            # sign identifying this hint to decide which type of code to
             # generate to type-check the current pith against the current hint.
             #
             # This decision is intentionally implemented as a linear series of
@@ -429,7 +423,6 @@ def make_check_expr(
             #
             # Consider the standard alternative of sequestering the body of
             # each test implemented below into either:
-            #
             # * A discrete private function called by this function. This
             #   approach requires maintaining a global private dictionary
             #   mapping from each support unsubscripted typing attribute to
@@ -848,22 +841,11 @@ def make_check_expr(
                         # parent tuple...
                         for hint_child_index, hint_child in enumerate(
                             hint_childs):
-                            #FIXME: Refactor most (or even *ALL*) calls to
-                            #sanify_hint_child() to a new
-                            #hints_meta.sanify_hint() method. The repetition
-                            #here is becoming... unnerving.
-
                             # Unignorable sane child hint sanified from this
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
-                            hint_or_sane_child = sanify_hint_child(
-                                hint=hint_child,
-                                cls_stack=hints_meta.cls_stack,
-                                conf=hints_meta.conf,
-                                typevar_to_hint=(
-                                    hints_meta.hint_curr_meta.typevar_to_hint),
-                                exception_prefix=hints_meta.exception_prefix,
-                            )
+                            hint_or_sane_child = hints_meta.sanify_hint_child(
+                                hint_child)
                             # print(f'Sanified fixed tuple {hints_meta.hint_curr_meta}...')
                             # print(f'...child hint {hint_child} -> {hint_or_sane_child}!')
 
@@ -886,8 +868,6 @@ def make_check_expr(
                                             hints_meta.enqueue_hint_or_sane_child(
                                                 hint_or_sane=hint_or_sane_child,
                                                 pith_expr=pith_child_expr,
-                                                pith_var_name_index=(
-                                                    hints_meta.pith_curr_var_name_index),
                                             )
                                         ),
                                     ))
@@ -991,20 +971,10 @@ def make_check_expr(
                     # Unignorable sane child key and value hints sanified from
                     # these possibly ignorable insane child key and value hints
                     # *OR* "None" otherwise (i.e., if ignorable).
-                    hint_or_sane_child_key = sanify_hint_child(
-                        hint=hint_childs[0],
-                        cls_stack=cls_stack,
-                        conf=conf,
-                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-                    hint_or_sane_child_value = sanify_hint_child(
-                        hint=hint_childs[1],  # type: ignore[has-type]
-                        cls_stack=cls_stack,
-                        conf=conf,
-                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                    hint_or_sane_child_key = hints_meta.sanify_hint_child(
+                        hint_childs[0])
+                    hint_or_sane_child_value = hints_meta.sanify_hint_child(
+                        hint_childs[1])
 
                     # If at least one of these child hints are unignorable...
                     if not (
@@ -1036,8 +1006,6 @@ def make_check_expr(
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child_key,
                                         pith_expr=pith_key_var_name,
-                                        pith_var_name_index=(
-                                            hints_meta.pith_curr_var_name_index),
                                     ))
 
                                 # Placeholder string to be subsequently replaced
@@ -1051,8 +1019,6 @@ def make_check_expr(
                                                 hints_meta.pith_curr_var_name),
                                             pith_key_var_name=pith_key_var_name,
                                         ),
-                                        pith_var_name_index=(
-                                            hints_meta.pith_curr_var_name_index),
                                     ))
 
                                 # Code deeply type-checking these child key and
@@ -1086,8 +1052,6 @@ def make_check_expr(
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
                                                     pith_curr_var_name=(
                                                         hints_meta.pith_curr_var_name)),
-                                                pith_var_name_index=(
-                                                    hints_meta.pith_curr_var_name_index),
                                             )
                                         ),
                                     )
@@ -1110,8 +1074,6 @@ def make_check_expr(
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
                                                     hints_meta.pith_curr_var_name)),
-                                            pith_var_name_index=(
-                                                hints_meta.pith_curr_var_name_index),
                                         )
                                     ),
                                 )
@@ -1149,13 +1111,8 @@ def make_check_expr(
                     # Unignorable sane metahint annotating this parent hint
                     # sanified from this possibly ignorable insane metahint *OR*
                     # "None" otherwise (i.e., if this metahint is ignorable).
-                    hint_or_sane_child = sanify_hint_child(
-                        hint=get_hint_pep593_metahint(hint_curr),
-                        conf=conf,
-                        cls_stack=cls_stack,
-                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                    hint_or_sane_child = hints_meta.sanify_hint_child(
+                        get_hint_pep593_metahint(hint_curr))
                     # print(f'[593] metahint: {repr(get_hint_pep593_metahint(hint_curr))}')
                     # print(f'[593] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
                     # print(f'[593] hint_curr: {repr(hint_curr)}; hint_or_sane_child: {repr(hint_or_sane_child)}')
@@ -1219,8 +1176,6 @@ def make_check_expr(
                                     hints_meta.enqueue_hint_or_sane_child(
                                         hint_or_sane=hint_or_sane_child,
                                         pith_expr=hints_meta.pith_curr_assign_expr,
-                                        pith_var_name_index=(
-                                            hints_meta.pith_curr_var_name_index),
                                     )
                                 ),
                             )
@@ -1310,18 +1265,14 @@ def make_check_expr(
                     # Unignorable sane child hint sanified from this possibly
                     # ignorable insane child hint *OR* "None" otherwise (i.e.,
                     # if this child hint is ignorable).
-                    hint_or_sane_child = sanify_hint_child(
+                    hint_or_sane_child = hints_meta.sanify_hint_child(
                         # Possibly ignorable insane child hint subscripting
                         # this parent hint, validated to be the *ONLY* child
                         # hint subscripting this parent hint.
-                        hint=get_hint_pep484585_arg(
+                        get_hint_pep484585_arg(
                             hint=hint_curr,
                             exception_prefix=hints_meta.exception_prefix,
-                        ),
-                        conf=conf,
-                        cls_stack=hints_meta.cls_stack,
-                        typevar_to_hint=hints_meta.hint_curr_meta.typevar_to_hint,
-                        exception_prefix=hints_meta.exception_prefix,
+                        )
                     )
 
                     # If this child hint is unignorable...
@@ -1447,8 +1398,6 @@ def make_check_expr(
                                         # assigned to a local variable by the
                                         # prior expression.
                                         pith_expr=hints_meta.pith_curr_var_name,
-                                        pith_var_name_index=(
-                                            hints_meta.pith_curr_var_name_index),
                                     )
                                 ),
                             )
@@ -1636,11 +1585,8 @@ def make_check_expr(
         #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
         #     disabled by passing such an option to that call.
         else:  # pragma: no cover
-            raise BeartypeDecorHintPepException(
-                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} unrecognized '
-                f'(i.e., either PEP-noncompliant or '
-                f'PEP-compliant but currently unsupported by @beartype).'
-            )
+            die_as_hint_unsupported(
+                hint=hint_curr, exception_prefix=EXCEPTION_PREFIX_HINT)
 
         # ................{ CLEANUP                            }................
         # If prior logic generated *NO* code snippet type-checking the current
@@ -1648,8 +1594,8 @@ def make_check_expr(
         if hints_meta.func_curr_code is None:
             # Assert that a branch above defined the code snippet used below.
             assert hints_meta.hint_curr_expr is not None, (
-                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
-                f'expression undefined.'
+                f'{EXCEPTION_PREFIX_HINT}'
+                f'{repr(hint_curr)} expression undefined.'
             )
 
             # Fall back to a trivial code snippet shallowly type-checking this

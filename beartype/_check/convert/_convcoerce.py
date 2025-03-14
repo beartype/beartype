@@ -55,7 +55,7 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import Hint
-from beartype._check.forward.fwdmain import resolve_hint
+from beartype._check.forward.fwdresolve import resolve_hint
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484.pep484union import (

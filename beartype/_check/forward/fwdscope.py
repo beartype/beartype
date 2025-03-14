@@ -103,7 +103,7 @@ class BeartypeForwardScope(LexicalScope):
             provide both. Why? Because this forward scope is principally
             intended to be passed as the second and last parameter to the
             :func:`eval` builtin, called by the
-            :func:`beartype._check.forward.fwdmain.resolve_hint` function. For
+            :func:`beartype._check.forward.fwdresolve.resolve_hint` function. For
             unknown reasons, :func:`eval` only calls the :meth:`__missing__`
             dunder method of this forward scope when passed only two parameters
             (i.e., when passed only a global scope); :func:`eval` does *not*
@@ -181,7 +181,7 @@ class BeartypeForwardScope(LexicalScope):
         -------
         **This dunder method is susceptible to misuse by third-party frameworks
         that perform call stack inspection.** The higher-level
-        :func:`beartype._check.forward.fwdmain.resolve_hint` internally invokes
+        :func:`beartype._check.forward.fwdresolve.resolve_hint` internally invokes
         this dunder method by calling the :func:`eval` builtin, which then adds
         a new stack frame to the call stack whose ``f_locals`` and ``f_globals``
         attributes are this dictionary. If a third-party framework introspects
@@ -287,7 +287,7 @@ class BeartypeForwardScope(LexicalScope):
             is_frame_caller_beartype(ignore_frames=1) or
             # The caller indirectly resides inside the "beartype" package. This
             # common edge cases arises when the parent
-            # beartype._check.forward.fwdmain.resolve_hint() function calls the
+            # beartype._check.forward.fwdresolve.resolve_hint() function calls the
             # eval() builtin to dynamically evaluate the passed stringified type
             # hint: e.g.,
             #     # This is the eval() call triggering this call.
@@ -300,7 +300,7 @@ class BeartypeForwardScope(LexicalScope):
             # Naturally, that module is external and thus *NOT* inside the
             # "beartype" package. Ignore this stack frame in the hopes that the
             # parent stack frame of that eval() call will be the
-            # "beartype._check.forward.fwdmain" submodule performing that call.
+            # "beartype._check.forward.fwdresolve" submodule performing that call.
             # Look. We don't like this fragility any more than you do, but
             # Python shenanigans leave us little choice. Our paws are tied!
             is_frame_caller_beartype(ignore_frames=2)

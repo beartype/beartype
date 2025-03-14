@@ -310,7 +310,6 @@ class HintLogicQuasiiterable(HintLogicABC):
             hint_child_placeholder=hints_meta.enqueue_hint_or_sane_child(
                 hint_or_sane=hint_or_sane_child,
                 pith_expr=pith_child_var_name,
-                pith_var_name_index=hints_meta.pith_curr_var_name_index,
             ),
         )
 
@@ -399,7 +398,6 @@ class _HintLogicReiterableOrSequence(HintLogicABC):
                     # pith to be deeply type-checked against this child hint.
                     pith_expr=self._pith_child_expr_format(
                         pith_curr_var_name=hints_meta.pith_curr_var_name),
-                    pith_var_name_index=hints_meta.pith_curr_var_name_index,
                 ),
             )
         )

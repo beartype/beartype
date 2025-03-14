@@ -14,14 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
-from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
 from beartype._data.hint.datahintpep import (
     Hint,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import FrozenSetInts
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import SENTINEL
 
@@ -49,32 +47,29 @@ class HintMeta(object):
         (i.e., the :attr:`hint` instance variable).
     indent_level : int
         **Indentation level** (i.e., 1-based positive integer providing the
-        level of indentation appropriate for the currently visited type hint).
-
+        level of indentation appropriate for this hint).
         Indexing the
         :obj:`beartype._data.code.datacodeindent.INDENT_LEVEL_TO_CODE`
         dictionary singleton by this integer efficiently yields the current
         **indendation string** suitable for prefixing each line of code
-        type-checking the current pith against the current type hint.
+        type-checking the current pith against this hint.
     parent_hint_ids : FrozenSetInts
         **Recursion guard** (i.e., frozen set of the integers uniquely
-        identifying all transitive parent hints of this child hint). If the
-        integer identifying a subsequently visited child child hint subscripting
-        this child hint already resides in this recursion guard, that child
-        child hint has already been visited by prior iteration and is thus a
-        recursive hint. Since recursive hints are valid (rather than
-        constituting an unexpected error), the caller is expected to detect this
-        use case and silently short-circuit infinite recursion by avoiding
-        revisiting that already visited hint.
+        identifying all transitive parent hints of this hint). If the integer
+        identifying a subsequently visited child hint subscripting this hint
+        already resides in this recursion guard, that child hint has already
+        been visited by prior iteration and is thus a recursive hint. Since
+        recursive hints are valid (rather than constituting an unexpected
+        error), the caller is expected to detect this use case and silently
+        short-circuit infinite recursion by avoiding revisiting that already
+        visited child hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value
         of) the current **pith** (i.e., possibly nested object of the passed
-        parameter or return to be type-checked against the currently visited
-        type hint).
-
-        Note that this expression is intentionally *not* an assignment
-        expression but rather the original inefficient expression provided by
-        the parent type hint of the currently visited type hint.
+        parameter or return to be type-checked against this hint). Note that
+        this expression is intentionally *not* an assignment expression but
+        rather the original inefficient expression provided by the parent type
+        hint of this hint.
     pith_var_name_index : int
         **Pith variable name index** (i.e., 0-based integer suffixing the name
         of each local variable assigned the value of the current pith in an
@@ -83,19 +78,14 @@ class HintMeta(object):
         :obj:`beartype._check.code.snip.codesnipcls.PITH_INDEX_TO_VAR_NAME`
         dictionary singleton by this integer efficiently yields the current
         **pith variable name** locally storing the value of the current pith.
-
-        Note that this integer is intentionally incremented as an efficient
-        low-level scalar rather than as an inefficient high-level
-        :class:`itertools.Counter` object. Since both are equally thread-safe in
-        the internal context of a function body, the former is preferable.
     typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        each :pep:`484`-compliant type variable parametrizing either the
-        currently visited type hint *or* a transitive parent type hint of this
-        hint to the corresponding non-type variable type hint subscripting that
-        hint). This table enables runtime type-checkers to efficiently reduce a
-        proper subset of type variables to non-type variables at
-        :func:`beartype.beartype` decoration time, including:
+        **Type variable lookup table** (i.e., immutable dictionary mapping
+        from the **type variables** (i.e., :pep:`484`-compliant
+        :class:`typing.TypeVar` objects) originally parametrizing the
+        origins of all transitive parent hints of this hint to the
+        corresponding child hints subscripting those parent hints). This table
+        enables :func:`beartype.beartype` to efficiently reduce a proper subset
+        of type variables to non-type variables at decoration time, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
           example, this table enables runtime type-checkers to reduce the
@@ -180,47 +170,40 @@ class HintMeta(object):
         self,
         hint: Hint,
         indent_level: int,
+        parent_hint_ids: FrozenSetInts,
         pith_expr: str,
         pith_var_name_index: int,
         typevar_to_hint: TypeVarToHint,
-
-        #FIXME: Make mandatory, please.
-        parent_hint_ids: FrozenSetInts = FROZENSET_EMPTY,
     ) -> None:
         '''
-        Reinitialize this type-checking metadata to reflect the currently
-        iterated child type hint subscripting the currently visited type hint.
+        Reinitialize this type-checking metadata to reflect a new type hint.
 
         Parameters
         ----------
         hint : Hint
-            Currently iterated child hint subscripting the currently visited
-            hint.
+            Type hint to describe by this metadata.
         indent_level : int
             1-based indentation level describing the current level of
-            indentation appropriate for this child hint.
+            indentation appropriate for this hint.
         parent_hint_ids : FrozenSetInts
             **Recursion guard** (i.e., frozen set of the integers uniquely
-            identifying all transitive parent hints of this child hint). If the
-            integer identifying a subsequently visited child child hint
-            subscripting this child hint already resides in this recursion
-            guard, that child child hint has already been visited by prior
-            iteration and is thus a recursive hint. Since recursive hints are
-            valid (rather than constituting an unexpected error), the caller is
-            expected to detect this use case and silently short-circuit infinite
-            recursion by avoiding revisiting that already visited hint.
+            identifying all transitive parent hints of this hint).
         pith_expr : str
             Python code snippet evaluating to the child pith to be type-checked
-            against this child hint.
+            against this hint.
         pith_var_name_index : int
             0-based integer suffixing the name of each local variable assigned
             the value of the current pith in an assignment expression.
         typevar_to_hint : TypeVarToHint
             **Type variable lookup table** (i.e., immutable dictionary mapping
-            from the :pep:`484`-compliant **type variables** (i.e.,
+            from the **type variables** (i.e., :pep:`484`-compliant
             :class:`typing.TypeVar` objects) originally parametrizing the
             origins of all transitive parent hints of this hint to the
             corresponding child hints subscripting those parent hints).
+
+        See Also
+        --------
+        Class docstring for further details on the passed parameters.
         '''
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
