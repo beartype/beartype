@@ -15,17 +15,6 @@ This private submodule is intentionally distinct from the lower-level private
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: [PEP 647] Replace "TypeIs" with "TypeIs" everywhere across the
-#@beartype codebase, please. "TypeIs" entirely obsoletes "TypeIs" for all
-#practical intents and purposes (including ours). See also:
-#    https://peps.python.org/pep-0742
-
-#FIXME: [PEP 747] Replace *ALL* parameters of the form "hint: object" throughout
-#the codebase with at least "hint: TypeForm" (or ideally even a more refined
-#subscription like "hint: TypeForm[T]"):
-#    https://peps.python.org/pep-0747
-
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
@@ -85,18 +74,16 @@ if TYPE_CHECKING:
     # callables (including the common first parameter "hint" accepted by most
     # callables) with type forms created by this factory enables static
     # type-checkers to ensure that these objects are actually type hints.
-
+    #
+    # Note that we intentionally alias "TypeForm" to a more concise and readable
+    # name. The term "type form" does *NOT* especially mean much within the
+    # context of Python type hints. The term "hint", on the other hand, does.
     #FIXME: Unconditionally globalize this *AFTER* dropping Python 3.13: e.g.,
     #   from typing import TypeForm as TypeForm
-    #FIXME: Remove "# type: ignore[attr-defined]" *AFTER* "typing_extensions"
-    #officially supports PEP 747.
-    from typing_extensions import TypeForm as TypeForm  # type: ignore[attr-defined]
+    from typing_extensions import TypeForm as Hint
 
     # See discussion below, please. *sigh*
     from typing_extensions import TypeAlias
-
-    Hint: TypeAlias = TypeForm
-    # Hint: TypeAlias = object
 # Else, this submodule is currently being imported at runtime by Python. In this
 # case, dynamically import these type factories from whichever of the standard
 # "typing" module *OR* the third-party "typing_extensions" module declares these
@@ -111,7 +98,7 @@ else:
         'TypeForm', TypeHintTypeFactory(object))
 
 
-    Hint = TypeForm[Any]
+    Hint = TypeForm
     '''
     PEP-compliant type hint matching *any* PEP-compliant type hint.
 
@@ -119,6 +106,13 @@ else:
     unsubscripted :obj:`typing.TypeForm` type hint factory is currently unusable
     as such under Python <= 3.14. This insane hack trivially circumvents that.
     '''
+
+# ....................{ EXPORT                             }....................
+# Explicitly export the "Hint" alias of the "typing.TypeForm" hint factory
+# imported above. Blame mypy.
+__all__ = [
+    'Hint',
+]
 
 # ....................{ HINTS                              }....................
 T_Hint = TypeVar('T_Hint', bound=Hint)

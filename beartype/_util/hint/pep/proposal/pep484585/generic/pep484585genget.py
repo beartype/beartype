@@ -14,10 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
-    Dict,
     List,
     Optional,
-    TypeVar,
     Union,
 )
 from beartype._data.hint.datahintpep import (
@@ -92,7 +90,7 @@ def get_hint_pep484585_generic_args_full(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Generic type hint to be inspected.
     hint_base_target : Optional[Hint] = None
         **Target pseudo-superclass** (i.e., erased transitive pseudo-superclass
@@ -203,9 +201,9 @@ def get_hint_pep484585_generic_args_full(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic_user)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
     # ....................{ PREAMBLE                       }....................
     # If the caller explicitly passed a pseudo-superclass target...
@@ -233,7 +231,7 @@ def get_hint_pep484585_generic_args_full(
     # ....................{ LOCALS                         }....................
     # Metadata describing the passed generic, used to seed the depth-first
     # search (DFS) below with the first pseudo-superclass to be visited.
-    hint_root_data = [
+    hint_root_data: ListHints = [  # pyright: ignore
         # This generic.
         hint,
 
@@ -277,7 +275,7 @@ def get_hint_pep484585_generic_args_full(
     #     the child pseudo-superclasses of this pseudo-superclass.
     #
     # In short, there be dragons here -- albeit extremely efficient dragons.
-    hint_bases_data: _HintBasesData = [hint_root_data]
+    hint_bases_data: _HintBasesData = [hint_root_data]  # type: ignore[list-item]
 
     # Dictionary mapping from each previously observed PEP 484-compliant type
     # variable (i.e., "typing.TypeVar" object) subscripting a transitive
@@ -351,7 +349,7 @@ def get_hint_pep484585_generic_args_full(
             #
             # Note that this tester is mildly slower than the prior test and
             # thus intentionally tested later.
-            is_hint_pep484585_generic_user(hint_base)  # pyright: ignore
+            is_hint_pep484585_generic_user(hint_base)  # type: ignore[arg-type]
         # Then this DFS is currently recursing down into the child
         # pseudo-superclasses of this pseudo-superclass. In this case...
         ):
@@ -372,7 +370,7 @@ def get_hint_pep484585_generic_args_full(
             # pseudo-superclass.
             # print(f'Introspecting generic {hint} unerased bases...')
             hint_child_bases = get_hint_pep484585_generic_bases_unerased(
-                hint=hint_base,  # pyright: ignore
+                hint=hint_base,  # type: ignore[arg-type]
                 exception_cls=exception_cls,
                 exception_prefix=exception_prefix,
             )
@@ -428,7 +426,7 @@ def get_hint_pep484585_generic_args_full(
                 # tuple of zero or more child hints directly subscripting this
                 # pseudo-superclass is semantically equivalent to what that list
                 # would have been (had that list actually been defined).
-                list(get_hint_pep_args(hint_base))
+                list(get_hint_pep_args(hint_base))  # type: ignore[assignment]
                 if is_hint_base_leaf else
                 # Else, this is *NOT* a terminal leaf pseudo-superclass. In this
                 # case, the list of zero or more child hints transitively
@@ -495,8 +493,8 @@ def get_hint_pep484585_generic_args_full(
                             if hint_base_arg_full in typevar_to_hint:
                                 # print(f'Rebubbling hint {typevar_to_hint[hint_base_arg]} into...')
                                 # print(f'base {hint_base} typevar {hint_base_arg}!')
-                                hint_base_args_full[hint_base_arg_full_index] = ( # type: ignore[index]
-                                    typevar_to_hint[hint_base_arg_full])
+                                hint_base_args_full[hint_base_arg_full_index] = (
+                                    typevar_to_hint[hint_base_arg_full])  # type: ignore[index]
                             # Else, *NO* child hint directly subscripting a
                             # sibling pseudo-superclass of this child
                             # pseudo-superclass has already been "bubbled up"
@@ -517,9 +515,9 @@ def get_hint_pep484585_generic_args_full(
                             elif hint_base_super_args_stack:
                                 # print(f'Bubbling hint {hint_base_super_args_stack[-1]} into...')
                                 # print(f'base {hint_base} typevar {hint_base_arg}!')
-                                hint_base_arg_full_new = (
-                                hint_base_args_full[hint_base_arg_full_index]) = (  # type: ignore[index]
-                                    hint_base_super_args_stack.pop())  # pyright: ignore
+                                hint_base_arg_full_new = (  # pyright: ignore
+                                hint_base_args_full[hint_base_arg_full_index]) = (
+                                    hint_base_super_args_stack.pop())  # type: ignore[assignment]
 
                                 # If the currently unassigned child hint
                                 # directly subscripting this parent
@@ -550,8 +548,8 @@ def get_hint_pep484585_generic_args_full(
                                 # this type variable. <-- omg
                                 else:
                                     # print(f'Recording non-typevar {hint_base_arg_full} -> {hint_base_arg_full_new}...')
-                                    typevar_to_hint[hint_base_arg_full] = (  # pyright: ignore
-                                        hint_base_arg_full_new)
+                                    typevar_to_hint[hint_base_arg_full] = (  # type: ignore[index]
+                                        hint_base_arg_full_new)  # type: ignore[assignment]
                             # Else, all child hints directly subscripting this
                             # parent pseudo-superclass have already been
                             # "bubbled up" the class hierarchy. But this hint is
@@ -586,7 +584,7 @@ def get_hint_pep484585_generic_args_full(
                 # pseudo-superclass to be compared against this
                 # unsubscripted target pseudo-superclass.
                 hint_base_type = get_hint_pep484585_generic_type(
-                    hint=hint_base,  # pyright: ignore
+                    hint=hint_base,  # type: ignore[arg-type]
                     exception_cls=exception_cls,
                     exception_prefix=exception_prefix,
                 )
@@ -653,6 +651,10 @@ def get_hint_pep484585_generic_args_full(
             # Else, *NO* target pseudo-superclass is being searched for.
 
     # ....................{ RETURN                         }....................
+    # List of the one or more full child type hints transitively subscripting
+    # the passed generic, to be coerced into a tuple and returned.
+    hint_args_full: ListHints = None  # type: ignore[assignment]
+
     # If the caller passed a target pseudo-superclass...
     if hint_base_target:
         # If the DFS above failed to find the list of zero or more child hints
@@ -686,7 +688,7 @@ def get_hint_pep484585_generic_args_full(
                 #   pseudo-superclass of this target pseudo-superclass has
                 #   already been "bubbled up" into this type variable, preserve
                 #   this type variable as is.
-                hint_args_full[hint_arg_full_index] = typevar_to_hint.get(  # pyright: ignore
+                hint_args_full[hint_arg_full_index] = typevar_to_hint.get(  # type: ignore[call-overload]
                     hint_arg_full, hint_arg_full)  # pyright: ignore
             # Else, this hint is *NOT* a type variable.
     # Else, the caller did *NOT* pass a target pseudo-superclass.
@@ -717,8 +719,8 @@ def get_hint_pep484585_generic_args_full(
     return tuple(hint_args_full)
 
 
-#FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
-#Mypy likes that but pyright hates that. This is why we can't have good things.
+#FIXME: Ideally, this be annotated as ": Hint". Mypy likes that but pyright
+#hates that. This is why we can't have good things.
 _HintBaseData = List[Union[Hint, ListHints, '_HintBaseData']]
 '''
 PEP-compliant type hint matching each **unvisited pseudo-superclass** (i.e.,

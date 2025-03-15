@@ -19,13 +19,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepPanderaException
+from beartype._data.hint.datahintpep import Hint
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pandera(
-    hint: object,
-    exception_prefix: str,
-    *args, **kwargs
-) -> type:
+    hint: Hint, exception_prefix: str, *args, **kwargs) -> type:
     '''
     Reduce the passed **PEP-noncompliant Pandera type hint** (i.e.,
     subscription of *any* PEP-noncompliant type hint factory published by the
@@ -101,7 +99,7 @@ def reduce_hint_pandera(
     Pandas types they semantically alias by reducing the former to the latter.
 
     Caveats
-    ----------
+    -------
     **This reducer does not validate the callable annotated by this Pandera type
     hint to be decorated by the** :func:`pandera.check_types` **decorator.**
     Ideally, this reducer would do so to prevent :mod:`beartype` from emitting
@@ -142,21 +140,20 @@ def reduce_hint_pandera(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         PEP-noncompliant typed NumPy array to return the data type of.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable label prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     type
         Isinstanceable Pandas type subclassed by this Pandera type hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintNonpepPanderaException
         If either:
 
@@ -171,9 +168,6 @@ def reduce_hint_pandera(
 
     # Find and return the first Pandas type subclassed by this Pandera generic
     # type hint.
-    #
-    # Note that we intentionally pass positional rather than keyword arguments
-    # as a microoptimization for improved cache-time efficiency. Gah!
     return get_hint_pep484585_generic_base_in_module_first(
         hint=hint,  # pyright: ignore
         module_name=_PANDAS_MODULE_NAME,
@@ -182,7 +176,7 @@ def reduce_hint_pandera(
     )
 
 # ....................{ PRIVATE ~ constants                }....................
-_PANDAS_MODULE_NAME='pandas'
+_PANDAS_MODULE_NAME = 'pandas'
 '''
 Fully-qualified name of the package providing the third-party Pandas project.
 '''

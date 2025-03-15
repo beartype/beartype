@@ -250,7 +250,7 @@ def reduce_hint(
     # guarantee that the passed hint is *NEVER* equal to the previously reduced
     # instance of this hint unless actually reduced below. This is necessary, as
     # "None" is a valid type hint reduced to "type(None)" below.
-    hint_or_sane_prev: HintOrHintSanifiedData = SENTINEL  # pyright: ignore
+    hint_or_sane_prev: HintOrHintSanifiedData = SENTINEL  # type: ignore[assignment]
 
     # BeartypeHintOverrides.get() method bound to the user-defined
     # "hint_overrides" dictionary of this beartype configuration, localized as a

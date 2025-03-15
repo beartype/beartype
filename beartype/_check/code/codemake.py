@@ -255,7 +255,7 @@ def make_check_expr(
 
     # ..................{ LOCALS ~ hint : child              }..................
     # Currently iterated child hint subscripting the currently visited hint.
-    hint_child: Hint = None  # pyright: ignore
+    hint_child: object = None
 
     # Current unsubscripted typing attribute associated with this child hint
     # (e.g., "Union" if "hint_child == Union[int, str]").
@@ -264,7 +264,7 @@ def make_check_expr(
     # Currently iterated child hint subscripting the currently visited hint *OR*
     # sanified child hint metadata** (i.e., "HintSanifiedData" object describing
     # that child hint).
-    hint_or_sane_child: HintOrHintSanifiedData = None  # pyright: ignore
+    hint_or_sane_child: HintOrHintSanifiedData = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
@@ -845,7 +845,7 @@ def make_check_expr(
                             # possibly ignorable insane child hint *OR* "None"
                             # otherwise (i.e., if this child hint is ignorable).
                             hint_or_sane_child = hints_meta.sanify_hint_child(
-                                hint_child)
+                                hint_child)  # type: ignore[arg-type]
                             # print(f'Sanified fixed tuple {hints_meta.hint_curr_meta}...')
                             # print(f'...child hint {hint_child} -> {hint_or_sane_child}!')
 
@@ -1305,7 +1305,7 @@ def make_check_expr(
                             # parameter to the issubclass() builtin under all
                             # supported Python versions.
                             if hint_child_sign is HintSignUnion:
-                                hint_child = get_hint_pep_args(hint_child)  # pyright: ignore
+                                hint_child = get_hint_pep_args(hint_child)
                             # Else, this child hint is *NOT* a union.
 
                             # If this child hint is *NOT* an issubclassable
@@ -1328,7 +1328,7 @@ def make_check_expr(
 
                             # Python expression evaluating to this child hint.
                             hint_curr_expr = hints_meta.add_func_scope_type_or_types(
-                                hint_child)  # pyright: ignore
+                                hint_child)  # type: ignore[arg-type]
 
                         # Code type-checking this pith against this superclass.
                         hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
@@ -1418,7 +1418,7 @@ def make_check_expr(
                         pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
                         # Python expression evaluating to this generic type.
                         hint_curr_expr=hints_meta.add_func_scope_type_or_types(
-                            hint_curr),  # pyright: ignore
+                            hint_curr),  # type: ignore[arg-type]
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
                 # Else, this hint is *NOT* a generic.

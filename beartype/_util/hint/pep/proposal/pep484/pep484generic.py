@@ -60,10 +60,15 @@ def is_hint_pep484_generic_subscripted(hint: Hint) -> bool:
     # Arbitrary object originating this hint if any *OR* "None" otherwise.
     hint_origin = get_hint_pep_origin_or_none(hint)
 
-    # Return true only if this origin object is an unsubscripted generic type,
-    # which would then imply this hint to be a subscripted generic. If this
-    # strikes you as insane, you're not alone.
-    return is_hint_pep484_generic_unsubscripted(hint_origin)  # pyright: ignore
+    # Return true only if...
+    return (
+        # Some object originates this hint *AND*...
+        hint_origin is not None and
+        # This origin object is an unsubscripted generic type, which would then
+        # imply this hint to be a subscripted generic. If this strikes you as
+        # insane, you're not alone
+        is_hint_pep484_generic_unsubscripted(hint_origin)
+    )
 
 
 #FIXME: Unit test us up, please.

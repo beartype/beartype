@@ -54,15 +54,10 @@ def reduce_hint_pep484585_generic_subscripted(
     ----------
     hint : Hint
         Subscripted generic to be reduced.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
     All remaining passed keyword parameters are silently ignored.
-
-    Returns
-    -------
-    Hint
-        Hint reduced from this subscripted generic.
 
     Returns
     -------
@@ -92,7 +87,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # originating from "typing" type origins for stability reasons.
     if get_hint_pep_origin_or_none(hint) is Generic:
         # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
-        return Any  # pyright: ignore
+        return Any
     # Else, this subscripted generic is *NOT* the "typing.Generic" superclass
     # directly parametrized by one or more type variables and thus *NOT* an
     # ignorable non-protocol.
@@ -109,7 +104,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # Note that we reduce this subscripted IO generic *BEFORE* stripping all
     # child hints subscripting this IO generic, as this reducers requires these
     # child hints to correctly reduce this IO generic.
-    hint_reduced = _reduce_hint_pep484585_generic_io(
+    hint_reduced: HintOrHintSanifiedData = _reduce_hint_pep484585_generic_io(
         hint=hint, exception_prefix=exception_prefix)
 
     # If this hint was reduced to an unsubscripted generic from this subscripted

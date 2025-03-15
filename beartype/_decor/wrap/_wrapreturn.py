@@ -89,7 +89,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # Note that "None" is a semantically meaningful PEP 484-compliant hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish between
     # "None" and an unannotated return with a sentinel.
-    hint_insane: Hint = decor_meta.func_arg_name_to_hint_get(  # pyright: ignore
+    hint_insane: Hint = decor_meta.func_arg_name_to_hint_get(  # type: ignore[assignment]
         ARG_NAME_RETURN, SENTINEL)
     # print(f'func {decor_meta} return hint_insane: {hint_insane}')
 

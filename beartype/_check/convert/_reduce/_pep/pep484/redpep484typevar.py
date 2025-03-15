@@ -93,7 +93,7 @@ def reduce_hint_pep484_typevar(
             #
             # Note that this one-liner looks ridiculous, but actually works.
             # More importantly, this is the fastest way to accomplish this.
-            hint = typevar_to_hint.get(hint, hint)  # pyright: ignore
+            hint = typevar_to_hint.get(hint, hint)  # type: ignore[call-overload]
         # Else, a parent hint of this type variable mapped two or more type
         # variables. In this case, fallback to a slower and more complicated
         # approach that avoids worst-case edge cases. This includes recursion in

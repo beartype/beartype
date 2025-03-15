@@ -325,7 +325,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     # Else, this pith is a type.
 
     # Superclass this pith is required to be a subclass of.
-    hint_child: TypeOrTupleTypes = cause.hint_childs[0]  # pyright: ignore
+    hint_child: TypeOrTupleTypes = cause.hint_childs[0]  # type: ignore[assignment]
 
     # If this superclass is ignorable, then *ALL* types including this pith
     # satisfy this superclass. In this case, return the passed cause as is.

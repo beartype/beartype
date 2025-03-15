@@ -13,17 +13,23 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype  # <-- required to satisfy static type-checking madness :<>
 from abc import ABCMeta
 from beartype.typing import (
-    MutableMapping,
-    Union,
+    TYPE_CHECKING,
+    # MutableMapping,
+    # Union,
 )
 from beartype._cave._cavefast import NoneType
-# from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from threading import RLock
+
+# If @beartype is currently being statically type-checking (e.g., by mypy),
+# import the top-level "beartype" package to assist static type-checkers in
+# resolving @beartype-specific forward references below.
+if TYPE_CHECKING:
+    import beartype
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
@@ -66,25 +72,14 @@ class _TypeHintMeta(ABCMeta):
         obfuscated by Python to be externally inaccessible.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/8665179/2809027
         StackOverflow answers strongly inspiring this implementation.
     '''
 
     # ..................{ INSTANTIATORS                      }..................
-    # Note that "pyright" currently prohibits us from declaring the vastly more
-    # preferable signature both here and for the _make_wrapper() factory:
-    #     def __call__(cls: '_TypeHintMeta', hint: T_Hint) -> (
-    #         'beartype.door.TypeHint[T_Hint]'):  # type: ignore[override]
-    #
-    # Since  "mypy" has no such deficits *AND* since the message emitted by
-    # "pyright" is nonsensical (i.e., 'error: Cannot access attribute "TypeHint"
-    # for class "object"'), we assume "pyright" to be broken in some subtle
-    # respect. Until fixed, we fallback to this coarse signature. *shrug*
-    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases
-    #a new stable release.
-    # def __call__(cls: '_TypeHintMeta', hint: Hint):  # type: ignore[override]
-    def __call__(cls: '_TypeHintMeta', hint: object):  # type: ignore[override]
+    def __call__(cls: '_TypeHintMeta', hint: Hint) -> (
+        'beartype.door.TypeHint'):  # pyright: ignore
         '''
         Factory constructor magically instantiating and returning a singleton
         instance of the concrete subclass of the :class:`beartype.door.TypeHint`
@@ -164,13 +159,13 @@ class _TypeHintMeta(ABCMeta):
         # Type hint wrapper wrapping this hint, efficiently cached such that
         # each hint that evaluates to the same key is wrapped by the same
         # instance of the "TypeHint" class under this Python interpreter.
-        wrapper = (
-            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[attr-defined]
+        wrapper: 'beartype.door.TypeHint' = (
+            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(  # type: ignore[assignment]
                 # Cache this wrapper singleton under this key.
                 key=hint_key,
                 # If a wrapper singleton has yet to be instantiated for this
                 # hint, do so by calling this private factory method...
-                value_factory=cls._make_wrapper,
+                value_factory=cls._make_wrapper,  # type: ignore[arg-type]
                 # ...with this hint passed as the sole parameter to that method.
                 arg=hint,
             ))
@@ -179,10 +174,8 @@ class _TypeHintMeta(ABCMeta):
         return wrapper
 
     # ..................{ PRIVATE                            }..................
-    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases
-    #a new stable release.
-    # def _make_wrapper(cls: '_TypeHintMeta', hint: Hint):
-    def _make_wrapper(cls: '_TypeHintMeta', hint: object):
+    def _make_wrapper(cls: '_TypeHintMeta', hint: Hint) -> (
+        'beartype.door.TypeHint'):  # pyright: ignore
         '''
         **Type hint wrapper factory** (i.e., low-level private method creating
         and returning a new :class:`beartype.door.TypeHint` instance wrapping

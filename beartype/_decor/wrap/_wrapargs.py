@@ -18,12 +18,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    BeartypeDecorHintParamDefaultForwardRefWarning,
-    BeartypeDecorHintParamDefaultViolation,
+    # BeartypeDecorHintParamDefaultForwardRefWarning,
+    # BeartypeDecorHintParamDefaultViolation,
     BeartypeDecorHintPepException,
     BeartypeDecorParamNameException,
 )
-from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
+# from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import (
     Any,
     Optional,
@@ -37,34 +37,34 @@ from beartype._check.metadata.metasane import (
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
-from beartype._conf.confcls import BeartypeConf
+# from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
-    EXCEPTION_PREFIX_DEFAULT,
+    # EXCEPTION_PREFIX_DEFAULT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import (
-    issue_warning,
+    # issue_warning,
     reissue_warnings_placeholder,
 )
 from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
-    ArgMandatory,
+    # ArgMandatory,
     iter_func_args,
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.map.utilmapset import update_mapping
-from beartype._util.text.utiltextmunge import lowercase_str_char_first
+# from beartype._util.text.utiltextmunge import lowercase_str_char_first
 from beartype._util.text.utiltextprefix import (
     prefix_callable_arg_name,
-    prefix_pith_value,
+    # prefix_pith_value,
 )
 from beartype._util.utilobject import SENTINEL
 from warnings import catch_warnings
@@ -175,12 +175,12 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # ..................{ LOCALS ~ hint                      }..................
     # Possibly insane hint annotating the current parameter if any *OR* the
     # sentinel placeholder otherwise (i.e., if this parameter is unannotated).
-    hint_insane: Hint = None  # pyright: ignore
+    hint_insane: Hint = None  # type: ignore[assignment]
 
     # Sane hint annotating the current parameter sanified from this possibly
     # insane hint if sanifying this hint generated no supplementary metadata
     # *OR* that metadata otherwise.
-    hint_or_sane: HintOrHintSanifiedData = None  # pyright: ignore
+    hint_or_sane: HintOrHintSanifiedData = None  # type: ignore[assignment]
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -241,7 +241,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         # Note that "None" is a semantically meaningful PEP 484-compliant type
         # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
         # distinguish between that type hint and unannotated parameters.
-        hint_insane = decor_meta.func_arg_name_to_hint_get(  # pyright: ignore
+        hint_insane = decor_meta.func_arg_name_to_hint_get(  # type: ignore[assignment]
             arg_name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.

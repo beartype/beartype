@@ -58,7 +58,7 @@ def get_hint_pep484585_arg(hint: Hint, exception_prefix: str) -> Hint:
     '''
 
     # Defer to this lower-level getter.
-    return get_hint_pep484585_args(  # pyright: ignore
+    return get_hint_pep484585_args(  # type: ignore[return-value]
         hint=hint, args_len=1, exception_prefix=exception_prefix)
 
 

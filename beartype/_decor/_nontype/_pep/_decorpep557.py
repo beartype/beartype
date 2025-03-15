@@ -14,7 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintDataclassFieldViolation
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahintpep import DictStrToHint
+from beartype._data.hint.datahintpep import (
+    DictStrToHint,
+    Hint,
+)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_DATACLASS_NONFIELDS)
 from beartype._util.cls.utilclsset import set_type_attr
@@ -321,7 +324,7 @@ def beartype_pep557_dataclass(
         #   simply directly introspecting dataclass field type hints. Moreover,
         #   these alternates are unlikely to play nicely with unquoted forward
         #   references under Python >= 3.14.
-        attr_hint = field_name_to_hint_get(attr_name, SENTINEL)
+        attr_hint: Hint = field_name_to_hint_get(attr_name, SENTINEL)  # type: ignore[arg-type]
 
         # If this dataclass attribute is annotated and thus a field...
         if attr_hint is not SENTINEL:

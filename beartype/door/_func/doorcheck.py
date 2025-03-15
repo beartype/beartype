@@ -56,7 +56,7 @@ from beartype._check.checkmake import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
-    # Hint,
+    Hint,
     TypeIs,
 )
 from beartype._data.hint.datahinttyping import T
@@ -65,11 +65,7 @@ from beartype._data.hint.datahinttyping import T
 def die_if_unbearable(
     # Mandatory flexible parameters.
     obj: object,
-
-    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases
-    #a new stable release.
-    # hint: Hint,
-    hint: object,
+    hint: Hint,
 
     # Optional keyword-only parameters.
     *,
@@ -137,66 +133,24 @@ def die_if_unbearable(
     func_raiser(obj)  # pyright: ignore
 
 # ....................{ TESTERS ~ is_bearable              }....................
-#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
-#new stable release.
-# def is_bearable(
-#     # Mandatory flexible parameters.
-#     obj: object,
-#
-#     #FIXME: Uncomment *AFTER*:
-#     #* The new "typing_extensions.TypeForm" support lands.
-#     #* We refactor our "datahintpep" submodule to make factory fallbacks like
-#     #  this subscriptable in the event that "typing_extensions" is unimportable
-#     #  or of an outdated version. *sigh*
-#     # hint: Hint[T],  # type: ignore[type-arg]
-#     # hint: Hint,  # type: ignore[type-arg]
-#     hint: object,
-#
-#     # Optional keyword-only parameters.
-#     *,
-#     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-# ) -> TypeIs[T]:  # pyright: ignore
-
-# Note that this PEP 484- and 647-compliant API is entirely the brain child of
-# @asford (Alex Ford). If this breaks, redirect all ~~vengeance~~ enquiries to:
-#     https://github.com/asford
-@overload
 def is_bearable(
-    obj: object, hint: Type[T], *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-) -> TypeIs[T]:
-    '''
-    :pep:`647`-compliant type guard conditionally narrowing the passed object to
-    the passed type hint *only* when this hint is actually a valid **type**
-    (i.e., subclass of the builtin :class:`type` superclass).
-    '''
+    # Mandatory flexible parameters.
+    obj: object,
+    hint: Hint[T],
 
-
-@overload
-def is_bearable(
-    obj: T, hint: Any, *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-) -> TypeIs[T]:
-    '''
-    :pep:`647`-compliant fallback preserving (rather than narrowing) the type of
-    the passed object when this hint is *not* a valid type (e.g., the
-    :pep:`586`-compliant ``typing.Literal['totally', 'not', 'a', 'type']``,
-    which is clearly *not* a type).
-    '''
-
-
-# Note that the actual implementation of this overload is intentionally:
-# * *NOT* decorated by the standard @overload decorator.
-# * *NOT* annotated by type hints. By PEP 484, only the signatures of
-#   @overload-decorated callables are annotated by type hints.
-def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
+    # Optional keyword-only parameters.
+    *,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+) -> TypeIs[T]:  # pyright: ignore
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
     type hint under the passed beartype configuration.
 
-    Note that this tester is a :pep:`647`-, :pep:`742`-, and
-    :pep:`747`-compliant **smart type guard** (i.e., annotated by either the
-    :pep:`742`-compliant return type hint ``typing.TypeIs[T]`` *or* the
-    :pep:`647`-compliant return type hint ``typing.TypeIs[T]`` conditionally
-    depending on whether the active Python interpreter supports ). Specifically:
+    Note that this tester is a :pep:`647`- and :pep:`742`-compliant **smart type
+    guard** (i.e., annotated by either the :pep:`742`-compliant return type hint
+    ``typing.TypeIs[T]`` *or* the :pep:`647`-compliant return type hint
+    ``typing.TypeGuard[T]`` conditionally depending on whether the active Python
+    interpreter targets Python >= 3.13 or not). Specifically:
 
     * If the passed type hint is a valid **type** (i.e., subclass of the builtin
       :class:`type` superclass), this tester is a general-purpose type guard
@@ -233,7 +187,7 @@ def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
     ----------
     obj : object
         Arbitrary object to be tested against this hint.
-    hint : object
+    hint : Hint
         Type hint to test this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -284,10 +238,7 @@ def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
     return func_tester(obj)  # pyright: ignore
 
 # ....................{ TESTERS                            }....................
-#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
-#new stable release.
-# def is_subhint(subhint: Hint, superhint: Hint) -> bool:
-def is_subhint(subhint: object, superhint: object) -> bool:
+def is_subhint(subhint: Hint, superhint: Hint) -> bool:
     '''
     :data:`True` only if the first passed hint is a **subhint** of the second
     passed hint, in which case this second hint is a **superhint** of this first

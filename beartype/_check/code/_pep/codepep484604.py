@@ -195,7 +195,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         # PEP-noncompliant hints are by definition associated with *NO*
         # meaningful metadata, silently ignore this metadata.
         else:
-            hint_childs_nonpep[hint_child] = None  # pyright: ignore
+            hint_childs_nonpep[hint_child] = None  # type: ignore[index]
 
     # ....................{ NON-PEP                        }....................
     # Initialize the code type-checking the current pith against these arguments

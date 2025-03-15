@@ -35,13 +35,8 @@ from beartype.typing import (
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.hint.datahintpep import T_Hint
 from beartype._data.hint.datahinttyping import T
-
-#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
-#new stable release.
-# from beartype._data.hint.datahintpep import (
-#     T_Hint,
-# )
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -56,11 +51,7 @@ from beartype._util.utilobject import get_object_type_basename
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
-
-#FIXME: Uncomment *AFTER* the third-party "typing_extensions" module releases a
-#new stable release.
-# class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
-class TypeHint(Generic[T], metaclass=_TypeHintMeta):
+class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically
@@ -104,7 +95,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     Attributes
     ----------
-    _args : Tuple[object, ...]
+    _args : Tuple[Hint, ...]
         Tuple of the zero or more low-level child type hints subscripting
         (indexing) the low-level parent type hint wrapped by this wrapper.
     _hint : T_Hint
@@ -126,16 +117,13 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module
-    #releases a new stable release.
-    # def __init__(self, hint: T_Hint) -> None:
-    def __init__(self, hint: T) -> None:
+    def __init__(self, hint: T_Hint) -> None:
         '''
         Initialize this type hint wrapper from the passed low-level type hint.
 
         Parameters
         ----------
-        hint : object
+        hint : Hint
             Low-level type hint to be wrapped by this wrapper.
         '''
 
@@ -210,7 +198,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @method_cached_arg_by_id
     def __eq__(self, other: object) -> bool:
         '''
-        ``True`` only if the low-level type hint wrapped by this wrapper is
+        :data:`True`` only if the low-level type hint wrapped by this wrapper is
         semantically equivalent to the other low-level type hint wrapped by the
         passed wrapper.
 
@@ -226,25 +214,37 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Returns
         -------
         bool
-            ``True`` only if this type hint is equal to that other hint.
+            :data:`True` only if this type hint is equal to that other hint.
         '''
 
-        # If that object is *NOT* a type hint wrapper, defer to either:
-        # * If the class of that object defines a similar __eq__() method
-        #   supporting the "TypeHint" API, that method.
-        # * Else, Python's builtin C-based fallback equality comparator that
-        #   merely compares whether two objects are identical (i.e., share the
-        #   same object ID).
-        if not isinstance(other, TypeHint):
-            return NotImplemented
-        # Else, that object is also a type hint wrapper.
-
-        # Defer to the subclass-specific implementation of this test.
-        return self._is_equal(other)
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            self._is_equal(other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. In this case,
+            # defer to either:
+            # * If the class of that object defines a similar __eq__() method
+            #   supporting the "TypeHint" API, that method.
+            # * Else, Python's builtin C-based fallback equality comparator that
+            #   merely compares whether two objects are identical (i.e., share
+            #   the same object ID).
+            NotImplemented
+        )
 
 
     def __ne__(self, other: object) -> bool:
-        return not (self == other)
+
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            not self._is_equal(other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
 
     # ..................{ DUNDERS ~ compare : rich           }..................
     def __le__(self, other: object) -> bool:
@@ -252,10 +252,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :data:`True` if this hint is a subhint of the passed hint.
         '''
 
-        if not isinstance(other, TypeHint):
-            return NotImplemented
-
-        return self.is_subhint(other)
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            self.is_subhint(other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
 
 
     def __lt__(self, other: object) -> bool:
@@ -263,10 +268,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :data:`True` if this hint is a strict subhint of the passed hint.
         '''
 
-        if not isinstance(other, TypeHint):
-            return NotImplemented
-
-        return self.is_subhint(other) and self != other
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            (self.is_subhint(other) and self != other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
 
 
     def __ge__(self, other: object) -> bool:
@@ -274,10 +284,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :data:`True` if this hint is a superhint of the passed hint.
         '''
 
-        if not isinstance(other, TypeHint):
-            return NotImplemented
-
-        return self.is_superhint(other)
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            self.is_superhint(other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
 
 
     def __gt__(self, other: object) -> bool:
@@ -285,10 +300,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :data:`True` if this hint is a strict superhint of the passed hint.
         '''
 
-        if not isinstance(other, TypeHint):
-            return NotImplemented
-
-        return self.is_superhint(other) and self != other
+        # Return either...
+        return (
+            # If that object is a type hint wrapper, defer to the
+            # subclass-specific implementation of this test;
+            (self.is_superhint(other) and self != other)
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* a type hint wrapper. See __eq__().
+            NotImplemented
+        )
 
     # ..................{ DUNDERS ~ iterable                 }..................
     def __contains__(self, hint_child: 'TypeHint') -> bool:
@@ -414,6 +434,17 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
         Tuple of the zero or more low-level child type hints subscripting
         (indexing) the low-level parent type hint wrapped by this wrapper.
+
+        Caveats
+        -------
+        Note that this property is intentionally *not* annotated as returning a
+        tuple of valid type hints (e.g., ``Tuple[Hint, ...]``). Although most
+        child hints *are* valid type hints outside the context of this parent
+        hint, some are not. Examples include:
+
+        * :pep:`586`-compliant ``typing.Literal[...]`` hints, subscripted by
+          literal objects that are *not* valid hints (e.g.,
+          ``typing.Literal['totally', 'not', 'a', 'type']``,).
         '''
 
         # Who could argue with a working one-liner? Not you. Surely, not you.
@@ -421,10 +452,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     @property
-    #FIXME: Uncomment *AFTER* the third-party "typing_extensions" module
-    #releases a new stable release.
-    # def hint(self) -> T_Hint:
-    def hint(self) -> T:
+    def hint(self) -> T_Hint:
         '''
         **Original type hint** (i.e., low-level PEP-compliant type hint wrapped
         by this wrapper at :meth:`TypeHint.__init__` instantiation time).
@@ -728,6 +756,17 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Subclasses are advised to override this method to set the :attr:`_args`
         instance variable of this wrapper in a subclass-specific manner.
+
+        Caveats
+        -------
+        Note that this method is intentionally *not* annotated as returning a
+        tuple of valid type hints (e.g., ``Tuple[Hint, ...]``). Although most
+        child hints *are* valid type hints outside the context of this parent
+        hint, some are not. Examples include:
+
+        * :pep:`586`-compliant ``typing.Literal[...]`` hints, subscripted by
+          literal objects that are *not* valid hints (e.g.,
+          ``typing.Literal['totally', 'not', 'a', 'type']``,).
         '''
 
         # We are the one-liner. We are the codebase.
@@ -895,10 +934,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # zip() builtin called below silently ignores the trailing portion of
         # the longest iterable exceeding the length of the smallest iterable.
         # Silently permitting that would invite issues throughout this API.
-        if (
-            len(self._args_wrapped_tuple) !=
-            len(branch._args_wrapped_tuple)
-        ):
+        if len(self._args_wrapped_tuple) != len(branch._args_wrapped_tuple):
             # Number of child hints subscripting these two hints.
             self_args_len = len(self._args_wrapped_tuple)
             branch_args_len = len(branch._args_wrapped_tuple)

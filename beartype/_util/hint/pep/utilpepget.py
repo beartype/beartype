@@ -1216,7 +1216,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
     # Return either...
     return (
         # If this sign originates from an origin type, that type;
-        get_hint_pep_origin_or_none(hint)  # pyright: ignore
+        get_hint_pep_origin_or_none(hint)  # type: ignore[return-value]
         if hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE else
         # Else, "None".
         None

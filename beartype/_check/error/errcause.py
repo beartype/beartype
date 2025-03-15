@@ -358,7 +358,7 @@ class ViolationCause(object):
             # Sane hint sanified from this possibly insane hint if sanifying
             # this hint did not generate supplementary metadata *OR* that
             # metadata (i.e., if doing so generated supplementary metadata).
-            hint_or_sane = self.sanify_hint_child(hint)  # pyright: ignore
+            hint_or_sane = self.sanify_hint_child(hint)  # type: ignore[arg-type]
             # print(f'Sanified error parent hint {repr(hint)} to {repr(hint_or_sane)}.')
         # Else, the caller passed a sanified hint. In this case...
         else:
@@ -376,7 +376,7 @@ class ViolationCause(object):
 
         # Sane hint sanified from this possibly insane hint *AND* the
         # corresponding type variable lookup table unpacked from this metadata.
-        self.hint, self.typevar_to_hint = unpack_hint_or_sane(hint_or_sane)  # pyright: ignore
+        self.hint, self.typevar_to_hint = unpack_hint_or_sane(hint_or_sane)  # type: ignore[arg-type]
 
         # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
         # "None" otherwise (i.e., if this hint is PEP-noncompliant).
@@ -411,7 +411,7 @@ class ViolationCause(object):
                 # if sanifying this child hint did not generate supplementary
                 # metadata *OR* that metadata otherwise (i.e., if sanifying this
                 # child hint generated supplementary metadata).
-                hint_or_sane_child_sane: HintOrHintSanifiedData = None  # pyright: ignore
+                hint_or_sane_child_sane: HintOrHintSanifiedData = None  # type: ignore[assignment]
 
                 # If this child hint is PEP-compliant...
                 #

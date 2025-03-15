@@ -406,7 +406,7 @@ def coerce_hint_any(hint: Hint) -> Hint:
         # getter. Why? Because the latter would significantly increase the space
         # consumption of that memoization, as the passed hint has *NOT* yet been
         # deduplicated by the logic performed here.
-        return _hint_repr_to_hint.cache_or_get_cached_value(  # pyright: ignore
+        return _hint_repr_to_hint.cache_or_get_cached_value(  # type: ignore[return-value]
             key=repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 

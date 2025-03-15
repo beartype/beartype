@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Any,
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
@@ -44,7 +45,7 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
     TypeOrSetOrTupleTypes,
 )
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+# from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -629,7 +630,7 @@ class HintsMeta(FixedList):
         HintOrHintSanifiedData
             Either:
 
-            * If the passed hint is reducible to:
+            * If this child hint is reducible to:
 
               * An ignorable lower-level hint, :obj:`typing.Any`.
               * An unignorable lower-level hint, either:
@@ -638,14 +639,52 @@ class HintsMeta(FixedList):
                   supplementary metadata, that metadata.
                 * Else, that lower-level hint alone.
 
-            * Else, this hint is irreducible. In this case, this hint unmodified.
+            * Else, this child hint is irreducible. In this case, this child
+              hint unmodified.
         '''
         assert isinstance(typevar_to_hint, NoneTypeOr[FrozenDict]), (
             f'{repr(typevar_to_hint)} neither frozen dictionary nor "None".')
 
+        #FIXME: *NON-IDEAL.* Ideally, @beartype would actually generate code
+        #recursively type-checking recursive hints. However, doing so is
+        #*EXTREMELY* non-trivial. Why?
+        #
+        #Non-triviality is one obvious concern. For each recursive hint,
+        #@beartype must now:
+        #* Dynamically generate one low-level recursive type-checking function
+        #  unique to that recursive hint.
+        #* Call each such function in higher-level wrapper functions to
+        #  type-check each pith against the corresponding recursive hint.
+        #
+        #Safety is another obvious concern. Generated code *MUST* explicitly
+        #guard against infinitely recursive containers:
+        #    >>> infinite_list = []
+        #    >>> infinite_list.append(infinite_list)  # <-- gg fam
+        #
+        #But guarding against infinitely recursive containers requires
+        #maintaining a (...waitforit) frozen set of the IDs of all previously
+        #type-checked objects, which must then be passed to each dynamically
+        #generated recursive type-checking function that type-checks a specific
+        #recursive hint. Maintaining these frozen sets then incurs a probably
+        #significant space and time complexity hit.
+        #
+        #In short, it's pretty brutal stuff. For now, simply ignoring recursion
+        #strikes us the sanest and certainly simplest approach. *sigh*
+
+        #FIXME: Unit test us up, please.
+        # If the integer identifying this child hint is that of a transitive
+        # parent hint of this child hint, this child hint has already been
+        # visited by the current breadth-first search (BFS) and thus constitutes
+        # a recursive hint. Certainly, various approaches to generating code
+        # type-checking recursive hints exists. @beartype currently embraces the
+        # easiest, fastest, and laziest approach: simply ignore all recursion!
+        if id(hint) in self.hint_curr_meta.parent_hint_ids:
+            return Any
+        # Else, this child hint has *NOT* yet been visited by this BFS.
+        #
         # If *NO* type variable lookup table was passed, default this table to
         # that of of the currently visited parent hint of this child hint.
-        if typevar_to_hint is None:
+        elif typevar_to_hint is None:
             typevar_to_hint = self.hint_curr_meta.typevar_to_hint
         # Else, a type variable lookup table was passed. In this case, preserve
         # this table as is.

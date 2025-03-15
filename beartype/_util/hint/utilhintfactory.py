@@ -50,7 +50,7 @@ class _TypeHintTypeFactoryMeta(type):
         Parameters
         ----------
         cls : Type['TypeHintTypeFactory']
-            :class:`TypeHintTypeFactory` class to be instantiated.
+            :class:`.TypeHintTypeFactory` class to be instantiated.
         type_factory : type
             Arbitrary type to instantiate that class with.
         '''
@@ -76,14 +76,14 @@ class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
 
     Examples
     --------
-    Consider the :pep:`647`-compliant :attr:`typing.TypeIs` type hint
+    Consider the :pep:`647`-compliant :obj:`typing.TypeIs` type hint
     factory, which is only available under Python >= 3.10 or from
     :mod:`typing_extensions` if optionally installed; if neither of those two
-    conditions apply, this factory may be trivially used as a fake ``TypeIs``
-    stand-in returning the builtin :class:`bool` type when subscripted --
-    exactly as advised by :pep:`647` itself: e.g.,
+    conditions apply, this factory may be trivially used as a fake
+    :obj:`typing.TypeIs` stand-in returning the builtin :class:`bool` type when
+    subscripted -- exactly as advised by :pep:`647` itself: e.g.,
 
-    .. code-block:
+    .. code-block:: python
 
        from beartype.typing import TYPE_CHECKING
        from beartype._util.hint.utilhintfactory import TypeHintTypeFactory

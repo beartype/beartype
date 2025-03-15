@@ -232,7 +232,7 @@ def get_func_pith_violation(
         cls_stack=check_meta.cls_stack,
         conf=check_meta.conf,
         func=check_meta.func,
-        hint=hint,  # pyright: ignore
+        hint=hint,  # type: ignore[arg-type]
         obj=pith_value,
         pith_name=pith_name,
         **kwargs

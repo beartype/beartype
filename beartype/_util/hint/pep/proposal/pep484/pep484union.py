@@ -66,4 +66,4 @@ def make_hint_pep484_union(hints: TupleHints) -> Hint:
     # Else, this tuple contains one or more child type hints.
 
     # These are the one-liners of our lives.
-    return Union.__getitem__(hints)  # pyright: ignore
+    return Union.__getitem__(hints)  # type: ignore[return-value]
