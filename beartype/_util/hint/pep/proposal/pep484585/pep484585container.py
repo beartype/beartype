@@ -75,7 +75,7 @@ def reduce_hint_pep484585_itemsview(
             #
             # Look. @beartype doesn't make the insane rules. It just enforces
             # them. We pretend this makes the world a better place.
-            Collection[Tuple[hint_key, hint_value]],  # type: ignore[valid-type]
+            Collection[Tuple[hint_key, hint_value]],  # type: ignore[assignment, valid-type]
             # Constrain this collection to be an instance of the expected
             # "collections.abc.ItemsView" abstract base class (ABC).
             IsInstance[ItemsViewABC],

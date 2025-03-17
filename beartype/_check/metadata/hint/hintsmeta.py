@@ -53,6 +53,8 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
 )
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
+_AnyHint: Hint = Any
+
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
 class HintsMeta(FixedList):
@@ -679,7 +681,7 @@ class HintsMeta(FixedList):
         # type-checking recursive hints exists. @beartype currently embraces the
         # easiest, fastest, and laziest approach: simply ignore all recursion!
         if id(hint) in self.hint_curr_meta.parent_hint_ids:
-            return Any
+            return _AnyHint
         # Else, this child hint has *NOT* yet been visited by this BFS.
         #
         # If *NO* type variable lookup table was passed, default this table to

@@ -188,7 +188,7 @@ def coerce_func_hint_root(
         # thus taken the surprisingly sensible course of silently ignoring this
         # edge case by effectively performing the same type expansion as
         # performed here. *applause*
-        return Union[hint, NotImplementedType]  # pyright: ignore
+        return Union[hint, NotImplementedType]  # type: ignore[return-value]  # pyright: ignore
 
     # Defer to the function-agnostic root hint coercer as a generic fallback.
     return coerce_hint_root(hint=hint, exception_prefix=exception_prefix)

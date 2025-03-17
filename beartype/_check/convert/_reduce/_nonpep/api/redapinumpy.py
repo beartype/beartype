@@ -241,4 +241,4 @@ def reduce_hint_numpy_ndarray(
     hint_validator.get_repr = repr(hint)
 
     # Return this validator annotating the NumPy array type.
-    return Annotated[ndarray, hint_validator]  # pyright: ignore
+    return Annotated[ndarray, hint_validator]  # type: ignore[return-value]  # pyright: ignore

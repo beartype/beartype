@@ -59,7 +59,7 @@ from traceback import format_exc
 #FIXME: Unit test us up, please.
 def resolve_hint(
     # Mandatory parameters.
-    hint: str,
+    hint: Hint,  # is also a str
     decor_meta: BeartypeDecorMeta,
 
     # Optional parameters.
