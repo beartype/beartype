@@ -31,6 +31,7 @@ from beartype.typing import (
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
     import_typing_attr_or_fallback)
+from typing import Any
 
 # ....................{ FACTORIES                          }....................
 #FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
@@ -119,6 +120,11 @@ T_Hint = TypeVar('T_Hint', bound=Hint)
 '''
 :pep:`484`-compliant **type hint type variable** (i.e., :class:`typing.TypeVar`
 object bound to match *only* PEP-compliant type hints).
+'''
+
+ANY: Hint = Any
+'''
+Equivalent to `TypeForm(Any)`.
 '''
 
 # ....................{ HINTS ~ container                  }....................
