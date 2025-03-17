@@ -36,6 +36,7 @@ from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahintpep import (
+    ANY,
     Hint,
     TypeVarToHint,
 )
@@ -679,7 +680,7 @@ class HintsMeta(FixedList):
         # type-checking recursive hints exists. @beartype currently embraces the
         # easiest, fastest, and laziest approach: simply ignore all recursion!
         if id(hint) in self.hint_curr_meta.parent_hint_ids:
-            return Any
+            return ANY
         # Else, this child hint has *NOT* yet been visited by this BFS.
         #
         # If *NO* type variable lookup table was passed, default this table to

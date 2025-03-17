@@ -35,6 +35,7 @@ from beartype._check.metadata.metasane import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
+    ANY,
     Hint,
     SetHints,
     TypeVarToHint,
@@ -295,7 +296,7 @@ def reduce_hint(
         # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
         # implemented as a standard reduction assigned a single sign.
         if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
-            return Any  # pyright: ignore
+            return ANY  # pyright: ignore
         # Else, this hint is *NOT* shallowly ignorable.
 
         # ....................{ PHASE ~ override           }....................
@@ -370,7 +371,7 @@ def reduce_hint(
         # Note that this is an optional short-circuiting optimization avoiding
         # multiple repetitious reductions for each ignorable hint.
         if hint is Any:
-            return Any
+            return ANY
         # Else, this hint is currently unignorable. Continue reducing.
 
         # ....................{ PHASE ~ cached             }....................
@@ -385,7 +386,7 @@ def reduce_hint(
         # Note that, unlike the similar test above, this test is required rather
         # than merely an optimization.
         if hint_or_sane is Any:
-            return Any  # pyright: ignore
+            return ANY  # pyright: ignore
         # Else, this hint is currently unignorable. Continue reducing.
         #
         # If the current and previously reduced instances of this hint are
