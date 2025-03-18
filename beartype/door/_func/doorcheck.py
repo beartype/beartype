@@ -57,6 +57,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,
+    HintBare,
     TypeIs,
 )
 from beartype._data.hint.datahinttyping import T
@@ -136,7 +137,7 @@ def die_if_unbearable(
 def is_bearable(
     # Mandatory flexible parameters.
     obj: object,
-    hint: Hint[T],
+    hint: HintBare[T],
 
     # Optional keyword-only parameters.
     *,

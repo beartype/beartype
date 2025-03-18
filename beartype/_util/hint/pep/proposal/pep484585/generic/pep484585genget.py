@@ -20,6 +20,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.datahintpep import (
     Hint,
+    HintOrNone,
     ListHints,
     TupleHints,
     TypeVarToHint,
@@ -45,7 +46,7 @@ def get_hint_pep484585_generic_args_full(
     hint: Hint,
 
     # Optional parameters.
-    hint_base_target: Optional[Hint] = None,
+    hint_base_target: HintOrNone = None,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> TupleHints:
@@ -238,7 +239,7 @@ def get_hint_pep484585_generic_args_full(
         # Metadata describing the direct parent pseudo-superclass of this
         # generic. By definition, this generic is the root of this n-ary tree
         # and thus has *NO* parent (either direct or indirect).
-        None,
+        None,  # pyright: ignore
     ]
 
     # Unvisited pseudo-superclass stack (i.e., efficiently poppable list of

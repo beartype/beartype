@@ -53,16 +53,16 @@ class HintMeta(object):
         dictionary singleton by this integer efficiently yields the current
         **indendation string** suitable for prefixing each line of code
         type-checking the current pith against this hint.
-    parent_hint_ids : FrozenSetInts
+    recursable_hint_ids : FrozenSetInts
         **Recursion guard** (i.e., frozen set of the integers uniquely
-        identifying all transitive parent hints of this hint). If the integer
-        identifying a subsequently visited child hint subscripting this hint
-        already resides in this recursion guard, that child hint has already
-        been visited by prior iteration and is thus a recursive hint. Since
-        recursive hints are valid (rather than constituting an unexpected
-        error), the caller is expected to detect this use case and silently
-        short-circuit infinite recursion by avoiding revisiting that already
-        visited child hint.
+        identifying all transitive recursable parent hints (i.e., supporting
+        recursion) of this hint). If the integer identifying a subsequently
+        visited child hint subscripting this hint already resides in this
+        recursion guard, that child hint has already been visited by prior
+        iteration and is thus a recursive hint. Since recursive hints are valid
+        (rather than constituting an unexpected error), the caller is expected
+        to detect this use case and silently short-circuit infinite recursion by
+        avoiding revisiting that previously visited recursive child hint.
     pith_expr : str
         **Pith expression** (i.e., Python code snippet evaluating to the value
         of) the current **pith** (i.e., possibly nested object of the passed
@@ -122,9 +122,9 @@ class HintMeta(object):
         'hint',
         'hint_placeholder',
         'indent_level',
-        'parent_hint_ids',
         'pith_expr',
         'pith_var_name_index',
+        'recursable_hint_ids',
         'typevar_to_hint',
     )
 
@@ -134,9 +134,9 @@ class HintMeta(object):
         hint: Hint
         hint_placeholder: str
         indent_level: int
-        parent_hint_ids: FrozenSetInts
         pith_expr: str
         pith_var_name_index: int
+        recursable_hint_ids: FrozenSetInts
         typevar_to_hint: TypeVarToHint
 
     # ..................{ INITIALIZERS                       }..................
@@ -160,9 +160,9 @@ class HintMeta(object):
         # Nullify all remaining instance variables for safety.
         self.hint = SENTINEL  # type: ignore[assignment]
         self.indent_level = SENTINEL  # type: ignore[assignment]
-        self.parent_hint_ids = SENTINEL  # type: ignore[assignment]
         self.pith_expr = SENTINEL  # type: ignore[assignment]
         self.pith_var_name_index = SENTINEL  # type: ignore[assignment]
+        self.recursable_hint_ids = SENTINEL  # type: ignore[assignment]
         self.typevar_to_hint = SENTINEL  # type: ignore[assignment]
 
 
@@ -170,9 +170,9 @@ class HintMeta(object):
         self,
         hint: Hint,
         indent_level: int,
-        parent_hint_ids: FrozenSetInts,
         pith_expr: str,
         pith_var_name_index: int,
+        recursable_hint_ids: FrozenSetInts,
         typevar_to_hint: TypeVarToHint,
     ) -> None:
         '''
@@ -185,9 +185,10 @@ class HintMeta(object):
         indent_level : int
             1-based indentation level describing the current level of
             indentation appropriate for this hint.
-        parent_hint_ids : FrozenSetInts
+        recursable_hint_ids : FrozenSetInts
             **Recursion guard** (i.e., frozen set of the integers uniquely
-            identifying all transitive parent hints of this hint).
+            identifying all transitive recursable parent hints (i.e., supporting
+            recursion) of this hint).
         pith_expr : str
             Python code snippet evaluating to the child pith to be type-checked
             against this hint.
@@ -207,12 +208,12 @@ class HintMeta(object):
         '''
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
-        assert isinstance(parent_hint_ids, frozenset), (
-            f'{repr(parent_hint_ids)} not frozen set.')
         assert isinstance(pith_expr, str), (
             f'{repr(pith_expr)} not string.')
         assert isinstance(pith_var_name_index, int), (
             f'{repr(pith_var_name_index)} not integer.')
+        assert isinstance(recursable_hint_ids, frozenset), (
+            f'{repr(recursable_hint_ids)} not frozen set.')
         assert isinstance(typevar_to_hint, FrozenDict), (
             f'{repr(typevar_to_hint)} not frozen dictionary.')
         assert indent_level >= 1, f'{repr(indent_level)} < 1.'
@@ -222,9 +223,9 @@ class HintMeta(object):
         # Classify all passed parameters.
         self.hint = hint
         self.indent_level = indent_level
-        self.parent_hint_ids = parent_hint_ids
         self.pith_expr = pith_expr
         self.pith_var_name_index = pith_var_name_index
+        self.recursable_hint_ids = recursable_hint_ids
         self.typevar_to_hint = typevar_to_hint
 
     # ..................{ DUNDERS                            }..................
@@ -239,9 +240,9 @@ class HintMeta(object):
             f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
             f'indent_level={repr(self.indent_level)}, '
-            f'parent_hint_ids={repr(self.parent_hint_ids)}, '
             f'pith_expr={repr(self.pith_expr)}, '
             f'pith_var_name_index={repr(self.pith_var_name_index)}, '
+            f'recursable_hint_ids={repr(self.recursable_hint_ids)}, '
             f'typevar_to_hint={repr(self.typevar_to_hint)}'
             f')'
         )

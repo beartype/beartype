@@ -105,8 +105,7 @@ def coerce_func_hint_root(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable label prefixing raised exception messages.
 
     Returns
     -------
@@ -130,8 +129,8 @@ def coerce_func_hint_root(
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
         # print(f'Resolving {repr(decor_meta)} string hint {repr(hint)}...')
-        hint = resolve_hint(  # pyright: ignore
-            hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)
+        hint = resolve_hint(
+            hint=hint, decor_meta=decor_meta, exception_prefix=exception_prefix)  # pyright: ignore
     # Else, this hint is *NOT* stringified.
     #
     # In either case, this hint is guaranteed to now be a non-string hint.

@@ -28,24 +28,26 @@ from beartype._check.convert._reduce._redmap import (
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     HintSanifiedData,
     unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
-    ANY,
+    AnyObject,
     Hint,
     SetHints,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
+    FrozenSetInts,
     TypeStack,
 )
 from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
@@ -57,7 +59,7 @@ from beartype._util.utilobject import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_child(
-    hint: Hint, kwargs: DictStrToAny) -> HintOrHintSanifiedData:
+    hint: Hint, kwargs: DictStrToAny) -> HintOrSanifiedData:
     '''
     Lower-level child type hint reduced (i.e., converted) from the passed
     higher-level child type hint if reducible *or* this child type hint as
@@ -85,7 +87,7 @@ def reduce_hint_child(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If this hint is reducible, either:
@@ -117,10 +119,11 @@ def reduce_hint(
     decor_meta: Optional[BeartypeDecorMeta] = None,
     hints_overridden: Optional[SetHints] = None,
     pith_name: Optional[str] = None,
+    recursable_hint_ids: FrozenSetInts = FROZENSET_EMPTY,
     reductions_count: int = 0,
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
-) -> HintOrHintSanifiedData:
+) -> HintOrSanifiedData:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible *or* this hint as is otherwise (i.e., if
@@ -189,6 +192,17 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
+    recursable_hint_ids : FrozenSetInts, optional
+        **Recursion guard** (i.e., frozen set of the integers uniquely
+        identifying all transitive recursable parent hints (i.e., supporting
+        recursion) of this hint). If the integer identifying a subsequently
+        visited child hint subscripting this hint already resides in this
+        recursion guard, that child hint has already been visited by prior
+        iteration and is thus a recursive hint. Since recursive hints are valid
+        (rather than constituting an unexpected error), the caller is expected
+        to detect this use case and silently short-circuit infinite recursion by
+        avoiding revisiting that previously visited recursive child hint.
+        Defaults to the empty frozen set.
     reductions_count : int, optional
         Current number of total reductions internally performed by *all* calls
         to this function rooted at this function in the current call stack,
@@ -207,7 +221,7 @@ def reduce_hint(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If this hint is reducible, either:
@@ -237,6 +251,8 @@ def reduce_hint(
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(hints_overridden, set), (
         f'{repr(hints_overridden)} not set.')
+    assert isinstance(recursable_hint_ids, frozenset), (
+        f'{repr(recursable_hint_ids)} not frozen set.')
     assert isinstance(reductions_count, int), (
         f'{repr(reductions_count)} not integer.')
     assert isinstance(typevar_to_hint, FrozenDict), (
@@ -251,7 +267,7 @@ def reduce_hint(
     # guarantee that the passed hint is *NEVER* equal to the previously reduced
     # instance of this hint unless actually reduced below. This is necessary, as
     # "None" is a valid type hint reduced to "type(None)" below.
-    hint_or_sane_prev: HintOrHintSanifiedData = SENTINEL  # type: ignore[assignment]
+    hint_or_sane_prev: HintOrSanifiedData = SENTINEL  # type: ignore[assignment]
 
     # BeartypeHintOverrides.get() method bound to the user-defined
     # "hint_overrides" dictionary of this beartype configuration, localized as a
@@ -296,13 +312,18 @@ def reduce_hint(
         # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
         # implemented as a standard reduction assigned a single sign.
         if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
-            return ANY  # pyright: ignore
+            return AnyObject
         # Else, this hint is *NOT* shallowly ignorable.
 
         # ....................{ PHASE ~ override           }....................
         # Attempt to reduce this hint to another hint configured by a
         # user-defined hint override *BEFORE* attempting standard reduction.
         # User preference takes precedence over standard precedent.
+
+        #FIXME: *UGH*. There's *NO* need at all for EAFP. Instead:
+        #* Refactor this to use hint IDs rather than possibly unhashable hints.
+        #* In fact, just refactor this to use our new "recursable_hint_ids"
+        #  appoarch entirely, please.
 
         # Attempt to...
         #
@@ -317,8 +338,8 @@ def reduce_hint(
             # performed reductions...
             if hint not in hints_overridden:
                 # User-defined hint overriding this hint if this beartype
-                # configuration overrides this hint *OR* the sentinel placeholder
-                # otherwise (i.e., if this hist is *NOT* overridden).
+                # configuration overrides this hint *OR* the sentinel otherwise
+                # (i.e., if this hist is *NOT* overridden).
                 # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
                 hint_reduced = conf_hint_overrides_get(hint, SENTINEL)
 
@@ -360,6 +381,7 @@ def reduce_hint(
             decor_meta=decor_meta,
             hints_overridden=hints_overridden,
             pith_name=pith_name,
+            recursable_hint_ids=recursable_hint_ids,
             reductions_count=reductions_count,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
@@ -371,7 +393,7 @@ def reduce_hint(
         # Note that this is an optional short-circuiting optimization avoiding
         # multiple repetitious reductions for each ignorable hint.
         if hint is Any:
-            return ANY
+            return AnyObject
         # Else, this hint is currently unignorable. Continue reducing.
 
         # ....................{ PHASE ~ cached             }....................
@@ -386,7 +408,7 @@ def reduce_hint(
         # Note that, unlike the similar test above, this test is required rather
         # than merely an optimization.
         if hint_or_sane is Any:
-            return ANY  # pyright: ignore
+            return AnyObject
         # Else, this hint is currently unignorable. Continue reducing.
         #
         # If the current and previously reduced instances of this hint are
@@ -401,7 +423,9 @@ def reduce_hint(
         # This possibly context-free hint efficiently reduced to another hint
         # and the resulting type variable lookup table.
         hint, typevar_to_hint = unpack_hint_or_sane(
-            hint_or_sane=hint_or_sane, typevar_to_hint=typevar_to_hint)
+            hint_or_sane=hint_or_sane,
+            typevar_to_hint=typevar_to_hint,
+        )
         # print(f'[reduce_hint] Reduced to {repr(hint)} and type variable lookup table {repr(typevar_to_hint)}.')
 
         # Increment the current number of total reductions internally performed
@@ -439,6 +463,7 @@ def reduce_hint(
         # metadata by reducing to this hint alone.
         hint
         if (
+            #FIXME: Maybe *UNTRUE* if "recursable_hint_ids" is non-empty?
             # This hint reduces to the PEP 484-compliant "typing.Any" singleton,
             # this hint is ignorable. Since this hint is ignorable, any
             # extraneous metadata associated with this hint (e.g., type variable
@@ -471,6 +496,7 @@ def _reduce_hint_uncached(
     decor_meta: Optional[BeartypeDecorMeta],
     hints_overridden: SetHints,
     pith_name: Optional[str],
+    recursable_hint_ids: FrozenSetInts,
     reductions_count: int,
     typevar_to_hint: TypeVarToHint,
     exception_prefix: str,
@@ -529,6 +555,10 @@ def _reduce_hint_uncached(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
+    recursable_hint_ids : FrozenSetInts
+        **Recursion guard** (i.e., frozen set of the integers uniquely
+        identifying all transitive recursable parent hints (i.e., supporting
+        recursion) of this hint).
     reductions_count : int
         Current number of total reductions internally performed by *all* calls
         to this function rooted at this function in the current call stack,
@@ -595,6 +625,7 @@ def _reduce_hint_uncached(
             decor_meta=decor_meta,
             hints_overridden=hints_overridden,
             pith_name=pith_name,
+            recursable_hint_ids=recursable_hint_ids,
             reductions_count=reductions_count,
             typevar_to_hint=typevar_to_hint,
             exception_prefix=exception_prefix,
@@ -611,7 +642,7 @@ def _reduce_hint_cached(
     hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
-) -> HintOrHintSanifiedData:
+) -> HintOrSanifiedData:
     '''
     Lower-level **context-free type hint** (i.e., type hint *not* contextually
     dependent on the kind of class, attribute, callable parameter, or callable
@@ -634,7 +665,7 @@ def _reduce_hint_cached(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the passed hint is reducible, either:

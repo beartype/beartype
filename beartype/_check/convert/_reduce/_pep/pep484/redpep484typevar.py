@@ -22,11 +22,12 @@ from beartype.typing import (
     TypeVar,
 )
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     HintSanifiedData,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
+    HintOrNone,
     TupleHints,
     TypeVarToHint,
 )
@@ -173,7 +174,7 @@ def reduce_hint_pep484_typevar(
 
 
 def reduce_hint_pep484_subscripted_typevars_to_hints(
-    hint: Hint, exception_prefix: str = '', **kwargs) -> HintOrHintSanifiedData:
+    hint: Hint, exception_prefix: str = '', **kwargs) -> HintOrSanifiedData:
     '''
     Reduce the passed :pep:`484`-compliant **subscripted hint** (i.e., object
     produced by subscripting an unsubscripted hint originally parametrized by
@@ -234,7 +235,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the unsubscripted hint (e.g., :class:`typing.Generic`) originating
@@ -330,7 +331,7 @@ def _get_hint_pep484_typevars_to_hints(
     hints: TupleHints,
 
     # Optional parameters.
-    hint_parent: Optional[Hint] = None,
+    hint_parent: HintOrNone = None,
     exception_cls: TypeException = BeartypeDecorHintPep484TypeVarException,
     exception_prefix: str = '',
 ) -> TypeVarToHint:

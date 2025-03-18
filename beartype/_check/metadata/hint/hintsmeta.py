@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
-    Any,
+    # Any,
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
@@ -27,7 +27,7 @@ from beartype._check.code.snip.codesnipcls import (
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
@@ -36,7 +36,7 @@ from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahintpep import (
-    ANY,
+    # ANY,
     Hint,
     TypeVarToHint,
 )
@@ -462,12 +462,7 @@ class HintsMeta(FixedList):
 
     # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_or_sane_child(
-        self,
-
-        # Mandatory parameters.
-        hint_or_sane: HintOrHintSanifiedData,
-        pith_expr: str,
-    ) -> str:
+        self, hint_or_sane: HintOrSanifiedData, pith_expr: str) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
         **type-checking metadata** (i.e., a :class:`.HintMeta` object)
@@ -487,7 +482,7 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint_or_sane : HintOrHintSanifiedData
+        hint_or_sane : HintOrSanifiedData
             Either a type hint *or* **sanified type hint metadata** (i.e.,
             :data:`.HintSanifiedData` object) to be type-checked.
         pith_expr : str
@@ -506,34 +501,37 @@ class HintsMeta(FixedList):
         # Child hint and type variable lookup table encapsulated by this data.
         hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
 
+        #FIXME: This is trash, obviously. Instead, this should probably be
+        #returned by the unpack_hint_or_sane() function.
         # Recursion guard (i.e., frozen set of the integers uniquely identifying
-        # *ALL* transitive parent hints of this hint), defined as either...
-        parent_hint_ids: FrozenSetInts = (
-            # If there is *NO* currently visited hint, then the passed hint is
-            # the root hint and thus has *NO* parent hint. In this case,
-            # initialize this recursion guard to the empty frozen set. The first
-            # iteration of the parent make_check_expr() code factory calling
-            # this method will then ensure that the follownig "else" branch will
-            # produce the first non-empty recursion guard resembling:
-            #     FROZENSET_EMPTY | {id(root_hint)} ==
-            #     frozenset((id(root_hint),))
-            FROZENSET_EMPTY
-            if self.hint_curr_meta is None else
-            # Else, a parent hint of this child hint is currently being visited.
-            # In this case, produce the frozen set of the integers uniquely
-            # identifying *ALL* transitive parent hints of this child hint
-            # (including this parent hint of this child hint) by:
-            # * Efficiently extending the frozen set of the integers uniquely
-            #   identifying *ALL* transitive parent hints of this parent hint by
-            #   the integer uniquely identifying this parent hint.
-            #
-            # Note that OR-ing a "frozenset" with a "set" produces yet another
-            # "frozenset" and is, indeed, the most efficient means of doing so:
-            #     >>> frozenset(('ok',)) | {'ko',}
-            #     frozenset({'ok', 'ko'})
-            self.hint_curr_meta.parent_hint_ids | {id(
-                self.hint_curr_meta.hint),}
-        )
+        # *ALL* transitive recursable parent hints of this hint), defined as
+        # either...
+        recursable_hint_ids: FrozenSetInts = FROZENSET_EMPTY
+        #     # If there is *NO* currently visited hint, then the passed hint is
+        #     # the root hint and thus has *NO* parent hint. In this case,
+        #     # initialize this recursion guard to the empty frozen set. The first
+        #     # iteration of the parent make_check_expr() code factory calling
+        #     # this method will then ensure that the follownig "else" branch will
+        #     # produce the first non-empty recursion guard resembling:
+        #     #     FROZENSET_EMPTY | {id(root_hint)} ==
+        #     #     frozenset((id(root_hint),))
+        #     FROZENSET_EMPTY
+        #     if self.hint_curr_meta is None else
+        #     # Else, a parent hint of this child hint is currently being visited.
+        #     # In this case, produce the frozen set of the integers uniquely
+        #     # identifying *ALL* transitive parent hints of this child hint
+        #     # (including this parent hint of this child hint) by:
+        #     # * Efficiently extending the frozen set of the integers uniquely
+        #     #   identifying *ALL* transitive parent hints of this parent hint by
+        #     #   the integer uniquely identifying this parent hint.
+        #     #
+        #     # Note that OR-ing a "frozenset" with a "set" produces yet another
+        #     # "frozenset" and is, indeed, the most efficient means of doing so:
+        #     #     >>> frozenset(('ok',)) | {'ko',}
+        #     #     frozenset({'ok', 'ko'})
+        #     self.hint_curr_meta.parent_hint_ids | {id(
+        #         self.hint_curr_meta.hint),}
+        # )
 
         # Return the placeholder string to be subsequently replaced by code
         # type-checking this child pith against this child hint, produced by
@@ -541,9 +539,9 @@ class HintsMeta(FixedList):
         return self._enqueue_hint_child(
             hint=hint,
             indent_level=self.indent_level_child,
-            parent_hint_ids=parent_hint_ids,
             pith_expr=pith_expr,
             pith_var_name_index=self.pith_curr_var_name_index,
+            recursable_hint_ids=recursable_hint_ids,
             typevar_to_hint=typevar_to_hint,
         )
 
@@ -599,7 +597,7 @@ class HintsMeta(FixedList):
 
         # Optional parameters.
         typevar_to_hint: Optional[TypeVarToHint] = None,
-    ) -> HintOrHintSanifiedData:
+    ) -> HintOrSanifiedData:
         '''
         Type hint sanified (i.e., sanitized) from the passed **possibly insane
         child type hint** (i.e., possibly PEP-noncompliant hint transitively
@@ -628,7 +626,7 @@ class HintsMeta(FixedList):
 
         Returns
         -------
-        HintOrHintSanifiedData
+        HintOrSanifiedData
             Either:
 
             * If this child hint is reducible to:
@@ -672,6 +670,7 @@ class HintsMeta(FixedList):
         #In short, it's pretty brutal stuff. For now, simply ignoring recursion
         #strikes us the sanest and certainly simplest approach. *sigh*
 
+        #FIXME: Clean up *ALL* references to "parent_hint_ids", please. *sigh*
         #FIXME: Unit test us up, please.
         # If the integer identifying this child hint is that of a transitive
         # parent hint of this child hint, this child hint has already been
@@ -679,13 +678,22 @@ class HintsMeta(FixedList):
         # a recursive hint. Certainly, various approaches to generating code
         # type-checking recursive hints exists. @beartype currently embraces the
         # easiest, fastest, and laziest approach: simply ignore all recursion!
-        if id(hint) in self.hint_curr_meta.parent_hint_ids:
-            return ANY
+
+        #FIXME: *HMMMM.* Right. This needs to be tested *AFTER* sanification,
+        #really. Either that, or we need to be adding pre-sanified hint IDs. The
+        #point is that we need to be consistent about what we're adding and
+        #testing. Post-sanified IDs is probably best, honestly.
+        #FIXME: Actually, this should be tested in the existing
+        #reduce_hint_pep695_unsubscripted() reducer *BEFORE* sanification,
+        #obviously.
+
+        # if id(hint) in self.hint_curr_meta.parent_hint_ids:
+        #     return ANY
         # Else, this child hint has *NOT* yet been visited by this BFS.
-        #
+
         # If *NO* type variable lookup table was passed, default this table to
         # that of of the currently visited parent hint of this child hint.
-        elif typevar_to_hint is None:
+        if typevar_to_hint is None:
             typevar_to_hint = self.hint_curr_meta.typevar_to_hint
         # Else, a type variable lookup table was passed. In this case, preserve
         # this table as is.

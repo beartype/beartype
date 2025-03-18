@@ -13,15 +13,19 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484TypeVarException
 from beartype.typing import (
-    Optional,
+    # Optional,
     TypeVar,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahintpep import (
+    # Hint,
+    HintOrNone,
+    TypeIs,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_hint_pep484_typevar(hint: object) -> bool:
+def is_hint_pep484_typevar(hint: object) -> TypeIs[TypeVar]:
     '''
     :data:`True` only if the passed object is a :pep:`484`-compliant **type
     variable** (i.e., :class:`typing.TypeVar` instance).
@@ -102,7 +106,7 @@ def is_hint_pep484_typevar(hint: object) -> bool:
 #  Kinda fun, but *REALLY* non-trivial -- and probably no one cares. Guh!
 @callable_cached
 def get_hint_pep484_typevar_bound_or_none(
-    hint: TypeVar, exception_prefix: str = '') -> Optional[Hint]:
+    hint: TypeVar, exception_prefix: str = '') -> HintOrNone:
     '''
     PEP-compliant type hint synthesized from all bounded constraints
     parametrizing the passed :pep:`484`-compliant **type variable** (i.e.,

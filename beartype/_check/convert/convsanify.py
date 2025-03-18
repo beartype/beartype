@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.metadata.metasane import HintOrHintSanifiedData
+from beartype._check.metadata.metasane import HintOrSanifiedData
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
@@ -48,7 +48,7 @@ def sanify_hint_root_func(
     # Optional parameters.
     arg_kind: Optional[ArgKind] = None,
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
-) -> HintOrHintSanifiedData:
+) -> HintOrSanifiedData:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane root
     type hint** (i.e., possibly PEP-noncompliant hint annotating the parameter
@@ -113,7 +113,7 @@ def sanify_hint_root_func(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the passed hint is reducible to:
@@ -216,7 +216,7 @@ def sanify_hint_root_statement(
     hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
-) -> HintOrHintSanifiedData:
+) -> HintOrSanifiedData:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -249,7 +249,7 @@ def sanify_hint_root_statement(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the passed hint is reducible to:
@@ -309,7 +309,7 @@ def sanify_hint_child(
     pith_name: Optional[str] = None,
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
-) -> HintOrHintSanifiedData:
+) -> HintOrSanifiedData:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child
     type hint** (i.e., possibly PEP-noncompliant hint transitively subscripting
@@ -362,7 +362,7 @@ def sanify_hint_child(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the passed hint is reducible to:

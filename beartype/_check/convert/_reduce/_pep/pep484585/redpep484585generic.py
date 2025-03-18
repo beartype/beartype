@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Generic,
+from beartype.typing import Generic
+from beartype._data.hint.datahintpep import (
+    AnyObject,
+    Hint,
 )
-from beartype._data.hint.datahintpep import ANY, Hint
-from beartype._check.metadata.metasane import HintOrHintSanifiedData
+from beartype._check.metadata.metasane import HintOrSanifiedData
 from beartype._util.hint.pep.proposal.pep544 import (
     is_hint_pep484_generic_io,
     reduce_hint_pep484_generic_io_to_pep544_protocol,
@@ -26,7 +26,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subscripted(
-    hint: Hint, exception_prefix: str, **kwargs) -> HintOrHintSanifiedData:
+    hint: Hint, exception_prefix: str, **kwargs) -> HintOrSanifiedData:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subscripted
     generic** (i.e., object subscripted by one or more child type hints
@@ -61,7 +61,7 @@ def reduce_hint_pep484585_generic_subscripted(
 
     Returns
     -------
-    HintOrHintSanifiedData
+    HintOrSanifiedData
         Either:
 
         * If the unsubscripted hint (e.g., :class:`typing.Generic`) originating
@@ -87,7 +87,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # originating from "typing" type origins for stability reasons.
     if get_hint_pep_origin_or_none(hint) is Generic:
         # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
-        return ANY
+        return AnyObject
     # Else, this subscripted generic is *NOT* the "typing.Generic" superclass
     # directly parametrized by one or more type variables and thus *NOT* an
     # ignorable non-protocol.
@@ -104,7 +104,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # Note that we reduce this subscripted IO generic *BEFORE* stripping all
     # child hints subscripting this IO generic, as this reducers requires these
     # child hints to correctly reduce this IO generic.
-    hint_reduced: HintOrHintSanifiedData = _reduce_hint_pep484585_generic_io(
+    hint_reduced: HintOrSanifiedData = _reduce_hint_pep484585_generic_io(
         hint=hint, exception_prefix=exception_prefix)
 
     # If this hint was reduced to an unsubscripted generic from this subscripted

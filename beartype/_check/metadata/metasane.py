@@ -231,28 +231,28 @@ class HintSanifiedData(object):
         )
 
 # ....................{ HINTS                              }....................
-HintOrHintSanifiedData = Union[Hint, HintSanifiedData]
+HintOrSanifiedData = Union[Hint, HintSanifiedData]
 '''
 PEP-compliant type hint matching either a type hint *or* **sanified type hint
 metadata** (i.e., :class:`.HintSanifiedData` object).
 '''
 
 
-HintOrHintSanifiedDataUnpacked = Tuple[Hint, TypeVarToHint]
+HintOrSanifiedDataUnpacked = Tuple[Hint, TypeVarToHint]
 '''
 PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
 returned by the :func:`.unpack_hint_or_sane` unpacker.
 '''
 
 # ....................{ HINTS ~ container                  }....................
-DictHintOrHintSanifiedDataToAny = Dict[HintOrHintSanifiedData, Any]
+DictHintOrSanifiedDataToAny = Dict[HintOrSanifiedData, Any]
 '''
 PEP-compliant type hint matching a dictionary mapping from keys that are either
 type hints *or* **sanified type hint metadata** (i.e.,
 :class:`.HintSanifiedData` objects) to arbitrary objects.
 '''
 
-IterableHintOrHintSanifiedData = Iterable[HintOrHintSanifiedData]
+IterableHintOrSanifiedData = Iterable[HintOrSanifiedData]
 '''
 PEP-compliant type hint matching an iterable of zero or more items, each of
 which is either a type hint *or* **sanified type hint metadata** (i.e.,
@@ -260,7 +260,7 @@ which is either a type hint *or* **sanified type hint metadata** (i.e.,
 '''
 
 
-ListHintOrHintSanifiedData = List[HintOrHintSanifiedData]
+ListHintOrSanifiedData = List[HintOrSanifiedData]
 '''
 PEP-compliant type hint matching a list of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
@@ -268,7 +268,7 @@ either a type hint *or* **sanified type hint metadata** (i.e.,
 '''
 
 
-SetHintOrHintSanifiedData = Set[HintOrHintSanifiedData]
+SetHintOrSanifiedData = Set[HintOrSanifiedData]
 '''
 PEP-compliant type hint matching a set of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
@@ -276,7 +276,7 @@ either a type hint *or* **sanified type hint metadata** (i.e.,
 '''
 
 
-TupleHintOrHintSanifiedData = Tuple[HintOrHintSanifiedData, ...]
+TupleHintOrSanifiedData = Tuple[HintOrSanifiedData, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
@@ -285,7 +285,7 @@ either a type hint *or* **sanified type hint metadata** (i.e.,
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_or_sane_hint(hint_or_sane: HintOrHintSanifiedData) -> Hint:
+def get_hint_or_sane_hint(hint_or_sane: HintOrSanifiedData) -> Hint:
     '''
     Hint unpacked (i.e., coerced, converted) from the passed parameter.
 
@@ -318,11 +318,11 @@ def get_hint_or_sane_hint(hint_or_sane: HintOrHintSanifiedData) -> Hint:
 #FIXME: Unit test us up, please.
 def unpack_hint_or_sane(
     # Mandatory parameters.
-    hint_or_sane: HintOrHintSanifiedData,
+    hint_or_sane: HintOrSanifiedData,
 
     # Optional parameters.
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
-) -> HintOrHintSanifiedDataUnpacked:
+) -> HintOrSanifiedDataUnpacked:
     '''
     2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
 

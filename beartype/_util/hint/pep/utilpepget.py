@@ -22,7 +22,10 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahintpep import (
+    Hint,
+    HintOrNone,
+)
 from beartype._data.hint.datahinttyping import (
     # HintSignTrie,
     TypeException,
@@ -831,11 +834,13 @@ def get_hint_pep_origin(
 
     Returns
     -------
-    Optional[Hint]
-        Either:
+    Hint
+        Arbitrary object this hint originates from.
 
-        * If this hint originates from an arbitrary object, that object.
-        * Else, :data:`None`.
+    Raises
+    ------
+    exception_cls
+        If this hint originates from *no* object.
     '''
 
     # Origin originating this hint if any *OR* "None" otherwise.
@@ -853,7 +858,7 @@ def get_hint_pep_origin(
     return hint_origin
 
 
-def get_hint_pep_origin_or_none(hint: Hint) -> Optional[Hint]:
+def get_hint_pep_origin_or_none(hint: Hint) -> HintOrNone:
     '''
     **Unsafe origin object** (i.e., arbitrary object originating the passed
     PEP-compliant type hint but *not* necessarily an isinstanceable class such

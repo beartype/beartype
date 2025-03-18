@@ -37,7 +37,7 @@ from beartype._check.error.errget import (
     get_hint_object_violation,
 )
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     # get_hint_or_sane_hint,
 )
 from beartype._check.signature.sigmake import make_func_signature
@@ -197,7 +197,7 @@ def make_func_tester(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
-    hint_or_sane: HintOrHintSanifiedData,
+    hint_or_sane: HintOrSanifiedData,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -215,7 +215,7 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrHintSanifiedData
+    hint_or_sane : HintOrSanifiedData
         Either a type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object) to be type-checked.
     hint_insane : Hint
@@ -304,7 +304,7 @@ def make_code_raiser_hint_object_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
-    hint_or_sane: HintOrHintSanifiedData,
+    hint_or_sane: HintOrSanifiedData,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix : str,
@@ -321,7 +321,7 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrHintSanifiedData
+    hint_or_sane : HintOrSanifiedData
         Either a type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object) to be type-checked.
     hint_insane : Hint
@@ -369,7 +369,7 @@ def make_code_tester_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
-    hint_or_sane: HintOrHintSanifiedData,
+    hint_or_sane: HintOrSanifiedData,
     conf: BeartypeConf,
     cls_stack: Optional[TypeStack],
     is_param: Optional[bool],
@@ -385,7 +385,7 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrHintSanifiedData
+    hint_or_sane : HintOrSanifiedData
         Either a sanified type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object) to be type-checked.
     hint_insane : Hint

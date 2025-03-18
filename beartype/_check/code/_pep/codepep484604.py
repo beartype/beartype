@@ -11,15 +11,24 @@ snippets type-checking arbitrary objects against union type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Validate that PEP 695-compliant type aliases aliasing recursive unions
+#behave as expected: e.g.,
+#    type recursive_union = int | recursive_union
+#FIXME: Likewise, note that our current *EXTREMELY* non-trivial handling of
+#"hint_overrides"-based recursive unions below could probably benefit from being
+#refactored into the same approach used to handle PEP 695-based recursive
+#unions. The approach below is wild -- and not the good kind of "wild," either.
+
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     HintSanifiedData,
-    DictHintOrHintSanifiedDataToAny,
-    ListHintOrHintSanifiedData,
-    SetHintOrHintSanifiedData,
+    DictHintOrSanifiedDataToAny,
+    ListHintOrSanifiedData,
+    SetHintOrSanifiedData,
     get_hint_or_sane_hint,
     unpack_hint_or_sane,
 )
@@ -154,7 +163,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     # Dictionary whose keys comprise the set of all PEP-compliant child hints
     # subscripting this union and whose values are ignorable. See above.
-    hint_or_sane_childs_pep: DictHintOrHintSanifiedDataToAny = acquire_instance(
+    hint_or_sane_childs_pep: DictHintOrSanifiedDataToAny = acquire_instance(
         dict)
 
     # ....................{ FILTER                         }....................
@@ -318,7 +327,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached
 def _get_hint_pep484604_union_args_flattened(
-    hints_meta: HintsMeta) -> Tuple[HintOrHintSanifiedData, ...]:
+    hints_meta: HintsMeta) -> Tuple[HintOrSanifiedData, ...]:
     '''
     Flattened tuple of the two or more child hints subscripting the passed
     :pep:`604`- or :pep:`484`-compliant union hint such that *all* nested child
@@ -370,7 +379,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     Returns
     -------
-    Tuple[HintOrHintSanifiedData, ...]
+    Tuple[HintOrSanifiedData, ...]
         Flattened tuple of the two or more child hints *or* **sanified child
         hint metadatum** (i.e., :class:`.HintSanifiedData` objects) subscripting
         this parent union hint.
@@ -422,7 +431,7 @@ def _get_hint_pep484604_union_args_flattened(
     # Input stack of all currently unflattened transitive child hints of this
     # union to be visited by the depth-first search (DFS) below, initialized to
     # the non-empty list of all direct child hints of this union.
-    hint_or_insane_childs_unflattened: ListHintOrHintSanifiedData = (
+    hint_or_insane_childs_unflattened: ListHintOrSanifiedData = (
         acquire_instance(list))
     hint_or_insane_childs_unflattened.extend(hint_childs)
 
@@ -432,7 +441,7 @@ def _get_hint_pep484604_union_args_flattened(
     #
     # Note that this stack orders these child hints in the *REVERSE* order that
     # these child hints were originally ordered by the user in this union.
-    hint_or_sane_childs_flattened: ListHintOrHintSanifiedData = (
+    hint_or_sane_childs_flattened: ListHintOrSanifiedData = (
         acquire_instance(list))
 
     # ....................{ LOCALS ~ set                   }....................
@@ -444,7 +453,7 @@ def _get_hint_pep484604_union_args_flattened(
     #   configuration enabling the "hint_overrides" option (e.g., a
     #   "hints_meta.conf.hint_overrides" option whose value is
     #   "BeartypeHintOverrides({int: int | float})".
-    hint_or_insane_childs_sanified: SetHintOrHintSanifiedData = (
+    hint_or_insane_childs_sanified: SetHintOrSanifiedData = (
         acquire_instance(set))
 
     # ....................{ SEARCH                         }....................

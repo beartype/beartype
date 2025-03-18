@@ -59,7 +59,7 @@ from traceback import format_exc
 #FIXME: Unit test us up, please.
 def resolve_hint(
     # Mandatory parameters.
-    hint: Hint,  # is also a str
+    hint: str,
     decor_meta: BeartypeDecorMeta,
 
     # Optional parameters.
@@ -243,7 +243,7 @@ def resolve_hint(
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
     if hint in decor_meta.func_wrappee_scope_nested_names:  # type: ignore[operator]
         # print(f'Preserving string hint {repr(hint)}...')
-        return hint
+        return hint  # pyright: ignore
     # Else, this hint is *NOT* the unqualified name of a parent callable or
     # class of the decorated callable. In this case, this hint *COULD* require
     # dynamic evaluation under the eval() builtin. Why? Because this hint could

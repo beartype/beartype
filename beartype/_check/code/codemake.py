@@ -45,7 +45,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.metadata.metasane import (
-    HintOrHintSanifiedData,
+    HintOrSanifiedData,
     get_hint_or_sane_hint,
 )
 from beartype._check.proposal.checkpep484585generic import (
@@ -153,7 +153,7 @@ from random import getrandbits
 @callable_cached
 def make_check_expr(
     # ..................{ ARGS ~ mandatory                   }..................
-    hint_or_sane: HintOrHintSanifiedData,
+    hint_or_sane: HintOrSanifiedData,
     conf: BeartypeConf,
 
     # ..................{ ARGS ~ optional                    }..................
@@ -198,7 +198,7 @@ def make_check_expr(
 
     Parameters
     ----------
-    hint_or_sane : HintOrHintSanifiedData
+    hint_or_sane : HintOrSanifiedData
         Either a type hint *or* **sanified type hint metadata** (i.e.,
         :data:`.HintSanifiedData` object) to be type-checked.
     conf : BeartypeConf
@@ -264,7 +264,7 @@ def make_check_expr(
     # Currently iterated child hint subscripting the currently visited hint *OR*
     # sanified child hint metadata** (i.e., "HintSanifiedData" object describing
     # that child hint).
-    hint_or_sane_child: HintOrHintSanifiedData = None  # type: ignore[assignment]
+    hint_or_sane_child: HintOrSanifiedData = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint

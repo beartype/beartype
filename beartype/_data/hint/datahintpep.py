@@ -22,6 +22,7 @@ from beartype.typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     Sequence,
     Set,
     Tuple,
@@ -31,7 +32,7 @@ from beartype.typing import (
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
     import_typing_attr_or_fallback)
-from typing import Any
+# from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ FACTORIES                          }....................
 #FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
@@ -79,9 +80,13 @@ if TYPE_CHECKING:
     # Note that we intentionally alias "TypeForm" to a more concise and readable
     # name. The term "type form" does *NOT* especially mean much within the
     # context of Python type hints. The term "hint", on the other hand, does.
-    #FIXME: Unconditionally globalize this *AFTER* dropping Python 3.13: e.g.,
-    #   from typing import TypeForm as TypeForm
-    from typing_extensions import TypeForm as Hint
+
+    #FIXME: Replace "typing_extensions" with simply "typing" this *AFTER*
+    #dropping Python 3.13.
+    from typing_extensions import (  # type: ignore[attr-defined]
+        TypeForm as Hint,
+        TypeForm as HintBare,
+    )
 
     # See discussion below, please. *sigh*
     from typing_extensions import TypeAlias
@@ -99,7 +104,17 @@ else:
         'TypeForm', TypeHintTypeFactory(object))
 
 
-    Hint = TypeForm
+    HintBare = TypeForm
+    '''
+    PEP-compliant type hint matching *any* PEP-compliant type hint.
+
+    This hint should *only* be used to explicitly subscript the
+    :obj:`typing.TypeForm` type hint factory. For all other purposes, the
+    subscripted :data:`.Hint` type hint should be strongly preferred.
+    '''
+
+
+    Hint = TypeForm[Any]
     '''
     PEP-compliant type hint matching *any* PEP-compliant type hint.
 
@@ -109,22 +124,36 @@ else:
     '''
 
 # ....................{ EXPORT                             }....................
-# Explicitly export the "Hint" alias of the "typing.TypeForm" hint factory
-# imported above. Blame mypy.
+# Explicitly export the "Hint" and "HintBare" aliases of the "typing.TypeForm"
+# hint factory imported above. Blame mypy.
 __all__ = [
     'Hint',
+    'HintBare',
 ]
 
 # ....................{ HINTS                              }....................
-T_Hint = TypeVar('T_Hint', bound=Hint)
+#FIXME: Remove this at the earliest possible date, please. This *DEFINITELY*
+#isn't right. Clearly, "mypy" should just accept "Any". We facepalm. </facepalm>
+AnyObject: Hint = Any
 '''
-:pep:`484`-compliant **type hint type variable** (i.e., :class:`typing.TypeVar`
-object bound to match *only* PEP-compliant type hints).
+``mypy``-compatible alias of the standard :obj:`typing.Any` singleton, currently
+required as a crude workaround to force ``mypy`` to accept :obj:`typing.Any` in
+various contexts that ``mypy`` erroneously fails to accept :obj:`typing.Any`.
 '''
 
-ANY: Hint = Any
+
+HintOrNone = Optional[Hint]
 '''
-Equivalent to `TypeForm(Any)`.
+PEP-compliant type hint matching either any PEP-compliant type hint *or*
+:data:`None`.
+'''
+
+
+T_Hint = TypeVar('T_Hint', bound=Hint)
+'''
+:pep:`484`-compliant **type hint type variable** (i.e.,
+:class:`typing.TypeVar` object bound to match *only* PEP-compliant type
+hints).
 '''
 
 # ....................{ HINTS ~ container                  }....................
