@@ -18,7 +18,6 @@ from beartype.typing import (
     # Any,
     Optional,
 )
-from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
 from beartype._check.code.codescope import add_func_scope_type_or_types
@@ -26,33 +25,26 @@ from beartype._check.code.snip.codesnipcls import (
     PITH_INDEX_TO_VAR_NAME)
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
-from beartype._check.metadata.metasane import (
-    HintOrSanifiedData,
-    unpack_hint_or_sane,
+from beartype._check.metadata.hint.hintsane import (
+    HintSane,
+    HintOrSane,
+    # unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
-from beartype._data.hint.datahintpep import (
-    # ANY,
-    Hint,
-    TypeVarToHint,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
-    FrozenSetInts,
     LexicalScope,
     TypeStack,
     TypeOrSetOrTupleTypes,
 )
-# from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
 )
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -299,7 +291,12 @@ class HintsMeta(FixedList):
         self.index_last = -1
 
         # Nullify all remaining passed parameters.
+
+        #FIXME: Does this actually ever change? If not, this should either:
+        #* Just be initialized once in the __init__() method.
+        #* Just be hard-coded as "EXCEPTION_PREFIX" everywhere.
         self.exception_prefix = EXCEPTION_PREFIX
+
         self.func_curr_code = None  # type: ignore[assignment]
         self.func_wrapper_scope = {}
         self.hint_curr_expr = None
@@ -399,8 +396,17 @@ class HintsMeta(FixedList):
         self.indent_level_child = indent_level_curr + 1
         self.indent_curr  = INDENT_LEVEL_TO_CODE[indent_level_curr]
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
+
+        #FIXME: *HMM.* Can't callers just refer to
+        #"hints_meta.hint_curr_meta.pith_expr" instead? This is obfuscatory.
         self.pith_curr_expr = hint_curr_meta.pith_expr
+
+        #FIXME: *HMM.* Can't callers just refer to
+        #"hints_meta.hint_curr_meta.pith_var_name_index" instead? This is
+        #obfuscatory as well.
         self.pith_curr_var_name_index = hint_curr_meta.pith_var_name_index
+
+        #FIXME: *HMM.* Shouldn't this reside in the "HintMeta" class instead?
         self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
             self.pith_curr_var_name_index]
 
@@ -462,7 +468,7 @@ class HintsMeta(FixedList):
 
     # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_or_sane_child(
-        self, hint_or_sane: HintOrSanifiedData, pith_expr: str) -> str:
+        self, hint_sane: HintSane, pith_expr: str) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
         **type-checking metadata** (i.e., a :class:`.HintMeta` object)
@@ -482,9 +488,12 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint_or_sane : HintOrSanifiedData
-            Either a type hint *or* **sanified type hint metadata** (i.e.,
-            :data:`.HintSanifiedData` object) to be type-checked.
+        hint_sane : HintSane
+            **Sanified type hint metadata** (i.e., immutable and thus hashable
+            object encapsulating *all* metadata returned by
+            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
+            describing the type hint currently visited by this BFS.
         pith_expr : str
             **Pith expression** (i.e., Python code snippet evaluating to the
             value of) the current **pith** (i.e., possibly nested object of the
@@ -498,15 +507,15 @@ class HintsMeta(FixedList):
             this child pith against this child type hint.
         '''
 
-        # Child hint and type variable lookup table encapsulated by this data.
-        hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
+        # # Child hint and type variable lookup table encapsulated by this data.
+        # hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
 
         #FIXME: This is trash, obviously. Instead, this should probably be
-        #returned by the unpack_hint_or_sane() function.
+        #performed in the reduce_hint_pep695_unsubscripted() reducer.
         # Recursion guard (i.e., frozen set of the integers uniquely identifying
         # *ALL* transitive recursable parent hints of this hint), defined as
         # either...
-        recursable_hint_ids: FrozenSetInts = FROZENSET_EMPTY
+        # recursable_hint_ids: FrozenSetInts = FROZENSET_EMPTY
         #     # If there is *NO* currently visited hint, then the passed hint is
         #     # the root hint and thus has *NO* parent hint. In this case,
         #     # initialize this recursion guard to the empty frozen set. The first
@@ -537,12 +546,10 @@ class HintsMeta(FixedList):
         # type-checking this child pith against this child hint, produced by
         # enqueueing new type-checking metadata describing this child hint.
         return self._enqueue_hint_child(
-            hint=hint,
+            hint_sane=hint_sane,
             indent_level=self.indent_level_child,
             pith_expr=pith_expr,
             pith_var_name_index=self.pith_curr_var_name_index,
-            recursable_hint_ids=recursable_hint_ids,
-            typevar_to_hint=typevar_to_hint,
         )
 
 
@@ -589,15 +596,7 @@ class HintsMeta(FixedList):
         return hint_meta.hint_placeholder
 
     # ..................{ SANIFIERS                          }..................
-    def sanify_hint_child(
-        self,
-
-        # Mandatory parameters.
-        hint: Hint,
-
-        # Optional parameters.
-        typevar_to_hint: Optional[TypeVarToHint] = None,
-    ) -> HintOrSanifiedData:
+    def sanify_hint_child(self, hint: Hint) -> HintOrSane:
         '''
         Type hint sanified (i.e., sanitized) from the passed **possibly insane
         child type hint** (i.e., possibly PEP-noncompliant hint transitively
@@ -614,61 +613,15 @@ class HintsMeta(FixedList):
         ----------
         hint : Hint
             Child type hint to be sanified.
-        typevar_to_hint : TypeVarToHint, optional
-            **Type variable lookup table** (i.e., immutable dictionary mapping
-            from the :pep:`484`-compliant **type variables** (i.e.,
-            :class:`typing.TypeVar` objects) originally parametrizing the
-            origins of all transitive parent hints of this hint to the
-            corresponding child hints subscripting these parent hints). Defaults
-            to :data:`None`, in which case this table actually defaults to that
-            of the currently visited parent hint of this child hint (i.e.,
-            ``self.hint_curr_meta.typevar_to_hint``).
 
         Returns
         -------
-        HintOrSanifiedData
+        HintOrSane
             Either:
 
-            * If this child hint is reducible to:
-
-              * An ignorable lower-level hint, :obj:`typing.Any`.
-              * An unignorable lower-level hint, either:
-
-                * If reducing this hint to that lower-level hint generates
-                  supplementary metadata, that metadata.
-                * Else, that lower-level hint alone.
-
-            * Else, this child hint is irreducible. In this case, this child
-              hint unmodified.
+            * If this child hint is ignorable, :obj:`typing.Any`.
+            * Else, metadata describing this unignorable sanified child hint.
         '''
-        assert isinstance(typevar_to_hint, NoneTypeOr[FrozenDict]), (
-            f'{repr(typevar_to_hint)} neither frozen dictionary nor "None".')
-
-        #FIXME: *NON-IDEAL.* Ideally, @beartype would actually generate code
-        #recursively type-checking recursive hints. However, doing so is
-        #*EXTREMELY* non-trivial. Why?
-        #
-        #Non-triviality is one obvious concern. For each recursive hint,
-        #@beartype must now:
-        #* Dynamically generate one low-level recursive type-checking function
-        #  unique to that recursive hint.
-        #* Call each such function in higher-level wrapper functions to
-        #  type-check each pith against the corresponding recursive hint.
-        #
-        #Safety is another obvious concern. Generated code *MUST* explicitly
-        #guard against infinitely recursive containers:
-        #    >>> infinite_list = []
-        #    >>> infinite_list.append(infinite_list)  # <-- gg fam
-        #
-        #But guarding against infinitely recursive containers requires
-        #maintaining a (...waitforit) frozen set of the IDs of all previously
-        #type-checked objects, which must then be passed to each dynamically
-        #generated recursive type-checking function that type-checks a specific
-        #recursive hint. Maintaining these frozen sets then incurs a probably
-        #significant space and time complexity hit.
-        #
-        #In short, it's pretty brutal stuff. For now, simply ignoring recursion
-        #strikes us the sanest and certainly simplest approach. *sigh*
 
         #FIXME: Clean up *ALL* references to "parent_hint_ids", please. *sigh*
         #FIXME: Unit test us up, please.
@@ -691,21 +644,14 @@ class HintsMeta(FixedList):
         #     return ANY
         # Else, this child hint has *NOT* yet been visited by this BFS.
 
-        # If *NO* type variable lookup table was passed, default this table to
-        # that of of the currently visited parent hint of this child hint.
-        if typevar_to_hint is None:
-            typevar_to_hint = self.hint_curr_meta.typevar_to_hint
-        # Else, a type variable lookup table was passed. In this case, preserve
-        # this table as is.
-
         # Sane hint sanified from this possibly insane hint if sanifying this
         # hint did not generate supplementary metadata *OR* that metadata
         # otherwise (i.e., if doing so generated supplementary metadata).
         hint_or_sane_child = sanify_hint_child(
             hint=hint,
+            parent_hint_sane=self.hint_curr_meta.hint_sane,
             cls_stack=self.cls_stack,
             conf=self.conf,
-            typevar_to_hint=typevar_to_hint,
             exception_prefix=self.exception_prefix,
         )
 

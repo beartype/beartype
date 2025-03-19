@@ -20,6 +20,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Optional,
@@ -159,6 +160,13 @@ hints).
 # ....................{ HINTS ~ container                  }....................
 #FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
 #Mypy likes that but pyright hates that. This is why we can't have good things.
+
+FrozenSetHints = FrozenSet[Hint]
+'''
+:pep:`585`-compliant type hint matching *any* **type hint frozen set** (i.e.,
+frozen set of zero or more type hints).
+'''
+
 
 IterableHints = Iterable[Hint]
 '''

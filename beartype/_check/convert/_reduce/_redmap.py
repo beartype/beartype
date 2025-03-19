@@ -24,7 +24,7 @@ from beartype._check.convert._reduce._pep.pep484.redpep484 import (
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
     reduce_hint_pep484_typevar,
-    reduce_hint_pep484_subscripted_typevars_to_hints,
+    # reduce_hint_pep484_subscripted_typevars_to_hints,
 )
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subscripted,
@@ -42,7 +42,9 @@ from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
 from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
 from beartype._check.convert._reduce._pep.redpep695 import (
-    reduce_hint_pep695_unsubscripted)
+    reduce_hint_pep695_subscripted,
+    reduce_hint_pep695_unsubscripted,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
@@ -163,14 +165,6 @@ callable reducing those higher- to lower-level hints).
 # ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ PEP (484|585)                      }..................
-    # If this hint is a PEP 484- or 585-compliant subscripted generic:
-    # * Reduce this alias to the unsubscripted generic underlying this
-    #   subscripted generic.
-    # * Map the child hint subscripting this subscripted generic to the PEP
-    #   484-compliant type variable parametrizing that unsubscripted generic.
-    HintSignPep484585GenericSubscripted: (
-        reduce_hint_pep484585_generic_subscripted),
-
     # If this hint is a PEP 484-compliant IO generic base class, reduce this
     # functionally useless hint to the corresponding functionally useful
     # beartype-specific PEP 544-compliant protocol implementing this hint.
@@ -335,20 +329,6 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # reduce this hint to the standard "str" type.
     HintSignLiteralString: reduce_hint_pep675,
 
-    # ..................{ PEP 695                            }..................
-    # If this hint is a PEP 695-compliant subscripted type alias:
-    # * Reduce this alias to the underlying hint referred to by the
-    #   unsubscripted type alias underlying this subscripted type alias.
-    # * Map the PEP 484-compliant type variables parametrizing that
-    #   unsubscripted type alias to the child hints subscripting this
-    #   subscripted type alias.
-    HintSignPep695TypeAliasSubscripted: (
-        reduce_hint_pep484_subscripted_typevars_to_hints),
-
-    # If this hint is a PEP 695-compliant unsubscripted type alias, reduce this
-    # alias to the underlying hint lazily referred to by this alias.
-    HintSignPep695TypeAliasUnsubscripted: reduce_hint_pep695_unsubscripted,
-
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
     # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
@@ -405,6 +385,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # semantically (but *NOT* syntactically) "replaced" by concrete hints to
     # those hints, usually due to higher-level hints initially parametrized by
     # those type variables then being subscripted by those concrete hints.
+    #
     # tl;dr: the "typevar_to_hint" dictionary, which is uncached.
     HintSignTypeVar: reduce_hint_pep484_typevar,
 
@@ -458,6 +439,14 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # HintSignType: reduce_hint_pep484_deprecated,
 
     # ..................{ PEP (484|585)                      }..................
+    # If this hint is a PEP 484- or 585-compliant subscripted generic:
+    # * Reduce this alias to the unsubscripted generic underlying this
+    #   subscripted generic.
+    # * Map the child hint subscripting this subscripted generic to the PEP
+    #   484-compliant type variable parametrizing that unsubscripted generic.
+    HintSignPep484585GenericSubscripted: (
+        reduce_hint_pep484585_generic_subscripted),
+
     # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
     # by an ignorable child hint (e.g., "object", "typing.Any"), silently
     # ignore this child hint by reducing this hint to the "type" superclass.
@@ -529,6 +518,19 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     #   class on the passed type stack.
     # * Else, raise an exception.
     HintSignSelf: reduce_hint_pep673,
+
+    # ..................{ PEP 695                            }..................
+    # If this hint is a PEP 695-compliant subscripted type alias:
+    # * Reduce this alias to the underlying hint referred to by the
+    #   unsubscripted type alias underlying this subscripted type alias.
+    # * Map the PEP 484-compliant type variables parametrizing that
+    #   unsubscripted type alias to the child hints subscripting this
+    #   subscripted type alias.
+    HintSignPep695TypeAliasSubscripted: reduce_hint_pep695_subscripted,
+
+    # If this hint is a PEP 695-compliant unsubscripted type alias, reduce this
+    # alias to the underlying hint lazily referred to by this alias.
+    HintSignPep695TypeAliasUnsubscripted: reduce_hint_pep695_unsubscripted,
 
     # ..................{ PEP 742                            }..................
     # Reduce PEP 742-compliant "typing.TypeIs[...]" type hints to either:

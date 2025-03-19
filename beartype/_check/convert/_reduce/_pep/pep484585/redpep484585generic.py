@@ -12,12 +12,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Generic
+from beartype.typing import (
+    Generic,
+    Optional,
+)
 from beartype._data.hint.datahintpep import (
     AnyObject,
     Hint,
 )
-from beartype._check.metadata.metasane import HintOrSanifiedData
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
+    HintSane,
+)
 from beartype._util.hint.pep.proposal.pep544 import (
     is_hint_pep484_generic_io,
     reduce_hint_pep484_generic_io_to_pep544_protocol,
@@ -26,7 +32,11 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subscripted(
-    hint: Hint, exception_prefix: str, **kwargs) -> HintOrSanifiedData:
+    hint: Hint,
+    parent_hint_sane: Optional[HintSane],
+    exception_prefix: str,
+    **kwargs,
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subscripted
     generic** (i.e., object subscripted by one or more child type hints
@@ -54,6 +64,17 @@ def reduce_hint_pep484585_generic_subscripted(
     ----------
     hint : Hint
         Subscripted generic to be reduced.
+    parent_hint_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this child
+          hint into a fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -61,7 +82,7 @@ def reduce_hint_pep484585_generic_subscripted(
 
     Returns
     -------
-    HintOrSanifiedData
+    HintOrSane
         Either:
 
         * If the unsubscripted hint (e.g., :class:`typing.Generic`) originating
@@ -69,7 +90,7 @@ def reduce_hint_pep484585_generic_subscripted(
           unparametrized by type variables, that unsubscripted hint as is.
         * Else, that unsubscripted hint is parametrized by one or more type
           variables. In this case, the **sanified type hint metadata** (i.e.,
-          :class:`.HintSanifiedData` object) describing this reduction.
+          :class:`.HintSane` object) describing this reduction.
     '''
 
     # Avoid circular import dependencies.
@@ -104,7 +125,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # Note that we reduce this subscripted IO generic *BEFORE* stripping all
     # child hints subscripting this IO generic, as this reducers requires these
     # child hints to correctly reduce this IO generic.
-    hint_reduced: HintOrSanifiedData = _reduce_hint_pep484585_generic_io(
+    hint_reduced: HintOrSane = _reduce_hint_pep484585_generic_io(
         hint=hint, exception_prefix=exception_prefix)
 
     # If this hint was reduced to an unsubscripted generic from this subscripted
@@ -121,7 +142,11 @@ def reduce_hint_pep484585_generic_subscripted(
     #   this unsubscripted generic to all non-type variable hints subscripting
     #   this subscripted generic.
     # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-    hint_reduced = reduce_hint_pep484_subscripted_typevars_to_hints(hint)
+    hint_reduced = reduce_hint_pep484_subscripted_typevars_to_hints(
+        hint=hint,
+        parent_hint_sane=parent_hint_sane,
+        exception_prefix=exception_prefix,
+    )
     # print(f'[reduce_hint_pep484585_generic_subscripted] ...to unsubscripted generic {repr(hint_reduced)}.')
 
     # Return this reduced hint.

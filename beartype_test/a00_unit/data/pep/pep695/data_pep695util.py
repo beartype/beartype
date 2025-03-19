@@ -291,7 +291,7 @@ def unit_test_reduce_hint_pep484_subscripted_typevars_to_hints() -> None:
     from beartype.roar import BeartypeDecorHintPep484TypeVarException
     from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
         reduce_hint_pep484_subscripted_typevars_to_hints)
-    from beartype._check.metadata.metasane import HintSanifiedData
+    from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
     from pytest import raises
@@ -320,12 +320,12 @@ def unit_test_reduce_hint_pep484_subscripted_typevars_to_hints() -> None:
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     assert reduce_hint_pep484_subscripted_typevars_to_hints(
-        irresistible_career[int]) == HintSanifiedData(
+        irresistible_career[int]) == HintSane(
             irresistible_career,
             FrozenDict({irresistible_career_typevars[0]: int,}),
         )
     assert reduce_hint_pep484_subscripted_typevars_to_hints(
-        in_thy[bool, complex]) == HintSanifiedData(
+        in_thy[bool, complex]) == HintSane(
             in_thy,
             FrozenDict({
                 in_thy_typevars[0]: bool,

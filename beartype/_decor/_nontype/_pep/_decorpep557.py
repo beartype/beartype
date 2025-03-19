@@ -297,10 +297,10 @@ def beartype_pep557_dataclass(
         #  work. I suppose what we could do is an optimization resembling:
         #  * If sanifying this hint produced a different type hint than the
         #    original type hint *AND* this new type hint is *NOT* simply a
-        #    "HintSanifiedData" object, replace this old hint with this new hint
+        #    "HintSane" object, replace this old hint with this new hint
         #    in the "field_name_to_hint" dictionary.
         #  * Else, preserve this existing hint in this dictionary as is. If a
-        #    "HintSanifiedData" object was produced, we'll just have to throw
+        #    "HintSane" object was produced, we'll just have to throw
         #    that away for the moment. Alternately, we could *TRY* to generalize
         #    is_bearable() and die_if_unbearable() to accept these objects.
         #    But... probably not worth it for the moment. It is what it is.
@@ -308,7 +308,7 @@ def beartype_pep557_dataclass(
         #  reason we have to call the public-facing is_bearable() and
         #  die_if_unbearable() functions. Instead:
         #  * Define new private-facing variants of those functions transparently
-        #    accepting a "hint: HintOrSanifiedData" parameter. Call them:
+        #    accepting a "hint: HintOrSane" parameter. Call them:
         #    * is_hint_or_sane_bearable().
         #    * die_if_hint_or_sane_unbearable().
         #    In theory, this shouldn't be *TOO* hard. Indeed, we should be able

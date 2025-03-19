@@ -63,8 +63,8 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.metadata.metasane import (
-    HintOrSanifiedData,
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
     get_hint_or_sane_hint,
 )
 from beartype._check.proposal.checkpep484585generic import (
@@ -172,7 +172,7 @@ from random import getrandbits
 @callable_cached
 def make_check_expr(
     # ..................{ ARGS ~ mandatory                   }..................
-    hint_or_sane: HintOrSanifiedData,
+    hint_or_sane: HintOrSane,
     conf: BeartypeConf,
 
     # ..................{ ARGS ~ optional                    }..................
@@ -217,9 +217,9 @@ def make_check_expr(
 
     Parameters
     ----------
-    hint_or_sane : HintOrSanifiedData
+    hint_or_sane : HintOrSane
         Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSanifiedData` object) to be type-checked.
+        :data:`.HintSane` object) to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -281,9 +281,9 @@ def make_check_expr(
     hint_child_sign: Optional[HintSign] = None
 
     # Currently iterated child hint subscripting the currently visited hint *OR*
-    # sanified child hint metadata** (i.e., "HintSanifiedData" object describing
+    # sanified child hint metadata** (i.e., "HintSane" object describing
     # that child hint).
-    hint_or_sane_child: HintOrSanifiedData = None  # type: ignore[assignment]
+    hint_or_sane_child: HintOrSane = None  # type: ignore[assignment]
 
     # ..................{ LOCALS ~ hint : childs             }..................
     # Current tuple of all child hints subscripting the currently visited hint
