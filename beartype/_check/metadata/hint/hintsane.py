@@ -23,27 +23,37 @@ from beartype.typing import (
     Union,
 )
 from beartype._data.hint.datahintpep import (
+    FrozenSetHints,
     Hint,
     TypeVarToHint,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
-class HintSanifiedData(object):
+class HintSane(object):
     '''
-    **Beartype sanified type hint metadata** (i.e., immutable and thus hashable
-    object encapsulating *all* metadata returned by
-    :mod:`beartype._check.convert.convsanify` functions after sanitizing a
-    possibly PEP-noncompliant type hint into a fully PEP-compliant type hint).
+    **Sanified type hint metadata** (i.e., immutable and thus hashable object
+    encapsulating *all* metadata returned by
+    :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing a
+    possibly PEP-noncompliant hint into a fully PEP-compliant hint).
 
-    For efficiency, these functions only conditionally return this metadata for
-    the proper subset of type hints that actually modify this metadata; since
-    most type hints do *not* modify this metadata, these functions typically
-    only return the sanified type hint (rather than both that hint and all of
-    this other ancillary metadata).
+    For efficiency, sanifiers only conditionally return this metadata for the
+    proper subset of hints associated with this metadata; since most hints are
+    *not* associated with this metadata, sanifiers typically only return a
+    sanified type hint (rather than both that hint *and* this metadata).
+
+    Caveats
+    -------
+    **Callers should avoid modifying this metadata.** For efficiency, this class
+    does *not* explicitly prohibit modification of this metadata. Nonetheless,
+    this class is implemented under the assumption that callers *never* modify
+    this metadata. This metadata is effectively frozen. Any attempts to modify
+    this metadata *will* induce nondeterminism throughout :mod:`beartype`,
+    especially in memoized callables accepting and/or returning this metadata.
 
     Attributes
     ----------
@@ -51,12 +61,48 @@ class HintSanifiedData(object):
         Type hint sanified (i.e., sanitized) from a possibly insane type hint
         into a hopefully sane type hint by a
         :mod:`beartype._check.convert.convsanify` function.
+    recursable_hints : FrozenSetHints
+        **Recursion guard** (i.e., frozen set of all transitive recursable
+        parent hints (i.e., supporting recursion) of this hint). If the a
+        subsequently visited child hint subscripting this hint already resides
+        in this recursion guard, that child hint has already been visited by
+        prior iteration and is thus a recursive hint. Since recursive hints are
+        valid (rather than constituting an unexpected error), the caller is
+        expected to detect this use case and silently short-circuit infinite
+        recursion by avoiding revisiting that already visited recursive hint.
     typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** describing this type hint, defined as an
-        immutable dictionary mapping from the :pep:`484`-compliant **type
-        variables** (i.e., :class:`typing.TypeVar` objects) originally
-        parametrizing the origin of this type hint if any to the corresponding
-        child type hints subscripting this type hint.
+        **Type variable lookup table** (i.e., immutable dictionary mapping from
+        the **type variables** (i.e., :pep:`484`-compliant
+        :class:`typing.TypeVar` objects) originally parametrizing the origins of
+        all transitive parent hints of this hint if any to the corresponding
+        child hints subscripting those parent hints). This table enables
+        :func:`beartype.beartype` to efficiently reduce a proper subset of type
+        variables to non-type variables at decoration time, including:
+
+        * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
+          example, this table enables runtime type-checkers to reduce the
+          semantically useless pseudo-superclass ``list[T]`` to the
+          semantically useful pseudo-superclass ``list[int]`` at decoration time
+          in the following example:
+
+          .. code-block:: python
+
+             class MuhGeneric[T](list[T]): pass
+
+             @beartype
+             def muh_func(muh_arg: MuhGeneric[int]) -> None: pass
+
+        * :pep:`695`-compliant **subscripted type aliases.** For example, this
+          table enables runtime type-checkers to reduce the semantically useless
+          type hint ``muh_type_alias[float]`` to the semantically useful type
+          hint ``float | int`` at decoration time in the following example:
+
+          .. code-block:: python
+
+             type muh_type_alias[T] = T | int
+
+             @beartype
+             def muh_func(muh_arg: muh_type_alias[float]) -> None: pass
     _hash : int
         Hash identifying this object, precomputed for efficiency.
     '''
@@ -68,6 +114,7 @@ class HintSanifiedData(object):
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'hint',
+        'recursable_hints',
         'typevar_to_hint',
         '_hash',
     )
@@ -77,6 +124,7 @@ class HintSanifiedData(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         hint: Hint
+        recursable_hints: FrozenSetHints
         typevar_to_hint: TypeVarToHint
 
 
@@ -102,6 +150,7 @@ class HintSanifiedData(object):
         hint: Hint,
 
         # Optional parameters.
+        recursable_hints: FrozenSetHints = FROZENSET_EMPTY,
         typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     ) -> None:
         '''
@@ -113,23 +162,30 @@ class HintSanifiedData(object):
             Type hint sanified (i.e., sanitized) from a possibly insane type
             hint into a hopefully sane type hint by a
             :mod:`beartype._check.convert.convsanify` function.
+        recursable_hints : FrozenSetHints, optional
+            **Recursion guard** (i.e., frozen set of all transitive recursable
+            parent hints (i.e., supporting recursion) of this hint). Defaults to
+            the empty frozen set.
         typevar_to_hint : TypeVarToHint, optional
-            **Type variable lookup table** describing this type hint, defined as
-            an immutable dictionary mapping from the :pep:`484`-compliant **type
-            variables** (i.e., :class:`typing.TypeVar` objects) originally
-            parametrizing the origin of this type hint if any to the
-            corresponding child type hints subscripting this type hint. Defaults
-            to the empty table.
+            **Type variable lookup table** (i.e., immutable dictionary mapping
+            from the **type variables** (i.e., :pep:`484`-compliant
+            :class:`typing.TypeVar` objects) originally parametrizing the
+            origins of all transitive parent hints of this hint if any to the
+            corresponding child hints subscripting those parent hints). Defaults
+            to the empty frozen dictionary.
         '''
+        assert isinstance(recursable_hints, frozenset), (
+            f'{repr(recursable_hints)} not frozen set.')
         assert isinstance(typevar_to_hint, FrozenDict), (
             f'{repr(typevar_to_hint)} not frozen dictionary.')
 
         # Classify all passed parameters as instance variables.
         self.hint = hint
+        self.recursable_hints = recursable_hints
         self.typevar_to_hint = typevar_to_hint
 
         # Hash identifying this object, precomputed for efficiency.
-        self._hash = hash((hint, typevar_to_hint))
+        self._hash = hash((hint, recursable_hints, typevar_to_hint))
 
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:
@@ -174,9 +230,10 @@ class HintSanifiedData(object):
             # if these metadatum share the same instance variables;
             (
                 self.hint == other.hint and
+                self.recursable_hints == other.recursable_hints and
                 self.typevar_to_hint == other.typevar_to_hint
             )
-            if isinstance(other, HintSanifiedData) else
+            if isinstance(other, HintSane) else
             # Else, this other object is *NOT* also sanified hint metadata. In
             # this case, the standard singleton informing Python that this
             # equality comparator fails to support this comparison.
@@ -194,12 +251,13 @@ class HintSanifiedData(object):
         return (
             f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
+            f'recursable_hints={repr(self.recursable_hints)}, '
             f'typevar_to_hint={repr(self.typevar_to_hint)}'
             f')'
         )
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self, **kwargs) -> 'HintSanifiedData':
+    def permute(self, **kwargs) -> 'HintSane':
         '''
         Shallow copy of this metadata such that each passed keyword parameter
         overwrites the instance variable of the same name in this copy.
@@ -211,7 +269,7 @@ class HintSanifiedData(object):
 
         Returns
         -------
-        HintSanifiedData
+        HintSane
             Shallow copy of this metadata such that each keyword parameter
             overwrites the instance variable of the same name in this copy.
 
@@ -231,61 +289,62 @@ class HintSanifiedData(object):
         )
 
 # ....................{ HINTS                              }....................
-HintOrSanifiedData = Union[Hint, HintSanifiedData]
+HintOrSane = Union[Hint, HintSane]
 '''
 PEP-compliant type hint matching either a type hint *or* **sanified type hint
-metadata** (i.e., :class:`.HintSanifiedData` object).
+metadata** (i.e., :class:`.HintSane` object).
 '''
 
 
-HintOrSanifiedDataUnpacked = Tuple[Hint, TypeVarToHint]
+#FIXME: Ideally, this should be refactored away from the codebase. *sigh*
+HintOrSaneUnpacked = Tuple[Hint, TypeVarToHint]
 '''
 PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
 returned by the :func:`.unpack_hint_or_sane` unpacker.
 '''
 
 # ....................{ HINTS ~ container                  }....................
-DictHintOrSanifiedDataToAny = Dict[HintOrSanifiedData, Any]
+DictHintOrSaneToAny = Dict[HintOrSane, Any]
 '''
 PEP-compliant type hint matching a dictionary mapping from keys that are either
 type hints *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSanifiedData` objects) to arbitrary objects.
+:class:`.HintSane` objects) to arbitrary objects.
 '''
 
-IterableHintOrSanifiedData = Iterable[HintOrSanifiedData]
+IterableHintOrSane = Iterable[HintOrSane]
 '''
 PEP-compliant type hint matching an iterable of zero or more items, each of
 which is either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSanifiedData` object).
+:class:`.HintSane` object).
 '''
 
 
-ListHintOrSanifiedData = List[HintOrSanifiedData]
+ListHintOrSane = List[HintOrSane]
 '''
 PEP-compliant type hint matching a list of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSanifiedData` object).
+:class:`.HintSane` object).
 '''
 
 
-SetHintOrSanifiedData = Set[HintOrSanifiedData]
+SetHintOrSane = Set[HintOrSane]
 '''
 PEP-compliant type hint matching a set of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSanifiedData` object).
+:class:`.HintSane` object).
 '''
 
 
-TupleHintOrSanifiedData = Tuple[HintOrSanifiedData, ...]
+TupleHintOrSane = Tuple[HintOrSane, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more items, each of which is
 either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSanifiedData` object).
+:class:`.HintSane` object).
 '''
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_or_sane_hint(hint_or_sane: HintOrSanifiedData) -> Hint:
+def get_hint_or_sane_hint(hint_or_sane: HintOrSane) -> Hint:
     '''
     Hint unpacked (i.e., coerced, converted) from the passed parameter.
 
@@ -297,9 +356,9 @@ def get_hint_or_sane_hint(hint_or_sane: HintOrSanifiedData) -> Hint:
 
     Parameters
     ----------
-    hint_or_sane : HintSanifiedData
+    hint_or_sane : HintSane
         Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :class:`.HintSanifiedData` object) to be unpacked.
+        :class:`.HintSane` object) to be unpacked.
 
     Returns
     -------
@@ -310,19 +369,20 @@ def get_hint_or_sane_hint(hint_or_sane: HintOrSanifiedData) -> Hint:
     # Return the hint encapsulated by this metadata.
     return (
         hint_or_sane.hint
-        if isinstance(hint_or_sane, HintSanifiedData) else
+        if isinstance(hint_or_sane, HintSane) else
         hint_or_sane
     )
 
 # ....................{ UNPACKERS                          }....................
 #FIXME: Unit test us up, please.
+#FIXME: Ideally, this should be refactored away from the codebase. *sigh*
 def unpack_hint_or_sane(
     # Mandatory parameters.
-    hint_or_sane: HintOrSanifiedData,
+    hint_or_sane: HintOrSane,
 
     # Optional parameters.
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
-) -> HintOrSanifiedDataUnpacked:
+) -> HintOrSaneUnpacked:
     '''
     2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
 
@@ -331,9 +391,9 @@ def unpack_hint_or_sane(
 
     Parameters
     ----------
-    hint_or_sane : HintSanifiedData
+    hint_or_sane : HintSane
         Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :class:`.HintSanifiedData` object) to be unpacked.
+        :class:`.HintSane` object) to be unpacked.
     typevar_to_hint : TypeVarToHint
         **Type variable lookup table** (i.e., immutable dictionary mapping from
         the :pep:`484`-compliant **type variables** (i.e.,
@@ -360,7 +420,7 @@ def unpack_hint_or_sane(
         f'{repr(typevar_to_hint)} not frozen dictionary.')
 
     # If reducing this hint generated supplementary metadata...
-    if isinstance(hint_or_sane, HintSanifiedData):
+    if isinstance(hint_or_sane, HintSane):
         # This lower-level hint reduced from this higher-level hint.
         hint = hint_or_sane.hint
 

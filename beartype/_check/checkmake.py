@@ -36,8 +36,8 @@ from beartype._check.error.errget import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
-from beartype._check.metadata.metasane import (
-    HintOrSanifiedData,
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
     # get_hint_or_sane_hint,
 )
 from beartype._check.signature.sigmake import make_func_signature
@@ -197,7 +197,7 @@ def make_func_tester(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
-    hint_or_sane: HintOrSanifiedData,
+    hint_or_sane: HintOrSane,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -215,9 +215,9 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrSanifiedData
+    hint_or_sane : HintOrSane
         Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSanifiedData` object) to be type-checked.
+        :data:`.HintSane` object) to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked.
     conf : BeartypeConf
@@ -304,7 +304,7 @@ def make_code_raiser_hint_object_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
-    hint_or_sane: HintOrSanifiedData,
+    hint_or_sane: HintOrSane,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix : str,
@@ -321,9 +321,9 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrSanifiedData
+    hint_or_sane : HintOrSane
         Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSanifiedData` object) to be type-checked.
+        :data:`.HintSane` object) to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked. Although
         this factory ignores this hint, alternate factories require this hint.
@@ -369,7 +369,7 @@ def make_code_tester_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
-    hint_or_sane: HintOrSanifiedData,
+    hint_or_sane: HintOrSane,
     conf: BeartypeConf,
     cls_stack: Optional[TypeStack],
     is_param: Optional[bool],
@@ -385,9 +385,9 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    hint_or_sane : HintOrSanifiedData
+    hint_or_sane : HintOrSane
         Either a sanified type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSanifiedData` object) to be type-checked.
+        :data:`.HintSane` object) to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked.
     conf : BeartypeConf

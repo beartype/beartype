@@ -24,7 +24,7 @@ from beartype.typing import (
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.metasane import HintOrSanifiedData
+from beartype._check.metadata.hint.hintsane import HintOrSane
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import (
     CallableStrFormat,
@@ -219,7 +219,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
     def make_code(
         self,
         hints_meta: HintsMeta,
-        hint_or_sane_child: HintOrSanifiedData,
+        hint_or_sane_child: HintOrSane,
     ) -> None:
         '''
         Python expression deeply type-checking the current pith against the
@@ -230,9 +230,9 @@ class HintLogicABC(object, metaclass=ABCMeta):
         hints_meta : HintsMeta
             Stack of metadata describing all visitable hints currently
             discovered by this breadth-first search (BFS).
-        hint_or_sane_child : HintOrSanifiedData
+        hint_or_sane_child : HintOrSane
             Either the sole child hint of this container *or* **sanified child
-            hint metadata** (i.e., :data:`.HintSanifiedData` object describing
+            hint metadata** (i.e., :data:`.HintSane` object describing
             this child hint) to be type-checked.
         '''
 
@@ -274,7 +274,7 @@ class HintLogicQuasiiterable(HintLogicABC):
     def make_code(
         self,
         hints_meta: HintsMeta,
-        hint_or_sane_child: HintOrSanifiedData,
+        hint_or_sane_child: HintOrSane,
     ) -> None:
 
         assert isinstance(hints_meta, HintsMeta), (
@@ -379,7 +379,7 @@ class _HintLogicReiterableOrSequence(HintLogicABC):
     def make_code(
         self,
         hints_meta: HintsMeta,
-        hint_or_sane_child: HintOrSanifiedData,
+        hint_or_sane_child: HintOrSane,
     ) -> None:
 
         assert isinstance(hints_meta, HintsMeta), (

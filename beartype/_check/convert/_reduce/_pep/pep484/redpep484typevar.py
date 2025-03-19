@@ -21,19 +21,18 @@ from beartype.typing import (
     Optional,
     TypeVar,
 )
-from beartype._check.metadata.metasane import (
-    HintOrSanifiedData,
-    HintSanifiedData,
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
+    HintSane,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
-    HintOrNone,
     TupleHints,
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import (
     TupleTypeVars,
-    TypeException,
+    # TypeException,
 )
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
@@ -52,7 +51,7 @@ from beartype._util.kind.map.utilmapfrozen import FrozenDict
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(
     hint: Hint,
-    typevar_to_hint: TypeVarToHint,
+    parent_hint_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
 ) -> Hint:
@@ -68,9 +67,17 @@ def reduce_hint_pep484_typevar(
     ----------
     hint : Hint
         Type variable to be reduced.
-    typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** (i.e., dictionary mapping from type
-        variables to the arbitrary type hints those type variables map to).
+    parent_hint_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this child
+          hint into a fully PEP-compliant parent hint).
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
@@ -83,8 +90,18 @@ def reduce_hint_pep484_typevar(
     '''
     # print(f'Reducing PEP 484 type variable {repr(hint)} by type variable lookup table {repr(typevar_to_hint)}...')
 
-    # If a parent hint of this type variable maps one or more type variables...
-    if typevar_to_hint:
+    # If...
+    if (
+        # This type variable is not a root hint and thus has a parent hint
+        # *AND*...
+        parent_hint_sane is not None and
+        # A parent hint of this type variable maps one or more type variables...
+        parent_hint_sane.typevar_to_hint
+    ):
+        # Type variable lookup table of this parent hint, localized for
+        # usability and negligible efficiency.
+        typevar_to_hint = parent_hint_sane.typevar_to_hint
+
         # If a parent hint of this type variable maps exactly one type
         # variables, prefer a dramatically faster and simpler approach.
         if len(typevar_to_hint) == 1:
@@ -117,6 +134,13 @@ def reduce_hint_pep484_typevar(
             # This enables type variables reduced by the iteration below to be
             # popped off this copy as a simple (but effective) recursion guard.
             typevar_to_hint_stack = typevar_to_hint.copy()
+
+            #FIXME: [SPEED] *INEFFICIENT.* This has to be done either way, but
+            #rather than reperform this O(n) algorithm on every single instance
+            #of this type variable, this algorithm should simply be performed
+            #exactly *ONCE* in the
+            #reduce_hint_pep484_subscripted_typevars_to_hints() reducer. Please
+            #refactor this iteration over there *AFTER* the dust settles here.
 
             # While...
             while (
@@ -174,7 +198,13 @@ def reduce_hint_pep484_typevar(
 
 
 def reduce_hint_pep484_subscripted_typevars_to_hints(
-    hint: Hint, exception_prefix: str = '', **kwargs) -> HintOrSanifiedData:
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    parent_hint_sane: Optional[HintSane] = None,
+    exception_prefix: str = '',
+) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`-compliant **subscripted hint** (i.e., object
     produced by subscripting an unsubscripted hint originally parametrized by
@@ -229,13 +259,26 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     ----------
     hint : Hint
         Subscripted hint to be inspected.
+    parent_hint_sane : Optional[HintSane]
+        Either:
+
+        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
+          of child hints), :data:`None`.
+        * Else, the passed hint is a **child** of some parent hint. In this
+          case, the **sanified parent type hint metadata** (i.e., immutable and
+          thus hashable object encapsulating *all* metadata previously returned
+          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          sanitizing the possibly PEP-noncompliant parent hint of this child
+          hint into a fully PEP-compliant parent hint).
+
+        Defaults to :data:`None`.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
-    HintOrSanifiedData
+    HintOrSane
         Either:
 
         * If the unsubscripted hint (e.g., :class:`typing.Generic`) originating
@@ -243,7 +286,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
           unparametrized by type variables, that unsubscripted hint as is.
         * Else, that unsubscripted hint is parametrized by one or more type
           variables. In this case, the **sanified type hint metadata** (i.e.,
-          :class:`.HintSanifiedData` object) describing this reduction.
+          :class:`.HintSane` object) describing this reduction.
 
     Raises
     ------
@@ -254,6 +297,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         these type variables.
     '''
 
+    # ....................{ LOCALS                         }....................
     # Unsubscripted type alias originating this subscripted hint.
     hint_unsubscripted = get_hint_pep_origin(
         hint=hint,
@@ -279,6 +323,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     hint_args = get_hint_pep_args(hint)
     # print(f'hint_args: {repr(hint_args)}')
 
+    # ....................{ NOOP                           }....................
     # If either...
     if (
         # This unsubscripted hint is parametrized by *NO* type variables, *NO*
@@ -305,34 +350,69 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     # variables. In this case, produce a type variable lookup table mapping
     # these type variables to child hints subscripting this subscripted hint.
 
+    # ....................{ MAPPING                        }....................
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
-    typevars_to_hints = _get_hint_pep484_typevars_to_hints(
-        hint_parent=hint,
-        hints=hint_args,
-        typevars=hint_unsubscripted_typevars,
-        exception_cls=BeartypeDecorHintPep484TypeVarException,
-        exception_prefix=exception_prefix,
+    #
+    # Note that we pass parameters positionally due to memoization.
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+        hint,
+        hint_unsubscripted_typevars,
+        hint_args,
+        exception_prefix,
     )
 
-    # Metadata encapsulating this hint and type variable lookup table.
-    hint_or_sane = HintSanifiedData(
-        hint=hint_unsubscripted, typevar_to_hint=typevars_to_hints)
+    # ....................{ RETURN                         }....................
+    # Sanified metadata to be returned.
+    hint_sane: HintSane = None  # type: ignore[assignment]
+
+    # If this hint has *NO* parent, this is a root hint. In this case...
+    if parent_hint_sane is None:
+        # Metadata encapsulating this hint and type variable lookup table.
+        hint_sane = HintSane(
+            hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
+    # Else, this hint has a parent. In this case...
+    else:
+        # If the parent hint is also associated with a type variable lookup
+        # table...
+        if parent_hint_sane.typevar_to_hint:
+            # Full type variable lookup table merging the table associated this
+            # parent hint with the table just decided above for this child hint,
+            # efficiently defined as...
+            typevar_to_hint = (
+                # The type variable lookup table describing all transitive
+                # parent hints of this hint with...
+                parent_hint_sane.typevar_to_hint |  # type: ignore[operator]
+                # The type variable lookup table describing this hint.
+                #
+                # Note that this table is intentionally the second rather than
+                # first operand of this "|" operation, efficiently ensuring that
+                # type variables mapped by this hint take precedence over type
+                # variables mapped by transitive parent hints of this hint.
+                typevar_to_hint
+            )
+        # Else, the parent hint is associated with *NO* such table.
+
+        # Metadata encapsulating this hint and type variable lookup table, while
+        # "cascading" any other metadata associated with this parent hint (e.g.,
+        # recursable hint IDs) down onto this child hint as well.
+        hint_sane = parent_hint_sane.permute(
+            hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
+
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')
     # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
 
     # Return this metadata.
-    return hint_or_sane
+    return hint_sane
 
 # ....................{ PRIVATE ~ getters                  }....................
 def _get_hint_pep484_typevars_to_hints(
     # Mandatory parameters.
+    parent_hint: Hint,
     typevars: TupleTypeVars,
     hints: TupleHints,
 
     # Optional parameters.
-    hint_parent: HintOrNone = None,
-    exception_cls: TypeException = BeartypeDecorHintPep484TypeVarException,
     exception_prefix: str = '',
 ) -> TypeVarToHint:
     '''
@@ -347,21 +427,18 @@ def _get_hint_pep484_typevars_to_hints(
 
     Parameters
     ----------
-    typevars : TupleTypeVars
-        Tuple of one or more type variables.
-    hints : TupleHints
-        Tuple of one or more type hints those type variables map to.
-    hint_parent: Optional[Hint]
+    parent_hint: Optional[Hint]
         Parent type hint presumably both subscripted by these ``hints`` if any
         *or* :data:`None` otherwise. This hint is *only* embedded in the
         exception message in the event of a fatal error and thus technically
         optional, albeit strongly advised. Defaults to :data:`None`.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
-        :exc:`.BeartypeDecorHintPep484TypeVarException`.
+    typevars : TupleTypeVars
+        Tuple of one or more type variables.
+    hints : TupleHints
+        Tuple of one or more type hints those type variables map to.
     exception_prefix: str, optional
-        Human-readable substring prefixing the exception message in the event of
-        a fatal error. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -370,7 +447,7 @@ def _get_hint_pep484_typevars_to_hints(
 
     Raises
     ------
-    exception_cls
+    BeartypeDecorHintPep484TypeVarException
         If either:
 
         * This tuple of type variables is empty.
@@ -389,24 +466,24 @@ def _get_hint_pep484_typevars_to_hints(
     # ....................{ PREAMBLE                       }....................
     # If *NO* type variables were passed, raise an exception.
     if not typevars:
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint_parent)} '
+        raise BeartypeDecorHintPep484TypeVarException(
+            f'{exception_prefix}type hint {repr(parent_hint)} '
             f'parametrized by no PEP 484 type variables.'
         )
     # Else, one or more type variables were passed.
     #
     # If *NO* type hints were passed, raise an exception.
     elif not hints:
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint_parent)} '
+        raise BeartypeDecorHintPep484TypeVarException(
+            f'{exception_prefix}type hint {repr(parent_hint)} '
             f'subscripted by no type hints.'
         )
     # Else, one or more type hints were passed.
     #
     # If more type hints than type variables were passed, raise an exception.
     elif len(hints) > len(typevars):
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint_parent)} '
+        raise BeartypeDecorHintPep484TypeVarException(
+            f'{exception_prefix}type hint {repr(parent_hint)} '
             f'number of subscripted type hints {len(hints)} exceeds '
             f'number of parametrized type variables {len(typevars)} '
             f'(i.e., {len(hints)} > {len(typevars)}).'
@@ -444,8 +521,8 @@ def _get_hint_pep484_typevars_to_hints(
         #       >>> muh_alias.__parameters__
         #       (int,)  # <-- pretty sure that's *NOT* a parameter, Python
         if not is_hint_pep484_typevar(typevar):
-            raise exception_cls(
-                f'{exception_prefix}type hint {repr(hint_parent)} '
+            raise BeartypeDecorHintPep484TypeVarException(
+                f'{exception_prefix}type hint {repr(parent_hint)} '
                 f'parametrization {repr(typevar)} not '
                 f'PEP 484 type variable (i.e., "typing.TypeVar" object).'
             )
@@ -532,7 +609,7 @@ def _get_hint_pep484_typevars_to_hints(
                 # Raise a type-checking violation.
                 raise BeartypeDecorHintPep484TypeVarViolation(
                     message=(
-                        f'{exception_prefix}type hint {repr(hint_parent)} '
+                        f'{exception_prefix}type hint {repr(parent_hint)} '
                         f'originally parametrized by '
                         f'PEP 484 type variable {repr(typevar)} '
                         f'subsequently subscripted by '

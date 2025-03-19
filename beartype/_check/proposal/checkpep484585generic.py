@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Any
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype._check.metadata.metasane import (
-    IterableHintOrSanifiedData,
+from beartype._check.metadata.hint.hintsane import (
+    IterableHintOrSane,
     get_hint_or_sane_hint,
 )
 from beartype._conf.confcls import BeartypeConf
@@ -45,7 +45,7 @@ def iter_hint_pep484585_generic_bases_unerased(
     typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> IterableHintOrSanifiedData:
+) -> IterableHintOrSane:
     '''
     Breadth-first search (BFS) generator iteratively yielding the one or more
     unignorable unerased transitive pseudo-superclasses originally declared as
@@ -158,7 +158,7 @@ def iter_hint_pep484585_generic_bases_unerased(
 
     Returns
     -------
-    IterableHintOrSanifiedData
+    IterableHintOrSane
         Breadth-first search (BFS) generator iteratively yielding the one or
         more unignorable unerased transitive pseudo-superclasses originally
         declared as superclasses prior to their type erasure of this generic.

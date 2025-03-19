@@ -15,7 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.metadata.metasane import HintOrSanifiedData
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
+    HintSane,
+)
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
@@ -26,12 +29,8 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahintpep import (
-    Hint,
-    TypeVarToHint,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeStack
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
@@ -48,7 +47,7 @@ def sanify_hint_root_func(
     # Optional parameters.
     arg_kind: Optional[ArgKind] = None,
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
-) -> HintOrSanifiedData:
+) -> HintOrSane:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane root
     type hint** (i.e., possibly PEP-noncompliant hint annotating the parameter
@@ -113,7 +112,7 @@ def sanify_hint_root_func(
 
     Returns
     -------
-    HintOrSanifiedData
+    HintOrSane
         Either:
 
         * If the passed hint is reducible to:
@@ -216,7 +215,7 @@ def sanify_hint_root_statement(
     hint: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
-) -> HintOrSanifiedData:
+) -> HintOrSane:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -249,7 +248,7 @@ def sanify_hint_root_statement(
 
     Returns
     -------
-    HintOrSanifiedData
+    HintOrSane
         Either:
 
         * If the passed hint is reducible to:
@@ -302,14 +301,14 @@ def sanify_hint_root_statement(
 def sanify_hint_child(
     # Mandatory parameters.
     hint: Hint,
+    parent_hint_sane: HintSane,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     pith_name: Optional[str] = None,
-    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
     exception_prefix: str = '',
-) -> HintOrSanifiedData:
+) -> HintOrSane:
     '''
     Type hint sanified (i.e., sanitized) from the passed **possibly insane child
     type hint** (i.e., possibly PEP-noncompliant hint transitively subscripting
@@ -322,6 +321,12 @@ def sanify_hint_child(
     ----------
     hint : Hint
         Child type hint to be sanified.
+    parent_hint_sane : HintSane
+        **Sanified parent type hint metadata** (i.e., immutable and thus
+        hashable object encapsulating *all* metadata previously returned by
+        :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+        the possibly PEP-noncompliant parent hint of this child hint into a
+        fully PEP-compliant parent hint).
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
@@ -331,7 +336,7 @@ def sanify_hint_child(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to :obj:`.BEARTYPE_CONF_DEFAULT`, the default beartype configuration.
-    pith_name : Optional[str], optional
+    pith_name : Optional[str]
         Either:
 
         * If this hint directly annotates a callable parameter (as the root type
@@ -349,20 +354,13 @@ def sanify_hint_child(
           factory).
 
         Defaults to :data:`None`.
-    typevar_to_hint : TypeVarToHint, optional
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        the :pep:`484`-compliant **type variables** (i.e.,
-        :class:`typing.TypeVar` objects) originally parametrizing the origins of
-        all transitive parent hints of this hint to the corresponding child
-        hints subscripting these parent hints). Defaults to
-        :data:`.FROZENDICT_EMPTY`.
     exception_prefix : str, optional
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
     Returns
     -------
-    HintOrSanifiedData
+    HintOrSane
         Either:
 
         * If the passed hint is reducible to:
@@ -393,10 +391,10 @@ def sanify_hint_child(
     # otherwise (i.e., if reducing this hint generated supplementary metadata).
     hint_or_sane = reduce_hint(
         hint=hint,
+        parent_hint_sane=parent_hint_sane,
         conf=conf,
         cls_stack=cls_stack,
         pith_name=pith_name,
-        typevar_to_hint=typevar_to_hint,
         exception_prefix=exception_prefix,
     )
     # print(f'[sanify] Detecting hint {repr(hint)} reduction {repr(hint_or_sane)} ignorability...')

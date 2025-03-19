@@ -23,12 +23,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._check.metadata.metasane import (
-    HintOrSanifiedData,
-    HintSanifiedData,
-    DictHintOrSanifiedDataToAny,
-    ListHintOrSanifiedData,
-    SetHintOrSanifiedData,
+from beartype._check.metadata.hint.hintsane import (
+    HintOrSane,
+    HintSane,
+    DictHintOrSaneToAny,
+    ListHintOrSane,
+    SetHintOrSane,
     get_hint_or_sane_hint,
     unpack_hint_or_sane,
 )
@@ -163,7 +163,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     # Dictionary whose keys comprise the set of all PEP-compliant child hints
     # subscripting this union and whose values are ignorable. See above.
-    hint_or_sane_childs_pep: DictHintOrSanifiedDataToAny = acquire_instance(
+    hint_or_sane_childs_pep: DictHintOrSaneToAny = acquire_instance(
         dict)
 
     # ....................{ FILTER                         }....................
@@ -327,7 +327,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached
 def _get_hint_pep484604_union_args_flattened(
-    hints_meta: HintsMeta) -> Tuple[HintOrSanifiedData, ...]:
+    hints_meta: HintsMeta) -> Tuple[HintOrSane, ...]:
     '''
     Flattened tuple of the two or more child hints subscripting the passed
     :pep:`604`- or :pep:`484`-compliant union hint such that *all* nested child
@@ -379,9 +379,9 @@ def _get_hint_pep484604_union_args_flattened(
 
     Returns
     -------
-    Tuple[HintOrSanifiedData, ...]
+    Tuple[HintOrSane, ...]
         Flattened tuple of the two or more child hints *or* **sanified child
-        hint metadatum** (i.e., :class:`.HintSanifiedData` objects) subscripting
+        hint metadatum** (i.e., :class:`.HintSane` objects) subscripting
         this parent union hint.
 
     Raises
@@ -393,8 +393,9 @@ def _get_hint_pep484604_union_args_flattened(
 
     # ....................{ LOCALS                         }....................
     # Metadata localized from this dataclass for both usability and efficiency.
-    hint = hints_meta.hint_curr_meta.hint
-    typevar_to_hint = hints_meta.hint_curr_meta.typevar_to_hint
+    hint_sane = hints_meta.hint_curr_meta.hint_sane
+    hint = hint_sane.hint
+    typevar_to_hint = hint_sane.typevar_to_hint
 
     # ....................{ LOCALS ~ child                 }....................
     # Tuple of the two or more child hints subscripting this union.
@@ -425,26 +426,26 @@ def _get_hint_pep484604_union_args_flattened(
     )
 
     # ....................{ LOCALS ~ list                  }....................
-    # List of all currently sanified child hints from which to reconstitute this
-    # union, sanified by the current iteration of the loop performed below.
-
     # Input stack of all currently unflattened transitive child hints of this
     # union to be visited by the depth-first search (DFS) below, initialized to
     # the non-empty list of all direct child hints of this union.
-    hint_or_insane_childs_unflattened: ListHintOrSanifiedData = (
+    hint_or_insane_childs_unflattened: ListHintOrSane = (
         acquire_instance(list))
     hint_or_insane_childs_unflattened.extend(hint_childs)
 
     # Output stack of all previously flattened transitive child hints of this
     # union that have already been visited by this DFS, initialized to the
-    # empty list.
+    # empty list. Equivalently, this is the list of all sanified child hints
+    # from which to reconstitute this union below.
     #
     # Note that this stack orders these child hints in the *REVERSE* order that
     # these child hints were originally ordered by the user in this union.
-    hint_or_sane_childs_flattened: ListHintOrSanifiedData = (
+    hint_or_sane_childs_flattened: ListHintOrSane = (
         acquire_instance(list))
 
     # ....................{ LOCALS ~ set                   }....................
+    #FIXME: Pretty sure we should no longer require this *AFTER* implementing
+    #recursion guards properly elsewhere.
     # Set of all previously sanified child hints, required to avoid infinite
     # recursion that could otherwise be induced in worst-case sanification --
     # including:
@@ -453,7 +454,7 @@ def _get_hint_pep484604_union_args_flattened(
     #   configuration enabling the "hint_overrides" option (e.g., a
     #   "hints_meta.conf.hint_overrides" option whose value is
     #   "BeartypeHintOverrides({int: int | float})".
-    hint_or_insane_childs_sanified: SetHintOrSanifiedData = (
+    hint_or_insane_childs_sanified: SetHintOrSane = (
         acquire_instance(set))
 
     # ....................{ SEARCH                         }....................
@@ -625,7 +626,7 @@ def _get_hint_pep484604_union_args_flattened(
             # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
 
             # If this child union is encapsulated by metadata...
-            if isinstance(hint_or_sane_child, HintSanifiedData):
+            if isinstance(hint_or_sane_child, HintSane):
                 # For each child child type subscripting this child union...
                 for hint_child_child in hint_child_childs:
                     # Metadata encapsulating the sanification of this child
