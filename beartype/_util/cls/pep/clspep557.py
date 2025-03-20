@@ -11,7 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import DictStrToAny
+from beartype.roar import BeartypeDecorHintPep557Exception
+from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
+    TypeException,
+)
 from dataclasses import (  # type: ignore[attr-defined]
     # Public attributes of the "dataclasses" module.
     is_dataclass,
@@ -20,6 +24,50 @@ from dataclasses import (  # type: ignore[attr-defined]
     # extreme non-triviality of this module leaves us little choice. *shrug*
     _PARAMS,  # pyright: ignore
 )
+
+# ....................{ RAISERS                            }....................
+def die_unless_type_pep557_dataclass(
+    # Mandatory parameters.
+    cls: type,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception of the passed type unless the passed class is a
+    **dataclass** (i.e., :pep:`557`-compliant class decorated by the standard
+    :func:`dataclasses.dataclass` decorator).
+
+    Parameters
+    ----------
+    cls : type
+        Class to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep557Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exceptions messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    BeartypeDecorHintPep557Exception
+        If this class is *not* a :pep:`557`-compliant dataclass.
+    '''
+
+    # If this class is *NOT* a PEP 557-compliant dataclass...
+    if not is_type_pep557_dataclass(cls):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception.
+        raise exception_cls(
+            f'{exception_prefix}class {repr(cls)} not PEP 557 dataclass '
+            f'(i.e., not decorated by @dataclasses.dataclass decorator).'
+        )
 
 # ....................{ TESTERS                            }....................
 def is_type_pep557_dataclass(cls: type) -> bool:
@@ -84,8 +132,10 @@ def get_pep557_dataclass_kwargs(datacls: type) -> DictStrToAny:
         Keyword arguments originally configuring this dataclass.
     '''
 
-    #FIXME: Insufficient. Also:
-    #* Define a new die_unless_pep557_dataclass() raiser, please.
-    #* Call that raiser here first, please.
+    # If this dataclass is *NOT* actually a dataclass, raise an exception.
+    die_unless_type_pep557_dataclass(datacls)
+    # Else, this dataclass is actually a dataclass.
+
+    #FIXME: Comment us up, please.
     dataclass_kwargs = getattr(datacls, _PARAMS)
     return dataclass_kwargs

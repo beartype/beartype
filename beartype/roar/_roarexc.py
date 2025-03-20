@@ -1013,7 +1013,7 @@ class BeartypeCallHintViolation(BeartypeHintViolation):
     pass
 
 
-class BeartypeCallHintDataclassFieldViolation(BeartypeCallHintViolation):
+class BeartypeCallHintPep557FieldViolation(BeartypeCallHintViolation):
     '''
     **Beartyped dataclass field type-checking exception.**
 

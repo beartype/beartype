@@ -26,7 +26,9 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
+from beartype._decor._nontype._pep._decorpep557 import beartype_pep557_dataclass
 from beartype._util.cls.utilclsset import set_type_attr
+from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from collections import defaultdict
 from functools import wraps
@@ -243,6 +245,19 @@ def beartype_type(
             # print(f'type: {type(attr_value)}; dir: {dir(attr_value)}')
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
+
+    # ....................{ DECORATION ~ pep               }....................
+    # If...
+    if (
+        # This beartype configuration enables type-checking of PEP 557-compliant
+        # dataclasses *AND*...
+        conf.is_check_pep557 and
+        # This class is a PEP 557-compliant dataclass...
+        is_type_pep557_dataclass(cls)
+    ):
+        # Monkey-patch type-checking of *ALL* PEP 557-compliant dataclass fields
+        # into this dataclass.
+        beartype_pep557_dataclass(datacls=cls, conf=conf)
 
     # ....................{ MONKEY-PATCH                   }....................
     # Pure-Python __sizeof__() dunder method wrapping the original C-based

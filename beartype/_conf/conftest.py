@@ -168,6 +168,14 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "hint_overrides" is a frozen dict.
     #
+    # If "is_check_pep557" is *NOT* a boolean, raise an exception.
+    elif not isinstance(conf_kwargs['is_check_pep557'], bool):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "is_check_pep557" '
+            f'value {repr(conf_kwargs["is_check_pep557"])} not boolean.'
+        )
+    # Else, "is_check_pep557" is a boolean.
+    #
     # If "is_color" is *NOT* a tri-state boolean, raise an exception.
     elif not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
         raise BeartypeConfParamException(

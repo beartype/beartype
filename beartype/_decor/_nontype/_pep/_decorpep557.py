@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeCallHintDataclassFieldViolation
+from beartype.roar import BeartypeCallHintPep557FieldViolation
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahintpep import (
     DictStrToHint,
@@ -21,6 +21,7 @@ from beartype._data.hint.datahintpep import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_DATACLASS_NONFIELDS)
 from beartype._util.cls.utilclsset import set_type_attr
+from beartype._util.cls.pep.clspep557 import die_unless_type_pep557_dataclass
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.utilobject import (
@@ -31,9 +32,6 @@ from beartype._util.utilobject import (
 # ....................{ DECORATORS                         }....................
 #FIXME: As a mandatory prerequisite *BEFORE* integrating this into the @beartype
 #codebase, we first need to:
-#* Define a new "BeartypeConf(is_check_pep557_dataclass_fields: bool = False)"
-#  configuration option. Eventually, we'll flip that to "True". For now,
-#  "False".
 #* Generalize both is_bearable() and die_if_unbearable() to support quoted
 #  relative forward references. As always, the algorithm should iteratively
 #  search up the callstack for the first stack frame residing *OUTSIDE*
@@ -76,6 +74,8 @@ from beartype._util.utilobject import (
 #  stringified type hints against each such superclass "__annotations__" as
 #  well. Jeez. This sure got ugly fast, huh? So much sighing! *sigh sigh*
 def beartype_pep557_dataclass(
+    # Mandatory parameters.
+    #
     # Note that dataclasses do *NOT* have a more specific superclass than merely
     # the root "type" superclass of *ALL* types, sadly:
     #     >>> from dataclasses import dataclass
@@ -87,33 +87,43 @@ def beartype_pep557_dataclass(
     # From a typing perspective, "type" is the best that can be done. Yikes!
     datacls: type,
     conf: BeartypeConf,
+
+    # Optional parameters.
+    exception_prefix: str = '',
 ) -> None:
     '''
-    Decorate the passed **dataclass** (i.e., pure-Python types decorated by the
+    Decorate the passed **dataclass** (i.e., pure-Python class decorated by the
     :pep:`557`-compliant :obj:`dataclasses.dataclass` decorator) with
-    dynamically generated type-checking of.
+    dynamically generated type-checking of all **dataclass fields** (i.e., class
+    attributes annotated by *any* type hints other than :pep:`526`-compliant
+    ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
+    ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
+    initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
+    assignment** (i.e., when each field is subsequently assigned to by an
+    assignment statement).
 
-    This decorator safely monkey-patches type-checking into this same dataclass
-    *without* creating or returning a new object. This type-checking *only*
-    applies to **dataclass fields.** By :pep:`557`, a "dataclass field" is *any*
-    class attribute of this dataclass annotated by *any* type hint other than
-    either:
+    This decorator *only* type-checks **dataclass fields.** By :pep:`557`, a
+    "dataclass field" is *any* class attribute of this dataclass annotated by
+    *any* type hint other than either:
 
     * A :pep:`526`-compliant ``dataclasses.ClassVar[...]`` type hint.
     * A :pep:`557`-compliant ``dataclasses.InitVar[...]`` type hint.
 
-    This decorator safely monkey-patches the ``__setattr__()`` dunder method of
-    this dataclass. If this dataclass does *not* directly define
-    ``__setattr__()``, this decorator adds a new ``__setattr__()`` to this
-    dataclass; else, this decorator wraps the existing ``__setattr__()`` already
-    directly defined on this dataclass by a new ``__setattr__()`` internally
-    deferring to that existing ``__setattr__()``. In either case, this new
-    ``__setattr__()`` type-checks that each dataclass field satisfies the type
-    hint annotating that field on both:
+    Unlike most :mod:`beartype` decorators, this decorator safely monkey-patches
+    this dataclass in-place. (Equivalently, this decorator safely monkey-patches
+    type-checking into this same dataclass *without* creating or returning a new
+    dataclass.) Specifically, this decorator monkey-patches the
+    ``__setattr__()`` dunder method of this dataclass. If this dataclass does
+    *not* directly define ``__setattr__()``, this decorator adds a new
+    ``__setattr__()`` to this dataclass; else, this decorator wraps the existing
+    ``__setattr__()`` already directly defined on this dataclass with a new
+    ``__setattr__()`` internally deferring to that existing ``__setattr__()``.
+    In either case, this new ``__setattr__()`` type-checks that each dataclass
+    field satisfies the type hint annotating that field on both:
 
     * **Dataclass object initialization** (i.e., at early ``__init__()`` time).
     * **Dataclass field assignment** (i.e., when each field is subsequently
-      assigned to with an assignment statement).
+      assigned to by an assignment statement).
 
     Parameters
     ----------
@@ -122,13 +132,15 @@ def beartype_pep557_dataclass(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this dataclass.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exceptions messages. Defaults
+        to the empty string.
 
     Returns
     -------
     BeartypeableT
         This same dataclass monkey-patched in-place with type-checking.
     '''
-    assert isinstance(datacls, type), f'{repr(datacls)} not dataclass.'
     assert isinstance(conf, BeartypeConf), (
         f'{repr(conf)} not beartype configuration.')
 
@@ -141,6 +153,11 @@ def beartype_pep557_dataclass(
     #For the moment, let's just ignore frozen dataclasses altogether. Consider:
     #* Define a new is_dataclass_frozen() tester in "clspep557".
     #* Call that here. If true, silently reduce to a noop by returning. Guh!
+
+    # If this dataclass is *NOT* actually a dataclass, raise an exception.
+    die_unless_type_pep557_dataclass(
+        cls=datacls, exception_prefix=exception_prefix)
+    # Else, this dataclass is actually a dataclass.
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports prohibited at global scope.
@@ -355,7 +372,7 @@ def beartype_pep557_dataclass(
                 # Set the type of violation exception raised by the subsequent
                 # call to the die_if_unbearable() function to the expected type.
                 conf_kwargs['violation_door_type'] = (
-                    BeartypeCallHintDataclassFieldViolation)
+                    BeartypeCallHintPep557FieldViolation)
 
                 # New beartype configuration initialized by this dictionary.
                 conf_new = BeartypeConf(**conf_kwargs)

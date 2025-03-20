@@ -37,7 +37,7 @@ def test_conf_dataclass() -> None:
         BeartypeCallHintReturnViolation,
         BeartypeDoorHintViolation,
     )
-    from beartype.typing import Union
+    # from beartype.typing import Union
     from beartype._conf.confoverrides import (
         BEARTYPE_HINT_OVERRIDES_EMPTY,
         beartype_hint_overrides_pep484_tower,
@@ -66,6 +66,7 @@ def test_conf_dataclass() -> None:
         'claw_is_pep526',
         'claw_skip_package_names',
         'hint_overrides',
+        'is_check_pep557',
         'is_color',
         'is_debug',
         'is_pep484_tower',
@@ -93,6 +94,7 @@ def test_conf_dataclass() -> None:
         claw_is_pep526=False,
         claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
+        is_check_pep557=True,
         is_color=True,
         is_debug=True,
         is_pep484_tower=True,
@@ -134,6 +136,7 @@ def test_conf_dataclass() -> None:
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
+            is_check_pep557=True,
             is_debug=True,
             is_color=True,
             is_pep484_tower=True,
@@ -156,6 +159,7 @@ def test_conf_dataclass() -> None:
             is_pep484_tower=True,
             is_color=True,
             is_debug=True,
+            is_check_pep557=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
@@ -173,6 +177,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
     assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
+    assert BEAR_CONF_DEFAULT.is_check_pep557 is False
     assert BEAR_CONF_DEFAULT.is_color is None
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
@@ -199,6 +204,7 @@ def test_conf_dataclass() -> None:
         'Made_contrast_with', 'the_universe',)
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
         BEAR_HINT_OVERRIDES_NONEMPTY | beartype_hint_overrides_pep484_tower())
+    assert BEAR_CONF_NONDEFAULT.is_check_pep557 is True
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
@@ -314,6 +320,9 @@ def test_conf_dataclass() -> None:
     with raises(BeartypeConfParamException):
         BeartypeConf(hint_overrides=(
             'Wildered, and wan, and panting, she returned.'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(is_check_pep557=(
+            "Space region'd with life-air; and barren void;"))
     with raises(BeartypeConfParamException):
         BeartypeConf(is_color=(
             'And many sounds, and much of life and death.'))

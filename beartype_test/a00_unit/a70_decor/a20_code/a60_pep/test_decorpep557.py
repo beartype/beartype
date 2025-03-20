@@ -26,29 +26,25 @@ def test_decor_pep577() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype import beartype
+    from beartype import (
+        BeartypeConf,
+        beartype,
+    )
     from beartype.roar import (
-        BeartypeCallHintDataclassFieldViolation,
+        BeartypeCallHintPep557FieldViolation,
         BeartypeCallHintParamViolation,
     )
     from beartype.typing import (
         ClassVar,
         Optional,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from dataclasses import (
         InitVar,
         dataclass,
         field,
     )
     from pytest import raises
-
-    #FIXME: Drop this once we properly integrate this low-level decorator into
-    #the higher-level @beartype decorator. For now, this low-level decorator
-    #fails to cover all edge cases and is thus unsuitable for integration.
-    from beartype._decor._nontype._pep._decorpep557 import (
-        beartype_pep557_dataclass)
-    from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 
     # ..................{ LOCALS                             }..................
     # Modifiable list of **kwargs dictionaries to be passed as the keyword
@@ -71,10 +67,13 @@ def test_decor_pep577() -> None:
     #     # The slotted @dataclass decorator, only supported under Python >= 3.10.
     #     DATACLASSES_KWARGS.append(dict(slots=True))
 
+    # Beartype decorator type-checking *ALL* PEP 557-compliant dataclass fields.
+    beartype_pep557 = beartype(conf=BeartypeConf(is_check_pep557=True))
+
     # ..................{ DATACLASSES                        }..................
     # For each dictionary of keyword parameters configuring this dataclass...
     for dataclass_kwargs in DATACLASSES_KWARGS:
-        @beartype
+        @beartype_pep557
         @dataclass(**dataclass_kwargs)
         class SoSolemnSoSerene(object):
             '''
@@ -131,10 +130,6 @@ def test_decor_pep577() -> None:
                     self.that_man_may_be = but_for_such_faith
 
         # ..................{ LOCALS                         }..................
-        # Monkey-patch field type-checking into this dataclass.
-        beartype_pep557_dataclass(
-            datacls=SoSolemnSoSerene, conf=BEARTYPE_CONF_DEFAULT)
-
         # Arbitrary instance of this dataclass exercising all edge cases.
         great_mountain = SoSolemnSoSerene(
             but_for_such_faith='So solemn, so serene, that man may be,')
@@ -148,10 +143,10 @@ def test_decor_pep577() -> None:
 
         # Assert that attempting to set these fields to new values violating the
         # hints annotating these fields raises the expected exception.
-        with raises(BeartypeCallHintDataclassFieldViolation):
+        with raises(BeartypeCallHintPep557FieldViolation):
             great_mountain.that_man_may_be = (
                 b'Somewhere between the throne, and where I sit')
-        with raises(BeartypeCallHintDataclassFieldViolation):
+        with raises(BeartypeCallHintPep557FieldViolation):
             great_mountain.thou_hast_a_voice = (
                 'Here on this spot of earth. Search, Thea, search!')
 

@@ -115,7 +115,7 @@ from beartype.roar._roarexc import (
     # Violations (i.e., exceptions raised during runtime type-checking).
     BeartypeHintViolation as BeartypeHintViolation,
     BeartypeCallHintViolation as BeartypeCallHintViolation,
-    BeartypeCallHintDataclassFieldViolation as BeartypeCallHintDataclassFieldViolation,
+    BeartypeCallHintPep557FieldViolation as BeartypeCallHintPep557FieldViolation,
     BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
     BeartypeDecorHintViolation as BeartypeDecorHintViolation,

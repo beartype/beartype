@@ -117,6 +117,16 @@ class BeartypeConf(object):
         simplified type hints while internally instructing :mod:`beartype` to
         privately type-check that API under a completely different set of
         (typically more complicated) type hints.
+    _is_check_pep557 : bool
+        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+        classes decorated by the :pep:`557`-compliant
+        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+        attributes annotated by *any* type hints other than :pep:`526`-compliant
+        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
+        ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
+        initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
+        assignment** (i.e., when each field is subsequently assigned to by an
+        assignment statement).
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -220,6 +230,7 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_hash',
         '_hint_overrides',
+        '_is_check_pep557',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -248,6 +259,7 @@ class BeartypeConf(object):
         _conf_kwargs: DictStrToAny
         _hash: int
         _hint_overrides: BeartypeHintOverrides
+        _is_check_pep557: bool
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
@@ -289,6 +301,7 @@ class BeartypeConf(object):
         claw_is_pep526: bool = True,
         claw_skip_package_names: CollectionStrs = (),
         hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
+        is_check_pep557: bool = False,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -490,7 +503,7 @@ class BeartypeConf(object):
               the ``worst_package_evah`` package in entirety).
 
             Defaults to the empty tuple.
-        hint_overrides : BeartypeHintOverrides
+        hint_overrides : BeartypeHintOverrides, optional
             **Type hint overrides** (i.e., frozen dictionary mapping from
             arbitrary source to target type hints), enabling callers to lie to
             both their users and all other packages other than :mod:`beartype`.
@@ -530,6 +543,19 @@ class BeartypeConf(object):
                @beartype
                def lies(all_lies: list[int | float]) -> int | float:
                    return all_lies[0]
+        is_check_pep557 : bool, optional
+            :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+            classes decorated by the :pep:`557`-compliant
+            :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+            attributes annotated by *any* type hints other than
+            :pep:`526`-compliant ``dataclasses.ClassVar[...]`` or
+            :pep:`557`-compliant ``dataclasses.InitVar[...]`` type hints) on
+            both **dataclass object initialization** (i.e., at ``__init__()``
+            time) *and* **dataclass field assignment** (i.e., when each field is
+            subsequently assigned to by an assignment statement). Currently
+            defaults to :data:`False`, due to the non-triviality of safely
+            type-checking dataclass fields across all possible dataclass
+            configurations and use cases.
         is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -712,6 +738,7 @@ class BeartypeConf(object):
             If either:
 
             * ``is_color`` is *not* a tri-state boolean.
+            * ``is_check_pep557`` is *not* a boolean.
             * ``is_debug`` is *not* a boolean.
             * ``is_pep484_tower`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
@@ -751,6 +778,7 @@ class BeartypeConf(object):
                 claw_is_pep526,
                 claw_skip_package_names,
                 hint_overrides,
+                is_check_pep557,
                 is_color,
                 is_debug,
                 is_pep484_tower,
@@ -782,6 +810,7 @@ class BeartypeConf(object):
                 claw_is_pep526=claw_is_pep526,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
+                is_check_pep557=is_check_pep557,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
@@ -834,7 +863,11 @@ class BeartypeConf(object):
             self._conf_kwargs = conf_kwargs
 
             # Assert that these two data structures encapsulate the same number
-            # of configuration parameters (as a feeble safety check).
+            # of configuration parameters.
+            #
+            # Note that this is a feeble safety check against internal issues.
+            # Although this condition should *ALWAYS* be true, asserting this
+            # condition costs us nothing and gains us much: namely, QA.
             assert len(self._conf_args) == len(self._conf_kwargs)
 
             # Cache this configuration with all relevant dictionary singletons
@@ -857,6 +890,7 @@ class BeartypeConf(object):
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
+            self._is_check_pep557 = conf_kwargs['is_check_pep557']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
             self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore
@@ -1024,6 +1058,28 @@ class BeartypeConf(object):
         return self._warning_cls_on_decorator_exception
 
     # ..................{ PROPERTIES ~ options : bool        }..................
+    @property
+    def is_check_pep557(self) -> bool:
+        '''
+        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+        classes decorated by the :pep:`557`-compliant
+        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+        attributes annotated by *any* type hints other than :pep:`526`-compliant
+        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
+        ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
+        initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
+        assignment** (i.e., when each field is subsequently assigned to by an
+        assignment statement).
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_check_pep557
+
+
     @property
     def is_color(self) -> Optional[bool]:
         '''
