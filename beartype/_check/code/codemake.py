@@ -15,6 +15,25 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
+#FIXME: Indentation appears to have gone awry, sadly:
+#    (line 0027)     # If this parameter was passed...
+#    (line 0028)     if __beartype_pith_0 is not __beartype_get_violation:
+#    (line 0029)         # Type-check this parameter or return against this type hint.
+#    (line 0030)         if not (
+#    (line 0031)         # True only if this pith is of this iterable type *AND*...
+#    (line 0032)         isinstance(__beartype_pith_0, __beartype_object_108584612876976) and
+#
+#It's not just indentation, though. This code is less efficient than it could
+#be. We can strike down two birds with one stone by simply aggregating the above
+#two "if" conditionals to instead resemble:
+#    (line 0027)     # If this parameter was passed, type-check this parameter or return against this type hint...
+#    (line 0028)     if __beartype_pith_0 is not __beartype_get_violation and not (
+#    (line 0029)         # True only if this pith is of this iterable type *AND*...
+#    (line 0030)         isinstance(__beartype_pith_0, __beartype_object_108584612876976) and
+#
+#That said, the current approach technically does work and compile. Let's
+#revisit this once the code settles down a little, please.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPep593Exception,

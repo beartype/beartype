@@ -71,9 +71,6 @@ current pith against a **collection type hint** (i.e., either a
 '''
 
 
-#  this iterable is empty *OR*...
-# {{indent_curr}}    (not {{pith_curr_var_name}} or 
-
 CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # True only if this pith is of this iterable type *AND*...
 {{indent_curr}}    isinstance({{pith_curr_assign_expr}}, {{hint_curr_expr}}) and
@@ -83,7 +80,7 @@ CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # iterable to deeply satisfy this hint. It is what it is.
 {{indent_curr}}    (not isinstance({{pith_curr_var_name}}, {{collection_abc_expr}}) or
 {{indent_curr}}     # This iterable is an empty collection *OR*...
-{{indent_curr}}     not {{pith_curr_var_name}} or ((
+{{indent_curr}}     not len({{pith_curr_var_name}}) or ((
 {{indent_curr}}        # If this non-empty collection is a sequence, localize a
 {{indent_curr}}        # pseudo-random item of this sequence;
 {{indent_curr}}        (
@@ -102,6 +99,28 @@ current pith against an **quasiiterable type hint** (i.e., either a
 :pep:`484`-compliant ``typing.Iterable[...]`` type hint *or* a
 :pep:`585`-compliant ``collections.abc.Iterable[...]`` type hint matching a
 potentially unsafe container that is *not* guaranteed to be safely reiterable).
+
+Caveats
+-------
+Note that, in the test implemented in the code above:
+
+.. code-block:: python
+
+    not len({{pith_curr_var_name}}) or ((
+
+...the call to the :func:`len` builtin *cannot* be optimized away to simply:
+
+.. code-block:: python
+
+    not {{pith_curr_var_name}} or ((
+
+Why? Because a container being a collection does *not* necessarily imply that
+container to sanely implement the ``__bool__()`` dunder method. The canonical
+example is the third-party :class:`tensor.Torch` type, a collection whose
+``__bool__()`` dunder method raises exceptions for tensors containing one or
+more values: e.g.,
+
+    RuntimeError: Boolean value of Tensor with more than one value is ambiguous
 '''
 
 # ....................{ CODE ~ generic                     }....................

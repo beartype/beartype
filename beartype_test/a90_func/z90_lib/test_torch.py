@@ -37,6 +37,12 @@ def test_torch() -> None:
     # ....................{ LOCALS                         }....................
     # Tuple of all arguments to be passed to the active Python interpreter rerun
     # as an external command.
+    #
+    # Note that merely importing the top-level "torch" package conditionally
+    # imports and then applies @beartype to various PyTorch functionality if
+    # @beartype is importable. Ergo, merely importing this package suffices to
+    # test that @beartype does *NOT* break PyTorch -- which @beartype previously
+    # did, infamously requiring @beartype to rollback an entire release. OHNOES!
     _PYTHON_ARGS = get_interpreter_command_words() + ('-c', 'import torch',)
 
     # ....................{ PASS                           }....................
