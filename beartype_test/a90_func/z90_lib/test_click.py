@@ -67,7 +67,7 @@ def test_click_commands() -> None:
             '''
 
             # Feed that face! Feed it good.
-            print('!UGH!')
+            # print('!UGH!')
             return 0xFEEDFACE
 
 
