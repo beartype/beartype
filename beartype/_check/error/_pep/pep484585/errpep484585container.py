@@ -64,7 +64,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
     assert len(cause.hint_or_sane_childs) in hints_child_len_expected, (
-        f'Sequence type hint {repr(cause.hint)} number of child type hints '
+        f'Container type hint {repr(cause.hint)} number of child type hints '
         f'{len(cause.hint_or_sane_childs)} not in {hints_child_len_expected}.'
     )
 
@@ -93,7 +93,18 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     if (
         # This container is empty, *ALL* items of this container (of which there
         # are none) are necessarily valid *OR*...
-        not cause.pith or
+        #
+        # Note that this test *CANNOT* safely be optimized away to simply:
+        #     not cause.pith or
+        #
+        # Why? Because a container being a collection does *NOT* necessarily
+        # imply that container to sanely implement the __bool__() dunder method.
+        # The canonical example is the third-party "tensor.Torch" type, a
+        # collection whose __bool__() dunder method raises exceptions for
+        # tensors containing one or more values: e.g.,
+        #     RuntimeError: Boolean value of Tensor with more than one value is
+        #     ambiguous
+        not len(cause.pith) or
         # This child hint is ignorable...
         hint_or_sane_child is Any
     ):
@@ -192,7 +203,12 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     # the empty tuple.
     elif is_hint_pep484585_tuple_empty(cause.hint):
         # If this pith is the empty tuple, this path satisfies this hint.
-        if not cause.pith:
+        #
+        # Note that this test *CANNOT* safely be optimized away to simply:
+        #     not cause.pith or
+        #
+        # See above for additional commentary as to why.
+        if not len(cause.pith):
             return cause
         # Else, this tuple is non-empty and thus fails to satisfy this hint.
 

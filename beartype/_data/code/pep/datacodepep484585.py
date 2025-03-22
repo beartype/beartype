@@ -16,18 +16,34 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.checkmagic import VAR_NAME_RANDOM_INT
 from beartype._data.hint.datahinttyping import CallableStrFormat
 
-# ....................{ CODE ~ container                   }....................
+# ....................{ CODE ~ container : (reiterable|seq)}....................
 CODE_PEP484585_REITERABLE_OR_SEQUENCE = '''(
 {indent_curr}    # True only if this pith is of this container type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this container is empty *OR* this container
 {indent_curr}    # is non-empty and the selected item satisfies this hint.
-{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+{indent_curr}    (not len({pith_curr_var_name}) or {hint_child_placeholder})
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet generically type-checking the
 current pith against *any* arbitrary kind of single-argument standard
 container type hint.
+
+Caveats
+-------
+Note that, in the test implemented in the code above:
+
+.. code-block:: python
+
+    (not len({pith_curr_var_name}) or {hint_child_placeholder})
+
+...the call to the :func:`len` builtin *cannot* be optimized away to simply:
+
+.. code-block:: python
+
+    (not {pith_curr_var_name} or {hint_child_placeholder})
+
+See :data:`.CODE_PEP484585_QUASIITERABLE` for further details.
 '''
 
 
@@ -38,6 +54,7 @@ CODE_PEP484585_REITERABLE_PITH_CHILD_EXPR = (
 first item of the current reiterable pith.
 '''
 
+
 CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR = (
     f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
 '''
@@ -45,13 +62,13 @@ CODE_PEP484585_SEQUENCE_PITH_CHILD_EXPR = (
 value of a randomly indexed item of the current sequence pith.
 '''
 
-
+# ....................{ CODE ~ container : collection      }....................
 #FIXME: Actually use us up, please.
 CODE_PEP484585_COLLECTION = '''(
 {indent_curr}    # True only if this pith is of this collection type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this container is empty *OR*...
-{indent_curr}    (not {pith_curr_var_name} or (
+{indent_curr}    (not len({pith_curr_var_name}) or (
 {indent_curr}         # If this collection is a non-empty sequence, localize
 {indent_curr}         # a pseudo-random item of this sequence;
 {indent_curr}         (isinstance({pith_curr_var_name}, {sequence_abc_expr}) and
@@ -68,9 +85,25 @@ CODE_PEP484585_COLLECTION = '''(
 current pith against a **collection type hint** (i.e., either a
 :pep:`484`-compliant ``typing.Collection[...]`` type hint *or* a
 :pep:`585`-compliant ``collections.abc.Collection[...]`` type hint).
+
+Caveats
+-------
+Note that, in the test implemented in the code above:
+
+.. code-block:: python
+
+    not len({{pith_curr_var_name}}) or ((
+
+...the call to the :func:`len` builtin *cannot* be optimized away to simply:
+
+.. code-block:: python
+
+    not {{pith_curr_var_name}} or ((
+
+See :data:`.CODE_PEP484585_QUASIITERABLE` for further details.
 '''
 
-
+# ....................{ CODE ~ container : quasiiterable   }....................
 CODE_PEP484585_QUASIITERABLE = f'''(
 {{indent_curr}}    # True only if this pith is of this iterable type *AND*...
 {{indent_curr}}    isinstance({{pith_curr_assign_expr}}, {{hint_curr_expr}}) and
@@ -181,7 +214,7 @@ CODE_PEP484585_MAPPING = '''(
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this mapping is empty *OR* this mapping
 {indent_curr}    # is non-empty and...
-{indent_curr}    (not {pith_curr_var_name} or ({func_curr_code_key_value}))
+{indent_curr}    (not len({pith_curr_var_name}) or ({func_curr_code_key_value}))
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
@@ -198,6 +231,20 @@ Caveats
 There exist numerous means of accessing the first key-value pair of a
 dictionary. The approach taken here is well-known to be the fastest, as
 documented at this `StackOverflow answer`_.
+
+Lastly, note that, in the test implemented in the code above:
+
+.. code-block:: python
+
+    (not len({pith_curr_var_name}) or ({func_curr_code_key_value}))
+
+...the call to the :func:`len` builtin *cannot* be optimized away to simply:
+
+.. code-block:: python
+
+    (not {pith_curr_var_name} or ({func_curr_code_key_value}))
+
+See :data:`.CODE_PEP484585_QUASIITERABLE` for further details.
 
 .. _StackOverflow answer:
    https://stackoverflow.com/a/70490285/2809027

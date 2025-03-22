@@ -76,7 +76,20 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # If this mapping is empty, all items of this mapping (of which there are
     # none) are valid. By definition, this mapping satisfies this hint. In this
     # case, return the passed cause as is.
-    elif not cause.pith:
+    #
+    # Note that this test *CANNOT* safely be optimized away to simply:
+    #     not cause.pith or
+    #
+    # Why? Because a container being a mapping does *NOT* necessarily imply that
+    # mapping to sanely implement the __bool__() dunder method. Although all
+    # popular third-party mappings currently do implement sane __bool__() dunder
+    # methods, that could change at any time. Notably, popular third-party
+    # collections like PyTorch tensors and NumPy arrays do *NOT* implement sane
+    # __bool__() dunder methods. Since they don't, similar third-party
+    # mappings could implement similarly insane __bool__() dunder methods.
+    #
+    # See the "errpep484585container" submodule for additional commentary.
+    elif not len(cause.pith):
         return cause
     # Else, this mapping is non-empty.
 
