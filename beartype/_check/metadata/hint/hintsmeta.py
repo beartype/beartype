@@ -27,7 +27,7 @@ from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import (
     HintSane,
-    HintOrSane,
+    HintSane,
     # unpack_hint_or_sane,
 )
 from beartype._conf.confcls import BeartypeConf
@@ -596,7 +596,7 @@ class HintsMeta(FixedList):
         return hint_meta.hint_placeholder
 
     # ..................{ SANIFIERS                          }..................
-    def sanify_hint_child(self, hint: Hint) -> HintOrSane:
+    def sanify_hint_child(self, hint: Hint) -> HintSane:
         '''
         Type hint sanified (i.e., sanitized) from the passed **possibly insane
         child type hint** (i.e., possibly PEP-noncompliant hint transitively
@@ -616,7 +616,7 @@ class HintsMeta(FixedList):
 
         Returns
         -------
-        HintOrSane
+        HintSane
             Either:
 
             * If this child hint is ignorable, :obj:`typing.Any`.

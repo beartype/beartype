@@ -17,11 +17,11 @@ from beartype.roar import (
     BeartypeDecorHintPep484TypeVarViolation,
 )
 from beartype.typing import (
-    Any,
     Optional,
     TypeVar,
 )
 from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
     HintOrSane,
     HintSane,
 )
@@ -102,8 +102,8 @@ def reduce_hint_pep484_typevar(
         # usability and negligible efficiency.
         typevar_to_hint = parent_hint_sane.typevar_to_hint
 
-        # If a parent hint of this type variable maps exactly one type
-        # variables, prefer a dramatically faster and simpler approach.
+        # If a parent hint of this type variable maps exactly one type variable,
+        # prefer a dramatically faster and simpler approach.
         if len(typevar_to_hint) == 1:
             # Hint mapped to by this type variable if one or more parent hints
             # previously mapped this type variable to a hint *OR* this hint as
@@ -141,6 +141,12 @@ def reduce_hint_pep484_typevar(
             #exactly *ONCE* in the
             #reduce_hint_pep484_subscripted_typevars_to_hints() reducer. Please
             #refactor this iteration over there *AFTER* the dust settles here.
+            #FIXME: Actually, it's unclear how exactly this could be refactored
+            #into the reduce_hint_pep484_subscripted_typevars_to_hints()
+            #reducer. This reduction here only searches for a single typevar in
+            #O(n) time. Refactoring this over to
+            #reduce_hint_pep484_subscripted_typevars_to_hints() would require
+            #generalizing this into an O(n**2) algorithm there, probably. Yow!
 
             # While...
             while (
@@ -185,7 +191,7 @@ def reduce_hint_pep484_typevar(
         # variable is currently *NOT* type-checkable and is thus ignorable.
         # Reduce this type variable to the ignorable "typing.Any" singleton.
         if hint is None:
-            hint = Any
+            hint = HINT_IGNORABLE
         # Else, this type variable is either bounded *OR* constrained. In either
         # case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')

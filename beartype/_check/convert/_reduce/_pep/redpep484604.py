@@ -12,17 +12,21 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Any
+from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
+    HintOrSane,
+)
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
 # ....................{ TESTERS                            }....................
-def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
+    HintOrSane):
     '''
-    Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the
-    ignorable :obj:`typing.Any` singleton if this union is subscripted by one or
+    Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the ignorable
+    :data:`.HINT_IGNORABLE` singleton if this union is subscripted by one or
     more **ignorable child hints** (i.e., hints that themselves reduce to the
-    ignorable :obj:`typing.Any` singleton) *or* preserve this union as is
+    ignorable :data:`.HINT_IGNORABLE` singleton) *or* preserve this union as is
     otherwise (i.e., if this union is subscripted by *no* ignorable child
     hints).
 
@@ -48,9 +52,9 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
 
     Why? Because unions are only as narrow as their widest child type hints.
     Shallowly ignorable hints are ignorable exactly because they are the widest
-    possible hints (e.g., :class:`object`, :attr:`typing.Any`), which are so
-    wide as to constrain nothing and convey no meaningful semantics. A union of
-    one or more shallowly ignorable child hints is thus the widest possible
+    possible hints (e.g., :class:`object`, :data:`.HINT_IGNORABLE`), which are
+    so wide as to constrain nothing and convey no meaningful semantics. A union
+    of one or more shallowly ignorable child hints is thus the widest possible
     union, which is so wide as to constrain nothing and convey no meaningful
     semantics. There exist a countably infinite number of possible unions
     subscripted by one or more ignorable child hints. Ergo, these subscriptions
@@ -72,11 +76,11 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
 
     Returns
     -------
-    Hint
+    HintOrSane
         Either:
 
         * If this union is subscripted by one or more ignorable child hints,
-          :obj:`typing.Any`.
+          :data:`.HINT_IGNORABLE`.
         * Else, this union unmodified.
     '''
     # print(f'[484/604] Detecting union {repr(hint)} ignorability...')
@@ -130,15 +134,12 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
         # supplementary metadata).
         hint_or_sane_child = reduce_hint_child(hint_child, kwargs)
 
-        # If this sanified child hint is "Any", this child hint is ignorable. By
-        # set logic, a union subscripted by one or more ignorable child hints is
-        # itself ignorable. In this case...
-        if hint_or_sane_child is Any:
-            # Reduce this entire union to the ignorable "Any" singleton.
-            hint = Any  # pyright: ignore
-
-            # Immediately halt this iteration.
-            break
+        # If this sanified child hint is ignorable...
+        if hint_or_sane_child is HINT_IGNORABLE:
+            # Reduce this entire union to the "HINT_IGNORABLE" singleton. Why?
+            # By set logic, a union subscripted by one or more ignorable child
+            # hints is itself ignorable.
+            return HINT_IGNORABLE
         # Else, this sanified child hint is unignorable.
 
         # Increment the 0-based index of the currently iterated child hint.

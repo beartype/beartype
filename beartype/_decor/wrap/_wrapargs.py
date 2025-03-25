@@ -31,7 +31,7 @@ from beartype.typing import (
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.hint.hintsane import (
-    HintOrSane,
+    HintSane,
     # HintSane,
 )
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
@@ -180,7 +180,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # Sane hint annotating the current parameter sanified from this possibly
     # insane hint if sanifying this hint generated no supplementary metadata
     # *OR* that metadata otherwise.
-    hint_or_sane: HintOrSane = None  # type: ignore[assignment]
+    hint_or_sane: HintSane = None  # type: ignore[assignment]
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid

@@ -47,7 +47,6 @@ process).
 from beartype.typing import (
     Any,
     Type,
-    overload,
 )
 from beartype._check.checkmake import (
     make_func_raiser,

@@ -337,6 +337,28 @@ subscriptable classes).
 '''
 
 # ....................{ SETS ~ ignorable                   }....................
+#FIXME: *SUPER-AWKWARD.* We accidentally duplicated *ALMOST* all of this set's
+#functionality as the "HINT_SIGNS_BARE_IGNORABLE" set. From what we can tell,
+#the only difference between these two sets is:
+#* This set matches the "object" superclass via "<class 'object'>", whereas
+#  "HINT_SIGNS_BARE_IGNORABLE" fails to match that superclass.
+#
+#That said, the "HINT_SIGNS_BARE_IGNORABLE" set is *VASTLY* preferable to this
+#set. Why? Maintainability. That set is trivially defined and then just works.
+#This set, on the other hand? Super-fragile. Just look at the insane
+#initialization logic below. Given that, here's what we should do:
+#* Replace all use of this "HINTS_REPR_IGNORABLE_SHALLOW" set with the
+#  comparable "HINT_SIGNS_BARE_IGNORABLE" set. Doing is mostly trivial; just:
+#      hint_sign = get_hint_pep_sign_or_none(hint)
+#      hint_args = get_hint_pep_args(hint)
+#
+#      if hint is object or (
+#          not hint_args and
+#          hint_sign in HINT_SIGNS_BARE_IGNORABLE
+#      ):
+#          return HINT_IGNORABLE
+#* Completely excise this "HINTS_REPR_IGNORABLE_SHALLOW" set from the codebase.
+
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.

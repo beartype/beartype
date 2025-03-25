@@ -12,17 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.nonpep.utilnonpeptest import (
-    die_unless_hint_nonpep,
-    is_hint_nonpep,
-)
-from beartype._util.hint.pep.utilpeptest import (
-    die_if_hint_pep_unsupported,
-    is_hint_pep,
-    is_hint_pep_supported,
-)
 
 # ....................{ TESTERS                            }....................
 #FIXME: Call this getter everywhere we currently call "repr(hint*)", please.

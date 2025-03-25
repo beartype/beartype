@@ -24,11 +24,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Tuple
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
-    HintOrSane,
     HintSane,
-    DictHintOrSaneToAny,
-    ListHintOrSane,
-    SetHintOrSane,
+    HintSane,
+    DictHintSaneToAny,
+    ListHintSane,
+    SetHintSane,
     get_hint_or_sane_hint,
     unpack_hint_or_sane,
 )
@@ -163,7 +163,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     # Dictionary whose keys comprise the set of all PEP-compliant child hints
     # subscripting this union and whose values are ignorable. See above.
-    hint_or_sane_childs_pep: DictHintOrSaneToAny = acquire_instance(
+    hint_or_sane_childs_pep: DictHintSaneToAny = acquire_instance(
         dict)
 
     # ....................{ FILTER                         }....................
@@ -327,7 +327,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached
 def _get_hint_pep484604_union_args_flattened(
-    hints_meta: HintsMeta) -> Tuple[HintOrSane, ...]:
+    hints_meta: HintsMeta) -> Tuple[HintSane, ...]:
     '''
     Flattened tuple of the two or more child hints subscripting the passed
     :pep:`604`- or :pep:`484`-compliant union hint such that *all* nested child
@@ -379,7 +379,7 @@ def _get_hint_pep484604_union_args_flattened(
 
     Returns
     -------
-    Tuple[HintOrSane, ...]
+    Tuple[HintSane, ...]
         Flattened tuple of the two or more child hints *or* **sanified child
         hint metadatum** (i.e., :class:`.HintSane` objects) subscripting
         this parent union hint.
@@ -429,7 +429,7 @@ def _get_hint_pep484604_union_args_flattened(
     # Input stack of all currently unflattened transitive child hints of this
     # union to be visited by the depth-first search (DFS) below, initialized to
     # the non-empty list of all direct child hints of this union.
-    hint_or_insane_childs_unflattened: ListHintOrSane = (
+    hint_or_insane_childs_unflattened: ListHintSane = (
         acquire_instance(list))
     hint_or_insane_childs_unflattened.extend(hint_childs)
 
@@ -440,7 +440,7 @@ def _get_hint_pep484604_union_args_flattened(
     #
     # Note that this stack orders these child hints in the *REVERSE* order that
     # these child hints were originally ordered by the user in this union.
-    hint_or_sane_childs_flattened: ListHintOrSane = (
+    hint_or_sane_childs_flattened: ListHintSane = (
         acquire_instance(list))
 
     # ....................{ LOCALS ~ set                   }....................
@@ -454,7 +454,7 @@ def _get_hint_pep484604_union_args_flattened(
     #   configuration enabling the "hint_overrides" option (e.g., a
     #   "hints_meta.conf.hint_overrides" option whose value is
     #   "BeartypeHintOverrides({int: int | float})".
-    hint_or_insane_childs_sanified: SetHintOrSane = (
+    hint_or_insane_childs_sanified: SetHintSane = (
         acquire_instance(set))
 
     # ....................{ SEARCH                         }....................

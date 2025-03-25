@@ -17,11 +17,11 @@ from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype.typing import Optional
 from beartype._cave._cavefast import HintPep695TypeAlias
 from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
     HintOrSane,
     HintSane,
 )
 from beartype._data.hint.datahintpep import (
-    AnyObject,
     Hint,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
@@ -65,7 +65,7 @@ def reduce_hint_pep695_subscripted(
 
     Returns
     -------
-    HintOrSane
+    HintSane
         **Sanified type hint metadata** (i.e., :class:`.HintSane` object)
         describing this reduction.
 
@@ -92,14 +92,29 @@ def reduce_hint_pep695_subscripted(
     #   this unsubscripted alias to all non-type variable hints subscripting
     #   this subscripted alias.
     # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-    hint_reduced = reduce_hint_pep484_subscripted_typevars_to_hints(
+    hint_sane = reduce_hint_pep484_subscripted_typevars_to_hints(
         hint=hint,
         parent_hint_sane=parent_hint_sane,
         exception_prefix=exception_prefix,
     )
 
-    # Return this reduced hint.
-    return hint_reduced
+    #FIXME: *THIS DEFINITELY REQUIRES DOCUMENTATION.* Basically:
+    #* This function operates in two phases:
+    #  * The first phase above decides the type variable lookup table for this
+    #    subscripted PEP 695 type alias.
+    #  * The second phase here decides the recursion guard. Crucially, this
+    #    recursion guard also intentionally applies to the original
+    #    *SUBSCRIPTED* (rather than unsubscripted) PEP 695 type alias. This is
+    #    why we pass "hint=hint". That said, we also have to preserve the type
+    #    variable lookup table decided in the first phase. This is why we pass
+    #    the 'parent_hint_sane=hint_sane". It is, indeed, complicated.
+
+    # Sanified metadata to be returned, guarded against infinite recursion.
+    hint_sane = _make_hint_pep695_recursable_hints(
+        hint=hint, parent_hint_sane=hint_sane)
+
+    # Return this metadata.
+    return hint_sane
 
 
 def reduce_hint_pep695_unsubscripted(
@@ -138,7 +153,7 @@ def reduce_hint_pep695_unsubscripted(
 
     Returns
     -------
-    HintOrSane
+    HintSane
         **Sanified type hint metadata** (i.e., :class:`.HintSane` object)
         describing this reduction.
 
@@ -192,7 +207,7 @@ def reduce_hint_pep695_unsubscripted(
         # easiest, fastest, and laziest approach: simply ignore all recursion!
         hint in parent_hint_sane.recursable_hints
     ):
-        return AnyObject
+        return HINT_IGNORABLE
     # Else, this hint is either the root *OR* not a transitive parent of itself.
     # In either case, this hint is *NOT* a recursive hint..... yet. I sigh.
 
@@ -248,12 +263,20 @@ def reduce_hint_pep695_unsubscripted(
     # forward references to undeclared attributes.
 
     # ....................{ RETURN                         }....................
-    #FIXME: Propagate this logic above. Doing so will be... non-trivial. We'll
-    #probably want to define a new _make_hint_pep695_unsubscripted_sane()
-    #factory handling this to preserve DRY here and above. *sigh*
+    # Sanified metadata to be returned, guarded against infinite recursion.
+    hint_sane = _make_hint_pep695_recursable_hints(
+        hint=hint_aliased, parent_hint_sane=parent_hint_sane)
+
+    # Return this metadata.
+    return hint_sane
+
+# ....................{ PRIVATE ~ factories                }....................
+#FIXME: Docstring us up, please. *sigh*
+def _make_hint_pep695_recursable_hints(
+    hint: Hint, parent_hint_sane: Optional[HintSane]) -> HintSane:
 
     # Sanified metadata to be returned.
-    hint_sane: HintOrSane = None  # type: ignore[assignment]
+    hint_sane: HintSane = None  # type: ignore[assignment]
 
     # Recursion guard containing *ONLY* this pre-sanified unsubscripted hint
     # (which is what the initial recursion logic above will then subsequently
@@ -267,7 +290,7 @@ def reduce_hint_pep695_unsubscripted(
         # recursion logic above will then subsequently test against if this a
         # recursive alias).
         hint_sane = HintSane(
-            hint=hint_aliased, recursable_hints=recursable_hints)
+            hint=hint, recursable_hints=recursable_hints)
     # Else, this hint has a parent. In this case...
     else:
         # If the parent hint is also associated with a recursion guard...
@@ -289,7 +312,7 @@ def reduce_hint_pep695_unsubscripted(
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # type variable lookup table) down onto this child hint as well.
         hint_sane = parent_hint_sane.permute(
-            hint=hint_aliased, recursable_hints=recursable_hints)
+            hint=hint, recursable_hints=recursable_hints)
 
     # Return this underlying type hint.
     return hint_sane

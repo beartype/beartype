@@ -84,6 +84,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypedDict,
     HintSignTypeGuard,
     HintSignTypeVar,
+    HintSignTypeVarTuple,
     HintSignUnion,
     HintSignUnpack,
     HintSignValuesView,
@@ -122,6 +123,11 @@ HINT_SIGNS_UNSUBSCRIPTABLE = frozenset((
     # PEP 612-compliant parameter specifications (i.e., "typing.ParamSpec"
     # objects) are *ALWAYS* unsubscripted and thus clearly unsubscriptable.
     HintSignParamSpec,
+
+    # ..................{ PEP 646                            }..................
+    # PEP 646-compliant type variable tuples (i.e., "typing.TypeVarTuple"
+    # objects) are *ALWAYS* unsubscripted and thus clearly unsubscriptable.
+    HintSignTypeVarTuple,
 ))
 '''
 Frozen set of the signs uniquely identifying all **unsubscriptable type hints**,

@@ -288,6 +288,20 @@ class HintSane(object):
             exception_cls=_BeartypeDecorHintSanifyException,
         )
 
+# ....................{ GLOBALS                            }....................
+HINT_IGNORABLE = HintSane(hint=Any)
+'''
+**Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSign`
+instance to which *all* deeply or shallowly ignorable type hints are reduced by
+:mod:`beartype._check.convert.convsanify` sanifiers).
+
+This singleton enables callers to trivially differentiate ignorable from
+unignorable hints. After sanification, if a hint is sanified to:
+
+* Literally this singleton, then that hint is ignorable.
+* Any other object, then that hint is unignorable.
+'''
+
 # ....................{ HINTS                              }....................
 HintOrSane = Union[Hint, HintSane]
 '''
@@ -295,163 +309,38 @@ PEP-compliant type hint matching either a type hint *or* **sanified type hint
 metadata** (i.e., :class:`.HintSane` object).
 '''
 
-
-#FIXME: Ideally, this should be refactored away from the codebase. *sigh*
-HintOrSaneUnpacked = Tuple[Hint, TypeVarToHint]
-'''
-PEP-compliant type hint matching a 2-tuple ``(hint, typevar_to_hint)`` as
-returned by the :func:`.unpack_hint_or_sane` unpacker.
-'''
-
 # ....................{ HINTS ~ container                  }....................
-DictHintOrSaneToAny = Dict[HintOrSane, Any]
+DictHintSaneToAny = Dict[HintSane, Any]
 '''
-PEP-compliant type hint matching a dictionary mapping from keys that are either
-type hints *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSane` objects) to arbitrary objects.
-'''
-
-IterableHintOrSane = Iterable[HintOrSane]
-'''
-PEP-compliant type hint matching an iterable of zero or more items, each of
-which is either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSane` object).
+PEP-compliant type hint matching a dictionary mapping from keys that are
+**sanified type hint metadata** (i.e., :class:`.HintSane` objects) to arbitrary
+objects.
 '''
 
 
-ListHintOrSane = List[HintOrSane]
+IterableHintSane = Iterable[HintSane]
 '''
-PEP-compliant type hint matching a list of zero or more items, each of which is
-either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSane` object).
-'''
-
-
-SetHintOrSane = Set[HintOrSane]
-'''
-PEP-compliant type hint matching a set of zero or more items, each of which is
-either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSane` object).
+PEP-compliant type hint matching an iterable of zero or more **sanified type
+hint metadata** (i.e., :class:`.HintSane` objects).
 '''
 
 
-TupleHintOrSane = Tuple[HintOrSane, ...]
+ListHintSane = List[HintSane]
 '''
-PEP-compliant type hint matching a tuple of zero or more items, each of which is
-either a type hint *or* **sanified type hint metadata** (i.e.,
-:class:`.HintSane` object).
+PEP-compliant type hint matching a list of zero or more **sanified type hint
+metadata** (i.e., :class:`.HintSane` objects).
 '''
 
-# ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
-def get_hint_or_sane_hint(hint_or_sane: HintOrSane) -> Hint:
-    '''
-    Hint unpacked (i.e., coerced, converted) from the passed parameter.
 
-    Caveats
-    -------
-    This getter effectively discards *all* supplementary metadata recorded with
-    this parameter -- including any type variable lookup table associated with
-    this child hint.
+SetHintSane = Set[HintSane]
+'''
+PEP-compliant type hint matching a set of zero or more **sanified type hint
+metadata** (i.e., :class:`.HintSane` objects).
+'''
 
-    Parameters
-    ----------
-    hint_or_sane : HintSane
-        Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :class:`.HintSane` object) to be unpacked.
 
-    Returns
-    -------
-    Hint
-        Hint unpacked (i.e., coerced, converted) from this parameter.
-    '''
-
-    # Return the hint encapsulated by this metadata.
-    return (
-        hint_or_sane.hint
-        if isinstance(hint_or_sane, HintSane) else
-        hint_or_sane
-    )
-
-# ....................{ UNPACKERS                          }....................
-#FIXME: Unit test us up, please.
-#FIXME: Ideally, this should be refactored away from the codebase. *sigh*
-def unpack_hint_or_sane(
-    # Mandatory parameters.
-    hint_or_sane: HintOrSane,
-
-    # Optional parameters.
-    typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
-) -> HintOrSaneUnpacked:
-    '''
-    2-tuple ``(hint, typevar_to_hint)`` unpacked from the passed parameters.
-
-    This low-level utility function "unpacks" (i.e., coerces, converts) the
-    passed type hint and type variable lookup table.
-
-    Parameters
-    ----------
-    hint_or_sane : HintSane
-        Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :class:`.HintSane` object) to be unpacked.
-    typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        the :pep:`484`-compliant **type variables** (i.e.,
-        :class:`typing.TypeVar` objects) originally parametrizing the origins of
-        all transitive parent hints of this hint to the corresponding child
-        hints subscripting these parent hints). Defaults to
-        :class:`.FROZENDICT_EMPTY`.
-
-    Returns
-    -------
-    Tuple[Hint, TypeVarToHint]
-        2-tuple ``(hint, typevar_to_hint)`` where:
-
-        * ``hint`` is the hint encapsulated by the passed parameters.
-        * ``typevar_to_hint`` is the type variable lookup table encapsulated by
-          the passed parameters. If the pair of type variable lookup tables
-          encapsulated by both the passed ``typevar_to_hint`` parameter *and*
-          ``hint_or_sane.typevar_to_hint`` instance variable are non-empty, then
-          this ``typevar_to_hint`` item of this 2-tuple is a new type variable
-          lookup table efficiently merging this parameter and instance variable
-          (in that order).
-    '''
-    assert isinstance(typevar_to_hint, FrozenDict), (
-        f'{repr(typevar_to_hint)} not frozen dictionary.')
-
-    # If reducing this hint generated supplementary metadata...
-    if isinstance(hint_or_sane, HintSane):
-        # This lower-level hint reduced from this higher-level hint.
-        hint = hint_or_sane.hint
-
-        # If reducing this hint generated a non-empty type variable lookup
-        # table...
-        if hint_or_sane.typevar_to_hint:
-            # If the caller passed an empty type variable lookup table,
-            # trivially replace the latter with the former.
-            if not typevar_to_hint:
-                typevar_to_hint = hint_or_sane.typevar_to_hint
-            else:
-                # Full type variable lookup table uniting...
-                typevar_to_hint = (
-                    # The type variable lookup table describing all
-                    # transitive parent hints of this reduced hint *AND*...
-                    typevar_to_hint |  # type: ignore[operator]
-                    # The type variable lookup table describing this hint.
-                    #
-                    # Note that this table is intentionally the second
-                    # rather than first operand of this "|" operation,
-                    # efficiently ensuring that type variables mapped by
-                    # this hint take precedence over type variables mapped
-                    # by transitive parent hints of this hint.
-                    hint_or_sane.typevar_to_hint
-                )
-        # Else, reducing this hint generated an empty type variable lookup
-        # table. In this case, this table is ignorable.
-    # Else, reducing this hint did *NOT* generate supplementary metadata. In
-    # this case, preserve this reduced hint as is.
-    else:
-        hint = hint_or_sane
-
-    # Return the 2-tuple containing this hint and type variable lookup table.
-    return (hint, typevar_to_hint)
+TupleHintSane = Tuple[HintSane, ...]
+'''
+PEP-compliant type hint matching a tuple of zero or more **sanified type hint
+metadata** (i.e., :class:`.HintSane` objects).
+'''

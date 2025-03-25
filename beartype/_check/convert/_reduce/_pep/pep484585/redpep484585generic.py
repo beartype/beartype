@@ -16,17 +16,14 @@ from beartype.typing import (
     Generic,
     Optional,
 )
-from beartype._data.hint.datahintpep import (
-    AnyObject,
-    Hint,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
     HintOrSane,
     HintSane,
 )
 from beartype._util.hint.pep.proposal.pep544 import (
     is_hint_pep484_generic_io,
-    reduce_hint_pep484_generic_io_to_pep544_protocol,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
@@ -100,7 +97,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # If this subscripted generic is the "typing.Generic" superclass directly
     # parametrized by one or more type variables (e.g., "typing.Generic[T]"),
     # this generic is ignorable. In this case, reduce this ignorable generic to
-    # the ignorable "typing.Any" singleton.
+    # the ignorable singleton.
     #
     # Note that we intentionally avoid calling the
     # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
@@ -108,7 +105,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # originating from "typing" type origins for stability reasons.
     if get_hint_pep_origin_or_none(hint) is Generic:
         # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
-        return AnyObject
+        return HINT_IGNORABLE
     # Else, this subscripted generic is *NOT* the "typing.Generic" superclass
     # directly parametrized by one or more type variables and thus *NOT* an
     # ignorable non-protocol.
@@ -125,7 +122,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # Note that we reduce this subscripted IO generic *BEFORE* stripping all
     # child hints subscripting this IO generic, as this reducers requires these
     # child hints to correctly reduce this IO generic.
-    hint_reduced: HintOrSane = _reduce_hint_pep484585_generic_io(
+    hint_reduced: HintSane = _reduce_hint_pep484585_generic_io(
         hint=hint, exception_prefix=exception_prefix)
 
     # If this hint was reduced to an unsubscripted generic from this subscripted
@@ -133,7 +130,7 @@ def reduce_hint_pep484585_generic_subscripted(
     if hint_reduced is not hint:
         return hint_reduced
     # Else, this hint was *NOT* reduced to an unsubscripted generic from this
-    # subscripted IO generic.
+    # subscripted IO generic (i.e., "hint_reduced is hint").
 
     # Reduce this subscripted generic to:
     # * The semantically useful unsubscripted generic originating this
@@ -216,6 +213,10 @@ def _reduce_hint_pep484585_generic_io(
     Hint
         This subscripted generic possibly reduced to a more suitable hint.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._check.convert._reduce._pep.redpep544 import (
+        reduce_hint_pep484_generic_io_to_pep544_protocol)
 
     # If this hint is a PEP 484-compliant IO generic base class, reduce this
     # functionally useless hint to the corresponding functionally useful

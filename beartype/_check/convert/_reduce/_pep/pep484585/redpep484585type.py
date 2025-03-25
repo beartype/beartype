@@ -13,9 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-)
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg)
@@ -51,7 +49,7 @@ def reduce_hint_pep484585_type(
     Returns
     -------
     Hint
-        Hint reduced from this subclass hint.
+        Lower-level hint reduced from this subclass hint.
 
     Raises
     ------
@@ -101,7 +99,7 @@ def reduce_hint_pep484585_type(
 
         # If this child hint is ignorable, reduce this subclass hint to merely
         # the "type" superclass.
-        if hint_child_reduced is Any:
+        if hint_child_reduced is HINT_IGNORABLE:
             # print(f'Reducing subclass hint {hint} to "type"...')
             hint = type  # pyright: ignore
         # Else, this child hint is unignorable. Preserve this hint as is.

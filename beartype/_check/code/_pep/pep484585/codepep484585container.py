@@ -12,9 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Any
 from beartype.roar import BeartypeDecorHintPepException
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
@@ -116,7 +116,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     # If this child hint is unignorable:
     # * Shallowly type-check the type of the current pith.
     # * Deeply type-check an efficiently retrievable item of this pith.
-    if hint_or_sane_child is not Any:
+    if hint_or_sane_child is not HINT_IGNORABLE:
         # Hint logic type-checking this sign if any *OR* "None" otherwise.
         hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(hint_sign)
 

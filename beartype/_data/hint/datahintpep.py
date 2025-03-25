@@ -133,16 +133,6 @@ __all__ = [
 ]
 
 # ....................{ HINTS                              }....................
-#FIXME: Remove this at the earliest possible date, please. This *DEFINITELY*
-#isn't right. Clearly, "mypy" should just accept "Any". We facepalm. </facepalm>
-AnyObject: Hint = Any
-'''
-``mypy``-compatible alias of the standard :obj:`typing.Any` singleton, currently
-required as a crude workaround to force ``mypy`` to accept :obj:`typing.Any` in
-various contexts that ``mypy`` erroneously fails to accept :obj:`typing.Any`.
-'''
-
-
 HintOrNone = Optional[Hint]
 '''
 PEP-compliant type hint matching either any PEP-compliant type hint *or*

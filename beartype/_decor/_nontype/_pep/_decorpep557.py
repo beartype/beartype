@@ -308,7 +308,7 @@ def beartype_pep557_dataclass(
         #  reason we have to call the public-facing is_bearable() and
         #  die_if_unbearable() functions. Instead:
         #  * Define new private-facing variants of those functions transparently
-        #    accepting a "hint: HintOrSane" parameter. Call them:
+        #    accepting a "hint: HintSane" parameter. Call them:
         #    * is_hint_or_sane_bearable().
         #    * die_if_hint_or_sane_unbearable().
         #    In theory, this shouldn't be *TOO* hard. Indeed, we should be able
