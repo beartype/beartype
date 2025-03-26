@@ -13,12 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.cls.utilclstest import is_type_subclass_proper
-# from beartype.roar import BeartypeDecorHintPep484Exception
-# from beartype.typing import Any
-# from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType
-# from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-# from types import FunctionType
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -67,30 +63,30 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #(BFS) over type hints into a new depth-first search (DFS) over type hints.
 #We've extensively documented this in the "beartype._check.code.__init__"
 #submodule. Simply know that this will be non-trivial, albeit fun and needed!
-def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
+def is_hint_pep484_namedtuple_subclass(hint: Hint) -> bool:
     '''
-    ``True`` only if the passed object is a :pep:`484`-compliant **named tuple
-    subclass** (i.e., concrete subclass of the standard
-    :attr:`typing.NamedTuple` superclass).
+    :data:`True` only if the passed object is a :pep:`484`-compliant **named
+    tuple subclass** (i.e., concrete subclass of the standard
+    :obj:`typing.NamedTuple` superclass).
 
-    Note that the :attr:`typing.NamedTuple` attribute is *not* actually a
+    Note that the :obj:`typing.NamedTuple` attribute is *not* actually a
     superclass; that attribute only superficially masquerades (through
     inscrutable metaclass trickery) as a superclass. As one might imagine,
     detecting "subclasses" of a non-existent superclass is non-trivial.
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a :pep:`484`-compliant named tuple
+        :data:`True` only if this object is a :pep:`484`-compliant named tuple
         subclass.
     '''
 

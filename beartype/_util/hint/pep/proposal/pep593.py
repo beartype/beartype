@@ -15,14 +15,15 @@ from beartype.typing import (
     Any,
     Tuple,
 )
-from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 
 # ....................{ RAISERS                            }....................
 #FIXME: Pass "exception_prefix" to all calls of this validator.
 def die_unless_hint_pep593(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep593Exception,
@@ -36,7 +37,7 @@ def die_unless_hint_pep593(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
@@ -63,7 +64,7 @@ def die_unless_hint_pep593(
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up.
-def is_hint_pep593(hint: Any) -> bool:
+def is_hint_pep593(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`593`-compliant **type
     metahint** (i.e., subscription of either the :attr:`typing.Annotated` or
@@ -71,7 +72,7 @@ def is_hint_pep593(hint: Any) -> bool:
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -88,7 +89,7 @@ def is_hint_pep593(hint: Any) -> bool:
     return get_hint_pep_sign_or_none(hint) is HintSignAnnotated
 
 # ....................{ TESTERS ~ beartype                 }....................
-def is_hint_pep593_beartype(hint: Any) -> bool:
+def is_hint_pep593_beartype(hint: Hint) -> bool:
     '''
     :data:`True` only if the second argument subscripting the passed
     :pep:`593`-compliant :attr:`typing.Annotated` type hint is
@@ -97,7 +98,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         :pep:`593`-compliant type hint to be inspected.
 
     Returns
@@ -138,7 +139,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep593_metadata(
-    hint: Any, exception_prefix: str = '') -> Tuple[Any, ...]:
+    hint: Hint, exception_prefix: str = '') -> Tuple[Any, ...]:
     '''
     Tuple of one or more arbitrary objects annotating the passed
     :pep:`593`-compliant **type metahint** (i.e., subscription of the
@@ -155,14 +156,14 @@ def get_hint_pep593_metadata(
     Parameters
     ----------
     hint : object
-        `PEP 593`-compliant type metahint to be inspected.
+        :pep:`593`-compliant type metahint to be inspected.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
-    type
+    Tuple[Any, ...]
         Tuple of one or more arbitrary objects annotating this metahint.
 
     Raises
@@ -190,7 +191,7 @@ def get_hint_pep593_metadata(
 
 
 #FIXME: Unit test us up, please.
-def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
+def get_hint_pep593_metahint(hint: Hint, exception_prefix: str = '') -> Hint:
     '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
@@ -206,7 +207,7 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         :pep:`593`-compliant type metahint to be inspected.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
@@ -214,7 +215,7 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
 
     Returns
     -------
-    Any
+    Hint
         PEP-compliant type hint annotated by this metahint.
 
     Raises

@@ -14,17 +14,17 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeStrategy
 from beartype.typing import (
-    Any,
     Hashable,
     Iterable,
     Tuple,
 )
+from beartype._check.error.errcause import ViolationCause
+from beartype._check.error._errtype import find_cause_type_instance_origin
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCounter
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
-from beartype._check.error.errcause import ViolationCause
-from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -110,8 +110,8 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     )
 
     # True only if these hints are unignorable.
-    is_hint_key_unignorable = hint_or_sane_key is not Any
-    is_hint_value_unignorable = hint_or_sane_value is not Any
+    is_hint_key_unignorable = hint_or_sane_key is not HINT_IGNORABLE
+    is_hint_value_unignorable = hint_or_sane_value is not HINT_IGNORABLE
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:
@@ -145,7 +145,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # this child key hint if this key violates this child key hint *OR*
             # "None" otherwise (i.e., if this key satisfies this child key
             # hint).
-            cause_deep = cause.permute(
+            cause_deep = cause.permute_cause
                 pith=pith_key, hint_or_sane=hint_or_sane_key).find_cause()
 
             # If this key is the cause of this failure...
@@ -169,7 +169,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # this child value hint if this value violates this child value hint
             # *OR* "None" otherwise (i.e., if this value satisfies this child
             # value hint).
-            cause_deep = cause.permute(
+            cause_deep = cause.permute_cause
                 pith=pith_value, hint_or_sane=hint_or_sane_value).find_cause()
 
             # If this value is the cause of this failure...

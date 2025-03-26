@@ -610,3 +610,27 @@ include = [
     # Relative filenames of all requisite package-level installation-time files.
     "/beartype/py.typed",
 ]
+
+# ....................{ NON-PEP ~ pyright                  }....................
+# PEP-noncompliant section declaring pyright-specific version settings. See
+# also:
+# * Official documentation for this section.
+#   https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+[tool.pyright]
+
+# List of POSIX-compatible glob expressions matching all paths to be statically
+# type-checked by pyright.
+include = ["beartype"]
+
+# List of POSIX-compatible glob expressions matching all paths to *NOT* be
+# statically type-checked by pyright.
+exclude = ["**/__pycache__"]
+
+# No idea, honestly. pyright appears to want this. It is what it is. 8<>
+stubPath = ""
+
+# Instruct pyright to statically type-check Python Enhancement Proposals (PEPs)
+# that have been accepted for standard inclusion with the next major stable
+# release of Python but *NOT* any existing release of Python. Examples include:
+# * PEP 747-compliant "typing.TypeForm[...]" type hints under Python >= 3.14.
+enableExperimentalFeatures = true

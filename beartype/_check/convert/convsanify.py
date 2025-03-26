@@ -15,7 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._check.metadata.hint.hintsane import (
+    HintSane,
+    HintSane,
+)
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
@@ -28,6 +31,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeStack
+from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
@@ -111,12 +115,16 @@ def sanify_hint_root_func(
     HintSane
         Either:
 
-        * If this hint is ignorable,
-          :obj:`beartype._check.metadata.hint.hintsane.HINT_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint, metadata
-          encapsulating this reduction.
-        * Else, this unignorable hint is irreducible. In this case, metadata
-          encapsulating this hint unmodified.
+        * If the passed hint is reducible to:
+
+          * An ignorable lower-level hint, :obj:`typing.Any`.
+          * An unignorable lower-level hint, either:
+
+            * If reducing this hint to that lower-level hint generates
+              supplementary metadata, that metadata.
+            * Else, that lower-level hint alone.
+
+        * Else, this hint is irreducible. In this case, this hint unmodified.
 
     Raises
     ------
@@ -243,12 +251,16 @@ def sanify_hint_root_statement(
     HintSane
         Either:
 
-        * If this hint is ignorable,
-          :obj:`beartype._check.metadata.hint.hintsane.HINT_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint, metadata
-          encapsulating this reduction.
-        * Else, this unignorable hint is irreducible. In this case, metadata
-          encapsulating this hint unmodified.
+        * If the passed hint is reducible to:
+
+          * An ignorable lower-level hint, :obj:`typing.Any`.
+          * An unignorable lower-level hint, either:
+
+            * If reducing this hint to that lower-level hint generates
+              supplementary metadata, that metadata.
+            * Else, that lower-level hint alone.
+
+        * Else, this hint is irreducible. In this case, this hint unmodified.
 
     Raises
     ------
@@ -351,17 +363,34 @@ def sanify_hint_child(
     HintSane
         Either:
 
-        * If this hint is ignorable,
-          :obj:`beartype._check.metadata.hint.hintsane.HINT_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint, metadata
-          encapsulating this reduction.
-        * Else, this unignorable hint is irreducible. In this case, metadata
-          encapsulating this hint unmodified.
+        * If the passed hint is reducible to:
+
+          * An ignorable lower-level hint, :obj:`typing.Any`.
+          * An unignorable lower-level hint, either:
+
+            * If reducing this hint to that lower-level hint generates
+              supplementary metadata, that metadata.
+            * Else, that lower-level hint alone.
+
+        * Else, this hint is irreducible. In this case, this hint unmodified.
     '''
     # print(f'Sanifying child hint {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
     # This sanifier covers the proper subset of logic performed by the
     # sanify_hint_root_statement() sanifier applicable to child type hints.
+
+    #FIXME: *FASCINATING.* Looks like this should now be performed as a
+    #preliminary reduction directly inside the reduce_hint() function now. Why?
+    #Because reducers recursively call the reduce_hint_child() function. Each
+    #time that occurs, this coercion should occur first. Currently, that isn't
+    #happening, because this coercion is being performed here outside of the
+    #reduce_hint() workflow. In short:
+    #* Shift this call to coerce_hint_any() directly inside the body of the
+    #  reduce_hint() function.
+    #FIXME: *WAIT*. No. We've considered everything extensively. Indeed, the
+    #current approach here is the correct approach. What isn't correct,
+    #actually, is the reduce_hint_child() function -- which should probably
+    #simply call this coerce_hint_any() function. Trivial. *shrug*
 
     # PEP-compliant hint coerced (i.e., permanently converted in the annotations
     # dictionary of the passed callable) from this possibly PEP-noncompliant

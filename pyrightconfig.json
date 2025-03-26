@@ -1,5 +1,0 @@
-{
-  "include": ["beartype"],
-  "exclude": ["**/__pycache__"],
-  "stubPath": ""
-}

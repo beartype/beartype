@@ -40,15 +40,13 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
 )
-from beartype.typing import (
-    Any,
-    Optional,
-)
+from beartype.typing import Optional
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
@@ -332,7 +330,7 @@ def make_check_expr(
     #   Python code snippet to be returned (i.e., "func_wrapper_code") by a
     #   Python code snippet type-checking the root pith expression (i.e.,
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
-    func_root_code = hints_meta.enqueue_hint_or_sane_child(
+    func_root_code = hints_meta.enqueue_hint_child_sane(
         hint_or_sane=hint_or_sane, pith_expr=VAR_NAME_PITH_ROOT)
 
     # Python code snippet to be returned, seeded with a placeholder to be
@@ -399,7 +397,7 @@ def make_check_expr(
             # explicitly ignored ignorable root hints, these two guarantees
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
-            assert hint_curr is not Any, (
+            assert hint_curr is not HINT_IGNORABLE, (
                 f'{EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.'
             )
@@ -719,7 +717,7 @@ def make_check_expr(
                     #
                     # Note that this edge case is induced by method calls
                     # performed below of the form:
-                    #    hints_meta.enqueue_hint_or_sane_child(
+                    #    hints_meta.enqueue_hint_child_sane(
                     #        ..., pith_expr=pith_curr_assign_expr, ...)
                     #
                     # As of this writing, the only such edge cases are:
@@ -869,7 +867,7 @@ def make_check_expr(
                             # print(f'...child hint {hint_child} -> {hint_or_sane_child}!')
 
                             # If this child hint is unignorable...
-                            if hint_or_sane_child is not Any:
+                            if hint_or_sane_child is not HINT_IGNORABLE:
                                 # Python expression yielding the value of the
                                 # currently indexed item of this tuple to be
                                 # type-checked against this child hint.
@@ -884,7 +882,7 @@ def make_check_expr(
                                 hints_meta.func_curr_code += (
                                     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
                                         hint_child_placeholder=(
-                                            hints_meta.enqueue_hint_or_sane_child(
+                                            hints_meta.enqueue_hint_child_sane(
                                                 hint_or_sane=hint_or_sane_child,
                                                 pith_expr=pith_child_expr,
                                             )
@@ -997,13 +995,13 @@ def make_check_expr(
 
                     # If at least one of these child hints are unignorable...
                     if not (
-                        hint_or_sane_child_key is Any and
-                        hint_or_sane_child_value is Any
+                        hint_or_sane_child_key   is HINT_IGNORABLE and
+                        hint_or_sane_child_value is HINT_IGNORABLE
                     ):
                         # If this child key hint is unignorable...
-                        if hint_or_sane_child_key is not Any:
+                        if hint_or_sane_child_key is not HINT_IGNORABLE:
                             # If this child value hint is also unignorable...
-                            if hint_or_sane_child_value is not Any:
+                            if hint_or_sane_child_value is not HINT_IGNORABLE:
                                 # Increase the indentation level of code
                                 # type-checking this child value pith.
                                 hints_meta.indent_level_child += 1
@@ -1022,7 +1020,7 @@ def make_check_expr(
                                 # by code type-checking this child key pith
                                 # against this hint.
                                 hint_key_placeholder = (
-                                    hints_meta.enqueue_hint_or_sane_child(
+                                    hints_meta.enqueue_hint_child_sane(
                                         hint_or_sane=hint_or_sane_child_key,
                                         pith_expr=pith_key_var_name,
                                     ))
@@ -1031,7 +1029,7 @@ def make_check_expr(
                                 # by code type-checking this child value pith
                                 # against this hint.
                                 hint_value_placeholder = (
-                                    hints_meta.enqueue_hint_or_sane_child(
+                                    hints_meta.enqueue_hint_child_sane(
                                         hint_or_sane=hint_or_sane_child_value,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=(
@@ -1065,7 +1063,7 @@ def make_check_expr(
                                         # replaced by code type-checking this
                                         # child key pith against this hint.
                                         hint_key_placeholder=(
-                                            hints_meta.enqueue_hint_or_sane_child(
+                                            hints_meta.enqueue_hint_child_sane(
                                                 hint_or_sane=(
                                                     hint_or_sane_child_key),
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
@@ -1088,7 +1086,7 @@ def make_check_expr(
                                     # replaced by code type-checking this
                                     # child value pith against this hint.
                                     hint_value_placeholder=(
-                                        hints_meta.enqueue_hint_or_sane_child(
+                                        hints_meta.enqueue_hint_child_sane(
                                             hint_or_sane=hint_or_sane_child_value,
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
@@ -1142,7 +1140,7 @@ def make_check_expr(
                     # print(f'hints_child: {repr(hints_child)}')
 
                     # If this metahint is ignorable...
-                    if hint_or_sane_child is Any:
+                    if hint_or_sane_child is HINT_IGNORABLE:
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
@@ -1192,7 +1190,7 @@ def make_check_expr(
                                 # child hint and one or more arbitrary objects.
                                 # Ergo, we need *NOT* explicitly validate that here.
                                 hint_child_placeholder=(
-                                    hints_meta.enqueue_hint_or_sane_child(
+                                    hints_meta.enqueue_hint_child_sane(
                                         hint_or_sane=hint_or_sane_child,
                                         pith_expr=hints_meta.pith_curr_assign_expr,
                                     )
@@ -1295,7 +1293,7 @@ def make_check_expr(
                     )
 
                     # If this child hint is unignorable...
-                    if hint_or_sane_child is not Any:
+                    if hint_or_sane_child is not HINT_IGNORABLE:
                         # Child hint encapsulated by this metadata.
                         hint_child = get_hint_or_sane_hint(hint_or_sane_child)
 
@@ -1410,7 +1408,7 @@ def make_check_expr(
                         hints_meta.func_curr_code += (
                             CODE_PEP484585_GENERIC_CHILD_format(
                                 hint_child_placeholder=(
-                                    hints_meta.enqueue_hint_or_sane_child(
+                                    hints_meta.enqueue_hint_child_sane(
                                         hint_or_sane=hint_or_sane_child,
                                         # Python expression efficiently reusing
                                         # the value of this pith previously

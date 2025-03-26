@@ -10,6 +10,21 @@
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: [SPACE] Memoize the HintSane.__new__() or __init__() constructors. In
+#theory, we dimly recall already defining a caching metaclass somewhere in the
+#codebase. Perhaps we can simply leverage that to get this trivially done?
+#
+#Note, however, that keyword arguments will be an issue. We currently
+#instantiate "HintSane" objects throughout the codebase by passing keyword
+#arguments -- which clearly conflict with memoization. That said, preserving
+#keyword argument passing would be *EXTREMELY* beneficial here. Without keyword
+#arguments, we lose the flexibility that keyword arguments enable -- especially
+#with respect to adding new keyword arguments at some future date.
+#
+#Perhaps that aforementioned caching metaclass could be augmented to support
+#keyword arguments? That would still be better than nothing.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
 from beartype.typing import (
@@ -257,7 +272,7 @@ class HintSane(object):
         )
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self, **kwargs) -> 'HintSane':
+    def permute_sane(self, **kwargs) -> 'HintSane':
         '''
         Shallow copy of this metadata such that each passed keyword parameter
         overwrites the instance variable of the same name in this copy.
@@ -322,6 +337,14 @@ IterableHintSane = Iterable[HintSane]
 '''
 PEP-compliant type hint matching an iterable of zero or more **sanified type
 hint metadata** (i.e., :class:`.HintSane` objects).
+'''
+
+
+ListHintOrSane = List[HintOrSane]
+'''
+PEP-compliant type hint matching a list of zero or more items, each of which is
+either a type hint *or* **sanified type hint metadata** (i.e.,
+:class:`.HintSane` object).
 '''
 
 

@@ -367,7 +367,7 @@ class ViolationCause(object):
             #
             # Note that we would ideally raise an exception if the caller also
             # passed an unsanified hint, but that doing so would raise
-            # complications with our current implementation of the permute()
+            # complications with our current implementation of the permute_cause)
             # method. Since this dataclass *ONLY* applies to private
             # functionality *NEVER* exposed to end users, a bit of wonkiness in
             # this private API is currently an acceptable tradeoff.
@@ -616,7 +616,7 @@ class ViolationCause(object):
         return cause_finder(self)
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self, **kwargs) -> 'ViolationCause':
+    def permute_causeself, **kwargs) -> 'ViolationCause':
         '''
         Shallow copy of this object such that each passed keyword parameter
         overwrites the instance variable of the same name in this copy.
@@ -648,7 +648,7 @@ class ViolationCause(object):
            ...     cause_indent='',
            ...     exception_prefix='List of integers',
            ... )
-           >>> sleuth_copy = sleuth.permute(pith=[24,])
+           >>> sleuth_copy = sleuth.permute_causepith=[24,])
            >>> sleuth_copy.pith
            [24,]
            >>> sleuth_copy.hint

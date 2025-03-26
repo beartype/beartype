@@ -15,11 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Any
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
@@ -106,7 +106,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         #     ambiguous
         not len(cause.pith) or
         # This child hint is ignorable...
-        hint_or_sane_child is Any
+        hint_or_sane_child is HINT_IGNORABLE
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -141,7 +141,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
             # Deep output cause describing the failure of this item to satisfy
             # this child hint if this item violates this child hint *OR* "None"
             # otherwise (i.e., if this item satisfies this child hint).
-            cause_deep = cause.permute(
+            cause_deep = cause.permute_cause
                 hint_or_sane=hint_or_sane_child, pith=pith_item).find_cause()
 
             # If this item is the cause of this failure...
@@ -214,7 +214,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
 
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
+        cause_deep = cause.permute_causecause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} non-empty'))
 
         # Return this cause.
@@ -226,7 +226,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     elif len(cause.pith) != len(cause.hint_or_sane_childs):
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute(cause_str_or_none=(
+        cause_deep = cause.permute_causecause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} length '
             f'{len(cause.pith)} != {len(cause.hint_or_sane_childs)}'
         ))
@@ -243,15 +243,15 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_or_sane_child is Any:
+        if hint_or_sane_child is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 
         # Deep output cause to be returned, type-checking whether this tuple
         # item satisfies this child hint.
-        # sleuth_copy = cause.permute(pith=pith_item, hint=hint_child)
+        # sleuth_copy = cause.permute_causepith=pith_item, hint=hint_child)
         # pith_item_cause = sleuth_copy.find_cause()
-        cause_deep = cause.permute(
+        cause_deep = cause.permute_cause
             pith=pith_item, hint_or_sane=hint_or_sane_child).find_cause()
 
         # If this item is the cause of this failure...

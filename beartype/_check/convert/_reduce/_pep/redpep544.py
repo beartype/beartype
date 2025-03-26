@@ -37,9 +37,9 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str, **kwargs) -> (
     '''
     Reduce the passed :pep:`544`-compliant **protocol** (i.e., user-defined
     subclass of the :class:`typing.Protocol` abstract base class (ABC)) to the
-    ignorable :obj:`typing.Any` singleton if this protocol is a parametrization
-    of this ABC by one or more :pep:`484`-compliant **type variables** (i.e.,
-    :class:`typing.TypeVar` objects).
+    ignorable :data:`.HINT_IGNORABLE` singleton if this protocol is a
+    parametrization of this ABC by one or more :pep:`484`-compliant **type
+    variables** (i.e., :class:`typing.TypeVar` objects).
 
     As the name implies, this ABC is generic and thus fails to impose any
     meaningful constraints. Since a type variable in and of itself also fails to
@@ -107,8 +107,8 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str, **kwargs) -> (
             # If this hint is the "Protocol" superclass defined by this module
             # directly parametrized by one or more type variables (e.g.,
             # "typing.Protocol[S, T]"), ignore this superclass by returning the
-            # ignorable "typing.Any" singleton. This superclass can *ONLY* be
-            # parametrized by type variables; a string test thus suffices.
+            # ignorable "HINT_IGNORABLE" singleton. This superclass can *ONLY*
+            # be parametrized by type variables; a string test thus suffices.
             #
             # For unknown and uninteresting reasons, *ALL* possible objects
             # satisfy the "Protocol" superclass. Ergo, this superclass and *ALL*

@@ -189,7 +189,7 @@ def reduce_hint_pep484_typevar(
 
         # If this type variable is both unbounded *AND* unconstrained, this type
         # variable is currently *NOT* type-checkable and is thus ignorable.
-        # Reduce this type variable to the ignorable "typing.Any" singleton.
+        # Reduce this type variable to the ignorable "HINT_IGNORABLE" singleton.
         if hint is None:
             hint = HINT_IGNORABLE
         # Else, this type variable is either bounded *OR* constrained. In either
@@ -402,7 +402,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         # Metadata encapsulating this hint and type variable lookup table, while
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # recursable hint IDs) down onto this child hint as well.
-        hint_sane = parent_hint_sane.permute(
+        hint_sane = parent_hint_sane.permute_sane(
             hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
 
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')

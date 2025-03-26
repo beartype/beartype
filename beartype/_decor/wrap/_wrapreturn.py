@@ -14,15 +14,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Any,
     NoReturn,
 )
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
+    # HintSane,
+)
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
@@ -114,10 +117,8 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
         # during this logic for subsequent "playrback" below...
         with catch_warnings(record=True) as warnings_issued:
-            # Sane hint sanified from this possibly insane return hint if
-            # sanifying this hint generated no supplementary metadata *OR*
-            # that metadata otherwise. Additionally, if this hint is unsupported
-            # by @beartype, raise an exception.
+            # Sanified hint metadata sanified from this possibly insane return.
+            # If this hint is unsupported by @beartype, raise an exception.
             #
             # Note that:
             # * This hint must sanitized *BEFORE* testing this hint. Why? The
@@ -133,17 +134,17 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             #   performed in the low-level make_check_expr() dynamically
             #   generating code type-checking this hint.
             # print(f'Sanifying {repr(decor_meta)} return hint {repr(hint_insane)}...')
-            hint_or_sane = sanify_hint_root_func(
+            hint_sane = sanify_hint_root_func(
                 decor_meta=decor_meta,
                 hint=hint_insane,
                 pith_name=ARG_NAME_RETURN,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
-            # print(f'Sanified {repr(decor_meta)} return hint {repr(hint_insane)} to {repr(hint_or_sane)}.')
+            # print(f'Sanified {repr(decor_meta)} return hint {repr(hint_insane)} to {repr(hint_sane)}.')
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # allowed *ONLY* as a return annotation...
-            if hint_or_sane is NoReturn:
+            if hint_sane is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
@@ -164,7 +165,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # Else, this is *NOT* "typing.NoReturn".
             #
             # If this hint is unignorable...
-            elif hint_or_sane is not Any:
+            elif hint_sane is not HINT_IGNORABLE:
                 #FIXME: DRY violation. The same logic appears in "_wrapargs" as
                 #well. It looks like what we *PROBABLY* want to do here is:
                 #* Rename the existing make_code_raiser_func_pith_check()
@@ -199,7 +200,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                    hint_or_sane,
+                    hint_sane,
                     decor_meta.conf,
                     cls_stack,
                     False,  # <-- True only for parameters

@@ -18,26 +18,21 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    # BeartypeDecorHintParamDefaultForwardRefWarning,
-    # BeartypeDecorHintParamDefaultViolation,
     BeartypeDecorHintPepException,
     BeartypeDecorParamNameException,
 )
-# from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import (
-    Any,
     Optional,
     Set,
-)
-from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.metadata.hint.hintsane import (
-    HintSane,
-    # HintSane,
 )
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
-# from beartype._conf.confcls import BeartypeConf
+from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
+    HintSane,
+)
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahintpep import Hint
@@ -177,10 +172,9 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # sentinel placeholder otherwise (i.e., if this parameter is unannotated).
     hint_insane: Hint = None  # type: ignore[assignment]
 
-    # Sane hint annotating the current parameter sanified from this possibly
-    # insane hint if sanifying this hint generated no supplementary metadata
-    # *OR* that metadata otherwise.
-    hint_or_sane: HintSane = None  # type: ignore[assignment]
+    # Sanified hint metadata annotating the current parameter, sanified from
+    # this possibly insane hint.
+    hint_sane: HintSane = None  # type: ignore[assignment]
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -266,7 +260,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # sanifying this hint generated no supplementary metadata *OR*
                 # that metadata otherwise. Additionally, if this hint is
                 # unsupported by @beartype, raise an exception.
-                hint_or_sane = sanify_hint_root_func(
+                hint_sane = sanify_hint_root_func(
                     decor_meta=decor_meta,
                     hint=hint_insane,
                     pith_name=arg_name,
@@ -275,7 +269,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 )
 
                 # If this hint is ignorable, continue to the next parameter.
-                if hint_or_sane is Any:
+                if hint_sane is HINT_IGNORABLE:
                     # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.
@@ -369,7 +363,6 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 # "hint_insane" is truth.
                 cls_stack = (
                     decor_meta.cls_stack
-                    # if is_hint_needs_cls_stack(hint) else
                     if is_hint_needs_cls_stack(hint_insane) else
                     None
                 )
@@ -381,7 +374,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
-                    hint_or_sane,
+                    hint_sane,
                     decor_meta.conf,
                     cls_stack,
                     True,  # <-- True only for parameters

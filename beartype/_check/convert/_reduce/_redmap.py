@@ -459,7 +459,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
 
     # ..................{ PEP (484|604)                      }..................
     # Reduce PEP 484- and 604-compliant unions subscripted by one or more
-    # ignorable child hints to the ignorable "typing.Any" singleton.
+    # ignorable child hints to the ignorable "HINT_IGNORABLE" singleton.
     #
     # Note that doing so requires recursively reducing these child hints first.
     # Since one or more of these child hints may require an uncached reduction

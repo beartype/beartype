@@ -467,7 +467,7 @@ class HintsMeta(FixedList):
         )
 
     # ..................{ ENQUEUERS                          }..................
-    def enqueue_hint_or_sane_child(
+    def enqueue_hint_child_sane(
         self, hint_sane: HintSane, pith_expr: str) -> str:
         '''
         **Enqueue** (i.e., append) to the end of the this queue new
@@ -493,7 +493,7 @@ class HintsMeta(FixedList):
             object encapsulating *all* metadata returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
             this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
-            describing the type hint currently visited by this BFS.
+            describing the child type hint currently visited by this BFS.
         pith_expr : str
             **Pith expression** (i.e., Python code snippet evaluating to the
             value of) the current **pith** (i.e., possibly nested object of the
@@ -506,41 +506,6 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
-
-        # # Child hint and type variable lookup table encapsulated by this data.
-        # hint, typevar_to_hint = unpack_hint_or_sane(hint_or_sane)
-
-        #FIXME: This is trash, obviously. Instead, this should probably be
-        #performed in the reduce_hint_pep695_unsubscripted() reducer.
-        # Recursion guard (i.e., frozen set of the integers uniquely identifying
-        # *ALL* transitive recursable parent hints of this hint), defined as
-        # either...
-        # recursable_hint_ids: FrozenSetInts = FROZENSET_EMPTY
-        #     # If there is *NO* currently visited hint, then the passed hint is
-        #     # the root hint and thus has *NO* parent hint. In this case,
-        #     # initialize this recursion guard to the empty frozen set. The first
-        #     # iteration of the parent make_check_expr() code factory calling
-        #     # this method will then ensure that the follownig "else" branch will
-        #     # produce the first non-empty recursion guard resembling:
-        #     #     FROZENSET_EMPTY | {id(root_hint)} ==
-        #     #     frozenset((id(root_hint),))
-        #     FROZENSET_EMPTY
-        #     if self.hint_curr_meta is None else
-        #     # Else, a parent hint of this child hint is currently being visited.
-        #     # In this case, produce the frozen set of the integers uniquely
-        #     # identifying *ALL* transitive parent hints of this child hint
-        #     # (including this parent hint of this child hint) by:
-        #     # * Efficiently extending the frozen set of the integers uniquely
-        #     #   identifying *ALL* transitive parent hints of this parent hint by
-        #     #   the integer uniquely identifying this parent hint.
-        #     #
-        #     # Note that OR-ing a "frozenset" with a "set" produces yet another
-        #     # "frozenset" and is, indeed, the most efficient means of doing so:
-        #     #     >>> frozenset(('ok',)) | {'ko',}
-        #     #     frozenset({'ok', 'ko'})
-        #     self.hint_curr_meta.parent_hint_ids | {id(
-        #         self.hint_curr_meta.hint),}
-        # )
 
         # Return the placeholder string to be subsequently replaced by code
         # type-checking this child pith against this child hint, produced by
@@ -619,30 +584,13 @@ class HintsMeta(FixedList):
         HintSane
             Either:
 
-            * If this child hint is ignorable, :obj:`typing.Any`.
-            * Else, metadata describing this unignorable sanified child hint.
+            * If this child hint is ignorable,
+              :obj:`beartype._check.metadata.hint.hintsane.HINT_IGNORABLE`.
+            * Else if this unignorable child hint is reducible to another hint,
+              metadata encapsulating this reduction.
+            * Else, this unignorable child hint is irreducible. In this case,
+              metadata encapsulating this child hint unmodified.
         '''
-
-        #FIXME: Clean up *ALL* references to "parent_hint_ids", please. *sigh*
-        #FIXME: Unit test us up, please.
-        # If the integer identifying this child hint is that of a transitive
-        # parent hint of this child hint, this child hint has already been
-        # visited by the current breadth-first search (BFS) and thus constitutes
-        # a recursive hint. Certainly, various approaches to generating code
-        # type-checking recursive hints exists. @beartype currently embraces the
-        # easiest, fastest, and laziest approach: simply ignore all recursion!
-
-        #FIXME: *HMMMM.* Right. This needs to be tested *AFTER* sanification,
-        #really. Either that, or we need to be adding pre-sanified hint IDs. The
-        #point is that we need to be consistent about what we're adding and
-        #testing. Post-sanified IDs is probably best, honestly.
-        #FIXME: Actually, this should be tested in the existing
-        #reduce_hint_pep695_unsubscripted() reducer *BEFORE* sanification,
-        #obviously.
-
-        # if id(hint) in self.hint_curr_meta.parent_hint_ids:
-        #     return ANY
-        # Else, this child hint has *NOT* yet been visited by this BFS.
 
         # Sane hint sanified from this possibly insane hint if sanifying this
         # hint did not generate supplementary metadata *OR* that metadata

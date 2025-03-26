@@ -75,7 +75,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is an instance of one or more of these types.
-    cause_shallow = cause.permute(hint=hint_literal_types).find_cause()
+    cause_shallow = cause.permute_causehint=hint_literal_types).find_cause()
 
     # If this pith is *NOT* such an instance, return this string.
     if cause_shallow.cause_str_or_none is not None:
@@ -91,7 +91,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Deep output cause to be returned, permuted from this input cause such that
     # the justification is a human-readable string describing this failure.
-    cause_deep = cause.permute(cause_str_or_none=(
+    cause_deep = cause.permute_causecause_str_or_none=(
         f'{represent_pith(cause.pith)} != '
         f'{color_type(text=cause_literals_unsatisfied, is_color=cause.conf.is_color)}.'
     ))

@@ -81,10 +81,29 @@ def reduce_hint_pep695_subscripted(
         Further details.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
         reduce_hint_pep484_subscripted_typevars_to_hints)
 
+    # ....................{ RECURSE                        }....................
+    # If...
+    if (
+        # This hint has a parent *AND*...
+        parent_hint_sane is not None and
+        # This hint is a transitive parent of itself...
+        hint in parent_hint_sane.recursable_hints
+    ):
+        # Then this hint has already been visited by the current breadth-first
+        # search (BFS) and so constitutes a recursive hint. Certainly, various
+        # approaches to generating code type-checking recursive hints exists.
+        # @beartype currently embraces the easiest, fastest, and laziest
+        # approach: simply ignore all recursion!
+        return HINT_IGNORABLE
+    # Else, this hint is either the root *OR* not a transitive parent of itself.
+    # In either case, this hint is *NOT* a recursive hint..... yet. I sigh.
+
+    # ....................{ REDUCE                         }....................
     # Reduce this PEP 695-compliant subscripted type alias to:
     # * The semantically useful unsubscripted alias originating this
     #   semantically useless subscripted alias.
@@ -98,6 +117,7 @@ def reduce_hint_pep695_subscripted(
         exception_prefix=exception_prefix,
     )
 
+    # ....................{ RETURN                         }....................
     #FIXME: *THIS DEFINITELY REQUIRES DOCUMENTATION.* Basically:
     #* This function operates in two phases:
     #  * The first phase above decides the type variable lookup table for this
@@ -195,18 +215,18 @@ def reduce_hint_pep695_unsubscripted(
     #In short, it's pretty brutal stuff. For now, simply ignoring recursion
     #strikes us the sanest and certainly simplest approach. *sigh*
 
-    #FIXME: Propagate this logic above. Doing so should be trivial. \o/
     # If...
     if (
         # This hint has a parent *AND*...
         parent_hint_sane is not None and
-        # This hint is a transitive parent of itself, this hint has already been
-        # visited by the current breadth-first search (BFS) and thus constitutes
-        # a recursive hint. Certainly, various approaches to generating code
-        # type-checking recursive hints exists. @beartype currently embraces the
-        # easiest, fastest, and laziest approach: simply ignore all recursion!
+        # This hint is a transitive parent of itself...
         hint in parent_hint_sane.recursable_hints
     ):
+        # Then this hint has already been visited by the current breadth-first
+        # search (BFS) and so constitutes a recursive hint. Certainly, various
+        # approaches to generating code type-checking recursive hints exists.
+        # @beartype currently embraces the easiest, fastest, and laziest
+        # approach: simply ignore all recursion!
         return HINT_IGNORABLE
     # Else, this hint is either the root *OR* not a transitive parent of itself.
     # In either case, this hint is *NOT* a recursive hint..... yet. I sigh.
@@ -311,7 +331,7 @@ def _make_hint_pep695_recursable_hints(
         # Metadata encapsulating this hint and recursion guard, while
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # type variable lookup table) down onto this child hint as well.
-        hint_sane = parent_hint_sane.permute(
+        hint_sane = parent_hint_sane.permute_sane(
             hint=hint, recursable_hints=recursable_hints)
 
     # Return this underlying type hint.

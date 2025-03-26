@@ -104,7 +104,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
 
             # Child hint output cause to be returned, type-checking only whether
             # this pith deeply satisfies this child hint.
-            cause_child = cause.permute(
+            cause_child = cause.permute_cause
                 hint_or_sane=hint_or_sane_child,
                 cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
@@ -207,7 +207,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause such that the
     # output cause justification is either...
-    cause_return = cause.permute(cause_str_or_none=(
+    cause_return = cause.permute_causecause_str_or_none=(
         # If prior logic appended one cause, a single-line
         # substring intended to be embedded in a longer string;
         f'{pith_repr} {cause_strs[0]}'

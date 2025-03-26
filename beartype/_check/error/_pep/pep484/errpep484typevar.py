@@ -83,7 +83,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #         # Ignore this semantically useless type variable in favour of this
 #         # semantically useful hint by replacing *ALL* hint metadata describing
 #         # the former with the latter.
-#         cause_return = cause.permute(hint=hint_child).find_cause()
+#         cause_return = cause.permute_causehint=hint_child).find_cause()
 #     # Else, this type variable is *NOT* reducible to an unignorable hint. Since
 #     # @beartype currently fails to generate type-checking code for type
 #     # variables in and of themselves, type variables have *NO* intrinsic

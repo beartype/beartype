@@ -121,6 +121,17 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     )
 
     # ....................{ REDUCE                         }....................
+    #FIXME: [SPEED] It'd be *REALLY* nice if this reducer completely
+    #reconstituted the union it returns from the child hints it reduces below.
+    #Currently, this reducer doesn't do that. Why? Because the rest of the
+    #codebase isn't quite ready to support unions that contain *TOTALLY
+    #PEP-VIOLATING OBJECTS* -- namely, "HintSane" objects. To support this,
+    #we'll need to at least:
+    #* Generalize sanify_hint_child() to avoid resanifying the passed hint if
+    #  the passed hint is already a "HintSane" object. In that case, the passed
+    #  hint should simply be returned unmodified.
+    #* Probably lots else. Kinda seems dangerous, the more we consider it.
+
     # For each child hint of this union...
     while hint_childs_index < hint_childs_len:
         # Currently visited child hint of this union.
@@ -132,10 +143,34 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         # sanifying this child hint did not generate supplementary metadata *OR*
         # that metadata otherwise (i.e., if sanifying this child hint generated
         # supplementary metadata).
-        hint_or_sane_child = reduce_hint_child(hint_child, kwargs)
+        hint_sane_child = reduce_hint_child(hint_child, kwargs)
 
-        # If this sanified child hint is ignorable...
-        if hint_or_sane_child is HINT_IGNORABLE:
+        # If...
+        if (
+            # This sanified child hint is ignorable *AND*...
+            hint_sane_child is HINT_IGNORABLE and
+            # This child hint is *NOT* a transitive parent of itself...
+            #
+            # If this child hint is a transitive parent of itself, this child
+            # hint has already been visited by the current breadth-first search
+            # (BFS) and so constitutes a recursive child hint. Although
+            # recursive child hints are ignorable in (most) other contexts,
+            # recursive child hints are *NOT* ignorable in the usual sense
+            # inside union hints. In this context, a recursive child hint is
+            # simply a union hint to be shallowly rather than deeply ignored.
+            # That is, a recursive child hint of a union does *NOT* propagate
+            # its ignorability to that union. That union remains unignorable
+            # regardless of whether that union contains a recursive child hint.
+            #
+            # Consider a PEP 695-compliant recursive type alias trivially
+            # aliasing a union: e.g.,
+            #     type recursive_union = int | recursive_union
+            #
+            # That union contains the recursive child hint "recursive_union" but
+            # is *NOT* ignorable. Rather, that union semantically reduces to the
+            # trivial type "int".
+            hint not in hint_sane_child.recursable_hints
+        ):
             # Reduce this entire union to the "HINT_IGNORABLE" singleton. Why?
             # By set logic, a union subscripted by one or more ignorable child
             # hints is itself ignorable.

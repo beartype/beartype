@@ -40,11 +40,13 @@ from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeStack,
 )
-from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_BARE_IGNORABLE)
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-from beartype._util.hint.utilhintget import get_hint_repr
+from beartype._util.hint.pep.utilpepget import (
+    get_hint_pep_args,
+    get_hint_pep_sign_or_none,
+)
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.kind.map.utilmapset import remove_mapping_keys
 from beartype._util.utilobject import SENTINEL
@@ -230,41 +232,76 @@ def reduce_hint(
         # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
         # ....................{ PHASE ~ shallow            }....................
-        # Attempt to shallowly reduce this hint to the ignorable
-        # "HINT_IGNORABLE" singleton *BEFORE* attempting reductions that deeply
-        # inspect the contents of this hint. Why? Several reasons:
-        # * This shallow reduction is an O(1) constant-time operation with
-        #   negligible constants and thus *INCREDIBLY* fast.
-        # * Okay. That's all I've got. It's late, people. I exhaustedly sigh.
+        # Attempt to reduce this hint with trivial zero-cost tests *BEFORE*
+        # spending scarce resources on non-trivial full-cost tests below.
+        # These tests are shallow and thus exhibit amortized O(1) constant time
+        # complexity with negligible constants.
 
-        #FIXME: This is... kinda silly. Turns out we already had an existing
-        #mechanism for detecting shallowly ignorable hints: the
-        #"HINT_SIGNS_BARE_IGNORABLE" set. The advantage of that over the
-        #"HINTS_REPR_IGNORABLE_SHALLOW" set tested below is that the former is
-        #*A LOT* less fragile. For example, the former trivially supports
-        #"typing_extensions"; the latter does not.
-        #    hint_sign = get_hint_pep_sign_or_none(hint)
-        #    hint_args = get_hint_pep_args(hint)
-        #
-        #    if hint is object or (
-        #        not hint_args and
-        #        hint_sign in HINT_SIGNS_BARE_IGNORABLE
-        #    ):
-        #        return HINT_IGNORABLE
-
-        # Machine-readable representation of this hint.
-        hint_repr = get_hint_repr(hint_curr)
-
-        # If this hint is shallowly ignorable, reduce this hint to the ignorable
+        # If this hint is the root "object" superclass, this hint is trivially
+        # shallowly ignorable. In this case, reduce this hint to the ignorable
         # "HINT_IGNORABLE" singleton.
-        #
-        # Note that this reduction efficiently applies to multiple signs
-        # concurrently, including the "None", "HintSignOptional", and
-        # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
-        # implemented as a standard reduction assigned a single sign.
-        if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
+        if hint_curr is object:
             return HINT_IGNORABLE
-        # Else, this hint is *NOT* shallowly ignorable.
+        # Else, this hint is *NOT* the root "object" superclass.
+
+        # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
+        # "None" otherwise (e.g., if this hint is PEP-noncompliant).
+        hint_sign = get_hint_pep_sign_or_none(hint_curr)
+        # print(f'reduce_hint() hint {hint} sign {hint_sign}')
+
+        # If this hint is PEP-noncompliant...
+        #
+        # Note that this logic could also be handled in a reduce_hint_nonpep()
+        # reducer mapped to the "None" sign, whose body is the body of this "if"
+        # conditional. Indeed, the prior implementation of this logic did just
+        # that. Technically, that approach did work. Pragmatically, that
+        # approach was obfuscatory, obtuse, and ultimately unmaintainable. This
+        # approach is equally efficient but *CONSIDERABLY* more sensible.
+        if hint_sign is None:
+            # If this hint is unsupported by @beartype, raise an exception.
+            die_unless_hint(hint=hint_curr, exception_prefix=exception_prefix)
+            # Else, this hint is supported by @beartype.
+
+            # Return this hint as is. By definition, PEP-noncompliant hints are
+            # irreducible. If this hint was instead reducible, the
+            # get_hint_pep_sign_or_none() getter called above would have instead
+            # returned a unique sign identifying this hint (rather than "None").
+            return hint_curr
+        # Else, this hint is PEP-compliant.
+        #
+        # If...
+        elif (
+            # This hint is unconditionally ignorable when unsubscripted *AND*...
+            hint_sign in HINT_SIGNS_BARE_IGNORABLE and
+            # This hint is unsubscripted...
+            #
+            # Note that calling this getter is slower than testing membership in
+            # the above set. Ergo, this getter is intentionally called *AFTER*
+            # the prior faster test.
+            not get_hint_pep_args(hint_curr)
+        # Then this hint is ignorable. Reduce this hint to the ignorable
+        # "HINT_IGNORABLE" singleton.
+        ):
+            return HINT_IGNORABLE
+
+        #FIXME: Excise the now-obsolete "HINTS_REPR_IGNORABLE_SHALLOW" set
+        #everywhere from the codebase, please.
+        #FIXME: Preserved for temporary posterity. Excise when feasible, please!
+        # from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
+        # from beartype._util.hint.utilhintget import get_hint_repr
+        # # Machine-readable representation of this hint.
+        # hint_repr = get_hint_repr(hint_curr)
+        #
+        # # If this hint is shallowly ignorable, reduce this hint to the ignorable
+        # # "HINT_IGNORABLE" singleton.
+        # #
+        # # Note that this reduction efficiently applies to multiple signs
+        # # concurrently, including the "None", "HintSignOptional", and
+        # # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
+        # # implemented as a standard reduction assigned a single sign.
+        # if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
+        #     return HINT_IGNORABLE
+        # # Else, this hint is *NOT* shallowly ignorable.
 
         # ....................{ PHASE ~ override           }....................
         # Attempt to reduce this hint to another hint configured by a
@@ -314,65 +351,75 @@ def reduce_hint(
         except TypeError:
             pass
 
-        # ....................{ PHASE ~ uncached           }....................
-        # Attempt to deeply reduce this possibly contextual hint to another hint
-        # *BEFORE* attempting to context-free reductions. Why? Because the
-        # former depends on context and is thus "lower-level" than the latter,
-        # which depends on *NO* context and is thus "higher-level" in a sense.
-        #
-        # In theory, order of reduction *SHOULD* be insignificant; in practice,
-        # we suspect unforeseen and unpredictable interactions between these two
-        # reductions. To reduce the likelihood of fire-breathing dragons here,
-        # we reduce contextual hints first.
-        hint_or_sane_curr = _reduce_hint_uncached(
-            hint=hint_curr,
-            arg_kind=arg_kind,
-            cls_stack=cls_stack,
-            conf=conf,
-            decor_meta=decor_meta,
-            hints_overridden=hints_overridden,
-            pith_name=pith_name,
-            parent_hint_sane=parent_hint_sane,
-            reductions_count=reductions_count,
-            exception_prefix=exception_prefix,
-        )
+        # ....................{ PHASE ~ deep               }....................
+        # Attempt to deeply reduce this hint with a context-free reduction
+        # *BEFORE* deeply reducing this hint with a contextual reduction. Due to
+        # *NOT* depending on contextual state, context-free reductions are
+        # easily memoizable and thus faster than contextual reductions.
 
-        #FIXME: Make sure we've replaced "Any" with "HINT_IGNORABLE" throughout
-        #the codebase, please.
+        # Context-free reducer reducing this hint if such a reducer reduces
+        # hints of this sign *OR* "None" otherwise.
+        hint_reducer_cached = HINT_SIGN_TO_REDUCE_HINT_CACHED_get(hint_sign)
+
+        # If a context-free reducer reduces hints of this sign...
+        if hint_reducer_cached is not None:
+            #FIXME: [SPEED] *ALL* of these reducers now need to be manually
+            #memoized with the @callable_cached decorator. Trivial, of course.
+            #Just unctuous. We sigh. *sigh*
+            #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
+            #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
+            #Does it actually vary with context? Can't recall. Investigate up!
+            #FIXME: [SPEED] Is passing the "conf" parameter here worthwhile? How
+            #many cached reductions actually benefit from receiving a "conf"? If
+            #the answer is "Hardly any, bro.", then:
+            #* Those cached reductions that actually benefit from receiving a
+            #  "conf" should just be refactored into uncached reductions.
+            #* We should stop passing "conf" altogether below. Doing so improves
+            #  caching efficiency for the general case, which is all that
+            #  matters.
+
+            # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
+
+            # Reduce this hint by calling this reducer.
+            #
+            # Note that parameters are intentionally passed positionally to this
+            # memoized callable, which prohibits keyword parameters.
+            hint_or_sane_curr = hint_reducer_cached(
+                hint_curr, conf, exception_prefix)
+            # print(f'[_reduce_hint_cached] ...to cached hint {repr(hint)}.')
+        # Else, *NO* context-free reducer reduces hints of this sign. In this
+        # case...
+        else:
+            # Contextual reducer reducing this hint if such a reducer reduces
+            # hints of this sign *OR* "None" otherwise.
+            hint_reducer_uncached = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(
+                hint_sign)
+
+            # If a contextual reducer reduces hints of this sign...
+            if hint_reducer_uncached is not None:  # type: ignore[call-arg]
+                # print(f'[_reduce_hint_uncached] Reducing uncached hint {repr(hint)}...')
+                # print(f'...with type variable lookup table {repr(typevar_to_hint)}...')
+
+                # Reduce this hint by calling this reducer.
+                hint_or_sane_curr = hint_reducer_uncached(
+                    hint=hint_curr,  # pyright: ignore
+                    arg_kind=arg_kind,
+                    cls_stack=cls_stack,
+                    conf=conf,
+                    decor_meta=decor_meta,
+                    hints_overridden=hints_overridden,
+                    parent_hint_sane=parent_hint_sane,
+                    pith_name=pith_name,
+                    reductions_count=reductions_count,
+                    exception_prefix=exception_prefix,
+                )
+            # Else, *NO* contextual reducer reduces hints of this sign. In this
+            # case, preserve this hint as is.
+            else:
+                hint_or_sane_curr = hint_curr
+        # print(f'[_reduce_hint_uncached]...to uncached hint {repr(hint)}.')
+
         # If this hint is ignorable, halt reducing.
-        #
-        # Note that this is an optional short-circuiting optimization avoiding
-        # multiple repetitious reductions for each ignorable hint.
-        if hint_or_sane_curr is HINT_IGNORABLE:
-            return HINT_IGNORABLE
-        # Else, this hint is currently unignorable. Continue reducing.
-
-        #FIXME: Comment us up, please.
-        hint_curr = (
-            hint_or_sane_curr.hint
-            if isinstance(hint_or_sane_curr, HintSane) else
-            hint_or_sane_curr
-        )
-
-        # ....................{ PHASE ~ cached             }....................
-        #FIXME: Is passing the "conf" parameter here worthwhile? How many cached
-        #reductions actually benefit from receiving a "conf"? If the answer is
-        #"Hardly any, bro.", then:
-        #* Those cached reductions that actually benefit from receiving a "conf"
-        #  should just be refactored into uncached reductions.
-        #* We should stop passing "conf" altogether below. Doing so improves
-        #  caching efficiency for the general case, which is all that matters.
-
-        # Sane hint reduced from this possibly insane hint if reducing this hint
-        # did not generate supplementary metadata *OR* that metadata otherwise
-        # (i.e., if reducing this hint generated supplementary metadata).
-        hint_or_sane_curr = _reduce_hint_cached(
-            hint_curr, conf, exception_prefix)
-
-        # If this hint is ignorable, halt reducing.
-        #
-        # Note that, unlike the similar test above, this test is required rather
-        # than merely an optimization.
         if hint_or_sane_curr is HINT_IGNORABLE:
             return HINT_IGNORABLE
         # Else, this hint is currently unignorable. Continue reducing.
@@ -385,25 +432,29 @@ def reduce_hint(
             break
         # Else, the current and previously reduced instances of this hint
         # differ, implying this hint to still be reducible. Continue reducing.
-
-        #FIXME: Improve commentary, please. *sigh*
+        #
         # If reducing this hint generated supplementary metadata...
         elif isinstance(hint_or_sane_curr, HintSane):
-            if parent_hint_sane is not None:
-                #FIXME: *AWFUL.* Do something sane here, please. Notably, we
-                #should composite the "parent_hint_sane" and "hint_or_sane_curr"
-                #metadata together into "hint_or_sane_curr".
-                raise ValueError(
-                    f'Sanified type hint {repr(hint_or_sane_curr)} '
-                    f'returned by cached reducer.'
-                )
-
+            # Replace the sanified type hint metadata of the parent hint of this
+            # hint by the sanified type hint metadata of this hint itself. Doing
+            # so ensures that the next reducer passed the "parent_hint_sane"
+            # parameter preserves this metadata during its reduction. Since the
+            # most recent reducer call received the prior "parent_hint_sane"
+            # parameter, that reducer has already safely preserved the parent
+            # metadata by compositing that metadata into this
+            # "hint_or_sane_curr" metadata that that reducer returned. Srsly.
             parent_hint_sane = hint_or_sane_curr
+
+            # Extract the currently reduced hint from this metadata.
             hint_curr = hint_or_sane_curr.hint
-        # elif parent_hint_sane is not None:
-        #     hint_or_sane_curr = parent_hint_sane.permute(hint=hint_or_sane_curr)
+        # Else, reducing this hint did *NOT* generate supplementary metadata,
+        # implying "hint_or_sane_curr" to be the currently reduced hint. In this
+        # case, record this currently reduced hint.
         else:
             hint_curr = hint_or_sane_curr
+
+        # ....................{ PHASE ~ next               }....................
+        # Prepare for the next iterative reduction of this "while" loop.
 
         # Increment the current number of total reductions internally performed
         # by this call *BEFORE* detecting accidental recursion below.
@@ -433,10 +484,19 @@ def reduce_hint(
     # ....................{ RETURN                         }....................
     # If this hint is *NOT* already sanified type hint metadata, this hint is
     # unignorable. Why? Because, if this hint were ignorable, this hint would
-    # have been reduced to the "HINT_IGNORABLE" singleton. In this case,
-    # trivially encapsulate this hint with sanified type hint metadata.
+    # have been reduced to the "HINT_IGNORABLE" singleton. In this case...
     if not isinstance(hint_or_sane_curr, HintSane):
-        hint_or_sane_curr = HintSane(hint)
+        # Encapsulate this hint with such metadata, defined as either...
+        hint_or_sane_curr = (
+            # If this hint has *NO* parent, this is a root hint. In this case,
+            # the trivial metadata shallowly encapsulating this root hint;
+            HintSane(hint)
+            if parent_hint_sane is None else
+            # Else, this hint has a parent. In this case, the non-trivial
+            # metadata deeply encapsulating both this non-root hint *AND* all
+            # metadata already associated with this parent hint.
+            parent_hint_sane.permute_sane(hint=hint_or_sane_curr)
+        )
     # Else, this hint is already sanified type hint metadata. In this case,
     # preserve this metadata as is.
 
@@ -490,221 +550,6 @@ def reduce_hint_child(
 
     # Return this child hint possibly reduced to a lower-level hint.
     return reduce_hint(hint=hint, **kwargs)
-
-# ....................{ PRIVATE ~ reducers                 }....................
-# Note that the higher-level reduce_hint() reducer defined above sequentially
-# calls the lower-level _reduce_hint_uncached() reducer defined below *BEFORE*
-# calling the lower-level _reduce_hint_cached() reducer defined below. As such,
-# the current hint should be validated in the former rather than the latter.
-
-def _reduce_hint_uncached(
-    hint: Hint,
-    arg_kind: Optional[ArgKind],
-    cls_stack: TypeStack,
-    conf: BeartypeConf,
-    decor_meta: Optional[BeartypeDecorMeta],
-    hints_overridden: SetHints,
-    parent_hint_sane: Optional[HintSane],
-    pith_name: Optional[str],
-    reductions_count: int,
-    exception_prefix: str,
-) -> Hint:
-    '''
-    Lower-level **contextual type hint** (i.e., type hint contextually dependent
-    on the kind of class, attribute, callable parameter, or callable return
-    annotated by this hint) inefficiently reduced (i.e., converted) from the
-    passed higher-level context-free type hint if this hint is reducible *or*
-    this hint as is otherwise (i.e., if this hint is irreducible).
-
-    This reducer *cannot* be meaningfully memoized, since multiple passed
-    parameters (e.g., ``pith_name``, ``cls_stack``) are typically isolated to a
-    handful of callables across the codebase currently being decorated by
-    :mod:`beartype`. Thankfully, this reducer is responsible for reducing only a
-    small subset of type hints requiring these problematic parameters.
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be possibly reduced.
-    arg_kind : Optional[ArgKind]
-        Either:
-
-        * If this hint annotates a parameter of some callable, that parameter's
-          **kind** (i.e., :class:`.ArgKind` enumeration member conveying the
-          syntactic class of that parameter, constraining how the callable
-          declaring that parameter requires that parameter to be passed).
-        * Else, :data:`None`.
-    cls_stack : TypeStack
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    decor_meta : Optional[BeartypeDecorMeta]
-        Either:
-
-        * If this hint annotates a parameter or return of some callable, the
-          :mod:`beartype`-specific decorator metadata describing that callable.
-        * Else, :data:`None`.
-    hints_overridden : set[Hint]
-        Mutable set of all previously **overridden hints** (i.e., hints reduced
-        to user-defined hint overrides configured by the
-        :attr:`beartype.BeartypeConf.hint_overrides` dictionary) reduced by a
-        prior call to this function, guarding against accidental infinite
-        recursion between lower-level reducers and this higher-level function.
-        If a hint has already been overridden in the current call stack rooted
-        at the top-most call to this function, this function avoids dangerously
-        re-overriding nested instances of the same hint.
-    parent_hint_sane : Optional[HintSane]
-        Either:
-
-        * If the passed hint is a **root** (i.e., top-most parent hint of a tree
-          of child hints), :data:`None`.
-        * Else, the passed hint is a **child** of some parent hint. In this
-          case, the **sanified parent type hint metadata** (i.e., immutable and
-          thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convsanify` sanifiers after
-          sanitizing the possibly PEP-noncompliant parent hint of this child
-          hint into a fully PEP-compliant parent hint).
-    pith_name : Optional[str]
-        Either:
-
-        * If this hint annotates a parameter of some callable, the name of that
-          parameter.
-        * If this hint annotates the return of some callable, ``"return"``.
-        * Else, :data:`None`.
-    reductions_count : int
-        Current number of total reductions internally performed by *all* calls
-        to this function rooted at this function in the current call stack,
-        guarding against accidental infinite recursion between lower-level
-        reducers and this higher-level function.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-
-    Returns
-    -------
-    Hint
-        Either:
-
-        * If this hint is ignorable, :obj:`typing.Any`.
-        * Else if this unignorable hint is reducible to another hint, that hint.
-        * Else, this unignorable hint is irreducible. In this case, this hint
-          unmodified.
-    '''
-
-    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    # "None" otherwise (e.g., if this hint is PEP-noncompliant).
-    hint_sign = get_hint_pep_sign_or_none(hint)
-    # print(f'_reduce_hint_uncached() hint_sign: {hint_sign}')
-
-    # If this hint is PEP-noncompliant...
-    #
-    # Note that this logic could also be handled in a reduce_hint_nonpep()
-    # reducer mapped to the "None" sign, whose body is the body of this "if"
-    # conditional. Indeed, the prior implementation of this logic did just that.
-    # Technically, that approach did work. Pragmatically, that approach was
-    # obfuscatory, obtuse, and ultimately unmaintainable. This approach is
-    # equally efficient but *CONSIDERABLY* more sensible. Sanity wins.
-    if hint_sign is None:
-        # If this hint is unsupported by @beartype, raise an exception.
-        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-        # Else, this hint is supported by @beartype.
-
-        # Return this hint as is. By definition, PEP-noncompliant hints are
-        # irreducible. If this hint was instead reducible, the
-        # get_hint_pep_sign_or_none() getter called above would have instead
-        # returned a unique sign identifying this hint (rather than "None").
-        return hint
-    # Else, this hint is PEP-compliant.
-
-    # Callable reducing this hint if a callable reducing hints of this sign was
-    # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
-    # was registered, in which case this hint is preserved as is).
-    hint_reducer = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(hint_sign)
-
-    # If a callable reducing hints of this sign was previously registered,
-    # reduce this hint to another hint via this callable.
-    if hint_reducer is not None:  # type: ignore[call-arg]
-        # print(f'[_reduce_hint_uncached] Reducing uncached hint {repr(hint)}...')
-        # print(f'...with type variable lookup table {repr(typevar_to_hint)}...')
-        hint = hint_reducer(
-            hint=hint,  # pyright: ignore
-            arg_kind=arg_kind,
-            cls_stack=cls_stack,
-            conf=conf,
-            decor_meta=decor_meta,
-            hints_overridden=hints_overridden,
-            parent_hint_sane=parent_hint_sane,
-            pith_name=pith_name,
-            reductions_count=reductions_count,
-            exception_prefix=exception_prefix,
-        )
-        # print(f'[_reduce_hint_uncached]...to uncached hint {repr(hint)}.')
-    # Else, *NO* such callable was registered. Preserve this hint as is, you!
-
-    # Return this possibly reduced hint.
-    return hint
-
-
-@callable_cached
-def _reduce_hint_cached(
-    hint: Hint, conf: BeartypeConf, exception_prefix: str) -> HintOrSane:
-    '''
-    Lower-level **context-free type hint** (i.e., type hint *not* contextually
-    dependent on the kind of class, attribute, callable parameter, or callable
-    return annotated by this hint) efficiently reduced (i.e., converted) from
-    the passed higher-level context-free type hint if this hint is reducible
-    *or* this hint as is otherwise (i.e., if this hint is irreducible).
-
-    This reducer is memoized for efficiency. Thankfully, this reducer is
-    responsible for reducing *most* (but not all) type hints.
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be possibly reduced.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    exception_prefix : str
-        Substring prefixing exception messages raised by this function.
-
-    Returns
-    -------
-    HintOrSane
-        Either:
-
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint, metadata
-          encapsulating this reduction.
-        * Else, this unignorable hint is irreducible. In this case, metadata
-          encapsulating this hint unmodified.
-    '''
-
-    # Sign uniquely identifying this hint if this hint is identifiable *OR*
-    # "None" otherwise (e.g., if this hint is merely an isinstanceable class).
-    hint_sign = get_hint_pep_sign_or_none(hint)
-
-    # Callable reducing this hint if a callable reducing hints of this sign was
-    # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
-    # was registered, in which case this hint is preserved as is).
-    hint_reducer = HINT_SIGN_TO_REDUCE_HINT_CACHED_get(hint_sign)
-
-    # If a callable reducing hints of this sign was previously registered,
-    # reduce this hint to another hint via this callable.
-    if hint_reducer is not None:
-        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
-        hint = hint_reducer(  # type: ignore[call-arg]
-            hint=hint,  # pyright: ignore
-            conf=conf,
-            exception_prefix=exception_prefix,
-        )
-        # print(f'[_reduce_hint_cached] ...to cached hint {repr(hint)}.')
-    # Else, *NO* such callable was registered. Preserve this hint as is, you!
-
-    # Return this possibly reduced hint.
-    return hint
 
 # ....................{ PRIVATE ~ globals                  }....................
 _REDUCTIONS_COUNT_MAX = 64

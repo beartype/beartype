@@ -169,7 +169,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause with this
     # output cause justification.
-    cause_return = cause.permute(cause_str_or_none=cause_str_or_none)
+    cause_return = cause.permute_causecause_str_or_none=cause_str_or_none)
 
     # Return this output cause.
     return cause_return
@@ -207,7 +207,7 @@ def find_cause_instance_type_forwardref(
     )
 
     # Defer to the function handling isinstanceable classes. Neato!
-    return find_cause_instance_type(cause.permute(hint=hint_ref_type))
+    return find_cause_instance_type(cause.permute_causehint=hint_ref_type))
 
 
 def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
@@ -244,7 +244,7 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
-    return find_cause_instance_type(cause.permute(hint=hint_type))
+    return find_cause_instance_type(cause.permute_causehint=hint_type))
 
 # ....................{ GETTERS ~ instance : types         }....................
 def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
@@ -279,7 +279,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     # If this pith is an instance of one or more types in this tuple union,
     # record that this pith satisfies this tuple union.
     if isinstance(cause.pith, hint):
-        cause_return = cause.permute(cause_str_or_none=None)
+        cause_return = cause.permute_causecause_str_or_none=None)
     # Else, this pith is an instance of *NO* types in this tuple union. In
     # this case, this pith violates this tuple union.
     else:
@@ -289,7 +289,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
 
         # Output cause to be returned, permuted from this input cause such that
         # the output cause justification is a substring describing this failure.
-        cause_return = cause.permute(cause_str_or_none=(
+        cause_return = cause.permute_causecause_str_or_none=(
             f'{represent_pith(cause.pith)} not instance of {hint_repr}'))
 
     # Return this output cause.
@@ -379,7 +379,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     # Else, this pith does *NOT* subclass this superclass. In this case...
     else:
         # Output cause to be returned, permuted from this input cause.
-        cause_return = cause.permute()
+        cause_return = cause.permute_cause)
 
         # Description of this superclasses, defined as either...
         hint_child_label = (

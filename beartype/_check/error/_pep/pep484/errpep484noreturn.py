@@ -44,7 +44,7 @@ def find_cause_pep484_noreturn(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause such that the
     # justification is a human-readable string describing this failure.
-    cause_return = cause.permute(cause_str_or_none=(
+    cause_return = cause.permute_causecause_str_or_none=(
         f'{label_callable(func)} annotated by PEP 484 return type hint '
         f'"typing.NoReturn" returned {represent_pith(cause.pith)}'
     ))

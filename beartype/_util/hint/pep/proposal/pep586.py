@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep586Exception
-from beartype.typing import Any
 from beartype._data.cls.datacls import TYPES_PEP586_ARG
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
@@ -20,7 +20,7 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 # ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep586(
     # Mandatory parameters.
-    hint: Any,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep586Exception,
@@ -45,11 +45,12 @@ def die_unless_hint_pep586(
     -------
     **This function is slow** and should thus be called only once per
     visitation of a :pep:`586`-compliant type hint. Specifically, this function
-    is O(n) for n the number of arguments subscripting this hint.
+    is :math:`O(n)` for :math:`n` the number of arguments subscripting this
+    hint.
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of fatal error. Defaults to
@@ -152,7 +153,7 @@ def die_unless_hint_pep586(
 #FIXME: Unit test us up, please.
 def get_hint_pep586_literals(
     # Mandatory parameters.
-    hint: Any,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep586Exception,
@@ -176,7 +177,7 @@ def get_hint_pep586_literals(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         :pep:`586`-compliant type hint to be inspected.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
