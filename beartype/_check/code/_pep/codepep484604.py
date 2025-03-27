@@ -441,6 +441,10 @@ def _get_hint_pep484604_union_args_flattened(
     # ....................{ LOCALS ~ set                   }....................
     #FIXME: Pretty sure we should no longer require this *AFTER* implementing
     #recursion guards properly elsewhere.
+    #FIXME: *RIGHT*. Just call something resembling the following below to
+    #properly detect recursive hints now:
+    #    is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane)
+
     # Set of all previously sanified child hints, required to avoid infinite
     # recursion that could otherwise be induced in worst-case sanification --
     # including:
@@ -553,10 +557,9 @@ def _get_hint_pep484604_union_args_flattened(
             # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
 
             #FIXME: Totally not right. Instead:
-            #* Refactor the hints_meta.sanify_hint_child() method to accept a
-            #  new optional "parent_hint_sane" parameter.
             #* Obtain the "parent_hint_sane" from the second item of the
             #  2-tuples appended below.
+            #* Pass that "parent_hint_sane" to this call.
             hint_child_sane = hints_meta.sanify_hint_child(hint_child_insane)
             # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
         # Else, this child hint has already been sanified by a previously

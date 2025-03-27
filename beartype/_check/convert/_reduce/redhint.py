@@ -29,13 +29,12 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
     HintSane,
+    is_hint_recursive,
+    make_hint_sane_recursable,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahintpep import (
-    Hint,
-    SetHints,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeStack,
@@ -61,7 +60,6 @@ def reduce_hint(
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
-    hints_overridden: Optional[SetHints] = None,
     parent_hint_sane: Optional[HintSane] = None,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
@@ -116,16 +114,6 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    hints_overridden : set[Hint], optional
-        Mutable set of all previously **overridden hints** (i.e., hints reduced
-        to user-defined hint overrides configured by the
-        :attr:`beartype.BeartypeConf.hint_overrides` dictionary) reduced by a
-        prior call to this function, guarding against accidental infinite
-        recursion between lower-level reducers and this higher-level function.
-        If a hint has already been overridden in the current call stack rooted
-        at the top-most call to this function, this function avoids dangerously
-        re-overriding nested instances of the same hint. Defaults to the empty
-        set.
     parent_hint_sane : Optional[HintSane]
         Either:
 
@@ -178,15 +166,8 @@ def reduce_hint(
     '''
 
     # ....................{ PREAMBLE                       }....................
-    # If passed *NO* hint overrides, default this set to the empty set.
-    if hints_overridden is None:
-        hints_overridden = set()
-    # Else, hint overrides were passed. Preserve these hint overrides as is.
-
     # Validate passed parameters *AFTER* establishing defaults above.
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(hints_overridden, set), (
-        f'{repr(hints_overridden)} not set.')
     assert isinstance(parent_hint_sane, NoneTypeOr[HintSane]), (
         f'{repr(parent_hint_sane)} neither sanified hint metadata nor "None".')
     assert isinstance(reductions_count, int), (
@@ -231,6 +212,74 @@ def reduce_hint(
     while True:
         # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
+        # ....................{ PHASE ~ override           }....................
+        # Attempt to reduce this hint to another hint configured by a
+        # user-defined hint override *BEFORE* attempting standard reduction.
+        # User preference takes precedence over standard precedent.
+
+        #FIXME: Once we drop support for Python <= 3.11, "BeartypeHintOverrides"
+        #can and should be internally implemented as PEP 695-compliant
+        #unsubscripted type aliases. Note that, even after doing so, the logic
+        #below will probably still need to be preserved as is.
+
+        # Attempt to...
+        #
+        # Note that the is_object_hashable() tester is internally implemented
+        # with the same Easier to Ask for Permission than Forgiveness
+        # (EAFP)-based "try-except" block and is thus equally inefficient. In
+        # fact, the current approach avoids an extraneous call to that tester
+        # and is thus marginally faster. (Emphasis on "marginally.")
+        try:
+            # If this hint is *NOT* recursive, this hint *CANNOT* have already
+            # been overridden by a previously performed reduction. Why? Because
+            # an overridden hint revisited by the current breadth-first search
+            # (BFS) would by definition by recursive. In this case...
+            #
+            # Note this tester raises "TypeError" when this hint is unhashable.
+            if not is_hint_recursive(
+                hint=hint, parent_hint_sane=parent_hint_sane):
+                # User-defined hint overriding this hint if this beartype
+                # configuration overrides this hint *OR* the sentinel otherwise
+                # (i.e., if this hist is *NOT* overridden).
+                # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
+                hint_overridden = conf_hint_overrides_get(hint_curr, SENTINEL)
+
+                # If this hint is overridden...
+                if hint_overridden is not SENTINEL:
+                    # Sanified metadata guarding this hint against infinite
+                    # recursion, recording this hint as already having been
+                    # overridden *BEFORE* reducing and thus forgetting this
+                    # hint.
+                    #
+                    # Note that this intentionally replaces the sanified type
+                    # hint metadata of the parent hint of this hint by the
+                    # sanified type hint metadata of this hint itself. Doing so
+                    # ensures that the next reducer passed the
+                    # "parent_hint_sane" parameter preserves this metadata
+                    # during its reduction. Since the most recent reducer call
+                    # received the prior "parent_hint_sane" parameter, that
+                    # reducer has already safely preserved the parent metadata
+                    # by compositing that metadata into this "hint_or_sane_curr"
+                    # metadata that that reducer returned. Srsly.
+                    parent_hint_sane = make_hint_sane_recursable(
+                        hint=hint_overridden, parent_hint_sane=parent_hint_sane)
+
+                    # Reduce this hint to this user-defined hint override.
+                    hint_curr = parent_hint_sane.hint
+                # Else, this hint is *NOT* overridden. In this case, preserve
+                # this hint as is.
+            # Else, this hint is recursive. In this case, avoid overriding this
+            # hint yet again. Doing so would (almost certainly) provoke infinite
+            # recursion (e.g., overriding "float" with "int | float").
+            #
+            # Certainly, various approaches to type-checking recursive hints
+            # exists. @beartype currently embraces the easiest, fastest, and
+            # laziest approach: just ignore all recursion! \o/
+        # If doing so raises a "TypeError", this hint is unhashable and thus
+        # inapplicable for hint overriding. In this case, ignore this hint.
+        except TypeError:
+            pass
+
         # ....................{ PHASE ~ shallow            }....................
         # Attempt to reduce this hint with trivial zero-cost tests *BEFORE*
         # spending scarce resources on non-trivial full-cost tests below.
@@ -238,8 +287,11 @@ def reduce_hint(
         # complexity with negligible constants.
 
         # If this hint is the root "object" superclass, this hint is trivially
-        # shallowly ignorable. In this case, reduce this hint to the ignorable
-        # "HINT_IGNORABLE" singleton.
+        # shallowly ignorable. Why? Because this type is the transitive
+        # superclass of all classes. Attributes annotated as "object"
+        # unconditionally match *ALL* objects under isinstance()-based type
+        # covariance and thus semantically reduce to unannotated attributes.
+        # Reduce this hint to the ignorable "HINT_IGNORABLE" singleton.
         if hint_curr is object:
             return HINT_IGNORABLE
         # Else, this hint is *NOT* the root "object" superclass.
@@ -303,54 +355,6 @@ def reduce_hint(
         #     return HINT_IGNORABLE
         # # Else, this hint is *NOT* shallowly ignorable.
 
-        # ....................{ PHASE ~ override           }....................
-        # Attempt to reduce this hint to another hint configured by a
-        # user-defined hint override *BEFORE* attempting standard reduction.
-        # User preference takes precedence over standard precedent.
-
-        #FIXME: *UGH*. There's *NO* need at all for EAFP. Instead:
-        #* Refactor this to use hint IDs rather than possibly unhashable hints.
-        #* In fact, just refactor this to use our new "recursable_hints"
-        #  approach entirely, please.
-
-        # Attempt to...
-        #
-        # Note that the is_object_hashable() tester is internally implemented
-        # with the same Easier to Ask for Permission than Forgiveness
-        # (EAFP)-based "try-except" block and is thus equally inefficient. In
-        # fact, the current approach avoids an extraneous call to that tester
-        # and is thus marginally faster. (Emphasis on "marginally.")
-        try:
-            # If this hint has *NOT* already been overridden by a previously
-            # performed reduction in this recursive tree of all previously
-            # performed reductions...
-            if hint_curr not in hints_overridden:
-                # User-defined hint overriding this hint if this beartype
-                # configuration overrides this hint *OR* the sentinel otherwise
-                # (i.e., if this hist is *NOT* overridden).
-                # print(f'Overriding hint {repr(hint)} via {repr(conf.hint_overrides)}...')
-                hint_reduced = conf_hint_overrides_get(hint_curr, SENTINEL)
-
-                # If this hint was overridden...
-                if hint_reduced is not SENTINEL:
-                    # Record this hint as already having been overridden
-                    # *BEFORE* reducing (and thus obliterating) this hint.
-                    hints_overridden.add(hint_curr)
-
-                    # Reduce this hint to this user-defined hint override.
-                    hint_curr = hint_reduced
-                # Else, this hint was *NOT* overridden. In this case, preserve
-                # this hint as is.
-            # Else, this hint has already been overridden by a previously
-            # performed reduction in this recursive tree of all previously
-            # performed reductions. In this case, avoid overriding this hint yet
-            # again. Doing so would (almost certainly) provoke infinite
-            # recursion (e.g., overriding "float" with "int | float").
-        # If doing so raises a "TypeError", this hint is unhashable and thus
-        # inapplicable for hint overriding. In this case, ignore this hint.
-        except TypeError:
-            pass
-
         # ....................{ PHASE ~ deep               }....................
         # Attempt to deeply reduce this hint with a context-free reduction
         # *BEFORE* deeply reducing this hint with a contextual reduction. Due to
@@ -407,7 +411,6 @@ def reduce_hint(
                     cls_stack=cls_stack,
                     conf=conf,
                     decor_meta=decor_meta,
-                    hints_overridden=hints_overridden,
                     parent_hint_sane=parent_hint_sane,
                     pith_name=pith_name,
                     reductions_count=reductions_count,

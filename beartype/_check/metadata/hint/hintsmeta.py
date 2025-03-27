@@ -61,6 +61,7 @@ class HintsMeta(FixedList):
     inefficient -- and dangerous, due to both unavoidable stack exhaustion and
     avoidable infinite recursion -- recursive algorithm.
 
+
     Note that this list is guaranteed by the previously called
     ``_die_if_hint_repr_exceeds_child_limit()`` function to be larger than the
     number of hints transitively visitable from this root hint. Ergo, *all*
@@ -561,7 +562,15 @@ class HintsMeta(FixedList):
         return hint_meta.hint_placeholder
 
     # ..................{ SANIFIERS                          }..................
-    def sanify_hint_child(self, hint: Hint) -> HintSane:
+    def sanify_hint_child(
+        self,
+
+        # Mandatory parameters.
+        hint: Hint,
+
+        # Optional parameters.
+        parent_hint_sane: Optional[HintSane] = None,
+    ) -> HintSane:
         '''
         Type hint sanified (i.e., sanitized) from the passed **possibly insane
         child type hint** (i.e., possibly PEP-noncompliant hint transitively
@@ -578,6 +587,18 @@ class HintsMeta(FixedList):
         ----------
         hint : Hint
             Child type hint to be sanified.
+        parent_hint_sane : Optional[HintSane], default: None
+            **Sanified parent type hint metadata** (i.e., immutable and thus
+            hashable object encapsulating *all* metadata previously returned by
+            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            the possibly PEP-noncompliant parent hint of this child hint into a
+            fully PEP-compliant parent hint). Defaults to :data:`None`, in which
+            case this parameter actually defaults to
+            ``self.hint_curr_meta.hint_sane``, the previously sanified metadata
+            encapsulating a parent transitive hint of this child hint. Since
+            this default suffices in the common case, callers should only pass
+            this parameter when explicitly sanifying the parent hint of this
+            child hint outside the current breadth-first search (BFS).
 
         Returns
         -------

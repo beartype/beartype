@@ -20,6 +20,8 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
     HintSane,
+    is_hint_recursive,
+    make_hint_sane_recursable,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -87,24 +89,27 @@ def reduce_hint_pep695_subscripted(
         reduce_hint_pep484_subscripted_typevars_to_hints)
 
     # ....................{ RECURSE                        }....................
-    # If...
-    if (
-        # This hint has a parent *AND*...
-        parent_hint_sane is not None and
-        # This hint is a transitive parent of itself...
-        hint in parent_hint_sane.recursable_hints
-    ):
-        # Then this hint has already been visited by the current breadth-first
-        # search (BFS) and so constitutes a recursive hint. Certainly, various
-        # approaches to generating code type-checking recursive hints exists.
-        # @beartype currently embraces the easiest, fastest, and laziest
-        # approach: simply ignore all recursion!
+    # If this hint is recursive, ignore this hint to avoid infinite recursion.
+    #
+    # Certainly, various approaches to generating code type-checking recursive
+    # hints exists. @beartype currently embraces the easiest, fastest, and
+    # laziest approach: just ignore all recursion! Ignorance works wonders.
+    if is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane):
         return HINT_IGNORABLE
-    # Else, this hint is either the root *OR* not a transitive parent of itself.
-    # In either case, this hint is *NOT* a recursive hint..... yet. I sigh.
+    # Else, this hint is *NOT* recursive.
 
     # ....................{ REDUCE                         }....................
-    # Reduce this PEP 695-compliant subscripted type alias to:
+    # This reducer is divided into two phases:
+    # 1. The first phase decides the type variable lookup table for this alias.
+    # 2. The second phase decides the recursion guard for this alias.
+    #
+    # Both phases are non-trivial. The output of each phase is sanified hint
+    # metadata (i.e., a "HintSane" object) containing the result of the decision
+    # problem decided by that phase.
+
+    # ....................{ REDUCE ~ phase : 1             }....................
+    # Decide the type variable lookup table for this alias. Specifically, reduce
+    # this PEP 695-compliant subscripted type alias to:
     # * The semantically useful unsubscripted alias originating this
     #   semantically useless subscripted alias.
     # * The type variable lookup table mapping all type variables parametrizing
@@ -117,22 +122,21 @@ def reduce_hint_pep695_subscripted(
         exception_prefix=exception_prefix,
     )
 
+    # ....................{ REDUCE ~ phase : 2             }....................
+    # Decide the recursion guard protecting this possibly recursive alias
+    # against infinite recursion. Note that:
+    # * This guard intentionally applies to the original *SUBSCRIPTED* PEP
+    #   695-compliant type alias (rather rather than the *UNSUBSCRIPTED* PEP
+    #   695-compliant type alias decided by the prior phase). This is why we
+    #   pass "hint=hint" rather than "hint=hint_sane.hint" here.
+    # * The type variable lookup table decided in the first phase *MUST* also be
+    #   preserved. This is why we pass the "parent_hint_sane=hint_sane" rather
+    #   than "parent_hint_sane=parent_hint_sane" as in the prior phase. Indeed,
+    #   "hint_sane" should safely encapsulate all metadata encapsulated by
+    #   "parent_hint_sane".
+    hint_sane = make_hint_sane_recursable(hint=hint, parent_hint_sane=hint_sane)
+
     # ....................{ RETURN                         }....................
-    #FIXME: *THIS DEFINITELY REQUIRES DOCUMENTATION.* Basically:
-    #* This function operates in two phases:
-    #  * The first phase above decides the type variable lookup table for this
-    #    subscripted PEP 695 type alias.
-    #  * The second phase here decides the recursion guard. Crucially, this
-    #    recursion guard also intentionally applies to the original
-    #    *SUBSCRIPTED* (rather than unsubscripted) PEP 695 type alias. This is
-    #    why we pass "hint=hint". That said, we also have to preserve the type
-    #    variable lookup table decided in the first phase. This is why we pass
-    #    the 'parent_hint_sane=hint_sane". It is, indeed, complicated.
-
-    # Sanified metadata to be returned, guarded against infinite recursion.
-    hint_sane = _make_hint_pep695_recursable_hints(
-        hint=hint, parent_hint_sane=hint_sane)
-
     # Return this metadata.
     return hint_sane
 
@@ -215,21 +219,14 @@ def reduce_hint_pep695_unsubscripted(
     #In short, it's pretty brutal stuff. For now, simply ignoring recursion
     #strikes us the sanest and certainly simplest approach. *sigh*
 
-    # If...
-    if (
-        # This hint has a parent *AND*...
-        parent_hint_sane is not None and
-        # This hint is a transitive parent of itself...
-        hint in parent_hint_sane.recursable_hints
-    ):
-        # Then this hint has already been visited by the current breadth-first
-        # search (BFS) and so constitutes a recursive hint. Certainly, various
-        # approaches to generating code type-checking recursive hints exists.
-        # @beartype currently embraces the easiest, fastest, and laziest
-        # approach: simply ignore all recursion!
+    # If this hint is recursive, ignore this hint to avoid infinite recursion.
+    #
+    # Certainly, various approaches to generating code type-checking recursive
+    # hints exists. @beartype currently embraces the easiest, fastest, and
+    # laziest approach: just ignore all recursion! Ignorance works wonders.
+    if is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane):
         return HINT_IGNORABLE
-    # Else, this hint is either the root *OR* not a transitive parent of itself.
-    # In either case, this hint is *NOT* a recursive hint..... yet. I sigh.
+    # Else, this hint is *NOT* recursive.
 
     # ....................{ REDUCE                         }....................
     # Underlying type hint to be returned.
@@ -284,55 +281,8 @@ def reduce_hint_pep695_unsubscripted(
 
     # ....................{ RETURN                         }....................
     # Sanified metadata to be returned, guarded against infinite recursion.
-    hint_sane = _make_hint_pep695_recursable_hints(
+    hint_sane = make_hint_sane_recursable(
         hint=hint_aliased, parent_hint_sane=parent_hint_sane)
 
     # Return this metadata.
-    return hint_sane
-
-# ....................{ PRIVATE ~ factories                }....................
-#FIXME: Docstring us up, please. *sigh*
-def _make_hint_pep695_recursable_hints(
-    hint: Hint, parent_hint_sane: Optional[HintSane]) -> HintSane:
-
-    # Sanified metadata to be returned.
-    hint_sane: HintSane = None  # type: ignore[assignment]
-
-    # Recursion guard containing *ONLY* this pre-sanified unsubscripted hint
-    # (which is what the initial recursion logic above will then subsequently
-    # test against if this a recursive alias).
-    recursable_hints = frozenset((hint,))
-
-    # If this hint has *NO* parent, this is a root hint. In this case...
-    if parent_hint_sane is None:
-        # Metadata encapsulating this hint and recursion guard containing *ONLY*
-        # this pre-sanified unsubscripted hint (which is what the initial
-        # recursion logic above will then subsequently test against if this a
-        # recursive alias).
-        hint_sane = HintSane(
-            hint=hint, recursable_hints=recursable_hints)
-    # Else, this hint has a parent. In this case...
-    else:
-        # If the parent hint is also associated with a recursion guard...
-        if parent_hint_sane.recursable_hints:
-            # Full recursion guard merging the guard associated this parent hint
-            # with the guard containing only this child hint, efficiently
-            # defined as...
-            recursable_hints = (
-                # The guard protecting all transitive parent hints of this hint
-                # with...
-                parent_hint_sane.recursable_hints |  # type: ignore[operator]
-                # The guard protecting this hint. Note that the order of
-                # operands in this "|" operation is insignificant.
-                recursable_hints
-            )
-        # Else, the parent hint is associated with *NO* such guard.
-
-        # Metadata encapsulating this hint and recursion guard, while
-        # "cascading" any other metadata associated with this parent hint (e.g.,
-        # type variable lookup table) down onto this child hint as well.
-        hint_sane = parent_hint_sane.permute_sane(
-            hint=hint, recursable_hints=recursable_hints)
-
-    # Return this underlying type hint.
     return hint_sane

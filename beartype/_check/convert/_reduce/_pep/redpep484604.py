@@ -121,6 +121,25 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     )
 
     # ....................{ REDUCE                         }....................
+    # Note that the low-level C-based "types.UnionType" class underlying PEP
+    # 604-compliant |-style unions (e.g., "int | float") imposes no constraints
+    # and is thus also semantically synonymous with the ignorable "typing.Any"
+    # singleton. Nonetheless, that class *CANNOT* be instantiated from Python
+    # code: e.g.,
+    #     >>> import types
+    #     >>> types.UnionType(int, bool)
+    #     TypeError: cannot create 'types.UnionType' instances
+    #
+    # Likewise, that class *CANNOT* be subscripted. It follows that there exists
+    # no meaningful equivalent of shallow type-checking for these unions. While
+    # trivially feasible, listing "<class 'types.UnionType'>" here would only
+    # prevent callers from meaningfully type-checking these unions passed as
+    # valid parameters or returned as valid returns: e.g.,
+    #     @beartype
+    #     def muh_union_printer(muh_union: UnionType) -> None: print(muh_union)
+    #
+    # Ergo, we intentionally omit that class from consideration here.
+
     #FIXME: [SPEED] It'd be *REALLY* nice if this reducer completely
     #reconstituted the union it returns from the child hints it reduces below.
     #Currently, this reducer doesn't do that. Why? Because the rest of the

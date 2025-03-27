@@ -336,90 +336,6 @@ for all :pep:`484`-compliant type hints obsoleted by :pep:`585`-compliant
 subscriptable classes).
 '''
 
-# ....................{ SETS ~ ignorable                   }....................
-#FIXME: *SUPER-AWKWARD.* We accidentally duplicated *ALMOST* all of this set's
-#functionality as the "HINT_SIGNS_BARE_IGNORABLE" set. From what we can tell,
-#the only difference between these two sets is:
-#* This set matches the "object" superclass via "<class 'object'>", whereas
-#  "HINT_SIGNS_BARE_IGNORABLE" fails to match that superclass.
-#
-#That said, the "HINT_SIGNS_BARE_IGNORABLE" set is *VASTLY* preferable to this
-#set. Why? Maintainability. That set is trivially defined and then just works.
-#This set, on the other hand? Super-fragile. Just look at the insane
-#initialization logic below. Given that, here's what we should do:
-#* Replace all use of this "HINTS_REPR_IGNORABLE_SHALLOW" set with the
-#  comparable "HINT_SIGNS_BARE_IGNORABLE" set. Doing is mostly trivial; just:
-#      hint_sign = get_hint_pep_sign_or_none(hint)
-#      hint_args = get_hint_pep_args(hint)
-#
-#      if hint is object or (
-#          not hint_args and
-#          hint_sign in HINT_SIGNS_BARE_IGNORABLE
-#      ):
-#          return HINT_IGNORABLE
-#* Completely excise this "HINTS_REPR_IGNORABLE_SHALLOW" set from the codebase.
-
-# The majority of this dictionary is initialized with automated inspection
-# below in the _init() function. The *ONLY* key-value pairs explicitly defined
-# here are those *NOT* amenable to such inspection.
-HINTS_REPR_IGNORABLE_SHALLOW: FrozenSetStrs = {  # type: ignore[assignment]
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize changes to this set with the corresponding
-    # testing-specific set
-    # "beartype_test.a00_unit.data.hint.pep.data_pep.HINTS_PEP_IGNORABLE_SHALLOW".
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # ..................{ NON-PEP                            }..................
-    # The PEP-noncompliant builtin "object" type is the transitive superclass
-    # of all classes. Ergo, parameters and return values annotated as "object"
-    # unconditionally match *ALL* objects under isinstance()-based type
-    # covariance and thus semantically reduce to unannotated parameters and
-    # return values. This is literally the "beartype.cave.AnyType" type.
-    "<class 'object'>",
-
-    # ..................{ PEP 604                            }..................
-    # The low-level C-based "types.UnionType" class underlying PEP 604-compliant
-    # |-style unions (e.g., "int | float") imposes no constraints and is thus
-    # also semantically synonymous with the ignorable PEP-noncompliant
-    # "beartype.cave.AnyType" and hence "object" types. Nonetheless, this class
-    # *CANNOT* be instantiated from Python code:
-    #     >>> import types
-    #     >>> types.UnionType(int, bool)
-    #     TypeError: cannot create 'types.UnionType' instances
-    #
-    # Likewise, this class *CANNOT* be subscripted. It follows that there exists
-    # no meaningful equivalent of shallow type-checking for these unions. While
-    # trivially feasible, listing "<class 'types.UnionType'>" here would only
-    # prevent callers from meaningfully type-checking these unions passed as
-    # valid parameters or returned as valid returns: e.g.,
-    #     @beartype
-    #     def muh_union_printer(muh_union: UnionType) -> None: print(muh_union)
-    #
-    # Ergo, we intentionally omit this type from consideration here.
-
-    # ....................{ NON-PEP                        }....................
-    # Machine-readable representations of shallowly ignorable type hints
-    # published by PEP-noncompliant third-party type hints, including...
-    # ...absolutely nuthin', at the moment. :<>
-}
-'''
-Frozen set of all **shallowly ignorable PEP-compliant type hint
-representations** (i.e., machine-readable strings returned by the :func:`repr`
-builtin for all PEP-compliant type hints that are unconditionally ignorable by
-the :func:`beartype.beartype` decorator in *all* possible contexts)
-
-Caveats
--------
-**The high-level**
-:func:`beartype._util.hint.pep.utilhinttest.is_hint_ignorable` **tester
-function should always be called in lieu of testing type hints against this
-low-level set.** This set is merely shallow and thus excludes **deeply
-ignorable type hints** (e.g., :data:`Union[Any, bool, str]`). Since there exist
-a countably infinite number of deeply ignorable type hints, this set is
-necessarily constrained to the substantially smaller finite subset of only
-shallowly ignorable type hints.
-'''
-
 # ....................{ INITIALIZERS                       }....................
 def _init() -> None:
     '''
@@ -438,9 +354,7 @@ def _init() -> None:
 
     # ..................{ GLOBALS                            }..................
     # Permit redefinition of these globals below.
-    global \
-        HINTS_PEP484_REPR_PREFIX_DEPRECATED, \
-        HINTS_REPR_IGNORABLE_SHALLOW
+    global HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
     # ..................{ HINTS                              }..................
     # Length of the ignorable substring prefixing the name of each sign.
@@ -734,20 +648,6 @@ def _init() -> None:
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
                 typing_module_name][typing_attr_name] = hint_sign
 
-        # For each shallowly ignorable typing non-class attribute name...
-        for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
-            # Add that attribute relative to this module to this set.
-            # print(f'[datapeprepr] Registering ignorable non-class "{typing_module_name}.{typing_attr_name}"...')
-            HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
-                f'{typing_module_name}.{typing_attr_name}')
-
-        # For each shallowly ignorable typing classname...
-        for typing_type_name in _HINT_TYPING_TYPE_NAMES_IGNORABLE:
-            # Add that classname relative to this module to this set.
-            # print(f'[datapeprepr] Registering ignorable class "{typing_module_name}.{typing_attr_name}"...')
-            HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
-                f"<class '{typing_module_name}.{typing_type_name}'>")
-
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
             # Add that attribute relative to this module to this set.
@@ -759,7 +659,6 @@ def _init() -> None:
     # Freeze all relevant global sets for safety.
     HINTS_PEP484_REPR_PREFIX_DEPRECATED = frozenset(
         HINTS_PEP484_REPR_PREFIX_DEPRECATED)
-    HINTS_REPR_IGNORABLE_SHALLOW = frozenset(HINTS_REPR_IGNORABLE_SHALLOW)
 
     # ..................{ DEBUGGING                          }..................
     # Uncomment as needed to display the contents of these objects.
@@ -769,6 +668,7 @@ def _init() -> None:
     # print(f'HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN)}')
     # print(f'HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN)}')
     # print(f'HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: {pformat(HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN)}')
+
 
 # Initialize this submodule.
 _init()
