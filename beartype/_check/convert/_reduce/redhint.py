@@ -60,7 +60,7 @@ def reduce_hint(
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
-    parent_hint_sane: Optional[HintSane] = None,
+    hint_parent_sane: Optional[HintSane] = None,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
     exception_prefix: str = '',
@@ -114,7 +114,7 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -168,8 +168,8 @@ def reduce_hint(
     # ....................{ PREAMBLE                       }....................
     # Validate passed parameters *AFTER* establishing defaults above.
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(parent_hint_sane, NoneTypeOr[HintSane]), (
-        f'{repr(parent_hint_sane)} neither sanified hint metadata nor "None".')
+    assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+        f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
     assert isinstance(reductions_count, int), (
         f'{repr(reductions_count)} not integer.')
 
@@ -237,7 +237,7 @@ def reduce_hint(
             #
             # Note this tester raises "TypeError" when this hint is unhashable.
             if not is_hint_recursive(
-                hint=hint, parent_hint_sane=parent_hint_sane):
+                hint=hint, hint_parent_sane=hint_parent_sane):
                 # User-defined hint overriding this hint if this beartype
                 # configuration overrides this hint *OR* the sentinel otherwise
                 # (i.e., if this hist is *NOT* overridden).
@@ -255,17 +255,17 @@ def reduce_hint(
                     # hint metadata of the parent hint of this hint by the
                     # sanified type hint metadata of this hint itself. Doing so
                     # ensures that the next reducer passed the
-                    # "parent_hint_sane" parameter preserves this metadata
+                    # "hint_parent_sane" parameter preserves this metadata
                     # during its reduction. Since the most recent reducer call
-                    # received the prior "parent_hint_sane" parameter, that
+                    # received the prior "hint_parent_sane" parameter, that
                     # reducer has already safely preserved the parent metadata
                     # by compositing that metadata into this "hint_or_sane_curr"
                     # metadata that that reducer returned. Srsly.
-                    parent_hint_sane = make_hint_sane_recursable(
-                        hint=hint_overridden, parent_hint_sane=parent_hint_sane)
+                    hint_parent_sane = make_hint_sane_recursable(
+                        hint=hint_overridden, hint_parent_sane=hint_parent_sane)
 
                     # Reduce this hint to this user-defined hint override.
-                    hint_curr = parent_hint_sane.hint
+                    hint_curr = hint_parent_sane.hint
                 # Else, this hint is *NOT* overridden. In this case, preserve
                 # this hint as is.
             # Else, this hint is recursive. In this case, avoid overriding this
@@ -411,7 +411,7 @@ def reduce_hint(
                     cls_stack=cls_stack,
                     conf=conf,
                     decor_meta=decor_meta,
-                    parent_hint_sane=parent_hint_sane,
+                    hint_parent_sane=hint_parent_sane,
                     pith_name=pith_name,
                     reductions_count=reductions_count,
                     exception_prefix=exception_prefix,
@@ -440,13 +440,13 @@ def reduce_hint(
         elif isinstance(hint_or_sane_curr, HintSane):
             # Replace the sanified type hint metadata of the parent hint of this
             # hint by the sanified type hint metadata of this hint itself. Doing
-            # so ensures that the next reducer passed the "parent_hint_sane"
+            # so ensures that the next reducer passed the "hint_parent_sane"
             # parameter preserves this metadata during its reduction. Since the
-            # most recent reducer call received the prior "parent_hint_sane"
+            # most recent reducer call received the prior "hint_parent_sane"
             # parameter, that reducer has already safely preserved the parent
             # metadata by compositing that metadata into this
             # "hint_or_sane_curr" metadata that that reducer returned. Srsly.
-            parent_hint_sane = hint_or_sane_curr
+            hint_parent_sane = hint_or_sane_curr
 
             # Extract the currently reduced hint from this metadata.
             hint_curr = hint_or_sane_curr.hint
@@ -494,11 +494,11 @@ def reduce_hint(
             # If this hint has *NO* parent, this is a root hint. In this case,
             # the trivial metadata shallowly encapsulating this root hint;
             HintSane(hint)
-            if parent_hint_sane is None else
+            if hint_parent_sane is None else
             # Else, this hint has a parent. In this case, the non-trivial
             # metadata deeply encapsulating both this non-root hint *AND* all
             # metadata already associated with this parent hint.
-            parent_hint_sane.permute_sane(hint=hint_or_sane_curr)
+            hint_parent_sane.permute_sane(hint=hint_or_sane_curr)
         )
     # Else, this hint is already sanified type hint metadata. In this case,
     # preserve this metadata as is.

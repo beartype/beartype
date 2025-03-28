@@ -15,21 +15,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
-    # Any,
     Optional,
 )
-from beartype._check.code.codemagic import (
-    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL)
+from beartype._check.code.codemagic import EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL
 from beartype._check.code.codescope import add_func_scope_type_or_types
-from beartype._check.code.snip.codesnipcls import (
-    PITH_INDEX_TO_VAR_NAME)
+from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
-from beartype._check.metadata.hint.hintsane import (
-    HintSane,
-    HintSane,
-    # unpack_hint_or_sane,
-)
+from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
@@ -38,8 +31,8 @@ from beartype._data.error.dataerrmagic import (
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
-    TypeStack,
     TypeOrSetOrTupleTypes,
+    TypeStack,
 )
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -60,7 +53,6 @@ class HintsMeta(FixedList):
     BFS to be implemented as an efficient imperative algorithm rather than an
     inefficient -- and dangerous, due to both unavoidable stack exhaustion and
     avoidable infinite recursion -- recursive algorithm.
-
 
     Note that this list is guaranteed by the previously called
     ``_die_if_hint_repr_exceeds_child_limit()`` function to be larger than the
@@ -566,10 +558,10 @@ class HintsMeta(FixedList):
         self,
 
         # Mandatory parameters.
-        hint: Hint,
+        hint_child_insane: Hint,
 
         # Optional parameters.
-        parent_hint_sane: Optional[HintSane] = None,
+        hint_parent_sane: Optional[HintSane] = None,
     ) -> HintSane:
         '''
         Type hint sanified (i.e., sanitized) from the passed **possibly insane
@@ -585,9 +577,9 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint : Hint
+        hint_child_insane : Hint
             Child type hint to be sanified.
-        parent_hint_sane : Optional[HintSane], default: None
+        hint_parent_sane : Optional[HintSane], default: None
             **Sanified parent type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata previously returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
@@ -613,16 +605,21 @@ class HintsMeta(FixedList):
               metadata encapsulating this child hint unmodified.
         '''
 
-        # Sane hint sanified from this possibly insane hint if sanifying this
-        # hint did not generate supplementary metadata *OR* that metadata
-        # otherwise (i.e., if doing so generated supplementary metadata).
-        hint_or_sane_child = sanify_hint_child(
-            hint=hint,
-            parent_hint_sane=self.hint_curr_meta.hint_sane,
+        # If the caller explicitly passed *NO* sanified parent hint metadata,
+        # default this metadata to that of the currently visited parent hint.
+        if hint_parent_sane is None:
+            hint_parent_sane = self.hint_curr_meta.hint_sane
+        # Else, the caller explicitly passed sanified parent hint metadata.
+        # Silently preserve this metadata as is.
+
+        # Metadata encapsulating the sanification of this child hint.
+        hint_child_sane = sanify_hint_child(
+            hint=hint_child_insane,
+            hint_parent_sane=hint_parent_sane,
             cls_stack=self.cls_stack,
             conf=self.conf,
             exception_prefix=self.exception_prefix,
         )
 
         # Return this metadata.
-        return hint_or_sane_child
+        return hint_child_sane

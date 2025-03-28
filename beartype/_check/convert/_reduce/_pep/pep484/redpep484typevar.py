@@ -51,7 +51,7 @@ from beartype._util.kind.map.utilmapfrozen import FrozenDict
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(
     hint: Hint,
-    parent_hint_sane: Optional[HintSane],
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
 ) -> Hint:
@@ -67,7 +67,7 @@ def reduce_hint_pep484_typevar(
     ----------
     hint : Hint
         Type variable to be reduced.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -94,13 +94,13 @@ def reduce_hint_pep484_typevar(
     if (
         # This type variable is not a root hint and thus has a parent hint
         # *AND*...
-        parent_hint_sane is not None and
+        hint_parent_sane is not None and
         # A parent hint of this type variable maps one or more type variables...
-        parent_hint_sane.typevar_to_hint
+        hint_parent_sane.typevar_to_hint
     ):
         # Type variable lookup table of this parent hint, localized for
         # usability and negligible efficiency.
-        typevar_to_hint = parent_hint_sane.typevar_to_hint
+        typevar_to_hint = hint_parent_sane.typevar_to_hint
 
         # If a parent hint of this type variable maps exactly one type variable,
         # prefer a dramatically faster and simpler approach.
@@ -208,7 +208,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     hint: Hint,
 
     # Optional parameters.
-    parent_hint_sane: Optional[HintSane] = None,
+    hint_parent_sane: Optional[HintSane] = None,
     exception_prefix: str = '',
 ) -> HintOrSane:
     '''
@@ -265,7 +265,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     ----------
     hint : Hint
         Subscripted hint to be inspected.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -373,7 +373,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     hint_sane: HintSane = None  # type: ignore[assignment]
 
     # If this hint has *NO* parent, this is a root hint. In this case...
-    if parent_hint_sane is None:
+    if hint_parent_sane is None:
         # Metadata encapsulating this hint and type variable lookup table.
         hint_sane = HintSane(
             hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
@@ -381,14 +381,14 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     else:
         # If the parent hint is also associated with a type variable lookup
         # table...
-        if parent_hint_sane.typevar_to_hint:
+        if hint_parent_sane.typevar_to_hint:
             # Full type variable lookup table merging the table associated this
             # parent hint with the table just decided above for this child hint,
             # efficiently defined as...
             typevar_to_hint = (
                 # The type variable lookup table describing all transitive
                 # parent hints of this hint with...
-                parent_hint_sane.typevar_to_hint |  # type: ignore[operator]
+                hint_parent_sane.typevar_to_hint |  # type: ignore[operator]
                 # The type variable lookup table describing this hint.
                 #
                 # Note that this table is intentionally the second rather than
@@ -402,7 +402,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         # Metadata encapsulating this hint and type variable lookup table, while
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # recursable hint IDs) down onto this child hint as well.
-        hint_sane = parent_hint_sane.permute_sane(
+        hint_sane = hint_parent_sane.permute_sane(
             hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
 
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')

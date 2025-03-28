@@ -30,7 +30,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484585_generic_subscripted(
     hint: Hint,
-    parent_hint_sane: Optional[HintSane],
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs,
 ) -> HintOrSane:
@@ -61,7 +61,7 @@ def reduce_hint_pep484585_generic_subscripted(
     ----------
     hint : Hint
         Subscripted generic to be reduced.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -141,7 +141,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
     hint_reduced = reduce_hint_pep484_subscripted_typevars_to_hints(
         hint=hint,
-        parent_hint_sane=parent_hint_sane,
+        hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
     )
     # print(f'[reduce_hint_pep484585_generic_subscripted] ...to unsubscripted generic {repr(hint_reduced)}.')

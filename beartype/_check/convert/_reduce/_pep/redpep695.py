@@ -33,7 +33,7 @@ from beartype._util.hint.pep.proposal.pep695 import (
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep695_subscripted(
     hint: Hint,
-    parent_hint_sane: Optional[HintSane],
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs,
 ) -> HintOrSane:
@@ -51,7 +51,7 @@ def reduce_hint_pep695_subscripted(
     ----------
     hint : Hint
         Subscripted hint to be inspected.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -94,7 +94,7 @@ def reduce_hint_pep695_subscripted(
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
-    if is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane):
+    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
@@ -118,7 +118,7 @@ def reduce_hint_pep695_subscripted(
     # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
     hint_sane = reduce_hint_pep484_subscripted_typevars_to_hints(
         hint=hint,
-        parent_hint_sane=parent_hint_sane,
+        hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
     )
 
@@ -130,11 +130,11 @@ def reduce_hint_pep695_subscripted(
     #   695-compliant type alias decided by the prior phase). This is why we
     #   pass "hint=hint" rather than "hint=hint_sane.hint" here.
     # * The type variable lookup table decided in the first phase *MUST* also be
-    #   preserved. This is why we pass the "parent_hint_sane=hint_sane" rather
-    #   than "parent_hint_sane=parent_hint_sane" as in the prior phase. Indeed,
+    #   preserved. This is why we pass the "hint_parent_sane=hint_sane" rather
+    #   than "hint_parent_sane=hint_parent_sane" as in the prior phase. Indeed,
     #   "hint_sane" should safely encapsulate all metadata encapsulated by
-    #   "parent_hint_sane".
-    hint_sane = make_hint_sane_recursable(hint=hint, parent_hint_sane=hint_sane)
+    #   "hint_parent_sane".
+    hint_sane = make_hint_sane_recursable(hint=hint, hint_parent_sane=hint_sane)
 
     # ....................{ RETURN                         }....................
     # Return this metadata.
@@ -143,7 +143,7 @@ def reduce_hint_pep695_subscripted(
 
 def reduce_hint_pep695_unsubscripted(
     hint: Hint,
-    parent_hint_sane: Optional[HintSane],
+    hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs,
 ) -> HintOrSane:
@@ -159,7 +159,7 @@ def reduce_hint_pep695_unsubscripted(
     ----------
     hint : HintPep695TypeAlias
         Unsubscripted type alias to be reduced.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -224,7 +224,7 @@ def reduce_hint_pep695_unsubscripted(
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
-    if is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane):
+    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
@@ -282,7 +282,7 @@ def reduce_hint_pep695_unsubscripted(
     # ....................{ RETURN                         }....................
     # Sanified metadata to be returned, guarded against infinite recursion.
     hint_sane = make_hint_sane_recursable(
-        hint=hint_aliased, parent_hint_sane=parent_hint_sane)
+        hint=hint_aliased, hint_parent_sane=hint_parent_sane)
 
     # Return this metadata.
     return hint_sane

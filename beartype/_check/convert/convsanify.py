@@ -301,7 +301,7 @@ def sanify_hint_root_statement(
 def sanify_hint_child(
     # Mandatory parameters.
     hint: Hint,
-    parent_hint_sane: HintSane,
+    hint_parent_sane: HintSane,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
@@ -321,7 +321,7 @@ def sanify_hint_child(
     ----------
     hint : Hint
         Child type hint to be sanified.
-    parent_hint_sane : HintSane
+    hint_parent_sane : HintSane
         **Sanified parent type hint metadata** (i.e., immutable and thus
         hashable object encapsulating *all* metadata previously returned by
         :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
@@ -404,7 +404,7 @@ def sanify_hint_child(
     # otherwise (i.e., if reducing this hint generated supplementary metadata).
     hint_or_sane = reduce_hint(
         hint=hint,
-        parent_hint_sane=parent_hint_sane,
+        hint_parent_sane=hint_parent_sane,
         conf=conf,
         cls_stack=cls_stack,
         pith_name=pith_name,

@@ -21,13 +21,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #unions. The approach below is wild -- and not the good kind of "wild," either.
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import Tuple
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
     HintSane,
     DictHintSaneToAny,
-    ListHintOrSane,
     ListHintSane,
-    SetHintSane,
     TupleHintSane,
 )
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_OR
@@ -37,7 +37,7 @@ from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
 )
-# from beartype._data.hint.datahintpep import SetHints
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import DictTypeToAny
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.pool.utilcachepoolinstance import (
@@ -162,8 +162,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     # Dictionary whose keys comprise the set of all PEP-compliant child hints
     # subscripting this union and whose values are ignorable. See above.
-    hint_childs_sane_pep: DictHintSaneToAny = acquire_instance(
-        dict)
+    hint_childs_sane_pep: DictHintSaneToAny = acquire_instance(dict)
 
     # ....................{ FILTER                         }....................
     #FIXME: Optimize by refactoring into a "while" loop. Naturally, profile that
@@ -185,6 +184,40 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
         # Child hint encapsulated by this metadata.
         hint_child = hint_child_sane.hint
+
+        #FIXME: *WOOOOOOOOOOOOOAH.* Waitjustaminute. Not all PEP-compliant type
+        #hints are hashable! Seriously. Here's one obvious example:
+        #    Annotated[object, []]
+        #
+        #There's absolutely *NO* way that's hashable. We... kinda messed up
+        #here, folks. Thankfully, this edge case has yet to actually hit anyone.
+        #This suggests that nearly all type hints of real-world interest are
+        #hashable. Still, that's a pretty bad assumption. Let's generalize this
+        #with "try" logic resembling:
+        #    if is_hint_pep(hint_child):
+        #        try:
+        #            hint_childs_sane_pep[hint_child_sane] = None
+        #        except TypeError:
+        #            hint_childs_sane_pep_unhashable.append(hint_child_sane)
+        #    else:
+        #        hint_childs_nonpep[hint_child] = None  # type: ignore[index]
+        #
+        #As the above logic suggests, this edge case *ONLY* applies to
+        #PEP-compliant type hints. All PEP-noncompliant type hints are
+        #isinstanceable types -- which, by definition, are all hashable. \o/
+        #
+        #Naturally, we'll then need to:
+        #* Rename "hint_childs_sane_pep" to "hint_childs_sane_pep_hashable".
+        #* Define "hint_childs_sane_pep_unhashable" as a list above.
+        #* Handle "hint_childs_sane_pep_unhashable" below. The most reliable way
+        #  to do that is to:
+        #  * First define a new tuple resembling:
+        #      hint_childs_sane_pep_list = (
+        #          list(hint_childs_sane_pep.keys()) +
+        #          hint_childs_sane_pep_unhashable
+        #      )
+        #  * Then iterate over "hint_childs_sane_pep_list" rather than
+        #    "hint_childs_sane_pep.keys()" below.
 
         # If this child hint is PEP-compliant, filter this child hint *AND* all
         # associated metadata (if any) into this dictionary of PEP-compliant
@@ -390,13 +423,14 @@ def _get_hint_pep484604_union_args_flattened(
     # print(f'[484/604] hint_curr_meta: {repr(hints_meta.hint_curr_meta)}')
 
     # ....................{ LOCALS                         }....................
-    # Metadata localized from this dataclass for both usability and efficiency.
-    hint_sane = hints_meta.hint_curr_meta.hint_sane
-    hint = hint_sane.hint
+    # Metadata encapsulating the currently visited PEP 484- or 604-compliant
+    # union type hint as well as that hint.
+    union_hint_sane = hints_meta.hint_curr_meta.hint_sane
+    union_hint = union_hint_sane.hint
 
     # ....................{ LOCALS ~ child                 }....................
     # Tuple of the two or more child hints subscripting this union.
-    hint_childs = get_hint_pep_args(hint)
+    hint_childs = get_hint_pep_args(union_hint)
 
     # Number of these child hints.
     hint_childs_len = len(hint_childs)
@@ -418,42 +452,49 @@ def _get_hint_pep484604_union_args_flattened(
     #     int
     assert hint_childs_len >= 2, (
         f'{hints_meta.exception_prefix}'
-        f'PEP 484 or 604 union type hint {repr(hint)} either unsubscripted '
-        f'or subscripted by only one child type hint.'
+        f'PEP 484 or 604 union type hint {repr(union_hint)} either '
+        f'unsubscripted or subscripted by only one child type hint.'
     )
 
     # ....................{ LOCALS ~ list                  }....................
     # Input stack of all currently unflattened transitive child hints of this
-    # union to be visited by the depth-first search (DFS) below, initialized to
-    # the non-empty list of all direct child hints of this union.
-    hint_childs_insane_unflattened: ListHintOrSane = acquire_instance(list)
-    hint_childs_insane_unflattened.extend(hint_childs)
+    # union to be visited by the depth-first search (DFS) below such that each
+    # item of this stack is a 2-tuple (hint_child_insane, hint_parent_sane),
+    # where:
+    # * "hint_child_insane" is an transitive child hint of this union that has
+    #   yet to be sanified and thus possibly expanded into a nested union hint
+    #   requiring flattening into this root union hint.
+    # * "hint_parent_sane" is sanified metadata encapsulating the direct parent
+    #   hint of "hint_child_insane". In theory, this should *ALWAYS* be a union
+    #   hint -- either this root union hint *OR* a nested union hint thereof.
+    hint_childs_insane_unflattened: Tuple[Hint, HintSane] = acquire_instance(
+        list)
+
+    # Efficiently initialize this input stack to the non-empty list of all
+    # 2-tuples (hint_child_insane, union_hint_sane) containing all direct child
+    # hints of this union, equivalent to the following inefficient iteration:
+    #     for hint_child in hint_childs:
+    #         hint_childs_insane_unflattened.append((
+    #             hint_child, union_hint_sane))
+    #
+    # Specifically:
+    # * "(union_hint_sane,)*hint_childs_len" expands to the n-tuple containing
+    #   "n" repetitions of this root union hint, where n is the number of child
+    #   hints subscripting this root union hint.
+    # * This call to the zip() builtin creates an iterable of 2-tuples
+    #   (hint_child_insane, union_hint_sane) for each such child hint.
+    hint_childs_insane_unflattened.extend(zip(
+        hint_childs, (union_hint_sane,)*hint_childs_len))
 
     # Output stack of all previously flattened transitive child hints of this
-    # union that have already been visited by this DFS, initialized to the
-    # empty list. Equivalently, this is the list of all sanified child hints
-    # from which to reconstitute this union below.
+    # union that have already been visited by this DFS such that each item of
+    # this list is sanified metadata encapsulating each such child hint,
+    # initialized to the empty list. Equivalently, this is the list of all
+    # sanified child hints from which to reconstitute this union below.
     #
     # Note that this stack orders these child hints in the *REVERSE* order that
     # these child hints were originally ordered by the user in this union.
     hint_childs_sane_flattened: ListHintSane = acquire_instance(list)
-
-    # ....................{ LOCALS ~ set                   }....................
-    #FIXME: Pretty sure we should no longer require this *AFTER* implementing
-    #recursion guards properly elsewhere.
-    #FIXME: *RIGHT*. Just call something resembling the following below to
-    #properly detect recursive hints now:
-    #    is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane)
-
-    # Set of all previously sanified child hints, required to avoid infinite
-    # recursion that could otherwise be induced in worst-case sanification --
-    # including:
-    # * If the caller overrode at least one type hint to expand to a union
-    #   recursively embedding the same type hint through a beartype
-    #   configuration enabling the "hint_overrides" option (e.g., a
-    #   "hints_meta.conf.hint_overrides" option whose value is
-    #   "BeartypeHintOverrides({int: int | float})".
-    hint_childs_insane_sanified: SetHintSane = acquire_instance(set)
 
     # ....................{ SEARCH                         }....................
     # Repeatedly flatten all currently unflattened transitive child hints of
@@ -468,105 +509,43 @@ def _get_hint_pep484604_union_args_flattened(
     # transitive child hints of this union have yet to be flattened. Then...
     while hint_childs_insane_unflattened:
         # ....................{ SANIFY                     }....................
-        # Currently unflattened transitive child hint to be flattened, defined
-        # as either:
-        # * If either a nested parent union of this child hint has not already
-        #   been sanified by a prior iteration of this loop *OR* a nested parent
-        #   union of this child hint has already been sanified by a prior
-        #   iteration of this loop but doing so did not generate supplementary
-        #   metadata, this child hint as is.
-        # * Else, sanifying this child hint generated supplementary metadata. In
-        #   this case, that metadata.
-        hint_child_insane = hint_childs_insane_unflattened.pop()
+        # Currently unflattened transitive child hint to be flattened defined as
+        # the 2-tuple (hint_child_insane, hint_parent_sane), where:
+        # * "hint_child_insane" is an transitive child hint of this union that
+        #   has yet to be sanified and thus possibly expanded into a nested
+        #   union hint requiring flattening into this root union hint.
+        # * "hint_parent_sane" is sanified metadata encapsulating the direct
+        #   parent hint of "hint_child_insane". In theory, this should *ALWAYS*
+        #   be a union hint -- either this root union hint *OR* a nested union
+        #   hint sanified by a prior iteration of this loop below.
+        hint_child_insane, hint_parent_sane = (
+            hint_childs_insane_unflattened.pop())
 
         # Metadata encapsulating the sanification of the currently unflattened
         # transitive child hint to be flattened.
         hint_child_sane: HintSane = SENTINEL  # type: ignore[assignment]
 
-        # True only if this child hint has *NOT* already been sanified by a
-        # previously performed sanification in this recursive tree of all
-        # previously performed sanifications. For safety, assume insanity.
-        is_hint_child_insane = True
-
-        #FIXME: Pretty sure we should no longer require this *AFTER*
-        #implementing recursion guards properly elsewhere.
-        # True only if this child hint was sanified via a hint override
-        # externally configured by the user. For safety, assume *NO* override.
-        is_hint_child_overridden = False
-
-        # Attempt to...
+        # Sanified hint metadata encapsulating the sanification of this
+        # possibly insane child hint with respect to the previously sanified
+        # metadata encapsulating the direct parent hint of this child hint.
         #
-        # Note that the is_object_hashable() tester is internally implemented
-        # with the same Easier to Ask for Permission than Forgiveness
-        # (EAFP)-based "try-except" block and is thus equally inefficient. In
-        # fact, the current approach avoids an extraneous call to that tester
-        # and is thus marginally faster. (Emphasis on "marginally.")
-        try:
-            # True only if this child hint has *NOT* already been sanified by a
-            # previously performed sanification in this recursive tree of all
-            # previously performed sanifications.
-            #
-            # Note that testing whether an item resides in a set requires that
-            # item to be hashable. For safety, this addition is intentionally
-            # isolated to this "try" branch.
-            is_hint_child_insane = (
-                hint_child_insane not in hint_childs_insane_sanified)
-
-            # If this child hint has yet to be sanified...
-            if is_hint_child_insane:
-                # Record this child hint as now having been sanified *AFTER*
-                # detecting whether this child hint requires sanification. Ugh!
-                #
-                # Note that adding an item to a set requires that item to be
-                # hashable. For safety, this addition is intentionally isolated
-                # to this "try" branch.
-                hint_childs_insane_sanified.add(hint_child_insane)
-            # Else, this child hint has already been sanified. In this case...
-            else:
-                assert isinstance(hint_child_insane, HintSane), (
-                    f'Union child hint {repr(hint_child_insane)} not sanified.')
-
-                # Sanified hint metadata encapsulating the sanification of this
-                # previously insane child hint.
-                hint_child_sane = hint_child_insane
-
-                # True only if this child hint was sanified via a hint override
-                # externally configured by the end user.
-                is_hint_child_overridden = (
-                    hint_child_sane in hints_meta.conf.hint_overrides)
-        # If doing so raises a "TypeError", this child hint is unhashable. In
-        # this case, assume this child hint to be insane. You know who you are.
-        except TypeError:
-            pass
-
-        # If this child hint has yet to be sanified...
-        if is_hint_child_insane:
-            # Sanified hint metadata encapsulating the sanification of this
-            # possibly insane child hint.
-            #
-            # Note that this sanification is intentionally performed *BEFORE*
-            # the sign of this child hint is tested. Why? Because some
-            # reductions expand an arbitrary hint into a union. This includes:
-            # * PEP 695-compliant type aliases aliased to unions. See above!
-            # * The PEP-noncompliant "float' and "complex" types, implicitly
-            #   expanded to the PEP 484-compliant "float | int" and "complex |
-            #   float | int" type hints (respectively) when the non-default
-            #   "conf.is_pep484_tower=True" parameter is enabled.
-            # * User-defined "BeartypeHintOverrides", a generalization of the
-            #   prior item.
-            # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-
-            #FIXME: Totally not right. Instead:
-            #* Obtain the "parent_hint_sane" from the second item of the
-            #  2-tuples appended below.
-            #* Pass that "parent_hint_sane" to this call.
-            hint_child_sane = hints_meta.sanify_hint_child(hint_child_insane)
-            # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
-        # Else, this child hint has already been sanified by a previously
+        # Note that this sanification is intentionally performed *BEFORE* the
+        # sign of this child hint is tested. Why? Because some reductions expand
+        # an arbitrary hint into a union. This includes:
+        # * PEP 695-compliant type aliases aliased to unions. See above!
+        # * The PEP-noncompliant "float' and "complex" types, implicitly
+        #   expanded to the PEP 484-compliant "float | int" and "complex | float
+        #   | int" type hints (respectively) when the non-default
+        #   "conf.is_pep484_tower=True" parameter is enabled.
+        # * User-defined "BeartypeHintOverrides", a generalization of the prior
+        #   item.
+        #
+        # Likewise, note that this sanification implicitly handles *ALL*
+        # recursive edge cases. We need *NOT* do so explicitly above or below.
+        # Notably, if this child hint has already been sanified by a previously
         # performed sanification in this recursive tree of all previously
-        # performed sanifications.
-        #
-        # There now exist two divergent edge cases. Either:
+        # performed sanifications, there now exist two divergent edge cases.
+        # Either:
         # * This child hint has intrinsic value and *MUST* thus be preserved as
         #   a member of this union. This edge case currently arises *ONLY*
         #   through hint overrides. Consider overriding the child hint "float"
@@ -580,6 +559,12 @@ def _get_hint_pep484604_union_args_flattened(
         #     ignored, as doing so would omit this child hint from this union.
         #     This child hint thus has intrinsic value and *MUST* thus be
         #     preserved as a member of this union.
+        #
+        #   This edge case is implicitly handled by the
+        #   hints_meta.sanify_hint_child() method called below, which
+        #   transitively calls the reduce_hint() function, which detects
+        #   recursion in an overridden hint and implicitly returns that hint as
+        #   is *WITHOUT* recursively overriding that hint yet again.
         # * This child hint lacks intrinsic value and *MUST* thus be removed as
         #   a member of this union. This edge case currently arises *ONLY*
         #   through PEP 695-compliant recursive type aliases. Consider:
@@ -591,21 +576,23 @@ def _get_hint_pep484604_union_args_flattened(
         #       type NonrecursiveAlias = int
         #
         #   Similar logic as with the prior edge case then applies, except that
-        #   this hild *SHOULD* be removed and ignored (rather than preserved).
-        #
-        # If this child hint was overridden by an external hint override, this
-        # child hint has itrinsic value and *MUST* thus be preserved. Avoid
-        # sanifying this child hint yet again, as doing so would provoke
-        # infinite recursion. Reuse this previously sanified child hint as is.
-        elif is_hint_child_overridden:
-            hint_child_sane = hint_child_insane
-        # Else, this child hint was *NOT* overridden by an external hint
-        # override. In this case, this child hint lacks intrinsic value.
-        # Fortunately, this child hint has already been sanified and thus
-        # appended to this union as a member. In this case, ignoring this
-        # extraneous child hint here is both safe and desirable.
-        else:
+        #   this hint *SHOULD* be removed and ignored (rather than preserved).
+        #   Thankfully, this edge case as well is implicitly handled by the
+        #   hints_meta.sanify_hint_child() method called below, which
+        #   transitively calls the reduce_hint() function, which detects
+        #   recursion in a non-overridden hint and explicitly returns
+        #   "HINT_IGNORABLE" rather than recursing infinitely into that hint.
+        # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
+        hint_child_sane = hints_meta.sanify_hint_child(
+            hint_child_insane=hint_child_insane,
+            hint_parent_sane=hint_parent_sane,
+        )
+        # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
+
+        # If this child hint is ignorable, skip this child hint. Continue! \o/
+        if hint_child_sane is HINT_IGNORABLE:
             continue
+        # Else, this child hint is unignorable.
 
         # ....................{ UNION                      }....................
         # Sane child hint encapsulated by this metadata.
@@ -632,31 +619,17 @@ def _get_hint_pep484604_union_args_flattened(
             hint_child_childs = get_hint_pep_args(hint_child)
             # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
 
-            # For each child child type subscripting this child union...
-            for hint_child_child in hint_child_childs:
-                #FIXME: This really doesn't work at all. This prevents us from
-                #distinguishing sanified from unsanified child hints. Instead:
-                #    hint_childs_insane_unflattened.append((
-                #        hint_child_child, hint_child_sane))
-                #
-                #Then detect 2-tuples above as being insane. Sanify them by
-                #passing the second item of these 2-tuples as the
-                #"parent_hint_sane" parameter to sanify_hint_child().
-
-                # Metadata encapsulating the sanification of this child child
-                # hint.
-                hint_child_sane_child = hint_child_sane.permute_sane(
-                    hint=hint_child_child)
-
-                #FIXME: Comment exactly what we're doing here. It's kinda
-                #madness. Rather than use a 2-tuple, we should probably be
-                #leveraging an actual class of some sort. @beartype already
-                #supports tuples as quasi-valid type hints. Ambiguity thus
-                #arises, which isn't great.
-
-                # Inefficiently append this child child hint to this parent
-                # union in a manner preserving this metadata.
-                hint_childs_insane_unflattened.append(hint_child_sane_child)
+            # For each child child type subscripting this child union,
+            # efficiently append the 2-tuple containing both this unsanified
+            # child child hint *AND* this sanified child hint metadata to this
+            # stack. This is equivalent to the following inefficient iteration:
+            #     for hint_child_child in hint_child_childs:
+            #         hint_childs_insane_unflattened.append((
+            #             hint_child_child, hint_child_sane))
+            #
+            # See above for further discussion dissecting this madness.
+            hint_childs_insane_unflattened.extend(zip(
+                hint_child_childs, (hint_child_sane,)*len(hint_child_childs)))
         # ....................{ NON-UNION                  }....................
         # Else, this child hint is *NOT* itself a union. In this case, append
         # this child hint to this parent union.
@@ -672,7 +645,6 @@ def _get_hint_pep484604_union_args_flattened(
         hint_childs_sane_flattened))
 
     # Release these stacks back to their respective pool.
-    release_instance(hint_childs_insane_sanified)
     release_instance(hint_childs_insane_unflattened)
     release_instance(hint_childs_sane_flattened)
     # print(f'Flattened union to {repr(hint_childs_sane)}...')

@@ -373,7 +373,7 @@ metadata** (i.e., :class:`.HintSane` objects).
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_hint_recursive(
-    hint: Hint, parent_hint_sane: Optional[HintSane]) -> bool:
+    hint: Hint, hint_parent_sane: Optional[HintSane]) -> bool:
     '''
     :data:`True` only if the passed **recursable type hint** (i.e., type hint
     implicitly supporting recursion like, say, a :pep:`695`-compliant type
@@ -395,7 +395,7 @@ def is_hint_recursive(
 
        # Attempt to test whether hint is recursive or not.
        try:
-           if is_hint_recursive(hint=hint, parent_hint_sane=parent_hint_sane):
+           if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
                pass
        # If doing so raises a "TypeError", this hint is unhashable and thus
        # inapplicable for hint recursion. In this case, ignore this hint.
@@ -406,7 +406,7 @@ def is_hint_recursive(
     ----------
     hint : Hint
         Recursable type hint to be inspected.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If this recursable type hint is a root type hint, :data:`None`.
@@ -426,21 +426,21 @@ def is_hint_recursive(
     TypeError
         If this hint is unhashable.
     '''
-    assert isinstance(parent_hint_sane, NoneTypeOr[HintSane]), (
-        f'{repr(parent_hint_sane)} neither sanified hint metadata nor "None".')
+    assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+        f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
 
     # Return true only if...
     return (
         # This hint has a parent *AND*...
-        parent_hint_sane is not None and
+        hint_parent_sane is not None and
         # This hint is a transitive parent of itself.
-        hint in parent_hint_sane.recursable_hints
+        hint in hint_parent_sane.recursable_hints
     )
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_hint_sane_recursable(
-    hint: Hint, parent_hint_sane: Optional[HintSane]) -> HintSane:
+    hint: Hint, hint_parent_sane: Optional[HintSane]) -> HintSane:
     '''
     **Sanified type hint metadata** (i.e., :class:`.HintSane` object) safely
     encapsulating both the passed **recursable type hint** (i.e., type hint
@@ -457,7 +457,7 @@ def make_hint_sane_recursable(
     ----------
     hint : Hint
         Recursable type hint to be encapsulated.
-    parent_hint_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If this recursable type hint is a root type hint, :data:`None`.
@@ -475,8 +475,8 @@ def make_hint_sane_recursable(
         * This recursable type hint.
         * This sanified parent type hint metadata.
     '''
-    assert isinstance(parent_hint_sane, NoneTypeOr[HintSane]), (
-        f'{repr(parent_hint_sane)} neither sanified hint metadata nor "None".')
+    assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+        f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
 
     # Sanified metadata to be returned.
     hint_sane: HintSane = None  # type: ignore[assignment]
@@ -487,7 +487,7 @@ def make_hint_sane_recursable(
     recursable_hints = frozenset((hint,))
 
     # If this hint has *NO* parent, this is a root hint. In this case...
-    if parent_hint_sane is None:
+    if hint_parent_sane is None:
         # Metadata encapsulating this hint and recursion guard containing *ONLY*
         # this pre-sanified unsubscripted hint (which is what the initial
         # recursion logic above will then subsequently test against if this a
@@ -496,14 +496,14 @@ def make_hint_sane_recursable(
     # Else, this hint has a parent. In this case...
     else:
         # If the parent hint is also associated with a recursion guard...
-        if parent_hint_sane.recursable_hints:
+        if hint_parent_sane.recursable_hints:
             # Full recursion guard merging the guard associated this parent hint
             # with the guard containing only this child hint, efficiently
             # defined as...
             recursable_hints = (
                 # The guard protecting all transitive parent hints of this hint
                 # with...
-                parent_hint_sane.recursable_hints |  # type: ignore[operator]
+                hint_parent_sane.recursable_hints |  # type: ignore[operator]
                 # The guard protecting this hint. Note that the order of
                 # operands in this "|" operation is insignificant.
                 recursable_hints
@@ -513,7 +513,7 @@ def make_hint_sane_recursable(
         # Metadata encapsulating this hint and recursion guard, while
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # type variable lookup table) down onto this child hint as well.
-        hint_sane = parent_hint_sane.permute_sane(
+        hint_sane = hint_parent_sane.permute_sane(
             hint=hint, recursable_hints=recursable_hints)
 
     # Return this underlying type hint.
