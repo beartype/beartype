@@ -14,8 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.error.errcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
-from beartype._util.hint.pep.proposal.pep586 import (
-    get_hint_pep586_literals)
+from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._util.text.utiltextrepr import represent_pith
@@ -75,7 +74,8 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is an instance of one or more of these types.
-    cause_shallow = cause.permute_causehint=hint_literal_types).find_cause()
+    cause_shallow = cause.permute_cause_hint_insane(
+        hint_literal_types).find_cause()
 
     # If this pith is *NOT* such an instance, return this string.
     if cause_shallow.cause_str_or_none is not None:
@@ -91,7 +91,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Deep output cause to be returned, permuted from this input cause such that
     # the justification is a human-readable string describing this failure.
-    cause_deep = cause.permute_causecause_str_or_none=(
+    cause_deep = cause.permute_cause(cause_str_or_none=(
         f'{represent_pith(cause.pith)} != '
         f'{color_type(text=cause_literals_unsatisfied, is_color=cause.conf.is_color)}.'
     ))

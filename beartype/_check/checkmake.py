@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Any,
     Callable,
     Optional,
 )
@@ -29,16 +28,15 @@ from beartype._check.checkmagic import (
     CODE_PITH_ROOT_NAME_PLACEHOLDER,
     FUNC_CHECKER_NAME_PREFIX,
 )
-from beartype._check.convert.convsanify import (
-    sanify_hint_root_statement)
+from beartype._check.convert.convsanify import sanify_hint_root_statement
 from beartype._check.code.codemake import make_check_expr
 from beartype._check.error.errget import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
 from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
     HintSane,
-    # get_hint_or_sane_hint,
 )
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._check._checksnip import (
@@ -662,7 +660,7 @@ def _make_func_checker(
 
             # If this hint is ignorable, all objects satisfy this hint. In this
             # case, return a trivial function unconditionally returning true.
-            if hint_or_sane is Any:
+            if hint_or_sane is HINT_IGNORABLE:
                 return _func_checker_ignorable
             # Else, this hint is unignorable.
 

@@ -57,9 +57,9 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
-    assert len(cause.hint_or_sane_childs) in hints_child_len_expected, (
+    assert len(cause.hint_childs_sane) in hints_child_len_expected, (
         f'Mapping type hint {repr(cause.hint)} number of child type hints '
-        f'{len(cause.hint_or_sane_childs)} not in {hints_child_len_expected}.'
+        f'{len(cause.hint_childs_sane)} not in {hints_child_len_expected}.'
     )
 
     # Shallow output cause describing the failure of this path to be a shallow
@@ -94,11 +94,11 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # Else, this mapping is non-empty.
 
     # Child key hint subscripting this parent mapping hint.
-    hint_or_sane_key = cause.hint_or_sane_childs[0]
+    hint_sane_key = cause.hint_childs_sane[0]
 
     # Child value hint subscripting this parent mapping hint, defined as
     # either...
-    hint_or_sane_value = (
+    hint_sane_value = (
         # If this hint describes a "collections.Counter" dictionary subclass,
         # the standard "int" type. See related logic in the
         # beartype._check.code.codemake.make_check_expr() factory for details.
@@ -106,12 +106,12 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         # Else, this hint does *NOT* describes a "collections.Counter"
         # dictionary subclass. In this case, this child value hint as is.
         if cause.hint_sign is HintSignCounter else
-        cause.hint_or_sane_childs[1]
+        cause.hint_childs_sane[1]
     )
 
     # True only if these hints are unignorable.
-    is_hint_key_unignorable = hint_or_sane_key is not HINT_IGNORABLE
-    is_hint_value_unignorable = hint_or_sane_value is not HINT_IGNORABLE
+    is_hint_key_unignorable = hint_sane_key is not HINT_IGNORABLE
+    is_hint_value_unignorable = hint_sane_value is not HINT_IGNORABLE
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:
@@ -145,8 +145,8 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # this child key hint if this key violates this child key hint *OR*
             # "None" otherwise (i.e., if this key satisfies this child key
             # hint).
-            cause_deep = cause.permute_cause
-                pith=pith_key, hint_or_sane=hint_or_sane_key).find_cause()
+            cause_deep = cause.permute_cause(
+                hint_sane=hint_sane_key, pith=pith_key).find_cause()
 
             # If this key is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -169,8 +169,8 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # this child value hint if this value violates this child value hint
             # *OR* "None" otherwise (i.e., if this value satisfies this child
             # value hint).
-            cause_deep = cause.permute_cause
-                pith=pith_value, hint_or_sane=hint_or_sane_value).find_cause()
+            cause_deep = cause.permute_cause(
+                hint_sane=hint_sane_value, pith=pith_value).find_cause()
 
             # If this value is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:

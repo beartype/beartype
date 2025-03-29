@@ -363,41 +363,45 @@ class HintsMeta(FixedList):
         return hint_curr_meta
 
     # ..................{ SETTERS                            }..................
-    def set_hint_curr_meta(self, hint_curr_meta: HintMeta) -> None:
+    def set_index_current(self, hint_index: int) -> None:
         '''
-        Set the hint encapsulated by the passed metadata as the currently
-        visited hint of the breadth-first search (BFS) iterated by this queue.
+        Set the hint encapsulated by the metadata with the passed 0-based index
+        as the currently visited hint of the breadth-first search (BFS) iterated
+        by this queue.
 
         This setter updates instance variables of this queue to reflect that
         this hint is now the currently visited hint.
 
         Parameters
         ----------
-        hint_curr_meta: HintMeta
-            Metadata describing the currently visited hint, appended by the
-            previously visited parent hint to this queue.
+        hint_index: int
+            0-based index of the metadata describing the currently visited hint,
+            appended by the previously visited parent hint to this queue.
         '''
-        assert isinstance(hint_curr_meta, HintMeta), (
-            f'{repr(hint_curr_meta)} not "HintMeta" object.')
+        assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
+        assert 0 <= hint_index <= self.index_last, (
+            f'{hint_index} not in [0, {self.index_last}].')
+
+        # Metadata describing the currently visited hint.
+        self.hint_curr_meta = self[hint_index]
 
         # Current level of indentation appropriate for this hint.
-        indent_level_curr = hint_curr_meta.indent_level
+        indent_level_curr = self.hint_curr_meta.indent_level
 
         # Update instance variables of this queue to reflect that this hint is
         # now the currently visited hint.
-        self.hint_curr_meta = hint_curr_meta
         self.indent_level_child = indent_level_curr + 1
         self.indent_curr  = INDENT_LEVEL_TO_CODE[indent_level_curr]
         self.indent_child = INDENT_LEVEL_TO_CODE[self.indent_level_child]
 
         #FIXME: *HMM.* Can't callers just refer to
         #"hints_meta.hint_curr_meta.pith_expr" instead? This is obfuscatory.
-        self.pith_curr_expr = hint_curr_meta.pith_expr
+        self.pith_curr_expr = self.hint_curr_meta.pith_expr
 
         #FIXME: *HMM.* Can't callers just refer to
         #"hints_meta.hint_curr_meta.pith_var_name_index" instead? This is
         #obfuscatory as well.
-        self.pith_curr_var_name_index = hint_curr_meta.pith_var_name_index
+        self.pith_curr_var_name_index = self.hint_curr_meta.pith_var_name_index
 
         #FIXME: *HMM.* Shouldn't this reside in the "HintMeta" class instead?
         self.pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
@@ -499,39 +503,6 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child type hint.
         '''
-
-        # Return the placeholder string to be subsequently replaced by code
-        # type-checking this child pith against this child hint, produced by
-        # enqueueing new type-checking metadata describing this child hint.
-        return self._enqueue_hint_child(
-            hint_sane=hint_sane,
-            indent_level=self.indent_level_child,
-            pith_expr=pith_expr,
-            pith_var_name_index=self.pith_curr_var_name_index,
-        )
-
-
-    #FIXME: Possibly just inline into the above method call. Previously, we
-    #required these to be separate methods. Now we no longer do. We sigh. *sigh*
-    def _enqueue_hint_child(self, **kwargs) -> str:
-        '''
-        **Enqueue** (i.e., append) to the end of the this queue new
-        **type-checking metadata** (i.e., a :class:`.HintMeta` object)
-        describing the currently iterated child type hint with the passed
-        metadata, enabling this hint to be visited by the ongoing breadth-first
-        search (BFS) traversing over this queue.
-
-        Parameters
-        ----------
-        All passed keyword parameters are passed as is to the lower-level
-        :meth:`.HintMeta.reinit` method.
-
-        Returns
-        -------
-        str
-            Placeholder string to be subsequently replaced by code type-checking
-            this child pith against this child type hint.
-        '''
         # print(f'Enqueing child hint {self.index_last+1} with {repr(kwargs)}...')
 
         # Increment the 0-based index of metadata describing the last visitable
@@ -548,9 +519,16 @@ class HintsMeta(FixedList):
         hint_meta = self.__getitem__(self.index_last)
 
         # Replace prior fields of this metadata with the passed fields.
-        hint_meta.reinit(**kwargs)
+        hint_meta.reinit(
+            hint_sane=hint_sane,
+            indent_level=self.indent_level_child,
+            pith_expr=pith_expr,
+            pith_var_name_index=self.pith_curr_var_name_index,
+        )
 
-        # Return the placeholder substring associated with this type hint.
+        # Return the placeholder string to be subsequently replaced by code
+        # type-checking this child pith against this child hint, produced by
+        # enqueueing new type-checking metadata describing this child hint.
         return hint_meta.hint_placeholder
 
     # ..................{ SANIFIERS                          }..................
@@ -564,13 +542,13 @@ class HintsMeta(FixedList):
         hint_parent_sane: Optional[HintSane] = None,
     ) -> HintSane:
         '''
-        Type hint sanified (i.e., sanitized) from the passed **possibly insane
-        child type hint** (i.e., possibly PEP-noncompliant hint transitively
-        subscripting the root type hint annotating a parameter or return of the
-        currently decorated callable) if this hint is both reducible and
-        unignorable, this hint unmodified if this hint is both irreducible and
-        unignorable, or :obj:`typing.Any` otherwise (i.e., if this hint is
-        ignorable).
+        Metadata encapsulating the sanification (i.e., sanitization) of the
+        passed **possibly insane child type hint** (i.e., possibly
+        PEP-noncompliant hint transitively subscripting the root hint annotating
+        a parameter or return of the currently decorated callable) if this hint
+        is both reducible and unignorable, this hint unmodified if this hint is
+        both irreducible and unignorable, or :obj:`.HINT_IGNORABLE` otherwise
+        (i.e., if this hint is ignorable).
 
         This method is merely a convenience wrapper for the lower-level
         :func:`.sanify_hint_child` sanifier.

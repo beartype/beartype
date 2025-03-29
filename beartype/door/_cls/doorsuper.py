@@ -24,7 +24,6 @@ from beartype.door._func.doorcheck import (
 )
 from beartype.roar import BeartypeDoorIsSubhintException
 from beartype.typing import (
-    # TYPE_CHECKING,
     Any,
     FrozenSet,
     Generic,
@@ -32,11 +31,11 @@ from beartype.typing import (
     Tuple,
     overload,
 )
-from beartype._check.convert.convsanify import sanify_hint_child
+from beartype._check.convert.convsanify import sanify_hint_any
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import T_Hint
-from beartype._data.hint.datahinttyping import T
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -543,8 +542,12 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
             :data:`True` only if this type hint is ignorable.
         '''
 
+        #FIXME: [SPEED] *SLOW.* Ideally, the result of calling
+        #sanify_hint_child() should be lazily memoized with a new private
+        #"_hint_sane" property, which this logic would then access instead.
+
         # Return true only if this hint is ignorable.
-        return sanify_hint_child(self._hint) is Any  # pyright: ignore
+        return sanify_hint_any(self._hint) is HINT_IGNORABLE  # pyright: ignore
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

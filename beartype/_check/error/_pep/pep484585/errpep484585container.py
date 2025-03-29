@@ -63,9 +63,9 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
 
     # Assert this hint was subscripted by the expected number of child type
     # hints. Note that prior logic should have already guaranteed this.
-    assert len(cause.hint_or_sane_childs) in hints_child_len_expected, (
+    assert len(cause.hint_childs_sane) in hints_child_len_expected, (
         f'Container type hint {repr(cause.hint)} number of child type hints '
-        f'{len(cause.hint_or_sane_childs)} not in {hints_child_len_expected}.'
+        f'{len(cause.hint_childs_sane)} not in {hints_child_len_expected}.'
     )
 
     # Shallow output cause describing the failure of this path to be a shallow
@@ -87,7 +87,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
     #   subscripted by only two child hints -- the latter of which is guaranteed
     #   to be an ellipses and thus ignorable syntactic chuff.
-    hint_or_sane_child = cause.hint_or_sane_childs[0]
+    hint_sane_child = cause.hint_childs_sane[0]
 
     # If either...
     if (
@@ -106,7 +106,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         #     ambiguous
         not len(cause.pith) or
         # This child hint is ignorable...
-        hint_or_sane_child is HINT_IGNORABLE
+        hint_sane_child is HINT_IGNORABLE
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -141,8 +141,8 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
             # Deep output cause describing the failure of this item to satisfy
             # this child hint if this item violates this child hint *OR* "None"
             # otherwise (i.e., if this item satisfies this child hint).
-            cause_deep = cause.permute_cause
-                hint_or_sane=hint_or_sane_child, pith=pith_item).find_cause()
+            cause_deep = cause.permute_cause(
+                hint_sane=hint_sane_child, pith=pith_item).find_cause()
 
             # If this item is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -214,7 +214,7 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
 
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute_causecause_str_or_none=(
+        cause_deep = cause.permute_cause(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} non-empty'))
 
         # Return this cause.
@@ -223,12 +223,12 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this pith and hint are of differing lengths, this tuple fails to
     # satisfy this hint. In this case...
-    elif len(cause.pith) != len(cause.hint_or_sane_childs):
+    elif len(cause.pith) != len(cause.hint_childs_sane):
         # Deep output cause to be returned, permuted from this input cause
         # with a human-readable string describing this failure.
-        cause_deep = cause.permute_causecause_str_or_none=(
+        cause_deep = cause.permute_cause(cause_str_or_none=(
             f'tuple {represent_pith(cause.pith)} length '
-            f'{len(cause.pith)} != {len(cause.hint_or_sane_childs)}'
+            f'{len(cause.pith)} != {len(cause.hint_childs_sane)}'
         ))
 
         # Return this cause.
@@ -239,20 +239,18 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     for pith_item_index, pith_item in enumerate(cause.pith):
         # Child hint corresponding to this tuple item. Since this pith and
         # hint are of the same length, this child hint exists.
-        hint_or_sane_child = cause.hint_or_sane_childs[pith_item_index]
+        hint_sane_child = cause.hint_childs_sane[pith_item_index]
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_or_sane_child is HINT_IGNORABLE:
+        if hint_sane_child is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 
         # Deep output cause to be returned, type-checking whether this tuple
         # item satisfies this child hint.
-        # sleuth_copy = cause.permute_causepith=pith_item, hint=hint_child)
-        # pith_item_cause = sleuth_copy.find_cause()
-        cause_deep = cause.permute_cause
-            pith=pith_item, hint_or_sane=hint_or_sane_child).find_cause()
+        cause_deep = cause.permute_cause(
+            hint_sane=hint_sane_child, pith=pith_item).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:

@@ -58,8 +58,7 @@ def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
     # Shallow output cause to be returned, type-checking only whether this pith
     # satisfies this metahint.
     # print(f'[593] Finding {cause} shallow cause...')
-    cause_shallow = cause.permute_causehint=metahint).find_cause()
-    # cause_shallow = cause.permute_causehint=metahint, is_hint_root=True).find_cause()
+    cause_shallow = cause.permute_cause_hint_insane(metahint).find_cause()
 
     # If this pith fails to satisfy this metahint, return this cause as is.
     if cause_shallow.cause_str_or_none is not None:
@@ -67,7 +66,7 @@ def find_cause_pep593_annotated(cause: ViolationCause) -> ViolationCause:
     # Else, this pith satisfies this metahint.
 
     # Deep output cause to be returned, permuted from this input cause.
-    cause_deep = cause.permute_cause)
+    cause_deep = cause.permute_cause()
 
     # For each beartype validator annotating this metahint...
     for hint_validator in hint_validators:

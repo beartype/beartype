@@ -13,10 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Any
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import get_hint_or_sane_hint
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -70,14 +69,14 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     PITH_REPR_INDEX = len(pith_repr) + 1
 
     # For each subscripted argument of this union...
-    for hint_or_sane_child in cause.hint_or_sane_childs:
+    for hint_sane_child in cause.hint_childs_sane:
         # If this child hint is ignorable, continue to the next.
-        if hint_or_sane_child is Any:
+        if hint_sane_child is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 
         # Child hint encapsulated by this metadata.
-        hint_child = get_hint_or_sane_hint(hint_or_sane_child)
+        hint_child = hint_sane_child.hint
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
@@ -104,8 +103,8 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
 
             # Child hint output cause to be returned, type-checking only whether
             # this pith deeply satisfies this child hint.
-            cause_child = cause.permute_cause
-                hint_or_sane=hint_or_sane_child,
+            cause_child = cause.permute_cause(
+                hint_sane=hint_sane_child,
                 cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
 
@@ -207,7 +206,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause such that the
     # output cause justification is either...
-    cause_return = cause.permute_causecause_str_or_none=(
+    cause_return = cause.permute_cause(cause_str_or_none=(
         # If prior logic appended one cause, a single-line
         # substring intended to be embedded in a longer string;
         f'{pith_repr} {cause_strs[0]}'

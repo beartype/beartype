@@ -56,7 +56,7 @@ def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is instance of this origin type.
-    cause_type = cause.permute_causehint=hint_type)
+    cause_type = cause.permute_cause_hint_insane(hint_type)
     cause_shallow = find_cause_instance_type(cause_type)
     # print(f'[find_cause_generic] cause.hint [post-reduction]: {cause.hint}')
 
@@ -67,14 +67,13 @@ def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
 
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
-    for hint_or_sane_child in iter_hint_pep484585_generic_bases_unerased(
-        hint=cause.hint,
+    for hint_sane_child in iter_hint_pep484585_generic_bases_unerased(
+        hint_sane=cause.hint_sane,
         conf=cause.conf,
-        typevar_to_hint=cause.typevar_to_hint,
         exception_prefix=cause.exception_prefix,
     ):
         # Cause permuted to reflect this pseudo-superclass.
-        cause_child = cause.permute_causehint_or_sane=hint_or_sane_child)
+        cause_child = cause.permute_cause(hint_sane=hint_sane_child)
 
         # Deep output cause to be returned, permuted from this input cause.
         cause_deep = cause_child.find_cause()

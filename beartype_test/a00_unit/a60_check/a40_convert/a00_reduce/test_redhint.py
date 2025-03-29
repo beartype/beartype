@@ -176,25 +176,25 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype.typing import Any
+    from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
     from beartype._check.convert._reduce.redhint import reduce_hint
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in hints_ignorable:
-        assert reduce_hint(hint_ignorable) is Any
+        assert reduce_hint(hint_ignorable) is HINT_IGNORABLE
 
     # Assert this tester rejects unignorable PEP-noncompliant type hints.
     for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert reduce_hint(hint_unignorable) is not Any
+        assert reduce_hint(hint_unignorable) is not HINT_IGNORABLE
 
     # Assert this tester:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
-        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is Any
+        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is HINT_IGNORABLE
 
         # Assert this hint is either ignorable or unignorable as expected.
         assert hint_pep_meta.is_ignorable == is_hint_ignorable

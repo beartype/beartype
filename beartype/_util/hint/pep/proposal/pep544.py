@@ -437,4 +437,3 @@ _Pep544TextIO: Any = None  # type: ignore[assignment]
 '''
 Typed version of the return of :func:`open` in text mode.
 '''
-
