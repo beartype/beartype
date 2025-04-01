@@ -49,8 +49,8 @@ def sanify_hint_root_func(
     type hint** (i.e., possibly PEP-noncompliant hint annotating the parameter
     or return with the passed name of the passed callable) if this hint is both
     reducible and unignorable, this hint unmodified if this hint is both
-    irreducible and unignorable, or :obj:`typing.Any` otherwise (i.e., if this
-    hint is ignorable).
+    irreducible and unignorable, or :data:`.HINT_IGNORABLE` otherwise (i.e., if
+    this hint is ignorable).
 
     Specifically, this function:
 
@@ -187,7 +187,7 @@ def sanify_hint_root_func(
     # sense whatsoever; they're simply non-trivial for @beartype to support in
     # their current form and thus temporarily reduced in-memory into a more
     # convenient form for beartype-specific type-checking elsewhere.
-    hint_or_sane = reduce_hint(
+    hint_sane = reduce_hint(
         hint=hint,
         conf=decor_meta.conf,
         decor_meta=decor_meta,
@@ -198,7 +198,7 @@ def sanify_hint_root_func(
     )
 
     # Return this hint if this hint is unignorable *OR* "typing.Any" otherwise.
-    return hint_or_sane
+    return hint_sane
 
 
 #FIXME: Unit test us up, please.
@@ -212,7 +212,7 @@ def sanify_hint_root_statement(
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
     type hint) if this hint is both reducible and unignorable, this hint
     unmodified if this hint is both irreducible and unignorable, or
-    :obj:`typing.Any` otherwise (i.e., if this hint is ignorable).
+    :data:`.HINT_IGNORABLE` otherwise (i.e., if this hint is ignorable).
 
     This sanifier is principally intended to be called by a **statement-level
     type-checker factory** (i.e., a function creating and returning a runtime
@@ -223,7 +223,9 @@ def sanify_hint_root_statement(
     * The private :func:`beartype._check.checkmake.make_func_tester` factory,
       internally called by:
 
+      * The public :func:`beartype.door.die_if_unbearable` function.
       * The public :func:`beartype.door.is_bearable` function.
+      * The public :meth:`beartype.door.TypeHint.die_if_unbearable` method.
       * The public :meth:`beartype.door.TypeHint.is_bearable` method.
 
     Parameters
@@ -272,15 +274,12 @@ def sanify_hint_root_statement(
     # *BEFORE* validating this hint to be PEP-compliant.
     hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
 
-    # Sane child hint reduced from this possibly insane child hint if reducing
-    # this hint did not generate supplementary metadata *OR* that metadata
-    # otherwise (i.e., if reducing this hint generated supplementary metadata).
-    # See also sanify_hint_root_func().
-    hint_or_sane = reduce_hint(
+    # Metadata encapsulating the sanification of this hint.
+    hint_sane = reduce_hint(
         hint=hint, conf=conf, exception_prefix=exception_prefix)
 
-    # Return this hint if this hint is unignorable *OR* "typing.Any" otherwise.
-    return hint_or_sane
+    # Return this metadat.
+    return hint_sane
 
 # ....................{ SANIFIERS ~ any                    }....................
 #FIXME: Unit test us up, please.
@@ -395,7 +394,7 @@ def sanify_hint_child(
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
-    # print(f'[sanify] Detecting hint {repr(hint)} reduction {repr(hint_or_sane)} ignorability...')
+    # print(f'[sanify] Detecting hint {repr(hint)} reduction {repr(hint_sane)} ignorability...')
 
     # Return this metadata.
     return hint_sane

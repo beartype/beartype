@@ -392,8 +392,8 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
     from beartype.typing import TypeVar
+    from beartype._check.convert.convsanify import sanify_hint_any
     from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
-    from beartype._check.convert.convsanify import sanify_hint_child
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
     from contextlib import suppress
@@ -439,9 +439,7 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
                 hint_typevar_bound is None or
                 # This type hint is constrained by one or more ignorable
                 # constraints.
-                sanify_hint_child(
-                    hint=hint_typevar_bound, hint_parent_sane=None) is (
-                    HINT_IGNORABLE)
+                sanify_hint_any(hint=hint_typevar_bound) is HINT_IGNORABLE
             )
         # Else, this hint is *NOT* a type variable.
 

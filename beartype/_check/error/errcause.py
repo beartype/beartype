@@ -71,7 +71,6 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,
-    TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -173,7 +172,7 @@ class ViolationCause(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._check.error.errget.get_func_pith_violation` function.
+        :func:`beartype._check.error.errmain.get_func_pith_violation` function.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -195,7 +194,6 @@ class ViolationCause(object):
         'pith',
         'pith_name',
         'random_int',
-        'typevar_to_hint',
     )
 
 
@@ -216,21 +214,19 @@ class ViolationCause(object):
         pith: Any
         pith_name: Optional[str]
         random_int: Optional[int]
-        typevar_to_hint: TypeVarToHint
 
 
     _INIT_PARAM_NAMES = frozenset((
+        'hint_sane',
         'cause_indent',
-        'cause_str_or_none',
         'cls_stack',
         'conf',
         'exception_prefix',
         'func',
-        'hint_sane',
         'pith',
         'pith_name',
         'random_int',
-        'typevar_to_hint',
+        'cause_str_or_none',
     ))
     '''
     Frozen set of the names of all parameters accepted by the :meth:`init`
@@ -423,12 +419,12 @@ class ViolationCause(object):
         This method is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
         the parent
-        :func:`beartype._check.error.errget.get_func_pith_violation` function
+        :func:`beartype._check.error.errmain.get_func_pith_violation` function
         calling this method is *always* passed an object *not* satisfying the
         passed hint, this method is under no such constraints. Why? Because this
         method is also called to find which of an arbitrary number of objects
         transitively nested in the object passed to
-        :func:`beartype._check.error.errget.get_func_pith_violation` fails to
+        :func:`beartype._check.error.errmain.get_func_pith_violation` fails to
         satisfy the corresponding hint transitively nested in the hint passed to
         that function.
 

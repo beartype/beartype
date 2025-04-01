@@ -465,13 +465,13 @@ class HintsMeta(FixedList):
 
     # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_child_sane(
-        self, hint_sane: HintSane, pith_expr: str) -> str:
+        self, hint_child_sane: HintSane, pith_expr: str) -> str:
         '''
-        **Enqueue** (i.e., append) to the end of the this queue new
-        **type-checking metadata** (i.e., a :class:`.HintMeta` object)
-        describing the currently iterated child type hint with the passed
-        metadata, enabling this hint to be visited by the ongoing breadth-first
-        search (BFS) traversing over this queue.
+        **Enqueue** (i.e., append) to the end of this queue new **type-checking
+        metadata** (i.e., :class:`.HintMeta` object) describing the currently
+        iterated child type hint with the passed metadata, enabling this hint to
+        be visited by the ongoing breadth-first search (BFS) traversing over
+        this queue.
 
         Callers are expected to modify this metadata by modifying these instance
         variables of this higher-level parent object:
@@ -485,7 +485,7 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint_sane : HintSane
+        hint_child_sane : HintSane
             **Sanified type hint metadata** (i.e., immutable and thus hashable
             object encapsulating *all* metadata returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
@@ -520,7 +520,7 @@ class HintsMeta(FixedList):
 
         # Replace prior fields of this metadata with the passed fields.
         hint_meta.reinit(
-            hint_sane=hint_sane,
+            hint_sane=hint_child_sane,
             indent_level=self.indent_level_child,
             pith_expr=pith_expr,
             pith_var_name_index=self.pith_curr_var_name_index,

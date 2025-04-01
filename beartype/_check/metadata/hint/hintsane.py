@@ -24,6 +24,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Perhaps that aforementioned caching metaclass could be augmented to support
 #keyword arguments? That would still be better than nothing.
+#FIXME: When memoizing, only memoize *CONDITIONALLY.* Notably, there exist two
+#common cases here:
+#* Context-free "HintSane" instances are initialized with *ONLY* a "hint". They
+#  lack contextual metadata and are thus context-free. Unsurprisingly,
+#  context-free "HintSane" instances are readily memoizable.
+#* Contextual "HintSane" instances are initialized with both a "hint" and one or
+#  more supplemental parameters supplying contextual metadata (e.g.,
+#  "recursable_hints", "typevar_to_hint"). They are *NOT* context-free. Ergo,
+#  contextual "HintSane" instances are *NOT* readily memoizable. Don't even
+#  bother wasting space or time attempting to do so.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
@@ -440,7 +450,9 @@ def is_hint_recursive(
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_hint_sane_recursable(
-    hint: Hint, hint_parent_sane: Optional[HintSane]) -> HintSane:
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
+) -> HintSane:
     '''
     **Sanified type hint metadata** (i.e., :class:`.HintSane` object) safely
     encapsulating both the passed **recursable type hint** (i.e., type hint

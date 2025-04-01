@@ -254,7 +254,6 @@ def get_hint_pep484_generic_bases_unerased(
     #common case of user-defined types directly subclassing "typing" types,
     #this tuple probably is *NOT* implemented correctly for the edge case of
     #user-defined types indirectly subclassing "typing" types: e.g.,
-    #
     #    >>> import collections.abc, typing
     #    >>> T = typing.TypeVar('T')
     #    >>> class Direct(collections.abc.Sized, typing.Generic[T]): pass
@@ -375,7 +374,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     # If this hint is *NOT* a class, reduce this hint to the object originating
     # this hint if any. See is_hint_pep484_generic() for details.
-    hint = get_hint_pep484585_generic_type_or_none(hint)
+    hint = get_hint_pep484585_generic_type_or_none(hint)  # pyright: ignore
 
     # If this hint is *NOT* a PEP 484- or 544-compliant generic, raise an
     # exception.
@@ -409,7 +408,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     # Unerased superclasses of this generic defined by the method resolution
     # order (MRO) for this generic.
-    hint_bases = hint.__mro__
+    hint_bases = hint.__mro__  # pyright: ignore
 
     # If this MRO lists strictly less than four classes, raise an exception.
     # The MRO for any unerased generic should list at least four classes:

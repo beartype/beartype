@@ -7,7 +7,7 @@
 **Beartype error-handling plugin unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.error.errget` submodule with respect to
+:mod:`beartype._check.error.errmain` submodule with respect to
 :mod:`beartype`-specific plugin APIs (e.g., the ``__instancecheck_str__()``
 dunder method).
 '''
@@ -22,7 +22,7 @@ dunder method).
 def test_get_func_pith_violation_instancecheck_str() -> None:
     '''
     Test the
-    :func:`beartype._check.error.errget.get_func_pith_violation`
+    :func:`beartype._check.error.errmain.get_func_pith_violation`
     getter with respect to the :mod:`beartype`-specific
     ``__instancecheck_str__()`` dunder method plugin API.
     '''
@@ -32,7 +32,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype import BeartypeConf
     from beartype.roar import BeartypePlugInstancecheckStrException
     from beartype.typing import Any
-    from beartype._check.error.errget import get_func_pith_violation
+    from beartype._check.error.errmain import get_func_pith_violation
     from beartype._check.metadata.metacheck import BeartypeCheckMeta
     from pytest import raises
 

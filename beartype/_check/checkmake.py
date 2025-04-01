@@ -30,7 +30,7 @@ from beartype._check.checkmagic import (
 )
 from beartype._check.convert.convsanify import sanify_hint_root_statement
 from beartype._check.code.codemake import make_check_expr
-from beartype._check.error.errget import (
+from beartype._check.error.errmain import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
@@ -195,7 +195,7 @@ def make_func_tester(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_hint_object_check(
-    hint_or_sane: HintSane,
+    hint_sane: HintSane,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -213,17 +213,15 @@ def make_code_raiser_hint_object_check(
 
     Parameters
     ----------
-    hint_or_sane : HintSane
-        Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSane` object) to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the type hint to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -248,7 +246,7 @@ def make_code_raiser_hint_object_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint_or_sane, conf)
+    ) = make_check_expr(hint_sane, conf)
 
     # Code snippet passing the value of the random integer previously generated
     # for the current call to the exception-handling function call embedded in
@@ -272,6 +270,7 @@ def make_code_raiser_hint_object_check(
     func_scope[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
     func_scope[ARG_NAME_HINT] = hint_insane
 
+    #FIXME: [SPEED] Globalize this bound method as a negligible efficiency gain.
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_HINT_OBJECT_VIOLATION.format(
@@ -302,7 +301,7 @@ def make_code_raiser_hint_object_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_tester_check(
-    hint_or_sane: HintSane,
+    hint_sane: HintSane,
     hint_insane: Hint,
     conf: BeartypeConf,
     exception_prefix : str,
@@ -319,9 +318,8 @@ def make_code_tester_check(
 
     Parameters
     ----------
-    hint_or_sane : HintSane
-        Either a type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSane` object) to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the type hint to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked. Although
         this factory ignores this hint, alternate factories require this hint.
@@ -329,8 +327,7 @@ def make_code_tester_check(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -351,7 +348,7 @@ def make_code_tester_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint_or_sane, conf)
+    ) = make_check_expr(hint_sane, conf)
 
     # Code snippet type-checking the root pith against the root hint.
     func_code = f'{CODE_TESTER_CHECK_PREFIX}{code_expr}'
@@ -367,7 +364,7 @@ def make_code_tester_check(
 #FIXME: Unit test us up, please.
 @callable_cached
 def make_code_raiser_func_pith_check(
-    hint_or_sane: HintSane,
+    hint_sane: HintSane,
     conf: BeartypeConf,
     cls_stack: Optional[TypeStack],
     is_param: Optional[bool],
@@ -383,9 +380,8 @@ def make_code_raiser_func_pith_check(
 
     Parameters
     ----------
-    hint_or_sane : HintSane
-        Either a sanified type hint *or* **sanified type hint metadata** (i.e.,
-        :data:`.HintSane` object) to be type-checked.
+    hint_sane : HintSane
+        Metadata encapsulating the type hint to be type-checked.
     hint_insane : Hint
         **Insane** (i.e., pre-sanified) type hint to be type-checked.
     conf : BeartypeConf
@@ -435,7 +431,7 @@ def make_code_raiser_func_pith_check(
         code_expr,
         func_scope,
         hint_refs_type_basename,
-    ) = make_check_expr(hint_or_sane, conf, cls_stack)
+    ) = make_check_expr(hint_sane, conf, cls_stack)
 
     # Code snippet passing the value of the random integer previously generated
     # for the current call to the exception-handling function call embedded in
@@ -654,13 +650,13 @@ def _make_func_checker(
             # unsupported by @beartype, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint_or_sane = sanify_hint_root_statement(
+            hint_sane = sanify_hint_root_statement(
                 hint=hint, conf=conf, exception_prefix=EXCEPTION_PLACEHOLDER)
-            # print(f'Reduced tester root hint {repr(hint)} to hint or metadata {repr(hint_or_sane)}.')
+            # print(f'Reduced tester root hint {repr(hint)} to hint or metadata {repr(hint_sane)}.')
 
             # If this hint is ignorable, all objects satisfy this hint. In this
             # case, return a trivial function unconditionally returning true.
-            if hint_or_sane is HINT_IGNORABLE:
+            if hint_sane is HINT_IGNORABLE:
                 return _func_checker_ignorable
             # Else, this hint is unignorable.
 
@@ -671,7 +667,7 @@ def _make_func_checker(
                 code_check,
                 func_scope,
                 hint_refs_type_basename,
-            ) = make_code_check(hint_or_sane, hint, conf, exception_prefix)
+            ) = make_code_check(hint_sane, hint, conf, exception_prefix)
             # print(f'func_scope: {func_scope}')
 
             #FIXME: Actually, nothing below is particularly significant. Users

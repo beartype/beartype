@@ -7,7 +7,7 @@
 **Beartype decorator exception unit tests.**
 
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
-to exceptions raised by the :mod:`beartype._check.error.errget` submodule.
+to exceptions raised by the :mod:`beartype._check.error.errmain` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................

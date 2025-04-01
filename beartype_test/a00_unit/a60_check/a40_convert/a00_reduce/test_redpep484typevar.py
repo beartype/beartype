@@ -5,7 +5,7 @@
 
 # ....................{ TESTS                              }....................
 '''
-**Beartype** :pep:`484`-compliant **type variable reduction** unit tests.
+Beartype :pep:`484`-compliant **type variable reduction** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar` submodule.

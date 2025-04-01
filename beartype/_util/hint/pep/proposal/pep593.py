@@ -187,7 +187,7 @@ def get_hint_pep593_metadata(
     #     >>> Annotated[int]
     #     TypeError: Annotated[...] should be used with at least two
     #     arguments (a type and an annotation).
-    return hint.__metadata__
+    return hint.__metadata__  # pyright: ignore
 
 
 #FIXME: Unit test us up, please.
@@ -244,4 +244,4 @@ def get_hint_pep593_metahint(hint: Hint, exception_prefix: str = '') -> Hint:
     # "__origin__" attribute commonly used to store the origin type of type
     # hints originating from a standard class rather than in a
     # metahint-specific dunder attribute.
-    return hint.__origin__
+    return hint.__origin__  # pyright: ignore

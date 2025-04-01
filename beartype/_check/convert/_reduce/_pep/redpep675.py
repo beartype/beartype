@@ -14,21 +14,26 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Type
+from beartype._data.hint.datahintpep import Hint
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-def reduce_hint_pep675(**kwargs) -> Type[str]:
+def reduce_hint_pep675(hint: Hint, exception_prefix: str) -> Type[str]:
     '''
     Reduce the passed :pep:`675`-compliant **literal string type hint** (i.e.,
     :obj:`typing.LiteralString` singleton) to the builtin :class:`str` class as
     advised by :pep:`675` when performing runtime type-checking.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as reducers cannot be memoized.
+    ``callable_cached`` decorator), as the implementation trivially reduces to a
+    one-liner.
 
     Parameters
     ----------
-    All passed keyword parameters are silently ignored.
+    hint : Hint
+        Type hint to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------

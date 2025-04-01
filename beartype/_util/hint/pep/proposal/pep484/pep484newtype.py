@@ -117,6 +117,17 @@ def get_hint_pep484_newtype_alias(
 
     This getter is memoized for efficiency.
 
+    Caveats
+    -------
+    **This getter has worst-case linear time complexity** :math:`O(k)` for
+    :math:`k` the number of **nested new types** (e.g., :math:`k = 2` for the
+    doubly nested new type ``NewType('a', NewType('b', int))``) embedded within
+    this new type. Pragmatically, this getter has average-case constant time
+    complexity :math:`O(1)`. Why? Because nested new types are extremely rare.
+    Almost all real-world new types are non-nested. Indeed, it took three years
+    for a user to submit an issue presenting the existence of a nested new type.
+
+
     Parameters
     ----------
     hint : Hint
@@ -164,51 +175,3 @@ def get_hint_pep484_newtype_alias(
 
     # Return this unaliased type hint.
     return hint
-
-# ....................{ REDUCERS                           }....................
-def reduce_hint_pep484_newtype(
-    hint: Hint, exception_prefix: str, **kwargs) -> object:
-    '''
-    Reduce the passed **new type** (i.e., object created and returned by the
-    :pep:`484`-compliant :func:`typing.NewType` type hint factory) to the
-    **non-new type type hint** (i.e., PEP-compliant type hint that is *not* a
-    new type) encapsulated by this new type.
-
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Caveats
-    -------
-    **This reducer has worst-case linear time complexity** :math:`O(k)` for
-    :math:`k` the number of **nested new types** (e.g., :math:`k = 2` for the
-    doubly nested new type ``NewType('a', NewType('b', int))``) embedded within
-    this new type. Pragmatically, this reducer has average-case constant time
-    complexity :math:`O(1)`. Why? Because nested new types are extremely rare.
-    Almost all real-world new types are non-nested. Indeed, it took three years
-    for a user to submit an issue presenting the existence of a nested new type.
-
-    Parameters
-    ----------
-    hint : Hint
-        Final type hint to be reduced.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message.
-
-    All remaining passed arguments are silently ignored.
-
-    Returns
-    -------
-    type
-        Non-new type type hint encapsulated by this new type.
-    '''
-
-    # Reduce this new type to the non-new type type hint encapsulated by this
-    # new type. Note that:
-    # * This reducer *CANNOT* be reduced to an efficient alias of the
-    #   get_hint_pep484_newtype_alias() getter, as this reducer accepts
-    #   ignorable arguments *NOT* accepted by that getter.
-    # * get_hint_pep484_newtype_alias() is memoized and thus intentionally
-    #   called with positional arguments.
-    return get_hint_pep484_newtype_alias(hint, exception_prefix)

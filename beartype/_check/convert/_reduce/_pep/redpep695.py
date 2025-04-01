@@ -116,13 +116,24 @@ def reduce_hint_pep695_subscripted(
     #   this unsubscripted alias to all non-type variable hints subscripting
     #   this subscripted alias.
     # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-    hint_sane = reduce_hint_pep484_subscripted_typevars_to_hints(
+    hint_or_sane = reduce_hint_pep484_subscripted_typevars_to_hints(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
     )
 
     # ....................{ REDUCE ~ phase : 2             }....................
+    # Metadata encapsulating the sanification of both the parent hint (if any)
+    # *AND* the previously decided type variable lookup table for this alias.
+    # Since this new metadata is guaranteed to be the superset of the old
+    # metadata applying *ONLY* to the parent hint, we intentionally replace the
+    # latter with the former here.
+    hint_parent_sane = (
+        hint_or_sane
+        if isinstance(hint_or_sane, HintSane) else
+        hint_parent_sane
+    )
+
     # Decide the recursion guard protecting this possibly recursive alias
     # against infinite recursion. Note that:
     # * This guard intentionally applies to the original *SUBSCRIPTED* PEP
@@ -130,11 +141,12 @@ def reduce_hint_pep695_subscripted(
     #   695-compliant type alias decided by the prior phase). This is why we
     #   pass "hint=hint" rather than "hint=hint_sane.hint" here.
     # * The type variable lookup table decided in the first phase *MUST* also be
-    #   preserved. This is why we pass the "hint_parent_sane=hint_sane" rather
-    #   than "hint_parent_sane=hint_parent_sane" as in the prior phase. Indeed,
-    #   "hint_sane" should safely encapsulate all metadata encapsulated by
-    #   "hint_parent_sane".
-    hint_sane = make_hint_sane_recursable(hint=hint, hint_parent_sane=hint_sane)
+    #   preserved. This is why we pass a new "hint_parent_sane" object rather
+    #   than the same "hint_parent_sane" as in the prior phase. Indeed, the new
+    #   "hint_parent_sane" object should safely encapsulate all metadata
+    #   encapsulated by the prior "hint_parent_sane" object.
+    hint_sane = make_hint_sane_recursable(
+        hint=hint, hint_parent_sane=hint_parent_sane)
 
     # ....................{ RETURN                         }....................
     # Return this metadata.
@@ -224,7 +236,7 @@ def reduce_hint_pep695_unsubscripted(
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
-    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
+    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):  # pyright: ignore
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 

@@ -22,9 +22,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._util.hint.pep.proposal.pep544 import (
-    is_hint_pep484_generic_io,
-)
+from beartype._util.hint.pep.proposal.pep544 import is_hint_pep484_generic_io
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
 # ....................{ REDUCERS                           }....................
@@ -122,8 +120,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # Note that we reduce this subscripted IO generic *BEFORE* stripping all
     # child hints subscripting this IO generic, as this reducers requires these
     # child hints to correctly reduce this IO generic.
-    hint_reduced: HintSane = _reduce_hint_pep484585_generic_io(
-        hint=hint, exception_prefix=exception_prefix)
+    hint_reduced = _reduce_hint_pep484585_generic_io(hint, exception_prefix)
 
     # If this hint was reduced to an unsubscripted generic from this subscripted
     # IO generic, return this reduced hint.
@@ -151,7 +148,7 @@ def reduce_hint_pep484585_generic_subscripted(
 
 
 def reduce_hint_pep484585_generic_unsubscripted(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+    hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **unsubscripted
     generic** (i.e., type originally subclassing at least one unsubscripted
@@ -166,10 +163,7 @@ def reduce_hint_pep484585_generic_unsubscripted(
     hint : Hint
         Subscripted generic to be reduced.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message.
-
-    All remaining passed arguments are silently ignored.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -177,17 +171,36 @@ def reduce_hint_pep484585_generic_unsubscripted(
         This unsubscripted generic possibly reduced to a more suitable hint.
     '''
 
+    # If this unsubscripted generic is the "typing.Generic" superclass, this
+    # generic is ignorable. In this case, reduce this ignorable generic to the
+    # ignorable singleton.
+    #
+    # Note that we intentionally avoid calling the
+    # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
+    # been intentionally designed to exclude PEP-compliant type hints
+    # originating from "typing" type origins for stability reasons.
+    if hint is Generic:
+        # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
+        return HINT_IGNORABLE
+    # Else, this unsubscripted generic is *NOT* the "typing.Generic" superclass
+    # and thus *NOT* an ignorable non-protocol.
+    #
+    # Note that this condition being false is *NOT* sufficient to declare this
+    # hint to be unignorable. Notably, the origin type originating both
+    # ignorable and unignorable protocols is "Protocol" rather than "Generic".
+    # Ergo, this generic could still be an ignorable protocol.
+
     # Hint possibly reduced from this useless unsubscripted IO generic if this
     # hint is an unsubscripted IO generic *OR* this hint as is otherwise.
     hint_reduced = _reduce_hint_pep484585_generic_io(
-        hint=hint, exception_prefix=exception_prefix)
+        hint, exception_prefix)
 
     # Return this possibly reduced hint.
     return hint_reduced
 
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_pep484585_generic_io(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+    hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **standard IO
     generic** (i.e., standard :obj:`typing.IO` generic (in either subscripted or
@@ -224,7 +237,7 @@ def _reduce_hint_pep484585_generic_io(
     if is_hint_pep484_generic_io(hint):
         # print(f'Reducing IO generic {repr(hint)}...')
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
-            hint=hint, exception_prefix=exception_prefix)
+            hint, exception_prefix)
         # print(f'...{repr(hint)}.')
     # Else, this hint is *NOT* a PEP 484-compliant IO generic base class.
     # Preserve this hint as is.

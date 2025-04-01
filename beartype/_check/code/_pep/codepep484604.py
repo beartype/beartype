@@ -21,7 +21,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #unions. The approach below is wild -- and not the good kind of "wild," either.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Tuple
+from beartype.typing import (
+    List,
+    Tuple,
+)
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
@@ -300,7 +303,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         hints_meta.func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
             # Expression yielding the value of this pith.
             hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                hint_sane=hint_child_sane_pep,
+                hint_child_sane=hint_child_sane_pep,
                 pith_expr=(
                     # If either...
                     #
@@ -467,8 +470,8 @@ def _get_hint_pep484604_union_args_flattened(
     # * "hint_parent_sane" is sanified metadata encapsulating the direct parent
     #   hint of "hint_child_insane". In theory, this should *ALWAYS* be a union
     #   hint -- either this root union hint *OR* a nested union hint thereof.
-    hint_childs_insane_unflattened: Tuple[Hint, HintSane] = acquire_instance(
-        list)
+    hint_childs_insane_unflattened: List[Tuple[Hint, HintSane]] = (
+        acquire_instance(list))
 
     # Efficiently initialize this input stack to the non-empty list of all
     # 2-tuples (hint_child_insane, union_hint_sane) containing all direct child

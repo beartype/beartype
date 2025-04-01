@@ -20,7 +20,7 @@ from beartype._util.hint.pep.proposal.pep593 import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep593(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+def reduce_hint_pep593(hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`593`-compliant **type metahint** (i.e., subscription
     of the :obj:`typing.Annotated` hint factory) to a lower-level hint if this
@@ -28,7 +28,8 @@ def reduce_hint_pep593(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     :mod:`beartype.vale` factories).
 
     This reducer is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as reducers cannot be memoized.
+    ``callable_cached`` decorator), as the implementation trivially reduces to a
+    one-liner.
 
     Parameters
     ----------
@@ -36,8 +37,6 @@ def reduce_hint_pep593(hint: Hint, exception_prefix: str, **kwargs) -> Hint:
         Type hint to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
-
-    All remaining passed keyword parameters are silently ignored.
 
     Returns
     -------

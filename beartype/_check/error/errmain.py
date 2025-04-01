@@ -117,6 +117,7 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseException,
 )
 from beartype.typing import Optional
+from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._conf.confcls import BeartypeConf
@@ -207,9 +208,9 @@ def get_func_pith_violation(
         f'{repr(check_meta)} not type-checking call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
-    # Type hint annotating this parameter or return if this parameter or return
-    # is annotated *OR* the placeholder sentinel otherwise (i.e., if this
-    # parameter or return is unannotated).
+    # Hint annotating this parameter or return if this parameter or return is
+    # annotated *OR* the placeholder sentinel otherwise (i.e., if this parameter
+    # or return is unannotated).
     hint = check_meta.func_arg_name_to_hint.get(pith_name, SENTINEL)
 
     # If this parameter or return is unannotated, raise an exception.
@@ -452,6 +453,15 @@ def get_hint_object_violation(
     # Uppercase the first character of this violation prefix for readability.
     exception_prefix = uppercase_str_char_first(exception_prefix)
 
+    # Metadata encapsulating the sanification of this child hint.
+    hint_sane = sanify_hint_any(
+        hint=hint,
+        cls_stack=cls_stack,
+        conf=conf,
+        pith_name=pith_name,
+        exception_prefix=exception_prefix,
+    )
+
     # ....................{ CAUSE                          }....................
     # Cause describing the failure of this pith to satisfy this hint.
     violation_cause = ViolationCause(
@@ -460,8 +470,7 @@ def get_hint_object_violation(
         conf=conf,
         exception_prefix=exception_prefix,
         func=func,
-        hint=hint,
-        # is_hint_root=True,
+        hint_sane=hint_sane,
         pith=obj,
         pith_name=pith_name,
         random_int=random_int,
@@ -519,7 +528,7 @@ def get_hint_object_violation(
     # corresponding substring prepending this exception message.
     VIOLATION_VERBOSITY_TO_PREFIX = {
         BeartypeViolationVerbosity.MINIMAL: (
-            f'{exception_prefix}was expected to be of type {hint_repr}'),
+            f'{exception_prefix}expected to be of type {hint_repr}'),
         BeartypeViolationVerbosity.DEFAULT: (
             f'{exception_prefix}violates type hint {hint_repr}'),
     }

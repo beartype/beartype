@@ -17,8 +17,7 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep557 import get_hint_pep557_initvar_arg
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep557_initvar(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+def reduce_hint_pep557_initvar(hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`557`-compliant **dataclass initialization-only
     instance variable type hint** (i.e., subscription of the
@@ -36,8 +35,6 @@ def reduce_hint_pep557_initvar(
         Type variable to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
-
-    All remaining passed arguments are silently ignored.
 
     Returns
     -------

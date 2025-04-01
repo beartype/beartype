@@ -74,8 +74,12 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is an instance of one or more of these types.
+    #
+    # Note that this only works due to @beartype natively supporting
+    # PEP-noncompliant tuple unions as PEP-compliant type hints, which they
+    # technically are *NOT*. Pragmatically, they are. That's good enough for us!
     cause_shallow = cause.permute_cause_hint_insane(
-        hint_literal_types).find_cause()
+        hint_literal_types).find_cause()  # pyright: ignore
 
     # If this pith is *NOT* such an instance, return this string.
     if cause_shallow.cause_str_or_none is not None:

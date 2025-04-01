@@ -182,8 +182,8 @@ def reduce_hint(
     hint_curr: Hint = hint
 
     # Currently reduced instance of either this hint *OR* metadata encapsulating
-    # this hint.
-    hint_or_sane_curr: HintOrSane = hint
+    # the sanification of this hint, initialized to the sentinel for safety.
+    hint_or_sane_curr: HintOrSane = SENTINEL  # type: ignore[assignment]
 
     # Previously reduced instance of either this hint *OR* metadata
     # encapsulating this hint, initialized to the sentinel to guarantee that the
@@ -202,7 +202,7 @@ def reduce_hint(
     # variable "hint_curr" is strongly preferred for disambiguity.
     del hint
 
-    # ....................{ REDUCTION                      }....................
+    # ....................{ REDUCE                         }....................
     # Repeatedly reduce this hint to increasingly irreducible hints until this
     # hint is no longer reducible.
     #
@@ -212,15 +212,25 @@ def reduce_hint(
     while True:
         # print(f'[reduce_hint] Reducing {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
 
+        # ....................{ PREPARE                    }....................
+        # Currently reduced instance of this hint, reverting back to the
+        # currently visited hint in preparation for subsequent reduction.
+        hint_or_sane_curr = hint_curr
+
         # ....................{ PHASE ~ override           }....................
         # Attempt to reduce this hint to another hint configured by a
         # user-defined hint override *BEFORE* attempting standard reduction.
         # User preference takes precedence over standard precedent.
 
-        #FIXME: Once we drop support for Python <= 3.11, "BeartypeHintOverrides"
-        #can and should be internally implemented as PEP 695-compliant
-        #unsubscripted type aliases. Note that, even after doing so, the logic
-        #below will probably still need to be preserved as is.
+        #FIXME: Pretty sure we don't even need "BeartypeHintOverrides" anymore.
+        #The only reason for that "dict" subclass to exist was to prohibit
+        #full-blown recursion in "hint_overrides", really. Now that we permit
+        #full-blown recursion in "hint_overrides":
+        #* Permit "hint_overrides" to accept *ANY* arbitrary mappings satisfying
+        #  "Dict[Hint, Hint]".
+        #* Relax "BeartypeHintOverrides" to accept full-blown recursion.
+        #* Deprecate "BeartypeHintOverrides" by emitting a "DeprecatingWarning"
+        #  from the BeartypeHintOverrides.__init__() constructor.
 
         # Attempt to...
         #
@@ -237,7 +247,7 @@ def reduce_hint(
             #
             # Note this tester raises "TypeError" when this hint is unhashable.
             if not is_hint_recursive(
-                hint=hint, hint_parent_sane=hint_parent_sane):
+                hint=hint_curr, hint_parent_sane=hint_parent_sane):
                 # User-defined hint overriding this hint if this beartype
                 # configuration overrides this hint *OR* the sentinel otherwise
                 # (i.e., if this hist is *NOT* overridden).
@@ -314,11 +324,12 @@ def reduce_hint(
             die_unless_hint(hint=hint_curr, exception_prefix=exception_prefix)
             # Else, this hint is supported by @beartype.
 
-            # Return this hint as is. By definition, PEP-noncompliant hints are
+            # Halt reduction, which then returns the trivial metadata shallowly
+            # encapsulating this hint. By definition, PEP-noncompliant hints are
             # irreducible. If this hint was instead reducible, the
             # get_hint_pep_sign_or_none() getter called above would have instead
             # returned a unique sign identifying this hint (rather than "None").
-            return hint_curr
+            break
         # Else, this hint is PEP-compliant.
         #
         # If...
@@ -334,26 +345,9 @@ def reduce_hint(
         # Then this hint is ignorable. Reduce this hint to the ignorable
         # "HINT_IGNORABLE" singleton.
         ):
+            # print(f'Ignoring hint {repr(hint_curr)}...')
             return HINT_IGNORABLE
-
-        #FIXME: Excise the now-obsolete "HINTS_REPR_IGNORABLE_SHALLOW" set
-        #everywhere from the codebase, please.
-        #FIXME: Preserved for temporary posterity. Excise when feasible, please!
-        # from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
-        # from beartype._util.hint.utilhintget import get_hint_repr
-        # # Machine-readable representation of this hint.
-        # hint_repr = get_hint_repr(hint_curr)
-        #
-        # # If this hint is shallowly ignorable, reduce this hint to the ignorable
-        # # "HINT_IGNORABLE" singleton.
-        # #
-        # # Note that this reduction efficiently applies to multiple signs
-        # # concurrently, including the "None", "HintSignOptional", and
-        # # "HintSignUnion". Ergo, this reduction *CANNOT* be trivially
-        # # implemented as a standard reduction assigned a single sign.
-        # if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
-        #     return HINT_IGNORABLE
-        # # Else, this hint is *NOT* shallowly ignorable.
+        # Else, this hint is unignorable.
 
         # ....................{ PHASE ~ deep               }....................
         # Attempt to deeply reduce this hint with a context-free reduction
@@ -367,29 +361,16 @@ def reduce_hint(
 
         # If a context-free reducer reduces hints of this sign...
         if hint_reducer_cached is not None:
-            #FIXME: [SPEED] *ALL* of these reducers now need to be manually
-            #memoized with the @callable_cached decorator. Trivial, of course.
-            #Just unctuous. We sigh. *sigh*
+            # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
+
             #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
             #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
             #Does it actually vary with context? Can't recall. Investigate up!
-            #FIXME: [SPEED] Is passing the "conf" parameter here worthwhile? How
-            #many cached reductions actually benefit from receiving a "conf"? If
-            #the answer is "Hardly any, bro.", then:
-            #* Those cached reductions that actually benefit from receiving a
-            #  "conf" should just be refactored into uncached reductions.
-            #* We should stop passing "conf" altogether below. Doing so improves
-            #  caching efficiency for the general case, which is all that
-            #  matters.
-
-            # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
-
             # Reduce this hint by calling this reducer.
             #
             # Note that parameters are intentionally passed positionally to this
             # memoized callable, which prohibits keyword parameters.
-            hint_or_sane_curr = hint_reducer_cached(
-                hint_curr, conf, exception_prefix)
+            hint_or_sane_curr = hint_reducer_cached(hint_curr, exception_prefix)
             # print(f'[_reduce_hint_cached] ...to cached hint {repr(hint)}.')
         # Else, *NO* context-free reducer reduces hints of this sign. In this
         # case...
@@ -493,7 +474,7 @@ def reduce_hint(
         hint_or_sane_curr = (
             # If this hint has *NO* parent, this is a root hint. In this case,
             # the trivial metadata shallowly encapsulating this root hint;
-            HintSane(hint)
+            HintSane(hint_or_sane_curr)
             if hint_parent_sane is None else
             # Else, this hint has a parent. In this case, the non-trivial
             # metadata deeply encapsulating both this non-root hint *AND* all

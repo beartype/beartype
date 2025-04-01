@@ -18,14 +18,16 @@ from beartype.typing import (
 )
 from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
     reduce_hint_numpy_ndarray)
+from beartype._check.convert._reduce._nonpep.api.redapipandera import (
+    reduce_hint_pandera)
 from beartype._check.convert._reduce._pep.pep484.redpep484 import (
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-    reduce_hint_pep484_typevar,
-    # reduce_hint_pep484_subscripted_typevars_to_hints,
-)
+    reduce_hint_pep484_typevar)
+from beartype._check.convert._reduce._pep.pep484585.redpep484585container import (
+    reduce_hint_pep484585_itemsview)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subscripted,
     reduce_hint_pep484585_generic_unsubscripted,
@@ -37,7 +39,10 @@ from beartype._check.convert._reduce._pep.redpep484604 import (
 from beartype._check.convert._reduce._pep.redpep544 import reduce_hint_pep544
 from beartype._check.convert._reduce._pep.redpep557 import (
     reduce_hint_pep557_initvar)
+from beartype._check.convert._reduce._pep.redpep585 import (
+    reduce_hint_pep585_builtin_subscripted_unknown)
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
+from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
 from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
@@ -114,15 +119,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnpack,
     HintSignValuesView,
 )
-from beartype._util.hint.nonpep.api.utilmodpandera import (
-    reduce_hint_pandera)
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
-    reduce_hint_pep484_newtype)
-from beartype._util.hint.pep.proposal.pep484585.pep484585container import (
-    reduce_hint_pep484585_itemsview)
-from beartype._util.hint.pep.proposal.pep585 import (
-    reduce_hint_pep585_builtin_subscripted_unknown)
-from beartype._util.hint.pep.proposal.pep591 import reduce_hint_pep591
+    get_hint_pep484_newtype_alias)
 from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_args,
     reduce_hint_pep612_kwargs,
@@ -164,16 +162,11 @@ callable reducing those higher- to lower-level hints).
 
 # ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
-    # ..................{ PEP (484|585)                      }..................
-    # If this hint is a PEP 484-compliant IO generic base class, reduce this
-    # functionally useless hint to the corresponding functionally useful
-    # beartype-specific PEP 544-compliant protocol implementing this hint.
-    HintSignPep484585GenericUnsubscripted: (
-        reduce_hint_pep484585_generic_unsubscripted),
-
+    # ..................{ PEP 484                            }..................
     # If this hint is a PEP 484-compliant new type, reduce this new type to the
-    # user-defined class aliased by this new type.
-    HintSignNewType: reduce_hint_pep484_newtype,
+    # non-new type type hint (i.e., PEP-compliant type hint that is *NOT* a
+    # new type) aliased by this new type.
+    HintSignNewType: get_hint_pep484_newtype_alias,
 
     # If this hint is the PEP 484-compliant "None" singleton, reduce this hint
     # to the type of that singleton. While *NOT* explicitly defined by the
@@ -189,6 +182,12 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 484- or 585-compliant items view type hint, reduce
     # this hint to a more trivially consumable PEP 593-compliant type hint.
     HintSignItemsView: reduce_hint_pep484585_itemsview,
+
+    # If this hint is a PEP 484-compliant IO generic base class, reduce this
+    # functionally useless hint to the corresponding functionally useful
+    # beartype-specific PEP 544-compliant protocol implementing this hint.
+    HintSignPep484585GenericUnsubscripted: (
+        reduce_hint_pep484585_generic_unsubscripted),
 
     # ..................{ PEP 544                            }..................
     # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
@@ -268,7 +267,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #        return hint
     #
     #Since the _infer_hint_factory_collection_builtin() function appears to be
-    #of public relevance, let's at least rename that
+    #of public relevance, let's at least rename that to
     #infer_hint_factory_collection_builtin().
     #
     #Pretty cool, eh? Fairly trivial and *SHOULD* definitely work. Let's give

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsuper import TypeHint
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -26,8 +26,8 @@ class AnnotatedTypeHint(TypeHint):
     **Annotated type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`593`-compliant :attr:`typing.Annotated` type hint).
 
-    Attributes (Private)
-    --------
+    Attributes
+    ----------
     _metadata : tuple[object]
         **Metadata** (i.e., tuple of zero or more arbitrary low-level
         caller-defined objects annotating this :attr:`typing.Annotated` type
@@ -39,7 +39,7 @@ class AnnotatedTypeHint(TypeHint):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, hint: object) -> None:
+    def __init__(self, hint: Hint) -> None:
 
         # Initialize our superclass.
         super().__init__(hint)

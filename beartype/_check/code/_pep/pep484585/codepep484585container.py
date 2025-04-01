@@ -70,7 +70,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
 
     # ....................{ LOCALS                         }....................
     # This container hint, localized for both usability and efficiency.
-    hint = hints_meta.hint_curr_meta.hint
+    hint = hints_meta.hint_curr_meta.hint_sane.hint
 
     # Python expression evaluating to the origin type of this hint as a hidden
     # beartype-specific parameter injected into the signature of this wrapper.
@@ -108,15 +108,14 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     # print(f'Sanifying container hint {repr(hint_curr)} child hint {repr(hint_child)}...')
     # print(f'...with type variable lookup table {repr(hint_curr_meta.typevar_to_hint)}.')
 
-    # Unignorable sane child hint sanified from this possibly ignorable insane
-    # child hint *OR* "Any" otherwise (i.e., if this child hint is ignorable).
-    hint_or_sane_child = hints_meta.sanify_hint_child(hint_child)
+    # Metadata encapsulating the sanification of this child hint.
+    hint_child_sane = hints_meta.sanify_hint_child(hint_child)
 
     # ....................{ FORMAT                         }....................
     # If this child hint is unignorable:
     # * Shallowly type-check the type of the current pith.
     # * Deeply type-check an efficiently retrievable item of this pith.
-    if hint_or_sane_child is not HINT_IGNORABLE:
+    if hint_child_sane is not HINT_IGNORABLE:
         # Hint logic type-checking this sign if any *OR* "None" otherwise.
         hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(hint_sign)
 
@@ -137,7 +136,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
 
         # Python expression deeply type-checking this pith against this hint.
         hint_logic.make_code(
-            hints_meta=hints_meta, hint_or_sane_child=hint_or_sane_child)
+            hints_meta=hints_meta, hint_child_sane=hint_child_sane)
 
         # Record whether this expression requires a pseudo-random integer.
         hints_meta.is_var_random_int_needed |= (

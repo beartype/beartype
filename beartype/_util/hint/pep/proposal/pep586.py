@@ -202,4 +202,4 @@ def get_hint_pep586_literals(
     # Else, this hint is PEP 586-compliant.
 
     # Return the standard tuple of all literals subscripting this hint.
-    return hint.__args__
+    return hint.__args__  # pyright: ignore

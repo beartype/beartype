@@ -5,9 +5,8 @@
 
 '''
 Project-wide :pep:`544`-compliant **type alias reducers** (i.e., low-level
-callables converting higher-level objects created via the ``type`` statement
-under Python >= 3.12 to lower-level type hints more readily consumable by
-:mod:`beartype`).
+callables converting higher-level protocols to lower-level type hints more
+readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,7 +21,7 @@ from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep544 import (
     HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
-    make_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
+    init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
     is_hint_pep484_generic_io,
 )
 from beartype._util.hint.pep.utilpepget import (
@@ -32,8 +31,7 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.utilhintget import get_hint_repr
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep544(hint: Hint, exception_prefix: str, **kwargs) -> (
-    HintOrSane):
+def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
     '''
     Reduce the passed :pep:`544`-compliant **protocol** (i.e., user-defined
     subclass of the :class:`typing.Protocol` abstract base class (ABC)) to the
@@ -90,8 +88,21 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str, **kwargs) -> (
     #    # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
     #    # been intentionally designed to exclude PEP-compliant type hints
     #    # originating from "typing" type origins for stability reasons.
-    #    if get_hint_pep_origin_or_none(hint) is Protocol:
+    #    if (
+    #        # Unsubscripted "typing.Protocol" or "beartype.typing.Protocol"
+    #        # superclass *OR*...
+    #        hint in HINT_PEP544_SUPERTYPES or
+    #        # Subscripted "typing.Protocol[...]" or
+    #        # "beartype.typing.Protocol[...]" superclass subscripted by one or
+    #        # more PEP 484-compliant type variables...
+    #        get_hint_pep_origin_or_none(hint) in HINT_PEP544_SUPERTYPES
+    #    ):
     #        return HINT_IGNORABLE
+    #
+    #    #FIXME: Shift into "beartype._data.hint.pep" somewhere, please.
+    #    from beartype.typing import Protocol as ProtocolFast
+    #    from typing import Protocol as ProtocolSlow
+    #    HINT_PEP544_SUPERTYPES = frozenset((ProtocolSlow, ProtocolFast,))
     #
     #We facepalm. We facepalm so hard.
 
@@ -181,8 +192,15 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # Why? Because this initialization performs somewhat space- and
     # time-intensive work -- including importation of the "beartype.vale"
     # subpackage, which we strictly prohibit importing from global scope.
+
+    #FIXME: Awkward API. Technically, this is fine. It works. So, that's good.
+    #Still, the ideal API would be a "dict" subclass that auto-initializes
+    #itself on the first call to the dict.get() method called below -- probably
+    #by just trivially overriding the dict.get() method to instead perform the
+    #logic currently performed by this
+    #init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL() initialization method.
     elif not HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL:
-        make_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL()
+        init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL()
     # In any case, this dictionary is now initialized.
 
     # PEP 544-compliant IO protocol implementing this PEP 484-compliant IO
@@ -211,6 +229,9 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         # ignoring the type variable parametrizing this hint.
         hint_unparametrized: type = get_hint_pep_origin_or_none(hint)  # type: ignore[assignment]
 
+        #FIXME: The caching-specific assignment
+        #"HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint] = \" should no longer
+        #be required (or desired), as this reducer is itself memoized.
         # PEP 544-compliant IO protocol implementing this unparametrized PEP
         # 484-compliant IO generic. For efficiency, we additionally cache this
         # mapping under the original parametrized hint to minimize the cost of

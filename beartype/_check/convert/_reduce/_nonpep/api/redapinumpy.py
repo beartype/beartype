@@ -22,7 +22,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepNumpyException
-from typing import Annotated
 from beartype.typing import (
     Annotated,
     Any,
@@ -32,15 +31,13 @@ from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.utilobject import is_object_hashable
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
-#By splitting this function up into smaller functions -- each of which is
-#actually cached by @callable_cached and thus called with positional arguments.
-def reduce_hint_numpy_ndarray(
-    hint: Hint, exception_prefix: str, *args, **kwargs) -> Hint:
+@callable_cached
+def reduce_hint_numpy_ndarray(hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
     subscription of the third-party :attr:`numpy.typing.NDArray` type hint
@@ -54,18 +51,14 @@ def reduce_hint_numpy_ndarray(
     throughout the codebase. Of course, doing so would yield *no* tangible
     benefits while imposing a considerable maintenance burden.
 
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This reducer is memoized for efficiency.
 
     Parameters
     ----------
     hint : Hint
         PEP-noncompliant typed NumPy array to be reduced.
     exception_prefix : str
-        Human-readable label prefixing raised exception messages.
-
-    All remaining passed arguments are silently ignored.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
@@ -140,6 +133,7 @@ def reduce_hint_numpy_ndarray(
     # an argumentative hill about semantics. Upstream makes the rules. Do it.
     if hint is NDArray:
         return ndarray
+    # Else, this hint is *NOT* the unsubscripted "NDArray" type hint.
 
     # ..................{ CONSTANTS                          }..................
     # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
@@ -188,6 +182,7 @@ def reduce_hint_numpy_ndarray(
     # Note the similar test matching the unsubscripted "NDArray" hint above.
     if hint_dtype_like is Any:
         return ndarray  # pyright: ignore
+    # Else, this dtype-like is *NOT* "typing.Any".
 
     # ..................{ REDUCTION                          }..................
     # Equivalent nested beartype validator reduced from this hint.

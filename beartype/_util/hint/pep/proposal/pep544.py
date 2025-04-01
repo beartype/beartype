@@ -20,11 +20,15 @@ from beartype.typing import (
     TextIO,
 )
 from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeIs,
+)
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 
 # ....................{ MAPPINGS                           }....................
-# Initialized by the make_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL() function.
+# Initialized by the init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL() function.
 HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, Any] = {}
 '''
 Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
@@ -35,7 +39,7 @@ defined by this submodule).
 '''
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_generic_io(hint: object) -> bool:
+def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is a functionally useless
     :pep:`484`-compliant :mod:`typing` **IO generic superclass** (i.e., either
@@ -89,7 +93,7 @@ def is_hint_pep484_generic_io(hint: object) -> bool:
     return hint_origin in TYPES_PEP484_GENERIC_IO
 
 
-def is_hint_pep544_protocol(hint: object) -> bool:
+def is_hint_pep544_protocol(hint: Hint) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is a :pep:`544`-compliant
     **protocol** (i.e., subclass of the :class:`typing.Protocol` superclass).
@@ -134,7 +138,7 @@ def is_hint_pep544_protocol(hint: object) -> bool:
     )
 
 # ....................{ FACTORIES                          }....................
-def make_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL() -> None:
+def init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL() -> None:
     '''
     Initialize this submodule.
     '''

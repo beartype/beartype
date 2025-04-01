@@ -22,7 +22,7 @@ from beartype._util.error.utilerrwarn import issue_warning
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_deprecated(
-    hint: Hint, exception_prefix : str, **kwargs) -> Hint:
+    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     '''
     Preserve the passed :pep:`484`-compliant type hint as is while emitting one
     non-fatal deprecation warning for this type hint if **deprecated** (i.e.,
@@ -44,8 +44,7 @@ def reduce_hint_pep484_deprecated(
     hint : Hint
         Type hint to be reduced.
     exception_prefix : str
-        Human-readable substring prefixing the representation of this object in
-        the warning message.
+        Human-readable substring prefixing emitted warning messages.
 
     All remaining passed arguments are silently ignored.
 
@@ -107,7 +106,7 @@ def reduce_hint_pep484_deprecated(
 # emits false positives when this reducer is typed as returning "NoneType":
 #     beartype._util.hint.pep.proposal.pep484.pep484.py:190: error: Variable
 #     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
-def reduce_hint_pep484_none(hint: Hint, **kwargs) -> type:
+def reduce_hint_pep484_none(hint: Hint, exception_prefix: str) -> type:
     '''
     Reduce the passed :pep:`484`-compliant :data:`None` hint to the type of
     :data:`None` (i.e., the builtin :class:`types.NoneType` class).
@@ -126,6 +125,8 @@ def reduce_hint_pep484_none(hint: Hint, **kwargs) -> type:
     ----------
     hint : Hint
         :data:`None` hint to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 

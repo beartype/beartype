@@ -5,8 +5,9 @@
 
 '''
 Project-wide :pep:`484`- and :pep:`585`-compliant **container type hint
-utilities** (i.e., low-level callables generically applicable to both
-:pep:`484`- and :pep:`585`-compliant container type hints).
+reducers** (i.e., low-level callables converting higher-level :pep:`484`- and
+:pep:`585`-compliant container type hints to lower-level type hints more readily
+consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,29 +19,32 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.hint.datahintpep import Hint
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
+    get_hint_pep484585_args)
+from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
 from collections.abc import (
     ItemsView as ItemsViewABC,
 )
 
 # ....................{ REDUCERS                           }....................
+@callable_cached
 def reduce_hint_pep484585_itemsview(
-    hint: Hint, exception_prefix: str, **kwargs) -> Hint:
+    hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **items view type
     hint** (i.e., of the form ``(collections.abc|typing).ItemsView[{hint_key},
     {hint_value}]``) to a more suitable type hint better supported by
     :mod:`beartype`.
 
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
+    This reducer is memoized for efficiency.
 
     Parameters
     ----------
     hint : Hint
         Items view type hint to be reduced.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this hint in
-        exception messages raised by this reducer.
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 
@@ -50,14 +54,9 @@ def reduce_hint_pep484585_itemsview(
         More suitable type hint better supported by :mod:`beartype`.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
-        get_hint_pep484585_args)
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
-
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)
     # of *ALL* items views.
-    hint_reduced: Hint = ItemsViewABC  # pyright: ignore
+    hint_reduced: Hint = ItemsViewABC
 
     # If this hint is subscripted by one or more child type hints...
     if is_hint_pep_subscripted(hint):

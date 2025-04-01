@@ -217,10 +217,7 @@ class HintLogicABC(object, metaclass=ABCMeta):
     # ..................{ ABSTRACT                           }..................
     @abstractmethod
     def make_code(
-        self,
-        hints_meta: HintsMeta,
-        hint_or_sane_child: HintSane,
-    ) -> None:
+        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
         '''
         Python expression deeply type-checking the current pith against the
         currently visited container hint described by the passed parameters.
@@ -230,10 +227,10 @@ class HintLogicABC(object, metaclass=ABCMeta):
         hints_meta : HintsMeta
             Stack of metadata describing all visitable hints currently
             discovered by this breadth-first search (BFS).
-        hint_or_sane_child : HintSane
-            Either the sole child hint of this container *or* **sanified child
-            hint metadata** (i.e., :data:`.HintSane` object describing
-            this child hint) to be type-checked.
+        hint_child_sane : HintSane
+            **Sanified child hint metadata** (i.e., :data:`.HintSane` object)
+            encapsulating the sanification of this child hint to be
+            type-checked.
         '''
 
         pass
@@ -272,11 +269,7 @@ class HintLogicQuasiiterable(HintLogicABC):
 
     # ..................{ FACTORIES                          }..................
     def make_code(
-        self,
-        hints_meta: HintsMeta,
-        hint_or_sane_child: HintSane,
-    ) -> None:
-
+        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
         assert isinstance(hints_meta, HintsMeta), (
             f'{repr(hints_meta)} not "HintsMeta" object.')
 
@@ -308,7 +301,7 @@ class HintLogicQuasiiterable(HintLogicABC):
             collection_abc_expr=collection_abc_expr,
             sequence_abc_expr=sequence_abc_expr,
             hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                hint_or_sane=hint_or_sane_child,
+                hint_child_sane=hint_child_sane,
                 pith_expr=pith_child_var_name,
             ),
         )
@@ -377,11 +370,7 @@ class _HintLogicReiterableOrSequence(HintLogicABC):
 
     # ..................{ FACTORIES                          }..................
     def make_code(
-        self,
-        hints_meta: HintsMeta,
-        hint_or_sane_child: HintSane,
-    ) -> None:
-
+        self, hints_meta: HintsMeta, hint_child_sane: HintSane) -> None:
         assert isinstance(hints_meta, HintsMeta), (
             f'{repr(hints_meta)} not "HintsMeta" object.')
 
@@ -393,7 +382,7 @@ class _HintLogicReiterableOrSequence(HintLogicABC):
                 pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
                 pith_curr_var_name=hints_meta.pith_curr_var_name,
                 hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                    hint_or_sane=hint_or_sane_child,
+                    hint_child_sane=hint_child_sane,
                     # Python expression efficiently yielding some item of this
                     # pith to be deeply type-checked against this child hint.
                     pith_expr=self._pith_child_expr_format(

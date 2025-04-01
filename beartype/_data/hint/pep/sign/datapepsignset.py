@@ -322,23 +322,13 @@ HINT_SIGNS_BARE_IGNORABLE: _FrozenSetHintSign = frozenset((
     # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
     HintSignAny,
 
-    # The "Generic" superclass imposes no constraints and is thus also
-    # semantically synonymous with the ignorable PEP-noncompliant
-    # "beartype.cave.AnyType" and hence "object" types. Since PEP
-    # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-    # singleton including "typing.Generic" semantically expands to that
-    # singelton subscripted by an implicit "Any" argument, "Generic"
-    # semantically expands to the implicit "Generic[Any]" singleton.
-    HintSignPep484585GenericUnsubscripted,
-
     # The unsubscripted "Optional" singleton semantically expands to the
-    # implicit "Optional[Any]" singleton by the same argument. Since PEP
-    # 484 also stipulates that all "Optional[t]" singletons semantically expand
-    #     to "Union[t, type(None)]" singletons for arbitrary arguments "t",
-    #     "Optional[Any]" semantically expands to merely "Union[Any,
-    #     type(None)]". Since all unions subscripted by "Any" semantically
-    #     reduce to merely "Any", the "Optional" singleton also reduces to
-    # merely "Any".
+    # implicit "Optional[Any]" singleton by the same argument. Since PEP 484
+    # also stipulates that all "Optional[t]" singletons semantically expand to
+    # "Union[t, type(None)]" singletons for arbitrary arguments "t",
+    # "Optional[Any]" semantically expands to merely "Union[Any, type(None)]".
+    # Since all unions subscripted by "Any" semantically reduce to merely "Any",
+    # the "Optional" singleton also reduces to merely "Any".
     #
     # This intentionally excludes "Optional[type(None)]", which the "typing"
     # module physically reduces to merely "type(None)". *shrug*
