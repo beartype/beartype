@@ -17,7 +17,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
 )
-from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.cls.datacls import TYPES_PEP544_PROTOCOL
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep544 import (
     HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
@@ -28,7 +28,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_typevars,
 )
-from beartype._util.hint.utilhintget import get_hint_repr
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
@@ -68,73 +67,44 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
 
-    #FIXME: *SUPER-WEIRD.* This logic is totally cray-cray. What the heck is
-    #this O(n) search madness? This is why we have signs, people. So that we
-    #don't have to manually crawl over "TYPING_MODULE_NAMES". In theory, the
-    #same exact test should trivially reduce to:
-    #    if (
-    #        hint.__name__ == 'Protocol' and
-    #        hint.__module__ in TYPING_MODULE_NAMES
-    #    ):
-    #        return HINT_IGNORABLE
-    #FIXME: Actually, the "redpep484585generic" submodule has ever simpler logic
-    #that we should pilfer from:
-    #    # If this subscripted generic is the "typing.Protocol" superclass directly
-    #    # parametrized by one or more type variables (e.g., "typing.Protocol[T]"),
-    #    # this generic is ignorable. In this case, reduce this ignorable generic to
-    #    # the ignorable singleton.
-    #    #
-    #    # Note that we intentionally avoid calling the
-    #    # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
-    #    # been intentionally designed to exclude PEP-compliant type hints
-    #    # originating from "typing" type origins for stability reasons.
-    #    if (
-    #        # Unsubscripted "typing.Protocol" or "beartype.typing.Protocol"
-    #        # superclass *OR*...
-    #        hint in HINT_PEP544_SUPERTYPES or
-    #        # Subscripted "typing.Protocol[...]" or
-    #        # "beartype.typing.Protocol[...]" superclass subscripted by one or
-    #        # more PEP 484-compliant type variables...
-    #        get_hint_pep_origin_or_none(hint) in HINT_PEP544_SUPERTYPES
-    #    ):
-    #        return HINT_IGNORABLE
-    #
-    #    #FIXME: Shift into "beartype._data.hint.pep" somewhere, please.
-    #    from beartype.typing import Protocol as ProtocolFast
-    #    from typing import Protocol as ProtocolSlow
-    #    HINT_PEP544_SUPERTYPES = frozenset((ProtocolSlow, ProtocolFast,))
-    #
-    #We facepalm. We facepalm so hard.
+    # If this protocol is either...
+    if (
+        # Either of the unsubscripted "typing.Protocol" or
+        # "beartype.typing.Protocol" superclasses *OR*...
+        #
+        # Note that *ALL* classes (and thus protocols) are hashable. Ergo, both
+        # this and the membership test below are guaranteed to be safe.
+        hint in TYPES_PEP544_PROTOCOL or
+        # Either of the "typing.Protocol[...]" or
+        # "beartype.typing.Protocol[...]" superclasses subscripted by one or
+        # more PEP 484-compliant type variables (e.g., "typing.Protocol[T]")...
+        #
+        # Note that:
+        # * These superclasses can *ONLY* be parametrized by type variables.
+        # * We intentionally avoid calling the
+        #   get_hint_pep_origin_type_isinstanceable_or_none() function here,
+        #   which has been intentionally designed to exclude PEP-compliant type
+        #   hints originating from "typing" type origins for stability reasons.
+        get_hint_pep_origin_or_none(hint) in TYPES_PEP544_PROTOCOL
+    ):
+        # Then this protocol is ignorable. Reduce this ignorable protocol to the
+        # ignorable singleton.
+        #
+        # For unknown (but probably) uninteresting reasons, *ALL* possible
+        # objects satisfy these protocol superclasses. Ergo, these superclasses
+        # and *ALL* parametrizations of these superclasses are synonymous with
+        # the "object" root superclass : e.g.,
+        #     >>> from typing as Protocol
+        #     >>> isinstance(object(), Protocol)
+        #     True
+        #     >>> isinstance('wtfbro', Protocol)
+        #     True
+        #     >>> isinstance(0x696969, Protocol)
+        #     True
+        return HINT_IGNORABLE
+    # Else, this protocol is unignorable.
 
-    # Machine-readable representation of this hint.
-    hint_repr = get_hint_repr(hint)
-
-    # If this representation contains a relevant substring suggesting that this
-    # hint *MIGHT* be the "Protocol" superclass directly parametrized by type
-    # variables (e.g., "typing.Protocol[S, T]")...
-    if 'Protocol[' in hint_repr:
-        # For the fully-qualified name of each typing module...
-        for typing_module_name in TYPING_MODULE_NAMES:
-            # If this hint is the "Protocol" superclass defined by this module
-            # directly parametrized by one or more type variables (e.g.,
-            # "typing.Protocol[S, T]"), ignore this superclass by returning the
-            # ignorable "HINT_IGNORABLE" singleton. This superclass can *ONLY*
-            # be parametrized by type variables; a string test thus suffices.
-            #
-            # For unknown and uninteresting reasons, *ALL* possible objects
-            # satisfy the "Protocol" superclass. Ergo, this superclass and *ALL*
-            # parametrizations of this superclass are synonymous with the
-            # "object" root superclass.
-            if hint_repr.startswith(f'{typing_module_name}.Protocol['):
-                return HINT_IGNORABLE
-            # Else, this hint is *NOT* such a "Protocol" superclass. In this
-            # case, continue to the next typing module.
-        # Else, this hint is *NOT* the "Protocol" superclass directly
-        # parametrized by one or more type variables.
-    # Else, this representation contains such *NO* such substring.
-
-    # Return this protocol unmodified, as *ALL* other "Protocol" subclasses are
-    # unignorable by definition.
+    # Preserve this unignorable protocol.
     return hint
 
 

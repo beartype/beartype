@@ -131,43 +131,43 @@ class _CachingProtocolMeta(_ProtocolMeta):
     effectively coerced into a caching :class:`beartype.typing.Protocol`
     protocol through inheritance: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
-      >>> from abc import abstractmethod
-      >>> from typing import Protocol
-      >>> from beartype.typing import _CachingProtocolMeta, runtime_checkable
-      >>> @runtime_checkable
-      ... class _MyProtocol(Protocol):  # plain vanilla protocol
-      ...     @abstractmethod
-      ...     def myfunc(self, arg: int) -> str:
-      ...         pass
-      >>> @runtime_checkable  # redundant, but useful for documentation
-      ... class MyProtocol(
-      ...     _MyProtocol,
-      ...     Protocol,
-      ...     metaclass=_CachingProtocolMeta,  # caching version
-      ... ):
-      ...     pass
-      >>> class MyImplementation:
-      ...     def myfunc(self, arg: int) -> str:
-      ...         return str(arg * -2 + 5)
-      >>> my_thing: MyProtocol = MyImplementation()
-      >>> isinstance(my_thing, MyProtocol)
-      True
+       >>> from abc import abstractmethod
+       >>> from typing import Protocol
+       >>> from beartype.typing import _CachingProtocolMeta, runtime_checkable
+       >>> @runtime_checkable
+       ... class _MyProtocol(Protocol):  # plain vanilla protocol
+       ...     @abstractmethod
+       ...     def myfunc(self, arg: int) -> str:
+       ...         pass
+       >>> @runtime_checkable  # redundant, but useful for documentation
+       ... class MyProtocol(
+       ...     _MyProtocol,
+       ...     Protocol,
+       ...     metaclass=_CachingProtocolMeta,  # caching version
+       ... ):
+       ...     pass
+       >>> class MyImplementation:
+       ...     def myfunc(self, arg: int) -> str:
+       ...         return str(arg * -2 + 5)
+       >>> my_thing: MyProtocol = MyImplementation()
+       >>> isinstance(my_thing, MyProtocol)
+       True
 
     Pragmatically, :class:`beartype.typing.Protocol` trivially eliminates
     *all* of the above fragile boilerplate: e.g.,
 
-    .. code-block:: python
+    .. code-block:: pycon
 
-      >>> from beartype.typing import Protocol
-      >>> class MyBearProtocol(Protocol):
-      ...     @abstractmethod
-      ...     def myfunc(self, arg: int) -> str:
-      ...         pass
-      >>> my_thing: MyBearProtocol = MyImplementation()
-      >>> isinstance(my_thing, MyBearProtocol)
-      True
+       >>> from beartype.typing import Protocol
+       >>> class MyBearProtocol(Protocol):
+       ...     @abstractmethod
+       ...     def myfunc(self, arg: int) -> str:
+       ...         pass
+       >>> my_thing: MyBearProtocol = MyImplementation()
+       >>> isinstance(my_thing, MyBearProtocol)
+       True
     '''
 
     # ................{ CLASS VARIABLES                        }................

@@ -38,7 +38,8 @@ def is_hint_pep484585_generic_user(hint: Hint) -> bool:
     neither:
 
     * A :pep:`484`- or :pep:`544`-compliant superclass defined by the
-      :mod:`typing` module (e.g., :class:`typing.Generic`) *nor*...
+      :mod:`typing` module (e.g., :class:`typing.Generic`,
+      :class:`typing.Protocol`) *nor*...
     * A :pep:`585`-compliant superclass (e.g., ``list[T]``).
 
     This tester is intentionally *not* memoized (e.g., by the

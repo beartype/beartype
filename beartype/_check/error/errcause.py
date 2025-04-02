@@ -345,19 +345,21 @@ class ViolationCause(object):
             # Sane child hint sanified from this possibly insane child hint.
             hint_child: Hint = None  # pyright: ignore
 
-            # Sane child hint sanified from this possibly insane child hint if
-            # sanifying this child hint did not generate supplementary metadata
-            # *OR* that metadata otherwise (i.e., if sanifying this child hint
-            # generated supplementary metadata).
+            # Metadata encapsulating the sanification of this child hint.
             hint_child_sane: HintSane = None  # type: ignore[assignment]
 
-            # If this child hint is PEP-compliant...
+            # If this child hint is either...
             #
             # Note that arbitrary PEP-noncompliant arguments *CANNOT* be safely
-            # sanitized. Why? Because arbitrary arguments are *NOT* necessarily
-            # valid hints. Consider the hint "tuple[()]", where the argument
-            # "()" is invalid as a hint but valid an argument to that hint.
-            if is_hint_pep(hint_child_insane):
+            # sanified. Arbitrary arguments are *NOT* necessarily valid hints.
+            # Consider the hint "tuple[()]", where the argument "()" is invalid
+            # as a hint but valid an argument to that hint.
+            if (
+                # PEP-compliant *OR*...
+                is_hint_pep(hint_child_insane) or
+                # A type, which is effectively PEP 484-compliant.
+                isinstance(hint_child_insane, type)
+            ):
                 # Sanify this child hint into this metadata.
                 hint_child_sane = self.sanify_hint_child(
                     hint_child_insane=hint_child_insane,
@@ -648,7 +650,14 @@ class ViolationCause(object):
 
     # ..................{ SANIFIERS                          }..................
     def sanify_hint_child(
-        self, hint_child_insane: Hint, hint_parent_sane: HintSane) -> HintSane:
+        self,
+
+        # Mandatory parameters.
+        hint_child_insane: Hint,
+
+        # Optional parameters.
+        hint_parent_sane: Optional[HintSane] = None,
+    ) -> HintSane:
         '''
         Metadata encapsulating the sanification (i.e., sanitization) of the
         passed **possibly insane child type hint** (i.e., possibly
@@ -671,6 +680,17 @@ class ViolationCause(object):
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
             the possibly PEP-noncompliant parent hint of this child hint into a
             fully PEP-compliant parent hint).
+        hint_parent_sane : Optional[HintSane], default: None
+            **Sanified parent type hint metadata** (i.e., immutable and thus
+            hashable object encapsulating *all* metadata previously returned by
+            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            the possibly PEP-noncompliant parent hint of this child hint into a
+            fully PEP-compliant parent hint). Defaults to :data:`None`, in which
+            case this parameter actually defaults to ``self.hint_sane``, the
+            previously sanified metadata encapsulating the direct parent hint of
+            this child hint. Since this default suffices in the common case,
+            callers should only pass this parameter when explicitly sanifying
+            the parent hint of this child hint.
 
         Returns
         -------
@@ -684,9 +704,14 @@ class ViolationCause(object):
               metadata encapsulating this child hint unmodified.
         '''
 
-        # Sane hint sanified from this possibly insane hint if sanifying this
-        # hint did not generate supplementary metadata *OR* that metadata
-        # otherwise (i.e., if doing so generated supplementary metadata).
+        # If the caller explicitly passed *NO* sanified parent hint metadata,
+        # default this metadata to that of the currently visited hint.
+        if hint_parent_sane is None:
+            hint_parent_sane = self.hint_sane
+        # Else, the caller explicitly passed sanified parent hint metadata.
+        # Silently preserve this metadata as is.
+
+        # Metadata encapsulating the sanification of this child hint.
         hint_sane_child = sanify_hint_child(
             hint=hint_child_insane,
             hint_parent_sane=hint_parent_sane,

@@ -12,11 +12,17 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    # Dict,
-    BinaryIO,
     ForwardRef,
     Generic,
-    Protocol,
+
+    # The non-standard "beartype.typing.Protocol" superclass subclasses the
+    # standard "typing.Protocol" superclass. Since "typing.Protocol" is the
+    # proper superset of "beartype.typing.Protocol" and thus more
+    # general-purpose, we intentionally:
+    # * Reserve the name "Protocol" for the standard "typing.Protocol"
+    #   superclass throughout this submodule.
+    # * Preserve disambiguity by renaming "beartype.typing.Protocol" away.
+    Protocol as ProtocolFast,
 )
 from beartype._cave._cavefast import (
     ClassType,
@@ -40,6 +46,7 @@ from pathlib import Path
 from typing import (
     BinaryIO,
     IO,
+    Protocol,
     TextIO,
 )
 
@@ -171,15 +178,6 @@ Note that these generics are *not* :pep:`544`-compliant protocols. These
 generics are thus mostly useless for most real-world purposes.
 '''
 
-# ....................{ PEP ~ (484|544)                    }....................
-TYPES_PEP484544_GENERIC = frozenset((Generic, Protocol))
-'''
-Frozen set of all :pep:`484`- and :pep:`544`-compliant **generic superclasses**
-(i.e., public types defined by the standard :mod:`typing` module, intended to be
-subscripted by user-defined :pep:`484`-compliant generics and
-:pep:`544`-compliant protocols).
-'''
-
 # ....................{ PEP ~ (484|585)                    }....................
 TYPES_PEP484585_REF = (str, ForwardRef)
 '''
@@ -200,6 +198,27 @@ references as is, :mod:`typing` type hint factories coerce string-based forward
 references into higher-level objects encapsulating those strings. The latter
 approach is the demonstrably wrong approach, because encapsulating strings only
 harms space and time complexity at runtime with *no* concomitant benefits.
+'''
+
+# ....................{ PEP ~ 544                          }....................
+TYPES_PEP544_PROTOCOL = frozenset((Protocol, ProtocolFast,))
+'''
+Frozen set of all **protocol superclasses** (i.e., types defined by the standard
+:mod:`typing` and non-standard :mod:`beartype.typing` modules, guaranteed to be
+the superclasses of all :pep:`544`-compliant protocols).
+
+Note that callers typically reference this frozen set to efficiently detect
+whether a type hint is an unsubscripted protocol superclass. Although
+:class:`beartype.typing.Protocol` subclasses :class:`typing.Protocol`, both thus
+*must* be explicitly enumerated here.
+'''
+
+
+TYPES_PEP484544_GENERIC = frozenset((Generic,)) | TYPES_PEP544_PROTOCOL
+'''
+Frozen set of all **generic superclasses** (i.e., types defined by the standard
+:mod:`typing` module guaranteed to be the superclasses of all
+:pep:`484`-compliant generics and/or :pep:`544`-compliant protocols).
 '''
 
 # ....................{ PEP ~ 586                          }....................

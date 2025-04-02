@@ -15,6 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import URL_PEP585_DEPRECATIONS
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype._cave._cavefast import NoneType
+from beartype._check.metadata.hint.hintsane import (
+    HINT_IGNORABLE,
+    HintSane,
+)
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
@@ -100,6 +104,32 @@ def reduce_hint_pep484_deprecated(
     # Preserve this hint as is, regardless of deprecation.
     return hint
 
+# ....................{ REDUCERS ~ singleton               }....................
+def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
+    '''
+    Reduce the passed :pep:`484`-compliant :obj:`typing.Any` singleton to the
+    ignorable :data:`.HINT_IGNORABLE` singleton.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        :obj:`typing.Any` hint to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    HintSane
+        Ignorable :data:`.HINT_IGNORABLE` singleton.
+    '''
+
+    # Unconditionally ignore the "Any" singleton.
+    return HINT_IGNORABLE
+
 
 # Note that this reducer is intentionally typed as returning "type" rather than
 # "NoneType". While the former would certainly be preferable, mypy erroneously
@@ -108,7 +138,7 @@ def reduce_hint_pep484_deprecated(
 #     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
 def reduce_hint_pep484_none(hint: Hint, exception_prefix: str) -> type:
     '''
-    Reduce the passed :pep:`484`-compliant :data:`None` hint to the type of
+    Reduce the passed :pep:`484`-compliant :data:`None` singleton to the type of
     :data:`None` (i.e., the builtin :class:`types.NoneType` class).
 
     While *not* explicitly defined by the :mod:`typing` module, :pep:`484`
@@ -127,8 +157,6 @@ def reduce_hint_pep484_none(hint: Hint, exception_prefix: str) -> type:
         :data:`None` hint to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
-
-    All remaining passed arguments are silently ignored.
 
     Returns
     -------

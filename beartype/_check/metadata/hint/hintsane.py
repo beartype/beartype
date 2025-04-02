@@ -273,6 +273,13 @@ class HintSane(object):
         Machine-readable representation of this metadata.
         '''
 
+        # If this metadata is the ignorable "HINT_IGNORABLE" singleton,
+        # trivially return the unqualified basename of this singleton for
+        # debuggability, disambiguity, and readability.
+        if self is HINT_IGNORABLE:
+            return 'HINT_IGNORABLE'
+        # Else, this metadata is *NOT* the ignorable "HINT_IGNORABLE" singleton.
+
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
         return (

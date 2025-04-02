@@ -17,6 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.typing import (
+    FrozenSet,
+    List,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 
 # ....................{ SIGNS ~ implicit : pep : (484|585) }....................
@@ -56,8 +60,56 @@ of arbitrary child type hints): e.g.,
    HintSignPep484585GenericSubscripted
 '''
 
-# ....................{ SIGNS ~ explicit                   }....................
-# Signs with explicit analogues in the stdlib "typing" module.
+# ....................{ SIGNS ~ explicit : setup           }....................
+_HINT_SIGNS_TYPING_LIST: List[_HintSign] = []
+'''
+List of the signs identifying *all* standard :mod:`typing` type hints and type
+hint factories.
+
+This private list only exists for a brief window of time. Specifically:
+
+#. This list initializes the public :data:`HINT_SIGNS_TYPING` frozen set below.
+#. This list is then immediately deleted to avoid polluting the module namespace
+   with temporary globals.
+'''
+
+
+def _make_typing_hint_sign(name: str) -> _HintSign:
+    '''
+    Sign with an explicit analogue in the standard :mod:`typing` module.
+
+    This factory additionally adds this sign to the :data:`.HINT_SIGNS_TYPING`
+    frozen set of the signs identifying *all* standard :mod:`typing` type hints
+    and type hint factories.
+
+    Caveats
+    -------
+    **This higher-level factory should always be used in lieu of the
+    lower-level** :class:`._HintSign` **class to instantiate signs identifying
+    standard** :mod:`typing` **type hints and type hint factories.**
+
+    Parameters
+    ----------
+    name : str
+        Name of this :mod:`typing` sign.
+
+    Returns
+    -------
+    _HintSign
+        This :mod:`typing` sign.
+    '''
+
+    # Sign with this same.
+    hint_sign = _HintSign(name)
+
+    # Append this sign to this list.
+    _HINT_SIGNS_TYPING_LIST.append(hint_sign)
+
+    # Return this sign.
+    return hint_sign
+
+# ....................{ SIGNS ~ explicit : define          }....................
+# Signs with explicit analogues in the standard "typing" module.
 #
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Signs defined by this module are synchronized with the "__all__"
@@ -90,22 +142,22 @@ of arbitrary child type hints): e.g.,
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
-HintSignAnnotated       = _HintSign(name='Annotated')
-HintSignAny             = _HintSign(name='Any')
-HintSignCallable        = _HintSign(name='Callable')
-HintSignClassVar        = _HintSign(name='ClassVar')
-HintSignConcatenate     = _HintSign(name='Concatenate')
-HintSignFinal           = _HintSign(name='Final')
-HintSignForwardRef      = _HintSign(name='ForwardRef')
+HintSignAnnotated       = _make_typing_hint_sign('Annotated')
+HintSignAny             = _make_typing_hint_sign('Any')
+HintSignCallable        = _make_typing_hint_sign('Callable')
+HintSignClassVar        = _make_typing_hint_sign('ClassVar')
+HintSignConcatenate     = _make_typing_hint_sign('Concatenate')
+HintSignFinal           = _make_typing_hint_sign('Final')
+HintSignForwardRef      = _make_typing_hint_sign('ForwardRef')
 # Generic  <-- ambiguous between subscripted and unsubscripted variants (disambiguated below)
-HintSignLiteral         = _HintSign(name='Literal')
-HintSignOptional        = _HintSign(name='Optional')
-HintSignParamSpec       = _HintSign(name='ParamSpec')
-HintSignParamSpecArgs   = _HintSign(name='ParamSpecArgs')
-HintSignParamSpecKwargs = _HintSign(name='ParamSpecKwargs')
-HintSignProtocol        = _HintSign(name='Protocol')
+HintSignLiteral         = _make_typing_hint_sign('Literal')
+HintSignOptional        = _make_typing_hint_sign('Optional')
+HintSignParamSpec       = _make_typing_hint_sign('ParamSpec')
+HintSignParamSpecArgs   = _make_typing_hint_sign('ParamSpecArgs')
+HintSignParamSpecKwargs = _make_typing_hint_sign('ParamSpecKwargs')
+HintSignProtocol        = _make_typing_hint_sign('Protocol')
 
-HintSignTuple           = _HintSign(name='Tuple')
+HintSignTuple           = _make_typing_hint_sign('Tuple')
 '''
 Sign uniquely identifying **variable-length tuple type hints,** including:
 
@@ -122,42 +174,42 @@ HintSignTupleFixed
     Sign uniquely identifying **fixed-length tuple type hints.**
 '''
 
-HintSignType         = _HintSign(name='Type')
-HintSignTypeVar      = _HintSign(name='TypeVar')
-HintSignTypeVarTuple = _HintSign(name='TypeVarTuple')
-HintSignUnion        = _HintSign(name='Union')
+HintSignType         = _make_typing_hint_sign('Type')
+HintSignTypeVar      = _make_typing_hint_sign('TypeVar')
+HintSignTypeVarTuple = _make_typing_hint_sign('TypeVarTuple')
+HintSignUnion        = _make_typing_hint_sign('Union')
 
 # ABCs (from collections.abc).
-HintSignAbstractSet         = _HintSign(name='AbstractSet')
+HintSignAbstractSet         = _make_typing_hint_sign('AbstractSet')
 
 #FIXME: Permanently remove this sign *AFTER* dropping support for Python 3.15.
-HintSignByteString          = _HintSign(name='ByteString')
+HintSignByteString          = _make_typing_hint_sign('ByteString')
 
-HintSignContainer           = _HintSign(name='Container')
-HintSignContextManager      = _HintSign(name='ContextManager')
-HintSignHashable            = _HintSign(name='Hashable')
-HintSignItemsView           = _HintSign(name='ItemsView')
-HintSignIterable            = _HintSign(name='Iterable')
-HintSignIterator            = _HintSign(name='Iterator')
-HintSignKeysView            = _HintSign(name='KeysView')
-HintSignMapping             = _HintSign(name='Mapping')
-HintSignMappingView         = _HintSign(name='MappingView')
-HintSignMutableMapping      = _HintSign(name='MutableMapping')
-HintSignMutableSequence     = _HintSign(name='MutableSequence')
-HintSignMutableSet          = _HintSign(name='MutableSet')
-HintSignSequence            = _HintSign(name='Sequence')
-HintSignSized               = _HintSign(name='Sized')
-HintSignValuesView          = _HintSign(name='ValuesView')
-HintSignAwaitable           = _HintSign(name='Awaitable')
-HintSignAsyncIterator       = _HintSign(name='AsyncIterator')
-HintSignAsyncIterable       = _HintSign(name='AsyncIterable')
-HintSignCoroutine           = _HintSign(name='Coroutine')
-HintSignCollection          = _HintSign(name='Collection')
-HintSignAsyncGenerator      = _HintSign(name='AsyncGenerator')
-HintSignAsyncContextManager = _HintSign(name='AsyncContextManager')
+HintSignContainer           = _make_typing_hint_sign('Container')
+HintSignContextManager      = _make_typing_hint_sign('ContextManager')
+HintSignHashable            = _make_typing_hint_sign('Hashable')
+HintSignItemsView           = _make_typing_hint_sign('ItemsView')
+HintSignIterable            = _make_typing_hint_sign('Iterable')
+HintSignIterator            = _make_typing_hint_sign('Iterator')
+HintSignKeysView            = _make_typing_hint_sign('KeysView')
+HintSignMapping             = _make_typing_hint_sign('Mapping')
+HintSignMappingView         = _make_typing_hint_sign('MappingView')
+HintSignMutableMapping      = _make_typing_hint_sign('MutableMapping')
+HintSignMutableSequence     = _make_typing_hint_sign('MutableSequence')
+HintSignMutableSet          = _make_typing_hint_sign('MutableSet')
+HintSignSequence            = _make_typing_hint_sign('Sequence')
+HintSignSized               = _make_typing_hint_sign('Sized')
+HintSignValuesView          = _make_typing_hint_sign('ValuesView')
+HintSignAwaitable           = _make_typing_hint_sign('Awaitable')
+HintSignAsyncIterator       = _make_typing_hint_sign('AsyncIterator')
+HintSignAsyncIterable       = _make_typing_hint_sign('AsyncIterable')
+HintSignCoroutine           = _make_typing_hint_sign('Coroutine')
+HintSignCollection          = _make_typing_hint_sign('Collection')
+HintSignAsyncGenerator      = _make_typing_hint_sign('AsyncGenerator')
+HintSignAsyncContextManager = _make_typing_hint_sign('AsyncContextManager')
 
 # Structural checks, a.k.a. protocols.
-HintSignReversible = _HintSign(name='Reversible')
+HintSignReversible = _make_typing_hint_sign('Reversible')
 # SupportsAbs   <-- not a useful type hint (already an isinstanceable ABC)
 # SupportsBytes   <-- not a useful type hint (already an isinstanceable ABC)
 # SupportsComplex   <-- not a useful type hint (already an isinstanceable ABC)
@@ -167,22 +219,22 @@ HintSignReversible = _HintSign(name='Reversible')
 # SupportsRound   <-- not a useful type hint (already an isinstanceable ABC)
 
 # Concrete collection types.
-HintSignChainMap = _HintSign(name='ChainMap')
-HintSignCounter = _HintSign(name='Counter')
-HintSignDeque = _HintSign(name='Deque')
-HintSignDict = _HintSign(name='Dict')
-HintSignDefaultDict = _HintSign(name='DefaultDict')
-HintSignList = _HintSign(name='List')
-HintSignOrderedDict = _HintSign(name='OrderedDict')
-HintSignSet = _HintSign(name='Set')
-HintSignFrozenSet = _HintSign(name='FrozenSet')
-HintSignNamedTuple = _HintSign(name='NamedTuple')
-HintSignTypedDict = _HintSign(name='TypedDict')
-HintSignGenerator = _HintSign(name='Generator')
+HintSignChainMap = _make_typing_hint_sign('ChainMap')
+HintSignCounter = _make_typing_hint_sign('Counter')
+HintSignDeque = _make_typing_hint_sign('Deque')
+HintSignDict = _make_typing_hint_sign('Dict')
+HintSignDefaultDict = _make_typing_hint_sign('DefaultDict')
+HintSignList = _make_typing_hint_sign('List')
+HintSignOrderedDict = _make_typing_hint_sign('OrderedDict')
+HintSignSet = _make_typing_hint_sign('Set')
+HintSignFrozenSet = _make_typing_hint_sign('FrozenSet')
+HintSignNamedTuple = _make_typing_hint_sign('NamedTuple')
+HintSignTypedDict = _make_typing_hint_sign('TypedDict')
+HintSignGenerator = _make_typing_hint_sign('Generator')
 
 # Other concrete types.
-HintSignMatch = _HintSign(name='Match')
-HintSignPattern = _HintSign(name='Pattern')
+HintSignMatch = _make_typing_hint_sign('Match')
+HintSignPattern = _make_typing_hint_sign('Pattern')
 
 # Other concrete type aliases.
 # IO  <-- ambiguous between subscripted and unsubscripted variants
@@ -202,12 +254,12 @@ HintSignTextIO = HintSignPep484585GenericUnsubscripted
 # get_type_hints   <-- unusable as a type hint
 # is_protocol    <-- unusable as a type hint
 # is_typeddict   <-- unusable as a type hint
-HintSignLiteralString = _HintSign(name='LiteralString')
-HintSignNever         = _HintSign(name='Never')
-HintSignNewType       = _HintSign(name='NewType')
+HintSignLiteralString = _make_typing_hint_sign('LiteralString')
+HintSignNever         = _make_typing_hint_sign('Never')
+HintSignNewType       = _make_typing_hint_sign('NewType')
 # no_type_check   <-- unusable as a type hint
 # no_type_check_decorator   <-- unusable as a type hint
-HintSignNoDefault     = _HintSign(name='NoDefault')
+HintSignNoDefault     = _make_typing_hint_sign('NoDefault')
 
 # Note that "NoReturn" is contextually valid *ONLY* as a top-level return hint.
 # Since this use case is extremely limited, we explicitly generate code for this
@@ -224,30 +276,38 @@ HintSignNoDefault     = _HintSign(name='NoDefault')
 # feelings about the matter. Wisely, we choose pragmatics.
 #
 # In short, "NoReturn" is insane.
-HintSignNoReturn = _HintSign(name='NoReturn')
+HintSignNoReturn = _make_typing_hint_sign('NoReturn')
 
-HintSignNotRequired     = _HintSign(name='NotRequired')
+HintSignNotRequired     = _make_typing_hint_sign('NotRequired')
 # overload   <-- unusable as a type hint
 # override   <-- unusable as a type hint
-HintSignParamSpecArgs   = _HintSign(name='ParamSpecArgs')
-HintSignParamSpecKwargs = _HintSign(name='ParamSpecKwargs')
-HintSignReadOnly        = _HintSign(name='ReadOnly')
-HintSignRequired        = _HintSign(name='Required')
+HintSignParamSpecArgs   = _make_typing_hint_sign('ParamSpecArgs')
+HintSignParamSpecKwargs = _make_typing_hint_sign('ParamSpecKwargs')
+HintSignReadOnly        = _make_typing_hint_sign('ReadOnly')
+HintSignRequired        = _make_typing_hint_sign('Required')
 # reveal_type         <-- unusable as a type hint
 # runtime_checkable   <-- unusable as a type hint
-HintSignSelf            = _HintSign(name='Self')
+HintSignSelf            = _make_typing_hint_sign('Self')
 # Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
-HintSignTypeAlias       = _HintSign(name='TypeAlias')
-HintSignTypeGuard       = _HintSign(name='TypeIs')
-HintSignTypeIs          = _HintSign(name='TypeIs')
+HintSignTypeAlias       = _make_typing_hint_sign('TypeAlias')
+HintSignTypeGuard       = _make_typing_hint_sign('TypeIs')
+HintSignTypeIs          = _make_typing_hint_sign('TypeIs')
 # TypeAliasType  <-- not a unique type hint (merely a C-based type)
-HintSignUnpack          = _HintSign(name='Unpack')
+HintSignUnpack          = _make_typing_hint_sign('Unpack')
 
 # Wrapper namespace for re type aliases.
 #
 # Note that "typing.__all__" intentionally omits the "Match" and "Pattern"
 # attributes, which it oddly considers to comprise another namespace. *shrug*
+
+# ....................{ SIGNS ~ explicit : teardown        }....................
+HINT_SIGNS_TYPING: FrozenSet[_HintSign] = frozenset(_HINT_SIGNS_TYPING_LIST)
+'''
+Frozen set of all **typing signs** (i.e., identifying *all* standard
+PEP-compliant :mod:`typing` type hints and type hint factories available in the
+most recent stable CPython release).
+'''
 
 # ....................{ SIGNS ~ implicit                   }....................
 # Signs with *NO* explicit analogues in the stdlib "typing" module but
@@ -267,6 +327,9 @@ module:
 #FIXME: *WOOPS.* Turns out this was an awful idea, thanks to PEP 646 (i.e.,
 #tuple type hint unpacking). Probably should have seen that coming. See the
 #"data_pep646" test submodule for clarity on what to do now. It's not pretty.
+#FIXME: Actually, this is fine. This obviously fails to suffice to support PEP
+#646, but... who cares? The type-checking code generator for the "HintSignTuple"
+#sign will need to be generalized to support that. This sign is unaffected.
 HintSignTupleFixed = _HintSign(name='TupleFixed')
 '''
 Sign uniquely identifying **fixed-length tuple type hints,** including:
@@ -392,4 +455,10 @@ arbitrary child type hints): e.g.,
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the
 # attributes of this namespace and signs.
-del _HintSign
+del (
+    FrozenSet,
+    List,
+    _HINT_SIGNS_TYPING_LIST,
+    _HintSign,
+    _make_typing_hint_sign,
+)

@@ -99,12 +99,53 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     # Number of these child hints.
     hint_childs_len = len(hint_childs)
 
+    # If this union is subscripted by *NO* child hints, this union is ignorable.
+    # In this case, reduce this union to the ignorable "HINT_IGNORABLE"
+    # singleton.
+    #
+    # Why are unsubscripted unions ignorable? First, consider the case of the
+    # unsubscripted "typing.Union" type hint factory. When unsubscripted, this
+    # factory semantically expands to the implicit "Union[Any]" singleton by the
+    # same argument. Since PEP 484 stipulates that a union of one type
+    # semantically reduces to only that type, "Union[Any]" semantically reduces
+    # to merely "Any". Despite their semantic equivalency, however, these
+    # objects remain syntactically distinct with respect to object
+    # identification: e.g.,
+    #     >>> Union is not Union[Any]
+    #     True
+    #     >>> Union is not Any
+    #     True
+    #
+    # This intentionally excludes:
+    # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
+    #   module physically reduces:
+    #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which is
+    #     already ignored by reducers elsewhere.
+    #   * "Union[object]" to merely "object" (i.e., "Union[object] is
+    #     object"), which is already ignored by reducers elsewhere.
+    # * The "Union" singleton subscripted by one or more ignorable type hints
+    #   contained in this set (e.g., "Union[Any, bool, str]"). Since there exist
+    #   a countably infinite number of these subscriptions, these subscriptions
+    #   are recursively detected below.
+    #
+    # Next, consider the case of the unsubscripted "typing.Optional" type hint
+    # factory. When unsubscripted, this factory semantically expands to the
+    # implicit "Optional[Any]" singleton by the same argument. Since PEP 484
+    # also stipulates that all "Optional[t]" singletons semantically expand to
+    # "Union[t, type(None)]" singletons for arbitrary arguments "t",
+    # "Optional[Any]" semantically expands to merely "Union[Any, type(None)]".
+    # Since all unions subscripted by "Any" semantically reduce to merely "Any",
+    # the "Optional" singleton also reduces to merely "Any".
+    #
+    # This intentionally excludes "Optional[type(None)]", which the "typing"
+    # module physically reduces to merely "type(None)". *shrug*
+    if not hint_childs_len:
+        return HINT_IGNORABLE
+    # Else, this union is subscripted by one or more child hints.
+
     # Assert this union to be subscripted by two or more child hints.
     #
     # Note this should *ALWAYS* be the case, as:
-    # * The unsubscripted "typing.Union" type hint factory is explicitly listed
-    #   in the "HINTS_REPR_IGNORABLE_SHALLOW" set and should thus have already
-    #   been ignored when present.
     # * The "typing" module explicitly prohibits empty union subscription: e.g.,
     #       >>> typing.Union[]
     #       SyntaxError: invalid syntax

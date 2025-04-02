@@ -94,15 +94,15 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     # Else, this mapping is non-empty.
 
     # Child key hint subscripting this parent mapping hint.
-    hint_sane_key = cause.hint_childs_sane[0]
+    hint_key_sane = cause.hint_childs_sane[0]
 
     # Child value hint subscripting this parent mapping hint, defined as
     # either...
-    hint_sane_value = (
+    hint_value_sane = (
         # If this hint describes a "collections.Counter" dictionary subclass,
         # the standard "int" type. See related logic in the
         # beartype._check.code.codemake.make_check_expr() factory for details.
-        int
+        cause.sanify_hint_child(int)
         # Else, this hint does *NOT* describes a "collections.Counter"
         # dictionary subclass. In this case, this child value hint as is.
         if cause.hint_sign is HintSignCounter else
@@ -110,8 +110,8 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
     )
 
     # True only if these hints are unignorable.
-    is_hint_key_unignorable = hint_sane_key is not HINT_IGNORABLE
-    is_hint_value_unignorable = hint_sane_value is not HINT_IGNORABLE
+    is_hint_key_unignorable = hint_key_sane is not HINT_IGNORABLE
+    is_hint_value_unignorable = hint_value_sane is not HINT_IGNORABLE
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:
@@ -146,7 +146,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # "None" otherwise (i.e., if this key satisfies this child key
             # hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_sane_key, pith=pith_key).find_cause()
+                hint_sane=hint_key_sane, pith=pith_key).find_cause()
 
             # If this key is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -170,7 +170,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
             # *OR* "None" otherwise (i.e., if this value satisfies this child
             # value hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_sane_value, pith=pith_value).find_cause()
+                hint_sane=hint_value_sane, pith=pith_value).find_cause()
 
             # If this value is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:

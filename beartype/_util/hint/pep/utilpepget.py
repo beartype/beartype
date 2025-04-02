@@ -34,6 +34,7 @@ from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
+    HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN,
     HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -551,12 +552,12 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # uniquely identifiable by those types to their identifying signs if that
     # package is recognized *OR* the empty dictionary otherwise (i.e., if the
     # package defining this hint is unrecognized).
-    hint_type_name_to_sign = HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN.get(
+    hint_type_basename_to_sign = HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN.get(
         hint_type.__module__, FROZENDICT_EMPTY)
 
     # Sign identifying this hint if this hint is identifiable by its classname
     # *OR* "None" otherwise.
-    hint_sign = hint_type_name_to_sign.get(hint_type.__qualname__)
+    hint_sign = hint_type_basename_to_sign.get(hint_type.__qualname__)
     # print(f'hint_type: {hint_type}')
     # print(f'hint_sign [by type]: {hint_sign}')
 
@@ -564,6 +565,49 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     if hint_sign:
         return hint_sign
     # Else, this hint is *NOT* identifiable by its classname.
+
+    # ..................{ PHASE ~ class                      }..................
+    # This phase attempts to map from the fully-qualified name of this hint if
+    # this hint is a type to a sign identifying *ALL* hints that are instances
+    # of that class.
+    #
+    # Note that most hints are *NOT* types. Likewise, most objects (and thus
+    # most hints) do *NOT* define the "__qualname__" dunder attribute accessed
+    # by this phase. Although this phase is equally as fast as the prior phase,
+    # this phase identifies only an extremely small subset of hints that are
+    # all fairly uncommon. Ergo, this phase is performed early but *NOT* first.
+    # Examples of hints that are types include:
+    # * The PEP 484-compliant unsubscripted "typing.Generic" superclass.
+    # * The PEP 544-compliant unsubscripted "typing.Protocol" superclass.
+
+    # If this hint is a class...
+    if isinstance(hint, type):
+        #FIXME: Is this actually the case? Do non-physical classes dynamically
+        #defined at runtime actually define *BOTH* of these dunder attributes:
+        #* "hint_type.__module__"?
+        #* "hint_type.__qualname__"?
+        # Dictionary mapping from the unqualified basenames of all
+        # PEP-compliant hints that are types residing in the package defining
+        # this hint that are uniquely identifiable by those types to their
+        # identifying signs if that package is recognized *OR* the empty
+        # dictionary otherwise (i.e., if the package defining this hint is
+        # unrecognized).
+        hint_type_basename_to_sign = (
+            HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN.get(
+                hint.__module__, FROZENDICT_EMPTY))
+
+        # Sign identifying this hint if this hint is identifiable by its classname
+        # *OR* "None" otherwise.
+        hint_sign = hint_type_basename_to_sign.get(hint.__qualname__)
+        # print(f'hint: {hint}')
+        # print(f'hint_sign [by self]: {hint_sign}')
+        # print(f'lookup table: {HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN}')
+
+        # If this hint is identifiable by its classname, return this sign.
+        if hint_sign:
+            return hint_sign
+        # Else, this hint is *NOT* identifiable by its classname.
+    # Else, this hint is *NOT* a class.
 
     # ..................{ PHASE ~ repr : str                 }..................
     # This phase attempts to map from the unsubscripted machine-readable

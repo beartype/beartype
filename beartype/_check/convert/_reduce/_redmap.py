@@ -21,6 +21,7 @@ from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
 from beartype._check.convert._reduce._nonpep.api.redapipandera import (
     reduce_hint_pandera)
 from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+    reduce_hint_pep484_any,
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
 )
@@ -54,6 +55,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAbstractSet,
     HintSignAnnotated,
+    HintSignAny,
     HintSignAsyncContextManager,
     HintSignAsyncGenerator,
     HintSignAsyncIterable,
@@ -163,9 +165,12 @@ callable reducing those higher- to lower-level hints).
 # ....................{ MAPPINGS ~ cached                  }....................
 HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ PEP 484                            }..................
-    # If this hint is a PEP 484-compliant new type, reduce this new type to the
-    # non-new type type hint (i.e., PEP-compliant type hint that is *NOT* a
-    # new type) aliased by this new type.
+    # Reduce the PEP 484-compliant "Any" singleton to the ignorable
+    # "HINT_IGNORABLE" singleton.
+    HintSignAny: reduce_hint_pep484_any,
+
+    # Reduce PEP 484-compliant new types to the non-new type type hints (i.e.,
+    # PEP-compliant type hints *NOT* new types) aliased by these new types.
     HintSignNewType: get_hint_pep484_newtype_alias,
 
     # If this hint is the PEP 484-compliant "None" singleton, reduce this hint

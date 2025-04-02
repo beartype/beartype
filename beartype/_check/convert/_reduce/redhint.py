@@ -39,13 +39,8 @@ from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_BARE_IGNORABLE)
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
-)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.kind.map.utilmapset import remove_mapping_keys
 from beartype._util.utilobject import SENTINEL
@@ -296,16 +291,6 @@ def reduce_hint(
         # These tests are shallow and thus exhibit amortized O(1) constant time
         # complexity with negligible constants.
 
-        # If this hint is the root "object" superclass, this hint is trivially
-        # shallowly ignorable. Why? Because this type is the transitive
-        # superclass of all classes. Attributes annotated as "object"
-        # unconditionally match *ALL* objects under isinstance()-based type
-        # covariance and thus semantically reduce to unannotated attributes.
-        # Reduce this hint to the ignorable "HINT_IGNORABLE" singleton.
-        if hint_curr is object:
-            return HINT_IGNORABLE
-        # Else, this hint is *NOT* the root "object" superclass.
-
         # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
         # "None" otherwise (e.g., if this hint is PEP-noncompliant).
         hint_sign = get_hint_pep_sign_or_none(hint_curr)
@@ -331,23 +316,6 @@ def reduce_hint(
             # returned a unique sign identifying this hint (rather than "None").
             break
         # Else, this hint is PEP-compliant.
-        #
-        # If...
-        elif (
-            # This hint is unconditionally ignorable when unsubscripted *AND*...
-            hint_sign in HINT_SIGNS_BARE_IGNORABLE and
-            # This hint is unsubscripted...
-            #
-            # Note that calling this getter is slower than testing membership in
-            # the above set. Ergo, this getter is intentionally called *AFTER*
-            # the prior faster test.
-            not get_hint_pep_args(hint_curr)
-        # Then this hint is ignorable. Reduce this hint to the ignorable
-        # "HINT_IGNORABLE" singleton.
-        ):
-            # print(f'Ignoring hint {repr(hint_curr)}...')
-            return HINT_IGNORABLE
-        # Else, this hint is unignorable.
 
         # ....................{ PHASE ~ deep               }....................
         # Attempt to deeply reduce this hint with a context-free reduction

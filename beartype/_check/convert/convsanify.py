@@ -377,6 +377,12 @@ def sanify_hint_child(
     #current approach here is the correct approach. What isn't correct,
     #actually, is the reduce_hint_child() function -- which should probably
     #simply call this coerce_hint_any() function. Trivial. *shrug*
+    #FIXME: *WAIT.* Is calling coerce_hint_any() actually valuable here at all?
+    #The only demonstrable reason to coerce unmemoized hints into memoized hints
+    #is to deduplicate hints across "__annotations__" dunder dictionaries. Here,
+    #that argument doesn't apply *AT ALL.* There's no space being reduced here.
+    #Indeed, this only appears to be uselessly consuming time for no tangible
+    #gains whatsoever. </lolbro>
 
     # PEP-compliant hint coerced (i.e., permanently converted in the annotations
     # dictionary of the passed callable) from this possibly PEP-noncompliant
