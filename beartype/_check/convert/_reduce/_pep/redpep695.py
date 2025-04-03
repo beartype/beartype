@@ -146,7 +146,7 @@ def reduce_hint_pep695_subscripted(
     #   "hint_parent_sane" object should safely encapsulate all metadata
     #   encapsulated by the prior "hint_parent_sane" object.
     hint_sane = make_hint_sane_recursable(
-        hint=hint, hint_parent_sane=hint_parent_sane)
+        hint_recursable=hint, hint_parent_sane=hint_parent_sane)
 
     # ....................{ RETURN                         }....................
     # Return this metadata.
@@ -294,7 +294,7 @@ def reduce_hint_pep695_unsubscripted(
     # ....................{ RETURN                         }....................
     # Sanified metadata to be returned, guarded against infinite recursion.
     hint_sane = make_hint_sane_recursable(
-        hint=hint_aliased, hint_parent_sane=hint_parent_sane)
+        hint_recursable=hint_aliased, hint_parent_sane=hint_parent_sane)
 
     # Return this metadata.
     return hint_sane

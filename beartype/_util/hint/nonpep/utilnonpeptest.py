@@ -565,8 +565,7 @@ def is_hint_nonpep_type(
 
 # ....................{ TESTERS ~ private                  }....................
 @callable_cached
-def _is_hint_nonpep_tuple(
-    hint: object, is_forwardref_valid: bool) -> bool:
+def _is_hint_nonpep_tuple(hint: object, is_forwardref_valid: bool) -> bool:
     '''
     :data:`True` only if the passed object is a PEP-noncompliant non-empty tuple
     of one or more types.
@@ -605,7 +604,7 @@ def _is_hint_nonpep_tuple(
         # A tuple *AND*...
         isinstance(hint, tuple) and
         # This tuple is non-empty *AND*...
-        bool(hint)
+        hint
     ):
         # This object is either not a tuple *OR* is the empty tuple. In either
         # case, this object is *NOT* a non-empty tuple. Return false.

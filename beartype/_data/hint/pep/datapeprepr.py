@@ -241,20 +241,28 @@ identifying sign.
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
 # here are those *NOT* amenable to such inspection.
 HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
-    # ..................{ BUILTINS                           }..................
-    # Standard builtins module.
-    'builtins': {
-        # ..................{ NON-PEP                        }..................
-        # The PEP-noncompliant root "object" superclass is semantically
-        # equivalent to the PEP-compliant "typing.Any" singleton from the
-        # runtime type-checking perspective. Why? Because "object" is the
-        # transitive superclass of all classes. Attributes annotated as "object"
-        # unconditionally match *ALL* objects under isinstance()-based type
-        # covariance and thus semantically reduce to unannotated attributes.
-        # Reduce this hint to "typing.Any", which then reduces this hint to the
-        # ignorable "HINT_IGNORABLE" singleton.
-        'object': HintSignAny,
-    },
+    # Note that the root "object" superclass *CANNOT* be safely mapped to the
+    # "typing.Any" singleton with logic resembling:
+    #    # ..................{ BUILTINS                           }..................
+    #    # Standard builtins module.
+    #    'builtins': {
+    #        # ..................{ NON-PEP                        }..................
+    #        # The PEP-noncompliant root "object" superclass is semantically
+    #        # equivalent to the PEP-compliant "typing.Any" singleton from the
+    #        # runtime type-checking perspective. Why? Because "object" is the
+    #        # transitive superclass of all classes. Attributes annotated as "object"
+    #        # unconditionally match *ALL* objects under isinstance()-based type
+    #        # covariance and thus semantically reduce to unannotated attributes.
+    #        # Reduce this hint to "typing.Any", which then reduces this hint to the
+    #        # ignorable "HINT_IGNORABLE" singleton.
+    #        'object': HintSignAny,
+    #    },
+    #
+    # Why? Because doing so would then erroneously render the otherwise
+    # PEP-noncompliant "object" type PEP-compliant, which would then cause
+    # raisers like die_if_pep() and die_unless_pep() to exhibit anomalous
+    # behaviour with respect to this type. In short, the clever solution is the
+    # wrong solution. *sigh*
 
     # ..................{ TYPING                             }..................
     # Default *ALL* typing-like modules to the empty dictionary to simplify

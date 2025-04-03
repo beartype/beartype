@@ -12,85 +12,77 @@ hints more readily consumable by :mod:`beartype`).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# FIXME: Preserved in perpetuity. Although currently unused, this logic will
-# probably be desired again at some point. *shrug*
+# ....................{ IMPORTS                            }....................
+from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._data.hint.datahintpep import Hint
+from beartype._util.hint.utilhinttest import die_unless_hint
 
-# # ....................{ IMPORTS                            }....................
-# from beartype._data.hint.datahinttyping import (
-#     Pep484TowerComplex,
-#     Pep484TowerFloat,
-# )
-# from beartype._conf.confcls import BeartypeConf
-# from beartype._data.hint.datahintpep import Hint
-# from beartype._util.hint.utilhinttest import die_unless_hint
-#
-# # ....................{ REDUCERS                           }....................
-# def reduce_hint_nonpep_type(
-#     hint: Hint,
-#     conf: BeartypeConf,
-#     exception_prefix: str,
-#     **kwargs
-# ) -> Hint:
-#     '''
-#     Reduce the passed **PEP-noncompliant type** (i.e., type hint identified
-#     by *no* sign, implying this hint to almost certainly be an isinstanceable
-#     type) if this hint satisfies various conditions to another (possibly signed)
-#     PEP-compliant type hint.
-#
-#     Specifically:
-#
-#     * If the passed hint is **shallowly ignorable**
-#     * If the passed configuration enables support for the :pep:`484`-compliant
-#       implicit numeric tower *and* this hint is:
-#
-#       * The builtin :class:`float` type, this reducer expands this type to the
-#         ``float | int`` union of types.
-#       * The builtin :class:`complex` type, this reducer expands this type to the
-#         ``complex | float | int`` union of types.
-#
-#     This reducer is intentionally *not* memoized (e.g., by the
-#     ``callable_cached`` decorator), as reducers cannot be memoized.
-#
-#     Parameters
-#     ----------
-#     hint : Hint
-#         PEP-noncompliant hint to be reduced.
-#     exception_prefix : str
-#         Human-readable substring prefixing raised exception messages.
-#
-#     All remaining passed arguments are silently ignored.
-#
-#     Returns
-#     -------
-#     Hint
-#         PEP-compliant hint reduced from this PEP-noncompliant hint.
-#     '''
-#
-#     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-#
-#     # If...
-#     if (
-#         # This configuration enables support for the PEP 484-compliant
-#         # implicit numeric tower *AND*...
-#         conf.is_pep484_tower and
-#         # This hint is either the builtin "float" or "complex" classes
-#         # governed by this tower...
-#         (hint is float or hint is complex)
-#     # Then expand this hint to the corresponding numeric tower.
-#     ):
-#         # Expand this hint to match...
-#         hint = (
-#             # If this hint is the builtin "float" class, both the builtin
-#             # "float" and "int" classes;
-#             Pep484TowerFloat
-#             if hint is float else
-#             # Else, this hint is the builtin "complex" class by the above
-#             # condition; in this case, the builtin "complex", "float", and
-#             # "int" classes.
-#             Pep484TowerComplex
-#         )
-#     # Else, this hint is truly unidentifiable.
-#     else:
-#
-#     # Return this hint as is unmodified.
-#     return hint
+# ....................{ REDUCERS                           }....................
+def reduce_hint_nonpep_type(hint: Hint, exception_prefix: str) -> Hint:
+    '''
+    Reduce the passed **PEP-noncompliant type hint** (i.e., type hint identified
+    by *no* sign, typically but *not* necessarily implying this hint to be an
+    isinstanceable type) if this hint satisfies various conditions to another
+    possibly PEP-compliant type hint.
+
+    Specifically, if this hint is either:
+
+    * A valid PEP-noncompliant isinstanceable type, this reducer preserves this
+      type as is.
+    * A valid PEP-compliant hint unrecognized by beartype, this reducer raises
+      a :exc:`.BeartypeDecorHintPepUnsupportedException` exception.
+    * An invalid and thus PEP-noncompliant hint, this reducer raises an
+      :exc:`.BeartypeDecorHintNonpepException` exception.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to a
+    one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        PEP-noncompliant hint to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    Returns
+    -------
+    Hint
+        Either:
+
+        * If this hint is the root :class:`object` superclass, the ignorable
+          :data:`.HINT_IGNORABLE` singleton. :class:`object` is the transitive
+          superclass of all classes. Attributes annotated as :class:`object`
+          unconditionally match *all* objects under :func:`isinstance`-based
+          type covariance and thus semantically reduce to unannotated attributes
+          -- which is to say, they are ignorable.
+        * Else, this PEP-noncompliant hint unmodified.
+
+    Raises
+    ------
+    BeartypeDecorHintPepUnsupportedException
+        If this object is a PEP-compliant type hint currently unsupported by
+        the :func:`beartype.beartype` decorator.
+    BeartypeDecorHintNonpepException
+        If this object is neither a:
+
+        * Supported PEP-compliant type hint.
+        * Supported PEP-noncompliant type hint.
+    '''
+
+    # If this hint is unsupported by @beartype, raise an exception.
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+    # Else, this hint is supported by @beartype.
+
+    # If this hint is the root "object" superclass, reduce this type to the
+    # ignorable ".HINT_IGNORABLE" singleton.
+    if hint is object:
+        return HINT_IGNORABLE
+    # Else, this hint is *NOT* the root "object" superclass.
+
+    # Return this hint as is unmodified, which then halts reduction. By
+    # definition, PEP-noncompliant hints are irreducible. If this hint was
+    # instead reducible, the get_hint_pep_sign_or_none() getter called by the
+    # parent _reduce_hint_cached() function would have instead returned a unique
+    # sign identifying this hint (rather than "None").
+    return hint

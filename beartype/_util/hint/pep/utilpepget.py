@@ -372,6 +372,7 @@ def get_hint_pep_sign(
 
         # Avoid circular import dependencies.
         from beartype._util.hint.nonpep.utilnonpeptest import die_if_hint_nonpep
+        from beartype._util.hint.utilhinttest import die_as_hint_unsupported
 
         # If this hint is PEP-noncompliant, raise an exception.
         die_if_hint_nonpep(
@@ -384,16 +385,10 @@ def get_hint_pep_sign(
         # hint currently unsupported by the @beartype decorator.
 
         # Raise an exception indicating this.
-        #
-        # Note that we intentionally avoid calling the
-        # die_if_hint_pep_unsupported() function here, which calls the
-        # is_hint_pep_supported() function, which calls this function.
-        raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'currently unsupported by beartype. '
-            f'You suddenly feel encouraged to submit a feature request '
-            f'for this hint to our friendly issue tracker at:\n'
-            f'\t{URL_ISSUES}'
+        die_as_hint_unsupported(
+            hint=hint,
+            exception_prefix=exception_prefix,
+            exception_cls=exception_cls,
         )
     # Else, this hint is recognized.
 

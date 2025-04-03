@@ -25,11 +25,15 @@ def test_make_check_code_decoration() -> None:
 
     # Defer test-specific imports.
     from beartype._check.code.codemake import make_check_expr
+    from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 
     # Assert this function generates identical code for identical hints and is
     # thus cached via memoization.
+    #
+    # Note that the make_check_expr() API expects the passed hint to already be
+    # sanified and thus encapsulated by a "HintSign" object.
     assert (
-        make_check_expr(str, BEARTYPE_CONF_DEFAULT) is
-        make_check_expr(str, BEARTYPE_CONF_DEFAULT)
+        make_check_expr(HintSane(str), BEARTYPE_CONF_DEFAULT) is
+        make_check_expr(HintSane(str), BEARTYPE_CONF_DEFAULT)
     )
