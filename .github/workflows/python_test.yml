@@ -166,6 +166,28 @@ jobs:
             python-version: "3.12"
           - tox-env: py313-coverage
             python-version: "3.13"
+
+          #FIXME: Add support for testing the free-threaded CPython. In theory,
+          #this should just work "out-of-the-box" by uncommenting the following:
+          #    - tox-env: py313-coverage
+          #      python-version: "3.13t"
+          #
+          #The "t" is the official suffix reserved by CPython for free-threaded
+          #builds. Since the "setup-python" action already explicitly supports
+          #this syntax, this *SHOULD* just work. Sadly, issues arise with "tox".
+          #Ideally, we would add support for the free-threaded CPython by
+          #adding the following to our "tox.ini" configuration:
+          #    envlist = py{39,310,311,312,313,313t}-coverage
+          #
+          #Unfortunately, "tox" currently fails to support this syntax. See also
+          #this currently open issue on the topic:
+          #    https://github.com/tox-dev/tox/issues/3391
+          #
+          #Note there exists a "tox"-specific workaround for this issue: the
+          #"--discover" option. If testing free-threaded CPython ever becomes a
+          #pressing concern, see this wiki topic describing this workaround:
+          #    https://tox.wiki/en/4.21.2/cli_interface.html#tox-run---discover
+
           # - tox-env: py314-coverage
           #   python-version: "3.14"
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*

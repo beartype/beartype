@@ -120,9 +120,8 @@ from beartype.roar import (
     BeartypeDecorHintPep646Exception,
     BeartypeDecorHintPep692Exception,
 )
-from beartype.typing import (
-    Optional,
-)
+from beartype.typing import Optional
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypedDict,
     HintSignTypeVarTuple,
@@ -139,11 +138,11 @@ from beartype._util.hint.pep.utilpepget import (
 #  *PROHIBITED.* They signify nothing. "typing.Unpack" should *ALWAYS* be
 #  subscripted by at least something.
 def reduce_hint_pep646692_unpack(
-    hint: object,
+    hint: Hint,
     arg_kind: Optional[ArgKind],
     exception_prefix: str,
     **kwargs
-) -> object:
+) -> Hint:
     '''
     Reduce the passed :pep:`646`- or :pep:`692`-compliant **unpack type hint**
     (i.e., ``typing.Unpack[...]`` type hint subscripted by either a

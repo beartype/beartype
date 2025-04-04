@@ -453,6 +453,8 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     return func_wrapper_code
 
 # ....................{ PRIVATE ~ constants                }....................
+#FIXME: Shift these constants into a more appropriate "beartype._data"
+#submodule, please. *sigh*
 _ARG_KINDS_KEYWORD = frozenset((
     ArgKind.KEYWORD_ONLY,
     ArgKind.POSITIONAL_OR_KEYWORD,

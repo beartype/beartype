@@ -231,6 +231,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
             # trivial type "int".
             hint not in hint_sane_child.recursable_hints
         ):
+            # print(f'Ignoring union {hint} with ignorable child {hint_sane_child}...')
             # Reduce this entire union to the "HINT_IGNORABLE" singleton. Why?
             # By set logic, a union subscripted by one or more ignorable child
             # hints is itself ignorable.

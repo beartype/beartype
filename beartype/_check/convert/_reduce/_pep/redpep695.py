@@ -89,12 +89,15 @@ def reduce_hint_pep695_subscripted(
         reduce_hint_pep484_subscripted_typevars_to_hints)
 
     # ....................{ RECURSE                        }....................
+    # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
+
     # If this hint is recursive, ignore this hint to avoid infinite recursion.
     #
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
+        # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
