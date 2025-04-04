@@ -97,7 +97,7 @@ def reduce_hint_pep695_subscripted(
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
-        # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
+        print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
@@ -126,16 +126,17 @@ def reduce_hint_pep695_subscripted(
     )
 
     # ....................{ REDUCE ~ phase : 2             }....................
+    #FIXME: Revise comments, please. *sigh*
     # Metadata encapsulating the sanification of both the parent hint (if any)
     # *AND* the previously decided type variable lookup table for this alias.
     # Since this new metadata is guaranteed to be the superset of the old
     # metadata applying *ONLY* to the parent hint, we intentionally replace the
     # latter with the former here.
-    hint_parent_sane = (
-        hint_or_sane
-        if isinstance(hint_or_sane, HintSane) else
-        hint_parent_sane
-    )
+    if isinstance(hint_or_sane, HintSane):
+        hint_parent_sane = hint_or_sane
+        hint_nonrecursable = hint_or_sane.hint
+    else:
+        hint_nonrecursable = hint_or_sane
 
     # Decide the recursion guard protecting this possibly recursive alias
     # against infinite recursion. Note that:
@@ -149,7 +150,12 @@ def reduce_hint_pep695_subscripted(
     #   "hint_parent_sane" object should safely encapsulate all metadata
     #   encapsulated by the prior "hint_parent_sane" object.
     hint_sane = make_hint_sane_recursable(
-        hint_recursable=hint, hint_parent_sane=hint_parent_sane)
+        #FIXME: Document this. Kinda intense, yo. Copy-paste similar comments
+        #inside _reduce_hint_overrides() to here, please. *sigh*
+        hint_recursable=hint,
+        hint_nonrecursable=hint_nonrecursable,
+        hint_parent_sane=hint_parent_sane,
+    )
 
     # ....................{ RETURN                         }....................
     # Return this metadata.
@@ -240,6 +246,7 @@ def reduce_hint_pep695_unsubscripted(
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):  # pyright: ignore
+        print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
@@ -297,7 +304,12 @@ def reduce_hint_pep695_unsubscripted(
     # ....................{ RETURN                         }....................
     # Sanified metadata to be returned, guarded against infinite recursion.
     hint_sane = make_hint_sane_recursable(
-        hint_recursable=hint_aliased, hint_parent_sane=hint_parent_sane)
+        #FIXME: Document this. Kinda intense, yo. Copy-paste similar comments
+        #inside _reduce_hint_overrides() to here, please. *sigh*
+        hint_recursable=hint,
+        hint_nonrecursable=hint_aliased,
+        hint_parent_sane=hint_parent_sane,
+    )
 
     # Return this metadata.
     return hint_sane

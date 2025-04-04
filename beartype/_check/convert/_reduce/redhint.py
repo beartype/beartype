@@ -208,7 +208,7 @@ def reduce_hint(
         # ....................{ REDUCE                     }....................
         # For each lower-level reducer...
         for hint_reducer in _HINT_REDUCERS:
-            # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
+            print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
 
             # Either:
             # * If this reducer reduces this hint:
@@ -227,13 +227,25 @@ def reduce_hint(
                 reductions_count=reductions_count,
                 exception_prefix=exception_prefix,
             )
-            # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
+            print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
             # If this unreduced hint was modified, this reducer reduced this
             # hint. Halt reducing by these lower-level reducers, enabling the
             # outer loop to decide whether to continue reducing.
-            if hint_or_sane_curr is not hint_or_sane_prev:
-                # print(f'[reduce_hint] Incrementally reduced!')
+            # if hint_or_sane_curr is not hint_or_sane_prev:
+            if hint_or_sane_curr is not hint_curr:
+                # If this hint is ignorable, halt reducing immediately.
+                #
+                # Note that this is merely an optimization avoiding unnecessary
+                # iteration. Without this test, hints reduced to this ignorable
+                # singleton would require an additional loop through the
+                # "_HINT_REDUCERS" tuple. This test elides that iteration.
+                if hint_or_sane_curr is HINT_IGNORABLE:
+                    print(f'[reduce_hint] Ignorably reduced!')
+                    return HINT_IGNORABLE
+                # Else, this hint is currently unignorable.
+
+                print(f'[reduce_hint] Incrementally reduced!')
                 break
             # Else, this unreduced hint remains unmodified. Since this reducer
             # failed to reduce this hint, silently continue to the next reducer.
@@ -250,25 +262,8 @@ def reduce_hint(
         # ....................{ RESPOND                    }....................
         # Respond to the lower-level reduction performed above.
 
-        # If this hint is ignorable, halt reducing immediately.
-        if hint_or_sane_curr is HINT_IGNORABLE:
-            # print(f'[reduce_hint] Ignorably reduced!')
-            return HINT_IGNORABLE
-        # Else, this hint is currently unignorable.
-
-        #FIXME: Uhh... This actually seems to work. Intuitively, I get it.
-        #Rationally, I don't. Let's document this *EXTENSIVELY*, please. *sigh*
-        if (
-            hint_curr is hint_or_sane_prev or (
-                isinstance(hint_or_sane_prev, HintSane) and
-                hint_curr is hint_or_sane_prev.hint
-            )
-        ):
-            # print(f'[reduce_hint] Fully reduced!')
-            break
-
         # If reducing this hint generated supplementary metadata...
-        elif isinstance(hint_or_sane_curr, HintSane):
+        if isinstance(hint_or_sane_curr, HintSane):
             # Replace the sanified type hint metadata of the parent hint of this
             # hint by the sanified type hint metadata of this hint itself. Doing
             # so ensures that the next reducer passed the "hint_parent_sane"

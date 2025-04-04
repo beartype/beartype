@@ -477,12 +477,9 @@ def is_hint_recursive(
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_hint_sane_recursable(
-    # Mandatory parameters.
     hint_recursable: Hint,
+    hint_nonrecursable: Hint,
     hint_parent_sane: Optional[HintSane],
-
-    # Optional parameters.
-    hint_nonrecursable: Union[Hint, Iota] = SENTINEL,
 ) -> HintSane:
     '''
     **Sanified type hint metadata** (i.e., :class:`.HintSane` object) safely
@@ -501,16 +498,7 @@ def make_hint_sane_recursable(
     hint_recursable : Hint
         Recursable type hint to be added to the
         :attr:`.HintSane.recursable_hints` frozen set of the returned metadata.
-    hint_parent_sane : Optional[HintSane]
-        Either:
-
-        * If this recursable type hint is a root type hint, :data:`None`.
-        * Else, **sanified parent type hint metadata** (i.e., immutable and thus
-          hashable object encapsulating *all* metadata previously returned by
-          :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
-          the possibly PEP-noncompliant parent hint of this hint into a fully
-          PEP-compliant parent hint).
-    hint_nonrecursable : Union[Hint, Iota]
+    hint_nonrecursable : Hint
         Non-recursable type hint to be encapsulated if this type hint has both
         recursable and non-recursable forms describing this type hint. The
         distinction is as follows:
@@ -525,11 +513,15 @@ def make_hint_sane_recursable(
           of the returned metadata. This non-recursable form is typically the
           post-sanified hint produced by sanifying the recursable form of the
           pre-sanified hint passed as the ``hint_recursable`` parameter.
+    hint_parent_sane : Optional[HintSane]
+        Either:
 
-        Defaults to the sentinel placeholder, in which case this parameter
-        actually defaults to the passed ``hint_recursable`` parameter. This
-        default suffices for the common case in which the recursable and
-        non-recursable forms of a type hint are exactly the same.
+        * If this recursable type hint is a root type hint, :data:`None`.
+        * Else, **sanified parent type hint metadata** (i.e., immutable and thus
+          hashable object encapsulating *all* metadata previously returned by
+          :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+          the possibly PEP-noncompliant parent hint of this hint into a fully
+          PEP-compliant parent hint).
 
     Returns
     -------
@@ -541,16 +533,13 @@ def make_hint_sane_recursable(
     '''
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
+    assert hint_nonrecursable is not hint_recursable, (
+        f'Non-recursable hint {repr(hint_nonrecursable)} == '
+        f'recursable hint {repr(hint_recursable)}.'
+    )
 
     # Sanified metadata to be returned.
     hint_sane: HintSane = None  # type: ignore[assignment]
-
-    # If the caller passed *NO* non-recursable form of this hint, default this
-    # form to the passed recursable form of this hint.
-    if hint_nonrecursable is SENTINEL:
-        hint_nonrecursable = hint_recursable
-    # Else, the caller passed a non-recursable form of this hint. Preserve this
-    # form as is.
 
     # Recursion guard containing *ONLY* this pre-sanified unsubscripted hint
     # (which is what the initial recursion logic above will then subsequently
