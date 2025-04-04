@@ -50,21 +50,20 @@ def test_get_hint_pep484_typevars_to_hints() -> None:
     # ....................{ PASS                           }....................
     # Assert that this mapper correctly maps a single type variable to a single
     # type hint.
-    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
-        typevars=(S,), hints=(int,))
+    typevar_to_hint = _get_hint_pep484_typevars_to_hints(None, (S,), (int,))
     assert typevar_to_hint == {S: int}
 
     # Assert that this mapper correctly maps a single type variable bounded to a
     # type to a single type hint satisfying that type.
     typevar_to_hint = _get_hint_pep484_typevars_to_hints(
-        typevars=(T_sequence,), hints=(list,))
+        None, (T_sequence,), (list,))
     assert typevar_to_hint == {T_sequence: list}
 
     # Assert that this mapper correctly maps a single type variable constrained
     # to two or more types to a single type hint satisfying at least one of
     # those types.
     typevar_to_hint = _get_hint_pep484_typevars_to_hints(
-        typevars=(T_str_or_bytes,), hints=(bytes,))
+        None, (T_str_or_bytes,), (bytes,))
     assert typevar_to_hint == {T_str_or_bytes: bytes}
 
     # Assert that this mapper correctly maps multiple type variables to multiple
@@ -72,41 +71,40 @@ def test_get_hint_pep484_typevars_to_hints() -> None:
     # overwriting the type hint previously mapped to that type variable with the
     # corresponding passed hint.
     typevar_to_hint = _get_hint_pep484_typevars_to_hints(
-        typevars=(T, S,), hints=(float, complex,))
+        None, (T, S,), (float, complex,))
     assert typevar_to_hint == {S: complex, T: float}
 
     # ....................{ FAIL                           }....................
     # Assert that this mapper raises the expected exception when passed *NO*
     # type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        _get_hint_pep484_typevars_to_hints(
-            typevars=(), hints=(bool,))
+        _get_hint_pep484_typevars_to_hints(None, (), (bool,))
 
     # Assert that this mapper raises the expected exception when passed a type
     # variable that is *NOT* actually a type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
         _get_hint_pep484_typevars_to_hints(
-            typevars=(S, 'His brother Death. A rare and regal prey',),
-            hints=(int, str,),
+            None,
+            (S, 'His brother Death. A rare and regal prey',),
+            (int, str,),
         )
 
     # Assert that this mapper raises the expected exception when passed *NO*
     # type hints.
     with raises(BeartypeDecorHintPep484TypeVarException):
-        _get_hint_pep484_typevars_to_hints(
-            typevars=(S,), hints=())
+        _get_hint_pep484_typevars_to_hints(None, (S,), ())
 
     # Assert that this mapper raises the expected exception when passed more
     # type hints than type variables.
     with raises(BeartypeDecorHintPep484TypeVarException):
         _get_hint_pep484_typevars_to_hints(
-            typevars=(S, T,), hints=(int, bool, complex,))
+            None, (S, T,), (int, bool, complex,))
 
     # Assert that this mapper raises the expected violation when passed a type
     # hint violating the bounds of a passed type variable.
     with raises(BeartypeDecorHintPep484TypeVarViolation):
         _get_hint_pep484_typevars_to_hints(
-            typevars=(S, T, T_sequence,), hints=(float, complex, int,))
+            None, (S, T, T_sequence,), (float, complex, int,))
 
     #FIXME: Uncomment *AFTER* we generalize this mapper to type-check violations
     #against arbitrarily complex constraints.

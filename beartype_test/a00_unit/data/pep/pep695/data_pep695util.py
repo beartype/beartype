@@ -67,22 +67,22 @@ def unit_test_is_hint_pep695_subscripted() -> None:
     assert is_hint_pep695_subscripted(colossal_skeleton) is False
 
 # ....................{ TESTS ~ getter                     }....................
-def unit_test_get_hint_pep695_typevars() -> None:
+def unit_test_get_hint_pep695_parameterizable_typeparams() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.is_hint_pep695_subscripted`
-    tester.
+    :mod:`beartype._util.hint.pep.proposal.pep695._get_hint_pep695_parameterizable_typeparams`
+    getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.typing import (
-        Generic,
         ParamSpec,
         TypeVar,
         TypeVarTuple,
     )
-    from beartype._util.hint.pep.proposal.pep695 import _get_hint_pep695_parameterizable_typeparams
+    from beartype._util.hint.pep.proposal.pep695 import (
+        _get_hint_pep695_parameterizable_typeparams)
 
     # ....................{ CLASSES                        }....................
     class AndThenSpake[S]:  # <-- this is madness. this is PEP 695.
@@ -125,22 +125,24 @@ def unit_test_get_hint_pep695_typevars() -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this getter passed a pure-Python class returns the expected tuple.
-    AndThenSpake_typevars = _get_hint_pep695_parameterizable_typeparams(AndThenSpake)
+    AndThenSpake_typevars = _get_hint_pep695_parameterizable_typeparams(
+        AndThenSpake)
     assert len(AndThenSpake_typevars) == 1
     assert isinstance(AndThenSpake_typevars[0], TypeVar)
 
     # Assert this getter passed a pure-Python function returns the expected
     # tuple.
-    as_with_a_palsied_tongue_typevars = _get_hint_pep695_parameterizable_typeparams(
-        as_with_a_palsied_tongue)
+    as_with_a_palsied_tongue_typevars = (
+        _get_hint_pep695_parameterizable_typeparams(as_with_a_palsied_tongue))
     assert len(as_with_a_palsied_tongue_typevars) == 2
     assert isinstance(as_with_a_palsied_tongue_typevars[0], TypeVarTuple)
     assert isinstance(as_with_a_palsied_tongue_typevars[1], ParamSpec)
 
     # Assert this getter passed a PEP 695-compliant type alias returns the
     # expected tuple.
-    and_that_fair_kneeling_goddess_typevars = _get_hint_pep695_parameterizable_typeparams(
-        and_that_fair_kneeling_goddess)
+    and_that_fair_kneeling_goddess_typevars = (
+        _get_hint_pep695_parameterizable_typeparams(
+            and_that_fair_kneeling_goddess))
     assert len(and_that_fair_kneeling_goddess_typevars) == 3
     assert isinstance(and_that_fair_kneeling_goddess_typevars[0], TypeVar)
     assert isinstance(and_that_fair_kneeling_goddess_typevars[1], TypeVarTuple)
@@ -176,7 +178,8 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # ....................{ ASSERTS ~ null                 }....................
     # Assert that this iterator yields nothing when passed a type alias
     # containing *NO* unquoted forward references.
-    their_own_life = list(iter_hint_pep695_unsubscripted_forwardrefs(of_intermitted_song))
+    their_own_life = list(
+        iter_hint_pep695_unsubscripted_forwardrefs(of_intermitted_song))
     assert not their_own_life
 
     # ....................{ ASSERTS ~ single               }....................
@@ -269,14 +272,22 @@ def unit_test_reduce_hint_pep695_unsubscripted() -> None:
     # ....................{ PASS                           }....................
     # Assert that this reducer returns the type hint underlying the passed type
     # alias containing *NO* unquoted forward references.
-    assert reduce_hint_pep695_unsubscripted(
-        hint=her_dark_locks, exception_prefix='') == str | int
+    hint_sane = reduce_hint_pep695_unsubscripted(
+        hint=her_dark_locks,
+        hint_parent_sane=None,
+        exception_prefix='',
+    )
+    assert hint_sane.hint == str | int
 
     # ....................{ FAIL                           }....................
     # Assert that this reducer raises the expected exception when passed a type
     # alias containing one unquoted forward reference.
     with raises(BeartypeDecorHintPep695Exception):
-        reduce_hint_pep695_unsubscripted(hint=floating_in, exception_prefix='')
+        reduce_hint_pep695_unsubscripted(
+            hint=floating_in,
+            hint_parent_sane=None,
+            exception_prefix='',
+        )
 
 
 def unit_test_reduce_hint_pep484_subscripted_typevars_to_hints() -> None:
@@ -321,13 +332,13 @@ def unit_test_reduce_hint_pep484_subscripted_typevars_to_hints() -> None:
     # "__parameters__" dunder attribute on these aliases. It is what it is.
     assert reduce_hint_pep484_subscripted_typevars_to_hints(
         irresistible_career[int]) == HintSane(
-            irresistible_career,
-            FrozenDict({irresistible_career_typevars[0]: int,}),
+            hint=irresistible_career,
+            typevar_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
         )
     assert reduce_hint_pep484_subscripted_typevars_to_hints(
         in_thy[bool, complex]) == HintSane(
-            in_thy,
-            FrozenDict({
+            hint=in_thy,
+            typevar_to_hint=FrozenDict({
                 in_thy_typevars[0]: bool,
                 in_thy_typevars[1]: complex,
             }),

@@ -49,7 +49,7 @@ def test_is_hint_pep695_subscripted() -> None:
         'And thou, colossal Skeleton, that, still') is False
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep695_typevars() -> None:
+def test_get_hint_pep695_parameterizable_typeparams() -> None:
     '''
     Test the private
     :mod:`beartype._util.hint.pep.proposal.pep695._get_hint_pep695_parameterizable_typeparams`
@@ -59,7 +59,8 @@ def test_get_hint_pep695_typevars() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._util.hint.pep.proposal.pep695 import _get_hint_pep695_parameterizable_typeparams
+    from beartype._util.hint.pep.proposal.pep695 import (
+        _get_hint_pep695_parameterizable_typeparams)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -72,10 +73,10 @@ def test_get_hint_pep695_typevars() -> None:
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
-            unit_test_get_hint_pep695_typevars)
+            unit_test_get_hint_pep695_parameterizable_typeparams)
 
         # Perform this test.
-        unit_test_get_hint_pep695_typevars()
+        unit_test_get_hint_pep695_parameterizable_typeparams()
     # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
     # 695.
 
@@ -88,7 +89,8 @@ def test_get_hint_pep695_typevars() -> None:
     # Assert this getter raises the expected exception when passed an arbitrary
     # object that is *NOT* parameterizable under PEP 695.
     with raises(BeartypeDecorHintPep695Exception):
-        _get_hint_pep695_parameterizable_typeparams('And all the gloom and sorrow of the place,')
+        _get_hint_pep695_parameterizable_typeparams(
+            'And all the gloom and sorrow of the place,')
 
 # ....................{ TESTS ~ iterator                   }....................
 def test_iter_hint_pep695_forwardrefs() -> None:
