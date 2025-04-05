@@ -577,7 +577,6 @@ include = [
     "/mypy.ini",
     "/pyproject.toml",
     "/pyright",
-    "/pyrightconfig.json",
     "/pytest",
     "/pytest.ini",
     "/sphinx",
