@@ -40,7 +40,16 @@ defined by this submodule).
 '''
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[typing_Protocol]:
+#FIXME: We'd strongly prefer to annotate this as returning
+#"TypeIs[typing_Protocol]" rather than "TypeIs[type]". The former is
+#considerably more fine-grained and thus broadly useful than the latter. Sadly,
+#both "mypy" and "pyright" complain about this. Both are wrong, of course:
+#    beartype/_util/hint/pep/proposal/pep544.py:43: error: Variable
+#    "typing.Protocol" is not valid as a type  [valid-type]
+#
+#Nonsense! "typing.Protocol" is *LITERALLY* a type. It's a type, guys. Like most
+#types, it's both a type hint *AND* a type. That's fine. Oh, well.
+def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is a functionally useless
     :pep:`484`-compliant :mod:`typing` **IO generic superclass** (i.e., either
@@ -94,7 +103,9 @@ def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[typing_Protocol]:
     return hint_origin in TYPES_PEP484_GENERIC_IO
 
 
-def is_hint_pep544_protocol(hint: Hint) -> TypeIs[typing_Protocol]:
+#FIXME: We'd strongly prefer to annotate this as returning
+#"TypeIs[typing_Protocol]" rather than "TypeIs[type]". See above for commentary.
+def is_hint_pep544_protocol(hint: Hint) -> TypeIs[type]:
     '''
     :data:`True` only if the passed object is a :pep:`544`-compliant
     **protocol** (i.e., subclass of the :class:`typing.Protocol` superclass).
