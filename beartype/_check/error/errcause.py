@@ -318,7 +318,7 @@ class ViolationCause(object):
         # If this hint is either...
         if (
             # Ignorable *OR*...
-            self.hint is HINT_IGNORABLE or
+            self.hint_sane is HINT_IGNORABLE or
             # PEP-noncompliant...
             not is_hint_pep(self.hint)
         ):
@@ -463,49 +463,15 @@ class ViolationCause(object):
         # If this hint is ignorable, all possible objects satisfy this hint.
         # Since this hint *CANNOT* (by definition) be the cause of this failure,
         # return the same cause as is.
-        if self.hint is HINT_IGNORABLE:
+        if self.hint_sane is HINT_IGNORABLE:
             return self
         # Else, this hint is unignorable.
 
         # Getter function returning the desired string.
         cause_finder: Callable[[ViolationCause], ViolationCause] = None  # type: ignore[assignment]
 
-        #FIXME: Trivially simplify this method by:
-        #* Define a new find_cause_nonpep() function elsewhere whose body is
-        #  the body of this "if" conditional branch.
-        #* Register this function with HINT_SIGN_TO_GET_CAUSE_FUNC: e.g.,
-        #  HINT_SIGN_TO_GET_CAUSE_FUNC = {
-        #      ...,
-        #      None: find_cause_nonpep,
-        #  }
-        #* Remove this "if" conditional branch.
-
-        # If *NO* sign uniquely identifies this hint, this hint is either
-        # PEP-noncompliant *OR* only contextually PEP-compliant in certain
-        # specific use cases. In either case...
-        if self.hint_sign is None:
-            # Avoid circular import dependencies.
-            from beartype._check.error._errtype import (
-                find_cause_instance_types_tuple,
-                find_cause_instance_type,
-            )
-
-            # If this hint is a tuple union, defer to the finder specific to
-            # tuple unions.
-            if isinstance(self.hint, tuple):
-                cause_finder = find_cause_instance_types_tuple
-            # Else, this hint is *NOT* a tuple union. In this case, assume this
-            # hint to be an isinstanceable class by deferring to the finder
-            # specific to isinstanceable classes.
-            #
-            # Note that if this assumption is *NOT* the case, this finder
-            # subsequently raises a human-readable exception.
-            else:
-                cause_finder = find_cause_instance_type
-        # Else, this hint is PEP-compliant.
-        #
         # If this hint...
-        elif (
+        if (
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
             self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
@@ -541,7 +507,7 @@ class ViolationCause(object):
             # yet, raise an exception.
             if cause_finder is None:
                 raise _BeartypeCallHintPepRaiseException(
-                    f'{self.exception_prefix} type hint '
+                    f'{self.exception_prefix}type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
                     f'"find_cause_"-prefixed getter function defined '
                     f'for this category of hint).'
@@ -556,8 +522,9 @@ class ViolationCause(object):
     # ..................{ PERMUTERS                          }..................
     def permute_cause(self, **kwargs) -> 'ViolationCause':
         '''
-        Shallow copy of this object such that each passed keyword parameter
-        overwrites the instance variable of the same name in this copy.
+        Shallow copy of this violation cause such that each passed keyword
+        parameter overwrites the instance variable of the same name in this
+        copy.
 
         Parameters
         ----------
@@ -567,14 +534,15 @@ class ViolationCause(object):
         Returns
         -------
         ViolationCause
-            Shallow copy of this object such that each keyword parameter
-            overwrites the instance variable of the same name in this copy.
+            Shallow copy of this violation cause such that each keyword
+            parameter overwrites the instance variable of the same name in this
+            copy.
 
         Raises
         ------
         _BeartypeCallHintPepRaiseException
             If the name of any passed keyword parameter is *not* that of an
-            existing instance variable of this object.
+            existing instance variable of this violation cause.
 
         Examples
         --------
@@ -602,19 +570,21 @@ class ViolationCause(object):
         )
 
 
-    def permute_cause_hint_insane(
-        self, hint_insane: Hint, **kwargs) -> 'ViolationCause':
+    def permute_cause_hint_child_insane(
+        self, hint_child_insane: Hint, **kwargs) -> 'ViolationCause':
         '''
-        Shallow copy of this object such that each passed keyword parameter
-        overwrites the instance variable of the same name in this copy *after*
-        sanifying (i.e., sanitizing) the passed **possibly insane hint** (i.e.,
-        hint that has yet to be sanified) and passing the metadata encapsulating
-        that sanification as the ``hint_sane`` parameter of this dictionary.
+        Shallow copy of this violation cause such that each passed keyword
+        parameter overwrites the instance variable of the same name in this copy
+        *after* sanifying (i.e., sanitizing) the passed **possibly insane child
+        hint** (i.e., child hint that has yet to be sanified subscripting the
+        current hint encapsulated by this cause) and passing the metadata
+        encapsulating that sanification as the ``hint_sane`` parameter of this
+        dictionary.
 
         Parameters
         ----------
-        hint_insane : Hint
-            Possibly insane hint to be sanified.
+        hint_child_insane : Hint
+            Possibly insane child hint to be sanified.
 
         All other keyword parameters are of the same name and type as instance
         variables of this object (e.g., ``pith: object``).
@@ -622,13 +592,13 @@ class ViolationCause(object):
         Returns
         -------
         ViolationCause
-            Shallow copy of this object, permuted as detailed above.
+            Shallow copy of this violation cause, permuted as detailed above.
 
         Raises
         ------
         _BeartypeCallHintPepRaiseException
             If the name of any passed keyword parameter is *not* that of an
-            existing instance variable of this object.
+            existing instance variable of this violation cause.
 
         See Also
         --------
@@ -640,7 +610,9 @@ class ViolationCause(object):
         # the current previously sanified hint, which effectively serves as the
         # "parent" of the passed hint for all intents and purposes.
         hint_sane = self.sanify_hint_child(
-            hint_child_insane=hint_insane, hint_parent_sane=self.hint_sane)
+            hint_child_insane=hint_child_insane,
+            hint_parent_sane=self.hint_sane,
+        )
 
         # Violation cause permuted from this metadata and these keywords.
         cause_permuted = self.permute_cause(hint_sane=hint_sane, **kwargs)
@@ -720,6 +692,7 @@ class ViolationCause(object):
             pith_name=self.pith_name,
             exception_prefix=self.exception_prefix,
         )
+        # print(f'Sanified child hint {hint_child_insane} to {hint_sane_child} of parent {hint_parent_sane}!')
 
         # Return this metadata.
         return hint_sane_child

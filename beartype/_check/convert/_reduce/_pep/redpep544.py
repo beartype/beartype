@@ -17,12 +17,12 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
 )
-from beartype._data.cls.datacls import TYPES_PEP544_PROTOCOL
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.hint.pep.proposal.pep544 import (
     HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
     init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
     is_hint_pep484_generic_io,
+    is_hint_pep544_protocol_supertype,
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
@@ -67,40 +67,50 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
 
-    # If this protocol is either...
+    # If this protocol is an unsubscripted
+    # "(typing|typing_extension|beartype.typing).Protocol" superclass, then this
+    # protocol is ignorable. Reduce this ignorable protocol to the ignorable
+    # singleton.
+    #
+    # For unknown (but probably) uninteresting reasons, *ALL* possible objects
+    # satisfy these protocol superclasses. Ergo, these superclasses and *ALL*
+    # parametrizations of these superclasses are synonymous with the root
+    # "object" superclass: e.g.,
+    #     >>> from typing as Protocol
+    #     >>> isinstance(object(), Protocol)
+    #     True
+    #     >>> isinstance('wtfbro', Protocol)
+    #     True
+    #     >>> isinstance(0x696969, Protocol)
+    #     True
+    if is_hint_pep544_protocol_supertype(hint):
+        return HINT_IGNORABLE
+
+    # Type originating this protocol if any *OR* "None" otherwise.
+    #
+    # Note that we intentionally avoid calling the
+    # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
+    # been intentionally designed to exclude PEP-compliant type hints
+    # originating from "typing" type origins for stability reasons.
+    hint_origin = get_hint_pep_origin_or_none(hint)
+
+    # If...
     if (
-        # Either of the unsubscripted "typing.Protocol" or
-        # "beartype.typing.Protocol" superclasses *OR*...
-        #
-        # Note that *ALL* classes (and thus protocols) are hashable. Ergo, both
-        # this and the membership test below are guaranteed to be safe.
-        hint in TYPES_PEP544_PROTOCOL or
-        # Either of the "typing.Protocol[...]" or
-        # "beartype.typing.Protocol[...]" superclasses subscripted by one or
-        # more PEP 484-compliant type variables (e.g., "typing.Protocol[T]")...
-        #
-        # Note that:
-        # * These superclasses can *ONLY* be parametrized by type variables.
-        # * We intentionally avoid calling the
-        #   get_hint_pep_origin_type_isinstanceable_or_none() function here,
-        #   which has been intentionally designed to exclude PEP-compliant type
-        #   hints originating from "typing" type origins for stability reasons.
-        get_hint_pep_origin_or_none(hint) in TYPES_PEP544_PROTOCOL
+        # Some type originates this protocol *AND*...
+        hint_origin is not None and
+        # This origin type is an unsubscripted
+        # "(typing|typing_extension|beartype.typing).Protocol" superclass...
+        is_hint_pep544_protocol_supertype(hint_origin)
     ):
-        # Then this protocol is ignorable. Reduce this ignorable protocol to the
-        # ignorable singleton.
+        # Then the passed protocol is a
+        # "(typing|typing_extension|beartype.typing).Protocol" superclass
+        # subscripted by one or more PEP 484-compliant type variables (e.g.,
+        # "typing.Protocol[T]"). Since these type variables convey *NO*
+        # meaningful semantics in this context, this protocol is ignorable by a
+        # similar argument as above.
         #
-        # For unknown (but probably) uninteresting reasons, *ALL* possible
-        # objects satisfy these protocol superclasses. Ergo, these superclasses
-        # and *ALL* parametrizations of these superclasses are synonymous with
-        # the "object" root superclass : e.g.,
-        #     >>> from typing as Protocol
-        #     >>> isinstance(object(), Protocol)
-        #     True
-        #     >>> isinstance('wtfbro', Protocol)
-        #     True
-        #     >>> isinstance(0x696969, Protocol)
-        #     True
+        # Note that protocol superclasses can *ONLY* be parametrized by type
+        # variables.
         return HINT_IGNORABLE
     # Else, this protocol is unignorable.
 

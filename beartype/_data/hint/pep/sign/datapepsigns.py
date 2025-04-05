@@ -291,7 +291,7 @@ HintSignSelf            = _make_typing_hint_sign('Self')
 # Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
 HintSignTypeAlias       = _make_typing_hint_sign('TypeAlias')
-HintSignTypeGuard       = _make_typing_hint_sign('TypeIs')
+HintSignTypeGuard       = _make_typing_hint_sign('TypeGuard')
 HintSignTypeIs          = _make_typing_hint_sign('TypeIs')
 # TypeAliasType  <-- not a unique type hint (merely a C-based type)
 HintSignUnpack          = _make_typing_hint_sign('Unpack')

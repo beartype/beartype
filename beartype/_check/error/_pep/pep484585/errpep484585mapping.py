@@ -29,7 +29,7 @@ from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
-def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_mapping(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **mapping type hint** (i.e., PEP-compliant type

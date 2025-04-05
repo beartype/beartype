@@ -24,7 +24,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
 from beartype._util.text.utiltextansi import color_hint
 
 # ....................{ GETTERS                            }....................
-def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the :pep:`484`- or :pep:`585`-compliant
@@ -56,7 +56,7 @@ def find_cause_generic_unsubscripted(cause: ViolationCause) -> ViolationCause:
 
     # Shallow output cause to be returned, type-checking only whether this pith
     # is instance of this origin type.
-    cause_type = cause.permute_cause_hint_insane(hint_type)
+    cause_type = cause.permute_cause_hint_child_insane(hint_type)
     cause_shallow = find_cause_instance_type(cause_type)
     # print(f'[find_cause_generic] cause.hint [post-reduction]: {cause.hint}')
 

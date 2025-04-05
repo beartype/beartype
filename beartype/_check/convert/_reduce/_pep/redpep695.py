@@ -307,7 +307,7 @@ def reduce_hint_pep695_unsubscripted(
     hint_sane = make_hint_sane_recursable(
         #FIXME: Document this. Kinda intense, yo. Copy-paste similar comments
         #inside _reduce_hint_overrides() to here, please. *sigh*
-        hint_recursable=hint,
+        hint_recursable=hint,  # pyright: ignore
         hint_nonrecursable=hint_aliased,
         hint_parent_sane=hint_parent_sane,
     )

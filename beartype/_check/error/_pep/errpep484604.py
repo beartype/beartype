@@ -45,7 +45,9 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
     assert cause.hint_sign in HINT_SIGNS_UNION, (
         f'{repr(cause.hint)} not union sign.')
+    # print(f'[union] Finding cause for child hints {cause.hint_childs_sane}...')
 
+    # ....................{ LOCALS                         }....................
     # Indentation preceding each line of the strings returned by child getter
     # functions called by this parent getter function, offset to visually
     # demarcate child from parent causes in multiline strings.
@@ -68,15 +70,16 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     # representation in violation causes collected below. Look. Just accept it.
     PITH_REPR_INDEX = len(pith_repr) + 1
 
+    # ....................{ SEARCH                         }....................
     # For each subscripted argument of this union...
-    for hint_sane_child in cause.hint_childs_sane:
+    for hint_child_sane in cause.hint_childs_sane:
         # If this child hint is ignorable, continue to the next.
-        if hint_sane_child is HINT_IGNORABLE:
+        if hint_child_sane is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 
         # Child hint encapsulated by this metadata.
-        hint_child = hint_sane_child.hint
+        hint_child = hint_child_sane.hint
 
         # If this child hint is PEP-compliant...
         if is_hint_pep(hint_child):
@@ -104,8 +107,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
             # Child hint output cause to be returned, type-checking only whether
             # this pith deeply satisfies this child hint.
             cause_child = cause.permute_cause(
-                hint_sane=hint_sane_child,
-                cause_indent=CAUSE_INDENT_CHILD,
+                hint_sane=hint_child_sane, cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
 
             # If this pith deeply satisfies this child hint, return this cause.
@@ -138,6 +140,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
             # Append the cause of this violation as a bullet-prefixed line to
             # the running list of these lines.
             cause_strs.append(cause_str)
+            # print(f'[union] Appended PEP-compliant child hint {hint_child} cause {cause_str}!')
         # Else, this child hint is PEP-noncompliant. In this case...
         else:
             # Assert this child hint to be a non-"typing" class. Note that
@@ -150,8 +153,8 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
                 f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
-            # If this pith is an instance of this type, this pith satisfies
-            # this hint. In this case, return this cause as is.
+            # If this pith is an instance of this type, this pith satisfies this
+            # hint. In this case, return this cause as is.
             if isinstance(cause.pith, hint_child):
                 return cause
             # Else, this pith is *NOT* an instance of this type, implying this
@@ -159,7 +162,9 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
 
             # Add this class to the subset of all types this pith violates.
             hint_types_violated.add(hint_child)
+            # print(f'[union] Appended PEP-noncompliant child hint {hint_child}!')
 
+    # ....................{ CAUSE                          }....................
     # If this pith fails to shallowly satisfy one or more of the types of this
     # union, concatenate these failures onto one discrete bullet-prefixed line.
     if hint_types_violated:

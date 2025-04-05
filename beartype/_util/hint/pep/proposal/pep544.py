@@ -19,6 +19,7 @@ from beartype.typing import (
     Optional,
     TextIO,
 )
+from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -39,7 +40,7 @@ defined by this submodule).
 '''
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[type]:
+def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[typing_Protocol]:
     '''
     :data:`True` only if the passed object is a functionally useless
     :pep:`484`-compliant :mod:`typing` **IO generic superclass** (i.e., either
@@ -93,7 +94,7 @@ def is_hint_pep484_generic_io(hint: Hint) -> TypeIs[type]:
     return hint_origin in TYPES_PEP484_GENERIC_IO
 
 
-def is_hint_pep544_protocol(hint: Hint) -> TypeIs[type]:
+def is_hint_pep544_protocol(hint: Hint) -> TypeIs[typing_Protocol]:
     '''
     :data:`True` only if the passed object is a :pep:`544`-compliant
     **protocol** (i.e., subclass of the :class:`typing.Protocol` superclass).
@@ -135,6 +136,42 @@ def is_hint_pep544_protocol(hint: Hint) -> TypeIs[type]:
         # Because even fake builtins (e.g., "type(None)") erroneously
         # masquerade as PEP 544-compliant protocols! :o
         not is_type_builtin_or_fake(hint)  # pyright: ignore
+    )
+
+
+#FIXME: Unit test us up, please.
+def is_hint_pep544_protocol_supertype(hint: Hint) -> TypeIs[type]:
+    '''
+    :data:`True` only if the passed object is a :pep:`544`-compliant
+    **protocol superclass** (i.e., either the :class:`typing.Protocol`,
+    :class:`typing_extensions.Protocol`, or :class:`beartype.typing.Protocol`
+    superclass).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a :pep:`544`-compliant protocol
+        superclass.
+    '''
+
+    # Return true only if...
+    return (
+        # This object is a type *AND*...
+        isinstance(hint, type) and
+        # The unqualified basename of this type is that of *ALL* protocol
+        # superclasses *AND*...
+        hint.__name__ == 'Protocol' and
+        # A typing-like module declares this type.
+        hint.__module__ in TYPING_MODULE_NAMES
     )
 
 # ....................{ FACTORIES                          }....................

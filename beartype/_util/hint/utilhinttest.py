@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintNonpepException
+from beartype.typing import NoReturn
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
@@ -116,7 +117,7 @@ def die_as_hint_unsupported(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
-) -> None:
+) -> NoReturn:
     '''
     Unconditionally raise an exception describing the failure of the passed
     object to be a **supported type hint** (i.e., object supported by the

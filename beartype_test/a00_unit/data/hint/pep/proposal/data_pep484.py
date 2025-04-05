@@ -4038,7 +4038,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # (e.g., "float", "complex").
 
         # Implicit numeric tower type *AND* an arbitrary type hint outside the
-        # implicit numeric tower with with the implicit numeric tower disabled.
+        # implicit numeric tower with the implicit numeric tower disabled.
         HintPepMetadata(
             hint=Union[float, Sequence[str]],
             pep_sign=HintSignUnion,
@@ -4072,7 +4072,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Implicit numeric tower type *AND* an arbitrary type hint outside the
-        # implicit numeric tower with with the implicit numeric tower enabled.
+        # implicit numeric tower with the implicit numeric tower enabled.
         HintPepMetadata(
             hint=Union[float, Sequence[str]],
             conf=BeartypeConf(is_pep484_tower=True),
@@ -4093,14 +4093,11 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPithUnsatisfiedMetadata(
                     pith=42 + 24j,
                     # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
+                    # declares the types *NOT* satisfied by this object as well
+                    # as a newline and bullet delimiter.
                     exception_str_match_regexes=(
                         r'\bfloat\b',
                         r'\bSequence\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
                         r'\n',
                         r'\*',
                     ),

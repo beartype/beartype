@@ -201,6 +201,9 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 # ....................{ PEP ~ 544                          }....................
+#FIXME: *YIKES.* This omits "typing_extensions.Protocol", which is a distinct
+#type from "typing.Protocol". *sigh*
+
 TYPES_PEP544_PROTOCOL = frozenset((Protocol, ProtocolFast,))
 '''
 Frozen set of all **protocol superclasses** (i.e., types defined by the standard

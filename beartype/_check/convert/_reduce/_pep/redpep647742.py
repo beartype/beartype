@@ -28,7 +28,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep647_or_pep742(
+def reduce_hint_pep647742(
     hint: Hint,
     pith_name: Optional[str],
     exception_prefix: str,
@@ -60,8 +60,7 @@ def reduce_hint_pep647_or_pep742(
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     All remaining passed arguments are silently ignored.
 
@@ -74,7 +73,7 @@ def reduce_hint_pep647_or_pep742(
     ------
     BeartypeDecorHintPep647Exception
         If this type guard does *not* annotate the return of some callable
-        (i.e., if ``arg_kind`` is *not* :data:`True`).
+        (i.e., if ``pith_name`` is *not* :data:`.ARG_NAME_RETURN`).
     '''
 
     # Avoid circular import dependencies.

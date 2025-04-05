@@ -310,14 +310,14 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
                     exception_str_match_regexes=(
                         # The type *NOT* satisfied by this object.
                         r'\bcomplex\b',
-                    ),
-                    # Match that the exception message raised for this pith
-                    # does *NOT* contain...
-                    exception_str_not_match_regexes=(
                         # A newline.
                         r'\n',
                         # A bullet delimiter.
                         r'\*',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
                         # The double-quoted name of this builtin type.
                         r'"complex"',
                     ),

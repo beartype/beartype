@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype class type hint violation describers** (i.e., functions returning
-human-readable strings explaining violations of type hints that are standard
-isinstanceable classes rather than PEP-specific objects).
+Beartype PEP-noncompliant class type hint violation describers** (i.e.,
+functions returning human-readable strings explaining violations of type hints
+that are PEP-noncompliant isinstanceable classes rather than PEP-compliant type
+hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,22 +19,10 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
-from beartype._data.hint.datahinttyping import (
-    TupleTypes,
-    TypeOrTupleTypes,
-)
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignForwardRef,
-    HintSignType,
-    HintSignUnion,
-)
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
-from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.cls.pep.clspep3119 import (
-    die_unless_object_issubclassable,
-    die_unless_type_isinstanceable,
-)
+from beartype._data.hint.datahinttyping import TupleTypes
+from beartype._data.hint.pep.sign.datapepsigns import HintSignForwardRef
+from beartype._util.cls.pep.clspep3119 import die_unless_type_isinstanceable
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal)
 from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -41,13 +30,43 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
 from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
     import_pep484585_ref_type)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_origin_type_isinstanceable_or_none,
-    get_hint_pep_sign_or_none,
-)
+    get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
+
+# ....................{ GETTERS ~ instance : type          }....................
+def find_cause_nonpep(cause: ViolationCause) -> ViolationCause:
+    '''
+    Output cause describing whether the pith of the passed input cause either
+    does or does not satisfy the PEP-noncompliant type hint of that cause.
+
+    Parameters
+    ----------
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    -------
+    ViolationCause
+        Output cause type-checking this data.
+    '''
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+
+    # If this PEP-noncompliant hint is a tuple union, defer to the finder
+    # specific to tuple unions.
+    if isinstance(cause.hint, tuple):
+        cause_finder = find_cause_instance_types_tuple
+    # Else, this PEP-noncompliant hint is *NOT* a tuple union. In this case,
+    # assume this hint to be an isinstanceable class by deferring to the finder
+    # specific to isinstanceable classes. When this assumption is incorrect
+    # (i.e., if this hint is *NOT* an isinstanceable class), this finder raises
+    # a general-purpose human-readable exception.
+    else:
+        cause_finder = find_cause_instance_type
+
+    # Trivially defer to this finder.
+    return cause_finder(cause)
 
 # ....................{ GETTERS ~ instance : type          }....................
 def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
@@ -62,6 +81,11 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
 
     Returns
     -------
+    ViolationCause
+        Output cause type-checking this data.
+
+    Raises
+    ------
     BeartypePlugInstancecheckStrException
         If the metaclass of this isinstanceable class defines the
         :mod:`beartype`-specific ``__instancecheck_str__()`` dunder method but
@@ -297,108 +321,4 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
             f'{represent_pith(cause.pith)} not instance of {hint_repr}'))
 
     # Return this output cause.
-    return cause_return
-
-# ....................{ GETTERS ~ subclass : type          }....................
-def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
-    '''
-    Output cause describing whether the pith of the passed input cause either is
-    or is not a subclass of the issubclassable type of that cause.
-
-    Parameters
-    ----------
-    cause : ViolationCause
-        Input cause providing this data.
-
-    Returns
-    -------
-    ViolationCause
-        Output cause type-checking this data.
-    '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignType, (
-        f'{cause.hint_sign} not HintSignType.')
-
-    # Shallow output cause describing the failure of this path to be a type if
-    # this pith a non-type *OR* "None" otherwise (i.e., if this pith is a type).
-    cause_shallow = find_cause_type_instance_origin(cause)
-
-    # If this pith is *NOT* a type, return this shallow cause.
-    if cause_shallow.cause_str_or_none is not None:
-        return cause_shallow
-    # Else, this pith is a type.
-
-    # Superclass this pith is required to be a subclass of.
-    hint_child: TypeOrTupleTypes = cause.hint_childs[0]  # type: ignore[assignment]
-
-    # If this superclass is ignorable, then *ALL* types including this pith
-    # satisfy this superclass. In this case, return the passed cause as is.
-    if hint_child is HINT_IGNORABLE:
-        return cause
-    # Else, this superclass is unignorable.
-
-    # Arbitrary object uniquely identifying this superclass.
-    hint_child_sign = get_hint_pep_sign_or_none(hint_child)
-
-    # If this child hint is a forward reference to a superclass...
-    if hint_child_sign is HintSignForwardRef:
-        # Superclass referred to by this absolute or relative forward reference.
-        hint_child = import_pep484585_ref_type(
-            hint=hint_child,  # type: ignore[arg-type]
-            cls_stack=cause.cls_stack,
-            func=cause.func,
-            exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix=cause.exception_prefix,
-        )
-    # Else, this child hint is *NOT* a forward reference.
-    #
-    # If this child hint is a union of superclasses, reduce this union to a
-    # tuple of superclasses. Only the latter is safely passable as the second
-    # parameter to the issubclass() builtin under all supported Python versions.
-    elif hint_child_sign is HintSignUnion:
-        hint_child = get_hint_pep_args(hint_child)
-    # Else, this child hint is *NOT* a union. By process of elimination, this
-    # child hint *MUST be a class. In this case, preserve this class as is.
-
-    # If this child hint is *NOT* an issubclassable object, raise an exception.
-    #
-    # Technically, this validation is only necessary when this child hint was a
-    # forward reference. Pragmatically, there's *NO* harm in performing this
-    # validation in all possible cases. Ergo, we do. *shrug*
-    die_unless_object_issubclassable(
-        obj=hint_child,
-        exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=cause.exception_prefix,
-
-        # If this child hint is still a forward reference, raise an exception.
-        # Ideally, the above conditional should already have resolved all
-        # forward references.
-        is_forwardref_valid=False,
-    )
-    # Else, this child hint is an issubclassable object.
-
-    # If this pith subclasses this superclass, return the passed cause as is.
-    if is_type_subclass(cause.pith, hint_child):
-        return cause
-    # Else, this pith does *NOT* subclass this superclass. In this case...
-    else:
-        # Output cause to be returned, permuted from this input cause.
-        cause_return = cause.permute_cause()
-
-        # Description of this superclasses, defined as either...
-        hint_child_label = (
-            # If this superclass is a type, a description of this type;
-            label_type(cls=hint_child, is_color=cause.conf.is_color)
-            if isinstance(hint_child, type) else
-            # Else, this superclass is a tuple of types. In this case, a
-            # description of these types...
-            join_delimited_disjunction_types(
-                types=hint_child, is_color=cause.conf.is_color)
-        )
-
-        # Human-readable string describing this failure.
-        cause_return.cause_str_or_none = (
-            f'{represent_pith(cause.pith)} not subclass of {hint_child_label}')
-
-    # Return this cause.
     return cause_return

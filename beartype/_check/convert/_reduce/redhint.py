@@ -208,7 +208,7 @@ def reduce_hint(
         # ....................{ REDUCE                     }....................
         # For each lower-level reducer...
         for hint_reducer in _HINT_REDUCERS:
-            print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
+            # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')
 
             # Either:
             # * If this reducer reduces this hint:
@@ -227,7 +227,7 @@ def reduce_hint(
                 reductions_count=reductions_count,
                 exception_prefix=exception_prefix,
             )
-            print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
+            # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
             # If this unreduced hint was modified, this reducer reduced this
             # hint. Halt reducing by these lower-level reducers, enabling the
@@ -241,11 +241,11 @@ def reduce_hint(
                 # singleton would require an additional loop through the
                 # "_HINT_REDUCERS" tuple. This test elides that iteration.
                 if hint_or_sane_curr is HINT_IGNORABLE:
-                    print(f'[reduce_hint] Ignorably reduced!')
+                    # print(f'[reduce_hint] Ignorably reduced!')
                     return HINT_IGNORABLE
                 # Else, this hint is currently unignorable.
 
-                print(f'[reduce_hint] Incrementally reduced!')
+                # print(f'[reduce_hint] Incrementally reduced!')
                 break
             # Else, this unreduced hint remains unmodified. Since this reducer
             # failed to reduce this hint, silently continue to the next reducer.
@@ -392,7 +392,7 @@ def reduce_hint_child(
 def _reduce_hint_overrides(
     hint: Hint,
     conf: BeartypeConf,
-    hint_parent_sane: HintSane,
+    hint_parent_sane: Optional[HintSane],
     **kwargs
 ) -> HintOrSane:
     '''

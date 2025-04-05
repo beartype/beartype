@@ -29,12 +29,12 @@ from beartype._check.convert._reduce._pep.pep484.redpep484 import (
 )
 from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
     reduce_hint_pep484_typevar)
-from beartype._check.convert._reduce._pep.pep484585.redpep484585container import (
-    reduce_hint_pep484585_itemsview)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subscripted,
     reduce_hint_pep484585_generic_unsubscripted,
 )
+from beartype._check.convert._reduce._pep.pep484585.redpep484585itemsview import (
+    reduce_hint_pep484585_itemsview)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585type import (
     reduce_hint_pep484585_type)
 from beartype._check.convert._reduce._pep.redpep484604 import (
@@ -47,6 +47,8 @@ from beartype._check.convert._reduce._pep.redpep585 import (
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
+from beartype._check.convert._reduce._pep.redpep647742 import (
+    reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
 from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
 from beartype._check.convert._reduce._pep.redpep695 import (
@@ -132,8 +134,6 @@ from beartype._util.hint.pep.proposal.pep612 import (
 from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
 from beartype._util.hint.pep.proposal.pep646692 import (
     reduce_hint_pep646692_unpack)
-from beartype._util.hint.pep.proposal.pep647742 import (
-    reduce_hint_pep647_or_pep742)
 from collections.abc import Callable
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -408,8 +408,13 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Preserve deprecated PEP 484-compliant hints while emitting one non-fatal
     # deprecation warning for each.
     #
-    # Note that, to ensure that one such warning is emitted for each such hint,
-    # these reducers are intentionally uncached rather than cached.
+    # Note that:
+    # * To ensure that one such warning is emitted for each such hint, these
+    #   reducers are intentionally uncached rather than cached.
+    # * To avoid conflict with more specific reducers mapped elsewhere, these
+    #   signs that would otherwise be mapped here are intentionally omitted:
+    #   * "HintSignItemsView", instead mapped to the more specific
+    #     reduce_hint_pep484585_itemsview() reducer.
     HintSignAbstractSet: reduce_hint_pep484_deprecated,
     HintSignAsyncContextManager: reduce_hint_pep484_deprecated,
     HintSignAsyncGenerator: reduce_hint_pep484_deprecated,
@@ -430,7 +435,6 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignFrozenSet: reduce_hint_pep484_deprecated,
     HintSignGenerator: reduce_hint_pep484_deprecated,
     HintSignHashable: reduce_hint_pep484_deprecated,
-    HintSignItemsView: reduce_hint_pep484_deprecated,
     HintSignIterable: reduce_hint_pep484_deprecated,
     HintSignIterator: reduce_hint_pep484_deprecated,
     HintSignKeysView: reduce_hint_pep484_deprecated,
@@ -526,7 +530,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Reduce PEP 647-compliant "typing.TypeIs[...]" type hints to either:
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
-    HintSignTypeGuard: reduce_hint_pep647_or_pep742,
+    HintSignTypeGuard: reduce_hint_pep647742,
 
     # ..................{ PEP 673                            }..................
     # Reduce PEP 673-compliant "typing.Self" type hints to either:
@@ -552,7 +556,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # Reduce PEP 742-compliant "typing.TypeIs[...]" type hints to either:
     # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
-    HintSignTypeIs: reduce_hint_pep647_or_pep742,
+    HintSignTypeIs: reduce_hint_pep647742,
 }
 '''
 Dictionary mapping from each sign uniquely identifying various type hints to

@@ -144,7 +144,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # allowed *ONLY* as a return annotation...
-            if hint_sane is NoReturn:
+            if hint_sane.hint is NoReturn:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(

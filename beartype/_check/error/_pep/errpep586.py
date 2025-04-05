@@ -78,7 +78,7 @@ def find_cause_pep586_literal(cause: ViolationCause) -> ViolationCause:
     # Note that this only works due to @beartype natively supporting
     # PEP-noncompliant tuple unions as PEP-compliant type hints, which they
     # technically are *NOT*. Pragmatically, they are. That's good enough for us!
-    cause_shallow = cause.permute_cause_hint_insane(
+    cause_shallow = cause.permute_cause_hint_child_insane(
         hint_literal_types).find_cause()  # pyright: ignore
 
     # If this pith is *NOT* such an instance, return this string.

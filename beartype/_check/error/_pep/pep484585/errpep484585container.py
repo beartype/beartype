@@ -35,7 +35,7 @@ from collections.abc import (
 )
 
 # ....................{ FINDERS                            }....................
-def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_container_args_1(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **single-argument container type hint**
@@ -87,7 +87,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
     #   subscripted by only two child hints -- the latter of which is guaranteed
     #   to be an ellipses and thus ignorable syntactic chuff.
-    hint_sane_child = cause.hint_childs_sane[0]
+    hint_child_sane = cause.hint_childs_sane[0]
 
     # If either...
     if (
@@ -106,7 +106,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
         #     ambiguous
         not len(cause.pith) or
         # This child hint is ignorable...
-        hint_sane_child is HINT_IGNORABLE
+        hint_child_sane is HINT_IGNORABLE
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -142,7 +142,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
             # this child hint if this item violates this child hint *OR* "None"
             # otherwise (i.e., if this item satisfies this child hint).
             cause_deep = cause.permute_cause(
-                hint_sane=hint_sane_child, pith=pith_item).find_cause()
+                hint_sane=hint_child_sane, pith=pith_item).find_cause()
 
             # If this item is the cause of this failure...
             if cause_deep.cause_str_or_none is not None:
@@ -166,7 +166,7 @@ def find_cause_container_args_1(cause: ViolationCause) -> ViolationCause:
     return cause
 
 
-def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
+def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **fixed-length tuple type hint** (i.e.,
@@ -239,18 +239,18 @@ def find_cause_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     for pith_item_index, pith_item in enumerate(cause.pith):
         # Child hint corresponding to this tuple item. Since this pith and
         # hint are of the same length, this child hint exists.
-        hint_sane_child = cause.hint_childs_sane[pith_item_index]
+        hint_child_sane = cause.hint_childs_sane[pith_item_index]
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_sane_child is HINT_IGNORABLE:
+        if hint_child_sane is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 
         # Deep output cause to be returned, type-checking whether this tuple
         # item satisfies this child hint.
         cause_deep = cause.permute_cause(
-            hint_sane=hint_sane_child, pith=pith_item).find_cause()
+            hint_sane=hint_child_sane, pith=pith_item).find_cause()
 
         # If this item is the cause of this failure...
         if cause_deep.cause_str_or_none is not None:

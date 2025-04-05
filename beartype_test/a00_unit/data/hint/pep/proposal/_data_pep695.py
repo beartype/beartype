@@ -254,17 +254,14 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                 HintPithUnsatisfiedMetadata(
                     pith=27 + 4j,
                     # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
+                    # declares the types *NOT* satisfied by this object as well
+                    # as a newline and bullet delimiter.
                     exception_str_match_regexes=(
                         r'\bdict\b',
                         r'\bfloat\b',
                         r'\bfrozenset\b',
                         r'\blist\b',
                         r'\bset\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
                         r'\n',
                         r'\*',
                     ),

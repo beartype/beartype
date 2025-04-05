@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **container type hint
+Project-wide :pep:`484`- and :pep:`585`-compliant **items view type hint
 reducers** (i.e., low-level callables converting higher-level :pep:`484`- and
-:pep:`585`-compliant container type hints to lower-level type hints more readily
-consumable by :mod:`beartype`).
+:pep:`585`-compliant ``ItemsView[...]` type hints to lower-level type hints more
+readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -23,14 +23,11 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_args)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
-from collections.abc import (
-    ItemsView as ItemsViewABC,
-)
+from collections.abc import ItemsView as ItemsViewABC
 
 # ....................{ REDUCERS                           }....................
 @callable_cached
-def reduce_hint_pep484585_itemsview(
-    hint: Hint, exception_prefix: str) -> Hint:
+def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **items view type
     hint** (i.e., of the form ``(collections.abc|typing).ItemsView[{hint_key},
@@ -46,13 +43,19 @@ def reduce_hint_pep484585_itemsview(
     exception_prefix : str, optional
         Human-readable substring prefixing raised exception messages.
 
-    All remaining passed arguments are silently ignored.
-
     Returns
     -------
     Hint
         More suitable type hint better supported by :mod:`beartype`.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+        reduce_hint_pep484_deprecated)
+
+    # If this hint is a PEP 484-compliant deprecated "typing.ItemsView[...]"
+    # type hint, emit a non-fatal deprecation warning.
+    reduce_hint_pep484_deprecated(hint=hint, exception_prefix=exception_prefix)
 
     # Reduced hint to be returned, defaulting to the abstract base class (ABC)
     # of *ALL* items views.
@@ -79,8 +82,8 @@ def reduce_hint_pep484585_itemsview(
             # "collections.abc.ItemsView" abstract base class (ABC).
             IsInstance[ItemsViewABC],
         ]
-    # Else, this hint is subscripted by *NO* child type hints. In this case,
-    # reduce to type-checking that an items view is an instance of this ABC.
+    # Else, this hint is unsubscripted. In this case, reduce to type-checking
+    # that an items view is an instance of this ABC (via the above default).
 
     # Return this reduced hint.
     return hint_reduced

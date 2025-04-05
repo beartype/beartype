@@ -28,20 +28,14 @@ from beartype._util.error.utilerrwarn import issue_warning
 def reduce_hint_pep484_deprecated(
     hint: Hint, exception_prefix: str, **kwargs) -> Hint:
     '''
-    Preserve the passed :pep:`484`-compliant type hint as is while emitting one
-    non-fatal deprecation warning for this type hint if **deprecated** (i.e.,
-    obsoleted by an equivalent :pep:`585`-compliant type hint *and* the active
-    Python interpreter targets Python >= 3.9).
-
-    While *not* explicitly defined by the :mod:`typing` module, :pep:`484`
-    explicitly supports this singleton:
-
-        When used in a type hint, the expression :data:`None` is considered
-        equivalent to ``type(None)``.
+    Preserve the passed :pep:`484`- or :pep:`585`-compliant type hint as is
+    while emitting one non-fatal deprecation warning for this type hint if
+    deprecated, due to being a :pep:`484`-compliant type hint obsoleted by an
+    equivalent :pep:`585`-compliant type hint.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as doing so would prevent this reducer from
+    emitting one warning per deprecated type hint.
 
     Parameters
     ----------
@@ -60,11 +54,8 @@ def reduce_hint_pep484_deprecated(
     Warns
     -----
     BeartypeDecorHintPep585DeprecationWarning
-        If this :pep:`484`-compliant type hint is deprecated by :pep:`585` *and*
-        the active Python interpreter targets Python >= 3.9.
+        If this is a :pep:`484`-compliant type hint is deprecated by :pep:`585`.
     '''
-    assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
     # print(f'Testing PEP 484 type hint {repr(hint)} for PEP 585 deprecation...')
     # print(f'{HINTS_PEP484_REPR_PREFIX_DEPRECATED}')
 
@@ -84,9 +75,13 @@ def reduce_hint_pep484_deprecated(
 
     # If this hint is a PEP 484-compliant type hint originating from an origin
     # type (e.g., "typing.List[int]"), this hint has been deprecated by the
-    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
-    # emit a non-fatal PEP 585-specific deprecation warning.
+    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this
+    # case...
     if hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Emit a non-fatal PEP 585-specific deprecation warning.
         issue_warning(
             cls=BeartypeDecorHintPep585DeprecationWarning,
             message=(
