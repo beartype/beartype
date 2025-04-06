@@ -11,6 +11,123 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Generalize "recursable_hints" into a more useful
+#"hint_recursable_to_depth: FrozenDict[Hint, int]" instance variable as follows:
+#* Define a new type hint here:
+#     FrozenDictHintToInt: Hint = FrozenDict[Hint, int]
+#* Replace "recursable_hints" with "hint_recursable_to_depth:
+#  FrozenDictHintToInt": e.g.,
+#      hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
+#* Refactor is_hint_recursive() to accept a new optional "max_depth: int = 0"
+#  parameter. The implementation should now resemble:
+#      #FIXME: Document the "max_depth" parameter.
+#      def is_hint_recursive(
+#          # Mandatory parameters.
+#          hint: Hint,
+#          hint_parent_sane: Optional[HintSane],
+#
+#          # Optional parameters.
+#          max_depth: int = 0,
+#      ) -> bool:
+#          '''
+#          :data:`True` only if the passed **recursable type hint** (i.e., type hint
+#          implicitly supporting recursion like, say, a :pep:`695`-compliant type
+#          alias) is actually **recursive** (i.e., has already been visited by the
+#          current breadth-first search (BFS) over all type hints transitively nested
+#          in some root type hint) with respect to the passed previously sanified
+#          metadata for the parent type hint of the passed type hint.
+#
+#          Caveats
+#          -------
+#          **This tester assumes this hint to be hashable.** Although *most*
+#          PEP-compliant hints are hashable, some are not (e.g., :pep:`593`-compliant
+#          metahints annotated by unhashable objects like ``typing.Annotated[object,
+#          []]``). Callers that cannot guarantee this hint to be hashable should
+#          protect calls to this tester inside a ``try`` block explicitly catching the
+#          :exc:`TypeError` exception this tester raises when this hint is unhashable:
+#
+#          .. code-block:: python
+#
+#             # Attempt to test whether hint is recursive or not.
+#             try:
+#                 if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
+#                     pass
+#             # If doing so raises a "TypeError", this hint is unhashable and thus
+#             # inapplicable for hint recursion. In this case, ignore this hint.
+#             except TypeError:
+#                 pass
+#
+#          Parameters
+#          ----------
+#          hint : Hint
+#              Recursable type hint to be inspected.
+#          hint_parent_sane : Optional[HintSane]
+#              Either:
+#
+#              * If this recursable type hint is a root type hint, :data:`None`.
+#              * Else, **sanified parent type hint metadata** (i.e., immutable and thus
+#                hashable object encapsulating *all* metadata previously returned by
+#                :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+#                the possibly PEP-noncompliant parent hint of this hint into a fully
+#                PEP-compliant parent hint).
+#
+#          Returns
+#          -------
+#          bool
+#              :data:`True` only if this recursable type hint is recursive.
+#
+#          Raises
+#          ------
+#          TypeError
+#              If this hint is unhashable.
+#          '''
+#          assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
+#              f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
+#
+#          # True only if...
+#          is_hint_recursive_state = (
+#              # This hint has a parent *AND*...
+#              hint_parent_sane is not None and
+#              #FIXME: Revise comment to discuss "max_depth".
+#              # This hint is a transitive parent of itself.
+#              hint_parent_sane.hint_recursable_to_depth.get(hint, 0) <= max_depth
+#          )
+#          # print(f'Hint {hint} with parent {hint_parent_sane} recursive? {is_hint_recursive_state}')
+#
+#          # Return this boolean.
+#          return is_hint_recursive_state
+#FIXME: Refactor make_hint_sane_recursable() to accommodate
+#"hint_recursable_to_depth". Note that frozen dictionaries support the "|"
+#operator in a sensible way. Just use that, please. The only slightly tricky bit
+#is:
+#   if hint_parent_sane is None:
+#       hint_sane = HintSane(
+#           hint=hint_nonrecursable,
+#           hint_recursable_to_depth=FrozenDict({hint_recursable: 1}),
+#       )
+#   else:
+#       hint_recursable_depth = (
+#           hint_parent_sane.hint_recursable_to_depth.get(hint_recursable, 0) +
+#           1
+#       )
+#       hint_recursable_to_depth = FrozenDict({
+#           hint_recursable: hint_recursable_depth})
+#
+#       if hint_parent_sane.recursable_hints:
+#           hint_recursable_to_depth = (
+#               hint_parent_sane.hint_recursable_to_depth |  # type: ignore[operator]
+#               hint_recursable_to_depth
+#           )
+#
+#       hint_sane = hint_parent_sane.permute_sane(
+#           hint=hint_nonrecursable,
+#           hint_recursable_to_depth=hint_recursable_to_depth,
+#       )
+#* Shift those two helper functions into a new
+#  "beartype._check.convert._reduce._redrecurse" submodule, please. It's time.
+#* Avoid passing "max_depth" when handling hint overrides.
+#* But *DO* pass "max_depth=1" when handling PEP 695 type aliases.
+
 #FIXME: [SPACE] Memoize the HintSane.__new__() or __init__() constructors. In
 #theory, we dimly recall already defining a caching metaclass somewhere in the
 #codebase. Perhaps we can simply leverage that to get this trivially done?
@@ -58,10 +175,6 @@ from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
-from beartype._util.utilobject import (
-    SENTINEL,
-    Iota,
-)
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.

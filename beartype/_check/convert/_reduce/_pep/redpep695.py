@@ -97,7 +97,7 @@ def reduce_hint_pep695_subscripted(
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
-        print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
+        # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
@@ -247,7 +247,7 @@ def reduce_hint_pep695_unsubscripted(
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):  # pyright: ignore
-        print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
+        # print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
 
