@@ -16,12 +16,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep695Exception
 from beartype.typing import Optional
 from beartype._cave._cavefast import HintPep695TypeAlias
+from beartype._check.convert._reduce._redrecurse import (
+    is_hint_recursive,
+    make_hint_sane_recursable,
+)
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
     HintSane,
-    is_hint_recursive,
-    make_hint_sane_recursable,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -91,12 +93,52 @@ def reduce_hint_pep695_subscripted(
     # ....................{ RECURSE                        }....................
     # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
 
-    # If this hint is recursive, ignore this hint to avoid infinite recursion.
+    # If this PEP 695-compliant subscripted type alias is recursive, ignore this
+    # alias to avoid infinite recursion.
     #
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
-    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):
+    #
+    # Note that:
+    # * This tester intentionally passes a non-default value of "1" for the
+    #   optional parameter "hint_recursable_depth_max", ensuring this alias is
+    #   considered to be recursive *ONLY* after having been recursed into
+    #   exactly once before (i.e., *ONLY* after having been visited exactly
+    #   twice, once as a parent alias and again as a transitive child hint of
+    #   this parent alias). Unlike comparable kinds of recursable hints (e.g.,
+    #   hint overrides), PEP 695-compliant recursable type aliases typically
+    #   describe non-trivial recursive data structures conveying internal
+    #   semantics that merit deeper recursion.
+    #
+    #   Consider the following PEP 695-compliant subscripted type alias:
+    #       type RecursiveList[T] = list[RecursiveList[T] | T]
+    #
+    #   Lists satisfying the concrete type alias "RecursiveList[int]" alias
+    #   contain an arbitrary number of integers and other lists containing an
+    #   arbitrary number of integers, exhibiting an internal structure ala:
+    #       [42, [79]]
+    #       [42, [79], 83]
+    #       [42, [79], 83, [56, 12]]
+    #
+    #   Halting recursion at the first expansion of the concrete type alias
+    #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" would then
+    #   reduce the latter to "list[HINT_IGNORABLE | int]", which reduces to
+    #   "list[HINT_IGNORABLE]", which reduces to "list", which clearly fails to
+    #   convey the internal semantics of this data structure.
+    #
+    #   Halting recursion at the second expansion of the concrete type alias
+    #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" instead reduces
+    #   the latter to "list[list[RecursiveList[int] | int] | int]", which
+    #   reduces to "list[list[HINT_IGNORABLE | int] | int]", which reduces to
+    #   "list[list[HINT_IGNORABLE] | int]", which reduces to
+    #   "list[list | int]", which superficially conveys a layer of the internal
+    #   semantics of this data structure.
+    if is_hint_recursive(
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        hint_recursable_depth_max=1,
+    ):
         # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.
@@ -246,7 +288,11 @@ def reduce_hint_pep695_unsubscripted(
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
     # laziest approach: just ignore all recursion! Ignorance works wonders.
-    if is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane):  # pyright: ignore
+    if is_hint_recursive(
+        hint=hint,  # pyright: ignore
+        hint_parent_sane=hint_parent_sane,
+        hint_recursable_depth_max=1,
+    ):
         # print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_IGNORABLE
     # Else, this hint is *NOT* recursive.

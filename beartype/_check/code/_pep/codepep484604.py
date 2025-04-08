@@ -571,7 +571,7 @@ def _get_hint_pep484604_union_args_flattened(
         # * This child hint lacks intrinsic value and *MUST* thus be removed as
         #   a member of this union. This edge case currently arises *ONLY*
         #   through PEP 695-compliant recursive type aliases. Consider:
-        #       type RecursiveAlias = int | RecursiveAlias
+        #       type RecursiveUnion = int | RecursiveUnion
         #
         #   The recursive type alias "RecursiveAlias" merely has symbolic value
         #   and thus lacks intrinsic value. This type alias is semantically
@@ -593,9 +593,44 @@ def _get_hint_pep484604_union_args_flattened(
         # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
 
         # If this child hint is ignorable, skip this child hint. Continue! \o/
+        #
+        # Note that the previously applied reduction for PEP 484- and
+        # 604-compliant union hints (i.e., the reduce_hint_pep484604() reducer)
+        # has already ignored union hints containing *ANY* unconditionally
+        # ignorable child hints. However, union hints may also contain child
+        # hints that are only conditionally ignorable in various edge cases
+        # *NOT* visible to that reducer. Whereas a union hint containing *ANY*
+        # unconditionally ignorable child hint is itself trivially ignorable, a
+        # union hint containing a child hint that is only conditionally
+        # ignorable is *NOT* trivially ignorable. Only that conditionally
+        # ignorable child hint is ignorable.
+        #
+        # Consider a PEP 695-compliant recursive type alias aliasing a union:
+        #       type RecursiveUnion = int | RecursiveUnion
+        #
+        # The hints_meta.sanify_hint_child() method called above expands
+        # recursive type aliases twice: once for the original alias and a second
+        # time for the recursive alias embedded in that alias. Why? To preserve
+        # data structures across aliases recursively containing themselves.
+        # After performing these expansions, this expanded union resembles:
+        #       int | int | RecursiveUnion
+        #
+        # Naturally, this expanded union flattens to simply "int |
+        # RecursiveUnion". Equally naturally, the "RecursiveUnion" member of
+        # this union is ignorable. However, the "int" member of this union is
+        # *NOT* ignorable. Ergo, this union itself is *NOT* ignorable. Instead,
+        # this union is semantically equivalent to the builtin "int" type.
         if hint_child_sane is HINT_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
+
+        #FIXME: The prior "if" conditional doesn't quite make sense. Aren't
+        #unions containing ignorable child hints themselves ignorable, *PERIOD*?
+        #No idea. This condition should never happen, honestly.
+        # assert hint_child_sane is not HINT_IGNORABLE, (
+        #     f'Union {repr(union_hint)} '
+        #     f'ignorable child {repr(hint_child_insane)} unreduced.'
+        # )
 
         # ....................{ UNION                      }....................
         # Sane child hint encapsulated by this metadata.

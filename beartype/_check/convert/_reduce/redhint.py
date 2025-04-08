@@ -35,13 +35,15 @@ from beartype._check.convert._reduce._redmap import (
     HINT_SIGN_TO_REDUCE_HINT_CACHED_get,
     HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get,
 )
+from beartype._check.convert._reduce._redrecurse import (
+    is_hint_recursive,
+    make_hint_sane_recursable,
+)
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
     HintOrSane,
     HintSane,
-    is_hint_recursive,
-    make_hint_sane_recursable,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -474,13 +476,23 @@ def _reduce_hint_overrides(
             #
             # Note that:
             # * This tester raises "TypeError" when this hint is unhashable.
-            # * We intentionally preserve this un-overridden hint rather than
-            #   reducing this hint to the ignorable "HINT_IGNORABLE" singleton.
-            #   Why? Because un-overridden hints are themselves valid type hints
-            #   and thus have semantic meaning in and of themselves (e.g., the
-            #   "float" in the hint override
-            #   "BeartypeConf(hint_overrides={float: float | int})"
-            #   has semantic meaning as a builtin type).
+            # * This tester intentionally accepts the default value "0" for the
+            #   optional parameter "hint_recursable_depth_max", ensuring this
+            #   overridden hint is considered to be recursive when this
+            #   overridden hint has already been overridden a single time.
+            #   Unlike comparable kinds of recursable hints (e.g., PEP
+            #   695-compliant type aliases), hint overrides typically convey
+            #   *NO* internal structure and thus merit *NO* deeper recursion.
+            #   Hint overrides instruct @beartype to perform simple
+            #   global-search-and-replacements on exactly matching type hints.
+            #   Recursion is neither desirable nor necessary.
+            #
+            #   Consider the prototypical hint overrides of
+            #   "BeartypeConf(hint_overrides={float: float | int})". After
+            #   expanding the builtin "float" type to the PEP 604-compliant
+            #   union "float | int", attempting to recursively re-apply the same
+            #   expansion silently reduces to a noop (e.g., "float | int"
+            #   expands to "float | float | int", equal to "float | int").
             is_hint_recursive(hint=hint, hint_parent_sane=hint_parent_sane)
         ):
             # Then this overridden hint is *NOT* recursive, implying this hint
@@ -512,7 +524,13 @@ def _reduce_hint_overrides(
                 hint_nonrecursable=hint_overridden,
                 hint_parent_sane=hint_parent_sane,
             )
-        # Else, preserve this hint as is.
+        # Else, this overridden hint is recursive. In this case, preserve this
+        # un-overridden hint rather than reducing this hint to the ignorable
+        # "HINT_IGNORABLE" singleton. Why? Because un-overridden hints are
+        # themselves valid type hints and thus have semantic meaning in and of
+        # themselves (e.g., the "float" in the hint override
+        # "BeartypeConf(hint_overrides={float: float | int})" has semantic
+        # meaning as a builtin type).
     # If doing so raises a "TypeError", this hint is unhashable and thus
     # inapplicable for hint overriding. In this case, preserve this hint as is.
     except TypeError:

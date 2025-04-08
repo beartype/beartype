@@ -209,6 +209,11 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         if (
             # This sanified child hint is ignorable *AND*...
             hint_sane_child is HINT_IGNORABLE and
+
+            #FIXME: This... definitely doesn't seem right. Super non-trivial!
+            #For one thing, hashability. Like, seriously. For another, a simple
+            #membership test no longer appears to suffice. *shrug*
+
             # This child hint is *NOT* a transitive parent of itself...
             #
             # If this child hint is a transitive parent of itself, this child
@@ -229,7 +234,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
             # That union contains the recursive child hint "recursive_union" but
             # is *NOT* ignorable. Rather, that union semantically reduces to the
             # trivial type "int".
-            hint not in hint_sane_child.recursable_hints
+            hint not in hint_sane_child.hint_recursable_to_depth
         ):
             # print(f'Ignoring union {hint} with ignorable child {hint_sane_child}...')
             # Reduce this entire union to the "HINT_IGNORABLE" singleton. Why?
