@@ -89,7 +89,7 @@ def reduce_hint_pep484_typevar(
     Hint
         Lower-level type hint currently supported by :mod:`beartype`.
     '''
-    # print(f'Reducing PEP 484 type variable {repr(hint)} by type variable lookup table {repr(typevar_to_hint)}...')
+    # print(f'Reducing PEP 484 type variable {hint} with parent hint {hint_parent_sane}...')
 
     # If...
     if (
@@ -175,6 +175,7 @@ def reduce_hint_pep484_typevar(
 
                 # Map this type variable to this hint.
                 hint = hint_reduced
+        # print(f'...to hint {hint} via type variable lookup table!')
     # Else, this type variable is unmapped.
 
     # If this hint is still a type variable (e.g., due to either not being
@@ -368,6 +369,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         hint_childs,
         exception_prefix,
     )
+    # print(f'Mapped hint {hint} to type variable lookup table {typevar_to_hint}!')
 
     # ....................{ RETURN                         }....................
     # Sanified metadata to be returned.

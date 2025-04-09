@@ -210,7 +210,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     # For each child hint of this union...
     while hint_childs_index < hint_childs_len:
         # Currently visited child hint of this union.
-        hint_child = hint_childs_old[hint_childs_index]
+        hint_child_insane = hint_childs_old[hint_childs_index]
         # print(f'Recursively reducing {hint} child {hint_child}...')
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
@@ -218,7 +218,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         # sanifying this child hint did not generate supplementary metadata *OR*
         # that metadata otherwise (i.e., if sanifying this child hint generated
         # supplementary metadata).
-        hint_child_sane = reduce_hint_child(hint_child, kwargs)
+        hint_child_sane = reduce_hint_child(hint_child_insane, kwargs)
 
         # If this child hint is ignorable, reduce this entire union to the
         # "HINT_SANE_IGNORABLE" singleton. Why? By set logic, a union
@@ -265,8 +265,8 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         # Else, this child hint is non-recursive.
         #
         # If metadata encapsulates the reduction of this child hint, reduce this
-        # metadata to simply this child hint. While non-ideal, the remainder of
-        # the codebase is currently unequipped to handle unions of
+        # metadata to this possibly insane child hint. While non-ideal, the
+        # remainder of the codebase is currently unequipped to handle unions of
         # PEP-noncompliant "HintSane" objects. However, even if the remainder of
         # the codebase were refactored to handle such unions, there is *NO*
         # guarantee that Python itself would allow this abuse of unions.
@@ -274,7 +274,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         # PEP-noncompliant child hints. Even if Python currently allowed this,
         # there is *NO* guarantee that future releases of Python would do so.
         elif isinstance(hint_child_sane, HintSane):
-            hint_childs_new_list.append(hint_child_sane.hint)
+            hint_childs_new_list.append(hint_child_insane)
         # Else, *NO* metadata encapsulates the reduction of this child hint.
         #
         # In this case, preserve this child hint as is.

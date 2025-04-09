@@ -27,7 +27,7 @@ from beartype.typing import (
 )
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
-    HINT_SANE_IGNORABLE,
+    HINT_IGNORABLE,
     HintSane,
     DictHintSaneToAny,
     ListHintSane,
@@ -296,8 +296,8 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
     # that hint...
     for hint_child_sane_pep_index, hint_child_sane_pep in enumerate(
         hint_childs_sane_pep.keys()):
-        # print(f'Enqueing union {repr(hints_meta.hint_curr_meta.hint)}...')
-        # print(f'...PEP-compliant child {repr(hint_child_sane_pep)}.')
+        # print(f'Enqueing union {hints_meta.hint_curr_meta.hint_sane.hint}...')
+        # print(f'...PEP-compliant child {hint_child_sane_pep}.')
 
         # Code deeply type-checking this child hint.
         hints_meta.func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
@@ -590,7 +590,7 @@ def _get_hint_pep484604_union_args_flattened(
             hint_child_insane=hint_child_insane,
             hint_parent_sane=hint_parent_sane,
         )
-        # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
+        # print(f'Sanified union child hint {hint_child_insane} to {hint_child_sane}!')
 
         # Assert this child hint to be unignorable. The previously applied
         # reduction for PEP 484- and 604-compliant union hints (i.e., the
@@ -598,10 +598,10 @@ def _get_hint_pep484604_union_args_flattened(
         # hints containing *ANY* ignorable child hints. However, this union was
         # *NOT* ignored! By elimination, this union must contain *NO* ignorable
         # child hints.
-        assert hint_child_sane is not HINT_SANE_IGNORABLE, (
+        assert hint_child_sane.hint is not HINT_IGNORABLE, (
             f'Union {repr(union_hint)} '
             f'containing ignorable child {repr(hint_child_insane)} '
-            f'not itself ignored (i.e., reduced to "HINT_SANE_IGNORABLE" singleton).'
+            f'not itself ignored (i.e., reduced to "HINT_IGNORABLE" singleton).'
         )
 
         # ....................{ UNION                      }....................

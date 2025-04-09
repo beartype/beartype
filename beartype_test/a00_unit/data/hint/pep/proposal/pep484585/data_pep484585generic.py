@@ -21,7 +21,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype_test.a00_unit.data.data_type import Class
 from collections.abc import (
-    Callable as Pep585Callable,
+    # Callable as Pep585Callable,
     Container as Pep585Container,
     Iterable as Pep585Iterable,
     Iterator as Pep585Iterator,

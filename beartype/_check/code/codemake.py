@@ -1402,8 +1402,7 @@ def make_check_expr(
                             conf=conf,
                             exception_prefix=EXCEPTION_PREFIX,
                         )):
-                        # print(f'Visiting generic type hint {repr(hint_curr)}...')
-                        # print(f'...unerased base {repr(hint_child)}...')
+                        # print(f'Visiting generic type hint {hint_curr_sane} unerased base {hint_child_sane}...')
 
                         # Generate and append code type-checking this pith
                         # against this pseudo-superclass.
