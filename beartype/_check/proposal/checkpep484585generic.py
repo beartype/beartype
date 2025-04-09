@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
     IterableHintSane,
 )
@@ -230,7 +230,7 @@ def iter_hint_pep484585_generic_bases_unerased(
         # print(f'generic {hint} base: {repr(hint_base)}')
 
         # If this pseudo-superclass is unignorable...
-        if hint_sane_base is not HINT_IGNORABLE:
+        if hint_sane_base is not HINT_SANE_IGNORABLE:
             # Pseudo-superclass encapsulated by this metadata.
             hint_base = hint_sane_base.hint
 

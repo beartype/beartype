@@ -20,7 +20,7 @@ from beartype.typing import (
 )
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCounter
@@ -110,8 +110,8 @@ def find_cause_pep484585_mapping(cause: ViolationCause) -> ViolationCause:
     )
 
     # True only if these hints are unignorable.
-    is_hint_key_unignorable = hint_key_sane is not HINT_IGNORABLE
-    is_hint_value_unignorable = hint_value_sane is not HINT_IGNORABLE
+    is_hint_key_unignorable = hint_key_sane is not HINT_SANE_IGNORABLE
+    is_hint_value_unignorable = hint_value_sane is not HINT_SANE_IGNORABLE
 
     # Arbitrary iterator vaguely satisfying the dict.items() protocol, yielding
     # zero or more 2-tuples of the form "(key, value)", where:

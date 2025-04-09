@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.datahintpep import Hint
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
 )
@@ -103,7 +103,7 @@ def reduce_hint_pep484585_generic_subscripted(
     # originating from "typing" type origins for stability reasons.
     if get_hint_pep_origin_or_none(hint) is Generic:
         # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
-        return HINT_IGNORABLE
+        return HINT_SANE_IGNORABLE
     # Else, this subscripted generic is *NOT* the "typing.Generic" superclass
     # directly parametrized by one or more type variables and thus *NOT* an
     # ignorable non-protocol.
@@ -181,7 +181,7 @@ def reduce_hint_pep484585_generic_unsubscripted(
     # originating from "typing" type origins for stability reasons.
     if hint is Generic:
         # print(f'Testing generic hint {repr(hint)} deep ignorability... True')
-        return HINT_IGNORABLE
+        return HINT_SANE_IGNORABLE
     # Else, this unsubscripted generic is *NOT* the "typing.Generic" superclass
     # and thus *NOT* an ignorable non-protocol.
     #

@@ -19,7 +19,7 @@ from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
@@ -106,7 +106,7 @@ def find_cause_pep484585_container_args_1(cause: ViolationCause) -> ViolationCau
         #     ambiguous
         not len(cause.pith) or
         # This child hint is ignorable...
-        hint_child_sane is HINT_IGNORABLE
+        hint_child_sane is HINT_SANE_IGNORABLE
     ):
         # Then this container satisfies this hint. In this case, return the
         # passed cause as is.
@@ -243,7 +243,7 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         # print(f'tuple pith: {repr(pith_item)}\ntuple hint child: {repr(hint_child)}')
 
         # If this child hint is ignorable, continue to the next.
-        if hint_child_sane is HINT_IGNORABLE:
+        if hint_child_sane is HINT_SANE_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 

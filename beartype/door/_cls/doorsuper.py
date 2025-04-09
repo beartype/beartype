@@ -32,7 +32,7 @@ from beartype.typing import (
     overload,
 )
 from beartype._check.convert.convsanify import sanify_hint_any
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import T_Hint
@@ -547,7 +547,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
         #"_hint_sane" property, which this logic would then access instead.
 
         # Return true only if this hint is ignorable.
-        return sanify_hint_any(self._hint) is HINT_IGNORABLE  # pyright: ignore
+        return sanify_hint_any(self._hint) is HINT_SANE_IGNORABLE  # pyright: ignore
 
     # ..................{ CHECKERS                           }..................
     def die_if_unbearable(

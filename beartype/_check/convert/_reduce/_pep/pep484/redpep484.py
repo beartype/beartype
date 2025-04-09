@@ -16,7 +16,7 @@ from beartype.meta import URL_PEP585_DEPRECATIONS
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype._cave._cavefast import NoneType
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
 )
 from beartype._data.hint.datahintpep import Hint
@@ -103,7 +103,7 @@ def reduce_hint_pep484_deprecated(
 def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
     '''
     Reduce the passed :pep:`484`-compliant :obj:`typing.Any` singleton to the
-    ignorable :data:`.HINT_IGNORABLE` singleton.
+    ignorable :data:`.HINT_SANE_IGNORABLE` singleton.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation trivially reduces
@@ -119,11 +119,11 @@ def reduce_hint_pep484_any(hint: Hint, exception_prefix: str) -> HintSane:
     Returns
     -------
     HintSane
-        Ignorable :data:`.HINT_IGNORABLE` singleton.
+        Ignorable :data:`.HINT_SANE_IGNORABLE` singleton.
     '''
 
     # Unconditionally ignore the "Any" singleton.
-    return HINT_IGNORABLE
+    return HINT_SANE_IGNORABLE
 
 
 # Note that this reducer is intentionally typed as returning "type" rather than

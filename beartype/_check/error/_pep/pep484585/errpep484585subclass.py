@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._data.hint.datahinttyping import TypeOrTupleTypes
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
@@ -76,7 +76,7 @@ def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
 
     # If this superclass is ignorable, then *ALL* types including this pith
     # satisfy this superclass. In this case, return the passed cause as is.
-    if hint_child_sane is HINT_IGNORABLE:
+    if hint_child_sane is HINT_SANE_IGNORABLE:
         return cause
     # Else, this superclass is unignorable.
 

@@ -27,7 +27,7 @@ from beartype.typing import (
 )
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
     DictHintSaneToAny,
     ListHintSane,
@@ -584,7 +584,7 @@ def _get_hint_pep484604_union_args_flattened(
         #   hints_meta.sanify_hint_child() method called below, which
         #   transitively calls the reduce_hint() function, which detects
         #   recursion in a non-overridden hint and explicitly returns
-        #   "HINT_IGNORABLE" rather than recursing infinitely into that hint.
+        #   "HINT_SANE_IGNORABLE" rather than recursing infinitely into that hint.
         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
         hint_child_sane = hints_meta.sanify_hint_child(
             hint_child_insane=hint_child_insane,
@@ -592,45 +592,17 @@ def _get_hint_pep484604_union_args_flattened(
         )
         # print(f'Sanified union child hint to {repr(hint_child_sane)}.')
 
-        # If this child hint is ignorable, skip this child hint. Continue! \o/
-        #
-        # Note that the previously applied reduction for PEP 484- and
-        # 604-compliant union hints (i.e., the reduce_hint_pep484604() reducer)
-        # has already ignored union hints containing *ANY* unconditionally
-        # ignorable child hints. However, union hints may also contain child
-        # hints that are only conditionally ignorable in various edge cases
-        # *NOT* visible to that reducer. Whereas a union hint containing *ANY*
-        # unconditionally ignorable child hint is itself trivially ignorable, a
-        # union hint containing a child hint that is only conditionally
-        # ignorable is *NOT* trivially ignorable. Only that conditionally
-        # ignorable child hint is ignorable.
-        #
-        # Consider a PEP 695-compliant recursive type alias aliasing a union:
-        #       type RecursiveUnion = int | RecursiveUnion
-        #
-        # The hints_meta.sanify_hint_child() method called above expands
-        # recursive type aliases twice: once for the original alias and a second
-        # time for the recursive alias embedded in that alias. Why? To preserve
-        # data structures across aliases recursively containing themselves.
-        # After performing these expansions, this expanded union resembles:
-        #       int | int | RecursiveUnion
-        #
-        # Naturally, this expanded union flattens to simply "int |
-        # RecursiveUnion". Equally naturally, the "RecursiveUnion" member of
-        # this union is ignorable. However, the "int" member of this union is
-        # *NOT* ignorable. Ergo, this union itself is *NOT* ignorable. Instead,
-        # this union is semantically equivalent to the builtin "int" type.
-        if hint_child_sane is HINT_IGNORABLE:
-            continue
-        # Else, this child hint is unignorable.
-
-        #FIXME: The prior "if" conditional doesn't quite make sense. Aren't
-        #unions containing ignorable child hints themselves ignorable, *PERIOD*?
-        #No idea. This condition should never happen, honestly.
-        # assert hint_child_sane is not HINT_IGNORABLE, (
-        #     f'Union {repr(union_hint)} '
-        #     f'ignorable child {repr(hint_child_insane)} unreduced.'
-        # )
+        # Assert this child hint to be unignorable. The previously applied
+        # reduction for PEP 484- and 604-compliant union hints (i.e., the
+        # reduce_hint_pep484604() reducer) *SHOULD* have already ignored union
+        # hints containing *ANY* ignorable child hints. However, this union was
+        # *NOT* ignored! By elimination, this union must contain *NO* ignorable
+        # child hints.
+        assert hint_child_sane is not HINT_SANE_IGNORABLE, (
+            f'Union {repr(union_hint)} '
+            f'containing ignorable child {repr(hint_child_insane)} '
+            f'not itself ignored (i.e., reduced to "HINT_SANE_IGNORABLE" singleton).'
+        )
 
         # ....................{ UNION                      }....................
         # Sane child hint encapsulated by this metadata.

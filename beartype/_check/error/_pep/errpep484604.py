@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -74,7 +74,7 @@ def find_cause_pep484604_union(cause: ViolationCause) -> ViolationCause:
     # For each subscripted argument of this union...
     for hint_child_sane in cause.hint_childs_sane:
         # If this child hint is ignorable, continue to the next.
-        if hint_child_sane is HINT_IGNORABLE:
+        if hint_child_sane is HINT_SANE_IGNORABLE:
             continue
         # Else, this child hint is unignorable.
 

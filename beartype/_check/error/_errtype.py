@@ -28,7 +28,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignUnion,
 )
 from beartype._check.error.errcause import ViolationCause
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_issubclassable,
@@ -333,7 +333,7 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
 
     # If this superclass is ignorable, then *ALL* types including this pith
     # satisfy this superclass. In this case, return the passed cause as is.
-    if hint_child is HINT_IGNORABLE:
+    if hint_child is HINT_SANE_IGNORABLE:
         return cause
     # Else, this superclass is unignorable.
 

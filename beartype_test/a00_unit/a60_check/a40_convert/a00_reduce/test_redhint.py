@@ -79,8 +79,8 @@ def test_reduce_hint() -> None:
         hint=complex,
         conf=BeartypeConf(is_pep484_tower=True),
     )
-    assert hint_pep484_tower_float_sane.hint is Pep484TowerFloat
-    assert hint_pep484_tower_complex_sane.hint is Pep484TowerComplex
+    assert hint_pep484_tower_float_sane.hint == Pep484TowerFloat
+    assert hint_pep484_tower_complex_sane.hint == Pep484TowerComplex
 
     # Assert this reducer preserves the builtin "float" and "complex" types as
     # is when configured to disable the implicit numeric tower.
@@ -188,25 +188,25 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+    from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
     from beartype._check.convert._reduce.redhint import reduce_hint
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in hints_ignorable:
-        assert reduce_hint(hint_ignorable) is HINT_IGNORABLE
+        assert reduce_hint(hint_ignorable) is HINT_SANE_IGNORABLE
 
     # Assert this tester rejects unignorable PEP-noncompliant type hints.
     for hint_unignorable in HINTS_NONPEP_UNIGNORABLE:
-        assert reduce_hint(hint_unignorable) is not HINT_IGNORABLE
+        assert reduce_hint(hint_unignorable) is not HINT_SANE_IGNORABLE
 
     # Assert this tester:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         # True only if this hint reduces to the ignorable "Any" singleton.
-        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is HINT_IGNORABLE
+        is_hint_ignorable = reduce_hint(hint_pep_meta.hint) is HINT_SANE_IGNORABLE
 
         # Assert this hint is either ignorable or unignorable as expected.
         assert hint_pep_meta.is_ignorable == is_hint_ignorable

@@ -21,7 +21,7 @@ from beartype.typing import (
     TypeVar,
 )
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
 )
@@ -190,9 +190,9 @@ def reduce_hint_pep484_typevar(
 
         # If this type variable is both unbounded *AND* unconstrained, this type
         # variable is currently *NOT* type-checkable and is thus ignorable.
-        # Reduce this type variable to the ignorable "HINT_IGNORABLE" singleton.
+        # Reduce this type variable to the ignorable "HINT_SANE_IGNORABLE" singleton.
         if hint is None:
-            hint = HINT_IGNORABLE
+            hint = HINT_SANE_IGNORABLE
         # Else, this type variable is either bounded *OR* constrained. In either
         # case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')

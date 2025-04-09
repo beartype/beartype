@@ -20,18 +20,6 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ TESTERS                            }....................
-#FIXME: Shift all of the following utility functions into a more appropriate
-#submodule -- say:
-#* Create a new "beartype._check.util" subpackage.
-#* Shift existing the "beartype._check" subpackages and submodules into
-#  "beartype._check.util": e.g.,
-#  * Shift the "beartype._check.checkcache" subpackage to
-#    "beartype._check.util.checkutilcache".
-#  * Shift the "beartype._check.signature" subpackage to
-#    "beartype._check.util.signature".
-#* Create a new "beartype._check.util.checkutilrecursion" submodule.
-#* Shift all of these utility functions into that submodule.
-
 #FIXME: Unit test us up, please.
 def is_hint_recursive(
     # Mandatory parameters.

@@ -22,7 +22,7 @@ from beartype._check.checkmake import (
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     # HintSane,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
@@ -165,7 +165,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
             # Else, this is *NOT* "typing.NoReturn".
             #
             # If this hint is unignorable...
-            elif hint_sane is not HINT_IGNORABLE:
+            elif hint_sane is not HINT_SANE_IGNORABLE:
                 #FIXME: DRY violation. The same logic appears in "_wrapargs" as
                 #well. It looks like what we *PROBABLY* want to do here is:
                 #* Rename the existing make_code_raiser_func_pith_check()

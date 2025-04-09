@@ -29,7 +29,7 @@ from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
@@ -269,7 +269,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
                 )
 
                 # If this hint is ignorable, continue to the next parameter.
-                if hint_sane is HINT_IGNORABLE:
+                if hint_sane is HINT_SANE_IGNORABLE:
                     # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.

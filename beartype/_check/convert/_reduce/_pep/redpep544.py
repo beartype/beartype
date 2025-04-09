@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintOrSane,
 )
 from beartype._data.hint.datahintpep import Hint
@@ -34,7 +34,7 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
     '''
     Reduce the passed :pep:`544`-compliant **protocol** (i.e., user-defined
     subclass of the :class:`typing.Protocol` abstract base class (ABC)) to the
-    ignorable :data:`.HINT_IGNORABLE` singleton if this protocol is a
+    ignorable :data:`.HINT_SANE_IGNORABLE` singleton if this protocol is a
     parametrization of this ABC by one or more :pep:`484`-compliant **type
     variables** (i.e., :class:`typing.TypeVar` objects).
 
@@ -84,7 +84,7 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
     #     >>> isinstance(0x696969, Protocol)
     #     True
     if is_hint_pep544_protocol_supertype(hint):
-        return HINT_IGNORABLE
+        return HINT_SANE_IGNORABLE
 
     # Type originating this protocol if any *OR* "None" otherwise.
     #
@@ -111,7 +111,7 @@ def reduce_hint_pep544(hint: Hint, exception_prefix: str) -> HintOrSane:
         #
         # Note that protocol superclasses can *ONLY* be parametrized by type
         # variables.
-        return HINT_IGNORABLE
+        return HINT_SANE_IGNORABLE
     # Else, this protocol is unignorable.
 
     # Preserve this unignorable protocol.

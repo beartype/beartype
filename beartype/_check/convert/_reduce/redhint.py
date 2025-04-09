@@ -42,6 +42,7 @@ from beartype._check.convert._reduce._redrecurse import (
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintOrSane,
     HintSane,
 )
@@ -68,6 +69,7 @@ def reduce_hint(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
     hint_parent_sane: Optional[HintSane] = None,
+    is_hint_ignorable_preserved: bool = False,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
     exception_prefix: str = '',
@@ -121,7 +123,7 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    hint_parent_sane : Optional[HintSane]
+    hint_parent_sane : Optional[HintSane], default: None
         Either:
 
         * If the passed hint is a **root** (i.e., top-most parent hint of a tree
@@ -134,7 +136,28 @@ def reduce_hint(
           hint into a fully PEP-compliant parent hint).
 
         Defaults to :data:`None`.
-    pith_name : Optional[str]
+    is_hint_ignorable_preserved : bool, default: False
+        Either:
+
+        * If the caller prefers that ignorable hints reduced to a unique
+          :data:`.HintSane` object *not* equal to the standard
+          :data:`.HINT_SANE_IGNORABLE` singleton but instead encapsulating the
+          :data:`.HINT_IGNORABLE` type hint and unique metadata describing the
+          ignored hint reduce to that :data:`.HintSane` object rather than the
+          :data:`.HINT_SANE_IGNORABLE` singleton, data:`True`.
+        * If the caller prefers that ignorable hints reduced to a unique
+          :data:`.HintSane` object *not* equal to the standard
+          :data:`.HINT_SANE_IGNORABLE` singleton be transparently reduced to the
+          :data:`.HINT_SANE_IGNORABLE` singleton, data:`False`. This preference
+          is substantially easier for callers to handle but also technically
+          lossy, as all unique metadata associated with this reduction is lost.
+
+        Defaults to :data:`False`, as most callers neither require nor desire
+        this distinction and are thus incapable of handling ignorable hints
+        reduced to unique :data:`.HintSane` objects *not* equal to the standard
+        :data:`.HINT_SANE_IGNORABLE` singleton. Most callers only expect the
+        :data:`.HINT_SANE_IGNORABLE` singleton.
+    pith_name : Optional[str], default: None
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
@@ -143,7 +166,7 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    reductions_count : int, optional
+    reductions_count : int, default: None
         Current number of total reductions internally performed by *all* calls
         to this function rooted at this function in the current call stack,
         guarding against accidental infinite recursion between lower-level
@@ -157,7 +180,7 @@ def reduce_hint(
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata
@@ -173,12 +196,23 @@ def reduce_hint(
     '''
 
     # ....................{ PREAMBLE                       }....................
-    # Validate passed parameters *AFTER* establishing defaults above.
+    assert isinstance(arg_kind, NoneTypeOr[ArgKind]), (
+        f'{repr(arg_kind)} neither argument kind nor "None".')
+    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+        f'{repr(cls_stack)} neither tuple nor "None".')
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(decor_meta, NoneTypeOr[BeartypeDecorMeta]), (
+        f'{repr(hint_parent_sane)} neither decoration metadata nor "None".')
     assert isinstance(hint_parent_sane, NoneTypeOr[HintSane]), (
         f'{repr(hint_parent_sane)} neither sanified hint metadata nor "None".')
+    assert isinstance(is_hint_ignorable_preserved, bool), (
+        f'{repr(is_hint_ignorable_preserved)} not boolean.')
+    assert isinstance(pith_name, NoneTypeOr[str]), (
+        f'{repr(pith_name)} neither string nor "None".')
     assert isinstance(reductions_count, int), (
         f'{repr(reductions_count)} not integer.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # ....................{ LOCALS                         }....................
     # Original unreduced hint passed to this reducer, preserved so as to be
@@ -231,20 +265,20 @@ def reduce_hint(
             )
             # print(f'[reduce_hint] Reduced to {hint_or_sane_curr}!')
 
-            # If this unreduced hint was modified, this reducer reduced this
-            # hint. Halt reducing by these lower-level reducers, enabling the
-            # outer loop to decide whether to continue reducing.
-            # if hint_or_sane_curr is not hint_or_sane_prev:
+            # If this reduced hint is *NOT* this unreduced hint, this reducer
+            # reduced this hint. Halt reducing by these lower-level reducers,
+            # enabling the outer loop to decide whether to continue reducing.
             if hint_or_sane_curr is not hint_curr:
-                # If this hint is ignorable, halt reducing immediately.
+                # If this hint reduces to the ignorable "HINT_SANE_IGNORABLE"
+                # metadata singleton, then halt reducing immediately.
                 #
                 # Note that this is merely an optimization avoiding unnecessary
                 # iteration. Without this test, hints reduced to this ignorable
                 # singleton would require an additional loop through the
                 # "_HINT_REDUCERS" tuple. This test elides that iteration.
-                if hint_or_sane_curr is HINT_IGNORABLE:
+                if hint_or_sane_curr is HINT_SANE_IGNORABLE:
                     # print(f'[reduce_hint] Ignorably reduced!')
-                    return HINT_IGNORABLE
+                    return HINT_SANE_IGNORABLE
                 # Else, this hint is currently unignorable.
 
                 # print(f'[reduce_hint] Incrementally reduced!')
@@ -266,6 +300,43 @@ def reduce_hint(
 
         # If reducing this hint generated supplementary metadata...
         if isinstance(hint_or_sane_curr, HintSane):
+            # Extract the currently reduced hint from this metadata.
+            hint_curr = hint_or_sane_curr.hint
+
+            #FIXME: Should probably be performed down below outside this loop.
+            # If this hint reduces to the ignorable "HINT_IGNORABLE"
+            # singleton, then halt reducing immediately.
+            #
+            # Note that this is *NOT* merely an optimization avoiding
+            # unnecessary iteration as above. While similar, this logic is
+            # distinct from that above. This edge case arises when a reducer
+            # avoids reducing to an ignorable hint to the higher-level ignorable
+            # "HINT_SANE_IGNORABLE" metadata singleton but instead encapsulates
+            # the lower-level "HINT_IGNORABLE" type hint singleton with a new
+            # "HintSane" object providing unique metadata describing the ignored
+            # type hint. That unique metadata enables parent reducers to
+            # selectively decide how to handle ignorable child type hints.
+            #
+            # Examples include:
+            # * The reduce_hint_pep484604() reducer for union type hints.
+            if hint_curr is HINT_IGNORABLE:
+                # Return either...
+                return (
+                    # If the caller requests that unique "HintSane" objects
+                    # encapsulating the "HINT_IGNORABLE" singleton be preserved,
+                    # do so by returning this metadata as is. Note that this is
+                    # *NOT* what most callers expect and thus not the default;
+                    hint_or_sane_curr
+                    if is_hint_ignorable_preserved else
+                    # Else, reduce this metadata to the standard ignorable
+                    # "HINT_SANE_IGNORABLE" singleton describing ignorable
+                    # hints. Note that this is what *MOST* callers expect and
+                    # thus the default.
+                    HINT_SANE_IGNORABLE
+                )
+            # Else, this hint does *NOT* reduce to the ignorable
+            # "HINT_IGNORABLE" singleton. Ergo, this hint is unignorable.
+
             # Replace the sanified type hint metadata of the parent hint of this
             # hint by the sanified type hint metadata of this hint itself. Doing
             # so ensures that the next reducer passed the "hint_parent_sane"
@@ -275,14 +346,22 @@ def reduce_hint(
             # metadata by compositing that metadata into this
             # "hint_or_sane_curr" metadata that that reducer returned. Srsly.
             hint_parent_sane = hint_or_sane_curr
-
-            # Extract the currently reduced hint from this metadata.
-            hint_curr = hint_or_sane_curr.hint
         # Else, reducing this hint did *NOT* generate supplementary metadata,
         # implying "hint_or_sane_curr" to be the currently reduced hint. In this
         # case, record this currently reduced hint.
         else:
             hint_curr = hint_or_sane_curr
+
+        #FIXME: Should probably be performed above the prior "if" conditional.
+        #FIXME: Currently unused, but useful. Could be required at some point.
+        # If this currently reduced hint is exactly the previously reduced hint,
+        # the above reducers failed to reduce this hint. Halt reducing entirely.
+        #
+        # Note that this is a rare (albeit valid) edge case that arises for
+        # reducers that unconditionally create and return new . The above "else:" block of the
+        # above "for hint_reducer in _HINT_REDUCERS:" loop 
+        # if hint_or_sane_curr == hint_or_sane_prev:
+        #     break
 
         # ....................{ RECURSION                  }....................
         # Guard against infinite recursion in lower-level reductions with
@@ -323,7 +402,7 @@ def reduce_hint(
     # ....................{ RETURN                         }....................
     # If this hint is *NOT* already sanified type hint metadata, this hint is
     # unignorable. Why? Because, if this hint were ignorable, this hint would
-    # have been reduced to the "HINT_IGNORABLE" singleton. In this case...
+    # have been reduced to the "HINT_SANE_IGNORABLE" singleton. In this case...
     if not isinstance(hint_or_sane_curr, HintSane):
         # Encapsulate this hint with such metadata, defined as either...
         hint_or_sane_curr = (
@@ -375,7 +454,7 @@ def reduce_hint_child(
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata
@@ -526,7 +605,7 @@ def _reduce_hint_overrides(
             )
         # Else, this overridden hint is recursive. In this case, preserve this
         # un-overridden hint rather than reducing this hint to the ignorable
-        # "HINT_IGNORABLE" singleton. Why? Because un-overridden hints are
+        # "HINT_SANE_IGNORABLE" singleton. Why? Because un-overridden hints are
         # themselves valid type hints and thus have semantic meaning in and of
         # themselves (e.g., the "float" in the hint override
         # "BeartypeConf(hint_overrides={float: float | int})" has semantic
@@ -563,7 +642,7 @@ def _reduce_hint_cached(
     HintOrSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint by a
           memoized reducer, metadata encapsulating this reduction.
         * Else, this hint unmodified as is.
@@ -619,7 +698,7 @@ def _reduce_hint_uncached(hint: Hint, **kwargs) -> HintOrSane:
     HintOrSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint by a
           unmemoized reducer, metadata encapsulating this reduction.
         * Else, this hint unmodified as is.

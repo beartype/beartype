@@ -21,13 +21,11 @@ from beartype._check.convert._reduce._redrecurse import (
     make_hint_sane_recursable,
 )
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_RECURSIVE,
     HintOrSane,
     HintSane,
 )
-from beartype._data.hint.datahintpep import (
-    Hint,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_unsubscripted_alias)
@@ -96,10 +94,6 @@ def reduce_hint_pep695_subscripted(
     # If this PEP 695-compliant subscripted type alias is recursive, ignore this
     # alias to avoid infinite recursion.
     #
-    # Certainly, various approaches to generating code type-checking recursive
-    # hints exists. @beartype currently embraces the easiest, fastest, and
-    # laziest approach: just ignore all recursion! Ignorance works wonders.
-    #
     # Note that:
     # * This tester intentionally passes a non-default value of "1" for the
     #   optional parameter "hint_recursable_depth_max", ensuring this alias is
@@ -123,15 +117,15 @@ def reduce_hint_pep695_subscripted(
     #
     #   Halting recursion at the first expansion of the concrete type alias
     #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" would then
-    #   reduce the latter to "list[HINT_IGNORABLE | int]", which reduces to
-    #   "list[HINT_IGNORABLE]", which reduces to "list", which clearly fails to
-    #   convey the internal semantics of this data structure.
+    #   reduce the latter to "list[HINT_SANE_RECURSIVE | int]", which reduces to
+    #   "list[HINT_SANE_RECURSIVE]", which reduces to "list", which clearly
+    #   fails to convey the internal semantics of this data structure.
     #
     #   Halting recursion at the second expansion of the concrete type alias
     #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" instead reduces
     #   the latter to "list[list[RecursiveList[int] | int] | int]", which
-    #   reduces to "list[list[HINT_IGNORABLE | int] | int]", which reduces to
-    #   "list[list[HINT_IGNORABLE] | int]", which reduces to
+    #   reduces to "list[list[HINT_SANE_RECURSIVE | int] | int]", reducing to
+    #   "list[list[HINT_SANE_RECURSIVE] | int]", which reduces to
     #   "list[list | int]", which superficially conveys a layer of the internal
     #   semantics of this data structure.
     if is_hint_recursive(
@@ -140,7 +134,7 @@ def reduce_hint_pep695_subscripted(
         hint_recursable_depth_max=1,
     ):
         # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
-        return HINT_IGNORABLE
+        return HINT_SANE_RECURSIVE
     # Else, this hint is *NOT* recursive.
 
     # ....................{ REDUCE                         }....................
@@ -294,7 +288,7 @@ def reduce_hint_pep695_unsubscripted(
         hint_recursable_depth_max=1,
     ):
         # print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
-        return HINT_IGNORABLE
+        return HINT_SANE_RECURSIVE
     # Else, this hint is *NOT* recursive.
 
     # ....................{ REDUCE                         }....................

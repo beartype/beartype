@@ -46,7 +46,7 @@ from beartype._check.checkmagic import (
     VAR_NAME_PITH_ROOT,
 )
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
-from beartype._check.metadata.hint.hintsane import HINT_IGNORABLE
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
@@ -399,7 +399,7 @@ def make_check_expr(
             # explicitly ignored ignorable root hints, these two guarantees
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
-            assert hint_curr is not HINT_IGNORABLE, (
+            assert hint_curr is not HINT_SANE_IGNORABLE, (
                 f'{EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.'
             )
@@ -869,7 +869,7 @@ def make_check_expr(
                             # print(f'...child hint {hint_child} -> {hint_child_sane}!')
 
                             # If this child hint is unignorable...
-                            if hint_child_sane is not HINT_IGNORABLE:
+                            if hint_child_sane is not HINT_SANE_IGNORABLE:
                                 # Python expression yielding the value of the
                                 # currently indexed item of this tuple to be
                                 # type-checked against this child hint.
@@ -997,13 +997,13 @@ def make_check_expr(
 
                     # If at least one of these child hints are unignorable...
                     if not (
-                        hint_child_sane_key   is HINT_IGNORABLE and
-                        hint_child_sane_value is HINT_IGNORABLE
+                        hint_child_sane_key   is HINT_SANE_IGNORABLE and
+                        hint_child_sane_value is HINT_SANE_IGNORABLE
                     ):
                         # If this child key hint is unignorable...
-                        if hint_child_sane_key is not HINT_IGNORABLE:
+                        if hint_child_sane_key is not HINT_SANE_IGNORABLE:
                             # If this child value hint is also unignorable...
-                            if hint_child_sane_value is not HINT_IGNORABLE:
+                            if hint_child_sane_value is not HINT_SANE_IGNORABLE:
                                 # Increase the indentation level of code
                                 # type-checking this child value pith.
                                 hints_meta.indent_level_child += 1
@@ -1143,7 +1143,7 @@ def make_check_expr(
                     # print(f'hints_child: {repr(hints_child)}')
 
                     # If this metahint is ignorable...
-                    if hint_child_sane is HINT_IGNORABLE:
+                    if hint_child_sane is HINT_SANE_IGNORABLE:
                         # Expression yielding the value of the current pith,
                         # defined as either...
                         hint_curr_expr = (
@@ -1296,7 +1296,7 @@ def make_check_expr(
                     )
 
                     # If this child hint is unignorable...
-                    if hint_child_sane is not HINT_IGNORABLE:
+                    if hint_child_sane is not HINT_SANE_IGNORABLE:
                         # Child hint encapsulated by this metadata.
                         hint_child = hint_child_sane.hint
 

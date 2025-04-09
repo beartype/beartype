@@ -63,7 +63,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
     TupleHintSane,
 )
@@ -318,7 +318,7 @@ class ViolationCause(object):
         # If this hint is either...
         if (
             # Ignorable *OR*...
-            self.hint_sane is HINT_IGNORABLE or
+            self.hint_sane is HINT_SANE_IGNORABLE or
             # PEP-noncompliant...
             not is_hint_pep(self.hint)
         ):
@@ -463,7 +463,7 @@ class ViolationCause(object):
         # If this hint is ignorable, all possible objects satisfy this hint.
         # Since this hint *CANNOT* (by definition) be the cause of this failure,
         # return the same cause as is.
-        if self.hint_sane is HINT_IGNORABLE:
+        if self.hint_sane is HINT_SANE_IGNORABLE:
             return self
         # Else, this hint is unignorable.
 
@@ -636,7 +636,7 @@ class ViolationCause(object):
         PEP-noncompliant hint transitively subscripting the root hint annotating
         a parameter or return of the currently decorated callable) if this hint
         is both reducible and unignorable, this hint unmodified if this hint is
-        both irreducible and unignorable, or :obj:`.HINT_IGNORABLE` otherwise
+        both irreducible and unignorable, or :obj:`.HINT_SANE_IGNORABLE` otherwise
         (i.e., if this hint is ignorable).
 
         This method is merely a convenience wrapper for the lower-level
@@ -669,7 +669,7 @@ class ViolationCause(object):
         HintSane
             Either:
 
-            * If this child hint is ignorable, :data:`.HINT_IGNORABLE`.
+            * If this child hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
             * Else if this unignorable child hint is reducible to another hint,
               metadata encapsulating this reduction.
             * Else, this unignorable child hint is irreducible. In this case,

@@ -286,12 +286,12 @@ class HintSane(object):
         Machine-readable representation of this metadata.
         '''
 
-        # If this metadata is the ignorable "HINT_IGNORABLE" singleton,
+        # If this metadata is the ignorable "HINT_SANE_IGNORABLE" singleton,
         # trivially return the unqualified basename of this singleton for
         # debuggability, disambiguity, and readability.
-        if self is HINT_IGNORABLE:
-            return 'HINT_IGNORABLE'
-        # Else, this metadata is *NOT* the ignorable "HINT_IGNORABLE" singleton.
+        if self is HINT_SANE_IGNORABLE:
+            return 'HINT_SANE_IGNORABLE'
+        # Else, this metadata is *NOT* the ignorable "HINT_SANE_IGNORABLE" singleton.
 
         # Represent this metadata with just the minimal subset of metadata
         # needed to reasonably describe this metadata.
@@ -336,9 +336,17 @@ class HintSane(object):
         )
 
 # ....................{ GLOBALS                            }....................
-HINT_IGNORABLE = HintSane(hint=Any)
+HINT_IGNORABLE = Any
 '''
-**Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSign`
+**Ignorable sanified type hint** (i.e., singleton :class:`.Any` type hint
+encapsulated by the metadata to which *all* deeply or shallowly ignorable type
+hints are reduced by :mod:`beartype._check.convert.convsanify` sanifiers).
+'''
+
+
+HINT_SANE_IGNORABLE = HintSane(hint=HINT_IGNORABLE)
+'''
+**Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSane`
 instance to which *all* deeply or shallowly ignorable type hints are reduced by
 :mod:`beartype._check.convert.convsanify` sanifiers).
 
@@ -347,6 +355,27 @@ unignorable hints. After sanification, if a hint is sanified to:
 
 * Literally this singleton, then that hint is ignorable.
 * Any other object, then that hint is unignorable.
+'''
+
+
+HINT_SANE_RECURSIVE = HintSane(hint=HINT_IGNORABLE)
+'''
+**Recursive sanified type hint metadata** (i.e., singleton :class:`.HintSane`
+instance to which **deeply recursive type hints** (i.e., recursive type hints
+whose reducers recursively expand to at least two levels of of recursion) are
+reduced by :mod:`beartype._check.convert.convsanify` sanifiers).
+
+This singleton enables callers to trivially differentiate deeply recursive from
+ignorable hints. While deeply recursive hints are ignorable in *most* contexts,
+deeply recursive hints are unignorable in other contexts (e.g., when child hints
+of parent unions). Differentiating between these two cases thus requires a
+distinct singleton from the comparable and significantly more common
+:data:`.HINT_SANE_IGNORABLE` singleton.
+
+After sanification, if a hint is sanified to:
+
+* Literally this singleton, then that hint is deeply recursive.
+* Any other object, then that hint is *not* deeply recursive.
 '''
 
 # ....................{ HINTS                              }....................

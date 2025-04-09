@@ -35,7 +35,7 @@ from beartype._check.error.errmain import (
     get_hint_object_violation,
 )
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
     HintSane,
 )
 from beartype._check.signature.sigmake import make_func_signature
@@ -572,8 +572,8 @@ def _make_func_checker(
 ) -> CallableRaiserOrTester:
     '''
     **Type-checking function factory** (i.e., low-level callable dynamically
-    generating a pure-Python tester function testing whether an arbitrary object
-    passed to that tester satisfies the type hint passed to this factory and
+    generating a pure-Python function detecting whether an arbitrary object
+    passed to that function satisfies the type hint passed to this factory and
     either returning that result as its boolean return *or* raising a fatal
     exception or emitting a non-fatal warning if that result is :data:`False`).
 
@@ -599,8 +599,8 @@ def _make_func_checker(
         code snippet of a function type-checking an arbitrary object against the
         passed type hint under the passed beartype configuration).
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to a reasonably sensible string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to a reasonably sensible string.
 
     Returns
     -------
@@ -656,7 +656,8 @@ def _make_func_checker(
 
             # If this hint is ignorable, all objects satisfy this hint. In this
             # case, return a trivial function unconditionally returning true.
-            if hint_sane is HINT_IGNORABLE:
+            if hint_sane is HINT_SANE_IGNORABLE:
+                # print(f'[_make_func_checker] Ignoring ignorable hint {hint} with conf {conf}!')
                 return _func_checker_ignorable
             # Else, this hint is unignorable.
 
@@ -772,6 +773,7 @@ def _make_func_checker(
 
             # ....................{ FUNCTION               }....................
             # Type-checking tester function to be returned.
+            # print(f'Making checker {repr(func_checker_name)} with conf {conf}...')
             func_tester = make_func(
                 func_name=func_checker_name,
                 func_code=func_checker_code,

@@ -16,7 +16,6 @@ from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
-    coerce_hint_any,
     coerce_hint_root,
 )
 from beartype._check.convert._reduce.redhint import reduce_hint
@@ -49,7 +48,7 @@ def sanify_hint_root_func(
     type hint** (i.e., possibly PEP-noncompliant hint annotating the parameter
     or return with the passed name of the passed callable) if this hint is both
     reducible and unignorable, this hint unmodified if this hint is both
-    irreducible and unignorable, or :data:`.HINT_IGNORABLE` otherwise (i.e., if
+    irreducible and unignorable, or :data:`.HINT_SANE_IGNORABLE` otherwise (i.e., if
     this hint is ignorable).
 
     Specifically, this function:
@@ -103,15 +102,15 @@ def sanify_hint_root_func(
 
         Defaults to :data:`None`.
     exception_prefix : str, optional
-        Human-readable label prefixing exception messages raised by this
-        function. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Returns
     -------
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata
@@ -212,7 +211,7 @@ def sanify_hint_root_statement(
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
     type hint) if this hint is both reducible and unignorable, this hint
     unmodified if this hint is both irreducible and unignorable, or
-    :data:`.HINT_IGNORABLE` otherwise (i.e., if this hint is ignorable).
+    :data:`.HINT_SANE_IGNORABLE` otherwise (i.e., if this hint is ignorable).
 
     This sanifier is principally intended to be called by a **statement-level
     type-checker factory** (i.e., a function creating and returning a runtime
@@ -236,15 +235,14 @@ def sanify_hint_root_statement(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Human-readable substring prefixing raised exception messages.
 
     Returns
     -------
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata
@@ -300,7 +298,7 @@ def sanify_hint_child(
     transitively subscripting the root hint annotating a parameter or return of
     the currently decorated callable) if this hint is both reducible and
     unignorable, this hint unmodified if this hint is both irreducible and
-    unignorable, or :obj:`.HINT_IGNORABLE` otherwise (i.e., if this hint is
+    unignorable, or :obj:`.HINT_SANE_IGNORABLE` otherwise (i.e., if this hint is
     ignorable).
 
     Parameters
@@ -354,7 +352,7 @@ def sanify_hint_child(
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata
@@ -364,34 +362,24 @@ def sanify_hint_child(
 
     # This sanifier covers the proper subset of logic performed by the
     # sanify_hint_root_statement() sanifier applicable to child type hints.
-
-    #FIXME: *FASCINATING.* Looks like this should now be performed as a
-    #preliminary reduction directly inside the reduce_hint() function now. Why?
-    #Because reducers recursively call the reduce_hint_child() function. Each
-    #time that occurs, this coercion should occur first. Currently, that isn't
-    #happening, because this coercion is being performed here outside of the
-    #reduce_hint() workflow. In short:
-    #* Shift this call to coerce_hint_any() directly inside the body of the
-    #  reduce_hint() function.
-    #FIXME: *WAIT*. No. We've considered everything extensively. Indeed, the
-    #current approach here is the correct approach. What isn't correct,
-    #actually, is the reduce_hint_child() function -- which should probably
-    #simply call this coerce_hint_any() function. Trivial. *shrug*
-    #FIXME: *WAIT.* Is calling coerce_hint_any() actually valuable here at all?
-    #The only demonstrable reason to coerce unmemoized hints into memoized hints
-    #is to deduplicate hints across "__annotations__" dunder dictionaries. Here,
-    #that argument doesn't apply *AT ALL.* There's no space being reduced here.
-    #Indeed, this only appears to be uselessly consuming time for no tangible
-    #gains whatsoever. </lolbro>
-
-    # PEP-compliant hint coerced (i.e., permanently converted in the annotations
-    # dictionary of the passed callable) from this possibly PEP-noncompliant
-    # hint if this hint is coercible *OR* this hint as is otherwise. Since the
-    # passed hint is *NOT* necessarily PEP-compliant, perform this coercion
-    # *BEFORE* validating this hint to be PEP-compliant.
-    hint = coerce_hint_any(hint)
+    #
+    # Note that this subset is currently the lower-level reduce_hint() reducer.
+    # Technically, this implies that this sanifier could simply be a trivial
+    # alias of that reducer. Pragmatically, doing so would only negligibly
+    # improve decoration-time speed (which is *SORTA* good) while demonstrably
+    # harming code maintainability (which is *DEFINITELY* bad). Ergo, we
+    # intentionally maintain this sanifier as a distinct and separate function.
 
     # Metadata encapsulating the sanification of this child hint.
+    #
+    # Note that this function intentionally performs *NO* hint coercion (e.g.,
+    # by calling the coerce_hint_any() coercer). Although feasible, doing so
+    # would be pointless. Why? Because hint coercion coerces unmemoized hints
+    # into memoized hints as a means of deduplicating hints across
+    # "__annotations__" dunder dictionaries. However, there exists *NO*
+    # "__annotations__" dunder dictionary to deduplicate across here. There
+    # exists *NO* space to be compacted here and thus *NO* demonstrable
+    # reason to perform hint coercion.
     hint_sane = reduce_hint(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
@@ -420,7 +408,7 @@ def sanify_hint_any(
     transitively subscripting the root hint annotating a parameter or return of
     the currently decorated callable) if this hint is both reducible and
     unignorable, this hint unmodified if this hint is both irreducible and
-    unignorable, or :obj:`.HINT_IGNORABLE` otherwise (i.e., if this hint is
+    unignorable, or :obj:`.HINT_SANE_IGNORABLE` otherwise (i.e., if this hint is
     ignorable).
 
     Caveats
@@ -456,7 +444,7 @@ def sanify_hint_any(
     HintSane
         Either:
 
-        * If this hint is ignorable, :data:`.HINT_IGNORABLE`.
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
         * Else if this unignorable hint is reducible to another hint, metadata
           encapsulating this reduction.
         * Else, this unignorable hint is irreducible. In this case, metadata

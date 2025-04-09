@@ -547,7 +547,7 @@ class HintsMeta(FixedList):
         PEP-noncompliant hint transitively subscripting the root hint annotating
         a parameter or return of the currently decorated callable) if this hint
         is both reducible and unignorable, this hint unmodified if this hint is
-        both irreducible and unignorable, or :obj:`.HINT_IGNORABLE` otherwise
+        both irreducible and unignorable, or :obj:`.HINT_SANE_IGNORABLE` otherwise
         (i.e., if this hint is ignorable).
 
         This method is merely a convenience wrapper for the lower-level
@@ -576,7 +576,7 @@ class HintsMeta(FixedList):
             Either:
 
             * If this child hint is ignorable,
-              :obj:`beartype._check.metadata.hint.hintsane.HINT_IGNORABLE`.
+              :obj:`beartype._check.metadata.hint.hintsane.HINT_SANE_IGNORABLE`.
             * Else if this unignorable child hint is reducible to another hint,
               metadata encapsulating this reduction.
             * Else, this unignorable child hint is irreducible. In this case,

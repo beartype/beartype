@@ -13,10 +13,17 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.hint.hintsane import (
-    HINT_IGNORABLE,
+    HINT_SANE_IGNORABLE,
+    HINT_SANE_RECURSIVE,
     HintOrSane,
+    HintSane,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahintpep import (
+    Hint,
+    ListHints,
+    TupleHints,
+)
+from beartype._util.hint.pep.proposal.pep484604 import make_hint_pep484604_union
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
 # ....................{ TESTERS                            }....................
@@ -24,9 +31,9 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     HintOrSane):
     '''
     Reduce the passed :pep:`484`- or :pep:`604`-compliant union to the ignorable
-    :data:`.HINT_IGNORABLE` singleton if this union is subscripted by one or
+    :data:`.HINT_SANE_IGNORABLE` singleton if this union is subscripted by one or
     more **ignorable child hints** (i.e., hints that themselves reduce to the
-    ignorable :data:`.HINT_IGNORABLE` singleton) *or* preserve this union as is
+    ignorable :data:`.HINT_SANE_IGNORABLE` singleton) *or* preserve this union as is
     otherwise (i.e., if this union is subscripted by *no* ignorable child
     hints).
 
@@ -52,7 +59,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
 
     Why? Because unions are only as narrow as their widest child type hints.
     Shallowly ignorable hints are ignorable exactly because they are the widest
-    possible hints (e.g., :class:`object`, :data:`.HINT_IGNORABLE`), which are
+    possible hints (e.g., :class:`object`, :data:`.HINT_SANE_IGNORABLE`), which are
     so wide as to constrain nothing and convey no meaningful semantics. A union
     of one or more shallowly ignorable child hints is thus the widest possible
     union, which is so wide as to constrain nothing and convey no meaningful
@@ -80,7 +87,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         Either:
 
         * If this union is subscripted by one or more ignorable child hints,
-          :data:`.HINT_IGNORABLE`.
+          :data:`.HINT_SANE_IGNORABLE`.
         * Else, this union unmodified.
     '''
     # print(f'[484/604] Detecting union {repr(hint)} ignorability...')
@@ -91,16 +98,13 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
 
     # ....................{ LOCALS                         }....................
     # Tuple of the two or more child hints subscripting this union.
-    hint_childs = get_hint_pep_args(hint)
-
-    # 0-based index of the currently iterated child hint.
-    hint_childs_index = 0
+    hint_childs_old = get_hint_pep_args(hint)
 
     # Number of these child hints.
-    hint_childs_len = len(hint_childs)
+    hint_childs_len = len(hint_childs_old)
 
     # If this union is subscripted by *NO* child hints, this union is ignorable.
-    # In this case, reduce this union to the ignorable "HINT_IGNORABLE"
+    # In this case, reduce this union to the ignorable "HINT_SANE_IGNORABLE"
     # singleton.
     #
     # Why are unsubscripted unions ignorable? First, consider the case of the
@@ -140,7 +144,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     # This intentionally excludes "Optional[type(None)]", which the "typing"
     # module physically reduces to merely "type(None)". *shrug*
     if not hint_childs_len:
-        return HINT_IGNORABLE
+        return HINT_SANE_IGNORABLE
     # Else, this union is subscripted by one or more child hints.
 
     # Assert this union to be subscripted by two or more child hints.
@@ -160,6 +164,28 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         f'PEP 484 or 604 union type hint {repr(hint)} either unsubscripted '
         f'or subscripted by only one child type hint.'
     )
+
+    # 0-based index of the currently iterated child hint.
+    hint_childs_index = 0
+
+    # List of all sanified child hints to be returned as the reduced members of
+    # this union.
+    hint_childs_new_list: ListHints = []
+
+    # Instruct the higher-level reduce_hint_child() reducer called below to
+    # preserve ignorable hints reduced to a unique "HintSane" object *NOT* equal
+    # to the standard "HINT_SANE_IGNORABLE" singleton but instead encapsulating
+    # the "HINT_IGNORABLE" type hint and unique metadata describing that hint.
+    # This enables logic below to inspect these metadata, including the
+    # "hint_recursable_to_depth" dictionary required to decide whether a child
+    # hint is either:
+    # * Recursive (and thus not ignorable in the conventional sense) *OR*...
+    # * Non-recursive (and thus ignorable in the conventional sense).
+    #
+    # By default, reduce_hint_child() reduces such hints to the standard
+    # "HINT_SANE_IGNORABLE" singleton. Though *USUALLY* desirable, that
+    # reduction destroys this unique metadata required by this decision.
+    kwargs['is_hint_ignorable_preserved'] = True
 
     # ....................{ REDUCE                         }....................
     # Note that the low-level C-based "types.UnionType" class underlying PEP
@@ -181,21 +207,10 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     #
     # Ergo, we intentionally omit that class from consideration here.
 
-    #FIXME: [SPEED] It'd be *REALLY* nice if this reducer completely
-    #reconstituted the union it returns from the child hints it reduces below.
-    #Currently, this reducer doesn't do that. Why? Because the rest of the
-    #codebase isn't quite ready to support unions that contain *TOTALLY
-    #PEP-VIOLATING OBJECTS* -- namely, "HintSane" objects. To support this,
-    #we'll need to at least:
-    #* Generalize sanify_hint_child() to avoid resanifying the passed hint if
-    #  the passed hint is already a "HintSane" object. In that case, the passed
-    #  hint should simply be returned unmodified.
-    #* Probably lots else. Kinda seems dangerous, the more we consider it.
-
     # For each child hint of this union...
     while hint_childs_index < hint_childs_len:
         # Currently visited child hint of this union.
-        hint_child = hint_childs[hint_childs_index]
+        hint_child = hint_childs_old[hint_childs_index]
         # print(f'Recursively reducing {hint} child {hint_child}...')
         # print(f'hints_overridden: {kwargs["hints_overridden"]}')
 
@@ -203,49 +218,88 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         # sanifying this child hint did not generate supplementary metadata *OR*
         # that metadata otherwise (i.e., if sanifying this child hint generated
         # supplementary metadata).
-        hint_sane_child = reduce_hint_child(hint_child, kwargs)
+        hint_child_sane = reduce_hint_child(hint_child, kwargs)
 
-        # If...
-        if (
-            # This sanified child hint is ignorable *AND*...
-            hint_sane_child is HINT_IGNORABLE and
-
-            #FIXME: This... definitely doesn't seem right. Super non-trivial!
-            #For one thing, hashability. Like, seriously. For another, a simple
-            #membership test no longer appears to suffice. *shrug*
-
-            # This child hint is *NOT* a transitive parent of itself...
-            #
-            # If this child hint is a transitive parent of itself, this child
-            # hint has already been visited by the current breadth-first search
-            # (BFS) and so constitutes a recursive child hint. Although
-            # recursive child hints are ignorable in (most) other contexts,
-            # recursive child hints are *NOT* ignorable in the usual sense
-            # inside union hints. In this context, a recursive child hint is
-            # simply a union hint to be shallowly rather than deeply ignored.
-            # That is, a recursive child hint of a union does *NOT* propagate
-            # its ignorability to that union. That union remains unignorable
-            # regardless of whether that union contains a recursive child hint.
-            #
-            # Consider a PEP 695-compliant recursive type alias trivially
-            # aliasing a union: e.g.,
-            #     type recursive_union = int | recursive_union
-            #
-            # That union contains the recursive child hint "recursive_union" but
-            # is *NOT* ignorable. Rather, that union semantically reduces to the
-            # trivial type "int".
-            hint not in hint_sane_child.hint_recursable_to_depth
-        ):
-            # print(f'Ignoring union {hint} with ignorable child {hint_sane_child}...')
-            # Reduce this entire union to the "HINT_IGNORABLE" singleton. Why?
-            # By set logic, a union subscripted by one or more ignorable child
-            # hints is itself ignorable.
-            return HINT_IGNORABLE
-        # Else, this sanified child hint is unignorable.
+        # If this child hint is ignorable, reduce this entire union to the
+        # "HINT_SANE_IGNORABLE" singleton. Why? By set logic, a union
+        # subscripted by one or more ignorable child hints is itself ignorable.
+        if hint_child_sane is HINT_SANE_IGNORABLE:
+            # print(f'Ignoring union {hint} with ignorable child {hint_child_sane}...')
+            return HINT_SANE_IGNORABLE
+        # Else, this child hint is unignorable.
+        #
+        # Else if this child hint is recursive (i.e., is a transitive parent of
+        # itself previously visited by the current search), shallowly ignore
+        # this child hint *WITHOUT* ignoring this entire union by simply
+        # removing this child hint from this union.
+        #
+        # Recursive child hints are ignorable in (most) other contexts. However,
+        # recursive child hints are *NOT* ignorable in the usual sense inside
+        # union hints. In this context, a recursive child hint is simply a union
+        # hint to be shallowly rather than deeply ignored. That is, a recursive
+        # child hint of a union does *NOT* propagate its ignorability to that
+        # union. That union remains unignorable regardless of whether that union
+        # contains a recursive child hint.
+        #
+        # Consider the trivial PEP 695-compliant recursive union type alias:
+        #       type RecursiveUnion = int | RecursiveUnion
+        #
+        # That unignorable union contains the recursive child hint
+        # "RecursiveUnion" but is *NOT* ignorable. Rather, that union
+        # semantically reduces to the builtin "int" type. Why? Continue reading.
+        #
+        # The reduce_hint_child() function called above expands recursive type
+        # aliases twice: once for the original alias and a second time for the
+        # recursive alias embedded in that alias. Doing so preserves data
+        # structures across aliases recursively containing themselves. After
+        # performing these expansions, this expanded union resembles:
+        #       int | int | RecursiveUnion
+        #
+        # Naturally, this expanded union flattens to simply "int |
+        # RecursiveUnion". Equally naturally, the "RecursiveUnion" member of
+        # this union is ignorable. However, the "int" member of this union is
+        # *NOT* ignorable. Ergo, this union itself is *NOT* ignorable. Instead,
+        # this union is semantically equivalent to the builtin "int" type.
+        elif hint_child_sane is HINT_SANE_RECURSIVE:
+            pass
+        # Else, this child hint is non-recursive.
+        #
+        # If metadata encapsulates the reduction of this child hint, reduce this
+        # metadata to simply this child hint. While non-ideal, the remainder of
+        # the codebase is currently unequipped to handle unions of
+        # PEP-noncompliant "HintSane" objects. However, even if the remainder of
+        # the codebase were refactored to handle such unions, there is *NO*
+        # guarantee that Python itself would allow this abuse of unions.
+        # Technically, both PEP 484- and 604-compliant unions prohibit
+        # PEP-noncompliant child hints. Even if Python currently allowed this,
+        # there is *NO* guarantee that future releases of Python would do so.
+        elif isinstance(hint_child_sane, HintSane):
+            hint_childs_new_list.append(hint_child_sane.hint)
+        # Else, *NO* metadata encapsulates the reduction of this child hint.
+        #
+        # In this case, preserve this child hint as is.
+        else:
+            hint_childs_new_list.append(hint_child_sane)
 
         # Increment the 0-based index of the currently iterated child hint.
         hint_childs_index += 1
 
     # ....................{ RETURN                         }....................
+    # Tuple of all sanified child hints to be returned as the reduced members of
+    # this union, coerced from this list.
+    hint_childs_new: TupleHints = tuple(hint_childs_new_list)
+
+    # Possibly reduced union reconstituted from the passed union, defined as
+    # either...
+    hint = (
+        # If the above reductions preserved the same child hints, this union
+        # unmodified;
+        hint
+        if hint_childs_old == hint_childs_new else
+        # Else, the above reductions reduced at least one of these child hints.
+        # In this case, a new union reconstituted from these child hints.
+        make_hint_pep484604_union(hint_childs_new)
+    )
+
     # Return this possibly reduced union.
     return hint

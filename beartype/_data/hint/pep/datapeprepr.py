@@ -254,7 +254,7 @@ HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
     #        # unconditionally match *ALL* objects under isinstance()-based type
     #        # covariance and thus semantically reduce to unannotated attributes.
     #        # Reduce this hint to "typing.Any", which then reduces this hint to the
-    #        # ignorable "HINT_IGNORABLE" singleton.
+    #        # ignorable "HINT_SANE_IGNORABLE" singleton.
     #        'object': HintSignAny,
     #    },
     #

@@ -178,7 +178,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
 
     # ..................{ PEP 484                            }..................
     # Reduce the PEP 484-compliant "Any" singleton to the ignorable
-    # "HINT_IGNORABLE" singleton.
+    # "HINT_SANE_IGNORABLE" singleton.
     HintSignAny: reduce_hint_pep484_any,
 
     # Reduce PEP 484-compliant new types to the non-new type type hints (i.e.,
@@ -479,7 +479,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
 
     # ..................{ PEP (484|604)                      }..................
     # Reduce PEP 484- and 604-compliant unions subscripted by one or more
-    # ignorable child hints to the ignorable "HINT_IGNORABLE" singleton.
+    # ignorable child hints to the ignorable "HINT_SANE_IGNORABLE" singleton.
     #
     # Note that doing so requires recursively reducing these child hints first.
     # Since one or more of these child hints may require an uncached reduction
