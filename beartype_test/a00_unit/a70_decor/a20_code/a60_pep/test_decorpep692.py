@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** :pep:`692`-compliant :obj:`typing.Self` **unit tests**.
+**Beartype decorator** :pep:`692`-compliant ``**kwargs:
+typing.Unpack[typing.TypedDict]`` unit tests.
 
 This submodule unit tests :pep:`692` support implemented in the
 :func:`beartype.beartype` decorator.

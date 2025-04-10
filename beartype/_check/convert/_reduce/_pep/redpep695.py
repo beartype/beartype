@@ -94,44 +94,13 @@ def reduce_hint_pep695_subscripted(
     # If this PEP 695-compliant subscripted type alias is recursive, ignore this
     # alias to avoid infinite recursion.
     #
-    # Note that:
-    # * This tester intentionally passes a non-default value of "1" for the
-    #   optional parameter "hint_recursable_depth_max", ensuring this alias is
-    #   considered to be recursive *ONLY* after having been recursed into
-    #   exactly once before (i.e., *ONLY* after having been visited exactly
-    #   twice, once as a parent alias and again as a transitive child hint of
-    #   this parent alias). Unlike comparable kinds of recursable hints (e.g.,
-    #   hint overrides), PEP 695-compliant recursable type aliases typically
-    #   describe non-trivial recursive data structures conveying internal
-    #   semantics that merit deeper recursion.
-    #
-    #   Consider the following PEP 695-compliant subscripted type alias:
-    #       type RecursiveList[T] = list[RecursiveList[T] | T]
-    #
-    #   Lists satisfying the concrete type alias "RecursiveList[int]" alias
-    #   contain an arbitrary number of integers and other lists containing an
-    #   arbitrary number of integers, exhibiting an internal structure ala:
-    #       [42, [79]]
-    #       [42, [79], 83]
-    #       [42, [79], 83, [56, 12]]
-    #
-    #   Halting recursion at the first expansion of the concrete type alias
-    #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" would then
-    #   reduce the latter to "list[HINT_SANE_RECURSIVE | int]", which reduces to
-    #   "list[HINT_SANE_RECURSIVE]", which reduces to "list", which clearly
-    #   fails to convey the internal semantics of this data structure.
-    #
-    #   Halting recursion at the second expansion of the concrete type alias
-    #   "RecursiveList[int]" to "list[RecursiveList[int] | int]" instead reduces
-    #   the latter to "list[list[RecursiveList[int] | int] | int]", which
-    #   reduces to "list[list[HINT_SANE_RECURSIVE | int] | int]", reducing to
-    #   "list[list[HINT_SANE_RECURSIVE] | int]", which reduces to
-    #   "list[list | int]", which superficially conveys a layer of the internal
-    #   semantics of this data structure.
+    # Certainly, various approaches to generating code type-checking recursive
+    # hints exists. @beartype currently embraces the easiest, fastest, and
+    # laziest approach: just ignore all recursion! Ignorance works wonders.
     if is_hint_recursive(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
-        hint_recursable_depth_max=1,
+        hint_recursable_depth_max=_HINT_PEP695_RECURSABLE_DEPTH_MAX,
     ):
         # print(f'Ignoring recursive PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_SANE_RECURSIVE
@@ -285,7 +254,7 @@ def reduce_hint_pep695_unsubscripted(
     if is_hint_recursive(
         hint=hint,  # pyright: ignore
         hint_parent_sane=hint_parent_sane,
-        hint_recursable_depth_max=1,
+        hint_recursable_depth_max=_HINT_PEP695_RECURSABLE_DEPTH_MAX,
     ):
         # print(f'Ignoring recursive PEP 695 unsubscripted type alias {hint} with parent {hint_parent_sane}...')
         return HINT_SANE_RECURSIVE
@@ -354,3 +323,49 @@ def reduce_hint_pep695_unsubscripted(
 
     # Return this metadata.
     return hint_sane
+
+# ....................{ PRIVATE ~ constants                }....................
+_HINT_PEP695_RECURSABLE_DEPTH_MAX = 1
+'''
+Value of the optional ``hint_recursable_depth_max`` parameter passed to the
+:func:`.is_hint_recursive` tester by the :pep:`695`-compliant reducers defined
+above.
+
+This depth ensures that :pep:`695`-compliant type aliases are considered to be
+recursive *only* after having been recursed into at most this many times before
+(i.e., *only* after having been visited exactly twice, once as a parent alias
+and again as a transitive child hint of this parent alias). Unlike comparable
+kinds of recursable hints (e.g., hint overrides), :pep:`695`-compliant
+recursable type aliases typically describe non-trivial recursive data structures
+conveying internal semantics that merit deeper recursion.
+
+Consider the following :pep:`695`-compliant subscripted type alias:
+
+.. code-block:: python
+
+   type RecursiveList[T] = list[RecursiveList[T] | T]
+
+Lists satisfying the concrete type alias ``RecursiveList[int]`` alias contain an
+arbitrary number of integers and other lists containing an arbitrary number of
+integers, exhibiting an internal structure ala:
+
+.. code-block:: python
+
+   [42, [79]]
+   [42, [79], 83]
+   [42, [79], 83, [56, 12]]
+
+Halting recursion at the first expansion of the concrete type alias
+``RecursiveList[int]`` to ``list[RecursiveList[int] | int]`` would then reduce
+the latter to ``list[HINT_SANE_RECURSIVE | int]``, which reduces to
+``list[HINT_SANE_RECURSIVE]``, which reduces to :class:`list`, which clearly
+fails to convey the internal semantics of this data structure.
+
+Halting recursion at the second expansion of the concrete type alias
+``RecursiveList[int]`` to ``list[RecursiveList[int] | int]`` instead reduces the
+latter to ``list[list[RecursiveList[int] | int] | int]``, which reduces to
+``list[list[HINT_SANE_RECURSIVE | int] | int]``, reducing to
+``list[list[HINT_SANE_RECURSIVE] | int]``, which reduces to ``list[list |
+int]``, which superficially conveys a layer of the internal semantics of this
+data structure.
+'''
