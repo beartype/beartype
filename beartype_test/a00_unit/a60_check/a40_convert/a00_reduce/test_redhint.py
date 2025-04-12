@@ -34,7 +34,7 @@ def test_reduce_hint() -> None:
     from beartype._cave._cavefast import NoneType
     from beartype._check.convert._reduce.redhint import reduce_hint
     from beartype._check.metadata.hint.hintsane import HintSane
-    from beartype._conf.confcls import BeartypeConf
+    from beartype._conf.confmain import BeartypeConf
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
     from beartype._data.hint.datahinttyping import (

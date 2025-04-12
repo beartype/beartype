@@ -15,17 +15,6 @@ classes and callables annotated by these type hints.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Pretty sure we don't even need "BeartypeHintOverrides" anymore. The only
-#reason for that "dict" subclass to exist was to prohibit full-blown recursion
-#in "hint_overrides", really. Now that we permit full-blown recursion in
-#"hint_overrides":
-#* Permit "hint_overrides" to accept *ANY* arbitrary mappings satisfying
-#  "Dict[Hint, Hint]".
-#* Relax "BeartypeHintOverrides" to accept full-blown recursion.
-#* Deprecate "BeartypeHintOverrides" by emitting a "DeprecatingWarning" from the
-#  BeartypeHintOverrides.__init__() constructor.
-
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintReduceException
@@ -46,7 +35,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
@@ -358,8 +347,8 @@ def reduce_hint(
         # the above reducers failed to reduce this hint. Halt reducing entirely.
         #
         # Note that this is a rare (albeit valid) edge case that arises for
-        # reducers that unconditionally create and return new . The above "else:" block of the
-        # above "for hint_reducer in _HINT_REDUCERS:" loop 
+        # reducers that unconditionally create and return new... The above
+        # "else:" block of the above "for hint_reducer in _HINT_REDUCERS:" loop
         # if hint_or_sane_curr == hint_or_sane_prev:
         #     break
 

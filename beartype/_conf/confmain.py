@@ -26,6 +26,7 @@ callers.
 #* "claw_is_pep526".
 #* "claw_skip_package_names".
 #* "hint_overrides".
+#* "is_pep557_fields".
 #* "violation_door_type".
 #* "violation_param_type".
 #* "violation_return_type".
@@ -46,14 +47,10 @@ from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
 )
-from beartype._conf.confoverrides import (
-    BEARTYPE_HINT_OVERRIDES_EMPTY,
-    BeartypeHintOverrides,
-)
 from beartype._conf.conftest import (
-    default_conf_kwargs_after,
-    default_conf_kwargs_before,
+    default_conf_kwargs,
     die_if_conf_kwargs_invalid,
+    sanify_conf_kwargs,
 )
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
@@ -64,6 +61,9 @@ from beartype._data.hint.datahinttyping import (
     TypeWarning,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._util.error.utilerrwarn import issue_warning
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
@@ -109,24 +109,11 @@ class BeartypeConf(object):
     _hash : int
         Precomputed configuration hash returned by the :meth:`__hash__` dunder
         method for efficiency.
-    _hint_overrides : BeartypeHintOverrides
+    _hint_overrides : FrozenDict
         **Type hint overrides** (i.e., frozen dictionary mapping from arbitrary
         source to target type hints), enabling callers to lie to both their
-        users and all other packages other than :mod:`beartype`. This dictionary
-        enables callers to externally present a public API annotated by
-        simplified type hints while internally instructing :mod:`beartype` to
-        privately type-check that API under a completely different set of
-        (typically more complicated) type hints.
-    _is_check_pep557 : bool
-        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
-        classes decorated by the :pep:`557`-compliant
-        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
-        attributes annotated by *any* type hints other than :pep:`526`-compliant
-        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
-        ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
-        initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
-        assignment** (i.e., when each field is subsequently assigned to by an
-        assignment statement).
+        users and all other packages other than :mod:`beartype`. See also the
+        :meth:`__new__` method docstring.
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -147,6 +134,16 @@ class BeartypeConf(object):
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
+    _is_pep557_fields : bool
+        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+        classes decorated by the :pep:`557`-compliant
+        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+        attributes annotated by *any* type hints other than :pep:`526`-compliant
+        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
+        ``dataclasses.InitVar[...]`` type hints) on both:
+        * **Dataclass object initialization** (i.e., at ``__init__()`` time).
+        * **Dataclass field assignment** (i.e., when each field is subsequently
+          assigned to by an assignment statement).
     _is_violation_door_warn : bool
         :data:`True` only if :attr:`violation_door_type` is a warning subclass.
         Note that this is stored only as a negligible optimization to avoid
@@ -230,10 +227,10 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_hash',
         '_hint_overrides',
-        '_is_check_pep557',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
+        '_is_pep557_fields',
         '_is_violation_door_warn',
         '_is_violation_param_warn',
         '_is_violation_return_warn',
@@ -258,11 +255,11 @@ class BeartypeConf(object):
         _conf_args: tuple
         _conf_kwargs: DictStrToAny
         _hash: int
-        _hint_overrides: BeartypeHintOverrides
-        _is_check_pep557: bool
+        _hint_overrides: FrozenDict
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
+        _is_pep557_fields: bool
         _is_violation_door_warn: bool
         _is_violation_param_warn: bool
         _is_violation_return_warn: bool
@@ -300,11 +297,11 @@ class BeartypeConf(object):
             BeartypeDecorationPosition.LAST),
         claw_is_pep526: bool = True,
         claw_skip_package_names: CollectionStrs = (),
-        hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
-        is_check_pep557: bool = False,
+        hint_overrides: FrozenDict = FROZENDICT_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,  # pyright: ignore
         is_debug: bool = False,
         is_pep484_tower: bool = False,
+        is_pep557_fields: bool = False,
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
         violation_door_type: Optional[TypeException] = None,
         violation_param_type: Optional[TypeException] = None,
@@ -314,6 +311,10 @@ class BeartypeConf(object):
             BeartypeViolationVerbosity.DEFAULT),
         warning_cls_on_decorator_exception: Optional[TypeWarning] = (
             _BeartypeConfReduceDecoratorExceptionToWarningDefault),
+
+        #FIXME: Consider removing these at some point, please.
+        # Optional keyword-only *DEPRECATED* parameters.
+        is_check_pep557: bool = False,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -503,7 +504,7 @@ class BeartypeConf(object):
               the ``worst_package_evah`` package in entirety).
 
             Defaults to the empty tuple.
-        hint_overrides : BeartypeHintOverrides, optional
+        hint_overrides : FrozenDict, default: FROZENDICT_EMPTY
             **Type hint overrides** (i.e., frozen dictionary mapping from
             arbitrary source to target type hints), enabling callers to lie to
             both their users and all other packages other than :mod:`beartype`.
@@ -513,7 +514,7 @@ class BeartypeConf(object):
             different set of (typically more complicated) type hints. Doing so
             preserves a facade of simplicity for downstream consumers like end
             users, static type-checkers, and document generators. Defaults to
-            the empty dictionary.
+            the empty frozen dictionary.
 
             Specifically, for each source type hint annotating each callable,
             class, or variable assignment observed by :mod:`beartype`, if that
@@ -523,16 +524,23 @@ class BeartypeConf(object):
             replaces, substitutes for) that source type hint. :mod:`beartype`
             then uses that target type hint in place of that source type hint.
 
+            Note that this parameter *must* be a **frozen dictionary** (i.e.,
+            :mod:`beartype`-specific :class:`beartype.FrozenDict` object) rather
+            than a **mutable dictionary** (i.e., standard :class:`dict` object).
+            Sadly, Python still lacks a standard frozen dictionary type. Since
+            beartype configurations are memoized (i.e., cached), mutable
+            containers like dictionaries are prohibited for safety.
+
             For example, consider this Abomination Unto the Eyes of Guido:
 
             .. code-block:: python
 
-               from beartype, BeartypeConf, BeartypeHintOverrides
+               from beartype, BeartypeConf, FrozenDict
 
                # @beartype decorator configured to expand all "float" type hints
                # to "int | float" type hints.
                lyingbeartype = beartype(conf=BeartypeConf(
-                   hint_overrides=BeartypeHintOverrides({float: int | float})))
+                   hint_overrides=FrozenDict({float: int | float})))
 
                # The @lyingbeartype decorator now expands this signature...
                @lyingbeartype
@@ -543,19 +551,6 @@ class BeartypeConf(object):
                @beartype
                def lies(all_lies: list[int | float]) -> int | float:
                    return all_lies[0]
-        is_check_pep557 : bool, optional
-            :data:`True` only if type-checking **dataclass** (i.e., pure-Python
-            classes decorated by the :pep:`557`-compliant
-            :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
-            attributes annotated by *any* type hints other than
-            :pep:`526`-compliant ``dataclasses.ClassVar[...]`` or
-            :pep:`557`-compliant ``dataclasses.InitVar[...]`` type hints) on
-            both **dataclass object initialization** (i.e., at ``__init__()``
-            time) *and* **dataclass field assignment** (i.e., when each field is
-            subsequently assigned to by an assignment statement). Currently
-            defaults to :data:`False`, due to the non-triviality of safely
-            type-checking dataclass fields across all possible dataclass
-            configurations and use cases.
         is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -632,6 +627,22 @@ class BeartypeConf(object):
             that accumulates over multiple conversions and operations into a
             larger precision error. Enabling this improves the usability of
             public APIs at a cost of introducing precision errors.
+        is_pep557_fields : bool, default: False
+            :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+            classes decorated by the :pep:`557`-compliant
+            :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+            attributes annotated by *any* type hints other than
+            :pep:`526`-compliant ``dataclasses.ClassVar[...]`` or
+            :pep:`557`-compliant ``dataclasses.InitVar[...]`` type hints) on
+            both:
+            * **Dataclass object initialization** (i.e., at ``__init__()``
+              time) *and*...
+            * **Dataclass field assignment** (i.e., when each field is
+              subsequently assigned to by an assignment statement).
+
+            Currently defaults to :data:`False`, due to the non-triviality of
+            safely type-checking dataclass fields across all possible dataclass
+            configurations and use cases.
         strategy : BeartypeStrategy, optional
             **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
             enumeration member) with which to implement all type-checks in the
@@ -738,9 +749,9 @@ class BeartypeConf(object):
             If either:
 
             * ``is_color`` is *not* a tri-state boolean.
-            * ``is_check_pep557`` is *not* a boolean.
             * ``is_debug`` is *not* a boolean.
             * ``is_pep484_tower`` is *not* a boolean.
+            * ``is_pep557_fields`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
               member.
             * ``warning_cls_on_decorator_exception`` is neither :data:`None`
@@ -751,6 +762,13 @@ class BeartypeConf(object):
             * The external ``${BEARTYPE_IS_COLOR}`` shell environment variable
               is set to an unrecognized string (i.e., neither ``"True"``,
               ``"False"``, nor ``"None"``).
+
+        Warns
+        -----
+        DeprecationWarning
+            If a deprecated parameter is passed, including any of the following:
+
+            * ``is_check_pep557``.
         '''
 
         # In a non-reentrant thread lock specific to beartype configurations...
@@ -762,6 +780,27 @@ class BeartypeConf(object):
         # cost of race conditions is high, this lock does no real-world harm and
         # may actually do a great deal of real-world good. Safety first, all!
         with _beartype_conf_lock:
+            # ..................{ DEPRECATED                 }..................
+            # If the caller passed a deprecated parameter...
+            #
+            # Note that deprecated parameters *MUST* be coerced into
+            # non-deprecated parameters before caching the latter.
+            if is_check_pep557:
+                # Issue a non-fatal deprecation warning.
+                issue_warning(
+                    cls=DeprecationWarning,
+                    message=(
+                        'Beartype configuration parameter "is_check_pep557" '
+                        'deprecated by new parameter "is_pep557_fields", '
+                        'because beartype is here to annoy you when you were '
+                        'just about to go home.\n\n'
+                        'tl;dr: pass "is_pep557_fields" instead, please. *sigh*'
+                    ),
+                )
+
+                # Pass the corresponding non-deprecated parameter instead.
+                is_pep557_fields = is_check_pep557
+
             # ..................{ CACHE                      }..................
             # Validate and possibly override the "is_color" parameter by the
             # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
@@ -778,10 +817,10 @@ class BeartypeConf(object):
                 claw_is_pep526,
                 claw_skip_package_names,
                 hint_overrides,
-                is_check_pep557,
                 is_color,
                 is_debug,
                 is_pep484_tower,
+                is_pep557_fields,
                 strategy,
                 violation_door_type,
                 violation_param_type,
@@ -810,10 +849,10 @@ class BeartypeConf(object):
                 claw_is_pep526=claw_is_pep526,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
-                is_check_pep557=is_check_pep557,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
+                is_pep557_fields=is_pep557_fields,
                 strategy=strategy,
                 violation_door_type=violation_door_type,
                 violation_param_type=violation_param_type,
@@ -826,15 +865,14 @@ class BeartypeConf(object):
 
             # Default all parameters not explicitly passed by the user to sane
             # defaults *BEFORE* validating these parameters.
-            default_conf_kwargs_before(conf_kwargs)
+            default_conf_kwargs(conf_kwargs)
 
             # If one or more passed parameters are invalid, raise an exception.
             die_if_conf_kwargs_invalid(conf_kwargs)
             # Else, all passed parameters are valid.
 
-            # Default all parameters not explicitly passed by the user to sane
-            # defaults *AFTER* validating these parameters.
-            default_conf_kwargs_after(conf_kwargs)
+            # Sanify all passed parameters *AFTER* validating these parameters.
+            sanify_conf_kwargs(conf_kwargs)
 
             # ..................{ INSTANTIATE                }..................
             # Instantiate a new configuration of this type.
@@ -890,10 +928,10 @@ class BeartypeConf(object):
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
             self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
-            self._is_check_pep557 = conf_kwargs['is_check_pep557']  # pyright: ignore
             self._is_color = conf_kwargs['is_color']  # pyright: ignore
             self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
             self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore
+            self._is_pep557_fields = conf_kwargs['is_pep557_fields']  # pyright: ignore
             self._strategy = conf_kwargs['strategy']  # pyright: ignore
             self._violation_door_type = conf_kwargs['violation_door_type']  # pyright: ignore
             self._violation_param_type = conf_kwargs['violation_param_type']  # pyright: ignore
@@ -1005,7 +1043,7 @@ class BeartypeConf(object):
     # broke backward compatibility with end users using static type-checkers.
 
     @property
-    def hint_overrides(self) -> BeartypeHintOverrides:
+    def hint_overrides(self) -> FrozenDict:
         '''
         **Type hint overrides** (i.e., frozen dictionary mapping from arbitrary
         source to target type hints), enabling callers to lie to both their
@@ -1059,28 +1097,6 @@ class BeartypeConf(object):
 
     # ..................{ PROPERTIES ~ options : bool        }..................
     @property
-    def is_check_pep557(self) -> bool:
-        '''
-        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
-        classes decorated by the :pep:`557`-compliant
-        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
-        attributes annotated by *any* type hints other than :pep:`526`-compliant
-        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
-        ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
-        initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
-        assignment** (i.e., when each field is subsequently assigned to by an
-        assignment statement).
-
-        See Also
-        --------
-        :meth:`__new__`
-            Further details.
-        '''
-
-        return self._is_check_pep557
-
-
-    @property
     def is_color(self) -> Optional[bool]:
         '''
         Tri-state boolean governing how and whether beartype colours
@@ -1119,7 +1135,7 @@ class BeartypeConf(object):
 
         return self._is_debug
 
-
+    # ..................{ PROPERTIES ~ options : bool : pep  }..................
     @property
     def is_pep484_tower(self) -> bool:
         '''
@@ -1133,6 +1149,28 @@ class BeartypeConf(object):
         '''
 
         return self._is_pep484_tower
+
+
+    @property
+    def is_pep557_fields(self) -> bool:
+        '''
+        :data:`True` only if type-checking **dataclass** (i.e., pure-Python
+        classes decorated by the :pep:`557`-compliant
+        :obj:`dataclasses.dataclass` decorator) **fields** (i.e., class
+        attributes annotated by *any* type hints other than :pep:`526`-compliant
+        ``dataclasses.ClassVar[...]`` or :pep:`557`-compliant
+        ``dataclasses.InitVar[...]`` type hints) on both **dataclass object
+        initialization** (i.e., at ``__init__()`` time) *and* **dataclass field
+        assignment** (i.e., when each field is subsequently assigned to by an
+        assignment statement).
+
+        See Also
+        --------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_pep557_fields
 
     # ..................{ PROPERTIES ~ options : claw        }..................
     @property

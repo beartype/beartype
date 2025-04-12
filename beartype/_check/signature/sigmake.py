@@ -20,7 +20,7 @@ from beartype._check.signature._sigsnip import (
     CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
 )

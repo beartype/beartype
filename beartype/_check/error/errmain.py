@@ -120,7 +120,7 @@ from beartype.typing import Optional
 from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeViolationVerbosity
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN

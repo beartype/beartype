@@ -14,7 +14,7 @@ callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._util.cache.utilcachecall import callable_cached
 

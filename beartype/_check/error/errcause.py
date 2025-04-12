@@ -67,7 +67,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintSane,
     TupleHintSane,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,

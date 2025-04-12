@@ -74,7 +74,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     import contextlib, re
-    from beartype import BeartypeConf
+    from beartype import (
+        BeartypeConf,
+        FrozenDict,
+    )
     from beartype.door import (
         CallableTypeHint,
         NewTypeTypeHint,
@@ -157,8 +160,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Pep484ListStr,
         Pep484ListListStr,
         Pep484ListUnsubscripted,
-        Pep484585GenericSTSequenceU,
-        Pep484585GenericIntTSequenceU,
+        # Pep484585GenericSTSequenceU,
+        # Pep484585GenericIntTSequenceU,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -234,32 +237,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ValuesView,
     )
 
-    # ....................{ CONSTANTS                      }....................
-    #FIXME: Excise this, please. This is now irrelevant.
-    # True only if unsubscripted typing attributes (i.e., public attributes of
-    # the "typing" module without arguments) are parametrized by one or more
-    # type variables under the active Python interpreter.
-    #
-    # This boolean is true for Python interpreters targeting Python < 3.9. Prior
-    # to Python 3.9, the "typing" module parametrized most unsubscripted typing
-    # attributes by default. Python 3.9 halted that barbaric practice by leaving
-    # unsubscripted typing attributes unparametrized by default.
-    IS_TYPEVARS_HIDDEN = False
-
-    #FIXME: Excise this, please. This is now irrelevant.
-    # True only if unsubscripted typing attributes (i.e., public attributes of
-    # the "typing" module without arguments) are actually subscripted by one or
-    # more type variables under the active Python interpreter.
-    #
-    # This boolean is true for Python interpreters targeting 3.6 < Python <
-    # 3.9, oddly. (We don't make the rules. We simply complain about them.)
-    IS_ARGS_HIDDEN = False
-
-    #FIXME: Just reference this directly below, please. *sigh*
-    # Type of warning emitted by the @beartype decorator for PEP 484-compliant
-    # type hints obsoleted by PEP 585.
-    PEP585_DEPRECATION_WARNING = BeartypeDecorHintPep585DeprecationWarning
-
     # ....................{ CONSTANTS ~ forwardref         }....................
     # Fully-qualified classname of an arbitrary class guaranteed to be
     # importable.
@@ -287,7 +264,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Hashable,
             pep_sign=HintSignHashable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=HashableABC,
             piths_meta=(
                 # String constant.
@@ -310,7 +287,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Sized,
             pep_sign=HintSignSized,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SizedABC,
             piths_meta=(
                 # String constant.
@@ -463,7 +440,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=CallableTypeHint,
             isinstanceable_type=CallableABC,
             piths_meta=(
@@ -497,10 +474,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Container,
             pep_sign=HintSignContainer,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -523,7 +498,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Container[object],
             pep_sign=HintSignContainer,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
             piths_meta=(
                 # Set of arbitrary objects.
@@ -538,7 +513,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Container[str],
             pep_sign=HintSignContainer,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
             piths_meta=(
                 # Empty set.
@@ -590,7 +565,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Container[T],
             pep_sign=HintSignContainer,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
             typevars=(T,),
             piths_meta=(
@@ -606,7 +581,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Container[Container[str]],
             pep_sign=HintSignContainer,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ContainerABC,
             piths_meta=(
                 # Set of frozen sets of strings.
@@ -652,10 +627,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Iterable,
             pep_sign=HintSignIterable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -678,7 +651,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Iterable[object],
             pep_sign=HintSignIterable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
             piths_meta=(
                 # Set of arbitrary objects.
@@ -693,7 +666,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Iterable[str],
             pep_sign=HintSignIterable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
             piths_meta=(
                 # Empty set.
@@ -745,7 +718,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Iterable[T],
             pep_sign=HintSignIterable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
             typevars=(T,),
             piths_meta=(
@@ -761,7 +734,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Iterable[Iterable[str]],
             pep_sign=HintSignIterable,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=IterableABC,
             piths_meta=(
                 # Set of frozen sets of strings.
@@ -808,10 +781,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Collection,
             pep_sign=HintSignCollection,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -834,7 +805,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Collection[object],
             pep_sign=HintSignCollection,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
             piths_meta=(
                 # Set of arbitrary objects.
@@ -849,7 +820,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Collection[str],
             pep_sign=HintSignCollection,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
             piths_meta=(
                 # Empty set.
@@ -895,7 +866,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Collection[T],
             pep_sign=HintSignCollection,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
             typevars=(T,),
             piths_meta=(
@@ -911,7 +882,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Collection[Collection[str]],
             pep_sign=HintSignCollection,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CollectionABC,
             piths_meta=(
                 # Set of frozen sets of strings.
@@ -939,7 +910,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ContextManager[str],
             pep_sign=HintSignContextManager,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=contextlib.AbstractContextManager,
             piths_meta=(
                 # Context manager.
@@ -964,7 +935,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484ListUnsubscripted,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ListUnsubscripted,
             is_type_typing=False,
             piths_meta=(
@@ -989,7 +960,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484ListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ListStr,
             is_type_typing=False,
             piths_meta=(
@@ -1018,7 +989,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Pep484ListListStr,
             pep_sign=HintSignPep484585GenericUnsubscripted,
             generic_type=Pep484ListListStr,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic list of list of string constants.
@@ -1181,7 +1152,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484ContextManagerTSequenceT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ContextManagerTSequenceT,
             is_type_typing=False,
             typevars=(T,),
@@ -1207,7 +1178,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484IterableTContainerT,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484IterableTContainerT,
             is_type_typing=False,
             typevars=(T,),
@@ -1229,7 +1200,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484IterableTupleSTContainerTupleST,
             pep_sign=HintSignPep484585GenericUnsubscripted,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484IterableTupleSTContainerTupleST,
             is_type_typing=False,
             typevars=(S, T,),
@@ -1253,7 +1224,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[Pep484ContextManagerTSequenceT],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of subclass-specific generic 2-tuples of string
@@ -1289,7 +1260,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Pep484IterableTContainerT[str],
             pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=Pep484IterableTContainerT,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -1313,7 +1284,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Pep484ContextManagerTSequenceT[bytes],
             pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=Pep484ContextManagerTSequenceT,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -1337,7 +1308,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Pep484IterableTupleSTContainerTupleST[str, bytes],
             pep_sign=HintSignPep484585GenericSubscripted,
             generic_type=Pep484IterableTupleSTContainerTupleST,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -1370,7 +1341,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pep484ListUnsubscripted[str],
             pep_sign=HintSignPep484585GenericSubscripted,
-            # warning_type=PEP585_DEPRECATION_WARNING,
+            # warning_type=BeartypeDecorHintPep585DeprecationWarning,
             generic_type=Pep484ListUnsubscripted,
             is_type_typing=False,
             piths_meta=(
@@ -1396,9 +1367,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict,
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Empty dictionary.
@@ -1420,7 +1389,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[object, object],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to arbitrary objects.
@@ -1438,7 +1407,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[object, str],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to strings.
@@ -1468,7 +1437,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[str, object],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping strings to arbitrary objects.
@@ -1502,7 +1471,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[int, str],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping integers to strings.
@@ -1536,7 +1505,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[S, T],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             typevars=(S, T,),
             piths_meta=(
@@ -1554,7 +1523,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[Tuple[int, float], str],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping 2-tuples of integers and floating-point
@@ -1588,7 +1557,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[int, Mapping[str, MutableMapping[bytes, bool]]],
             pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping integers to dictionaries mapping strings to
@@ -1633,9 +1602,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ChainMap,
             pep_sign=HintSignChainMap,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ChainMapType,
             piths_meta=(
                 # Chain map containing arbitrary key-value pairs.
@@ -1655,7 +1622,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ChainMap[bytes, str],
             pep_sign=HintSignChainMap,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ChainMapType,
             piths_meta=(
                 # Chain map mapping byte strings to strings.
@@ -1701,9 +1668,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Counter,
             pep_sign=HintSignCounter,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CounterType,
             piths_meta=(
                 # Counter containing arbitrary keys.
@@ -1723,7 +1688,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Counter[str],
             pep_sign=HintSignCounter,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=CounterType,
             piths_meta=(
                 # Counter mapping strings to integers.
@@ -1764,9 +1729,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=DefaultDict,
             pep_sign=HintSignDefaultDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=defaultdict,
             piths_meta=(
                 # Default dictionary containing arbitrary key-value pairs.
@@ -1783,7 +1746,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=DefaultDict[int, str],
             pep_sign=HintSignDefaultDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=defaultdict,
             piths_meta=(
                 # Default dictionary mapping integers to strings.
@@ -1814,9 +1777,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Mapping,
             pep_sign=HintSignMapping,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MappingABC,
             piths_meta=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -1836,7 +1797,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Mapping[int, str],
             pep_sign=HintSignMapping,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MappingABC,
             piths_meta=(
                 # Dictionary mapping integers to strings.
@@ -1871,9 +1832,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableMapping,
             pep_sign=HintSignMutableMapping,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableMappingABC,
             piths_meta=(
                 # Dictionary containing arbitrary key-value pairs.
@@ -1893,7 +1852,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableMapping[int, str],
             pep_sign=HintSignMutableMapping,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableMappingABC,
             piths_meta=(
                 # Dictionary mapping integers to strings.
@@ -1928,9 +1887,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=OrderedDict,
             pep_sign=HintSignOrderedDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=OrderedDictType,
             piths_meta=(
                 # Ordered dictionary containing arbitrary key-value pairs.
@@ -1950,7 +1907,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=OrderedDict[int, str],
             pep_sign=HintSignOrderedDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=OrderedDictType,
             piths_meta=(
                 # Ordered dictionary mapping integers to strings.
@@ -2038,10 +1995,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Match,
             pep_sign=HintSignMatch,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=RegexMatchType,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression match of one or more string constants.
                 HintPithSatisfiedMetadata(re.search(
@@ -2058,7 +2013,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Match[str],
             pep_sign=HintSignMatch,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=RegexMatchType,
             piths_meta=(
                 # Regular expression match of one or more string constants.
@@ -2076,10 +2031,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pattern,
             pep_sign=HintSignPattern,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=RegexCompiledType,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression string pattern.
                 HintPithSatisfiedMetadata(
@@ -2093,7 +2046,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pattern[str],
             pep_sign=HintSignPattern,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=RegexCompiledType,
             piths_meta=(
                 # Regular expression string pattern.
@@ -2109,10 +2062,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AbstractSet,
             pep_sign=HintSignAbstractSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -2132,7 +2083,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AbstractSet[object],
             pep_sign=HintSignAbstractSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
             piths_meta=(
                 # Set of arbitrary items.
@@ -2148,7 +2099,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AbstractSet[str],
             pep_sign=HintSignAbstractSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
             piths_meta=(
                 # Set of strings.
@@ -2179,7 +2130,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AbstractSet[T],
             pep_sign=HintSignAbstractSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
             typevars=(T,),
             piths_meta=(
@@ -2196,7 +2147,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AbstractSet[AbstractSet[str]],
             pep_sign=HintSignAbstractSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SetABC,
             piths_meta=(
                 # Set of frozen sets of strings.
@@ -2231,10 +2182,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Deque,
             pep_sign=HintSignDeque,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty deque.
                 HintPithSatisfiedMetadata(deque()),
@@ -2254,7 +2203,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Deque[object],
             pep_sign=HintSignDeque,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
             piths_meta=(
                 # Deque of arbitrary items.
@@ -2269,7 +2218,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Deque[str],
             pep_sign=HintSignDeque,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
             piths_meta=(
                 # Deque of strings.
@@ -2304,7 +2253,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Deque[T],
             pep_sign=HintSignDeque,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
             typevars=(T,),
             piths_meta=(
@@ -2321,7 +2270,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Deque[Deque[str]],
             pep_sign=HintSignDeque,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=deque,
             piths_meta=(
                 # Deque of deques of strings.
@@ -2358,10 +2307,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=FrozenSet,
             pep_sign=HintSignFrozenSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty frozen set.
                 HintPithSatisfiedMetadata(frozenset()),
@@ -2381,7 +2328,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=FrozenSet[object],
             pep_sign=HintSignFrozenSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
             piths_meta=(
                 # Frozen set of arbitrary items.
@@ -2397,7 +2344,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=FrozenSet[str],
             pep_sign=HintSignFrozenSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
             piths_meta=(
                 # Frozen set of strings.
@@ -2429,7 +2376,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=FrozenSet[T],
             pep_sign=HintSignFrozenSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
             typevars=(T,),
             piths_meta=(
@@ -2446,7 +2393,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=FrozenSet[FrozenSet[str]],
             pep_sign=HintSignFrozenSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=frozenset,
             piths_meta=(
                 # Frozen set of frozen sets of strings.
@@ -2477,10 +2424,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ItemsView,
             pep_sign=HintSignItemsView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ItemsViewABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty items view.
                 HintPithSatisfiedMetadata({}.items()),
@@ -2505,7 +2450,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ItemsView[object, Any],
             pep_sign=HintSignItemsView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ItemsViewABC,
             piths_meta=(
                 # Items view of arbitrary items.
@@ -2523,7 +2468,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ItemsView[str, bytes],
             pep_sign=HintSignItemsView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ItemsViewABC,
             piths_meta=(
                 # Items view of a dictionary mapping strings to byte strings.
@@ -2560,7 +2505,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ItemsView[S, T],
             pep_sign=HintSignItemsView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ItemsViewABC,
             typevars=(S, T,),
             piths_meta=(
@@ -2582,7 +2527,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[ItemsView[str, bytes]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of items views of dictionaries mapping strings to byte
@@ -2619,10 +2564,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=KeysView,
             pep_sign=HintSignKeysView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=KeysViewABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty keys view.
                 HintPithSatisfiedMetadata({}.keys()),
@@ -2644,7 +2587,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=KeysView[object],
             pep_sign=HintSignKeysView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=KeysViewABC,
             piths_meta=(
                 # Keys view of arbitrary items.
@@ -2660,7 +2603,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=KeysView[str],
             pep_sign=HintSignKeysView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=KeysViewABC,
             piths_meta=(
                 # Keys view of strings.
@@ -2694,7 +2637,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=KeysView[T],
             pep_sign=HintSignKeysView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=KeysViewABC,
             typevars=(T,),
             piths_meta=(
@@ -2716,7 +2659,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[KeysView[str]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of keys views of strings.
@@ -2745,10 +2688,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ValuesView,
             pep_sign=HintSignValuesView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ValuesViewABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty values view.
                 HintPithSatisfiedMetadata({}.values()),
@@ -2770,7 +2711,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ValuesView[object],
             pep_sign=HintSignValuesView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ValuesViewABC,
             piths_meta=(
                 # Values view of arbitrary items.
@@ -2786,7 +2727,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ValuesView[str],
             pep_sign=HintSignValuesView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ValuesViewABC,
             piths_meta=(
                 # Values view of strings.
@@ -2822,7 +2763,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ValuesView[T],
             pep_sign=HintSignValuesView,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=ValuesViewABC,
             typevars=(T,),
             piths_meta=(
@@ -2844,7 +2785,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[ValuesView[str]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of values views of strings.
@@ -2876,10 +2817,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSet,
             pep_sign=HintSignMutableSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSetABC,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -2899,7 +2838,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSet[object],
             pep_sign=HintSignMutableSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSetABC,
             piths_meta=(
                 # Set of arbitrary items.
@@ -2915,7 +2854,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSet[str],
             pep_sign=HintSignMutableSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSetABC,
             piths_meta=(
                 # Set of strings.
@@ -2944,7 +2883,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSet[T],
             pep_sign=HintSignMutableSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSetABC,
             typevars=(T,),
             piths_meta=(
@@ -2964,7 +2903,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[MutableSet[str]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of mutable sets of strings.
@@ -2993,10 +2932,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Set,
             pep_sign=HintSignSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=set,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty set.
                 HintPithSatisfiedMetadata(set()),
@@ -3016,7 +2953,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Set[object],
             pep_sign=HintSignSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=set,
             piths_meta=(
                 # Set of arbitrary items.
@@ -3032,7 +2969,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Set[str],
             pep_sign=HintSignSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=set,
             piths_meta=(
                 # Set of strings.
@@ -3061,7 +2998,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Set[T],
             pep_sign=HintSignSet,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=set,
             typevars=(T,),
             piths_meta=(
@@ -3081,7 +3018,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[Set[str]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List of sets of strings.
@@ -3110,10 +3047,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List,
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Empty list.
                 HintPithSatisfiedMetadata([]),
@@ -3138,7 +3073,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[object],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # Empty list.
@@ -3159,7 +3094,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[str],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # Empty list.
@@ -3192,7 +3127,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[T],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             typevars=(T,),
             piths_meta=(
@@ -3217,7 +3152,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple,
             pep_sign=HintSignTuple,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrary items.
@@ -3245,7 +3180,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[()],
             pep_sign=HintSignTupleFixed,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Empty tuple.
@@ -3269,7 +3204,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[Any, object,],
             pep_sign=HintSignTupleFixed,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrary items.
@@ -3293,7 +3228,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[float, Any, str,],
             pep_sign=HintSignTupleFixed,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing a floating-point number, string, and integer
@@ -3341,7 +3276,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[Tuple[float, Any, str,], ...],
             pep_sign=HintSignTuple,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing tuples containing a floating-point number,
@@ -3393,7 +3328,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[S, T],
             pep_sign=HintSignTupleFixed,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             typevars=(S, T,),
             piths_meta=(
@@ -3417,7 +3352,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[str, ...],
             pep_sign=HintSignTuple,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrarily many string constants.
@@ -3449,7 +3384,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[T, ...],
             pep_sign=HintSignTuple,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             typevars=(T,),
             piths_meta=(
@@ -3469,10 +3404,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type,
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
-            is_args=IS_ARGS_HIDDEN,
-            is_typevars=IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Transitive superclass of all superclasses.
                 HintPithSatisfiedMetadata(object),
@@ -3488,7 +3421,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[Any],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             piths_meta=(
                 # Arbitrary class.
@@ -3502,7 +3435,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[type],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             piths_meta=(
                 # Arbitrary metaclass.
@@ -3518,7 +3451,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[Class],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             piths_meta=(
                 # Subclass of this class.
@@ -3534,7 +3467,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[FORWARDREF_CLASSNAME],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             piths_meta=(
                 # Subclass of this class.
@@ -3550,7 +3483,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[Union[Class, OtherClass,]],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             piths_meta=(
                 # Arbitrary subclass of one class subscripting this hint.
@@ -3568,7 +3501,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Type[T],
             pep_sign=HintSignType,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=type,
             typevars=(T,),
             piths_meta=(
@@ -3614,7 +3547,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[int, Sequence[str]],
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(21),
@@ -3671,7 +3604,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[dict, float, int,
                 Sequence[Union[dict, float, int, MutableSequence[str]]]],
             pep_sign=HintSignUnion,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Empty dictionary.
@@ -3762,7 +3695,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
             typevars=(S, T,),
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
@@ -3796,7 +3729,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[List[str], Tuple[bytes, ...]],
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # List of string items.
                 HintPithSatisfiedMetadata(
@@ -3831,7 +3764,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[Union[int, str,]],
             pep_sign=HintSignList,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=list,
             piths_meta=(
                 # List containing a mixture of integer and string constants.
@@ -3881,7 +3814,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=SequenceABC,
             piths_meta=(
                 # Sequence of string and bytestring constants.
@@ -3928,7 +3861,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=MutableSequenceABC,
             piths_meta=(
                 # Mutable sequence of string and bytestring constants.
@@ -3990,7 +3923,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             # fundamentally different unsubscripted typing attributes depending
             # on Python version.
             pep_sign=HintSignOptional,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # None singleton.
@@ -4042,7 +3975,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Union[float, Sequence[str]],
             pep_sign=HintSignUnion,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
@@ -4077,7 +4010,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[float, Sequence[str]],
             conf=BeartypeConf(is_pep484_tower=True),
             pep_sign=HintSignUnion,
-            warning_type=PEP585_DEPRECATION_WARNING,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
@@ -4102,6 +4035,35 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                         r'\*',
                     ),
                 ),
+            ),
+        ),
+
+        # ................{ CONFIGURATION ~ overrides          }................
+        # PEP 484-compliant type hints exercising the beartype configuration
+        # "hint_overrides" parameter.
+
+        # Arbitrary PEP 484-compliant type hint configured by a hint override
+        # expanding this hint to another PEP 484-compliant type hint.
+        HintPepMetadata(
+            hint=List[str],
+            conf=BeartypeConf(hint_overrides=FrozenDict({
+                List[str]: Union[List[str], Tuple[str, ...]]})),
+            pep_sign=HintSignList,
+            warning_type=BeartypeDecorHintPep585DeprecationWarning,
+            isinstanceable_type=list,
+            piths_meta=(
+                # List of string constants.
+                HintPithSatisfiedMetadata(
+                    ['And in her bearing was a sort of hope,',]),
+                # Tuple of string constants.
+                HintPithSatisfiedMetadata(
+                    ("As thus she quick-voic'd spake, yet full of awe.",)),
+                # List of byte string constants.
+                HintPithUnsatisfiedMetadata(
+                    [b'"This cheers our fallen house: come to our friends,',]),
+                # Tuple of byte string constants.
+                HintPithUnsatisfiedMetadata(
+                    (b'O Saturn! come away, and give them heart;',)),
             ),
         ),
     ]
@@ -4133,7 +4095,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             HintPepMetadata(
                 hint=ByteString,
                 pep_sign=HintSignByteString,
-                warning_type=PEP585_DEPRECATION_WARNING,
+                warning_type=BeartypeDecorHintPep585DeprecationWarning,
                 isinstanceable_type=ByteStringABC,
                 piths_meta=(
                     # Byte string constant.

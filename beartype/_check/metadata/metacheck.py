@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahintpep import DictStrToHint
 from beartype._data.hint.datahinttyping import (
     # DictStrToAny,

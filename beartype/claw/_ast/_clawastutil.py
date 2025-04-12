@@ -26,7 +26,7 @@ from beartype.claw._clawmagic import (
     BEARTYPE_DECORATOR_FUNC_NAME,
 )
 from beartype.roar import BeartypeClawImportConfException
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeDecorationPosition
 from beartype._data.hint.datahinttyping import NodeDecoratable

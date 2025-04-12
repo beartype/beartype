@@ -30,7 +30,7 @@ from beartype.claw._importlib.clawimppath import (
 )
 from beartype.roar import BeartypeClawHookException
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahinttyping import IterableStrs
 from collections.abc import (
     Iterable as IterableABC,

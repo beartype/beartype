@@ -540,8 +540,7 @@ def _get_hint_pep484604_union_args_flattened(
         #   expanded to the PEP 484-compliant "float | int" and "complex | float
         #   | int" type hints (respectively) when the non-default
         #   "conf.is_pep484_tower=True" parameter is enabled.
-        # * User-defined "BeartypeHintOverrides", a generalization of the prior
-        #   item.
+        # * User-defined "hint_overrides", a generalization of the prior item.
         #
         # Likewise, note that this sanification implicitly handles *ALL*
         # recursive edge cases. We need *NOT* do so explicitly above or below.

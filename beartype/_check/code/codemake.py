@@ -66,7 +66,7 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._check.proposal.checkpep484585generic import (
     iter_hint_pep484585_generic_bases_unerased)
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,

@@ -68,7 +68,7 @@ def test_decor_pep577() -> None:
     #     DATACLASSES_KWARGS.append(dict(slots=True))
 
     # Beartype decorator type-checking *ALL* PEP 557-compliant dataclass fields.
-    beartype_pep557 = beartype(conf=BeartypeConf(is_check_pep557=True))
+    beartype_pep557 = beartype(conf=BeartypeConf(is_pep557_fields=True))
 
     # ..................{ DATACLASSES                        }..................
     # For each dictionary of keyword parameters configuring this dataclass...

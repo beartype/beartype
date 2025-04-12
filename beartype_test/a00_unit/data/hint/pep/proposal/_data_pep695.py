@@ -34,7 +34,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # Defer version-specific imports.
     from beartype import (
         BeartypeConf,
-        BeartypeHintOverrides,
+        FrozenDict,
     )
     from beartype.typing import Any
     from beartype._data.hint.pep.sign.datapepsigns import (
@@ -245,8 +245,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         # that child hint and another hint, exercising a subtle edge case.
         HintPepMetadata(
             hint=AliasPep484604[complex],
-            conf=BeartypeConf(hint_overrides=BeartypeHintOverrides(
-                {float: int | float})),
+            conf=BeartypeConf(hint_overrides=FrozenDict({float: int | float})),
             pep_sign=HintSignPep695TypeAliasSubscripted,
             is_pep585_builtin_subscripted=True,
             piths_meta=(

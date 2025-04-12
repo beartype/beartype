@@ -25,7 +25,7 @@ from beartype._check.metadata.metadecor import (
     cull_beartype_call,
     make_beartype_call,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.decor.datadecornontype import (
     MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get,

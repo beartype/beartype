@@ -20,7 +20,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkcache import clear_checker_caches
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
@@ -251,7 +251,7 @@ def beartype_type(
     if (
         # This beartype configuration enables type-checking of PEP 557-compliant
         # dataclasses *AND*...
-        conf.is_check_pep557 and
+        conf.is_pep557_fields and
         # This class is a PEP 557-compliant dataclass...
         is_type_pep557_dataclass(cls)
     ):

@@ -26,7 +26,7 @@ from beartype.typing import (
     Iterator,
     Optional,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from contextlib import contextmanager
 

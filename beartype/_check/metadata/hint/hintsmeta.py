@@ -23,7 +23,7 @@ from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (

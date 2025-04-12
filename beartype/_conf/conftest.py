@@ -20,28 +20,80 @@ from beartype.roar import (
     BeartypeCallHintReturnViolation,
     BeartypeDoorHintViolation,
 )
-# from beartype.roar._roarwarn import (
-#     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
-from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
     BeartypeDecorationPosition,
     BeartypeStrategy,
     BeartypeViolationVerbosity,
 )
-from beartype._conf.confoverrides import (
-    beartype_hint_overrides_pep484_tower,
-    BeartypeHintOverrides,
-)
+from beartype._conf._confoverrides import sanify_conf_kwargs_is_pep484_tower
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
     TypeException,
 )
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.text.utiltextidentifier import is_identifier
 from collections.abc import (
     Collection as CollectionABC,
 )
+
+# ....................{ DEFAULTERS                         }....................
+def default_conf_kwargs(conf_kwargs: DictStrToAny) -> None:
+    '''
+    Default all parameters not explicitly passed by the user in the passed
+    dictionary of configuration parameters to sane internal defaults *before*
+    the :func:`.die_if_conf_kwargs_invalid` raiser validates these parameters.
+
+    Parameters
+    ----------
+    conf_kwargs : Dict[str, object]
+        Dictionary mapping from the names to values of *all* possible keyword
+        parameters configuring this configuration.
+    '''
+    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
+
+    # ..................{ DEFAULT ~ violation_*type          }..................
+    # Default violation type if passed *OR* "None" if unpassed.
+    violation_type = conf_kwargs['violation_type']
+
+    # If...
+    if (
+        # The caller explicitly passed a default violation type...
+        violation_type is not None and
+        # That is *NOT* an exception subclass...
+        not is_type_subclass(violation_type, Exception)
+    # Raise an exception.
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "violation_type" value '
+            f'{repr(violation_type)} not exception type.'
+        )
+    # Else, the caller either passed *NO* default violation type or passed a
+    # valid default violation type.
+
+    # If the caller did *NOT* explicitly pass a DOOR violation type, default
+    # this type to either the default violation type if passed *OR* the default
+    # DOOR violation type if unpassed.
+    if conf_kwargs['violation_door_type'] is None:
+        conf_kwargs['violation_door_type'] = (
+            violation_type or BeartypeDoorHintViolation)
+    # Else, the caller explicitly passed a DOOR violation type.
+
+    # If the caller did *NOT* explicitly pass a parameter violation type,
+    # default this type to either the default violation type if passed *OR* the
+    # default DOOR violation type if unpassed.
+    if conf_kwargs['violation_param_type'] is None:
+        conf_kwargs['violation_param_type'] = (
+            violation_type or BeartypeCallHintParamViolation)
+
+    # If the caller did *NOT* explicitly pass a return violation type, default
+    # this type to either the default violation type if passed *OR* the default
+    # DOOR violation type if unpassed.
+    if conf_kwargs['violation_return_type'] is None:
+        conf_kwargs['violation_return_type'] = (
+            violation_type or BeartypeCallHintReturnViolation)
+    # Else, the caller explicitly passed a DOOR violation type.
 
 # ....................{ RAISERS                            }....................
 def die_unless_conf(
@@ -69,7 +121,7 @@ def die_unless_conf(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._conf.confcls import BeartypeConf
+    from beartype._conf.confmain import BeartypeConf
 
     # If this object is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
@@ -159,22 +211,22 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # Else, "claw_skip_package_names" is an iterable of non-empty strings.
     #
     # If "hint_overrides" is *NOT* a frozen dict, raise an exception.
-    elif not isinstance(conf_kwargs['hint_overrides'], BeartypeHintOverrides):
+    elif not isinstance(conf_kwargs['hint_overrides'], FrozenDict):
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "hint_overrides" '
             f'value {repr(conf_kwargs["hint_overrides"])} not '
             f'frozen dictionary '
-            f'(i.e., "beartype.BeartypeHintOverrides" instance).'
+            f'(i.e., "beartype.FrozenDict" instance).'
         )
     # Else, "hint_overrides" is a frozen dict.
     #
-    # If "is_check_pep557" is *NOT* a boolean, raise an exception.
-    elif not isinstance(conf_kwargs['is_check_pep557'], bool):
+    # If "is_pep557_fields" is *NOT* a boolean, raise an exception.
+    elif not isinstance(conf_kwargs['is_pep557_fields'], bool):
         raise BeartypeConfParamException(
-            f'Beartype configuration parameter "is_check_pep557" '
-            f'value {repr(conf_kwargs["is_check_pep557"])} not boolean.'
+            f'Beartype configuration parameter "is_pep557_fields" '
+            f'value {repr(conf_kwargs["is_pep557_fields"])} not boolean.'
         )
-    # Else, "is_check_pep557" is a boolean.
+    # Else, "is_pep557_fields" is a boolean.
     #
     # If "is_color" is *NOT* a tri-state boolean, raise an exception.
     elif not isinstance(conf_kwargs['is_color'], NoneTypeOr[bool]):
@@ -252,69 +304,10 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
                 f'exception type.'
             )
 
-# ....................{ DEFAULTERS                         }....................
-def default_conf_kwargs_before(conf_kwargs: DictStrToAny) -> None:
+# ....................{ SANIFIERS                          }....................
+def sanify_conf_kwargs(conf_kwargs: DictStrToAny) -> None:
     '''
-    Sanitize the passed dictionary of configuration parameters by defaulting all
-    parameters not explicitly passed by the user to sane internal defaults
-    *before* the :func:`.die_if_conf_kwargs_invalid` raiser validates these
-    parameters.
-
-    Parameters
-    ----------
-    conf_kwargs : Dict[str, object]
-        Dictionary mapping from the names to values of *all* possible keyword
-        parameters configuring this configuration.
-    '''
-    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
-
-    # ..................{ DEFAULT ~ violation_*type          }..................
-    # Default violation type if passed *OR* "None" if unpassed.
-    violation_type = conf_kwargs['violation_type']
-
-    # If...
-    if (
-        # The caller explicitly passed a default violation type...
-        violation_type is not None and
-        # That is *NOT* an exception subclass...
-        not is_type_subclass(violation_type, Exception)
-    # Raise an exception.
-    ):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "violation_type" value '
-            f'{repr(violation_type)} not exception type.'
-        )
-    # Else, the caller either passed *NO* default violation type or passed a
-    # valid default violation type.
-
-    # If the caller did *NOT* explicitly pass a DOOR violation type, default
-    # this type to either the default violation type if passed *OR* the default
-    # DOOR violation type if unpassed.
-    if conf_kwargs['violation_door_type'] is None:
-        conf_kwargs['violation_door_type'] = (
-            violation_type or BeartypeDoorHintViolation)
-    # Else, the caller explicitly passed a DOOR violation type.
-
-    # If the caller did *NOT* explicitly pass a parameter violation type,
-    # default this type to either the default violation type if passed *OR* the
-    # default DOOR violation type if unpassed.
-    if conf_kwargs['violation_param_type'] is None:
-        conf_kwargs['violation_param_type'] = (
-            violation_type or BeartypeCallHintParamViolation)
-
-    # If the caller did *NOT* explicitly pass a return violation type, default
-    # this type to either the default violation type if passed *OR* the default
-    # DOOR violation type if unpassed.
-    if conf_kwargs['violation_return_type'] is None:
-        conf_kwargs['violation_return_type'] = (
-            violation_type or BeartypeCallHintReturnViolation)
-    # Else, the caller explicitly passed a DOOR violation type.
-
-
-def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
-    '''
-    Sanitize the passed dictionary of configuration parameters by defaulting all
-    parameters not explicitly passed by the user to sane internal defaults
+    Sanify (i.e., sanitize) the passed dictionary of configuration parameters
     *after* the :func:`.die_if_conf_kwargs_invalid` raiser validates these
     parameters.
 
@@ -327,63 +320,10 @@ def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
     assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
 
     # ..................{ DEFAULT ~ hint_overrides           }..................
-    # If enabling the PEP 484-compliant implicit numeric tower...
+    # If enabling the PEP 484-compliant implicit numeric tower, dynamically
+    # synthesize this tower from this existing configuration.
     if conf_kwargs['is_pep484_tower']:
-        # PEP 484-compliant implicit tower type hint overrides (i.e.,
-        # "BeartypeHintOverrides" instance lossily convering integers to
-        # floating-point numbers *AND* both integers and floating-point numbers
-        # to complex numbers).
-        BEARTYPE_HINT_OVERRIDES_PEP484_TOWER = (
-            beartype_hint_overrides_pep484_tower())
-
-        # Hint overrides if passed by the caller *OR* "None" otherwise.
-        hint_overrides = conf_kwargs['hint_overrides']
-
-        # Target hint overrides for the source "float" and "complex" types if
-        # any *OR* "None" otherwise.
-        hint_overrides_float = hint_overrides.get(float)
-        hint_overrides_complex = hint_overrides.get(complex)
-
-        # Whichever of the "float" or "complex" types are already existing
-        # overrides in the passed type hint overrides.
-        hint_override_cls_conflict: Optional[type] = None
-
-        # If these overrides already define conflicting overrides for either the
-        # "float" or "complex" types, record that fact.
-        if (
-            hint_overrides_float and
-            hint_overrides_float != BEARTYPE_HINT_OVERRIDES_PEP484_TOWER[float]
-        ):
-            hint_override_cls_conflict = float
-        elif (
-            hint_overrides_complex and
-            hint_overrides_complex != BEARTYPE_HINT_OVERRIDES_PEP484_TOWER[
-                complex]
-        ):
-            hint_override_cls_conflict = complex
-        # Else, these overrides do *NOT* already define conflicting overrides
-        # for either the "float" or "complex" types.
-
-        # If these overrides already define conflicting overrides for either the
-        # "float" or "complex" types, raise an exception.
-        if hint_override_cls_conflict:
-            raise BeartypeConfParamException(
-                f'Beartype configuration '
-                f'parameter "is_pep484_tower" conflicts with '
-                f'parameter "hint_overrides" key '
-                f'"{hint_override_cls_conflict.__name__}" '
-                f'value '
-                f'{repr(hint_overrides[hint_override_cls_conflict])}.'
-            )
-        # Else, these overrides do *NOT* already define conflicting overrides
-        # for either the "float" or "complex" types.
-
-        # Add hint overrides expanding the passed type hint overrides with
-        # additional overrides mapping:
-        # * The "float" type to the "float | int" type hint.
-        # * The "complex" type to the "complex | float | int" type hint.
-        conf_kwargs['hint_overrides'] = (
-            hint_overrides | BEARTYPE_HINT_OVERRIDES_PEP484_TOWER)  # type: ignore[assignment]
+        sanify_conf_kwargs_is_pep484_tower(conf_kwargs)
     # Else, the PEP 484-compliant implicit numeric tower is disabled.
 
 # ....................{ PRIVATE ~ globals                  }....................

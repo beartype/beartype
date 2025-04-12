@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import FrozenSetInts
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (

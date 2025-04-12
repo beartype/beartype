@@ -50,13 +50,22 @@ def test_api_deprecations() -> None:
     subpackages of the :mod:`beartype` package (including itself).
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.module.utilmodimport import import_module_attr
     from pytest import warns
 
-    # Tuple of the fully-qualified names of all deprecated attributes.
-    DEPRECATED_ATTRIBUTES = (
-        'beartype.abby',
+    # ....................{ LOCALS                         }....................
+    # Dictionary mapping from the fully-qualified name of each deprecated
+    # attribute to the corresponding non-deprecated attribute if any.
+    ATTR_DEPRECATED_TO_NONDEPRECATED_NAME = {
+        'beartype.BeartypeHintOverrides': 'beartype.FrozenDict',
+        'beartype.abby': 'beartype.door',
+    }
+
+    # Tuple of the fully-qualified names of all deprecated attributes associated
+    # with *NO* corresponding non-deprecated attributes.
+    ATTR_DEPRECATED_NAMES = (
         'beartype.cave.HintPep585Type',
         'beartype.roar.BeartypeAbbyException',
         'beartype.roar.BeartypeAbbyHintViolation',
@@ -71,9 +80,25 @@ def test_api_deprecations() -> None:
         'beartype.roar.BeartypeDecorPepException',
     )
 
-    # For each deprecated attribute declared by beartype...
-    for deprecated_attribute in DEPRECATED_ATTRIBUTES:
+    # ....................{ WARNS                          }....................
+    # For the fully-qualified name of each deprecated attribute associated with
+    # a corresponding non-deprecated attribute declared by beartype...
+    for attr_deprecated_name, attr_nondeprecated_name in (
+        ATTR_DEPRECATED_TO_NONDEPRECATED_NAME.items()):
+        # Assert that importing this attribute both emits the expected warning
+        # and returns the expected non-deprecated attribute.
+        with warns(DeprecationWarning):
+            # Deprecated and non-deprecated attributes with these names.
+            attr_deprecated = import_module_attr(attr_deprecated_name)
+            attr_nondeprecated = import_module_attr(attr_nondeprecated_name)
+
+            # Assert these two attributes to be identical.
+            assert attr_deprecated is attr_nondeprecated
+
+    # For the fully-qualified name of each deprecated attribute associated with
+    # *NO* corresponding non-deprecated attribute declared by beartype...
+    for attr_deprecated_name in ATTR_DEPRECATED_NAMES:
         # Assert that importing this attribute both emits the expected warning
         # and returns a non-"None" value.
         with warns(DeprecationWarning):
-            assert import_module_attr(deprecated_attribute) is not None
+            assert import_module_attr(attr_deprecated_name) is not None

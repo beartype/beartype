@@ -23,7 +23,7 @@ from beartype.typing import (
     Tuple,
     Type,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import get_beartype_conf_strategy_on
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR

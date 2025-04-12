@@ -21,7 +21,7 @@ from beartype._check.convert._convcoerce import (
 from beartype._check.convert._reduce.redhint import reduce_hint
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN

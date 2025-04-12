@@ -17,7 +17,7 @@ from beartype.roar import (
     BeartypeClawHookException,
 )
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.hint.datahinttyping import IterableStrs
 from beartype._util.text.utiltextidentifier import die_unless_identifier

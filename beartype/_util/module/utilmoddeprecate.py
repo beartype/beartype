@@ -17,7 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # by this submodule. This submodule is typically called from the "__init__"
 # submodules of public subpackages.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import Any, Dict
+from beartype.typing import (
+    Any,
+    Dict,
+)
 from beartype._util.utilobject import SENTINEL
 from warnings import warn
 
@@ -28,17 +31,16 @@ def deprecate_module_attr(
     attr_nondeprecated_name_to_value: Dict[str, Any],
 ) -> object:
     '''
-    Dynamically retrieve a deprecated attribute with the passed unqualified
-    name mapped by the passed dictionary to a corresponding non-deprecated
-    attribute from the submodule with the passed dictionary of globally scoped
-    attributes and emit a non-fatal deprecation warning on each
-    such retrieval if that submodule defines this attribute *or* raise an
-    exception otherwise.
+    Dynamically retrieve a deprecated attribute with the passed unqualified name
+    mapped by the passed dictionary to a corresponding non-deprecated attribute
+    from the submodule with the passed dictionary of globally scoped attributes
+    and emit a non-fatal deprecation warning on each such retrieval if that
+    submodule defines this attribute *or* raise an exception otherwise.
 
     This function is intended to be called by :pep:`562`-compliant globally
     scoped ``__getattr__()`` dunder functions, which the Python interpreter
-    implicitly calls under Python >= 3.7 *after* failing to directly retrieve
-    an explicit attribute with this name from that submodule.
+    implicitly calls under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from that submodule.
 
     Parameters
     ----------
@@ -51,7 +53,7 @@ def deprecate_module_attr(
         * If that submodule defines a corresponding non-deprecated attribute,
           the unqualified name of that attribute.
         * If that submodule is deprecating that attribute *without* defining a
-          corresponding non-deprecated attribute, ``None``.
+          corresponding non-deprecated attribute, :data:`None`.
     attr_nondeprecated_name_to_value : Dict[str, object]
         Dictionary mapping from the unqualified name to value of each
         module-scoped attribute defined by the caller's submodule, typically
@@ -60,17 +62,17 @@ def deprecate_module_attr(
         stack inspection is non-portable under Python.
 
     Returns
-    ----------
+    -------
     object
         Value of this deprecated attribute.
 
     Warns
-    ----------
+    -----
     DeprecationWarning
         If this attribute is deprecated.
 
     Raises
-    ----------
+    ------
     AttributeError
         If this attribute is unrecognized and thus erroneous.
     ImportError
@@ -80,7 +82,7 @@ def deprecate_module_attr(
         dictionary.
 
     See Also
-    ----------
+    --------
     https://www.python.org/dev/peps/pep-0562/#id8
         :pep:`562`-compliant dunder function inspiring this implementation.
     '''
@@ -93,12 +95,13 @@ def deprecate_module_attr(
 
     # Fully-qualified name of the caller's submodule. Since all physical
     # submodules (i.e., those defined on-disk) define this dunder attribute
-    # *AND* this function is only ever called by such submodules, this
-    # attribute is effectively guaranteed to exist.
+    # *AND* this function is only ever called by such submodules, this attribute
+    # is effectively guaranteed to exist.
     MODULE_NAME = attr_nondeprecated_name_to_value['__name__']
 
-    # Unqualified name of the non-deprecated attribute originating this
-    # deprecated attribute if this attribute is deprecated *OR* the sentinel.
+    # Unqualified basename of the non-deprecated attribute originating this
+    # deprecated attribute if this attribute is deprecated *OR* the sentinel
+    # otherwise (i.e., if this attribute is *NOT* deprecated).
     attr_nondeprecated_name = attr_deprecated_name_to_nondeprecated_name.get(
         attr_deprecated_name, SENTINEL)
 
@@ -108,16 +111,18 @@ def deprecate_module_attr(
             f'{repr(attr_nondeprecated_name)} not string.')
 
         # Value of the non-deprecated attribute originating this deprecated
-        # attribute if the former exists *OR* the sentintel.
+        # attribute if that module defines this non-deprecated attribute *OR*
+        # the sentinel otherwise (i.e., if that module fails to define this
+        # non-deprecated attribute).
         attr_nondeprecated_value = attr_nondeprecated_name_to_value.get(
             attr_nondeprecated_name, SENTINEL)
 
-        # If that module fails to define this non-deprecated attribute, raise
-        # an exception.
+        # If that module fails to define this non-deprecated attribute, raise an
+        # exception.
         #
         # Note that:
         # * This should *NEVER* happen but surely will. In fact, this just did.
-        # * This intentionally raises an beartype-agnostic "ImportError"
+        # * This intentionally raises a beartype-agnostic "ImportError"
         #   exception rather than a beartype-specific exception. Why? Because
         #   this function is *ONLY* ever called by the module-scoped
         #   __getattr__() dunder function in the "__init__.py" submodules

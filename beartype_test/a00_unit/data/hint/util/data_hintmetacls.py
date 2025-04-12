@@ -21,7 +21,7 @@ from beartype.typing import (
     Type,
     TypeVar,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from collections.abc import Iterable as IterableABC
 

@@ -25,7 +25,7 @@ from beartype.claw._package.clawpkghook import hook_packages
 from beartype.roar import BeartypeClawHookUnpackagedException
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.api.standard.datamodpy import SCRIPT_MODULE_NAME
 from beartype._util.func.utilfuncfile import get_func_filename_or_none

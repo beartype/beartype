@@ -50,7 +50,7 @@ from beartype._check._checksnip import (
     CODE_RAISE_VIOLATION,
     CODE_WARN_VIOLATION,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER

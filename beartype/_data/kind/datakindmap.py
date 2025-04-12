@@ -12,15 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Dict,
-)
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ DICTS                              }....................
-# Note that this exact type annotation is required to avoid mypy complaints. :O
-FROZENDICT_EMPTY: Dict[Any, Any] = FrozenDict()
+FROZENDICT_EMPTY = FrozenDict()
 '''
 **Empty frozen dictionary** (i.e., :class:`.FrozenDict` object containing *no*
 key-value pairs).

@@ -7,7 +7,7 @@
 **Beartype configuration unit tests.**
 
 This submodule unit tests the subset of the public API of the :mod:`beartype`
-package defined by the private :mod:`beartype._conf.confcls` submodule.
+package defined by the private :mod:`beartype._conf.confmain` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -27,9 +27,9 @@ def test_conf_dataclass() -> None:
     from beartype import (
         BeartypeConf,
         BeartypeDecorationPosition,
-        BeartypeHintOverrides,
         BeartypeStrategy,
         BeartypeViolationVerbosity,
+        FrozenDict,
     )
     from beartype.roar import (
         BeartypeConfParamException,
@@ -37,13 +37,13 @@ def test_conf_dataclass() -> None:
         BeartypeCallHintReturnViolation,
         BeartypeDoorHintViolation,
     )
-    # from beartype.typing import Union
-    from beartype._conf.confoverrides import (
-        BEARTYPE_HINT_OVERRIDES_EMPTY,
-        beartype_hint_overrides_pep484_tower,
-    )
+    from beartype._conf._confoverrides import _hint_overrides_pep484_tower
+    from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
     from beartype._util.utilobject import get_object_type_basename
-    from pytest import raises
+    from pytest import (
+        raises,
+        warns,
+    )
 
     # ....................{ CLASSES                        }....................
     class FakeBool(object):
@@ -66,10 +66,10 @@ def test_conf_dataclass() -> None:
         'claw_is_pep526',
         'claw_skip_package_names',
         'hint_overrides',
-        'is_check_pep557',
         'is_color',
         'is_debug',
         'is_pep484_tower',
+        'is_pep557_fields',
         'strategy',
         'violation_door_type',
         'violation_param_type',
@@ -84,7 +84,7 @@ def test_conf_dataclass() -> None:
 
     # Non-empty hint overrides mapping one or more arbitrary source type hints
     # to corresponding arbitrary target type hints.
-    BEAR_HINT_OVERRIDES_NONEMPTY = BeartypeHintOverrides({bool: FakeBool})
+    BEAR_HINT_OVERRIDES_NONEMPTY = FrozenDict({bool: FakeBool})
 
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
@@ -94,10 +94,10 @@ def test_conf_dataclass() -> None:
         claw_is_pep526=False,
         claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
-        is_check_pep557=True,
         is_color=True,
         is_debug=True,
         is_pep484_tower=True,
+        is_pep557_fields=True,
         strategy=BeartypeStrategy.Ologn,
         violation_door_type=RuntimeError,
         violation_param_type=TypeError,
@@ -136,10 +136,10 @@ def test_conf_dataclass() -> None:
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
-            is_check_pep557=True,
             is_debug=True,
             is_color=True,
             is_pep484_tower=True,
+            is_pep557_fields=True,
             strategy=BeartypeStrategy.On,
             violation_door_type=RuntimeError,
             violation_param_type=TypeError,
@@ -156,10 +156,10 @@ def test_conf_dataclass() -> None:
             violation_param_type=TypeError,
             violation_door_type=RuntimeError,
             strategy=BeartypeStrategy.On,
+            is_pep557_fields=True,
             is_pep484_tower=True,
             is_color=True,
             is_debug=True,
-            is_check_pep557=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
@@ -176,11 +176,11 @@ def test_conf_dataclass() -> None:
         BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
-    assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
-    assert BEAR_CONF_DEFAULT.is_check_pep557 is False
+    assert BEAR_CONF_DEFAULT.hint_overrides is FROZENDICT_EMPTY
     assert BEAR_CONF_DEFAULT.is_color is None
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
+    assert BEAR_CONF_DEFAULT.is_pep557_fields is False
     assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
     assert BEAR_CONF_DEFAULT.violation_door_type is (
         BeartypeDoorHintViolation)
@@ -203,11 +203,11 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT.claw_skip_package_names == (
         'Made_contrast_with', 'the_universe',)
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
-        BEAR_HINT_OVERRIDES_NONEMPTY | beartype_hint_overrides_pep484_tower())
-    assert BEAR_CONF_NONDEFAULT.is_check_pep557 is True
+        BEAR_HINT_OVERRIDES_NONEMPTY | _hint_overrides_pep484_tower())
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
+    assert BEAR_CONF_NONDEFAULT.is_pep557_fields is True
     assert BEAR_CONF_NONDEFAULT.strategy is BeartypeStrategy.Ologn
     assert BEAR_CONF_NONDEFAULT.violation_door_type is RuntimeError
     assert BEAR_CONF_NONDEFAULT.violation_param_type is TypeError
@@ -291,7 +291,7 @@ def test_conf_dataclass() -> None:
     for bear_conf_repr_substr in BEAR_CONF_REPR_SUBSTRS:
         assert bear_conf_repr_substr in BEAR_CONF_NONDEFAULT_REPR
 
-    # ....................{ FAIL                           }....................
+    # ....................{ FAIL ~ raise                   }....................
     # Assert that instantiating a configuration with an invalid parameter raises
     # the expected exception.
     with raises(BeartypeConfParamException):
@@ -321,9 +321,6 @@ def test_conf_dataclass() -> None:
         BeartypeConf(hint_overrides=(
             'Wildered, and wan, and panting, she returned.'))
     with raises(BeartypeConfParamException):
-        BeartypeConf(is_check_pep557=(
-            "Space region'd with life-air; and barren void;"))
-    with raises(BeartypeConfParamException):
         BeartypeConf(is_color=(
             'And many sounds, and much of life and death.'))
     with raises(BeartypeConfParamException):
@@ -332,6 +329,9 @@ def test_conf_dataclass() -> None:
     with raises(BeartypeConfParamException):
         BeartypeConf(is_pep484_tower=(
             'In the calm darkness of the moonless nights,'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(is_pep557_fields=(
+            "Space region'd with life-air; and barren void;"))
     with raises(BeartypeConfParamException):
         BeartypeConf(strategy=(
             'By all, but which the wise, and great, and good'))
@@ -370,12 +370,12 @@ def test_conf_dataclass() -> None:
     with raises(BeartypeConfParamException):
         BeartypeConf(
             is_pep484_tower=True,
-            hint_overrides=BeartypeHintOverrides({float: complex})
+            hint_overrides=FrozenDict({float: complex})
         )
     with raises(BeartypeConfParamException):
         BeartypeConf(
             is_pep484_tower=True,
-            hint_overrides=BeartypeHintOverrides({complex: int})
+            hint_overrides=FrozenDict({complex: int})
         )
 
     # Assert that attempting to modify any public read-only property of this
@@ -413,6 +413,12 @@ def test_conf_dataclass() -> None:
             BeartypeViolationVerbosity.MINIMAL)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.warning_cls_on_decorator_exception = None
+
+    # ....................{ FAIL ~ warn                    }....................
+    # Assert that instantiating a configuration with a deprecated parameter
+    # issues the expected warning.
+    with warns(DeprecationWarning):
+        BeartypeConf(is_check_pep557=True)
 
 # ....................{ TESTS ~ arg                        }....................
 def test_conf_is_color(monkeypatch: 'pytest.MonkeyPatch') -> None:

@@ -1375,25 +1375,10 @@ class BeartypeKindFrozenDictException(BeartypeException):
     '''
     **Beartype frozen dictionary exception.**
 
-    This exception is raised from various methods of the private
-    :class:`beartype._util.kind.map.utilmapfrozen.FrozenDict` class publicly
-    exposed as the :class:`beartype.BeartypeHintOverrides` subclass, typically
-    due to external callers erroneously attempting to modify key-value pairs of
-    instances of this class.
-    '''
-
-    pass
-
-
-class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
-    '''
-    **Beartype hint overrides exception.**
-
     This exception is raised from various methods of the public
-    :class:`beartype.BeartypeHintOverrides` class, typically due to external
-    callers erroneously attempting to instantiate instances of this class with
-    **recursive hint overrides** (e.g.,
-    ``BeartypeHintOverrides{str: list[str]})``).
+    :class:`beartype._util.kind.map.utilmapfrozen.FrozenDict` class publicly
+    exposed as the :class:`beartype.FrozenDict` subclass, typically due to
+    external attempts to erroneously modify the contents of a frozen dictionary.
     '''
 
     pass

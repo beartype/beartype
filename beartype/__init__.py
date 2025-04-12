@@ -156,27 +156,30 @@ _init()
 # Publicize the private @beartype._decor.beartype decorator as
 # @beartype.beartype, preserving all implementation details as private.
 from beartype._decor.decormain import (
-    beartype as beartype)
+    beartype as beartype,
+)
 
 # Publicize all top-level configuration attributes required to configure the
 # @beartype.beartype decorator.
-from beartype._conf.confcls import (
-    BeartypeConf as BeartypeConf)
+from beartype._conf.confmain import (
+    BeartypeConf as BeartypeConf,
+)
 from beartype._conf.confenum import (
     BeartypeDecorationPosition as BeartypeDecorationPosition,
     BeartypeStrategy as BeartypeStrategy,
     BeartypeViolationVerbosity as BeartypeViolationVerbosity,
 )
-from beartype._conf.confoverrides import (
-    BeartypeHintOverrides as BeartypeHintOverrides)
+from beartype._util.kind.map.utilmapfrozen import (
+    FrozenDict as FrozenDict,
+)
 
 # ....................{ GLOBALS ~ __all__                  }....................
 __all__ = [
     'BeartypeConf',
     'BeartypeDecorationPosition',
-    'BeartypeHintOverrides',
     'BeartypeStrategy',
     'BeartypeViolationVerbosity',
+    'FrozenDict',
     'beartype',
     '__version__',
     '__version_info__',
@@ -276,6 +279,9 @@ def __getattr__(attr_name: str) -> object:
     # Return the value of this deprecated attribute and emit a warning.
     return deprecate_module_attr(
         attr_deprecated_name=attr_name,
-        attr_deprecated_name_to_nondeprecated_name={'abby': 'door',},
+        attr_deprecated_name_to_nondeprecated_name={
+            'BeartypeHintOverrides': 'FrozenDict',
+            'abby': 'door',
+        },
         attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
     )

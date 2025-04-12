@@ -44,7 +44,7 @@ from beartype._check.checkmake import (
     make_func_raiser,
     make_func_tester,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahintpep import (
     Hint,

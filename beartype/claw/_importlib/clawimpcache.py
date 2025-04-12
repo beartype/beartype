@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
 from beartype.roar import BeartypeClawImportConfException
 from beartype.typing import Dict
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from pprint import pformat
 
 # Original cache_from_source() function defined by the private (*gulp*)

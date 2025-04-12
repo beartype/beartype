@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype._check.code.codecls import HintMeta
 # from beartype._check.convert.convsanify import (
 #     sanify_hint_child)
-# from beartype._conf.confcls import BeartypeConf
+# from beartype._conf.confmain import BeartypeConf
 # from beartype._data.hint.datahintpep import Hint
 # from beartype._data.hint.datahinttyping import TypeStack
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (

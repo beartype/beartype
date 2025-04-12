@@ -22,7 +22,7 @@ from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined
 )
 from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confmain import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.text.utiltextlabel import label_exception
 from importlib import (  # type: ignore[attr-defined]

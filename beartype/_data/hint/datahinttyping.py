@@ -665,7 +665,7 @@ instances definitely encapsulating pathnames).
 #
 # Why? Because obsolete PEP 484-compliant type unions fail to support various
 # edge cases, including recursive "beartype.HintOverrides" globally defined by
-# the "beartype._conf.confoverrides" submodule.
+# the "beartype._conf._confoverrides" submodule.
 
 #FIXME: Shift into the more appropriate "datahintpep" submodule, please.
 Pep484TowerComplex = (

@@ -99,7 +99,6 @@ from beartype.roar._roarexc import (
     BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
     BeartypeCallHintException as BeartypeCallHintException,
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
-    BeartypeHintOverridesException as BeartypeHintOverridesException,
     BeartypeKindException as BeartypeKindException,
     BeartypeKindFrozenDictException as BeartypeKindFrozenDictException,
     BeartypeLibraryException as BeartypeLibraryException,

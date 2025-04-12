@@ -26,6 +26,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     import re
+    from beartype import (
+        BeartypeConf,
+        FrozenDict,
+    )
     from beartype.typing import (
         Any,
         Union,
@@ -2689,6 +2693,35 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                         r'\b[Ll]ist index \d+ item\b',
                     ),
                 ),
+            ),
+        ),
+
+        # ................{ CONFIGURATION ~ overrides          }................
+        # PEP 585-compliant type hints exercising the beartype configuration
+        # "hint_overrides" parameter.
+
+        # Arbitrary PEP 585-compliant type hint configured by a hint override
+        # expanding this hint to another PEP 484-compliant type hint.
+        HintPepMetadata(
+            hint=list[str],
+            conf=BeartypeConf(hint_overrides=FrozenDict({
+                list[str]: Union[list[str], tuple[str, ...]]})),
+            pep_sign=HintSignList,
+            isinstanceable_type=list,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # List of string constants.
+                HintPithSatisfiedMetadata(
+                    ['And in her bearing was a sort of hope,',]),
+                # Tuple of string constants.
+                HintPithSatisfiedMetadata(
+                    ("As thus she quick-voic'd spake, yet full of awe.",)),
+                # List of byte string constants.
+                HintPithUnsatisfiedMetadata(
+                    [b'"This cheers our fallen house: come to our friends,',]),
+                # Tuple of byte string constants.
+                HintPithUnsatisfiedMetadata(
+                    (b'O Saturn! come away, and give them heart;',)),
             ),
         ),
     ]
