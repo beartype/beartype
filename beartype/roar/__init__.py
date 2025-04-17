@@ -212,6 +212,8 @@ def __getattr__(attr_deprecated_name: str) -> object:
                 'BeartypeDecorHintPepDeprecationWarning'),
             'BeartypeDecorPepException': (
                 'BeartypePepException'),
+            'BeartypeHintOverridesException': (
+                'BeartypeConfParamException'),
         },
         attr_nondeprecated_name_to_value=globals(),
     )

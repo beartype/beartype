@@ -11,6 +11,34 @@ iterators** (i.e., low-level callables generically iterating over both
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Generalize to support generic "TypedDict" and "NamedTuple" subclasses as
+#follows:
+#* Define a new data global resembling:
+#  IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED = frozenset((
+#      HintSignPep484585GenericUnsubscripted,))
+#* Generalize the get_hint_pep_sign_or_none() getter to optionally accept a new
+#  "ignore_hint_signs: FrozenSet[HintSign] = FROZENSET_EMPTY" parameter.
+#* Refactor the get_hint_pep_sign_or_none() getter to respect the "ignore_signs"
+#  parameter as follows:
+#      if (
+#          HintSignPep484585GenericUnsubscripted not in ignore_hint_signs and
+#          is_hint_pep484585_generic_unsubscripted(hint)
+#      ):
+#          return HintSignPep484585GenericUnsubscripted
+#* Improve the iterator below as follows:
+#      hint_sign_nongeneric = get_hint_pep_sign_or_none(
+#          hint, IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
+#
+#      # Note that this constitutes an *EXTREMELY* rare edge case. In fact, it
+#      # took ten years for the first @beartype user to even hit this case.
+#      # Ergo, efficiency is absolutely *NOT* a concern. Maintainability is.
+#      if hint_sign_nongeneric is not None:
+#          hint_bases_direct = (hint,) + hint_bases_direct
+#* Exhaustively unit test this edge case.
+#
+#Pretty sure that should do it. Insanity, but surprisingly amenable to hacky.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._check.metadata.hint.hintsane import (
@@ -186,10 +214,13 @@ def iter_hint_pep484585_generic_bases_unerased(
     from beartype._check.convert.convsanify import sanify_hint_child
 
     # ....................{ LOCALS                         }....................
+    # This generic.
+    hint = hint_sane.hint
+
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
     # superclasses prior to their type erasure by this generic.
     hint_bases_direct = get_hint_pep484585_generic_bases_unerased(
-        hint=hint_sane.hint,
+        hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )

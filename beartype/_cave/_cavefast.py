@@ -460,7 +460,7 @@ Caveats
 Static method objects are *only* directly accessible via the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
 attributes, static methods reduce to instances of the standard
-:class:`FunctionType` type.
+:class:`.FunctionType` type.
 
 Static method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.

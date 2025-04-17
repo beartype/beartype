@@ -38,15 +38,15 @@ def is_hint_pep589(hint: object) -> bool:
     Notably, the :obj:`typing.TypedDict` attribute under Python >= 3.9 is *not*
     actually a superclass but instead a factory function masquerading as a
     superclass by setting the subversive ``__mro_entries__`` dunder attribute to
-    a tuple containing a private :obj:`typing._TypedDict` superclass. This
-    superclass defines various requisite dunder attributes. Passing the passed
-    hint and that superclass to the :func:`issubclass` builtin fails, as the
-    metaclass of that superclass prohibits :func:`issubclass` checks. I am
+    a tuple containing a private :obj:`typing._TypedDict` superclass. That
+    superclass then defines various requisite dunder attributes. Passing the
+    passed hint with that superclass to the :func:`issubclass` builtin fails, as
+    the metaclass of that superclass prohibits :func:`issubclass` checks. I am
     throwing up in my mouth as I write this.
 
     Unfortunately, all of the above complications are further complicated by the
     :class:`dict` type under Python >= 3.10. For unknown reasons, Python >= 3.10
-    adds spurious ``__annotations__`` dunder attributes to :class:`dict`
+    adds spurious ``__annotations__`` dunder attributes to *all* :class:`dict`
     subclasses -- even if those subclasses annotate *no* class or instance
     variables. While a likely bug, we have little choice but to at least
     temporarily support this insanity.

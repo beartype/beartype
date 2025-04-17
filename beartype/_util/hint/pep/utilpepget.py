@@ -22,6 +22,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._cave._cavefast import CallableOrClassTypes
 from beartype._data.hint.datahintpep import (
     Hint,
     HintOrNone,
@@ -575,8 +576,9 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # * The PEP 484-compliant unsubscripted "typing.Generic" superclass.
     # * The PEP 544-compliant unsubscripted "typing.Protocol" superclass.
 
-    # If this hint is a class...
-    if isinstance(hint, type):
+    # If this hint is either a callable *OR* class, this hint necessarily
+    # defines the "__qualname__" dunder attribute tested below. In this case...
+    if isinstance(hint, CallableOrClassTypes):
         #FIXME: Is this actually the case? Do non-physical classes dynamically
         #defined at runtime actually define *BOTH* of these dunder attributes:
         #* "hint_type.__module__"?
@@ -591,8 +593,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
             HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN.get(
                 hint.__module__, FROZENDICT_EMPTY))
 
-        # Sign identifying this hint if this hint is identifiable by its classname
-        # *OR* "None" otherwise.
+        # Sign identifying this hint if this hint is identifiable by its
+        # classname *OR* "None" otherwise.
         hint_sign = hint_type_basename_to_sign.get(hint.__qualname__)
         # print(f'hint: {hint}')
         # print(f'hint_sign [by self]: {hint_sign}')
@@ -770,10 +772,15 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     elif is_hint_pep484585_generic_subscripted(hint):
         return HintSignPep484585GenericSubscripted
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
-    #
+
+    #FIXME: Consider excising the is_hint_pep589() tester entirely. We meant
+    #well... but, ultimately, the implementation is so convoluted that it's
+    #better that we violate privacy encapsulation by detecting that the type of
+    #this type is the private "typing._TypedDictMeta" metaclass instead. *shrug*
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):
         return HintSignTypedDict
+
     # Else, this hint is *NOT* a PEP 589-compliant typed dictionary.
     #
     # If the active Python interpreter targets Python < 3.10 (and thus defines

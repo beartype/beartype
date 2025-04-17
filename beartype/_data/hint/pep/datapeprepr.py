@@ -238,8 +238,9 @@ identifying sign.
 
 # ....................{ MAPPINGS ~ type                    }....................
 # The majority of this dictionary is initialized with automated inspection
-# below in the _init() function. The *ONLY* key-value pairs explicitly defined
-# here are those *NOT* amenable to such inspection.
+# iterating over the "_TYPING_ATTR_HINT_BASENAME_TO_SIGN" dictionary local
+# defined by the _init() function below. The *ONLY* key-value pairs explicitly
+# defined here are those *NOT* amenable to such inspection.
 HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
     # Note that the root "object" superclass *CANNOT* be safely mapped to the
     # "typing.Any" singleton with logic resembling:
@@ -261,7 +262,7 @@ HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
     # Why? Because doing so would then erroneously render the otherwise
     # PEP-noncompliant "object" type PEP-compliant, which would then cause
     # raisers like die_if_pep() and die_unless_pep() to exhibit anomalous
-    # behaviour with respect to this type. In short, the clever solution is the
+    # behaviour with respect to that type. In short, the clever solution is the
     # wrong solution. *sigh*
 
     # ..................{ TYPING                             }..................
@@ -278,17 +279,19 @@ HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
     'beartype.typing': {},
 }
 '''
-**Type hint type trie** (i.e., dictionary-of-dictionaries tree data structure
-mapping from the fully-qualified names of packages and modules to a nested
-dictionary mapping from the unqualified basenames of all PEP-compliant type
-hints residing in those packages and modules such that those hints are both
-types *and* uniquely identifiable by those types to their identifying signs).
+**Type hint trie** (i.e., dictionary-of-dictionaries tree data structure mapping
+from the fully-qualified names of packages and modules to a nested dictionary
+mapping from the unqualified basenames of all PEP-compliant type hints residing
+in those packages and modules such that those hints are either callables or
+classes *and* uniquely identifiable by those callables or classes to their
+identifying signs).
 '''
 
 
 # The majority of this dictionary is initialized with automated inspection
-# below in the _init() function. The *ONLY* key-value pairs explicitly defined
-# here are those *NOT* amenable to such inspection.
+# iterating over the "_TYPING_ATTR_TYPE_BASENAME_TO_SIGN" dictionary local
+# defined by the _init() function below. The *ONLY* key-value pairs explicitly
+# defined here are those *NOT* amenable to such inspection.
 HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
     # ..................{ BUILTINS                           }..................
     # Standard builtins module.
@@ -479,9 +482,9 @@ def _init() -> None:
     # Else, the active Python interpreter does *NOT* target Python 3.11.x.
 
     # ..................{ HINTS ~ types                      }..................
-    # Dictionary mapping from the unqualified names of all classes defined by
-    # typing modules that are themselves valid PEP-compliant type hints to their
-    # corresponding signs.
+    # Dictionary mapping from the unqualified names of all callables and classes
+    # defined by typing modules that are themselves valid PEP-compliant type
+    # hints to their corresponding signs.
     _TYPING_ATTR_HINT_BASENAME_TO_SIGN = {
         # ................{ PEP 484                            }................
         # Unsubscripted "typing.Generic" superclass, which imposes no
@@ -598,62 +601,6 @@ def _init() -> None:
         'Type',
         'ValuesView',
     }
-
-    # ..................{ HINTS ~ ignorable                  }..................
-    #FIXME: *CURRENTLY UNUSED.* That said, this should be used... somehow.
-    # # Set of the unqualified names of all shallowly ignorable typing non-class
-    # # attributes. Since classes and non-class attributes have incommensurate
-    # # machine-readable representations, these two types of attributes *MUST* be
-    # # isolated to distinct sets. See "_HINT_TYPING_TYPE_NAMES_IGNORABLE" below.
-    # _HINT_TYPING_ATTR_NAMES_IGNORABLE = {
-    #     # ................{ PEP 484                            }................
-    #     # The "Any" singleton is semantically synonymous with the ignorable
-    #     # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
-    #     #
-    #     # Note that the "typing_extensions.Any" singleton is inexplicably a
-    #     # different object than the "typing.Any" singleton. WHYYYYYYYYYYY!?!?
-    #     'Any',
-    #
-    #     # The unsubscripted "Optional" singleton semantically expands to the
-    #     # implicit "Optional[Any]" singleton by the same argument. Since PEP
-    #     # 484 also stipulates that all "Optional[t]" singletons semantically
-    #     # expand to "Union[t, type(None)]" singletons for arbitrary arguments
-    #     # "t", "Optional[Any]" semantically expands to merely "Union[Any,
-    #     # type(None)]". Since all unions subscripted by "Any" semantically
-    #     # reduce to merely "Any", the "Optional" singleton also reduces to
-    #     # merely "Any".
-    #     #
-    #     # This intentionally excludes "Optional[type(None)]", which the
-    #     # "typing" module physically reduces to merely "type(None)". *shrug*
-    #     'Optional',
-    #
-    #     # The unsubscripted "Union" singleton semantically expands to the
-    #     # implicit "Union[Any]" singleton by the same argument. Since PEP 484
-    #     # stipulates that a union of one type semantically reduces to only that
-    #     # type, "Union[Any]" semantically reduces to merely "Any". Despite
-    #     # their semantic equivalency, however, these objects remain
-    #     # syntactically distinct with respect to object identification: e.g.,
-    #     #     >>> Union is not Union[Any]
-    #     #     True
-    #     #     >>> Union is not Any
-    #     #     True
-    #     #
-    #     # This intentionally excludes:
-    #     # * The "Union[Any]" and "Union[object]" singletons, since the "typing"
-    #     #   module physically reduces:
-    #     #   * "Union[Any]" to merely "Any" (i.e., "Union[Any] is Any"), which
-    #     #     this frozen set already contains.
-    #     #   * "Union[object]" to merely "object" (i.e., "Union[object] is
-    #     #     object"), which this frozen set also already contains.
-    #     # * "Union" singleton subscripted by one or more ignorable type hints
-    #     #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
-    #     #   exist a countably infinite number of these subscriptions, these
-    #     #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
-    #     #   these subscriptions are dynamically detected by the high-level
-    #     #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
-    #     #   function and thus referred to as deeply ignorable type hints.
-    #     'Union',
-    # }
 
     # ..................{ INITIALIZATION                     }..................
     # For the fully-qualified name of each quasi-standard typing module...

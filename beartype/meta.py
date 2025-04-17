@@ -9,12 +9,16 @@
 This submodule exports global constants synopsizing this package -- including
 versioning and dependencies.
 
-Python Version
---------------
 For uniformity between this package and the ``pyproject.toml`` file describing
 the installation of this package, this submodule also validates the version of
 the active Python interpreter. An exception is raised if this version is
 insufficient.
+
+As a tradeoff between backward compatibility, security, and maintainability,
+this package strongly attempts to preserve compatibility with the first stable
+release of the oldest version of CPython still under active development. Hence,
+obsolete and insecure versions of CPython that have reached their official End
+of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
 # ....................{ IMPORTS                            }....................
