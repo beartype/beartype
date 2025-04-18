@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Union
+from beartype.typing import (
+    FrozenSet,
+    Union,
+)
 
 # ....................{ CLASSES                            }....................
 class HintSign(object):
@@ -67,13 +70,3 @@ class HintSign(object):
         '''
 
         return f'"HintSign{self.name}"'
-
-# ....................{ HINTS                              }....................
-HintSignOrType = Union[HintSign, type]
-'''
-PEP-compliant type hint matching either a **sign** (i.e., object uniquely
-identifying PEP-compliant type hints in a safe, non-deprecated manner
-regardless of the Python version targeted by the active Python interpreter) or
-**isinstanceable class** (i.e., class safely passable as the second argument to
-the :func:`isinstance` builtin).
-'''

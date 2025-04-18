@@ -34,8 +34,8 @@ def test_decor_pep692() -> None:
     from beartype.typing import (
         Tuple,
         TypedDict,
-        Unpack,
     )
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from pytest import raises
 
     # ....................{ CLASSES                        }....................
@@ -48,41 +48,44 @@ def test_decor_pep692() -> None:
         nurses_of_rainbow_flowers: str
         and_branching_moss: bytes
 
-    # ....................{ CALLABLES                      }....................
-    @beartype
-    def commit_the_colours(
-        **kwargs: Unpack[BlueCavernMould]) -> str:
-        '''
-        Arbitrary callable decorated by :func:`beartype.beartype` accepting a
-        variadic keyword parameter annotated by as a :pep:`692`-compliant
-        unpacked typed dictionary subclass.
-        '''
-
-        # Return the string concatenation of these keyword arguments.
-        return (
-            kwargs['nurses_of_rainbow_flowers'] +
-            kwargs['and_branching_moss'].decode('utf-8')
-        )
-
-    # ....................{ PASS                           }....................
-    # Assert that this callable returns a tuple of all passed positional
-    # parameters.
-    assert commit_the_colours(
-        nurses_of_rainbow_flowers='Commit the colours of ',
-        and_branching_moss=b'that varying cheek,',
-    ) == 'Commit the colours of that varying cheek,'
-
-    # ....................{ FAIL                           }....................
-    #FIXME: Additionally assert that calling the above commit_the_colours()
-    #function with unrecognized or invalid keyword arguments raises the expected
-    #type-checking violation *AFTER* we actually deeply support PEP 692.
-
-    # Assert that @beartype raises the expected exception when decorating a
-    # callable accepting a variadic keyword parameter annotated by a hint
-    # unpacking a PEP 692-noncompliant object (i.e., *ANY* object other than a
-    # PEP 692-compliant typed dictionary subclass).
-    with raises(BeartypeDecorHintPep692Exception):
+    # ....................{ FACTORIES                      }....................
+    # For the "Unpack" type hint factory exported by each typing module...
+    for Unpack in get_typing_attrs('Unpack'):
+        # ....................{ CALLABLES                  }....................
         @beartype
-        def that_snowy_breast(
-            **those_dark_and_drooping_eyes: Unpack[Tuple[str]]) -> str:
-            return next(iter(those_dark_and_drooping_eyes.keys()))
+        def commit_the_colours(
+            **kwargs: Unpack[BlueCavernMould]) -> str:
+            '''
+            Arbitrary callable decorated by :func:`beartype.beartype` accepting
+            a variadic keyword parameter annotated by as a :pep:`692`-compliant
+            unpacked typed dictionary subclass.
+            '''
+
+            # Return the string concatenation of these keyword arguments.
+            return (
+                kwargs['nurses_of_rainbow_flowers'] +
+                kwargs['and_branching_moss'].decode('utf-8')
+            )
+
+        # ....................{ PASS                       }....................
+        # Assert that this callable returns a tuple of all passed positional
+        # parameters.
+        assert commit_the_colours(
+            nurses_of_rainbow_flowers='Commit the colours of ',
+            and_branching_moss=b'that varying cheek,',
+        ) == 'Commit the colours of that varying cheek,'
+
+        # ....................{ FAIL                       }....................
+        #FIXME: Additionally assert that calling the above commit_the_colours()
+        #function with unrecognized or invalid keyword arguments raises the
+        #expected type-checking violation *AFTER* we deeply support PEP 692.
+
+        # Assert that @beartype raises the expected exception when decorating a
+        # callable accepting a variadic keyword parameter annotated by a hint
+        # unpacking a PEP 692-noncompliant object (i.e., *ANY* object other than
+        # a PEP 692-compliant typed dictionary subclass).
+        with raises(BeartypeDecorHintPep692Exception):
+            @beartype
+            def that_snowy_breast(
+                **those_dark_and_drooping_eyes: Unpack[Tuple[str]]) -> str:
+                return next(iter(those_dark_and_drooping_eyes.keys()))

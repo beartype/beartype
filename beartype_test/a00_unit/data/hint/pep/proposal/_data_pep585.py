@@ -19,9 +19,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS ~ early                    }..................
     # Defer early-time imports.
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_MOST_3_11,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
 
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.

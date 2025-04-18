@@ -14,21 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: Generalize to support generic "TypedDict" and "NamedTuple" subclasses as
 #follows:
-#* Define a new data global resembling:
-#  IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED = frozenset((
-#      HintSignPep484585GenericUnsubscripted,))
-#* Generalize the get_hint_pep_sign_or_none() getter to optionally accept a new
-#  "ignore_hint_signs: FrozenSet[HintSign] = FROZENSET_EMPTY" parameter.
-#* Refactor the get_hint_pep_sign_or_none() getter to respect the "ignore_signs"
-#  parameter as follows:
-#      if (
-#          HintSignPep484585GenericUnsubscripted not in ignore_hint_signs and
-#          is_hint_pep484585_generic_unsubscripted(hint)
-#      ):
-#          return HintSignPep484585GenericUnsubscripted
 #* Improve the iterator below as follows:
 #      hint_sign_nongeneric = get_hint_pep_sign_or_none(
-#          hint, IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
+#          hint, _IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
 #
 #      # Note that this constitutes an *EXTREMELY* rare edge case. In fact, it
 #      # took ten years for the first @beartype user to even hit this case.
@@ -38,6 +26,70 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Exhaustively unit test this edge case.
 #
 #Pretty sure that should do it. Insanity, but surprisingly amenable to hacky.
+#FIXME: *WOAH.* Okay. The above commentary absolutely *DID NOT DO IT.* The key
+#insight from all of this is that, although *MOST* type hints are indeed
+#uniquely identifiably by a single sign, *SOME* type hints are (sadly) only
+#uniquely identifiably by two or more signs. These are the latter sort.
+#
+#Sure, we could try to hack around that. But those hacks will inevitably fail.
+#It'd be *A LOT* saner to get out ahead of this issue by just acknowledging
+#that, in the general case, only a tuple of signs suffices to identify a hint.
+#But you are now cogitating: "Uhh... but doesn't the *ENTIRE* codebase assume a
+#one-to-one relation between a hint and a sign?" The answer, of course, is:
+#"Yes. Yes, it does."
+#
+#But that doesn't mean we can't have our cake and eat it, too. That just means
+#we need to be careful about the way we our cake and eat it, too. Notably:
+#* Define a new "beartype._util.hint.pep.utilpepsign" submodule. This submodule
+#  should contain *ALL* sign-related functionality, which is rapidly becoming
+#  non-trivial. It was always non-trivial, but now it's *REALLY* non-trivial.
+#* In this submodule:
+#  * Define a new private _get_hint_pep_sign_unique_or_none() getter, refactored
+#    from the existing get_hint_pep_sign_or_none() getter by dropping all
+#    reference to the "HintSignPep484585GenericUnsubscripted" sign. Otherwise,
+#    the implementation should be the exact same as get_hint_pep_sign_or_none().
+#  * Abandon the new optional "ignore_hint_signs" parameter passed to the
+#    get_hint_pep_signs_or_none() getter. Nice idea, but ultimately flawed. We
+#    can and must do *SUBSTANTIALLY* better than that chaos.
+#  * Define a new get_hint_pep_signs_or_none() getter, refactored from the
+#    existing get_hint_pep_sign_or_none() getter with modifications as follows:
+#    @callable_cached
+#    def get_hint_pep_signs_or_none(hint: Any) -> TupleHintSign:
+#        hint_signs_list = acquire_instance(list)
+#
+#        if is_hint_pep484585_generic_unsubscripted(hint):
+#            hint_signs_list.append(HintSignPep484585GenericUnsubscripted)
+#
+#        hint_sign_unique = _get_hint_pep_sign_unique_or_none(hint)
+#        hint_signs_list.append(hint_sign_unique)
+#
+#        hint_signs = tuple(hint_signs_list)
+#        release_instance(hint_signs_list)
+#        return hint_signs
+#  * Refactor the existing get_hint_pep_sign_or_none() getter to trivially defer
+#    to the new get_hint_pep_signs_or_none() getter as follows:
+#    # Note: don't bother caching this! get_hint_pep_signs_or_none() is already
+#    # memoized, which is more than enough.
+#    def get_hint_pep_sign_or_none(hint: Any) -> TupleHintSign:
+#        hint_signs = get_hint_pep_signs_or_none(hint)
+#        return hint_signs[0]
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#* Refactor "codemake" to call get_hint_pep_signs_or_none() instead of
+#  get_hint_pep_sign_or_none() and then iterate over the result: e.g.,
+#    hint_curr_signs = get_hint_pep_signs_or_none(hint_curr)
+#
+#    #FIXME: [SPEED] Refactor into a "while" loop for speed. whatevah!
+#    for hint_curr_sign in hint_curr_signs:
+#        ...
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#* Refactor "errcause" similarly.
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#
+#Pretty cool, right? And it genuinely is. Most callers shouldn't need to care
+#about this distinction. They can continue to call get_hint_pep_sign_or_none()
+#and just pretend that hints have only one sign. Hopefully, the only callers
+#that care are our low-level code generators. Let's pretend this is the case.
+#*shudders*
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
@@ -52,6 +104,8 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignPep484585GenericUnsubscripted)
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
@@ -60,12 +114,14 @@ from beartype._util.cache.pool.utilcachepoollistfixed import (
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic_user)
+    # is_hint_pep484585_generic_unsubscripted,
+    is_hint_pep484585_generic_user,
+)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
-def iter_hint_pep484585_generic_bases_unerased(
+def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
     # Mandatory parameters.
     hint_sane: HintSane,
 
@@ -79,7 +135,7 @@ def iter_hint_pep484585_generic_bases_unerased(
     Breadth-first search (BFS) generator iteratively yielding the one or more
     unignorable unerased transitive pseudo-superclasses originally declared as
     superclasses prior to their type erasure of the passed :pep:`484`- or
-    :pep:`585`-compliant generic.
+    :pep:`585`-compliant unsubscripted generic.
 
     This generator yields the full tree of all pseudo-superclasses by
     transitively visiting both all direct pseudo-superclasses of this generic
@@ -169,7 +225,8 @@ def iter_hint_pep484585_generic_bases_unerased(
     ----------
     hint_sane : HintSane
         **Sanified type hint metadata** (i.e., :data:`.HintSane` object)
-        encapsulating the hint to be type-checked.
+        encapsulating the :pep:`484`- or :pep:`585`-compliant unsubscripted
+        generic to be type-checked.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -204,6 +261,7 @@ def iter_hint_pep484585_generic_bases_unerased(
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
+    # assert is_hint_pep484585_generic_unsubscripted(hint_sane.hint)
     assert isinstance(hint_sane, HintSane), (
         f'{repr(hint_sane)} not sanified metadata.')
     assert isinstance(conf, BeartypeConf), (
@@ -213,12 +271,12 @@ def iter_hint_pep484585_generic_bases_unerased(
     # Avoid circular import dependencies.
     from beartype._check.convert.convsanify import sanify_hint_child
 
-    # ....................{ LOCALS                         }....................
-    # This generic.
+    # ....................{ LOCALS ~ bases : direct        }....................
+    # This unsubscripted generic.
     hint = hint_sane.hint
 
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
-    # superclasses prior to their type erasure by this generic.
+    # superclasses prior to their type erasure by this unsubscripted generic.
     hint_bases_direct = get_hint_pep484585_generic_bases_unerased(
         hint=hint,
         exception_cls=exception_cls,
@@ -226,6 +284,25 @@ def iter_hint_pep484585_generic_bases_unerased(
     )
     # print(f'generic {hint} hint_bases_direct: {hint_bases_direct}')
 
+    #FIXME: Excise us up, please.
+    # # Secondary sign uniquely identifying this unsubscripted generic if this
+    # # generic is identifiable by a secondary sign *OR* "None" otherwise (i.e.,
+    # # if this generic is identifiable by *NO* secondary sign).
+    # hint_sign_nongeneric = get_hint_pep_sign_or_none(
+    #     hint, _IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
+    #
+    # # If this generic is identifiable by a secondary sign...
+    # #
+    # # Note that this constitutes an *EXTREMELY* rare edge case. In fact, it took
+    # # ten years for the first @beartype user to even hit this case. Ergo,
+    # # efficiency is absolutely *NOT* a concern. Maintainability is.
+    # if hint_sign_nongeneric is not None:
+    #     #FIXME: That's... *DEFINITELY* not gonna do it. We should ideally be
+    #     #yielding this "hint_sign_nongeneric" to callers as well. *sigh*
+    #     yield hint
+    # # Else, this generic is identifiable by *NO* secondary sign.
+
+    # ....................{ LOCALS ~ bases : indirect      }....................
     # Fixed list of the one or more unerased transitive pseudo-superclasses
     # originally listed as superclasses prior to their type erasure by this
     # generic that have yet to be visited by the breadth-first search (BFS) over
@@ -327,3 +404,13 @@ def iter_hint_pep484585_generic_bases_unerased(
     # ....................{ POSTAMBLE                      }....................
     # Release this list. Pray for salvation, for we find none here.
     release_fixed_list(hint_bases)
+
+# ....................{ PRIVATE ~ globals                  }....................
+_IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED = frozenset((
+    HintSignPep484585GenericUnsubscripted,))
+'''
+Frozen set containing *only* the sign uniquely identifying :pep:`484`- and
+:pep:`585`-compliant unsubscripted generics, intended to be passed as the
+``ignore_hint_signs`` parameter to the :func:`.get_hint_pep_sign_or_none` getter
+to identify secondary signs associated with unsubscripted generics.
+'''

@@ -64,8 +64,8 @@ from beartype._check.code.snip.codesnipstr import (
 from beartype._check.metadata.hint.hintsane import (
     HintSane,
 )
-from beartype._check.proposal.checkpep484585generic import (
-    iter_hint_pep484585_generic_bases_unerased)
+from beartype._check.pep.checkpep484585generic import (
+    iter_hint_pep484585_generic_unsubscripted_bases_unerased)
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
@@ -574,117 +574,6 @@ def make_check_expr(
                 hint_childs_len = len(hint_childs)
 
                 # ............{ DEEP ~ expression                  }............
-                #FIXME: Unit test that this is behaving as expected. Doing so
-                #will require further generalizations, including:
-                #* In the "beartype._decor.decormain" submodule:
-                #  * Detect when running under tests.
-                #  * When running under tests, define a new
-                #    "func_wrapper.__beartype_wrapper_code" attribute added to
-                #    decorated callables to be the "func_wrapper_code" string
-                #    rather than True. Note that this obviously isn't the right way
-                #    to do source code association. Ideally, we'd at least
-                #    interface with the stdlib "linecache" module (e.g., by calling
-                #    the linecache.lazycache() function intended to be used to
-                #    cache the source code for non-file-based modules) and possibly
-                #    even go so far as to define a PEP 302-compatible beartype
-                #    module loader. That's out of scope, so this suffices for now.
-                #* In the "beartype_test.a00_unit.data._data_hint_pep" submodule:
-                #  * Add a new "_PepHintMetadata.code_str_match_regexes" field,
-                #    defined as an iterable of regular expressions matching
-                #    substrings of the "func_wrapper.__beartype_wrapper_code"
-                #    attribute that are expected to exist.
-                #  * For most "HINTS_PEP_META" entries, default this field to
-                #    merely the empty tuple.
-                #  * For deeply nested "HINTS_PEP_META" entries, define this
-                #    field as follows:
-                #        code_str_match_regexes=(r'\s+:=\s+',)
-                #* In the "beartype_test.a00_unit.pep.p484.test_p484" submodule:
-                #  * Match the "pep_hinted.__beartype_wrapper_code" string against
-                #    all regular expressions in the "code_str_match_regexes"
-                #    iterable for the currently iterated "pep_hint_meta".
-                #
-                #This is fairly important, as we have no other reusable means of
-                #ascertaining whether this is actually being applied in general.
-                #FIXME: That's all great, except for the
-                #"func_wrapper.__beartype_wrapper_code" part. Don't do that,
-                #please. We really do just want to do this right the first time. As
-                #expected, the key to doing so is the linecache.lazycache()
-                #function, whose implementation under Python 3.7 reads:
-                #
-                #    def lazycache(filename, module_globals):
-                #        """Seed the cache for filename with module_globals.
-                #
-                #        The module loader will be asked for the source only when getlines is
-                #        called, not immediately.
-                #
-                #        If there is an entry in the cache already, it is not altered.
-                #
-                #        :return: True if a lazy load is registered in the cache,
-                #            otherwise False. To register such a load a module loader with a
-                #            get_source method must be found, the filename must be a cachable
-                #            filename, and the filename must not be already cached.
-                #        """
-                #        if filename in cache:
-                #            if len(cache[filename]) == 1:
-                #                return True
-                #            else:
-                #                return False
-                #        if not filename or (filename.startswith('<') and filename.endswith('>')):
-                #            return False
-                #        # Try for a __loader__, if available
-                #        if module_globals and '__loader__' in module_globals:
-                #            name = module_globals.get('__name__')
-                #            loader = module_globals['__loader__']
-                #            get_source = getattr(loader, 'get_source', None)
-                #
-                #            if name and get_source:
-                #                get_lines = functools.partial(get_source, name)
-                #                cache[filename] = (get_lines,)
-                #                return True
-                #        return False
-                #
-                #Given that, what we need to do is:
-                #* Define a new "beartype._decor._pep302" submodule implementing a
-                #  PEP 302-compatible loader for @beartype-generated wrapper
-                #  functions, enabling external callers (including the stdlib
-                #  "linecache" module) to obtain the source for these functions.
-                #  For space efficiency, this submodule should internally store
-                #  code in a compressed format -- which probably means "gzip" for
-                #  maximal portability. This submodule should at least define these
-                #  attributes:
-                #  * "_FUNC_WRAPPER_MODULE_NAME_TO_CODE", a dictionary mapping from
-                #    the unique fake module names assigned to @beartype-generated
-                #    wrapper functions by the @beartype decorator to the compressed
-                #    source strings for those fake modules.
-                #  * get_source(), a function accepting one unique fake module name
-                #    assigned to an arbitrary @beartype-generated wrapper function
-                #    by the @beartype decorator and returning the uncompressed
-                #    source string for that fake module. Clearly, this function
-                #    should internally access the
-                #    "_FUNC_WRAPPER_MODULE_NAME_TO_CODE" dictionary and either:
-                #    * If the passed module name has *NOT* already been registered
-                #      to that dictionary, raise an exception.
-                #    * Else, uncompress the compressed source string previously
-                #      registered under that module name with that dictionary and
-                #      return that uncompressed string. Don't worry about caching
-                #      uncompressed strings here; that's exactly what the stdlib
-                #      "linecache" module already does on our behalf.
-                #    Ergo, this function should have signature resembling:
-                #        def get_source(func_wrapper_module_name: str) -> str:
-                #  * set_source(), a function accepting one unique fake module name
-                #    assigned to an arbitrary @beartype-generated wrapper function
-                #    by the @beartype decorator as well as as the uncompressed
-                #    source string for that fake module. Clearly, this function
-                #    should internally
-                #    "_FUNC_WRAPPER_MODULE_NAME_TO_CODE" dictionary and either:
-                #    * If the passed module name has already been registered to
-                #      that dictionary, raise an exception.
-                #    * Else, compress the passed uncompressed source string and
-                #      register that compressed string under that module name with
-                #      that dictionary.
-                #* In the "beartype._decor.decormain" submodule:
-                #  * Do... something? Oh, boy. Why didn't we finish this comment?
-
                 # If the expression yielding the current pith is neither...
                 #
                 # Note that we explicitly test against piths rather than
@@ -1397,7 +1286,7 @@ def make_check_expr(
                     # For each unignorable unerased transitive pseudo-superclass
                     # originally declared as a superclass of this generic...
                     for hint_child_sane in (
-                        iter_hint_pep484585_generic_bases_unerased(
+                        iter_hint_pep484585_generic_unsubscripted_bases_unerased(
                             hint_sane=hint_curr_sane,
                             conf=conf,
                             exception_prefix=EXCEPTION_PREFIX,

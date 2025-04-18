@@ -347,6 +347,12 @@ variable).
 '''
 
 # ....................{ DICT ~ sign                        }....................
+FrozenSetHintSign = FrozenSet[HintSign]
+'''
+PEP-compliant type matching matching a frozen set of signs.
+'''
+
+# ....................{ DICT ~ sign : dict                 }....................
 DictStrToHintSign = Dict[str, HintSign]
 '''
 PEP-compliant type hint matching a dictionary mapping from strings to **signs**
