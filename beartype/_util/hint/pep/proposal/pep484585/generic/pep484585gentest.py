@@ -12,8 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.hint.datahintpep import Hint
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     is_hint_pep484_generic_subscripted,
@@ -26,6 +28,52 @@ from beartype._util.hint.pep.proposal.pep585 import (
 )
 from beartype._util.module.utilmodtest import (
     is_object_module_thirdparty_blacklisted)
+
+# ....................{ RAISERS                            }....................
+def die_unless_hint_pep484585_generic_unsubscripted(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise the passed exception unless the passed type hint is a :pep:`484`- or
+    :pep:`585`-compliant **unsubscripted generic** (i.e., type originally
+    subclassing at least one subscripted :pep:`484`- or :pep:`585`-compliant
+    pseudo-superclass).
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If this hint is *not* an unsubscripted generic.
+    '''
+
+    # If this hint is *NOT* an unsubscripted generic...
+    if not is_hint_pep484585_generic_unsubscripted(hint):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception of this type prefixed by this prefix.
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'not PEP 484 or 585 unsubscripted generic.'
+        )
+    # Else, this hint is an unsubscripted generic.
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep484585_generic_user(hint: Hint) -> bool:

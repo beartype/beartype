@@ -26,6 +26,9 @@ from beartype._data.hint.datahintpep import (
     TypeVarToHint,
 )
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignPep484585GenericUnsubscripted)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     get_hint_pep484_generic_bases_unerased)
@@ -151,8 +154,8 @@ def get_hint_pep484585_generic_args_full(
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -956,8 +959,8 @@ def get_hint_pep484585_generic_bases_unerased(
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -1364,3 +1367,75 @@ def get_hint_pep484585_generic_type_or_none(hint: Hint) -> Optional[type]:
 
     # Return the "None" singleton.
     return None
+
+# ....................{ GETTERS ~ unsubscripted            }....................
+#FIXME: Unit test us up, please.
+#FIXME: Document this, please. This getter behaves in non-trivial and somewhat
+#unexpected ways.
+def get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
+    # Mandatory parameters.
+    hint: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> Optional[HintSign]:
+    '''
+
+    Parameters
+    ----------
+    hint : Hint
+        Unsubscripted generic to be inspected.
+
+    Returns
+    -------
+    Optional[HintSign]
+        Either:
+
+    Raises
+    ------
+    exception_cls
+        If this hint is *not* an unsubscripted generic.
+
+    See Also
+    --------
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
+        die_unless_hint_pep484585_generic_unsubscripted)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+
+    # If this hint is *NOT* an unsubscripted generic, raise an exception.
+    die_unless_hint_pep484585_generic_unsubscripted(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this hint is an unsubscripted generic.
+
+    #FIXME: Improve commentary. This is *HIGHLY* non-trivial.
+    # Secondary sign additionally identifying this unsubscripted generic if this
+    # generic is identifiable by a secondary sign *OR* "None" otherwise (i.e.,
+    # if this generic is identifiable by *NO* secondary sign).
+    #
+    # Note that this constitutes an *EXTREMELY* rare edge case. In fact, it took
+    # ten years for the first @beartype user to even hit this case. Ergo,
+    # efficiency is absolutely *NOT* a concern. Maintainability is.
+    hint_sign_nongeneric = get_hint_pep_sign_or_none(
+        hint, _IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
+
+    # Return this sign.
+    return hint_sign_nongeneric
+
+# ....................{ PRIVATE ~ globals                  }....................
+_IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED = frozenset((
+    HintSignPep484585GenericUnsubscripted,))
+'''
+Frozen set containing *only* the sign uniquely identifying :pep:`484`- and
+:pep:`585`-compliant unsubscripted generics, intended to be passed as the
+``ignore_hint_signs`` parameter to the :func:`.get_hint_pep_sign_or_none` getter
+to identify secondary signs associated with unsubscripted generics.
+'''

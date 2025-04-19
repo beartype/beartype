@@ -349,14 +349,22 @@ variable).
 # ....................{ DICT ~ sign                        }....................
 FrozenSetHintSign = FrozenSet[HintSign]
 '''
-PEP-compliant type matching matching a frozen set of signs.
+PEP-compliant type matching matching a frozen set of **signs** (i.e.,
+:class:`.HintSign` objects uniquely identifying type hints).
+'''
+
+
+IterableHintSign = Iterable[HintSign]
+'''
+PEP-compliant type matching matching a iterable of **signs** (i.e.,
+:class:`.HintSign` objects uniquely identifying type hints).
 '''
 
 # ....................{ DICT ~ sign : dict                 }....................
 DictStrToHintSign = Dict[str, HintSign]
 '''
 PEP-compliant type hint matching a dictionary mapping from strings to **signs**
-(i.e., objects uniquely identifying type hints).
+(i.e., :class:`.HintSign` objects uniquely identifying type hints).
 '''
 
 

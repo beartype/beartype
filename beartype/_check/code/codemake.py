@@ -1263,19 +1263,19 @@ def make_check_expr(
                 #
                 # ............{ GENERIC or PROTOCOL                }............
                 # If this hint is either a:
-                # * PEP 484-compliant generic (i.e., user-defined class
-                #   subclassing a combination of one or more of the
+                # * PEP 484-compliant unsubscripted generic (i.e., user-defined
+                #   class subclassing a combination of one or more of the
                 #   "typing.Generic" superclass and other "typing" non-class
                 #   pseudo-superclasses) *OR*...
-                # * PEP 544-compliant protocol (i.e., class subclassing a
-                #   combination of one or more of the "typing.Protocol"
-                #   superclass and other "typing" non-class
+                # * PEP 544-compliant unsubscripted protocol (i.e., class
+                #   subclassing a combination of one or more of the
+                #   "typing.Protocol" superclass and other "typing" non-class
                 #   pseudo-superclasses) *OR*...
-                # * PEP 585-compliant generic (i.e., user-defined class
-                #   subclassing at least one non-class PEP 585-compliant
+                # * PEP 585-compliant unsubscripted generic (i.e., user-defined
+                #   class subclassing at least one non-class PEP 585-compliant
                 #   pseudo-superclasses) *OR*...
                 #
-                # ...then this hint is a PEP-compliant generic. In this case...
+                # ...then this hint is an unsubscripted generic. In this case...
                 elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
                     # print(f'Visiting generic type {repr(hint_curr)}...')
 
@@ -1283,8 +1283,11 @@ def make_check_expr(
                     # generic to the substring prefixing all such code.
                     hints_meta.func_curr_code = CODE_PEP484585_GENERIC_PREFIX
 
-                    # For each unignorable unerased transitive pseudo-superclass
-                    # originally declared as a superclass of this generic...
+                    #FIXME: 
+                    # For the metadata encapsulating the sanification of each
+                    # unignorable unerased transitive pseudo-superclass
+                    # originally declared as a superclass of this unsubscripted
+                    # generic...
                     for hint_child_sane in (
                         iter_hint_pep484585_generic_unsubscripted_bases_unerased(
                             hint_sane=hint_curr_sane,
