@@ -482,7 +482,7 @@ def get_hint_pep_sign_or_none(
         ``ignore_hint_signs=frozenset((HintSignPep484585GenericUnsubscripted,))``
         enables callers to identify that other sign. Prominent examples include:
 
-        * Generic typed dictionaries identifiable as both the
+        * **Generic typed dictionaries** identifiable as both the
           :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
           :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
           dictionaries: e.g.,
@@ -493,7 +493,7 @@ def get_hint_pep_sign_or_none(
              class GenericTypedDict[T](TypedDict, Generic[T]):
                  generic_item: T
 
-        * Generic named tuples identifiable as both the
+        * **Generic named tuples** identifiable as both the
           :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
           :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
           tuples: e.g.,

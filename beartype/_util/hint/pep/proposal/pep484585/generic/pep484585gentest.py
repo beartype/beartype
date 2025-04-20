@@ -39,10 +39,9 @@ def die_unless_hint_pep484585_generic_unsubscripted(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise the passed exception unless the passed type hint is a :pep:`484`- or
-    :pep:`585`-compliant **unsubscripted generic** (i.e., type originally
-    subclassing at least one subscripted :pep:`484`- or :pep:`585`-compliant
-    pseudo-superclass).
+    Raise the passed exception unless the passed type hint is an **unsubscripted
+    generic** (i.e., type originally subclassing at least one subscripted
+    :pep:`484`- or :pep:`585`-compliant pseudo-superclass).
 
     Parameters
     ----------

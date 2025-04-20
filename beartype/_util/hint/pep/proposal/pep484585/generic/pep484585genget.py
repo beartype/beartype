@@ -1369,9 +1369,6 @@ def get_hint_pep484585_generic_type_or_none(hint: Hint) -> Optional[type]:
     return None
 
 # ....................{ GETTERS ~ unsubscripted            }....................
-#FIXME: Unit test us up, please.
-#FIXME: Document this, please. This getter behaves in non-trivial and somewhat
-#unexpected ways.
 def get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
     # Mandatory parameters.
     hint: Hint,
@@ -1381,6 +1378,61 @@ def get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
     exception_prefix: str = '',
 ) -> Optional[HintSign]:
     '''
+    **Non-generic sign** (i.e., :data:`.HintSign` object) additionally
+    identifying the passed **unsubscripted generic** (i.e., type originally
+    subclassing at least one subscripted :pep:`484`- or :pep:`585`-compliant
+    pseudo-superclass) if this generic is identifiable by a non-generic sign in
+    addition to the standard :data:`.HintSignPep484585GenericUnsubscripted` sign
+    identifying all unsubscripted generics *or* :data:`None` otherwise (i.e., if
+    this unsubscripted generic is identifiable only be the standard
+    :data:`.HintSignPep484585GenericUnsubscripted` sign).
+
+    This getter enables callers to trivially detect and type-check user-defined
+    unsubscripted generics that subclass another PEP-compliant :mod:`typing`
+    superclass conveying additional type-checking semantics and thus also
+    identifiable by another sign. Although most unsubscripted generics are only
+    identifiable as a single unique sign, some unsubscripted generics are
+    identifiable as both the :data:`.HintSignPep484585GenericUnsubscripted` sign
+    *and* another sign identifying another PEP-compliant :mod:`typing`
+    superclass of those generics. Prominent examples include:
+
+    * **Generic typed dictionaries** identifiable as both the
+      :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+      :data:`.HintSignTypedDict` sign for :pep:`589`-compliant typed
+      dictionaries. When passed a generic typed dictionary, this getter returns
+      :data:`.HintSignTypedDict`: e.g.,
+
+      .. code-block:: pycon
+
+         >>> from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+         ...     get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none)
+         >>> from typing import Generic, TypedDict
+
+         >>> class GenericTypedDict[T](TypedDict, Generic[T]):
+         ...     generic_item: T
+
+         >>> get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
+         ...     GenericTypedDict)
+         HintSignTypedDict
+
+    * **Generic named tuples** identifiable as both the
+      :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+      :data:`.HintSignNamedTuple` sign for :pep:`484`-compliant named tuples.
+      When passed a generic named tuple, this getter returns
+      :data:`.HintSignNamedTuple`: e.g.,
+
+      .. code-block:: pycon
+
+         >>> from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+         ...     get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none)
+         >>> from typing import Generic, NamedTuple
+
+         >>> class GenericNamedTuple[T](NamedTuple, Generic[T]):
+         ...     generic_item: T
+
+         >>> get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
+         ...     GenericNamedTuple)
+         HintSignNamedTuple
 
     Parameters
     ----------

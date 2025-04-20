@@ -17,7 +17,7 @@ submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ getters : args             }....................
+# ....................{ TESTS ~ args                       }....................
 def test_get_hint_pep484585_generic_args_full() -> None:
     '''
     Test the
@@ -137,7 +137,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     with raises(BeartypeDecorHintPep484585Exception):
         get_hint_pep484585_generic_args_full(Nongeneric)
 
-# ....................{ TESTS ~ getters : base             }....................
+# ....................{ TESTS ~ base                       }....................
 def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
     '''
     Test the
@@ -258,7 +258,7 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
                 module_name='will_be.the.dome_of.a_vast_sepulchre',
             )
 
-# ....................{ TESTS ~ getters : type             }....................
+# ....................{ TESTS ~ type                       }....................
 def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     '''
     Test the
@@ -300,3 +300,94 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     # # type hints.
     # for not_hint_pep in NOT_HINTS_PEP:
     #     assert get_hint_pep484585_generic_type_or_none(not_hint_pep) is None
+
+# ....................{ TESTS ~ unsubscripted              }....................
+def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
+    None):
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484585Exception
+    from beartype.typing import (
+        Generic,
+        NamedTuple,
+        TypedDict,
+    )
+    from beartype._data.hint.datahinttyping import T
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignNamedTuple,
+        HintSignTypedDict,
+    )
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+        get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none)
+    from beartype_test.a00_unit.data.data_type import Class
+    from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class GenericNormal(Generic[T]):
+        '''
+        Arbitrary **normal generic** (i.e., type subclassing only the
+        :pep:`484`-compliant :class:`typing.Generic` superclass and *not*
+        another PEP-compliant :mod:`typing` superclass).
+        '''
+
+        pass
+
+
+    class GenericNamedTuple(NamedTuple, Generic[T]):
+        '''
+        Arbitrary **generic named tuple** (i.e., type subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`484`-compliant :class:`typing.NamedTuple` superclass).
+        '''
+
+        generic_item: T
+
+
+    class GenericTypedDict(TypedDict, Generic[T]):
+        '''
+        Arbitrary **generic typed dictionary** (i.e., type subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`589`-compliant :class:`typing.TypedDict` superclass).
+        '''
+
+        generic_item: T
+
+    # ....................{ LOCALS                         }....................
+    # Tuple of 2-tuples "(hint_generic_nongeneric, hint_sign_nongeneric)" where:
+    # * "hint_generic_nongeneric" is a PEP 484- or 585-compliant unsubscripted
+    #   generic that also subclasses a PEP-compliant non-generic superclass.
+    # * "hint_sign_nongeneric" is the sign additionally identifying that
+    #   PEP-compliant non-generic superclass.
+    TEST_GENERIC_NONGENERICS = (
+        # Normal generic.
+        (GenericNormal, None),
+
+        #FIXME: *WOOPS.* Looks like @beartype can't even detect subclass-based
+        #"typing.NamedTuple" types. Is that even valid PEP-compliant syntax,
+        #though? Let's investigate this, please. *sigh*
+        # # Generic named tuple.
+        # (GenericNamedTuple, HintSignNamedTuple),
+
+        # Generic typed dictionary.
+        (GenericTypedDict, HintSignTypedDict),
+    )
+
+    # ....................{ PASS                           }....................
+    # For each such unsubscripted generic and additional non-generic sign...
+    for hint_generic_nongeneric, hint_sign_nongeneric in (
+        TEST_GENERIC_NONGENERICS):
+        # Assert that this getter passed this generic returns this sign.
+        assert get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
+            hint_generic_nongeneric) is hint_sign_nongeneric
+
+    # ....................{ FAIL                           }....................
+    # Assert that this getter passed a non-generic type raises the expected
+    # exception.
+    with raises(BeartypeDecorHintPep484585Exception):
+        get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(Class)
