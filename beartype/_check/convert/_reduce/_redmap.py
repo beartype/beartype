@@ -222,7 +222,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     #"HintSignPep585BuiltinSubscriptedUnknown" are actually deeply
     #type-checkable as is. This is the case for *ALL* builtin collection type
     #subclasses, for example -- hardly an uncommon edge case: e.g.,
-    #    >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    #    >>> from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     #    >>> class UserList(list): pass
     #    >>> get_hint_pep_sign(UserList[str])
     #    HintSignPep585BuiltinSubscriptedUnknown

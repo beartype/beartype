@@ -48,7 +48,7 @@ of arbitrary child type hints): e.g.,
 
 .. code-block:: pycon
 
-   >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+   >>> from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
    # Unsubscripted PEP 585 generic parametrized by a PEP 484 type variable.
    >>> class MuhGeneric[T](list[T]): pass
@@ -439,7 +439,7 @@ arbitrary child type hints): e.g.,
 
 .. code-block:: pycon
 
-   >>> from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+   >>> from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
    # Unsubscripted PEP 695 type alias parametrized by a PEP 484 type variable.
    >>> MuhTypeAlias[T] = T | float

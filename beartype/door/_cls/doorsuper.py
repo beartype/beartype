@@ -43,8 +43,8 @@ from beartype._util.cache.utilcachecall import (
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_type_or_none,
-    get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_basename
 
 # ....................{ SUPERCLASSES                       }....................

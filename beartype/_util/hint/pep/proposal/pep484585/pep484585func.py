@@ -87,7 +87,7 @@ def reduce_hint_pep484585_func_return(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
         get_hint_pep484585_args)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.

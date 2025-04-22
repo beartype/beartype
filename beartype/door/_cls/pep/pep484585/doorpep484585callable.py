@@ -26,7 +26,7 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
     get_hint_pep484585_callable_params,
     get_hint_pep484585_callable_return,
 )
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ SUBCLASSES                         }....................
 class CallableTypeHint(TypeHint):

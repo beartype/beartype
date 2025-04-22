@@ -23,7 +23,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.cls.pep.clspep557 import die_unless_type_pep557_dataclass
 from beartype._util.func.utilfuncget import get_func_annotations
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import (
     SENTINEL,
     get_object_type_name,

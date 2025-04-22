@@ -58,7 +58,7 @@ def get_hint_pep557_initvar_arg(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.

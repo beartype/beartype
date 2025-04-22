@@ -16,6 +16,7 @@ submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ args                       }....................
 def test_get_hint_pep484585_generic_args_full() -> None:
@@ -302,12 +303,20 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     #     assert get_hint_pep484585_generic_type_or_none(not_hint_pep) is None
 
 # ....................{ TESTS ~ unsubscripted              }....................
+@skip_if_python_version_less_than('3.11.0')
 def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
     None):
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none`
-    getter.
+    getter if the active Python interpreter targets Python >= 3.11.0 *or* reduce
+    to a noop otherwise.
+
+    Python < 3.11 fails to support multiple inheritance in concert with the
+    :class:`typing.Generic` superclass and either of the
+    :class:`typing.NamedTuple` or :class:`typing.TypedDict` superclasses. Ergo,
+    Python < 3.11 fails to support either generic named tuples *or* generic
+    typed dictionaries. Ergo, Python < 3.11 fails to support this unit test.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -339,14 +348,19 @@ def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
         pass
 
 
-    class GenericNamedTuple(NamedTuple, Generic[T]):
-        '''
-        Arbitrary **generic named tuple** (i.e., type subclassing both the
-        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-        :pep:`484`-compliant :class:`typing.NamedTuple` superclass).
-        '''
-
-        generic_item: T
+    #FIXME: When we get around to supporting this, note that "typing.NamedTuple"
+    #*ONLY* supports multiple inheritance in partnership with "typing.Generic"
+    #under Python >= 3.11. Under older Python versions, the "typing" module
+    #raises the following exception on attempting to define such subclasses:
+    #    TypeError: Multiple inheritance with NamedTuple is not supported
+    # class GenericNamedTuple(NamedTuple, Generic[T]):
+    #     '''
+    #     Arbitrary **generic named tuple** (i.e., type subclassing both the
+    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+    #     :pep:`484`-compliant :class:`typing.NamedTuple` superclass).
+    #     '''
+    #
+    #     generic_item: T
 
 
     class GenericTypedDict(TypedDict, Generic[T]):

@@ -333,7 +333,7 @@ def test_door_infer_hint_pygments() -> None:
     # Defer test-specific imports.
     from beartype.door import infer_hint
     from beartype._data.hint.pep.sign.datapepsigns import HintSignList
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from pygments.lexers import PythonLexer
 
     # ....................{ LOCALS                         }....................

@@ -48,10 +48,8 @@ from beartype._util.cache.pool.utilcachepoolinstance import (
     release_instance,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
-)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.utilobject import SENTINEL
 
@@ -83,38 +81,9 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
 
     Parameters
     ----------
-    hint_meta : HintMeta
-        Metadata describing the currently visited hint, appended by the
-        previously visited parent hint to the ``hints_meta`` stack.
     hints_meta : HintsMeta
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object).
-    func_wrapper_scope : LexicalScope
-        Local scope (i.e., dictionary mapping from the name to value of each
-        attribute referenced in the signature) of this wrapper function required
-        by this Python code snippet.
-    pith_curr_expr : str
-        Full Python expression evaluating to the value of the **current pith**
-        (i.e., possibly nested object of the current parameter or return value
-        to be type-checked against this union type hint).
-    pith_curr_assign_expr : str
-        Assignment expression assigning this full Python expression to the
-        unique local variable assigned the value of this expression.
-    pith_curr_var_name_index : int
-        Integer suffixing the name of each local variable assigned the value of
-        the current pith in a assignment expression, thus uniquifying this
-        variable in the body of the current wrapper function.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
     '''
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
@@ -241,7 +210,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         else:
             hint_childs_nonpep[hint_child] = None  # type: ignore[index]
 
-    # ....................{ NON-PEP                        }....................
+    # ....................{ FORMAT ~ non-pep               }....................
     # Initialize the code type-checking the current pith against these arguments
     # to the substring prefixing all such code.
     hints_meta.func_curr_code = CODE_PEP484604_UNION_PREFIX
@@ -291,7 +260,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
                 hint_childs_nonpep.keys()),
         )
 
-    # ....................{ PEP                            }....................
+    # ....................{ FORMAT ~ pep                   }....................
     # For the 0-based index of each PEP-compliant child hint of this union *AND*
     # that hint...
     for hint_child_sane_pep_index, hint_child_sane_pep in enumerate(

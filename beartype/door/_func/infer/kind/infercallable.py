@@ -88,7 +88,7 @@ from beartype._util.func.arg.utilfuncargiter import (
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import is_func_codeobjable
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.proposal.pep612 import (
     get_hint_pep612_paramspec,
     make_hint_pep612_concatenate_list_or_none,

@@ -77,7 +77,7 @@ def reduce_hint_pep647742(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 
     # If this type guard annotates the return of some callable, reduce this type
     # guard to the builtin "bool" class. Sadly, type guards are useless at

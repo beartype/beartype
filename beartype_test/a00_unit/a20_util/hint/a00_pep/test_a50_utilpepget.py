@@ -86,10 +86,8 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_typevars,
-        get_hint_pep_sign_or_none,
-    )
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # ....................{ ASSERTS                        }....................
@@ -124,43 +122,6 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep_typevars(not_hint_pep) == ()
-
-# ....................{ TESTS ~ sign                       }....................
-def test_get_hint_pep_sign(hints_pep_meta) -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter.
-
-    Parameters
-    ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
-        List of PEP-compliant type hint metadata describing sample PEP-compliant
-        type hints exercising edge cases in the :mod:`beartype` codebase.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPepSignException
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-    from beartype_test.a00_unit.data.hint.data_hint import (
-        HINTS_NONPEP, NonpepCustomFakeTyping)
-    from pytest import raises
-
-    # Assert this getter returns the expected unsubscripted "typing" attribute
-    # for all PEP-compliant type hints associated with such an attribute.
-    for hint_pep_meta in hints_pep_meta:
-        assert get_hint_pep_sign(hint_pep_meta.hint) is hint_pep_meta.pep_sign
-
-    # Assert this getter raises the expected exception for an instance of a
-    # class erroneously masquerading as a "typing" class.
-    with raises(BeartypeDecorHintPepSignException):
-        # Localize this return value to simplify debugging.
-        hint_nonpep_sign = get_hint_pep_sign(NonpepCustomFakeTyping())
-
-    # Assert this getter raises the expected exception for non-"typing" hints.
-    for hint_nonpep in HINTS_NONPEP:
-        with raises(BeartypeDecorHintPepSignException):
-            # Localize this return value to simplify debugging.
-            hint_nonpep_sign = get_hint_pep_sign(hint_nonpep)
 
 # ....................{ TESTS ~ origin : type              }....................
 def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:

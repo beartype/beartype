@@ -321,8 +321,7 @@ def is_hint_pep(hint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_sign_or_none)
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
     # "None" otherwise (i.e., if this hint is *NOT* PEP-compliant).
@@ -357,7 +356,7 @@ def is_hint_pep(hint: object) -> bool:
 #     '''
 #
 #     # Avoid circular import dependencies.
-#     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+#     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 #
 #     # Sign uniquely identifying this hint.
 #     hint_sign = get_hint_pep_sign(hint)
@@ -446,7 +445,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Else, this hint is PEP-compliant.
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 
     # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign(hint)
@@ -483,8 +482,7 @@ def is_hint_pep_typing(hint: object) -> bool:
     # print(f'is_hint_pep_typing({repr(hint)}')
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_sign_or_none)
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # Return true only if this hint is either...
     return (

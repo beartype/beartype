@@ -80,10 +80,8 @@ def die_unless_hint_pep586(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_sign,
-    )
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 
     # If this hint is *NOT* PEP 586-compliant, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignLiteral:

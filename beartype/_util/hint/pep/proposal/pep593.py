@@ -83,7 +83,7 @@ def is_hint_pep593(hint: Hint) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # Return true only if this hint is PEP 593-compliant.
     return get_hint_pep_sign_or_none(hint) is HintSignAnnotated

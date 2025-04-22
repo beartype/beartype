@@ -82,7 +82,7 @@ def test_get_hint_pep585_generic_typevars(hints_pep_meta) -> None:
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
     from beartype._util.hint.pep.proposal.pep585 import (
         get_hint_pep585_generic_typevars)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from pytest import raises
 
     # ....................{ ASSERTS                        }....................

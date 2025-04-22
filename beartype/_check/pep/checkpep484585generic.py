@@ -97,7 +97,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-# from beartype.typing import Iterable
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
@@ -119,7 +118,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_user)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.

@@ -31,7 +31,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecKwargs,
 )
 from beartype._util.api.standard.utiltyping import import_typing_attr_or_none
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.func.arg.utilfuncargget import (
     get_func_arg_meta_variadic_keyword_or_none,
     get_func_arg_meta_variadic_positional_or_none,

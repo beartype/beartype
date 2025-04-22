@@ -346,7 +346,7 @@ variable of a class to the type hint annotating that parameter, return, or
 variable).
 '''
 
-# ....................{ DICT ~ sign                        }....................
+# ....................{ SIGN ~ container                   }....................
 FrozenSetHintSign = FrozenSet[HintSign]
 '''
 PEP-compliant type matching matching a frozen set of **signs** (i.e.,
@@ -360,7 +360,7 @@ PEP-compliant type matching matching a iterable of **signs** (i.e.,
 :class:`.HintSign` objects uniquely identifying type hints).
 '''
 
-# ....................{ DICT ~ sign : dict                 }....................
+# ....................{ SIGN ~ container : dict            }....................
 DictStrToHintSign = Dict[str, HintSign]
 '''
 PEP-compliant type hint matching a dictionary mapping from strings to **signs**

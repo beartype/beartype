@@ -148,7 +148,7 @@ def get_hint_pep484_newtype_alias(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
+    from beartype._util.hint.pep.utilpepsign import (
         get_hint_pep_sign,
         get_hint_pep_sign_or_none,
     )

@@ -103,7 +103,7 @@ def _die_unless_hint_pep484585_callable(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
 
     # Sign uniquely identifying this hint if any *OR* raise an exception.
     hint_sign = get_hint_pep_sign(
@@ -180,10 +180,8 @@ def get_hint_pep484585_callable_params(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_args,
-        get_hint_pep_sign_or_none,
-    )
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # If this hint is *NOT* a callable type hint, raise an exception.
     _die_unless_hint_pep484585_callable(hint)

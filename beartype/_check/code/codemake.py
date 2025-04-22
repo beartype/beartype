@@ -56,25 +56,20 @@ from beartype._check.code._pep.codepep484604 import (
     make_hint_pep484604_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585container import (
     make_hint_pep484585_container_check_expr)
+from beartype._check.code._pep.pep484585.codepep484585generic import (
+    make_hint_pep484585_generic_unsubscripted_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
     CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
-from beartype._check.metadata.hint.hintsane import (
-    HintSane,
-)
-from beartype._check.pep.checkpep484585generic import (
-    iter_hint_pep484585_generic_unsubscripted_bases_unerased)
+from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
 from beartype._data.code.pep.datacodepep484585 import (
-    CODE_PEP484585_GENERIC_CHILD_format,
-    CODE_PEP484585_GENERIC_PREFIX,
-    CODE_PEP484585_GENERIC_SUFFIX,
     CODE_PEP484585_MAPPING_format,
     CODE_PEP484585_MAPPING_KEY_ONLY_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_format,
@@ -103,9 +98,7 @@ from beartype._data.code.pep.datacodepep593 import (
 )
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
-from beartype._data.hint.datahintpep import (
-    Hint,
-)
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     TypeStack,
@@ -151,10 +144,9 @@ from beartype._util.hint.pep.proposal.pep593 import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    get_hint_pep_sign,
-    get_hint_pep_sign_or_none,
     get_hint_pep_origin_type_isinstanceable,
 )
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
@@ -404,8 +396,8 @@ def make_check_expr(
                 f'{repr(hint_curr)} not ignored.'
             )
 
-            # Sign uniquely identifying this hint.
-            hint_curr_sign = get_hint_pep_sign(hint_curr)
+            # Sign uniquely identifying this hint, localized for usability.
+            hint_curr_sign = hints_meta.hint_curr_meta.hint_sign  # type: ignore[assignment]
             # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -681,11 +673,10 @@ def make_check_expr(
                 #   ignorable arguments like tuple[str, ...].
                 #
                 # Then this hint is effectively (for all intents and purposes) a
-                # standard single-argument container. In this case...
+                # standard single-argument container. In this case, generate a
+                # Python code snippet type-checking the current pith against
+                # this container hint.
                 elif hint_curr_sign in HINT_SIGNS_CONTAINER_ARGS_1:
-                    # Python code snippet type-checking the current pith against
-                    # this hint if the child hint subscripting this parent
-                    # container hint is unignorable *OR* "None" otherwise.
                     make_hint_pep484585_container_check_expr(hints_meta)
                 # Else, this hint is *NOT* a standard single-argument container.
                 #
@@ -1262,76 +1253,13 @@ def make_check_expr(
                 # Else, this hint is *NOT* a subclass type hint.
                 #
                 # ............{ GENERIC or PROTOCOL                }............
-                # If this hint is either a:
-                # * PEP 484-compliant unsubscripted generic (i.e., user-defined
-                #   class subclassing a combination of one or more of the
-                #   "typing.Generic" superclass and other "typing" non-class
-                #   pseudo-superclasses) *OR*...
-                # * PEP 544-compliant unsubscripted protocol (i.e., class
-                #   subclassing a combination of one or more of the
-                #   "typing.Protocol" superclass and other "typing" non-class
-                #   pseudo-superclasses) *OR*...
-                # * PEP 585-compliant unsubscripted generic (i.e., user-defined
-                #   class subclassing at least one non-class PEP 585-compliant
-                #   pseudo-superclasses) *OR*...
-                #
-                # ...then this hint is an unsubscripted generic. In this case...
+                # If this hint is an unsubscripted generic, generate a Python
+                # code snippet type-checking the current pith against this
+                # unsubscripted generic.
                 elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
-                    # print(f'Visiting generic type {repr(hint_curr)}...')
-
-                    # Initialize the code type-checking this pith against this
-                    # generic to the substring prefixing all such code.
-                    hints_meta.func_curr_code = CODE_PEP484585_GENERIC_PREFIX
-
-                    #FIXME: 
-                    # For the metadata encapsulating the sanification of each
-                    # unignorable unerased transitive pseudo-superclass
-                    # originally declared as a superclass of this unsubscripted
-                    # generic...
-                    for hint_child_sane in (
-                        iter_hint_pep484585_generic_unsubscripted_bases_unerased(
-                            hint_sane=hint_curr_sane,
-                            conf=conf,
-                            exception_prefix=EXCEPTION_PREFIX,
-                        )):
-                        # print(f'Visiting generic type hint {hint_curr_sane} unerased base {hint_child_sane}...')
-
-                        # Generate and append code type-checking this pith
-                        # against this pseudo-superclass.
-                        hints_meta.func_curr_code += (
-                            CODE_PEP484585_GENERIC_CHILD_format(
-                                hint_child_placeholder=(
-                                    hints_meta.enqueue_hint_child_sane(
-                                        hint_child_sane=hint_child_sane,
-                                        # Python expression efficiently reusing
-                                        # the value of this pith previously
-                                        # assigned to a local variable by the
-                                        # prior expression.
-                                        pith_expr=hints_meta.pith_curr_var_name,
-                                    )
-                                ),
-                            )
-                        )
-
-                    # Munge this code to...
-                    hints_meta.func_curr_code = (
-                        # Strip the erroneous " and" suffix appended by the
-                        # last child hint from this code.
-                        f'{hints_meta.func_curr_code[:LINE_RSTRIP_INDEX_AND]}'
-                        # Suffix this code by the substring suffixing all such
-                        # code.
-                        f'{CODE_PEP484585_GENERIC_SUFFIX}'
-                    # Format...
-                    ).format(
-                        # Indentation deferred above for efficiency.
-                        indent_curr=hints_meta.indent_curr,
-                        pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-                        # Python expression evaluating to this generic type.
-                        hint_curr_expr=hints_meta.add_func_scope_type_or_types(
-                            hint_curr),  # type: ignore[arg-type]
-                    )
-                    # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
-                # Else, this hint is *NOT* a generic.
+                    make_hint_pep484585_generic_unsubscripted_check_expr(
+                        hints_meta)
+                # Else, this hint is *NOT* an unsubscripted generic.
                 #
                 # ............{ PEP 484 ~ type variable            }............
                 # If this hint is a PEP 484-compliant type variable (i.e.,

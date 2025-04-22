@@ -1458,7 +1458,7 @@ def get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         die_unless_hint_pep484585_generic_unsubscripted)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # If this hint is *NOT* an unsubscripted generic, raise an exception.
     die_unless_hint_pep484585_generic_unsubscripted(

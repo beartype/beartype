@@ -127,10 +127,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVarTuple,
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
-)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, including:

@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
+    Union,
 )
 from beartype._check.code.codemagic import EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL
 from beartype._check.code.codescope import add_func_scope_type_or_types
@@ -34,9 +35,15 @@ from beartype._data.hint.datahinttyping import (
     TypeOrSetOrTupleTypes,
     TypeStack,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
+)
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+from beartype._util.utilobject import (
+    SENTINEL,
+    Iota,
 )
 
 # ....................{ SUBCLASSES                         }....................
@@ -465,16 +472,24 @@ class HintsMeta(FixedList):
 
     # ..................{ ENQUEUERS                          }..................
     def enqueue_hint_child_sane(
-        self, hint_child_sane: HintSane, pith_expr: str) -> str:
+        self,
+
+        # Mandatory parameters.
+        hint_child_sane: HintSane,
+        pith_expr: str,
+
+        # Optional parameters.
+        hint_sign: Union[Optional[HintSign], Iota] = SENTINEL,
+    ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of this queue new **type-checking
         metadata** (i.e., :class:`.HintMeta` object) describing the currently
-        iterated child type hint with the passed metadata, enabling this hint to
-        be visited by the ongoing breadth-first search (BFS) traversing over
-        this queue.
+        iterated child type hint with the passed metadata, enabling the ongoing
+        breadth-first search (BFS) traversing over this queue to subsequently
+        visit this child hint.
 
-        Callers are expected to modify this metadata by modifying these instance
-        variables of this higher-level parent object:
+        Callers are expected to initialize this metadata by explicitly setting
+        these queue instance variables *before* calling this method:
 
         * :attr:`indent_level_child`, the 1-based indentation level describing
           the current level of indentation appropriate for this child hint.
@@ -490,20 +505,76 @@ class HintsMeta(FixedList):
             object encapsulating *all* metadata returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
             this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
-            describing the child type hint currently visited by this BFS.
+            describing this child hint.
         pith_expr : str
             **Pith expression** (i.e., Python code snippet evaluating to the
             value of) the current **pith** (i.e., possibly nested object of the
-            passed parameter or return to be type-checked against the currently
-            visited type hint).
+            passed parameter or return to be type-checked against this child
+            hint).
+        hint_sign : Union[Optional[HintSign], Iota], default: SENTINEL
+            Either:
+
+            * If this child hint is uniquely identified by a **non-default
+              sign** (i.e., a singleton instance of the :class:`.HintSign` class
+              *other* than the standard sign returned by the
+              :func:`.get_hint_pep_sign_or_none` getter), this sign.
+            * Else, the sentinel placeholder, in which case this parameter
+              defaults to the **default sign** (i.e., the standard sign returned
+              by the :func:`.get_hint_pep_sign_or_none` getter).
+
+            Defaults to the sentinel placeholder. This parameter should
+            typically *not* be passed. Almost all hints are uniquely identified
+            by the default sign. A small subset of hints, however, concurrently
+            satisfy the detection criteria for multiple signs and are thus
+            identifiable with multiple signs. This parameter supports those
+            hints by enabling callers to call this method multiple times with
+            the same hint passed different signs.
+
+            Prominent examples include:
+
+            * :pep:`484`- and :pep:`585`-compliant unsubscripted generics --
+              which, due to being user-defined types, may subclass another
+              PEP-compliant :mod:`typing` superclass also identifiable by
+              another sign. Prominent examples include:
+
+              * **Generic typed dictionaries** identifiable as both the
+                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
+                dictionaries: e.g.,
+
+                .. code-block:: python
+
+                   from typing import Generic, TypedDict
+                   class GenericTypedDict[T](TypedDict, Generic[T]):
+                       generic_item: T
+
+              * **Generic named tuples** identifiable as both the
+                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
+                tuples: e.g.,
+
+                .. code-block:: python
+
+                   from typing import Generic, NamedTuple
+                   class GenericNamedTuple[T](NamedTuple, Generic[T]):
+                       generic_item: T
 
         Returns
         -------
         str
             Placeholder string to be subsequently replaced by code type-checking
-            this child pith against this child type hint.
+            this child pith against this child hint.
         '''
+        assert isinstance(hint_child_sane, HintSane), (
+            f'{repr(hint_child_sane)} not sanified hint metadata.')
         # print(f'Enqueing child hint {self.index_last+1} with {repr(kwargs)}...')
+
+        # If the caller did *NOT* pass a non-default sign identifying this hint,
+        # default this sign to the default sign identifying this hint.
+        if hint_sign is SENTINEL:
+            hint_sign = get_hint_pep_sign_or_none(hint_child_sane.hint)
+        # Else, the caller passed a non-default sign identifying this hint.
+        # Preserve this sign as is.
 
         # Increment the 0-based index of metadata describing the last visitable
         # hint in this list (which also serves as the unique identifier of the
@@ -521,6 +592,7 @@ class HintsMeta(FixedList):
         # Replace prior fields of this metadata with the passed fields.
         hint_meta.reinit(
             hint_sane=hint_child_sane,
+            hint_sign=hint_sign,  # type: ignore[arg-type]
             indent_level=self.indent_level_child,
             pith_expr=pith_expr,
             pith_var_name_index=self.pith_curr_var_name_index,

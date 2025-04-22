@@ -13,9 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TYPE_CHECKING
+from beartype.typing import (
+    TYPE_CHECKING,
+    Optional,
+)
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
 from beartype._check.metadata.hint.hintsane import HintSane
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.utilobject import SENTINEL
 
 # ....................{ DATACLASSES                        }....................
@@ -44,6 +49,12 @@ class HintMeta(object):
         :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
         this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
         describing the type hint currently visited by this BFS.
+    hint_sign : Optional[HintSign]
+        Either:
+
+        * If this hint is PEP-compliant, the **sign** (i.e., singleton instance
+          of the :class:`.HintSign` class) uniquely identifying this hint.
+        * Else, :data:`None`.
     indent_level : int
         **Indentation level** (i.e., 1-based positive integer providing the
         level of indentation appropriate for this hint).
@@ -77,6 +88,7 @@ class HintMeta(object):
     __slots__ = (
         'hint_placeholder',
         'hint_sane',
+        'hint_sign',
         'indent_level',
         'pith_expr',
         'pith_var_name_index',
@@ -87,6 +99,7 @@ class HintMeta(object):
     if TYPE_CHECKING:
         hint_placeholder: str
         hint_sane: HintSane
+        hint_sign: Optional[HintSign]
         indent_level: int
         pith_expr: str
         pith_var_name_index: int
@@ -111,6 +124,7 @@ class HintMeta(object):
 
         # Nullify all remaining instance variables for safety.
         self.hint_sane = SENTINEL  # type: ignore[assignment]
+        self.hint_sign = SENTINEL  # type: ignore[assignment]
         self.indent_level = SENTINEL  # type: ignore[assignment]
         self.pith_expr = SENTINEL  # type: ignore[assignment]
         self.pith_var_name_index = SENTINEL  # type: ignore[assignment]
@@ -119,6 +133,7 @@ class HintMeta(object):
     def reinit(
         self,
         hint_sane: HintSane,
+        hint_sign: Optional[HintSign],
         indent_level: int,
         pith_expr: str,
         pith_var_name_index: int,
@@ -131,7 +146,12 @@ class HintMeta(object):
         Parameters
         ----------
         hint_sane : HintSane
-            Sanified type hint to be encapsulated by this metadata.
+            Metadata describing the sanification of this hint.
+        hint_sign : Optional[HintSign]
+            Either:
+
+            * If this hint is PEP-compliant, the sign identifying this hint.
+            * Else, :data:`None`.
         indent_level : int
             1-based indentation level describing the current level of
             indentation appropriate for this hint.
@@ -141,19 +161,15 @@ class HintMeta(object):
         pith_var_name_index : int
             0-based integer suffixing the name of each local variable assigned
             the value of the current pith in an assignment expression.
-        typevar_to_hint : TypeVarToHint
-            **Type variable lookup table** (i.e., immutable dictionary mapping
-            from the **type variables** (i.e., :pep:`484`-compliant
-            :class:`typing.TypeVar` objects) originally parametrizing the
-            origins of all transitive parent hints of this hint if any to the
-            corresponding child hints subscripting those parent hints).
 
         See Also
         --------
         Class docstring for further details on the passed parameters.
         '''
         assert isinstance(hint_sane, HintSane), (
-            f'{repr(hint_sane)} not sanified type hint metadata.')
+            f'{repr(hint_sane)} not sanified hint metadata.')
+        assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
+            f'{repr(hint_sign)} neither hint sign nor "None".')
         assert isinstance(indent_level, int), (
             f'{repr(indent_level)} not integer.')
         assert isinstance(pith_expr, str), (
@@ -166,6 +182,7 @@ class HintMeta(object):
 
         # Classify all passed parameters.
         self.hint_sane = hint_sane
+        self.hint_sign = hint_sign
         self.indent_level = indent_level
         self.pith_expr = pith_expr
         self.pith_var_name_index = pith_var_name_index
@@ -181,6 +198,7 @@ class HintMeta(object):
         return (
             f'{self.__class__.__name__}('
             f'hint_sane={repr(self.hint_sane)}, '
+            f'hint_sign={repr(self.hint_sign)}, '
             f'indent_level={repr(self.indent_level)}, '
             f'pith_expr={repr(self.pith_expr)}, '
             f'pith_var_name_index={repr(self.pith_var_name_index)}, '

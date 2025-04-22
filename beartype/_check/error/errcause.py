@@ -59,6 +59,7 @@ from beartype.typing import (
     Any,
     Callable,
     Optional,
+    Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convsanify import sanify_hint_child
@@ -78,11 +79,13 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
-)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
+from beartype._util.utilobject import (
+    SENTINEL,
+    Iota,
+)
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
@@ -154,7 +157,7 @@ class ViolationCause(object):
         Either:
 
         * If this hint is PEP-compliant, the sign identifying this hint.
-        * Else, :data:`None` otherwise.
+        * Else, :data:`None`.
     pith : Any
         Arbitrary object to be validated.
     pith_name : Optional[str]
@@ -217,12 +220,12 @@ class ViolationCause(object):
 
 
     _INIT_PARAM_NAMES = frozenset((
-        'hint_sane',
         'cause_indent',
         'cls_stack',
         'conf',
         'exception_prefix',
         'func',
+        'hint_sane',
         'pith',
         'pith_name',
         'random_int',
@@ -231,6 +234,10 @@ class ViolationCause(object):
     '''
     Frozen set of the names of all parameters accepted by the :meth:`init`
     method, defined as a set to enable efficient membership testing.
+
+    Note that the :attr:`hint_sign` instance variable is intentionally omitted.
+    This variable's value is unique to the current cause and thus *not* safely
+    copyable from parent to child hints by the :meth:`permute_cause` method.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -254,13 +261,62 @@ class ViolationCause(object):
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
+        hint_sign: Union[Optional[HintSign], Iota] = SENTINEL,
     ) -> None:
         '''
         Initialize this violation cause.
 
         Parameters
         ----------
-        See the class docstring for a description of all passed parameters.
+        hint_sign : Union[Optional[HintSign], Iota], default: SENTINEL
+            Either:
+
+            * If this child hint is uniquely identified by a **non-default
+              sign** (i.e., a singleton instance of the :class:`.HintSign` class
+              *other* than the standard sign returned by the
+              :func:`.get_hint_pep_sign_or_none` getter), this sign.
+            * Else, the sentinel placeholder, in which case this parameter
+              defaults to the **default sign** (i.e., the standard sign returned
+              by the :func:`.get_hint_pep_sign_or_none` getter).
+
+            Defaults to the sentinel placeholder. This parameter should
+            typically *not* be passed. Almost all hints are uniquely identified
+            by the default sign. A small subset of hints, however, concurrently
+            satisfy the detection criteria for multiple signs and are thus
+            identifiable with multiple signs. This parameter supports those
+            hints by enabling callers to call this method multiple times with
+            the same hint passed different signs.
+
+            Prominent examples include:
+
+            * :pep:`484`- and :pep:`585`-compliant unsubscripted generics --
+              which, due to being user-defined types, may subclass another
+              PEP-compliant :mod:`typing` superclass also identifiable by
+              another sign. Prominent examples include:
+
+              * **Generic typed dictionaries** identifiable as both the
+                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
+                dictionaries: e.g.,
+
+                .. code-block:: python
+
+                   from typing import Generic, TypedDict
+                   class GenericTypedDict[T](TypedDict, Generic[T]):
+                       generic_item: T
+
+              * **Generic named tuples** identifiable as both the
+                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
+                tuples: e.g.,
+
+                .. code-block:: python
+
+                   from typing import Generic, NamedTuple
+                   class GenericNamedTuple[T](NamedTuple, Generic[T]):
+                       generic_item: T
+
+        See the class docstring for a description of all remaining parameters.
         '''
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
             f'{repr(cls_stack)} neither tuple nor "None".')
@@ -281,6 +337,15 @@ class ViolationCause(object):
         assert isinstance(random_int, NoneTypeOr[int]), (
             f'{repr(random_int)} not integer or "None".')
 
+        # If the caller did *NOT* pass a non-default sign identifying this hint,
+        # default this sign to the default sign identifying this hint.
+        if hint_sign is SENTINEL:
+            hint_sign = get_hint_pep_sign_or_none(hint_sane.hint)
+        # Else, the caller passed a non-default sign identifying this hint.
+        # Preserve this sign as is.
+        assert isinstance(hint_sign, NoneTypeOr[HintSign]), (
+            f'{repr(hint_sane)} neither hint sign, "None", nor "SENTINEL".')
+
         # Classify all passed parameters.
         self.cause_indent = cause_indent
         self.cause_str_or_none = cause_str_or_none
@@ -289,6 +354,7 @@ class ViolationCause(object):
         self.exception_prefix = exception_prefix
         self.func = func
         self.hint_sane = hint_sane
+        self.hint_sign = hint_sign  # pyright: ignore
         self.pith = pith
         self.pith_name = pith_name
         self.random_int = random_int
@@ -299,10 +365,6 @@ class ViolationCause(object):
 
         # Sane hint sanified from this possibly insane hint.
         self.hint = hint_sane.hint
-
-        # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-        # "None" otherwise (i.e., if this hint is PEP-noncompliant).
-        self.hint_sign = get_hint_pep_sign_or_none(self.hint)
 
         # Initialize the "hint_childs" and "hint_childs_sane" instance variables
         # of this violation cause.
@@ -459,6 +521,7 @@ class ViolationCause(object):
             * PEP-compliant but no getter function has been implemented to
               handle this category of PEP-compliant type hint yet.
         '''
+        # print(f'Finding cause for {self.hint} identified by {self.hint_sign}...')
 
         # If this hint is ignorable, all possible objects satisfy this hint.
         # Since this hint *CANNOT* (by definition) be the cause of this failure,

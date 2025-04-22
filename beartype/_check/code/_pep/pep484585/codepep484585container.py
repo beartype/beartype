@@ -23,47 +23,24 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_type_isinstanceable,
-    get_hint_pep_sign,
 )
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     '''
     Either a Python code snippet type-checking the current pith against the
-    passed :pep:`484`- or :pep:`585`-compliant container type hint if this hint
-    is **unignorable** (i.e., subscripted by *no* ignorable child type hints)
-    *or* :data:`None` otherwise (i.e., if this hint is ignorable).
+    passed :pep:`484`- or :pep:`585`-compliant container type hint.
 
     This factory is intentionally *not* memoized (e.g., by the
-    :func:`.callable_cached` decorator), due to accepting **context-sensitive
-    parameters** (i.e., whose values contextually depend on context unique to
-    the code being generated for the currently decorated callable) such as
-    ``pith_curr_assign_expr``.
+    :func:`.callable_cached` decorator), as the ``hints_meta`` parameter is
+    **context-sensitive** (i.e., contextually depends on context unique to the
+    code being generated for the currently decorated callable).
 
     Parameters
     ----------
     hints_meta : HintsMeta
-        Stack of metadata describing all visitable hints currently discovered by
-        this breadth-first search (BFS).
-
-    Returns
-    -------
-    Tuple[Optional[str], str, bool]
-        2-tuple ``(func_curr_code, hint_curr_expr, is_var_random_int_needed)``
-        where:
-
-        * ``func_curr_code`` is either:
-
-          * If this hint is ignorable, :data:`None`.
-          * Else, a Python code snippet type-checking the current pith against
-            this hint.
-
-        * ``hint_curr_expr`` is a Python expression evaluating to the origin
-          type of this hint as a hidden :mod:`beartype`-specific parameter
-          injected into the signature of the current wrapper function.
-        * ``is_var_random_int_needed`` is :data:`True` only if this hint require
-          a pseudo-random integer. If :data:`True`, logic elsewhere prefixes the
-          body of this wrapper function with code generating this integer.
+        Stack of metadata describing all visitable hints previously discovered
+        by this breadth-first search (BFS).
     '''
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
@@ -72,14 +49,14 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     # This container hint, localized for both usability and efficiency.
     hint = hints_meta.hint_curr_meta.hint_sane.hint
 
+    # Sign uniquely identifying this hint, localized for usability.
+    hint_sign = hints_meta.hint_curr_meta.hint_sign
+
     # Python expression evaluating to the origin type of this hint as a hidden
     # beartype-specific parameter injected into the signature of this wrapper.
     hints_meta.hint_curr_expr = hints_meta.add_func_scope_type_or_types(
         get_hint_pep_origin_type_isinstanceable(hint))
     # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
-
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
 
     # Tuple of all child hints subscripting this hint if any *OR* the empty
     # tuple otherwise (e.g., if this hint is its own unsubscripted factory).
@@ -117,7 +94,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
     # * Deeply type-check an efficiently retrievable item of this pith.
     if hint_child_sane is not HINT_SANE_IGNORABLE:
         # Hint logic type-checking this sign if any *OR* "None" otherwise.
-        hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(hint_sign)
+        hint_logic = HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get(hint_sign)  # type: ignore[arg-type]
 
         # If *NO* hint logic type-checks this sign, raise an exception.
         #

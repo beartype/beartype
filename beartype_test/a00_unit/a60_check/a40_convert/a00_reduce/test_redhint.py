@@ -43,7 +43,7 @@ def test_reduce_hint() -> None:
     )
     from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     # from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
     #     T_int,
     #     T_str_or_bytes,

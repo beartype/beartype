@@ -26,10 +26,8 @@ from beartype._util.cls.pep.clspep3119 import die_unless_object_issubclassable
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
     import_pep484585_ref_type)
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
-)
+from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_pith
