@@ -18,12 +18,10 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._data.hint.datahinttyping import (
-    TypeException,
-)
+from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.kind.datakindiota import Iota
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.func.arg.utilfuncarglen import get_func_args_lens
-from beartype._util.utilobject import Iota
 from collections.abc import Callable
 from enum import (
     Enum,

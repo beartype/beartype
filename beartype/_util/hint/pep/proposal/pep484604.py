@@ -19,7 +19,7 @@ from beartype._data.hint.datahintpep import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import Sequence
 from functools import reduce
 from operator import __or__ as or_operator

@@ -47,7 +47,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_typevars,
 )
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
-# from beartype._util.utilobject import SENTINEL
+# from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(

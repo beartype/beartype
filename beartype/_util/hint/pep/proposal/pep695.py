@@ -125,7 +125,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep695_subscripted(hint: Hint) -> bool:

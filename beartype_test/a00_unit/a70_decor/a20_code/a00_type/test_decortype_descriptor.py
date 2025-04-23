@@ -325,7 +325,7 @@ def test_decor_type_descriptor_custom() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import Optional
-    from beartype._util.utilobject import SENTINEL
+    from beartype._data.kind.datakindiota import SENTINEL
     from collections.abc import Callable
     from functools import wraps
     from pytest import raises

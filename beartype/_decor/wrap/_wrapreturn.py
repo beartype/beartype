@@ -44,7 +44,7 @@ from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................

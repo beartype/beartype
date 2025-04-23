@@ -20,14 +20,12 @@ from beartype._data.hint.datahintpep import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_DATACLASS_NONFIELDS)
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.cls.pep.clspep557 import die_unless_type_pep557_dataclass
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.utilobject import (
-    SENTINEL,
-    get_object_type_name,
-)
+from beartype._util.utilobject import get_object_type_name
 
 # ....................{ DECORATORS                         }....................
 #FIXME: As a mandatory prerequisite *BEFORE* integrating this into the @beartype

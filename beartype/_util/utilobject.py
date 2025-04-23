@@ -19,24 +19,6 @@ from beartype.typing import (
 from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
 from contextlib import AbstractContextManager
 
-# ....................{ CLASSES                            }....................
-class Iota(object):
-    '''
-    **Iota** (i.e., object minimizing space consumption by guaranteeably
-    containing *no* attributes).
-    '''
-
-    __slots__ = ()
-
-# ....................{ CONSTANTS                          }....................
-SENTINEL = Iota()
-'''
-Sentinel object of arbitrary value.
-
-This object is internally leveraged by various utility functions to identify
-erroneous and edge-case input (e.g., iterables of insufficient length).
-'''
-
 # ....................{ TESTERS                            }....................
 def is_object_context_manager(obj: object) -> bool:
     '''

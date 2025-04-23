@@ -27,7 +27,7 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_variadic,
 )
 from beartype._util.text.utiltextlabel import label_callable
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from functools import wraps
 
 # ....................{ DECORATORS ~ callable              }....................

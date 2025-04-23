@@ -16,7 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
-    Union,
 )
 from beartype._check.code.codemagic import EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL
 from beartype._check.code.codescope import add_func_scope_type_or_types
@@ -31,20 +30,17 @@ from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
+    HintSignOrNoneOrSentinel,
     LexicalScope,
     TypeOrSetOrTupleTypes,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     FixedList,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.utilobject import (
-    SENTINEL,
-    Iota,
-)
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -479,7 +475,7 @@ class HintsMeta(FixedList):
         pith_expr: str,
 
         # Optional parameters.
-        hint_sign: Union[Optional[HintSign], Iota] = SENTINEL,
+        hint_sign: HintSignOrNoneOrSentinel = SENTINEL,
     ) -> str:
         '''
         **Enqueue** (i.e., append) to the end of this queue new **type-checking

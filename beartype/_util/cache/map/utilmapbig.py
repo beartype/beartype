@@ -15,7 +15,7 @@ from beartype.typing import (
     Dict,
     Union,
 )
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import Hashable
 from contextlib import AbstractContextManager
 from threading import Lock

@@ -51,7 +51,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:

@@ -44,7 +44,7 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_name_variadic_keyword,
     is_func_arg_name_variadic_positional,
 )
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep612_paramspec(

@@ -97,6 +97,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import (
+    Iterable,
+    Tuple,
+)
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
@@ -109,6 +113,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
@@ -132,6 +137,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
 ) -> IterableHintSane:
+# ) -> Iterable[Tuple[HintSane, HintSign]]:
     '''
     Generator iteratively yielding the one or more unignorable unerased
     transitive pseudo-superclasses originally declared as superclasses prior to
@@ -147,6 +153,62 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
     (FILO) queue rather than an inefficient (and dangerous, due to both
     unavoidable stack exhaustion and avoidable infinite recursion) tree of
     recursive function calls.
+
+    Note that there exist two kinds of pseudo-superclasses with respect to
+    type-checking. Each pseudo-superclass yielded by this generator is either:
+
+    * An **intrinsic pseudo-superclass** (i.e., whose type-checking is
+      intrinsically defined as a type hint such that all data required to
+      type-check this pseudo-superclass is fully defined by this hint). *All*
+      intrinsic pseudo-superclasses are valid type hints. This is the common
+      case and, indeed, almost all cases. Examples include:
+
+      * :pep:`484`- and :pep:`585`-compliant subscripted type hints: e.g.,
+
+        .. code-block:: python
+
+           # The PEP 585-compliant "list[T]" pseudo-superclass is a valid
+           # hint whose type-checking is intrinsic to this hint.
+           class GenericList(list[T]):
+               def generic_method(self, arg: T) -> T:
+                   return arg
+
+    * An **extrinsic pseudo-superclass (i.e., whose type-checking is
+      extrinsically defined by this unsubscripted generic such that only the
+      combination of this pseudo-superclass and this unsubscripted generic
+      suffices to provide all data required to type-check this
+      pseudo-superclass). Extrinsic pseudo-superclasses are *not* necessarily
+      valid type hints, though some might be. Examples include:
+
+      * **Generic named tuples** (i.e., types subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`589`-compliant :class:`typing.NamedTuple` superclass): e.g.,
+
+        .. code-block:: python
+
+           from typing import Generic, NamedTuple
+           class GenericNamedTuple[T](NamedTuple, Generic[T]):
+               generic_item: T
+
+        When iterating over the :class:`typing.NamedTuple` pseudo-superclass of
+        a generic typed dictionary, this generator yields the 2-tuple
+        ``(hint_sane.hint, HintSignNamedTuple)`` (e.g.,
+        ``(GenericNamedTuple, HintSignNamedTuple)`` for the above generic).
+
+      * **Generic typed dictionaries** (i.e., types subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`589`-compliant :class:`typing.TypedDict` superclass): e.g.,
+
+        .. code-block:: python
+
+           from typing import Generic, TypedDict
+           class GenericTypedDict[T](TypedDict, Generic[T]):
+               generic_item: T
+
+        When iterating over the :class:`typing.TypedDict` pseudo-superclass of
+        a generic typed dictionary, this generator yields the 2-tuple
+        ``(hint_sane.hint, HintSignTypedDict)`` (e.g.,
+        ``(GenericTypedDict, HintSignTypedDict)`` for the above generic).
 
     Motivation
     ----------
@@ -248,10 +310,17 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
 
     Returns
     -------
-    IterableHintSane
-        Generator iteratively yielding the one or more unignorable unerased
-        transitive pseudo-superclasses originally declared as superclasses prior
-        to their type erasure of this unsubscripted generic.
+    Iterable[Tuple[HintSane, HintSign]]
+        Generator iteratively yielding one or more 2-tuples ``(hint_sane,
+        hint_sign)``, where:
+
+        * ``hint_sane`` is an unignorable unerased transitive pseudo-superclass
+          originally declared as a superclass prior to its type erasure of this
+          unsubscripted generic.
+        * ``hint_sign`` is the sign uniquely identifying this pseudo-superclass.
+          Since this sign does *not* necessarily correspond to the sign returned
+          by the :func:`.get_hint_pep_sign_or_none` getter when passed this
+          pseudo-superclass, callers should take care to preserve this sign.
 
     Raises
     ------
@@ -300,8 +369,52 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
     # ....................{ SEARCH                         }....................
     # While the 0-based index of the next visited pseudo-superclass does *NOT*
     # exceed that of the last pseudo-superclass in this list, there remains one
-    # or more pseudo-superclasses to be visited in this BFS.
+    # or more pseudo-superclasses to be visited in this BFS. Let us do so.
     while hint_bases_index_curr < hint_bases_index_past_last:
+        # ....................{ PHASE ~ extrinsic          }....................
+        # Each iteration of this search is subdivided into two phases, enabling
+        # this search to discern between intrinsic and extrinsic
+        # pseudo-superclasses -- whose handling is fundamentally different here.
+        # See the docstring for the distinction between the two.
+        #
+        # In this first phase, we:
+        # 1. Decide whether this pseudo-superclass is extrinsic.
+        # 2. If so, return this subscripted generic (rather than this
+        #    pseudo-superclass) *AND* the sign uniquely identifying this
+        #    pseudo-superclass. To distinguish this sign from the normal sign
+        #    identifying a hint, this sign is referred to as the "subsign"
+        #    (i.e., subclass sign applicable to this subscripted generic
+        #    subclassing this pseudo-superclass rather than this
+        #    pseudo-superclass itself).
+        #
+        # Note that:
+        # * Extrinsic pseudo-superclasses are *EXTREMELY* rare. Almost all
+        #   pseudo-superclasses are intrinsic.
+        # * Extrinsic pseudo-superclasses are efficiently detectable in
+        #   non-amortized O(1) time. Even though extrinsic pseudo-superclasses
+        #   are rare, the cost of handling them is thankfully minimal.
+        # * Extrinsic pseudo-superclasses *MUST* be detected before intrinsic
+        #   pseudo-superclasses. Some extrinsic pseudo-superclasses (e.g.,
+        #   "typing.TypedDict") are also valid type hints and thus also valid
+        #   intrinsic pseudo-superclasses. Extrinsic pseudo-superclasses convey
+        #   more fine-grained data for type-checking purposes than intrinsic
+        #   pseudo-superclasses; the former are thus preferable to the latter.
+
+        #FIXME: Implement us up, please. To do so:
+        #* Define a new
+        #  get_hint_pep484585_generic_unsubscripted_subsign_or_none() getter
+        #  in the existing
+        #  "beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget"
+        #  submodule.
+        #* Call that getter here.
+        #* If the resulting sign is non-"None", return that sign.
+        #* Else, continue to the next phase.
+
+        # ....................{ PHASE ~ intrinsic          }....................
+        # In this second phase, we fallback to treating this pseudo-superclass
+        # as intrinsic by returning this this pseudo-superclass *AND* the sign
+        # uniquely identifying this pseudo-superclass. This is the common case.
+
         # Sane pseudo-superclass sanified from this possibly insane
         # pseudo-superclass if sanifying this pseudo-superclass did not generate
         # supplementary metadata *OR* that metadata (i.e., if doing so generated

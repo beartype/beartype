@@ -59,7 +59,6 @@ from beartype.typing import (
     Any,
     Callable,
     Optional,
-    Union,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convsanify import sanify_hint_child
@@ -73,19 +72,19 @@ from beartype._data.hint.datahintpep import (
     Hint,
     TupleHints,
 )
-from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.hint.datahinttyping import (
+    HintSignOrNoneOrSentinel,
+    TypeStack,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.utilobject import (
-    SENTINEL,
-    Iota,
-)
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ CLASSES                            }....................
@@ -218,8 +217,8 @@ class ViolationCause(object):
         pith_name: Optional[str]
         random_int: Optional[int]
 
-
-    _INIT_PARAM_NAMES = frozenset((
+    # ..................{ CLASS VARIABLES ~ set              }..................
+    _COPY_VAR_NAMES = frozenset((
         'cause_indent',
         'cls_stack',
         'conf',
@@ -232,18 +231,27 @@ class ViolationCause(object):
         'cause_str_or_none',
     ))
     '''
-    Frozen set of the names of all parameters accepted by the :meth:`init`
-    method, defined as a set to enable efficient membership testing.
+    Frozen set of the names of *all* instance variables whose values will be
+    copied as the default values of all **unpassed parameters** (i.e.,
+    parameters *not* explicitly passed to the :meth:`permute_cause` method),
+    defined as a set to enable efficient membership testing.
 
     Note that the :attr:`hint_sign` instance variable is intentionally omitted.
     This variable's value is unique to the current cause and thus *not* safely
     copyable from parent to child hints by the :meth:`permute_cause` method.
     '''
 
+
+    _INIT_ARG_NAMES = _COPY_VAR_NAMES | frozenset(('hint_sign',))
+    '''
+    Frozen set of the names of *all* parameters accepted by the :meth:`init`
+    method, defined as a set to enable efficient membership testing.
+    '''
+
     # ..................{ INITIALIZERS                       }..................
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Whenever adding, deleting, or renaming any parameter accepted by
-    # this method, make similar changes to the "_INIT_PARAM_NAMES" set above.
+    # this method, make similar changes to the "_INIT_ARG_NAMES" set above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
@@ -261,7 +269,7 @@ class ViolationCause(object):
 
         # Optional parameters.
         cause_str_or_none: Optional[str] = None,
-        hint_sign: Union[Optional[HintSign], Iota] = SENTINEL,
+        hint_sign: HintSignOrNoneOrSentinel = SENTINEL,
     ) -> None:
         '''
         Initialize this violation cause.
@@ -628,7 +636,8 @@ class ViolationCause(object):
         return permute_object(
             obj=self,
             init_arg_name_to_value=kwargs,
-            init_arg_names=self._INIT_PARAM_NAMES,
+            init_arg_names=self._INIT_ARG_NAMES,
+            copy_var_names=self._COPY_VAR_NAMES,
             exception_cls=_BeartypeCallHintPepRaiseException,
         )
 

@@ -21,7 +21,7 @@ from beartype.typing import (
     Any,
     Dict,
 )
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from warnings import warn
 
 # ....................{ IMPORTERS                          }....................

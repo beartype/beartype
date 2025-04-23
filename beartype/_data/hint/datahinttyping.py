@@ -54,6 +54,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.kind.datakindiota import Iota
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
@@ -344,6 +345,14 @@ PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
 the name of each annotated parameter or return of a callable or annotated
 variable of a class to the type hint annotating that parameter, return, or
 variable).
+'''
+
+# ....................{ SIGN                               }....................
+HintSignOrNoneOrSentinel = Union[Optional[HintSign], Iota]
+'''
+PEP-compliant type hint matching either a **sign** (i.e., :class:`.HintSign`
+object uniquely identifying type hint), the :data:`None` singleton, or the
+sentinel placeholder. 
 '''
 
 # ....................{ SIGN ~ container                   }....................

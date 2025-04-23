@@ -158,7 +158,7 @@ def test_import_module_attr_or_sentinel() -> None:
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.module.utilmodimport import (
         import_module_attr_or_sentinel)
-    from beartype._util.utilobject import SENTINEL
+    from beartype._data.kind.datakindiota import SENTINEL
     from pytest import (
         raises,
         warns,

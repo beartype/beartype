@@ -61,7 +61,7 @@ from beartype._util.text.utiltextprefix import (
     prefix_callable_arg_name,
     # prefix_pith_value,
 )
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................

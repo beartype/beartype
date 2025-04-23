@@ -31,7 +31,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ SUBCLASSES ~ attr                  }....................
 class _IsAttrFactory(_BeartypeValidatorFactoryABC):

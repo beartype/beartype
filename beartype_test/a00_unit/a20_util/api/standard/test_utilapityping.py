@@ -30,7 +30,7 @@ def test_import_typing_attr() -> None:
     from beartype._util.module.utilmodimport import (
         import_module_attr_or_sentinel)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
-    from beartype._util.utilobject import SENTINEL
+    from beartype._data.kind.datakindiota import SENTINEL
     from pytest import raises
     from typing import Union
 

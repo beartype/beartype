@@ -45,7 +45,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.map.utilmapset import remove_mapping_keys
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint(

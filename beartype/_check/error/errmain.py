@@ -143,7 +143,7 @@ from beartype._util.text.utiltextprefix import (
     prefix_pith_value,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._util.utilobject import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import Callable as CallableABC
 
 # ....................{ GETTERS                            }....................

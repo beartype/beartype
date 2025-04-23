@@ -162,7 +162,7 @@ class HintSane(object):
         typevar_to_hint: TypeVarToHint
 
 
-    _INIT_PARAM_NAMES = frozenset((
+    _INIT_ARG_NAMES = frozenset((
         var_name
         for var_name in __slots__
         # Ignore private slotted instance variables defined above.
@@ -331,7 +331,7 @@ class HintSane(object):
         return permute_object(
             obj=self,
             init_arg_name_to_value=kwargs,
-            init_arg_names=self._INIT_PARAM_NAMES,
+            init_arg_names=self._INIT_ARG_NAMES,
             exception_cls=_BeartypeDecorHintSanifyException,
         )
 
