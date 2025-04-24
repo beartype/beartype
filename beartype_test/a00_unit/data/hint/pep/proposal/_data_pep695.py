@@ -171,7 +171,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep484604[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Floating-point constant.
                 HintPithSatisfiedMetadata(70.319),
@@ -247,7 +247,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             hint=AliasPep484604[complex],
             conf=BeartypeConf(hint_overrides=FrozenDict({float: int | float})),
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(0xBEEFCAFE),
@@ -327,7 +327,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep484604Depth1T[int],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
@@ -387,7 +387,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585IterableTContainerT[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 HintPithSatisfiedMetadata(Pep585IterableTContainerT((
@@ -435,7 +435,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585IterableTupleSTContainerTupleST[str, bytes],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Generic container whose items satisfy this child hint.
                 HintPithSatisfiedMetadata(Pep585IterableTupleSTContainerTupleST((
@@ -480,7 +480,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585DictST[object, object],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to arbitrary objects.
                 HintPithSatisfiedMetadata({
@@ -496,7 +496,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585DictST[object, str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping arbitrary hashables to strings.
                 HintPithSatisfiedMetadata({
@@ -515,7 +515,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585DictST[str, object],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping strings to arbitrary objects.
                 HintPithSatisfiedMetadata({
@@ -534,7 +534,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585DictST[int, str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Dictionary mapping integers to strings.
                 HintPithSatisfiedMetadata({
@@ -581,7 +581,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585TupleFixedST[str, bytes],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # 2-tuple of items whose types satisfy these child hints.
                 HintPithSatisfiedMetadata((
@@ -626,7 +626,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585TypeT[Any],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary class.
                 HintPithSatisfiedMetadata(bool),
@@ -640,7 +640,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585TypeT[type],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary metaclass.
                 HintPithSatisfiedMetadata(NonIsinstanceableMetaclass),
@@ -656,7 +656,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585TypeT[Class],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Subclass of this class.
                 HintPithSatisfiedMetadata(Subclass),
@@ -672,7 +672,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep585TypeT[Class | OtherClass],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Arbitrary subclass of one class subscripting this hint.
                 HintPithSatisfiedMetadata(Subclass),
@@ -730,7 +730,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep593[object],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Non-empty byte string.
                 HintPithSatisfiedMetadata(
@@ -750,7 +750,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep593[int],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Non-zero integer.
                 HintPithSatisfiedMetadata(0xFADEFACE),
@@ -793,7 +793,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasRecursiveIdentityT[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             # This subscripted type alias is ignorable as follows:
             # * The type variable "T" parametrizing this alias maps to some
             #   concrete hint.
@@ -831,7 +831,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep484604Recursive1T[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
@@ -871,7 +871,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep484604Recursive2T[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
@@ -943,7 +943,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=AliasPep484604RecursiveTopT[str],
             pep_sign=HintSignPep695TypeAliasSubscripted,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Byte string constant.
                 HintPithSatisfiedMetadata(

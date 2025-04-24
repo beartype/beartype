@@ -471,7 +471,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 hint=List[AnnotatedStrIsLength],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subscripted=List is list,
+                is_pep585_builtin_subbed=List is list,
                 piths_meta=(
                     # List of string constants satisfying this validator.
                     HintPithSatisfiedMetadata([
@@ -503,7 +503,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 hint=List[List[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subscripted=List is list,
+                is_pep585_builtin_subbed=List is list,
                 typevars=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
@@ -529,7 +529,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 hint=List[List[T_IsIntNonZero]],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin_subscripted=List is list,
+                is_pep585_builtin_subbed=List is list,
                 typevars=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
@@ -715,7 +715,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     hint=List[List[T_IsNumberNonNegativeOrStrNonEmpty]],
                     pep_sign=HintSignList,
                     isinstanceable_type=list,
-                    is_pep585_builtin_subscripted=List is list,
+                    is_pep585_builtin_subbed=List is list,
                     typevars=(T_IsNumberNonNegativeOrStrNonEmpty,),
                     piths_meta=(
                         # List of lists of positive number constants.

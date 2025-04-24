@@ -18,19 +18,19 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
-    is_hint_pep484_generic_subscripted,
-    is_hint_pep484_generic_unsubscripted,
+    is_hint_pep484_generic_subbed,
+    is_hint_pep484_generic_unsubbed,
 )
 from beartype._util.hint.pep.proposal.pep585 import (
-    is_hint_pep585_generic_subscripted,
-    is_hint_pep585_generic_unsubscripted,
-    is_hint_pep585_builtin_subscripted,
+    is_hint_pep585_generic_subbed,
+    is_hint_pep585_generic_unsubbed,
+    is_hint_pep585_builtin_subbed,
 )
 from beartype._util.module.utilmodtest import (
     is_object_module_thirdparty_blacklisted)
 
 # ....................{ RAISERS                            }....................
-def die_unless_hint_pep484585_generic_unsubscripted(
+def die_unless_hint_pep484585_generic_unsubbed(
     # Mandatory parameters.
     hint: Hint,
 
@@ -61,7 +61,7 @@ def die_unless_hint_pep484585_generic_unsubscripted(
     '''
 
     # If this hint is *NOT* an unsubscripted generic...
-    if not is_hint_pep484585_generic_unsubscripted(hint):
+    if not is_hint_pep484585_generic_unsubbed(hint):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not type.')
         assert isinstance(exception_prefix, str), (
@@ -114,7 +114,7 @@ def is_hint_pep484585_generic_user(hint: Hint) -> bool:
         is_hint_pep484585_generic(hint) and not (
             # A subscripted PEP 585-compliant superclass (e.g., "list[T]")
             # *NOR*...
-            is_hint_pep585_builtin_subscripted(hint) or
+            is_hint_pep585_builtin_subbed(hint) or
             # A subscripted or unsubscripted PEP 484- or 544-compliant
             # superclass defined by the standard "typing" module, including:
             # * "typing.Generic".
@@ -190,14 +190,14 @@ def is_hint_pep484585_generic(hint: Hint) -> bool:
             #
             # Note these tests trivially reduce to fast O(1) operations and are
             # thus tested first.
-            is_hint_pep484_generic_unsubscripted(hint) or
-            is_hint_pep484_generic_subscripted(hint) or
+            is_hint_pep484_generic_unsubbed(hint) or
+            is_hint_pep484_generic_subbed(hint) or
             # PEP 585-compliant generic.
             #
             # Note this test is O(n) for n the number of pseudo-superclasses
             # originally subclassed by this generic and is thus tested last.
-            is_hint_pep585_generic_unsubscripted(hint) or
-            is_hint_pep585_generic_subscripted(hint)
+            is_hint_pep585_generic_unsubbed(hint) or
+            is_hint_pep585_generic_subbed(hint)
         # *AND*...
         ) and
         # This generic is *NOT* beartype-blacklisted.
@@ -205,7 +205,7 @@ def is_hint_pep484585_generic(hint: Hint) -> bool:
     )
 
 
-def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
+def is_hint_pep484585_generic_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **subscripted generic** (i.e., object subscripted by
@@ -216,9 +216,9 @@ def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
     This tester returns :data:`True` only if this object is either:
 
     * A :pep:`484`-compliant subscripted generic as tested by the lower-level
-      :func:`.is_hint_pep484_generic_subscripted` function.
+      :func:`.is_hint_pep484_generic_subbed` function.
     * A :pep:`585`-compliant subscripted generic as tested by the lower-level
-      :func:`.is_hint_pep585_generic_subscripted` function.
+      :func:`.is_hint_pep585_generic_subbed` function.
 
     This tester is memoized for efficiency.
 
@@ -241,12 +241,12 @@ def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
             #
             # Note this test trivially reduces to a fast O(1) operation and is
             # thus tested first.
-            is_hint_pep484_generic_subscripted(hint) or
+            is_hint_pep484_generic_subbed(hint) or
             # PEP 585-compliant subscripted generic.
             #
             # Note this test is O(n) for n the number of pseudo-superclasses
             # originally subclassed by this generic and is thus tested last.
-            is_hint_pep585_generic_subscripted(hint)
+            is_hint_pep585_generic_subbed(hint)
         # *AND*...
         ) and
         # This generic is *NOT* beartype-blacklisted.
@@ -254,7 +254,7 @@ def is_hint_pep484585_generic_subscripted(hint: Hint) -> bool:
     )
 
 
-def is_hint_pep484585_generic_unsubscripted(hint: Hint) -> bool:
+def is_hint_pep484585_generic_unsubbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **unsubscripted generic** (i.e., type originally
@@ -264,9 +264,9 @@ def is_hint_pep484585_generic_unsubscripted(hint: Hint) -> bool:
     This tester returns :data:`True` only if this object is either:
 
     * A :pep:`484`-compliant unsubscripted generic as tested by the lower-level
-      :func:`.is_hint_pep484_generic_unsubscripted` function.
+      :func:`.is_hint_pep484_generic_unsubbed` function.
     * A :pep:`585`-compliant unsubscripted generic as tested by the lower-level
-      :func:`.is_hint_pep585_generic_unsubscripted` function.
+      :func:`.is_hint_pep585_generic_unsubbed` function.
 
     This tester is memoized for efficiency.
 
@@ -289,12 +289,12 @@ def is_hint_pep484585_generic_unsubscripted(hint: Hint) -> bool:
             #
             # Note this test trivially reduces to a fast O(1) operation and is
             # thus tested first.
-            is_hint_pep484_generic_unsubscripted(hint) or
+            is_hint_pep484_generic_unsubbed(hint) or
             # PEP 585-compliant unsubscripted generic.
             #
             # Note this test is O(n) for n the number of pseudo-superclasses
             # originally subclassed by this generic and is thus tested last.
-            is_hint_pep585_generic_unsubscripted(hint)
+            is_hint_pep585_generic_unsubbed(hint)
         # *AND*...
         ) and
         # This generic is *NOT* beartype-blacklisted.

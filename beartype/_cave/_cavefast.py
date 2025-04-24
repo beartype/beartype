@@ -1038,7 +1038,7 @@ else:
 
     * :func:`beartype._util.hint.pep.proposal.pep484.pep484.is_hint_pep484_generic`,
       detecting :pep:`484`-compliant generic type hints.
-    * :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subscripted`,
+    * :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subbed`,
       detecting :pep:`585`-compliant builtin type hints.
     * :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_generic`,
       detecting :pep:`585`-compliant generic type hints.

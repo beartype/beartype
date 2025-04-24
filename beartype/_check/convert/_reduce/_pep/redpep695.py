@@ -28,10 +28,10 @@ from beartype._check.metadata.hint.hintsane import (
 from beartype._data.hint.datahintpep import Hint
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.hint.pep.proposal.pep695 import (
-    get_hint_pep695_unsubscripted_alias)
+    get_hint_pep695_unsubbed_alias)
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep695_subscripted(
+def reduce_hint_pep695_subbed(
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -79,14 +79,14 @@ def reduce_hint_pep695_subscripted(
 
     See Also
     --------
-    ``reduce_hint_pep484_subscripted_typevars_to_hints``
+    ``reduce_hint_pep484_subbed_typevars_to_hints``
         Further details.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-        reduce_hint_pep484_subscripted_typevars_to_hints)
+        reduce_hint_pep484_subbed_typevars_to_hints)
 
     # ....................{ RECURSE                        }....................
     # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
@@ -123,8 +123,8 @@ def reduce_hint_pep695_subscripted(
     # * The type variable lookup table mapping all type variables parametrizing
     #   this unsubscripted alias to all non-type variable hints subscripting
     #   this subscripted alias.
-    # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-    hint_or_sane = reduce_hint_pep484_subscripted_typevars_to_hints(
+    # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
+    hint_or_sane = reduce_hint_pep484_subbed_typevars_to_hints(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
@@ -167,7 +167,7 @@ def reduce_hint_pep695_subscripted(
     return hint_sane
 
 
-def reduce_hint_pep695_unsubscripted(
+def reduce_hint_pep695_unsubbed(
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -272,7 +272,7 @@ def reduce_hint_pep695_unsubscripted(
         #
         # Note that this getter is memoized and thus intentionally called with
         # positional arguments.
-        hint_aliased = get_hint_pep695_unsubscripted_alias(
+        hint_aliased = get_hint_pep695_unsubbed_alias(
             hint, exception_prefix)
     # If doing so raises a builtin "NameError" exception, this alias contains
     # one or more forward references to undeclared attributes. In this case...

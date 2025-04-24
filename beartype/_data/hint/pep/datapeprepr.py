@@ -22,7 +22,6 @@ from beartype._data.hint.datahinttyping import (
     HintSignTrie,
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAny,
     HintSignAbstractSet,
     HintSignAsyncContextManager,
     HintSignAsyncIterable,
@@ -41,7 +40,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
-    HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
     HintSignItemsView,
@@ -55,18 +53,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
-    HintSignNewType,
-    HintSignNone,
     HintSignNumpyArray,
     HintSignOrderedDict,
     HintSignPanderaAny,
-    HintSignParamSpec,
-    HintSignParamSpecArgs,
-    HintSignParamSpecKwargs,
     HintSignPep484585GenericUnsubscripted,
-    HintSignPep557DataclassInitVar,
-    HintSignPep695TypeAliasUnsubscripted,
-    HintSignProtocol,
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
@@ -74,19 +64,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTextIO,
     HintSignTuple,
     HintSignType,
-    HintSignTypeVar,
-    HintSignTypeVarTuple,
-    HintSignUnion,
     HintSignValuesView,
 )
-
-# ....................{ HINTS                              }....................
-DictStrToDictStrToHintSign = Dict[str, DictStrToHintSign]
-'''
-PEP-compliant type hint matching the types of the
-:data:`.HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN` and
-:data:`.HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN` dictionary globals.
-'''
 
 # ....................{ MAPPINGS ~ repr                    }....................
 # The majority of this dictionary is initialized with automated inspection below
@@ -103,7 +82,8 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
 
     #FIXME: Uhm. Shouldn't this be "HintSignIO" rather than
     #"HintSignPep484585GenericUnsubscripted"? What's this about, exactly? Please
-    #explain this away... somehow.
+    #explain this away... somehow. Hmm. This is probably related to one of our
+    #generics-specific reducers, isn't it? Makes sense, but let's document.
     "<class 'typing.IO'>":       HintSignPep484585GenericUnsubscripted,
     "<class 'typing.BinaryIO'>": HintSignBinaryIO,
     "<class 'typing.TextIO'>":   HintSignTextIO,
@@ -236,170 +216,6 @@ forms) of each hint uniquely identifiable by that representation to its
 identifying sign.
 '''
 
-# ....................{ MAPPINGS ~ type                    }....................
-# The majority of this dictionary is initialized with automated inspection
-# iterating over the "_TYPING_ATTR_HINT_BASENAME_TO_SIGN" dictionary local
-# defined by the _init() function below. The *ONLY* key-value pairs explicitly
-# defined here are those *NOT* amenable to such inspection.
-HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
-    # Note that the root "object" superclass *CANNOT* be safely mapped to the
-    # "typing.Any" singleton with logic resembling:
-    #    # ..................{ BUILTINS                           }..................
-    #    # Standard builtins module.
-    #    'builtins': {
-    #        # ..................{ NON-PEP                        }..................
-    #        # The PEP-noncompliant root "object" superclass is semantically
-    #        # equivalent to the PEP-compliant "typing.Any" singleton from the
-    #        # runtime type-checking perspective. Why? Because "object" is the
-    #        # transitive superclass of all classes. Attributes annotated as "object"
-    #        # unconditionally match *ALL* objects under isinstance()-based type
-    #        # covariance and thus semantically reduce to unannotated attributes.
-    #        # Reduce this hint to "typing.Any", which then reduces this hint to the
-    #        # ignorable "HINT_SANE_IGNORABLE" singleton.
-    #        'object': HintSignAny,
-    #    },
-    #
-    # Why? Because doing so would then erroneously render the otherwise
-    # PEP-noncompliant "object" type PEP-compliant, which would then cause
-    # raisers like die_if_pep() and die_unless_pep() to exhibit anomalous
-    # behaviour with respect to that type. In short, the clever solution is the
-    # wrong solution. *sigh*
-
-    # ..................{ TYPING                             }..................
-    # Default *ALL* typing-like modules to the empty dictionary to simplify
-    # logic in the _init() function called below.
-
-    # Standard typing module.
-    'typing': {},
-
-    # Third-party typing backports module.
-    'typing_extensions': {},
-
-    # Third-party @beartype typing module.
-    'beartype.typing': {},
-}
-'''
-**Type hint trie** (i.e., dictionary-of-dictionaries tree data structure mapping
-from the fully-qualified names of packages and modules to a nested dictionary
-mapping from the unqualified basenames of all PEP-compliant type hints residing
-in those packages and modules such that those hints are either callables or
-classes *and* uniquely identifiable by those callables or classes to their
-identifying signs).
-'''
-
-
-# The majority of this dictionary is initialized with automated inspection
-# iterating over the "_TYPING_ATTR_TYPE_BASENAME_TO_SIGN" dictionary local
-# defined by the _init() function below. The *ONLY* key-value pairs explicitly
-# defined here are those *NOT* amenable to such inspection.
-HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN: DictStrToDictStrToHintSign = {
-    # ..................{ BUILTINS                           }..................
-    # Standard builtins module.
-    'builtins': {
-        # ..................{ PEP 484                        }..................
-        # PEP 484-compliant forward reference type hints may be annotated
-        # either:
-        # * Explicitly as "typing.ForwardRef" instances, which automated
-        #   inspection performed by the _init() function below already handles.
-        # * Implicitly as strings, which this key-value pair here detects. Note
-        #   this unconditionally matches *ALL* strings, including both:
-        #   * Invalid Python identifiers (e.g., "0d@yw@r3z").
-        #   * Absolute forward references (i.e., fully-qualified classnames)
-        #     technically non-compliant with PEP 484 but seemingly compliant
-        #     with PEP 585.
-        #
-        #   Since the distinction between PEP-compliant and -noncompliant
-        #   forward references is murky at best and since unconditionally
-        #   matching *ALL* string as PEP-compliant substantially simplifies
-        #   logic throughout the codebase, we (currently) opt to do so.
-        'str': HintSignForwardRef,
-
-        # The C-based "builtins.NoneType" type does *NOT* actually exist: e.g.,
-        #     >>> from builtins import NoneType
-        #     ImportError: cannot import name 'NoneType' from 'builtins'
-        #     (unknown location)
-        #
-        # This implies that users *CANNOT* make user-defined instances of this
-        # type, which then implies that the *ONLY* instance of this type is
-        # guaranteed to be the PEP 484-compliant "None" singleton, which
-        # circuitously reduces to "types.NoneType" under PEP 484.
-        #
-        # PEP 484 explicitly supports this singleton as follows:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        #
-        # Note that the representation of the type of the "None" singleton
-        # (i.e., "<class 'NoneType'>") is intentionally omitted here despite the
-        # "None" singleton reducing to that type. Indeed, the *ONLY* reason we
-        # detect this singleton at all is to enable that reduction. Although
-        # this singleton conveys a PEP-compliant semantic, the type of this
-        # singleton explicitly conveys *NO* PEP-compliant semantics. That type
-        # is simply a standard isinstanceable type (like any other). Indeed,
-        # attempting to erroneously associate the type of the "None" singleton
-        # with the same sign here would cause that type to be detected as
-        # conveying sign-specific PEP-compliant semantics rather than *NO* such
-        # semantics, which would then substantially break and complicate dynamic
-        # code generation for no benefit whatsoever.
-        'NoneType': HintSignNone,
-    },
-
-    # ..................{ DATACLASSES                        }..................
-    # Standard PEP 557-compliant dataclass module.
-    'dataclasses': {
-        # ..................{ PEP 557                        }..................
-        # PEP 557-compliant "dataclasses.InitVar" type hints are merely
-        # instances of that class.
-        'InitVar': HintSignPep557DataclassInitVar,
-    },
-
-    # ..................{ TYPES                              }..................
-    # Standard module containing common low-level C-based types.
-    'types': {
-        # ..................{ PEP 604                        }..................
-        # PEP 604-compliant |-style unions (e.g., "int | float") are internally
-        # implemented as instances of the low-level C-based "types.UnionType"
-        # type. Thankfully, these unions are semantically interchangeable with
-        # comparable PEP 484-compliant unions (e.g., "typing.Union[int,
-        # float]"); both kinds expose equivalent dunder attributes (e.g.,
-        # "__args__", "__parameters__"), enabling subsequent code generation to
-        # conflate the two without issue.
-        'UnionType': HintSignUnion,
-    },
-
-    # ..................{ TYPING                             }..................
-    # Standard typing module.
-    'typing': {
-        # ..................{ PEP 484                        }..................
-        # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type
-        # hints as instances of that pure-Python class.
-        #
-        # Note that we intentionally omit both "beartype.typing.NewType" *AND*
-        # "typing_extensions.NewType" here, as:
-        # * "beartype.typing.NewType" is a merely an alias of "typing.NewType".
-        # * Regardless of the current Python version,
-        #   "typing_extensions.NewType" type hints remain implemented in the
-        #   manner of Python < 3.10 -- which is to say, as closures of that
-        #   function. Ergo, . See also:
-        #       https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
-        'NewType': HintSignNewType,
-    },
-
-    # Third-party typing backports module, intentionally mapped here to the
-    # empty dictionary to simplify logic in the _init() function called below.
-    'typing_extensions': {},
-
-    # Third-party @beartype typing module, intentionally mapped here to the
-    # empty dictionary to simplify logic in the _init() function called below.
-    'beartype.typing': {},
-}
-'''
-**Type hint type trie** (i.e., dictionary-of-dictionaries tree data structure
-mapping from the fully-qualified names of packages and modules to a nested
-dictionary mapping from the unqualified basenames of the types of all
-PEP-compliant type hints residing in those packages and modules that are
-uniquely identifiable by those types to their identifying signs).
-'''
-
 # ....................{ SETS ~ deprecated                  }....................
 # Initialized with automated inspection below in the _init() function.
 HINTS_PEP484_REPR_PREFIX_DEPRECATED: FrozenSetStrs = set()  # type: ignore[assignment]
@@ -420,21 +236,11 @@ def _init() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer initialization-specific imports.
     from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
-    from beartype._data.hint.pep.sign.datapepsigns import (
-        HINT_SIGNS_TYPING,
-        HintSignUnpack,
-    )
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_3_11,
-    )
+    from beartype._data.hint.pep.sign.datapepsigns import HINT_SIGNS_TYPING
 
     # ..................{ GLOBALS                            }..................
     # Permit redefinition of these globals below.
     global HINTS_PEP484_REPR_PREFIX_DEPRECATED
-
-    # ..................{ HINTS                              }..................
-    # Length of the ignorable substring prefixing the name of each sign.
-    _HINT_SIGN_PREFIX_LEN = len('HintSign')
 
     # ..................{ HINTS ~ repr                       }..................
     # Dictionary mapping from the unqualified names of typing attributes whose
@@ -454,103 +260,6 @@ def _init() -> None:
     # This dictionary enables subsequent logic to transparently resynchronize
     # the unqualified names and representations of pants typing attributes.
     _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
-
-    # If the active Python interpreter targets Python 3.11.x, identify PEP 646-
-    # and 692-compliant hints that are instances of the private
-    # "typing._UnpackGenericAlias" as "Unpack[...]" hints.
-    #
-    # Note that this fragile violation of privacy encapsulation is *ONLY* needed
-    # under Python 3.11.x, where the machine-readable representation of unpacked
-    # type variable tuples is ambiguously idiosyncratic and thus *NOT* a
-    # reasonable heuristic for detecting such unpacking: e.g.,
-    #     $ python3.11
-    #     >>> from typing import TypeVarTuple
-    #     >>> Ts = TypeVarTuple('Ts')
-    #     >>> list_of_Ts = [*Ts]
-    #     >>> repr(list_of_Ts[0])
-    #     *Ts    # <-- ambiguous and thus a significant issue
-    #
-    #     $ python3.12
-    #     >>> from typing import TypeVarTuple
-    #     >>> Ts = TypeVarTuple('Ts')
-    #     >>> list_of_Ts = [*Ts]
-    #     >>> repr(list_of_Ts[0])
-    #     typing.Unpack[Ts]    # <-- unambiguous and thus a non-issue
-    if IS_PYTHON_3_11:
-        HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
-            'typing']['_UnpackGenericAlias'] = HintSignUnpack
-    # Else, the active Python interpreter does *NOT* target Python 3.11.x.
-
-    # ..................{ HINTS ~ types                      }..................
-    # Dictionary mapping from the unqualified names of all callables and classes
-    # defined by typing modules that are themselves valid PEP-compliant type
-    # hints to their corresponding signs.
-    _TYPING_ATTR_HINT_BASENAME_TO_SIGN = {
-        # ................{ PEP 484                            }................
-        # Unsubscripted "typing.Generic" superclass, which imposes no
-        # constraints and is also semantically synonymous with the "object"
-        # superclass. Since PEP 484 stipulates that *ANY* unsubscripted
-        # subscriptable PEP-compliant type hint factories semantically expand to
-        # those factories subscripted by an implicit "Any" argument, "Generic"
-        # semantically expands to the implicit "Generic[Any]" singleton.
-        'Generic': HintSignPep484585GenericUnsubscripted,
-
-        # ....................{ PEP 544                    }....................
-        # Unsubscripted "typing.Protocol" superclass. For unknown and presumably
-        # uninteresting reasons, *ALL* possible objects satisfy this superclass.
-        # Ergo, this superclass is synonymous with the "object" root superclass:
-        #     >>> from typing import Protocol
-        #     >>> isinstance(object(), Protocol)
-        #     True
-        #     >>> isinstance('wtfbro', Protocol)
-        #     True
-        #     >>> isinstance(0x696969, Protocol)
-        #     True
-        'Protocol': HintSignProtocol,
-    }
-
-    # Dictionary mapping from the unqualified names of all classes defined by
-    # typing modules used to instantiate PEP-compliant type hints to their
-    # corresponding signs.
-    _TYPING_ATTR_TYPE_BASENAME_TO_SIGN = {
-        # ....................{ PEP 484                    }....................
-        # All PEP 484-compliant forward references are necessarily instances of
-        # the same class.
-        'ForwardRef' : HintSignForwardRef,
-
-        # All PEP 484-compliant type variables are necessarily instances of the
-        # same class.
-        'TypeVar': HintSignTypeVar,
-
-        #FIXME: "Generic" is ignorable when unsubscripted. Excise this up!
-        # The unsubscripted PEP 484-compliant "Generic" superclass is
-        # explicitly equivalent under PEP 484 to the "Generic[Any]"
-        # subscription and thus slightly conveys meaningful semantics.
-        # 'Generic': HintSignPep484585GenericUnsubscripted,
-
-        # ....................{ PEP 612                    }....................
-        # PEP 612-compliant "typing.ParamSpec" type hints as merely instances of
-        # that low-level C-based type.
-        'ParamSpec': HintSignParamSpec,
-
-        # PEP 612-compliant "*args: P.args" type hints as merely instances of
-        # the low-level C-based "typing.ParamSpecArgs" type.
-        'ParamSpecArgs': HintSignParamSpecArgs,
-
-        # PEP 612-compliant "**kwargs: P.kwargs" type hints as merely instances
-        # of the low-level C-based "typing.ParamSpecKwargs" type.
-        'ParamSpecKwargs': HintSignParamSpecKwargs,
-
-        # ....................{ PEP 646                    }....................
-        # All PEP 646-compliant type variable tuples are necessarily instances
-        # of the same class.
-        'TypeVarTuple': HintSignTypeVarTuple,
-
-        # ....................{ PEP 695                    }....................
-        # PEP 695-compliant "type" aliases are merely instances of the low-level
-        # C-based "typing.TypeAliasType" type.
-        'TypeAliasType': HintSignPep695TypeAliasUnsubscripted,
-    }
 
     # ..................{ HINTS ~ deprecated                 }..................
     # Set of the unqualified names of all deprecated PEP 484-compliant typing
@@ -605,24 +314,6 @@ def _init() -> None:
     # ..................{ INITIALIZATION                     }..................
     # For the fully-qualified name of each quasi-standard typing module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # For the unqualified basename of each type hint that is itself a type
-        # identifiable by a sign to that sign, map from the fully-qualified name
-        # of that type in this module to this sign.
-        for hint_basename, hint_sign in (
-            _TYPING_ATTR_HINT_BASENAME_TO_SIGN.items()):
-            # print(f'[datapeprepr] Mapping hint "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
-            HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN[
-                typing_module_name][hint_basename] = hint_sign
-
-        # For the unqualified basename of each type of each type hint
-        # identifiable by a sign to that sign, map from the fully-qualified name
-        # of that type in this module to this sign.
-        for type_basename, hint_sign in (
-            _TYPING_ATTR_TYPE_BASENAME_TO_SIGN.items()):
-            # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
-            HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
-                typing_module_name][type_basename] = hint_sign
-
         # For each deprecated PEP 484-compliant typing attribute name,
         # add that attribute relative to this module to this set.
         for typing_attr_basename in (

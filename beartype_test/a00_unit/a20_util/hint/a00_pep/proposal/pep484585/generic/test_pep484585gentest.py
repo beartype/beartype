@@ -49,10 +49,10 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
         assert is_hint_pep484585_generic(not_hint_pep) is False
 
 
-def test_is_hint_pep484585_generic_unsubscripted(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_unsubscripted`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_unsubbed`
     tester.
 
     Parameters
@@ -66,7 +66,7 @@ def test_is_hint_pep484585_generic_unsubscripted(hints_pep_meta) -> None:
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignPep484585GenericUnsubscripted)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-        is_hint_pep484585_generic_unsubscripted)
+        is_hint_pep484585_generic_unsubbed)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # Assert this tester:
@@ -74,18 +74,18 @@ def test_is_hint_pep484585_generic_unsubscripted(hints_pep_meta) -> None:
     # * Rejects concrete PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
-        assert is_hint_pep484585_generic_unsubscripted(hint_pep_meta.hint) is (
+        assert is_hint_pep484585_generic_unsubbed(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep484585_generic_unsubscripted(not_hint_pep) is False
+        assert is_hint_pep484585_generic_unsubbed(not_hint_pep) is False
 
 
-def test_is_hint_pep484585_generic_subscripted(hints_pep_meta) -> None:
+def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_subscripted`
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest.is_hint_pep484585_generic_subbed`
     tester.
 
     Parameters
@@ -99,7 +99,7 @@ def test_is_hint_pep484585_generic_subscripted(hints_pep_meta) -> None:
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignPep484585GenericSubscripted)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-        is_hint_pep484585_generic_subscripted)
+        is_hint_pep484585_generic_subbed)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # Assert this tester:
@@ -107,12 +107,12 @@ def test_is_hint_pep484585_generic_subscripted(hints_pep_meta) -> None:
     # * Rejects concrete PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
-        assert is_hint_pep484585_generic_subscripted(hint_pep_meta.hint) is (
+        assert is_hint_pep484585_generic_subbed(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign is HintSignPep484585GenericSubscripted)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep484585_generic_subscripted(not_hint_pep) is False
+        assert is_hint_pep484585_generic_subbed(not_hint_pep) is False
 
 # ....................{ TESTS ~ testers : user             }....................
 def test_is_hint_pep484585_generic_user(hints_pep_meta) -> None:

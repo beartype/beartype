@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.pep.checkpep484585generic import (
-    iter_hint_pep484585_generic_unsubscripted_bases_unerased)
+    iter_hint_pep484585_generic_unsubbed_bases_unerased)
 from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
@@ -23,7 +23,7 @@ from beartype._data.code.pep.datacodepep484585 import (
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_AND
 
 # ....................{ FACTORIES                          }....................
-def make_hint_pep484585_generic_unsubscripted_check_expr(
+def make_hint_pep484585_generic_unsubbed_check_expr(
     hints_meta: HintsMeta) -> None:
     '''
     Either a Python code snippet type-checking the current pith against the
@@ -69,7 +69,7 @@ def make_hint_pep484585_generic_unsubscripted_check_expr(
     # transitive pseudo-superclass originally declared as a superclass of this
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane in (
-        iter_hint_pep484585_generic_unsubscripted_bases_unerased(
+        iter_hint_pep484585_generic_unsubbed_bases_unerased(
             hint_sane=hint_sane,
             conf=hints_meta.conf,
             exception_prefix=hints_meta.exception_prefix,

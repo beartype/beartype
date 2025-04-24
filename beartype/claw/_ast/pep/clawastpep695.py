@@ -310,7 +310,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
             # Intentionally redefine this alias. Although this appears to be an
             # inefficient noop, this is in fact an essential operation. Why?
             # Because the prior successful access of the "__value__" dunder
-            # variable of this type alias in the iter_hint_pep695_unsubscripted_forwardrefs()
+            # variable of this type alias in the iter_hint_pep695_unsubbed_forwardrefs()
             # iterator called above silently cached and thus froze the value of
             # this alias. However, alias values are *NOT* necessarily safely
             # freezable at alias definition time. A canonical example of alias

@@ -84,7 +84,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
             hint=PathLike[str],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=PathLike,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Platform-agnostic path encapsulating a string pathname.
                 HintPithSatisfiedMetadata(this_path_strings),
@@ -104,7 +104,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
             hint=PathLike[bytes],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=PathLike,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Platform-agnostic path encapsulating a bytestring pathname.
                 HintPithSatisfiedMetadata(this_path_bytes),
@@ -126,7 +126,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
             hint=PathLike[Any],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=PathLike,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Platform-agnostic path encapsulating a bytestring pathname.
                 HintPithSatisfiedMetadata(this_path_bytes),
@@ -141,7 +141,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
             hint=PathLike[AnyStr],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=PathLike,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_typevars=True,
             piths_meta=(
                 # Platform-agnostic path encapsulating a bytestring pathname.

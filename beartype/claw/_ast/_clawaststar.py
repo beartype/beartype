@@ -71,7 +71,7 @@ from beartype.door._func.doorcheck import (
 # reference proxy for each unqualified relative forward reference in the passed
 # PEP 695-compliant type alias).
 from beartype._util.hint.pep.proposal.pep695 import (
-    iter_hint_pep695_unsubscripted_forwardrefs as __iter_hint_pep695_forwardref_beartype__)
+    iter_hint_pep695_unsubbed_forwardrefs as __iter_hint_pep695_forwardref_beartype__)
 
 # ....................{ GLOBALS                            }....................
 __all__ = [

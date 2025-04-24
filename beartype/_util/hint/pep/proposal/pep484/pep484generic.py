@@ -22,7 +22,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_hint_pep484_generic_subscripted(hint: Hint) -> bool:
+def is_hint_pep484_generic_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`484`-compliant
     **subscripted generic** (i.e., object subscripted by one or more child type
@@ -47,7 +47,7 @@ def is_hint_pep484_generic_subscripted(hint: Hint) -> bool:
 
     See Also
     --------
-    :func:`.is_hint_pep484_generic_unsubscripted`
+    :func:`.is_hint_pep484_generic_unsubbed`
         Further details.
     '''
 
@@ -64,12 +64,12 @@ def is_hint_pep484_generic_subscripted(hint: Hint) -> bool:
         # This origin object is an unsubscripted generic type, which would then
         # imply this hint to be a subscripted generic. If this strikes you as
         # insane, you're not alone
-        is_hint_pep484_generic_unsubscripted(hint_origin)
+        is_hint_pep484_generic_unsubbed(hint_origin)
     )
 
 
 #FIXME: Unit test us up, please.
-def is_hint_pep484_generic_unsubscripted(hint: Hint) -> bool:
+def is_hint_pep484_generic_unsubbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`484`-compliant
     **unsubscripted generic** (i.e., :class:`typing.Generic` subclass, typically
@@ -378,7 +378,7 @@ def get_hint_pep484_generic_bases_unerased(
 
     # If this hint is *NOT* a PEP 484- or 544-compliant generic, raise an
     # exception.
-    if not is_hint_pep484_generic_unsubscripted(hint):
+    if not is_hint_pep484_generic_unsubbed(hint):
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'

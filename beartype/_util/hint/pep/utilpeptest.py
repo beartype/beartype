@@ -379,7 +379,7 @@ def is_hint_pep(hint: object) -> bool:
 
 
 #FIXME: Unit test us up, please.
-def is_hint_pep_subscripted(hint: object) -> bool:
+def is_hint_pep_subbed(hint: object) -> bool:
     '''
     :data:`True` only if the passed PEP-compliant type hint is **subscripted**
     (i.e., indexed by one or more child type hints).

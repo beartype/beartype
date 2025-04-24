@@ -92,7 +92,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray,
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
             # Oddly, NumPy implicitly parametrizes the "NDArray[Any]" type hint
@@ -122,7 +122,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[Any],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -151,7 +151,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[dtype(float64)],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -181,7 +181,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[float64],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -210,7 +210,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[floating],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -238,7 +238,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignTupleFixed,
             isinstanceable_type=tuple,
-            is_pep585_builtin_subscripted=Tuple is tuple,
+            is_pep585_builtin_subbed=Tuple is tuple,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 HintPithSatisfiedMetadata((

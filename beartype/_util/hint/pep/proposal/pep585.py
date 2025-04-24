@@ -78,7 +78,7 @@ def die_unless_hint_pep585_generic(
     # Else, this object is a PEP 585-compliant generic.
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep585_builtin_subscripted(hint: Hint) -> bool:
+def is_hint_pep585_builtin_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **subscripted builtin type hint** (i.e., C-based type hint instantiated by
@@ -162,14 +162,14 @@ def is_hint_pep585_generic(hint: Hint) -> bool:
     # Return true only if object is either...
     return (
         # A PEP 585-compliant unsubscripted generic *OR*...
-        is_hint_pep585_generic_unsubscripted(hint) or
+        is_hint_pep585_generic_unsubbed(hint) or
         # A PEP 585-compliant subscripted generic.
-        is_hint_pep585_generic_subscripted(hint)
+        is_hint_pep585_generic_subbed(hint)
     )
 
 
 #FIXME: Unit test us up, please.
-def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
+def is_hint_pep585_generic_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **subscripted generic** (i.e., object subscripted by one or more child type
@@ -204,13 +204,13 @@ def is_hint_pep585_generic_subscripted(hint: Hint) -> bool:
         # This origin object is an unsubscripted generic type, which would then
         # imply this hint to be a subscripted generic. If this strikes you as
         # insane, you're not alone.
-        is_hint_pep585_generic_unsubscripted(hint_origin)
+        is_hint_pep585_generic_unsubbed(hint_origin)
     )
 
 
 #FIXME: Unit test us up, please.
 @callable_cached
-def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
+def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is a :pep:`585`-compliant
     **unsubscripted generic** (i.e., type originally subclassing at least one
@@ -308,7 +308,7 @@ def is_hint_pep585_generic_unsubscripted(hint: Hint) -> bool:
     for hint_base_erased in hint_bases_erased:  # type: ignore[union-attr]
         # If this pseudo-superclass is itself a PEP 585-compliant C-based
         # subscripted generic (e.g., "list[str]"), return true.
-        if is_hint_pep585_builtin_subscripted(hint_base_erased):
+        if is_hint_pep585_builtin_subbed(hint_base_erased):
             return True
         # Else, this pseudo-superclass is *NOT* PEP 585-compliant. In this
         # case, continue to the next pseudo-superclass.

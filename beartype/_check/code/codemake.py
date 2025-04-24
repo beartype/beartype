@@ -57,7 +57,7 @@ from beartype._check.code._pep.codepep484604 import (
 from beartype._check.code._pep.pep484585.codepep484585container import (
     make_hint_pep484585_container_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585generic import (
-    make_hint_pep484585_generic_unsubscripted_check_expr)
+    make_hint_pep484585_generic_unsubbed_check_expr)
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484_INSTANCE_format,
@@ -1257,7 +1257,7 @@ def make_check_expr(
                 # code snippet type-checking the current pith against this
                 # unsubscripted generic.
                 elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
-                    make_hint_pep484585_generic_unsubscripted_check_expr(
+                    make_hint_pep484585_generic_unsubbed_check_expr(
                         hints_meta)
                 # Else, this hint is *NOT* an unsubscripted generic.
                 #

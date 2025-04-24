@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subscripted`
+    :func:`beartype._util.hint.pep.proposal.pep585.is_hint_pep585_builtin_subbed`
     function.
 
     Parameters
@@ -32,12 +32,12 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep585 import (
-        is_hint_pep585_builtin_subscripted)
+        is_hint_pep585_builtin_subbed)
 
     # Assert this tester accepts only PEP 585-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
-        assert is_hint_pep585_builtin_subscripted(hint_pep_meta.hint) is (
-            hint_pep_meta.is_pep585_builtin_subscripted)
+        assert is_hint_pep585_builtin_subbed(hint_pep_meta.hint) is (
+            hint_pep_meta.is_pep585_builtin_subbed)
 
 
 def test_is_hint_pep585_generic(hints_pep_meta) -> None:

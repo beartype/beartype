@@ -17,10 +17,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ reducer                    }....................
-def test_reduce_hint_pep695_unsubscripted() -> None:
+def test_reduce_hint_pep695_unsubbed() -> None:
     '''
     Test the private
-    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubscripted`
+    :mod:`beartype._util.hint.pep.proposal.pep695.reduce_hint_pep695_unsubbed`
     iterator.
     '''
 
@@ -33,9 +33,9 @@ def test_reduce_hint_pep695_unsubscripted() -> None:
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
-            unit_test_reduce_hint_pep695_unsubscripted)
+            unit_test_reduce_hint_pep695_unsubbed)
 
         # Perform this test.
-        unit_test_reduce_hint_pep695_unsubscripted()
+        unit_test_reduce_hint_pep695_unsubbed()
     # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
     # 695.

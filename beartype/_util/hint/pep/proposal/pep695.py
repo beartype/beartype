@@ -62,7 +62,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #    # ...into this.
 #    from beartype._util.hint.pep.proposal.pep695 import (
-#        iter_hint_pep695_unsubscripted_forwardrefs as
+#        iter_hint_pep695_unsubbed_forwardrefs as
 #        __iter_hint_pep695_forwardref_beartype__
 #    )
 #    type {alias_name} = {alias_value}
@@ -81,7 +81,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            exec(f'{__hint_pep695_forwardref_beartype__.__name_beartype__} = __hint_pep695_forwardref_beartype__')
 #
 #    #FIXME: Technically, this *ONLY* needs to be done if the
-#    #iter_hint_pep695_unsubscripted_forwardrefs() iterator returned something. *shrug*
+#    #iter_hint_pep695_unsubbed_forwardrefs() iterator returned something. *shrug*
 #    # Intentionally redefine this alias. Although this appears to be an
 #    # inefficient noop, this is in fact an essential operation. Why?
 #    # Because the prior successful access of the "__value__" dunder
@@ -128,7 +128,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep695_subscripted(hint: Hint) -> bool:
+def is_hint_pep695_subbed(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed type hint is a :pep:`695`-compliant
     **subscripted type alias** (i.e., object created by subscripting an object
@@ -157,11 +157,11 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     .. code-block:: pycon
 
        >>> from beartype._util.hint.pep.proposal.pep695 import (
-       ...     is_hint_pep695_subscripted)
+       ...     is_hint_pep695_subbed)
        >>> type subscriptable_alias[T] = int | T
-       >>> is_hint_pep695_subscripted(subscriptable_alias)
+       >>> is_hint_pep695_subbed(subscriptable_alias)
        False
-       >>> is_hint_pep695_subscripted(subscriptable_alias[float])
+       >>> is_hint_pep695_subbed(subscriptable_alias[float])
        True
 
     Parameters
@@ -178,14 +178,14 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
     # from beartype._util.hint.pep.proposal.pep585 import (
-    #     is_hint_pep585_builtin_subscripted)
+    #     is_hint_pep585_builtin_subbed)
 
     #FIXME: Actually, this test is surprisingly computationally expensive.
     #Ignore for now as the test below currently suffices. *shrug*
     # # If this hint is a PEP 585-compliant subscripted builtin hint, immediately
     # # return false. All PEP 695-compliant subscripted type aliases are
     # # implemented as PEP 585-compliant subscripted builtin hints, interestingly.
-    # if not is_hint_pep585_builtin_subscripted(hint):
+    # if not is_hint_pep585_builtin_subbed(hint):
     #     return False
     # # Else, this hint is a PEP 585-compliant subscripted builtin hint and thus
     # # *COULD* be a PEP 695-compliant subscripted type alias. Further detection
@@ -202,7 +202,7 @@ def is_hint_pep695_subscripted(hint: Hint) -> bool:
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep695_unsubscripted_alias(
+def get_hint_pep695_unsubbed_alias(
     # Mandatory parameters.
     hint: HintPep695TypeAlias,
 
@@ -219,7 +219,7 @@ def get_hint_pep695_unsubscripted_alias(
     ``callable_cached`` decorator), for subtle reasons pertaining to unquoted
     forward references. Notably, memoizing this getter would prevent the
     external caller of the higher-level
-    :func:`.iter_hint_pep695_unsubscripted_forwardrefs` iterator calling this
+    :func:`.iter_hint_pep695_unsubbed_forwardrefs` iterator calling this
     lower-level getter from externally modifying this type alias by forcefully
     injecting forward reference proxies into this alias.
 
@@ -447,7 +447,7 @@ def _get_hint_pep695_parameterizable_typeparams(
     )
 
 # ....................{ ITERATORS                          }....................
-def iter_hint_pep695_unsubscripted_forwardrefs(
+def iter_hint_pep695_unsubbed_forwardrefs(
     # Mandatory parameters.
     hint: HintPep695TypeAlias,
 
@@ -506,9 +506,9 @@ def iter_hint_pep695_unsubscripted_forwardrefs(
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
             #
-            # Note that _get_hint_pep695_unsubscripted_alias() is memoized and
+            # Note that _get_hint_pep695_unsubbed_alias() is memoized and
             # thus intentionally called with positional arguments.
-            get_hint_pep695_unsubscripted_alias(hint, exception_prefix)
+            get_hint_pep695_unsubbed_alias(hint, exception_prefix)
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.

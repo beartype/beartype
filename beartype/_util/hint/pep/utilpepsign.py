@@ -26,10 +26,12 @@ from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
+)
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN,
     HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
@@ -44,17 +46,17 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-    is_hint_pep484585_generic_subscripted,
-    is_hint_pep484585_generic_unsubscripted,
+    is_hint_pep484585_generic_subbed,
+    is_hint_pep484585_generic_unsubbed,
 )
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
     get_hint_pep484585_sign_tuplefixed_or_same)
 from beartype._util.hint.pep.proposal.pep484604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.hint.pep.proposal.pep585 import (
-    is_hint_pep585_builtin_subscripted)
+    is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
-from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subscripted
+from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 
 # ....................{ GETTERS ~ sign                     }....................
@@ -284,10 +286,6 @@ def get_hint_pep_sign_or_none(
        HintSignPep484585GenericUnsubscripted
     '''
 
-    # ..................{ IMPORTS                            }..................
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhintget import get_hint_repr
-
     # ..................{ SYNOPSIS                           }..................
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in descending order of average time complexity
@@ -354,49 +352,53 @@ def get_hint_pep_sign_or_none(
         return hint_sign
     # Else, this hint is *NOT* identifiable by its classname.
 
-    # ..................{ PHASE ~ class                      }..................
+    # ..................{ PHASE ~ (class|callable)           }..................
     # This phase attempts to map from the fully-qualified name of this hint if
-    # this hint is a type to a sign identifying *ALL* hints that are instances
-    # of that class.
+    # this hint is either a type or callable to a sign identifying *ALL* hints
+    # that are literally that type or callable.
     #
-    # Note that most hints are *NOT* types. Likewise, most objects (and thus
-    # most hints) do *NOT* define the "__qualname__" dunder attribute accessed
-    # by this phase. Although this phase is equally as fast as the prior phase,
-    # this phase identifies only an extremely small subset of hints that are
-    # all fairly uncommon. Ergo, this phase is performed early but *NOT* first.
-    # Examples of hints that are types include:
+    # Note that most hints are *NOT* types or callables. Likewise, most objects
+    # (and thus most hints) do *NOT* define the "__qualname__" dunder attribute
+    # accessed by this phase. Although this phase is equally as fast as the
+    # prior phase, this phase identifies only an extremely small subset of hints
+    # that are all fairly uncommon. Ergo, this phase is performed early but
+    # *NOT* first. Examples of hints that are types include:
     # * The PEP 484-compliant unsubscripted "typing.Generic" superclass.
     # * The PEP 544-compliant unsubscripted "typing.Protocol" superclass.
 
-    # If this hint is either a callable *OR* class, this hint necessarily
-    # defines the "__qualname__" dunder attribute tested below. In this case...
+    # If this hint is either a type or callable, this hint necessarily defines
+    # the "__qualname__" dunder attribute tested below. In this case...
     if isinstance(hint, CallableOrClassTypes):
         #FIXME: Is this actually the case? Do non-physical classes dynamically
         #defined at runtime actually define *BOTH* of these dunder attributes:
         #* "hint_type.__module__"?
         #* "hint_type.__qualname__"?
+
         # Dictionary mapping from the unqualified basenames of all
-        # PEP-compliant hints that are types residing in the package defining
-        # this hint that are uniquely identifiable by those types to their
-        # identifying signs if that package is recognized *OR* the empty
-        # dictionary otherwise (i.e., if the package defining this hint is
-        # unrecognized).
-        hint_type_basename_to_sign = (
-            HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN.get(
-                hint.__module__, FROZENDICT_EMPTY))
+        # PEP-compliant hints that are types or callables residing in the
+        # package defining this hint that are uniquely identifiable by those
+        # types or callables to their identifying signs if that package is
+        # recognized *OR* the empty dictionary otherwise (i.e., if the package
+        # defining this hint is unrecognized).
+        hint_basename_to_sign = HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN.get(
+            hint.__module__, FROZENDICT_EMPTY)
 
         # Sign identifying this hint if this hint is identifiable by its
-        # classname *OR* "None" otherwise.
-        hint_sign = hint_type_basename_to_sign.get(hint.__qualname__)
+        # basename *OR* "None" otherwise.
+        hint_sign = hint_basename_to_sign.get(hint.__qualname__)
         # print(f'hint: {hint}')
         # print(f'hint_sign [by self]: {hint_sign}')
         # print(f'lookup table: {HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN}')
 
-        # If this hint is identifiable by its classname, return this sign.
+        # If this hint is identifiable by its basename, return this sign.
         if hint_sign:
             return hint_sign
-        # Else, this hint is *NOT* identifiable by its classname.
-    # Else, this hint is *NOT* a class.
+        # Else, this hint is *NOT* identifiable by its basename.
+    # Else, this hint is neither a type nor callable.
+
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
 
     # ..................{ PHASE ~ repr : str                 }..................
     # This phase attempts to map from the unsubscripted machine-readable
@@ -415,12 +417,12 @@ def get_hint_pep_sign_or_none(
     # * "hint_repr_prefix", the substring of this representation preceding the
     #   first "[" delimiter if this representation contains that delimiter *OR*
     #   this representation as is otherwise.
-    # * "hint_repr_subscripted", the "[" delimiter if this representation
+    # * "hint_repr_subbed", the "[" delimiter if this representation
     #   contains that delimiter *OR* the empty string otherwise.
     #
     # Note that the str.partition() method has been profiled to be the
     # optimally efficient means of parsing trivial prefixes like these.
-    hint_repr_prefix, hint_repr_subscripted, _ = hint_repr.partition('[')
+    hint_repr_prefix, hint_repr_subbed, _ = hint_repr.partition('[')
 
     # Sign identifying this possibly unsubscripted hint if this hint is
     # identifiable by its possibly unsubscripted representation *OR* "None".
@@ -439,7 +441,7 @@ def get_hint_pep_sign_or_none(
     # representation.
     #
     # If this representation (and thus this hint) is subscripted...
-    elif hint_repr_subscripted:
+    elif hint_repr_subbed:
         # Sign identifying this necessarily subscripted hint if this hint is
         # identifiable by its necessarily subscripted representation *OR*
         # "None" otherwise.
@@ -559,7 +561,7 @@ def get_hint_pep_sign_or_none(
         # unsubscripted generics *AND*...
         HintSignPep484585GenericUnsubscripted not in ignore_hint_signs and
         # This hint is an unsubscripted generic...
-        is_hint_pep484585_generic_unsubscripted(hint)
+        is_hint_pep484585_generic_unsubbed(hint)
     ):
         # Return the sign identifying unsubscripted generics.
         return HintSignPep484585GenericUnsubscripted
@@ -570,7 +572,7 @@ def get_hint_pep_sign_or_none(
     # object subscripted by one or more child type hints originating from a
     # user-defined class superficially subclassing at least one PEP 484- or
     # 585-compliant type hint), return that sign. See above for commentary.
-    elif is_hint_pep484585_generic_subscripted(hint):
+    elif is_hint_pep484585_generic_subbed(hint):
         return HintSignPep484585GenericSubscripted
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
 
@@ -624,12 +626,12 @@ def get_hint_pep_sign_or_none(
     # If this hint is an unrecognized subscripted builtin type hint (i.e.,
     # C-based type hint instantiated by subscripting a pure-Python origin class
     # unrecognized by @beartype and thus PEP-noncompliant)...
-    if is_hint_pep585_builtin_subscripted(hint):
+    if is_hint_pep585_builtin_subbed(hint):
         # If this hint is a PEP 695-compliant subscripted type alias (i.e.,
         # object created by subscripting an object created by a statement of the
         # form "type {alias_name}[{type_var}] = {alias_value}" by one or more
         # child type hints), return the corresponding sign.
-        if is_hint_pep695_subscripted(hint):
+        if is_hint_pep695_subbed(hint):
             return HintSignPep695TypeAliasSubscripted
         # Else, this hint is *NOT* a PEP 695-compliant subscripted type alias.
 
@@ -641,5 +643,9 @@ def get_hint_pep_sign_or_none(
         return HintSignPep585BuiltinSubscriptedUnknown
     # Else, this hint is *NOT* an unrecognized subscripted builtin type hint.
 
-    # Return "None".
+    # ..................{ RETURN                             }..................
+    # This hint *MUST* be a PEP-noncompliant albeit valid isinstanceable type,
+    # which is actually the common case.
+
+    # Return "None", informing the caller that this is an isinstanceable type.
     return None

@@ -26,7 +26,7 @@ from beartype._util.hint.pep.proposal.pep544 import is_hint_pep484_generic_io
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_or_none
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep484585_generic_subscripted(
+def reduce_hint_pep484585_generic_subbed(
     hint: Hint,
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
@@ -90,7 +90,7 @@ def reduce_hint_pep484585_generic_subscripted(
 
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-        reduce_hint_pep484_subscripted_typevars_to_hints)
+        reduce_hint_pep484_subbed_typevars_to_hints)
 
     # If this subscripted generic is the "typing.Generic" superclass directly
     # parametrized by one or more type variables (e.g., "typing.Generic[T]"),
@@ -135,19 +135,19 @@ def reduce_hint_pep484585_generic_subscripted(
     # * The type variable lookup table mapping all type variables parametrizing
     #   this unsubscripted generic to all non-type variable hints subscripting
     #   this subscripted generic.
-    # print(f'[reduce_hint_pep484585_generic_subscripted] Reducing subscripted generic {repr(hint)}...')
-    hint_reduced = reduce_hint_pep484_subscripted_typevars_to_hints(
+    # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
+    hint_reduced = reduce_hint_pep484_subbed_typevars_to_hints(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
     )
-    # print(f'[reduce_hint_pep484585_generic_subscripted] ...to unsubscripted generic {repr(hint_reduced)}.')
+    # print(f'[reduce_hint_pep484585_generic_subbed] ...to unsubscripted generic {repr(hint_reduced)}.')
 
     # Return this reduced hint.
     return hint_reduced
 
 
-def reduce_hint_pep484585_generic_unsubscripted(
+def reduce_hint_pep484585_generic_unsubbed(
     hint: Hint, exception_prefix: str) -> Hint:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **unsubscripted

@@ -57,7 +57,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    def get_hint_pep_signs_or_none(hint: Any) -> TupleHintSign:
 #        hint_signs_list = acquire_instance(list)
 #
-#        if is_hint_pep484585_generic_unsubscripted(hint):
+#        if is_hint_pep484585_generic_unsubbed(hint):
 #            hint_signs_list.append(HintSignPep484585GenericUnsubscripted)
 #
 #        hint_sign_unique = _get_hint_pep_sign_unique_or_none(hint)
@@ -92,15 +92,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #*shudders*
 #FIXME: Actually... belay that. While useful, the above is overkill for the
 #moment. Instead, just call the new
-#get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() getter in
+#get_hint_pep484585_generic_unsubbed_sign_nongeneric_or_none() getter in
 #both "codemake" and the appropriate "beartype._check.error" submodule, please.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import (
-    Iterable,
-    Tuple,
-)
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
@@ -113,21 +109,21 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
 )
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-    get_hint_pep484585_generic_bases_unerased)
+    get_hint_pep484585_generic_bases_unerased,
+)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_user)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
-def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
+def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # Mandatory parameters.
     hint_sane: HintSane,
 
@@ -139,11 +135,11 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
 ) -> IterableHintSane:
 # ) -> Iterable[Tuple[HintSane, HintSign]]:
     '''
-    Generator iteratively yielding the one or more unignorable unerased
-    transitive pseudo-superclasses originally declared as superclasses prior to
-    their type erasure of the passed :pep:`484`- or :pep:`585`-compliant
-    unsubscripted generic, effectively performing a breadth-first search (BFS)
-    over these pseudo-superclasses.
+    Generator iteratively yielding the one or more **unerased
+    pseudo-superclasses** (i.e., unignorable PEP-compliant type hints originally
+    declared as transitive superclasses prior to type erasure) of the passed
+    :pep:`484`- or :pep:`585`-compliant unsubscripted generic, effectively
+    performing a breadth-first search (BFS) over these pseudo-superclasses.
 
     This generator yields the full tree of all pseudo-superclasses by
     transitively visiting both all direct pseudo-superclasses of this generic
@@ -161,15 +157,14 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
       intrinsically defined as a type hint such that all data required to
       type-check this pseudo-superclass is fully defined by this hint). *All*
       intrinsic pseudo-superclasses are valid type hints. This is the common
-      case and, indeed, almost all cases. Examples include:
-
-      * :pep:`484`- and :pep:`585`-compliant subscripted type hints: e.g.,
+      case and, indeed, almost all cases. Examples include :pep:`484`- and
+      :pep:`585`-compliant subscripted container type hints: e.g.,
 
         .. code-block:: python
 
-           # The PEP 585-compliant "list[T]" pseudo-superclass is a valid
-           # hint whose type-checking is intrinsic to this hint.
-           class GenericList(list[T]):
+           # The PEP 585-compliant "list[T]" pseudo-superclass is a valid hint
+           # whose type-checking is intrinsic to this hint.
+           class GenericList[T](list[T]):
                def generic_method(self, arg: T) -> T:
                    return arg
 
@@ -182,7 +177,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
 
       * **Generic named tuples** (i.e., types subclassing both the
         :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-        :pep:`589`-compliant :class:`typing.NamedTuple` superclass): e.g.,
+        :pep:`484`-compliant :class:`typing.NamedTuple` superclass): e.g.,
 
         .. code-block:: python
 
@@ -258,7 +253,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
 
     .. code-block:: pycon
 
-       >>> from beartype._util.hint.pep.proposal.pep585 import is_hint_pep585_builtin_subscripted
+       >>> from beartype._util.hint.pep.proposal.pep585 import is_hint_pep585_builtin_subbed
        >>> class UserGeneric(list[int]): pass
        >>> class UserSubgeneric(UserGeneric[int]): pass
        >>> UserSubgeneric.__orig_bases__
@@ -268,7 +263,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
        True  # <-- good
        >>> UserGenericUnerased.__mro__
        (UserGeneric, list, object)
-       >>> is_hint_pep585_builtin_subscripted(UserGenericUnerased)
+       >>> is_hint_pep585_builtin_subbed(UserGenericUnerased)
        True
 
     Iteratively walking up the unerased inheritance hierarchy for any such
@@ -332,7 +327,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
-    # assert is_hint_pep484585_generic_unsubscripted(hint_sane.hint)
+    # assert is_hint_pep484585_generic_unsubbed(hint_sane.hint)
     assert isinstance(hint_sane, HintSane), (
         f'{repr(hint_sane)} not sanified metadata.')
 
@@ -402,7 +397,7 @@ def iter_hint_pep484585_generic_unsubscripted_bases_unerased(
 
         #FIXME: Implement us up, please. To do so:
         #* Define a new
-        #  get_hint_pep484585_generic_unsubscripted_subsign_or_none() getter
+        #  get_hint_pep484585_generic_unsubbed_subsign_or_none() getter
         #  in the existing
         #  "beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget"
         #  submodule.

@@ -113,7 +113,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             hint=list[int | str],
             pep_sign=HintSignList,
             isinstanceable_type=list,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # List containing a mixture of integer and string constants.
                 HintPithSatisfiedMetadata([

@@ -112,9 +112,9 @@ def test_is_hint_pep(hints_pep_meta, hints_nonpep_meta) -> None:
         assert is_hint_pep(not_hint_pep) is False
 
 
-def test_is_hint_pep_subscripted(hints_pep_meta, hints_nonpep_meta) -> None:
+def test_is_hint_pep_subbed(hints_pep_meta, hints_nonpep_meta) -> None:
     '''
-    Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_subscripted`
+    Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_subbed`
     tester.
 
     Parameters
@@ -128,25 +128,25 @@ def test_is_hint_pep_subscripted(hints_pep_meta, hints_nonpep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
+    from beartype._util.hint.pep.utilpeptest import is_hint_pep_subbed
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
 
     # Assert this tester:
     # * Accepts all subscripted PEP-compliant type hints.
     # * Rejects all unsubscripted PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
-        assert is_hint_pep_subscripted(hint_pep_meta.hint) is (
+        assert is_hint_pep_subbed(hint_pep_meta.hint) is (
             hint_pep_meta.is_args)
 
     # Assert this tester rejects PEP-noncompliant type hints implemented by the
     # "typing" module as normal types indistinguishable from non-"typing" types
     # and thus effectively non-PEP-compliant for all practical intents.
     for hint_nonpep_meta in hints_nonpep_meta:
-        assert is_hint_pep_subscripted(hint_nonpep_meta.hint) is False
+        assert is_hint_pep_subbed(hint_nonpep_meta.hint) is False
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert is_hint_pep_subscripted(not_hint_pep) is False
+        assert is_hint_pep_subbed(not_hint_pep) is False
 
 
 #FIXME: Implement us up, please.
@@ -169,7 +169,7 @@ def test_is_hint_pep_subscripted(hints_pep_meta, hints_nonpep_meta) -> None:
 #         # True only if we expect this hint to be non-self-cached, including.
 #         is_hint_pep_uncached_expected = (
 #             # If th
-#             hint_pep_meta.is_pep585_builtin_subscripted or
+#             hint_pep_meta.is_pep585_builtin_subbed or
 #             (
 #                 IS_PYTHON_AT_LEAST_3_9 and
 #                 hint_pep_meta

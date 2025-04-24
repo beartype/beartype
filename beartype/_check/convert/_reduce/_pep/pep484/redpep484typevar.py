@@ -140,13 +140,13 @@ def reduce_hint_pep484_typevar(
             #rather than reperform this O(n) algorithm on every single instance
             #of this type variable, this algorithm should simply be performed
             #exactly *ONCE* in the
-            #reduce_hint_pep484_subscripted_typevars_to_hints() reducer. Please
+            #reduce_hint_pep484_subbed_typevars_to_hints() reducer. Please
             #refactor this iteration over there *AFTER* the dust settles here.
             #FIXME: Actually, it's unclear how exactly this could be refactored
-            #into the reduce_hint_pep484_subscripted_typevars_to_hints()
+            #into the reduce_hint_pep484_subbed_typevars_to_hints()
             #reducer. This reduction here only searches for a single typevar in
             #O(n) time. Refactoring this over to
-            #reduce_hint_pep484_subscripted_typevars_to_hints() would require
+            #reduce_hint_pep484_subbed_typevars_to_hints() would require
             #generalizing this into an O(n**2) algorithm there, probably. Yow!
 
             # While...
@@ -205,7 +205,7 @@ def reduce_hint_pep484_typevar(
     return hint
 
 
-def reduce_hint_pep484_subscripted_typevars_to_hints(
+def reduce_hint_pep484_subbed_typevars_to_hints(
     # Mandatory parameters.
     hint: Hint,
 
@@ -307,7 +307,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
 
     # ....................{ LOCALS                         }....................
     # Unsubscripted type alias originating this subscripted hint.
-    hint_unsubscripted = get_hint_pep_origin(
+    hint_unsubbed = get_hint_pep_origin(
         hint=hint,
         exception_cls=BeartypeDecorHintPep484TypeVarException,
         exception_prefix=exception_prefix,
@@ -325,7 +325,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hint_unsubscripted_typevars = get_hint_pep_typevars(hint_unsubscripted)
+    hint_unsubbed_typevars = get_hint_pep_typevars(hint_unsubbed)
 
     # Tuple of all child hints subscripting this subscripted hint.
     hint_childs = get_hint_pep_args(hint)
@@ -342,18 +342,18 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         #   superclass (e.g., "typing.Generic[S, T]"). In this case, the
         #   original unsubscripted "typing.Generic" superclass remains
         #   unparametrized despite that superclass later being parametrized.
-        not hint_unsubscripted_typevars or
+        not hint_unsubbed_typevars or
         # This unsubscripted hint is parametrized by the exact same type
         # variables as this subscripted hint is subscripted by, in which case
         # the resulting type variable lookup table would uselessly be the
         # identity mapping from each of these type variables to itself. While an
         # identity type variable lookup table could trivially be produced, doing
         # so would convey *NO* meaningful semantics and thus be pointless.
-        hint_childs == hint_unsubscripted_typevars
+        hint_childs == hint_unsubbed_typevars
     # Then reduce this subscripted hint to simply this unsubscripted hint, as
     # type variable lookup tables are then irrelevent.
     ):
-        return hint_unsubscripted
+        return hint_unsubbed
     # Else, this unsubscripted hint is parametrized by one or more type
     # variables. In this case, produce a type variable lookup table mapping
     # these type variables to child hints subscripting this subscripted hint.
@@ -365,7 +365,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     # Note that we pass parameters positionally due to memoization.
     typevar_to_hint = _get_hint_pep484_typevars_to_hints(
         hint,
-        hint_unsubscripted_typevars,
+        hint_unsubbed_typevars,
         hint_childs,
         exception_prefix,
     )
@@ -379,7 +379,7 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
     if hint_parent_sane is None:
         # Metadata encapsulating this hint and type variable lookup table.
         hint_sane = HintSane(
-            hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
+            hint=hint_unsubbed, typevar_to_hint=typevar_to_hint)
     # Else, this hint has a parent. In this case...
     else:
         # If the parent hint is also associated with a type variable lookup
@@ -406,9 +406,9 @@ def reduce_hint_pep484_subscripted_typevars_to_hints(
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # recursable hint IDs) down onto this child hint as well.
         hint_sane = hint_parent_sane.permute_sane(
-            hint=hint_unsubscripted, typevar_to_hint=typevar_to_hint)
+            hint=hint_unsubbed, typevar_to_hint=typevar_to_hint)
 
-    # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubscripted)} and...')
+    # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubbed)} and...')
     # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
 
     # Return this metadata.

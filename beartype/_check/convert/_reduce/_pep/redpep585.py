@@ -20,7 +20,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 #FIXME: Unit test us up, please.
 #FIXME: Heavily refactor according to the discussion in the "redhint" submodule,
 #please. *sigh*
-def reduce_hint_pep585_builtin_subscripted_unknown(
+def reduce_hint_pep585_builtin_subbed_unknown(
     hint: Hint, exception_prefix: str) -> type:
     '''
     Reduce the passed :pep:`585`-compliant **unrecognized subscripted builtin

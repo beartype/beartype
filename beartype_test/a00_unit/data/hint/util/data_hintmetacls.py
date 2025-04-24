@@ -295,7 +295,7 @@ class HintPepMetadata(HintNonpepMetadata):
         variables) and/or **type variables** (i.e., :class:`typing.TypeVar`
         instances). Defaults to :data:`True` only if the machine-readable
         representation of this hint contains one or more "[" delimiters.
-    is_pep585_builtin_subscripted : bool, optional
+    is_pep585_builtin_subbed : bool, optional
         :data:`True` only if this hint is a :pep:`585`-compliant builtin. If
         :data:`True`, then :attr:`is_type_typing` *must* be :data:`False`.
         Defaults to the negation of :attr:`is_pep585_generic` if
@@ -311,11 +311,11 @@ class HintPepMetadata(HintNonpepMetadata):
         ``bool(typevars)``.
     is_type_typing : bool, optional
         :data:`True` only if this hint's class is defined by the :mod:`typing`
-        module. If ``True``, then :attr:`is_pep585_builtin_subscripted` and
+        module. If ``True``, then :attr:`is_pep585_builtin_subbed` and
         :attr:`is_pep585_generic` *must* both be ``False``. Defaults to
         either:
 
-        * If either :attr:`is_pep585_builtin_subscripted` *or*
+        * If either :attr:`is_pep585_builtin_subbed` *or*
           :attr:`is_pep585_generic` are :data:`True`, :data:`False`.
         * Else, :data:`True`.
     is_typing : bool, optional
@@ -358,7 +358,7 @@ class HintPepMetadata(HintNonpepMetadata):
 
         # Optional keyword-only parameters.
         is_args: Optional[bool] = None,
-        is_pep585_builtin_subscripted: Optional[bool] = None,
+        is_pep585_builtin_subbed: Optional[bool] = None,
         is_pep585_generic: Optional[bool] = None,
         is_typevars: bool = None,  # type: ignore[assignment]
         is_type_typing: Optional[bool] = None,
@@ -395,8 +395,8 @@ class HintPepMetadata(HintNonpepMetadata):
         if is_args is None:
             is_args = '[' in hint_repr
         # Default this parameter to true only if...
-        if is_pep585_builtin_subscripted is None:
-            is_pep585_builtin_subscripted = (
+        if is_pep585_builtin_subbed is None:
+            is_pep585_builtin_subbed = (
                 # This hint originates from an origin type *AND*...
                 isinstanceable_type is not None and
                 # The machine-readable representation of this hint is prefixed
@@ -405,7 +405,7 @@ class HintPepMetadata(HintNonpepMetadata):
                 # 585-compliant builtin.
                 hint_repr.startswith(isinstanceable_type.__name__)
             )
-            # print(f'is_pep585_builtin_subscripted: {is_pep585_builtin_subscripted}')
+            # print(f'is_pep585_builtin_subbed: {is_pep585_builtin_subbed}')
             # print(f'hint_repr: {hint_repr}')
             # print(f'isinstanceable_type.__name__: {isinstanceable_type.__name__}')
         # Default this parameter to false, because we can't think of anything
@@ -417,7 +417,7 @@ class HintPepMetadata(HintNonpepMetadata):
         # *NOT* defined by the "typing" module and vice versa.
         if is_type_typing is None:
             is_type_typing = not (
-                is_pep585_builtin_subscripted or is_pep585_generic)
+                is_pep585_builtin_subbed or is_pep585_generic)
         # Default this parameter to true only if this hint is expected to be
         # parametrized by one or more type variables.
         if is_typevars is None:
@@ -435,8 +435,8 @@ class HintPepMetadata(HintNonpepMetadata):
         # initializing these parameters above.
         assert isinstance(is_args, bool), (
             f'{repr(is_args)} not bool.')
-        assert isinstance(is_pep585_builtin_subscripted, bool), (
-            f'{repr(is_pep585_builtin_subscripted)} not bool.')
+        assert isinstance(is_pep585_builtin_subbed, bool), (
+            f'{repr(is_pep585_builtin_subbed)} not bool.')
         assert isinstance(is_pep585_generic, bool), (
             f'{repr(is_pep585_generic)} not bool.')
         assert isinstance(is_type_typing, bool), (
@@ -459,21 +459,21 @@ class HintPepMetadata(HintNonpepMetadata):
             f'"beartype.door.TypeHint" subclass nor "None".'
         )
 
-        # Validate that the "is_pep585_builtin_subscripted" and "is_type_typing"
+        # Validate that the "is_pep585_builtin_subbed" and "is_type_typing"
         # parameters are *NOT* both true. Note, however, that both can be false
         # (e.g., for PEP 484-compliant user-defined generics).
         assert not (
-            (is_pep585_builtin_subscripted or is_pep585_generic) and is_type_typing), (
+            (is_pep585_builtin_subbed or is_pep585_generic) and is_type_typing), (
             f'Mutually incompatible boolean parameters '
             f'is_type_typing={repr(is_type_typing)} and either '
-            f'is_pep585_builtin_subscripted={repr(is_pep585_builtin_subscripted)} or '
+            f'is_pep585_builtin_subbed={repr(is_pep585_builtin_subbed)} or '
             f'is_pep585_generic={repr(is_pep585_generic)} enabled.'
         )
 
         # Classify all passed parameters.
         self.generic_type = generic_type
         self.is_args = is_args
-        self.is_pep585_builtin_subscripted = is_pep585_builtin_subscripted
+        self.is_pep585_builtin_subbed = is_pep585_builtin_subbed
         self.is_pep585_generic = is_pep585_generic
         self.is_typevars = is_typevars
         self.is_type_typing = is_type_typing
@@ -496,7 +496,7 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_args={repr(self.is_args)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_needs_cls_stack={repr(self.is_needs_cls_stack)},',
-            f'    is_pep585_builtin_subscripted={repr(self.is_pep585_builtin_subscripted)},',
+            f'    is_pep585_builtin_subbed={repr(self.is_pep585_builtin_subbed)},',
             f'    is_pep585_generic={repr(self.is_pep585_generic)},',
             f'    is_supported={repr(self.is_supported)},',
             f'    is_typevars={repr(self.is_typevars)},',

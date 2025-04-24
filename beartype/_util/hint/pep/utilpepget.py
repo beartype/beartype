@@ -29,7 +29,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 )
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typevars,
-    is_hint_pep585_generic_unsubscripted,
+    is_hint_pep585_generic_unsubbed,
 )
 from beartype._data.hint.datahinttyping import TupleTypeVars
 
@@ -263,7 +263,7 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
             # tuple of all type variables parametrizing all pseudo-superclasses
             # of this generic;
             get_hint_pep585_generic_typevars(hint)
-            if is_hint_pep585_generic_unsubscripted(hint) else
+            if is_hint_pep585_generic_unsubbed(hint) else
             # Else, this hint is *NOT* a PEP 585-compliant unsubscripted
             # generic. In this case, the empty tuple.
             ()

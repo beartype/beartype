@@ -29,7 +29,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_supported,
 )
 from beartype._util.hint.pep.proposal.pep585 import (
-    is_hint_pep585_builtin_subscripted)
+    is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep484604 import is_hint_pep604
 
 # ....................{ RAISERS                            }....................
@@ -310,7 +310,7 @@ def is_hint_cacheworthy(hint: Hint) -> bool:
             # Note that this additionally includes all third-party type hints
             # that derive from the "types.GenericAlias" superclass, including:
             # * "numpy.typing.NDArray[...]" type hints.
-            is_hint_pep585_builtin_subscripted(hint) or
+            is_hint_pep585_builtin_subbed(hint) or
             # PEP 604-compliant (e.g., "int | str"). This hint is *NOT*
             # self-caching (e.g., "int | str is not int | str").
             #

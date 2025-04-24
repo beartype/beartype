@@ -82,7 +82,7 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
             hint=ref[Any],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=ref,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Weak reference to a living object.
                 HintPithSatisfiedMetadata(heard_in_ref),
@@ -99,7 +99,7 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
             hint=ref[TheCalmOfThought],
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=ref,
-            is_pep585_builtin_subscripted=True,
+            is_pep585_builtin_subbed=True,
             piths_meta=(
                 # Weak reference to a living object.
                 HintPithSatisfiedMetadata(heard_in_ref),

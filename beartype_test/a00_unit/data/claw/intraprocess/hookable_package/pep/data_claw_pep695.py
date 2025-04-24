@@ -52,7 +52,7 @@ from pytest import (
 #
 # Note that we intentionally:
 # * Embed at least two unquoted relative forward references in this alias. Why?
-#   Because the low-level reduce_hint_pep695_unsubscripted() reducer responsible for handling
+#   Because the low-level reduce_hint_pep695_unsubbed() reducer responsible for handling
 #   PEP 695-compliant type aliases is expected to iteratively resolve *ALL*
 #   unquoted relative forward references in this alias -- *NOT* simply the first
 #   relative forward reference in this alias.

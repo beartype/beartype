@@ -420,7 +420,7 @@ def label_type(
     from beartype._util.hint.pep.proposal.pep544 import (
         is_hint_pep544_protocol)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
-        is_hint_pep484585_generic_subscripted)
+        is_hint_pep484585_generic_subbed)
     from beartype._util.text.utiltextansi import color_type
 
     # Label to be returned.
@@ -431,7 +431,7 @@ def label_type(
     # the string "MuhGeneric[str]" given the generic type declaration "class
     # MuhGeneric[T](typing.Generic[T]):"). Alternative labels defined below fail
     # to include the child hint subscripting this subscripted generic.
-    if is_hint_pep484585_generic_subscripted(cls):  # pyright: ignore
+    if is_hint_pep484585_generic_subbed(cls):  # pyright: ignore
         classname = repr(cls)
     # Else, this type is *NOT* a PEP 484- or 585-compliant subscripted generic.
     # In this case...

@@ -18,13 +18,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type
 from beartype._check.pep.checkpep484585generic import (
-    iter_hint_pep484585_generic_unsubscripted_bases_unerased)
+    iter_hint_pep484585_generic_unsubbed_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type)
 from beartype._util.text.utiltextansi import color_hint
 
 # ....................{ GETTERS                            }....................
-def find_cause_pep484585_generic_unsubscripted(
+def find_cause_pep484585_generic_unsubbed(
     cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
@@ -68,7 +68,7 @@ def find_cause_pep484585_generic_unsubscripted(
 
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
-    for hint_sane_child in iter_hint_pep484585_generic_unsubscripted_bases_unerased(
+    for hint_sane_child in iter_hint_pep484585_generic_unsubbed_bases_unerased(
         hint_sane=cause.hint_sane,
         conf=cause.conf,
         exception_prefix=cause.exception_prefix,

@@ -22,7 +22,7 @@ from beartype._data.hint.datahintpep import Hint
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_args)
-from beartype._util.hint.pep.utilpeptest import is_hint_pep_subscripted
+from beartype._util.hint.pep.utilpeptest import is_hint_pep_subbed
 from collections.abc import ItemsView as ItemsViewABC
 
 # ....................{ REDUCERS                           }....................
@@ -62,7 +62,7 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
     hint_reduced: Hint = ItemsViewABC
 
     # If this hint is subscripted by one or more child type hints...
-    if is_hint_pep_subscripted(hint):
+    if is_hint_pep_subbed(hint):
         # Defer heavyweight imports.
         from beartype.vale import IsInstance
 

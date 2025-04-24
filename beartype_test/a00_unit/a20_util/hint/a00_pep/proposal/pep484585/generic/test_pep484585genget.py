@@ -16,7 +16,7 @@ submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+# from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ args                       }....................
 def test_get_hint_pep484585_generic_args_full() -> None:
@@ -303,25 +303,15 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     #     assert get_hint_pep484585_generic_type_or_none(not_hint_pep) is None
 
 # ....................{ TESTS ~ unsubscripted              }....................
-@skip_if_python_version_less_than('3.11.0')
-def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
-    None):
+def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none`
-    getter if the active Python interpreter targets Python >= 3.11.0 *or* reduce
-    to a noop otherwise.
-
-    Python < 3.11 fails to support multiple inheritance in concert with the
-    :class:`typing.Generic` superclass and either of the
-    :class:`typing.NamedTuple` or :class:`typing.TypedDict` superclasses. Ergo,
-    Python < 3.11 fails to support either generic named tuples *or* generic
-    typed dictionaries. Ergo, Python < 3.11 fails to support this unit test.
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_base_extrinsic_sign_or_none`
+    getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype.typing import (
         Generic,
         NamedTuple,
@@ -333,20 +323,15 @@ def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
         HintSignTypedDict,
     )
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none)
-    from beartype_test.a00_unit.data.data_type import Class
-    from pytest import raises
+        get_hint_pep484585_generic_base_extrinsic_sign_or_none)
 
     # ....................{ CLASSES                        }....................
-    class GenericNormal(Generic[T]):
-        '''
-        Arbitrary **normal generic** (i.e., type subclassing only the
-        :pep:`484`-compliant :class:`typing.Generic` superclass and *not*
-        another PEP-compliant :mod:`typing` superclass).
-        '''
-
-        pass
-
+    #FIXME: Useful docstring for when we use the generics defined below.
+    # Python < 3.11 fails to support multiple inheritance in concert with the
+    # :class:`typing.Generic` superclass and either of the
+    # :class:`typing.NamedTuple` or :class:`typing.TypedDict` superclasses. Ergo,
+    # Python < 3.11 fails to support either generic named tuples *or* generic
+    # typed dictionaries. Ergo, Python < 3.11 fails to support this unit test.
 
     #FIXME: When we get around to supporting this, note that "typing.NamedTuple"
     #*ONLY* supports multiple inheritance in partnership with "typing.Generic"
@@ -363,45 +348,40 @@ def test_get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none() -> (
     #     generic_item: T
 
 
-    class GenericTypedDict(TypedDict, Generic[T]):
-        '''
-        Arbitrary **generic typed dictionary** (i.e., type subclassing both the
-        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-        :pep:`589`-compliant :class:`typing.TypedDict` superclass).
-        '''
-
-        generic_item: T
+    #FIXME: Nice, but currently unused.
+    # class GenericTypedDict(TypedDict, Generic[T]):
+    #     '''
+    #     Arbitrary **generic typed dictionary** (i.e., type subclassing both the
+    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+    #     :pep:`589`-compliant :class:`typing.TypedDict` superclass).
+    #     '''
+    #
+    #     generic_item: T
 
     # ....................{ LOCALS                         }....................
-    # Tuple of 2-tuples "(hint_generic_nongeneric, hint_sign_nongeneric)" where:
-    # * "hint_generic_nongeneric" is a PEP 484- or 585-compliant unsubscripted
-    #   generic that also subclasses a PEP-compliant non-generic superclass.
-    # * "hint_sign_nongeneric" is the sign additionally identifying that
-    #   PEP-compliant non-generic superclass.
-    TEST_GENERIC_NONGENERICS = (
-        # Normal generic.
-        (GenericNormal, None),
+    # Tuple of 2-tuples "(hint_base, hint_extrinsic_sign)" where:
+    # * "hint_base" is a valid pseudo-superclass of a PEP 484- or 585-compliant
+    #   generic.
+    # * "hint_extrinsic_sign" is either:
+    #   * If that pseudo-superclass is extrinsic, the sign uniquely identifying
+    #     that pseudo-superclass.
+    #   * If that pseudo-superclass is intrinsic, "None".
+    TEST_GENERIC_BASES_EXTRINSIC_SIGNS = (
+        # Intrinsic PEP 484-compliant "typing.Generic" pseudo-superclass in both
+        # subscripted and unsubscripted forms.
+        (Generic, None),
+        (Generic[T], None),
 
-        #FIXME: *WOOPS.* Looks like @beartype can't even detect subclass-based
-        #"typing.NamedTuple" types. Is that even valid PEP-compliant syntax,
-        #though? Let's investigate this, please. *sigh*
-        # # Generic named tuple.
-        # (GenericNamedTuple, HintSignNamedTuple),
+        # Extrinsic PEP 484-compliant "typing.NamedTuple" pseudo-superclass.
+        (NamedTuple, HintSignNamedTuple),
 
-        # Generic typed dictionary.
-        (GenericTypedDict, HintSignTypedDict),
+        # Extrinsic PEP 589-compliant "typing.TypedDict" pseudo-superclass.
+        (TypedDict, HintSignTypedDict),
     )
 
-    # ....................{ PASS                           }....................
+    # ....................{ ASSERTS                        }....................
     # For each such unsubscripted generic and additional non-generic sign...
-    for hint_generic_nongeneric, hint_sign_nongeneric in (
-        TEST_GENERIC_NONGENERICS):
+    for hint_base, hint_extrinsic_sign in TEST_GENERIC_BASES_EXTRINSIC_SIGNS:
         # Assert that this getter passed this generic returns this sign.
-        assert get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(
-            hint_generic_nongeneric) is hint_sign_nongeneric
-
-    # ....................{ FAIL                           }....................
-    # Assert that this getter passed a non-generic type raises the expected
-    # exception.
-    with raises(BeartypeDecorHintPep484585Exception):
-        get_hint_pep484585_generic_unsubscripted_sign_nongeneric_or_none(Class)
+        assert get_hint_pep484585_generic_base_extrinsic_sign_or_none(
+            hint_base) is hint_extrinsic_sign
