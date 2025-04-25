@@ -319,6 +319,9 @@ test-tox = [
     # platform is a Linux distribution.
     "nuitka >=1.2.6; sys_platform == 'linux'",
 
+    # Required by optional SQLAlchemy-specific integration tests.
+    "sqlalchemy",
+
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 

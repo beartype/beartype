@@ -32,7 +32,6 @@ from beartype._data.hint.datahintpep import (
 )
 from beartype._data.hint.datahinttyping import (
     TupleTypeVars,
-    # TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
@@ -46,8 +45,8 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin,
     get_hint_pep_typevars,
 )
+from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
-# from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(
@@ -604,6 +603,24 @@ def _get_hint_pep484_typevars_to_hints(
             if (
                 # This type variable was bounded or constrained *AND*...
                 typevar_bound is not None and
+                # These bounded constraints are PEP-noncompliant *AND*...
+                #
+                # PEP-compliant constraints are *NOT* safely passable to the
+                # isinstance() or issubclass() testers, even if they technically
+                # are isinstanceable or issubclassable. Why? Consider the
+                # "typing.Any" singleton. Under newer Python versions, the
+                # "typing.Any" singleton is actually defined as a subclassable
+                # type. Although effectively *NO* real-world types subclass
+                # "typing.Any", literally *ALL* objects (including types)
+                # satisfy the "typing.Any" type hint. Passing "typing.Any" as
+                # the second parameter to the issubclass() tester below would
+                # thus erroneously reject (rather than silently accept) *ALL*
+                # objects as unconditionally violating these bounds.
+                not is_hint_pep(typevar_bound) and
+                #FIXME: As follows, please:
+                #* Unit test with "bound=Any". *sigh*
+                #* Integration test with "sqlalchemy". *sigh*
+
                 # These bounded constraints are issubclassable (i.e., an object
                 # safely passable as the second parameter to the issubclass()
                 # builtin) *AND*...

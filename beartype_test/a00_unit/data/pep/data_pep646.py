@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`646` **utility data submodule.**
+Project-wide :pep:`646` **data submodule.**
 
 This submodule exercises :pep:`646` support for statement-level tuple and type
 variable unpacking (e.g., ``*TypeVarTuple('Ts')``, ``*Tuple[int, str]``)

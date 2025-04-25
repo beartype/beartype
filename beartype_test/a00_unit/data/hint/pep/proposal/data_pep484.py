@@ -28,10 +28,21 @@ Note that:
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TypeVar
+from beartype.typing import (
+    Any,
+    TypeVar,
+)
 from collections.abc import Sequence as SequenceABC
 
 # ....................{ TYPEVARS ~ bounded                 }....................
+T_any = TypeVar('T_int', bound=Any)
+'''
+**Unbounded type variable** (i.e., type variable parametrized by the :obj:`.Any`
+singleton passed as the ``bound`` keyword argument, semantically equivalent to
+an unparametrized type variable).
+'''
+
+
 T_int = TypeVar('T_int', bound=int)
 '''
 **Integer-bounded type variable** (i.e., type variable parametrized by the
@@ -432,6 +443,22 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 ),
                 # List of integer constants.
                 HintPithUnsatisfiedMetadata([0xBAAAAAAD, 0xBADDCAFE,]),
+            ),
+        ),
+
+        # User-defined unbounded type variable.
+        HintPepMetadata(
+            hint=T_any,
+            pep_sign=HintSignTypeVar,
+            typehint_cls=TypeVarTypeHint,
+            is_ignorable=True,
+            is_typing=False,
+            piths_meta=(
+                # Integer constant.
+                HintPithSatisfiedMetadata(0xBADD135),
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    'O Saturn! come away, and give them heart;'),
             ),
         ),
 
