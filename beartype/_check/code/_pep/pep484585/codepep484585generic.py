@@ -68,25 +68,24 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # For metadata encapsulating the sanification of each unignorable unerased
     # transitive pseudo-superclass originally declared as a superclass of this
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
-    for hint_child_sane in (
+    for hint_child_sane, hint_child_sign in (
         iter_hint_pep484585_generic_unsubbed_bases_unerased(
             hint_sane=hint_sane,
             conf=hints_meta.conf,
             exception_prefix=hints_meta.exception_prefix,
-        )):
+        )
+    ):
         # print(f'Visiting generic type hint {hint_curr_sane} unerased base {hint_child_sane}...')
 
-        # Generate and append code type-checking this pith
-        # against this pseudo-superclass.
+        # Append code type-checking this pith against this pseudo-superclass.
         hints_meta.func_curr_code += CODE_PEP484585_GENERIC_CHILD_format(
-            hint_child_placeholder=(
-                hints_meta.enqueue_hint_child_sane(
-                    hint_child_sane=hint_child_sane,
-                    # Python expression efficiently reusing the value of this
-                    # pith previously assigned to a local variable by the prior
-                    # expression.
-                    pith_expr=hints_meta.pith_curr_var_name,
-                )
+            hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
+                hint_sane=hint_child_sane,
+                hint_sign=hint_child_sign,
+                # Python expression efficiently reusing the value of this pith
+                # previously assigned to a local variable by the prior
+                # expression.
+                pith_expr=hints_meta.pith_curr_var_name,
             ),
         )
 

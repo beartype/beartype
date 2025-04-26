@@ -30,6 +30,7 @@ def test_sqlalchemy_asyncsession() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import die_if_unbearable
+    from beartype.typing import Optional
     from sqlalchemy.ext.asyncio import AsyncSession
 
     # ....................{ ASSERTS                        }....................
@@ -38,4 +39,4 @@ def test_sqlalchemy_asyncsession() -> None:
     # exceptions. Ideally, this test would fully instantiate an asynchronous
     # SQLALchemy session and pass that as well. Pragmatically, doing so is
     # predictably non-trivial and altogether not worth the hassle. KISS it, yo!
-    die_if_unbearable(None, AsyncSession | None)
+    die_if_unbearable(None, Optional[AsyncSession])

@@ -19,7 +19,6 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import CallableOrClassTypes
 from beartype._data.hint.datahinttyping import (
-    FrozenSetHintSign,
     TypeException,
 )
 from beartype._data.hint.pep.datapeprepr import (
@@ -41,7 +40,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep695TypeAliasSubscripted,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
+# from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
@@ -145,16 +144,8 @@ def get_hint_pep_sign(
 
 
 #FIXME: Revise us up the docstring, most of which is now obsolete.
-#FIXME: Remove the "ignore_hint_signs" parameter, which should no longer be
-#required. *sigh*
 @callable_cached
-def get_hint_pep_sign_or_none(
-    # Mandatory parameters.
-    hint: Any,
-
-    # Optional parameters.
-    ignore_hint_signs: FrozenSetHintSign = FROZENSET_EMPTY,
-) -> Optional[HintSign]:
+def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
     PEP-compliant type hint if PEP-compliant *or* :data:`None` otherwise (i.e.,
@@ -212,45 +203,6 @@ def get_hint_pep_sign_or_none(
     ----------
     hint : Any
         Type hint to be inspected.
-    ignore_hint_signs : FrozenSetHintSign, default: FROZENSET_EMPTY
-        Frozen set of all signs to be ignored rather than returned by this
-        getter. If this getter initially identifies the passed type hint as a
-        sign in this set, this getter will silently ignore that sign and
-        continue attempting to detect this hint as another sign. This set
-        enables callers to iteratively identify hints as multiple signs for the
-        small subset of hints that are identifiable with multiple signs. Most
-        hints are only identifiable as a single unique sign. Some hints,
-        however, satisfy the detection criteria for multiple signs concurrently.
-
-        This getter currently only supports the
-        :data:`.HintSignPep484585GenericUnsubscripted` sign identifying
-        :pep:`484`- and :pep:`585`-compliant unsubscripted generics -- which,
-        due to being user-defined types, may subclass another PEP-compliant
-        :mod:`typing` superclass also identifiable by another sign. Passing
-        ``ignore_hint_signs=frozenset((HintSignPep484585GenericUnsubscripted,))``
-        enables callers to identify that other sign. Prominent examples include:
-
-        * **Generic typed dictionaries** identifiable as both the
-          :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
-          :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
-          dictionaries: e.g.,
-
-          .. code-block:: python
-
-             from typing import Generic, TypedDict
-             class GenericTypedDict[T](TypedDict, Generic[T]):
-                 generic_item: T
-
-        * **Generic named tuples** identifiable as both the
-          :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
-          :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
-          tuples: e.g.,
-
-          .. code-block:: python
-
-             from typing import Generic, NamedTuple
-             class GenericNamedTuple[T](NamedTuple, Generic[T]):
-                 generic_item: T
 
     Returns
     -------
@@ -554,16 +506,7 @@ def get_hint_pep_sign_or_none(
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
-    #
-    # Specifically, if...
-    if (
-        # The caller requested this getter to not ignore (and thus identify)
-        # unsubscripted generics *AND*...
-        HintSignPep484585GenericUnsubscripted not in ignore_hint_signs and
-        # This hint is an unsubscripted generic...
-        is_hint_pep484585_generic_unsubbed(hint)
-    ):
-        # Return the sign identifying unsubscripted generics.
+    if is_hint_pep484585_generic_unsubbed(hint):
         return HintSignPep484585GenericUnsubscripted
     # Else, this hint is *NOT* a PEP 484- or 585-compliant unsubscripted
     # generic.

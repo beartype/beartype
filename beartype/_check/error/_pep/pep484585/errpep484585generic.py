@@ -66,18 +66,20 @@ def find_cause_pep484585_generic_unsubbed(
         return cause_shallow
     # Else, this pith is an instance of this type.
 
-    # For each unignorable unerased transitive pseudo-superclass originally
-    # declared as an erased superclass of this generic...
-    for hint_sane_child in iter_hint_pep484585_generic_unsubbed_bases_unerased(
-        hint_sane=cause.hint_sane,
-        conf=cause.conf,
-        exception_prefix=cause.exception_prefix,
+    # For metadata encapsulating the sanification of each unignorable unerased
+    # transitive pseudo-superclass originally declared as a superclass of this
+    # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
+    for hint_child_sane, hint_child_sign in (
+        iter_hint_pep484585_generic_unsubbed_bases_unerased(
+            hint_sane=cause.hint_sane,
+            conf=cause.conf,
+            exception_prefix=cause.exception_prefix,
+        )
     ):
-        # Cause permuted to reflect this pseudo-superclass.
-        cause_child = cause.permute_cause(hint_sane=hint_sane_child)
-
-        # Deep output cause to be returned, permuted from this input cause.
-        cause_deep = cause_child.find_cause()
+        # Deep output cause to be returned, permuted from this input cause to
+        # reflect this pseudo-superclass.
+        cause_deep = cause.permute_cause(
+            hint_sane=hint_child_sane, hint_sign=hint_child_sign).find_cause()
         # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
 
         # If this pseudo-superclass is the cause of this failure...
@@ -86,7 +88,7 @@ def find_cause_pep484585_generic_unsubbed(
             # metadata describing this pseudo-superclass.
             cause_deep.cause_str_or_none = (
                 f'generic superclass '
-                f'{color_hint(text=repr(cause_child.hint), is_color=cause.conf.is_color)} of '
+                f'{color_hint(text=repr(hint_child_sane.hint), is_color=cause.conf.is_color)} of '
                 f'{cause_deep.cause_str_or_none}'
             )
 

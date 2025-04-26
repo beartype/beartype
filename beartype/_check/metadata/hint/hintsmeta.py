@@ -471,7 +471,7 @@ class HintsMeta(FixedList):
         self,
 
         # Mandatory parameters.
-        hint_child_sane: HintSane,
+        hint_sane: HintSane,
         pith_expr: str,
 
         # Optional parameters.
@@ -496,7 +496,7 @@ class HintsMeta(FixedList):
 
         Parameters
         ----------
-        hint_child_sane : HintSane
+        hint_sane : HintSane
             **Sanified type hint metadata** (i.e., immutable and thus hashable
             object encapsulating *all* metadata returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
@@ -561,14 +561,14 @@ class HintsMeta(FixedList):
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child hint.
         '''
-        assert isinstance(hint_child_sane, HintSane), (
-            f'{repr(hint_child_sane)} not sanified hint metadata.')
+        assert isinstance(hint_sane, HintSane), (
+            f'{repr(hint_sane)} not sanified hint metadata.')
         # print(f'Enqueing child hint {self.index_last+1} with {repr(kwargs)}...')
 
         # If the caller did *NOT* pass a non-default sign identifying this hint,
         # default this sign to the default sign identifying this hint.
         if hint_sign is SENTINEL:
-            hint_sign = get_hint_pep_sign_or_none(hint_child_sane.hint)
+            hint_sign = get_hint_pep_sign_or_none(hint_sane.hint)
         # Else, the caller passed a non-default sign identifying this hint.
         # Preserve this sign as is.
 
@@ -587,7 +587,7 @@ class HintsMeta(FixedList):
 
         # Replace prior fields of this metadata with the passed fields.
         hint_meta.reinit(
-            hint_sane=hint_child_sane,
+            hint_sane=hint_sane,
             hint_sign=hint_sign,  # type: ignore[arg-type]
             indent_level=self.indent_level_child,
             pith_expr=pith_expr,

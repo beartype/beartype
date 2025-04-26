@@ -97,11 +97,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import (
+    Iterable,
+    Tuple,
+)
 from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
-    IterableHintSane,
+    # IterableHintSane,
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
@@ -109,12 +113,14 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
 )
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_base_extrinsic_sign_or_none,
     get_hint_pep484585_generic_bases_unerased,
 )
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
@@ -132,8 +138,8 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> IterableHintSane:
-# ) -> Iterable[Tuple[HintSane, HintSign]]:
+# ) -> IterableHintSane:
+) -> Iterable[Tuple[HintSane, HintSign]]:
     '''
     Generator iteratively yielding the one or more **unerased
     pseudo-superclasses** (i.e., unignorable PEP-compliant type hints originally
@@ -365,13 +371,17 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # While the 0-based index of the next visited pseudo-superclass does *NOT*
     # exceed that of the last pseudo-superclass in this list, there remains one
     # or more pseudo-superclasses to be visited in this BFS. Let us do so.
+    #
+    # Each iteration of this search is subdivided into two phases, enabling this
+    # search to discern between intrinsic and extrinsic pseudo-superclasses --
+    # whose handling is fundamentally different. See the function docstring for
+    # the distinction between the two.
     while hint_bases_index_curr < hint_bases_index_past_last:
+        # ....................{ LOCALS                     }....................
+        # Current pseudo-superclass of this unsubscripted generic.
+        hint_base = hint_bases[hint_bases_index_curr]
+
         # ....................{ PHASE ~ extrinsic          }....................
-        # Each iteration of this search is subdivided into two phases, enabling
-        # this search to discern between intrinsic and extrinsic
-        # pseudo-superclasses -- whose handling is fundamentally different here.
-        # See the docstring for the distinction between the two.
-        #
         # In this first phase, we:
         # 1. Decide whether this pseudo-superclass is extrinsic.
         # 2. If so, return this subscripted generic (rather than this
@@ -395,90 +405,112 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         #   more fine-grained data for type-checking purposes than intrinsic
         #   pseudo-superclasses; the former are thus preferable to the latter.
 
-        #FIXME: Implement us up, please. To do so:
-        #* Define a new
-        #  get_hint_pep484585_generic_unsubbed_subsign_or_none() getter
-        #  in the existing
-        #  "beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget"
-        #  submodule.
-        #* Call that getter here.
-        #* If the resulting sign is non-"None", return that sign.
-        #* Else, continue to the next phase.
+        # Sign additionally identifying this pseudo-superclass if this
+        # pseudo-superclass is extrinsic *OR* "None" otherwise (i.e., if this
+        # pseudo-superclass is intrinsic).
+        hint_base_extrinsic_sign = (
+            get_hint_pep484585_generic_base_extrinsic_sign_or_none(
+                hint_base=hint_base,
+                exception_cls=exception_cls,
+                exception_prefix=exception_prefix,
+            ))
 
+        # If this pseudo-superclass is extrinsic, yield the 2-tuple of:
+        # * This *UNSUBSCRIPTED GENERIC* (rather than this extrinsic
+        #   pseudo-superclass). Why? Because, by definition, an extrinsic
+        #   pseudo-superclass itself conveys insufficient metadata required
+        #   to type-check the unsubscripted generic subclassing that
+        #   pseudo-superclass; that metadata is extrinsic to that
+        #   pseudo-superclass, residing in this unsubscripted generic.
+        # * This sign.
+        if hint_base_extrinsic_sign is not None:
+            yield hint_sane, hint_base_extrinsic_sign
+        # Else, this pseudo-superclass is intrinsic. Continue to the next phase
+        # deciding the sign identifying this intrinsic.
+        #
         # ....................{ PHASE ~ intrinsic          }....................
         # In this second phase, we fallback to treating this pseudo-superclass
         # as intrinsic by returning this this pseudo-superclass *AND* the sign
         # uniquely identifying this pseudo-superclass. This is the common case.
+        else:
+            # Sane pseudo-superclass sanified from this possibly insane
+            # pseudo-superclass if sanifying this pseudo-superclass did not
+            # generate supplementary metadata *OR* that metadata (i.e., if doing
+            # so generated supplementary metadata).
+            hint_base_sane = sanify_hint_child(
+                hint=hint_base,
+                hint_parent_sane=hint_sane,
+                cls_stack=cls_stack,
+                conf=conf,
+                exception_prefix=exception_prefix,
+            )
+            # print(f'generic {hint} base: {repr(hint_base)}')
 
-        # Sane pseudo-superclass sanified from this possibly insane
-        # pseudo-superclass if sanifying this pseudo-superclass did not generate
-        # supplementary metadata *OR* that metadata (i.e., if doing so generated
-        # supplementary metadata).
-        hint_sane_base = sanify_hint_child(
-            hint=hint_bases[hint_bases_index_curr],
-            hint_parent_sane=hint_sane,
-            cls_stack=cls_stack,
-            conf=conf,
-            exception_prefix=exception_prefix,
-        )
-        # print(f'generic {hint} base: {repr(hint_base)}')
+            # If this pseudo-superclass is unignorable...
+            if hint_base_sane is not HINT_SANE_IGNORABLE:
+                # Sanified pseudo-superclass encapsulated by this metadata.
+                hint_base = hint_base_sane.hint
 
-        # If this pseudo-superclass is unignorable...
-        if hint_sane_base is not HINT_SANE_IGNORABLE:
-            # Pseudo-superclass encapsulated by this metadata.
-            hint_base = hint_sane_base.hint
+                # If this pseudo-superclass is a user-defined PEP 484-compliant
+                # generic or 544-compliant protocol, generate *NO* type-checking
+                # code for this pseudo-superclass; instead, we only enqueue
+                # *ALL* parent pseudo-superclasses of this child
+                # pseudo-superclass for visitation by later iteration of this
+                # inner BFS.
+                #
+                # See "hints_bases" for explanatory commentary.
+                if is_hint_pep484585_generic_user(hint_base):
+                    # Tuple of the one or more parent pseudo-superclasses of
+                    # this child pseudo-superclass.
+                    hint_base_bases = get_hint_pep484585_generic_bases_unerased(
+                        hint=hint_base,
+                        exception_cls=exception_cls,
+                        exception_prefix=exception_prefix,
+                    )
 
-            # If this pseudo-superclass is a user-defined PEP 484-compliant
-            # generic or 544-compliant protocol, generate *NO* type-checking
-            # code for this pseudo-superclass; instead, we only enqueue *ALL*
-            # parent pseudo-superclasses of this child pseudo-superclass for
-            # visitation by later iteration of this inner BFS.
-            #
-            # See "hints_bases" for explanatory commentary.
-            if is_hint_pep484585_generic_user(hint_base):
-                # Tuple of the one or more parent pseudo-superclasses of this
-                # child pseudo-superclass.
-                hint_base_bases = get_hint_pep484585_generic_bases_unerased(
-                    hint=hint_base,
-                    exception_cls=exception_cls,
-                    exception_prefix=exception_prefix,
-                )
+                    # 0-based index of the last pseudo-superclass of this list
+                    # *BEFORE* adding onto this list.
+                    hint_bases_index_past_last_prev = hint_bases_index_past_last
 
-                # 0-based index of the last pseudo-superclass of this list
-                # *BEFORE* adding onto this list.
-                hint_bases_index_past_last_prev = hint_bases_index_past_last
+                    # 0-based index of the last pseudo-superclass of this list
+                    # *AFTER* adding onto this list.
+                    hint_bases_index_past_last += len(hint_base_bases)
 
-                # 0-based index of the last pseudo-superclass of this list
-                # *AFTER* adding onto this list.
-                hint_bases_index_past_last += len(hint_base_bases)
+                    # Enqueue these superclasses onto this list.
+                    hint_bases[
+                        hint_bases_index_past_last_prev:
+                        hint_bases_index_past_last
+                    ] = hint_base_bases
+                # Else, this pseudo-superclass is neither an ignorable
+                # user-defined PEP 484-compliant generic *NOR* an ignorable
+                # 544-compliant protocol. In either case, this pseudo-superclass
+                # is unignorable. In this case...
+                else:
+                    # Sign uniquely identifying this intrinsic pseudo-superclass
+                    # if this pseudo-superclass is PEP-compliant *OR* "None"
+                    # otherwise (i.e., if this pseudo-superclass is
+                    # PEP-noncompliant).
+                    hint_base_intrinsic_sign = get_hint_pep_sign_or_none(hint_base)
 
-                # Enqueue these superclasses onto this list.
-                hint_bases[
-                    hint_bases_index_past_last_prev:
-                    hint_bases_index_past_last
-                ] = hint_base_bases
-            # Else, this pseudo-superclass is neither an ignorable user-defined
-            # PEP 484-compliant generic *NOR* an ignorable 544-compliant
-            # protocol.
-
-            #FIXME: Improve commentary. This is *HIGHLY* non-trivial.
-            # If this pseudo-superclass is identified by a sign, this
-            # pseudo-superclass is *NOT* an isinstanceable type conveying *NO*
-            # meaningful semantics. This pseudo-superclass is unignorable. Yield
-            # this unignorable pseudo-superclass.
-            elif get_hint_pep_sign_or_none(hint_base) is not None:
-                yield hint_sane_base
-            # Else, this pseudo-superclass is an isinstanceable type conveying
-            # *NO* meaningful semantics and is thus effectively ignorable. Why?
-            # Because the caller already type-checks this pith against the
-            # generic subclassing this superclass and thus this superclass as
-            # well in an isinstance() call (e.g., in the
-            # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
-            # "beartype._check.code.codemake" submodule).
-        # Else, this pseudo-superclass is ignorable.
-        # else:
-        #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')
-        #     print(f'Is generic {hint} base {repr(hint_base)} type? {isinstance(hint_base, type)}')
+                    # If this pseudo-superclass is PEP-compliant, this
+                    # pseudo-superclass is a type hint conveying meaningful
+                    # semantics. Yield the 2-tuple of:
+                    # * This intrinsic pseudo-superclass.
+                    # * This sign.
+                    if hint_base_intrinsic_sign is not None:
+                        yield hint_base_sane, hint_base_intrinsic_sign
+                    # Else, this pseudo-superclass is an isinstanceable type
+                    # conveying *NO* meaningful semantics and is thus
+                    # effectively ignorable. Why? Because the caller already
+                    # type-checks this pith against the generic subclassing this
+                    # superclass and thus this superclass as well in an
+                    # isinstance() call (e.g., in the
+                    # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
+                    # "beartype._check.code.codemake" submodule).
+            # Else, this pseudo-superclass is ignorable.
+            # else:
+            #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')
+            #     print(f'Is generic {hint} base {repr(hint_base)} type? {isinstance(hint_base, type)}')
 
         # Nullify the previously visited pseudo-superclass in this list.
         hint_bases[hint_bases_index_curr] = None

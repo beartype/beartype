@@ -272,7 +272,7 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
         hints_meta.func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
             # Expression yielding the value of this pith.
             hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                hint_child_sane=hint_child_sane_pep,
+                hint_sane=hint_child_sane_pep,
                 pith_expr=(
                     # If either...
                     #

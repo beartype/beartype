@@ -817,6 +817,167 @@ child hints transitively subscripting this pseudo-superclass).
 # Delete the above counter for safety and sanity in equal measure.
 del __hint_bases_counter
 
+# ....................{ GETTERS ~ base                     }....................
+def get_hint_pep484585_generic_base_extrinsic_sign_or_none(
+    # Mandatory parameters.
+    hint_base: Hint,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> Optional[HintSign]:
+    '''
+    **Sign** (i.e., :data:`.HintSign` object) additionally identifying the
+    passed **unerased pseudo-superclass** (i.e., PEP-compliant object originally
+    declared as a transitive superclass prior to type erasure of some
+    :pep:`484`- or :pep:`585`-compliant generic type) if this pseudo-superclass
+    is extrinsically identifiable by a sign *or* :data:`None` otherwise (i.e.,
+    if this pseudo-superclass is *not* extrinsically identifiable by a sign).
+
+    This getter enables callers to distinguish extrinsic from intrinsic
+    pseudo-superclasses. Notably, when passed:
+
+    * An **intrinsic pseudo-superclass** (i.e., whose type-checking is
+      intrinsically defined as a type hint such that all data required to
+      type-check this pseudo-superclass is fully defined by this hint), this
+      getter returns :data:`None`. This is the common case and, indeed, almost
+      all cases. Examples include :pep:`484`- and :pep:`585`-compliant
+      subscripted container type hints: e.g.,
+
+      .. code-block:: pycon
+
+         # The PEP 585-compliant "list[T]" pseudo-superclass is a valid hint
+         # whose type-checking is intrinsic to this hint.
+         >>> class GenericList[T](list[T]):
+         ...     def generic_method(self, arg: T) -> T:
+         ...         return arg
+
+         # This pseudo-superclass has *NO* extrinsic sign.
+         >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
+         ...     list[T])
+         None
+
+    * An **extrinsic pseudo-superclass (i.e., whose type-checking is
+      extrinsically defined by this unsubscripted generic such that only the
+      combination of this pseudo-superclass and this unsubscripted generic
+      suffices to provide all data required to type-check this
+      pseudo-superclass), the sign identifying this pseudo-superclass. Extrinsic
+      pseudo-superclasses are *not* necessarily valid type hints, though some
+      might be. Examples include:
+
+      * **Generic named tuples** (i.e., types subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`484`-compliant :class:`typing.NamedTuple` superclass): e.g.,
+
+        .. code-block:: pycon
+
+           # The PEP 484-compliant "NamedTuple" pseudo-superclass is *NOT* a
+           # valid hint (due to being a function rather than a type) whose
+           # type-checking is extrinsic to this hint.
+           >>> from typing import Generic, NamedTuple
+           >>> class GenericNamedTuple[T](NamedTuple, Generic[T]):
+           ...     generic_item: T
+
+           # This pseudo-superclass has an extrinsic sign.
+           >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
+           ...     NamedTuple)
+           HintSignNamedTuple
+
+      * **Generic typed dictionaries** (i.e., types subclassing both the
+        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+        :pep:`589`-compliant :class:`typing.TypedDict` superclass): e.g.,
+
+        .. code-block:: pycon
+
+           # The PEP 589-compliant "TypedDict" pseudo-superclass is a valid hint
+           # (due to being a type) but whose type-checking is still extrinsic to
+           # this hint.
+           >>> from typing import Generic, TypedDict
+           >>> class GenericTypedDict[T](TypedDict, Generic[T]):
+           ...     generic_item: T
+
+           # This pseudo-superclass has an extrinsic sign.
+           >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
+           ...     TypedDict)
+           HintSignTypedDict
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint_base : Hint
+        Pseudo-superclass to be inspected.
+
+    Returns
+    -------
+    Optional[HintSign]
+        Either:
+
+        * If this pseudo-superclass is extrinsic, the sign uniquely identifying
+          this pseudo-superclass.
+        * If this pseudo-superclass is intrinsic, :data:`None`.
+    '''
+
+    # ..................{ SYNOPSIS                           }..................
+    # For efficiency, this tester identifies the sign of this pseudo-superclass
+    # with multiple phases performed in descending order of average time
+    # complexity (i.e., expected efficiency).
+    #
+    # Note that we intentionally avoid validating this pseudo-superclass to
+    # be a PEP-compliant type hint (e.g., by calling the die_unless_hint_pep()
+    # validator). Why? Because some pseudo-superclasses are *NOT* PEP-compliant
+    # type hints in the global sense; they're only PEP-compliant when
+    # contextually listed as a pseudo-superclass (e.g., the "typing.NamedTuple"
+    # function, which is a function and thus invalid as a type hint).
+
+    # ..................{ PHASE ~ (class|callable)           }..................
+    # This phase attempts to map from the fully-qualified name of this
+    # pseudo-superclass if this pseudo-superclass is either a type or callable
+    # to a sign identifying *ALL* extrinsic pseudo-superclasss that are
+    # literally that type or callable.
+
+    # If this pseudo-superclass is either a type or callable, this
+    # pseudo-superclass necessarily defines the "__qualname__" dunder attribute
+    # tested below. In this case...
+    if isinstance(hint_base, CallableOrClassTypes):
+        #FIXME: Is this actually the case? Do non-physical classes dynamically
+        #defined at runtime actually define *BOTH* of these dunder attributes:
+        #* "pseudo-superclass_type.__module__"?
+        #* "pseudo-superclass_type.__qualname__"?
+
+        # Dictionary mapping from the unqualified basenames of all extrinsic
+        # pseudo-superclasses that are types or callables residing in the
+        # package defining this hint that are uniquely identifiable by those
+        # types or callables to their identifying signs if that package is
+        # recognized *OR* the empty dictionary otherwise (i.e., if the package
+        # defining this pseudo-superclass is unrecognized).
+        hint_base_extrinsic_basename_to_sign = (
+            HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN.get(
+                hint_base.__module__, FROZENDICT_EMPTY))
+
+        # Sign identifying this pseudo-superclass if this pseudo-superclass is
+        # identifiable by its basename *OR* "None" otherwise.
+        hint_base_extrinsic_sign = hint_base_extrinsic_basename_to_sign.get(
+            hint_base.__qualname__)
+        # print(f'pseudo-superclass: {pseudo-superclass}')
+        # print(f'pseudo-superclass_sign [by self]: {pseudo-superclass_sign}')
+        # print(f'lookup table: {HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN}')
+
+        # If this pseudo-superclass is identifiable by its basename, return
+        # this sign.
+        if hint_base_extrinsic_sign:
+            return hint_base_extrinsic_sign
+        # Else, this pseudo-superclass is *NOT* identifiable by its basename.
+    # Else, this pseudo-superclass is *NOT* a class.
+
+    # ..................{ RETURN                             }..................
+    # This pseudo-superclass *MUST* be intrinsic, which is the common case.
+
+    # Return "None" to inform the caller this pseudo-superclass is intrinsic.
+    return None
+
 # ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(
     # Mandatory parameters.
@@ -1368,167 +1529,4 @@ def get_hint_pep484585_generic_type_or_none(hint: Hint) -> Optional[type]:
     # *NO* origin type.
 
     # Return the "None" singleton.
-    return None
-
-# ....................{ GETTERS ~ unsubscripted            }....................
-#FIXME: Actually call this getter from the
-#iter_hint_pep484585_generic_unsubbed_bases_unerased() iterator, please.
-def get_hint_pep484585_generic_base_extrinsic_sign_or_none(
-    # Mandatory parameters.
-    hint_base: Hint,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
-    exception_prefix: str = '',
-) -> Optional[HintSign]:
-    '''
-    **Sign** (i.e., :data:`.HintSign` object) additionally identifying the
-    passed **unerased pseudo-superclass** (i.e., PEP-compliant object originally
-    declared as a transitive superclass prior to type erasure of some
-    :pep:`484`- or :pep:`585`-compliant generic type) if this pseudo-superclass
-    is extrinsically identifiable by a sign *or* :data:`None` otherwise (i.e.,
-    if this pseudo-superclass is *not* extrinsically identifiable by a sign).
-
-    This getter enables callers to distinguish extrinsic from intrinsic
-    pseudo-superclasses. Notably, when passed:
-
-    * An **intrinsic pseudo-superclass** (i.e., whose type-checking is
-      intrinsically defined as a type hint such that all data required to
-      type-check this pseudo-superclass is fully defined by this hint), this
-      getter returns :data:`None`. This is the common case and, indeed, almost
-      all cases. Examples include :pep:`484`- and :pep:`585`-compliant
-      subscripted container type hints: e.g.,
-
-        .. code-block:: pycon
-
-           # The PEP 585-compliant "list[T]" pseudo-superclass is a valid hint
-           # whose type-checking is intrinsic to this hint.
-           >>> class GenericList[T](list[T]):
-           ...     def generic_method(self, arg: T) -> T:
-           ...         return arg
-
-           # This pseudo-superclass has *NO* extrinsic sign.
-           >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
-           ...     list[T])
-           None
-
-    * An **extrinsic pseudo-superclass (i.e., whose type-checking is
-      extrinsically defined by this unsubscripted generic such that only the
-      combination of this pseudo-superclass and this unsubscripted generic
-      suffices to provide all data required to type-check this
-      pseudo-superclass), the sign identifying this pseudo-superclass. Extrinsic
-      pseudo-superclasses are *not* necessarily valid type hints, though some
-      might be. Examples include:
-
-      * **Generic named tuples** (i.e., types subclassing both the
-        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-        :pep:`484`-compliant :class:`typing.NamedTuple` superclass): e.g.,
-
-        .. code-block:: pycon
-
-           # The PEP 484-compliant "NamedTuple" pseudo-superclass is *NOT* a
-           # valid hint (due to being a function rather than a type) whose
-           # type-checking is extrinsic to this hint.
-           >>> from typing import Generic, NamedTuple
-           >>> class GenericNamedTuple[T](NamedTuple, Generic[T]):
-           ...     generic_item: T
-
-           # This pseudo-superclass has an extrinsic sign.
-           >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
-           ...     NamedTuple)
-           HintSignNamedTuple
-
-      * **Generic typed dictionaries** (i.e., types subclassing both the
-        :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-        :pep:`589`-compliant :class:`typing.TypedDict` superclass): e.g.,
-
-        .. code-block:: pycon
-
-           # The PEP 589-compliant "TypedDict" pseudo-superclass is a valid hint
-           # (due to being a type) but whose type-checking is still extrinsic to
-           # this hint.
-           >>> from typing import Generic, TypedDict
-           >>> class GenericTypedDict[T](TypedDict, Generic[T]):
-           ...     generic_item: T
-
-           # This pseudo-superclass has an extrinsic sign.
-           >>> get_hint_pep484585_generic_unsubbed_sign_extrinsic_or_none(
-           ...     TypedDict)
-           HintSignTypedDict
-
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint_base : Hint
-        Pseudo-superclass to be inspected.
-
-    Returns
-    -------
-    Optional[HintSign]
-        Either:
-
-        * If this pseudo-superclass is extrinsic, the sign uniquely identifying
-          this pseudo-superclass.
-        * If this pseudo-superclass is intrinsic, :data:`None`.
-    '''
-
-    # ..................{ SYNOPSIS                           }..................
-    # For efficiency, this tester identifies the sign of this pseudo-superclass
-    # with multiple phases performed in descending order of average time
-    # complexity (i.e., expected efficiency).
-    #
-    # Note that we intentionally avoid validating this pseudo-superclass to
-    # be a PEP-compliant type hint (e.g., by calling the die_unless_hint_pep()
-    # validator). Why? Because some pseudo-superclasses are *NOT* PEP-compliant
-    # type hints in the global sense; they're only PEP-compliant when
-    # contextually listed as a pseudo-superclass (e.g., the "typing.NamedTuple"
-    # function, which is a function and thus invalid as a type hint).
-
-    # ..................{ PHASE ~ (class|callable)           }..................
-    # This phase attempts to map from the fully-qualified name of this
-    # pseudo-superclass if this pseudo-superclass is either a type or callable
-    # to a sign identifying *ALL* extrinsic pseudo-superclasss that are
-    # literally that type or callable.
-
-    # If this pseudo-superclass is either a type or callable, this
-    # pseudo-superclass necessarily defines the "__qualname__" dunder attribute
-    # tested below. In this case...
-    if isinstance(hint_base, CallableOrClassTypes):
-        #FIXME: Is this actually the case? Do non-physical classes dynamically
-        #defined at runtime actually define *BOTH* of these dunder attributes:
-        #* "pseudo-superclass_type.__module__"?
-        #* "pseudo-superclass_type.__qualname__"?
-
-        # Dictionary mapping from the unqualified basenames of all extrinsic
-        # pseudo-superclasses that are types or callables residing in the
-        # package defining this hint that are uniquely identifiable by those
-        # types or callables to their identifying signs if that package is
-        # recognized *OR* the empty dictionary otherwise (i.e., if the package
-        # defining this pseudo-superclass is unrecognized).
-        hint_base_extrinsic_basename_to_sign = (
-            HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN.get(
-                hint_base.__module__, FROZENDICT_EMPTY))
-
-        # Sign identifying this pseudo-superclass if this pseudo-superclass is
-        # identifiable by its basename *OR* "None" otherwise.
-        hint_base_extrinsic_sign = hint_base_extrinsic_basename_to_sign.get(
-            hint_base.__qualname__)
-        # print(f'pseudo-superclass: {pseudo-superclass}')
-        # print(f'pseudo-superclass_sign [by self]: {pseudo-superclass_sign}')
-        # print(f'lookup table: {HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN}')
-
-        # If this pseudo-superclass is identifiable by its basename, return
-        # this sign.
-        if hint_base_extrinsic_sign:
-            return hint_base_extrinsic_sign
-        # Else, this pseudo-superclass is *NOT* identifiable by its basename.
-    # Else, this pseudo-superclass is *NOT* a class.
-
-    # ..................{ RETURN                             }..................
-    # This pseudo-superclass *MUST* be intrinsic, which is the common case.
-
-    # Return "None" to inform the caller this pseudo-superclass is intrinsic.
     return None

@@ -325,7 +325,7 @@ def make_check_expr(
     #   Python code snippet type-checking the root pith expression (i.e.,
     #   "VAR_NAME_PITH_ROOT") against the root hint (i.e., "hint_root").
     func_root_code = hints_meta.enqueue_hint_child_sane(
-        hint_child_sane=hint_sane, pith_expr=VAR_NAME_PITH_ROOT)
+        hint_sane=hint_sane, pith_expr=VAR_NAME_PITH_ROOT)
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
@@ -765,7 +765,7 @@ def make_check_expr(
                                     CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
                                         hint_child_placeholder=(
                                             hints_meta.enqueue_hint_child_sane(
-                                                hint_child_sane=hint_child_sane,
+                                                hint_sane=hint_child_sane,
                                                 pith_expr=pith_child_expr,
                                             )
                                         ),
@@ -903,7 +903,7 @@ def make_check_expr(
                                 # against this hint.
                                 hint_key_placeholder = (
                                     hints_meta.enqueue_hint_child_sane(
-                                        hint_child_sane=hint_child_sane_key,
+                                        hint_sane=hint_child_sane_key,
                                         pith_expr=pith_key_var_name,
                                     ))
 
@@ -912,7 +912,7 @@ def make_check_expr(
                                 # against this hint.
                                 hint_value_placeholder = (
                                     hints_meta.enqueue_hint_child_sane(
-                                        hint_child_sane=hint_child_sane_value,
+                                        hint_sane=hint_child_sane_value,
                                         pith_expr=CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
                                             pith_curr_var_name=(
                                                 hints_meta.pith_curr_var_name),
@@ -946,8 +946,7 @@ def make_check_expr(
                                         # child key pith against this hint.
                                         hint_key_placeholder=(
                                             hints_meta.enqueue_hint_child_sane(
-                                                hint_child_sane=(
-                                                    hint_child_sane_key),
+                                                hint_sane=hint_child_sane_key,
                                                 pith_expr=CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
                                                     pith_curr_var_name=(
                                                         hints_meta.pith_curr_var_name)),
@@ -969,8 +968,7 @@ def make_check_expr(
                                     # child value pith against this hint.
                                     hint_value_placeholder=(
                                         hints_meta.enqueue_hint_child_sane(
-                                            hint_child_sane=(
-                                                hint_child_sane_value),
+                                            hint_sane=hint_child_sane_value,
                                             pith_expr=CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
                                                 pith_curr_var_name=(
                                                     hints_meta.pith_curr_var_name)),
@@ -1074,7 +1072,7 @@ def make_check_expr(
                                 # Ergo, we need *NOT* explicitly validate that here.
                                 hint_child_placeholder=(
                                     hints_meta.enqueue_hint_child_sane(
-                                        hint_child_sane=hint_child_sane,
+                                        hint_sane=hint_child_sane,
                                         pith_expr=hints_meta.pith_curr_assign_expr,
                                     )
                                 ),
@@ -1257,8 +1255,7 @@ def make_check_expr(
                 # code snippet type-checking the current pith against this
                 # unsubscripted generic.
                 elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
-                    make_hint_pep484585_generic_unsubbed_check_expr(
-                        hints_meta)
+                    make_hint_pep484585_generic_unsubbed_check_expr(hints_meta)
                 # Else, this hint is *NOT* an unsubscripted generic.
                 #
                 # ............{ PEP 484 ~ type variable            }............

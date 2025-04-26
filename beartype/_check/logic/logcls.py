@@ -301,9 +301,7 @@ class HintLogicQuasiiterable(HintLogicABC):
             collection_abc_expr=collection_abc_expr,
             sequence_abc_expr=sequence_abc_expr,
             hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                hint_child_sane=hint_child_sane,
-                pith_expr=pith_child_var_name,
-            ),
+                hint_sane=hint_child_sane, pith_expr=pith_child_var_name),
         )
 
 # ....................{ SUBCLASSES ~ (reiterable|sequence) }....................
@@ -382,7 +380,7 @@ class _HintLogicReiterableOrSequence(HintLogicABC):
                 pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
                 pith_curr_var_name=hints_meta.pith_curr_var_name,
                 hint_child_placeholder=hints_meta.enqueue_hint_child_sane(
-                    hint_child_sane=hint_child_sane,
+                    hint_sane=hint_child_sane,
                     # Python expression efficiently yielding some item of this
                     # pith to be deeply type-checked against this child hint.
                     pith_expr=self._pith_child_expr_format(

@@ -139,6 +139,90 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         get_hint_pep484585_generic_args_full(Nongeneric)
 
 # ....................{ TESTS ~ base                       }....................
+def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_base_extrinsic_sign_or_none`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.typing import (
+        Generic,
+        NamedTuple,
+        TypedDict,
+    )
+    from beartype._data.hint.datahinttyping import T
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignNamedTuple,
+        HintSignTypedDict,
+    )
+    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+        get_hint_pep484585_generic_base_extrinsic_sign_or_none)
+
+    # ....................{ CLASSES                        }....................
+    #FIXME: Useful docstring for when we use the generics defined below.
+    # Python < 3.11 fails to support multiple inheritance in concert with the
+    # :class:`typing.Generic` superclass and either of the
+    # :class:`typing.NamedTuple` or :class:`typing.TypedDict` superclasses. Ergo,
+    # Python < 3.11 fails to support either generic named tuples *or* generic
+    # typed dictionaries. Ergo, Python < 3.11 fails to support this unit test.
+
+    #FIXME: When we get around to supporting this, note that "typing.NamedTuple"
+    #*ONLY* supports multiple inheritance in partnership with "typing.Generic"
+    #under Python >= 3.11. Under older Python versions, the "typing" module
+    #raises the following exception on attempting to define such subclasses:
+    #    TypeError: Multiple inheritance with NamedTuple is not supported
+    # class GenericNamedTuple(NamedTuple, Generic[T]):
+    #     '''
+    #     Arbitrary **generic named tuple** (i.e., type subclassing both the
+    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+    #     :pep:`484`-compliant :class:`typing.NamedTuple` superclass).
+    #     '''
+    #
+    #     generic_item: T
+
+
+    #FIXME: Nice, but currently unused.
+    # class GenericTypedDict(TypedDict, Generic[T]):
+    #     '''
+    #     Arbitrary **generic typed dictionary** (i.e., type subclassing both the
+    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
+    #     :pep:`589`-compliant :class:`typing.TypedDict` superclass).
+    #     '''
+    #
+    #     generic_item: T
+
+    # ....................{ LOCALS                         }....................
+    # Tuple of 2-tuples "(hint_base, hint_extrinsic_sign)" where:
+    # * "hint_base" is a valid pseudo-superclass of a PEP 484- or 585-compliant
+    #   generic.
+    # * "hint_extrinsic_sign" is either:
+    #   * If that pseudo-superclass is extrinsic, the sign uniquely identifying
+    #     that pseudo-superclass.
+    #   * If that pseudo-superclass is intrinsic, "None".
+    TEST_GENERIC_BASES_EXTRINSIC_SIGNS = (
+        # Intrinsic PEP 484-compliant "typing.Generic" pseudo-superclass in both
+        # subscripted and unsubscripted forms.
+        (Generic, None),
+        (Generic[T], None),
+
+        # Extrinsic PEP 484-compliant "typing.NamedTuple" pseudo-superclass.
+        (NamedTuple, HintSignNamedTuple),
+
+        # Extrinsic PEP 589-compliant "typing.TypedDict" pseudo-superclass.
+        (TypedDict, HintSignTypedDict),
+    )
+
+    # ....................{ ASSERTS                        }....................
+    # For each such unsubscripted generic and additional non-generic sign...
+    for hint_base, hint_extrinsic_sign in TEST_GENERIC_BASES_EXTRINSIC_SIGNS:
+        # Assert that this getter passed this generic returns this sign.
+        assert get_hint_pep484585_generic_base_extrinsic_sign_or_none(
+            hint_base) is hint_extrinsic_sign
+
+
 def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
     '''
     Test the
@@ -301,87 +385,3 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     # # type hints.
     # for not_hint_pep in NOT_HINTS_PEP:
     #     assert get_hint_pep484585_generic_type_or_none(not_hint_pep) is None
-
-# ....................{ TESTS ~ unsubscripted              }....................
-def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_base_extrinsic_sign_or_none`
-    getter.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype.typing import (
-        Generic,
-        NamedTuple,
-        TypedDict,
-    )
-    from beartype._data.hint.datahinttyping import T
-    from beartype._data.hint.pep.sign.datapepsigns import (
-        HintSignNamedTuple,
-        HintSignTypedDict,
-    )
-    from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
-        get_hint_pep484585_generic_base_extrinsic_sign_or_none)
-
-    # ....................{ CLASSES                        }....................
-    #FIXME: Useful docstring for when we use the generics defined below.
-    # Python < 3.11 fails to support multiple inheritance in concert with the
-    # :class:`typing.Generic` superclass and either of the
-    # :class:`typing.NamedTuple` or :class:`typing.TypedDict` superclasses. Ergo,
-    # Python < 3.11 fails to support either generic named tuples *or* generic
-    # typed dictionaries. Ergo, Python < 3.11 fails to support this unit test.
-
-    #FIXME: When we get around to supporting this, note that "typing.NamedTuple"
-    #*ONLY* supports multiple inheritance in partnership with "typing.Generic"
-    #under Python >= 3.11. Under older Python versions, the "typing" module
-    #raises the following exception on attempting to define such subclasses:
-    #    TypeError: Multiple inheritance with NamedTuple is not supported
-    # class GenericNamedTuple(NamedTuple, Generic[T]):
-    #     '''
-    #     Arbitrary **generic named tuple** (i.e., type subclassing both the
-    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-    #     :pep:`484`-compliant :class:`typing.NamedTuple` superclass).
-    #     '''
-    #
-    #     generic_item: T
-
-
-    #FIXME: Nice, but currently unused.
-    # class GenericTypedDict(TypedDict, Generic[T]):
-    #     '''
-    #     Arbitrary **generic typed dictionary** (i.e., type subclassing both the
-    #     :pep:`484`-compliant :class:`typing.Generic` superclass *and* the
-    #     :pep:`589`-compliant :class:`typing.TypedDict` superclass).
-    #     '''
-    #
-    #     generic_item: T
-
-    # ....................{ LOCALS                         }....................
-    # Tuple of 2-tuples "(hint_base, hint_extrinsic_sign)" where:
-    # * "hint_base" is a valid pseudo-superclass of a PEP 484- or 585-compliant
-    #   generic.
-    # * "hint_extrinsic_sign" is either:
-    #   * If that pseudo-superclass is extrinsic, the sign uniquely identifying
-    #     that pseudo-superclass.
-    #   * If that pseudo-superclass is intrinsic, "None".
-    TEST_GENERIC_BASES_EXTRINSIC_SIGNS = (
-        # Intrinsic PEP 484-compliant "typing.Generic" pseudo-superclass in both
-        # subscripted and unsubscripted forms.
-        (Generic, None),
-        (Generic[T], None),
-
-        # Extrinsic PEP 484-compliant "typing.NamedTuple" pseudo-superclass.
-        (NamedTuple, HintSignNamedTuple),
-
-        # Extrinsic PEP 589-compliant "typing.TypedDict" pseudo-superclass.
-        (TypedDict, HintSignTypedDict),
-    )
-
-    # ....................{ ASSERTS                        }....................
-    # For each such unsubscripted generic and additional non-generic sign...
-    for hint_base, hint_extrinsic_sign in TEST_GENERIC_BASES_EXTRINSIC_SIGNS:
-        # Assert that this getter passed this generic returns this sign.
-        assert get_hint_pep484585_generic_base_extrinsic_sign_or_none(
-            hint_base) is hint_extrinsic_sign
