@@ -10,16 +10,10 @@ This submodule exercises :pep:`570` support for positional-only parameters
 implemented in the :func:`beartype.beartype` decorator by declaring callables
 accepting one or more positional-only parameters. For safety, these callables
 are intentionally isolated from the main test suite.
-
-Caveats
-----------
-**This submodule requires the active Python interpreter to target at least
-Python 3.8.0.** If this is *not* the case, importing this submodule raises an
-:exc:`SyntaxError` exception.
 '''
 
 # ....................{ IMPORTS                            }....................
-from typing import Union
+from beartype.typing import Union
 
 # ....................{ CALLABLES                          }....................
 def pep570_posonly(

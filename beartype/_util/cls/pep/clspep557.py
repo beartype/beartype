@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.hint.datahinttyping import (
-    DictStrToAny,
     TypeException,
 )
 from dataclasses import (  # type: ignore[attr-defined]
@@ -43,12 +42,10 @@ def die_unless_type_pep557_dataclass(
     ----------
     cls : type
         Class to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep557Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exceptions messages. Defaults
-        to the empty string.
+    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
+        Type of exception to be raised.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exceptions messages.
 
     Raises
     ------
@@ -57,7 +54,11 @@ def die_unless_type_pep557_dataclass(
     '''
 
     # If this class is *NOT* a PEP 557-compliant dataclass...
-    if not is_type_pep557_dataclass(cls):
+    if not is_type_pep557_dataclass(
+        cls=cls,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    ):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception type.')
         assert isinstance(exception_prefix, str), (
@@ -70,7 +71,14 @@ def die_unless_type_pep557_dataclass(
         )
 
 # ....................{ TESTERS                            }....................
-def is_type_pep557_dataclass(cls: type) -> bool:
+def is_type_pep557_dataclass(
+    # Mandatory parameters.
+    cls: type,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
+    exception_prefix: str = '',
+) -> bool:
     '''
     :data:`True` only if the passed class is a **dataclass** (i.e.,
     :pep:`557`-compliant class decorated by the standard
@@ -84,6 +92,10 @@ def is_type_pep557_dataclass(cls: type) -> bool:
     ----------
     cls : type
         Class to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
+        Type of exception to be raised.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exceptions messages.
 
     Returns
     -------
@@ -92,7 +104,7 @@ def is_type_pep557_dataclass(cls: type) -> bool:
 
     Raises
     ------
-    _BeartypeUtilTypeException
+    exception_cls
         If this object is *not* a class.
     '''
 
@@ -100,7 +112,11 @@ def is_type_pep557_dataclass(cls: type) -> bool:
     from beartype._util.cls.utilclstest import die_unless_type
 
     # If this object is *NOT* a type, raise an exception.
-    die_unless_type(cls)
+    die_unless_type(
+        cls=cls,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # Else, this object is a type.
 
     # Return true only if this type is a dataclass.
@@ -112,30 +128,124 @@ def is_type_pep557_dataclass(cls: type) -> bool:
     # an actual dataclass. (Dodged a misfired bullet there, folks.)
     return is_dataclass(cls)
 
-# ....................{ GETTERS                            }....................
-#FIXME: Implement us up, please.
-#FIXME: Unit test us up, please.
-def get_pep557_dataclass_kwargs(datacls: type) -> DictStrToAny:
+
+def is_pep557_dataclass_frozen(
+    # Mandatory parameters.
+    datacls: type,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
+    exception_prefix: str = '',
+) -> bool:
     '''
-    Dictionary of all keyword arguments originally passed to the
-    :pep:`557`-compliant :func:`dataclasses.dataclass` decorator decorating the
-    passed dataclass.
+    :data:`True` only if the passed **dataclass** (i.e.,
+    :pep:`557`-compliant :func:`dataclasses.dataclass`-decorated class) is
+    **frozen** (i.e., immutable due to being passed the ``frozen=True`` keyword
+    parameter at decoration time).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
 
     Parameters
     ----------
     datacls: type
         Dataclass to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
+        Type of exception to be raised.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exceptions messages.
 
     Returns
     -------
-    DictStrToAny
-        Keyword arguments originally configuring this dataclass.
+    bool
+        :data:`True` only if this class is a dataclass.
+
+    Raises
+    ------
+    exception_cls
+        If this dataclass is *not* actually a dataclass.
+    '''
+
+    # Object encapsulating all keyword parameters configuring this dataclass.
+    dataclass_kwargs = get_pep557_dataclass_kwargs(
+        datacls=datacls,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Return true only if this dataclass was configured to be frozen.
+    return dataclass_kwargs.frozen  # type: ignore[attr-defined]
+
+# ....................{ GETTERS                            }....................
+def get_pep557_dataclass_kwargs(
+    # Mandatory parameters.
+    datacls: type,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep557Exception,
+    exception_prefix: str = '',
+) -> object:
+    '''
+    Object encapsulating all keyword parameter originally passed to the
+    :pep:`557`-compliant :func:`dataclasses.dataclass` decorator decorating the
+    passed dataclass.
+
+    For each keyword parameter accepted by the :func:`dataclasses.dataclass`
+    decorator, the object returned by this getter defines an instance variable
+    of the same name whose value is the value either explicitly passed *or*
+    implicitly defaulting to that keyword parameter.
+
+    Caveats
+    -------
+    **The type of the object returned by this getter is private.** Callers
+    should *not* rely on this type, which is likely to change between between
+    Python versions.
+
+    **The type of the object returned by this getter is currently just a thin
+    wrapper.** This type fails to define any meaningful API apart from public
+    instance variables encapsulating these keyword parameters. In particular,
+    this type fails to override the ``__eq__()`` or ``__hash__()`` dunder
+    methods. Sadly, this directly implies that:
+
+    * **Objects returned by this getter cannot be meaningfully compared.**
+    * **Objects returned by this getter cannot be meaningfully added to
+      containers dependent on sane hashability** (e.g., dictionaries, sets).
+
+    In short, this getter sucks. Avoid doing *anything* with the object returned
+    by this getter except directly accessing their public instance variables.
+
+    Parameters
+    ----------
+    datacls: type
+        Dataclass to be inspected.
+    exception_cls : TypeException, default: BeartypeDecorHintPep557Exception
+        Type of exception to be raised.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exceptions messages.
+
+    Returns
+    -------
+    Object
+        Object encapsulating all keyword arguments originally configuring this
+        dataclass.
+
+    Raises
+    ------
+    exception_cls
+        If this dataclass is *not* actually a dataclass.
     '''
 
     # If this dataclass is *NOT* actually a dataclass, raise an exception.
-    die_unless_type_pep557_dataclass(datacls)
+    die_unless_type_pep557_dataclass(
+        cls=datacls,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
     # Else, this dataclass is actually a dataclass.
 
-    #FIXME: Comment us up, please.
+    # Dictionary of all keyword arguments originally passed to @dataclass.
     dataclass_kwargs = getattr(datacls, _PARAMS)
+
+    # Return this dictionary.
     return dataclass_kwargs

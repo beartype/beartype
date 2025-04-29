@@ -19,7 +19,7 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep557_initvar_arg() -> None:
     '''
-    Test usage of the private
+    Test the private
     :mod:`beartype._util.hint.pep.proposal.pep557.get_hint_pep557_initvar_arg`
     getter.
     '''
