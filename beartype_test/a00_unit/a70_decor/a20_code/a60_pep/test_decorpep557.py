@@ -40,6 +40,7 @@ def test_decor_pep577() -> None:
     )
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from dataclasses import (
+        FrozenInstanceError,
         InitVar,
         dataclass,
         field,
@@ -55,8 +56,8 @@ def test_decor_pep577() -> None:
         {},
 
         #FIXME: Uncomment *AFTER* frozen dataclasses are actually supported.
-        # # The frozen @dataclass decorator.
-        # dict(frozen=True),
+        # The frozen @dataclass decorator.
+        dict(frozen=True),
     ]
 
     #FIXME: Uncomment *AFTER* we actually test this properly below. Notably, it
@@ -126,13 +127,39 @@ def test_decor_pep577() -> None:
                 testing.
                 '''
 
+                # If the caller failed to pass this optional field to the
+                # __init__() constructor, default this field to this mandatory
+                # field required to be passed by the caller.
+                #
+                # Note that this field *CANNOT* be safely assigned with a simple
+                # assignment statement: e.g.,
+                #     self.that_man_may_be = but_for_such_faith
+                #
+                # Doing so suffices for the general case but fails for frozen
+                # dataclasses, which enforce immutability even within this
+                # __post_init__() initialization method, which arguably
+                # constitutes a long-standing bug that CPython devs will
+                # probably *NEVER* resolve: e.g.,
+                #     dataclasses.FrozenInstanceError: cannot assign to field
+                #     'that_man_may_be'
+                #
+                # Instead, we assign this field by circumventing the
+                # __setattr__() dunder method defined for frozen dataclasses
+                # entirely in favour of a permissive alternative guaranteed to
+                # exist: the object.__setattr__() dunder method. We sigh.
                 if self.that_man_may_be is None:
-                    self.that_man_may_be = but_for_such_faith
+                    object.__setattr__(
+                        self, 'that_man_may_be', but_for_such_faith)
+                # Else, the caller passed this optional field to the
+                # __init__() constructor. In this case, preserve this field.
 
         # ..................{ LOCALS                         }..................
         # Arbitrary instance of this dataclass exercising all edge cases.
         great_mountain = SoSolemnSoSerene(
             but_for_such_faith='So solemn, so serene, that man may be,')
+
+        # True only if this dataclass is frozen, defaulting to false.
+        IS_DATACLASS_FROZEN = dataclass_kwargs.get('frozen', False)
 
         # ..................{ ASSERTS ~ fields               }..................
         # Assert that this dataclass initializes these fields to have the
@@ -149,6 +176,30 @@ def test_decor_pep577() -> None:
         with raises(BeartypeCallHintPep557FieldViolation):
             great_mountain.thou_hast_a_voice = (
                 'Here on this spot of earth. Search, Thea, search!')
+
+        # If this dataclass is frozen...
+        if IS_DATACLASS_FROZEN:
+            # Assert that this dataclass prohibits callers from modifying *ANY*
+            # attributes (including both instance and class variables) by
+            # raising the expected exception on attempting to do so.
+            with raises(FrozenInstanceError):
+                great_mountain.that_man_may_be = (
+                    'With backward footing through the shade a space:')
+            with raises(FrozenInstanceError):
+                great_mountain.thou_hast_a_voice = len(
+                    "He follow'd, and she turn'd to lead the way")
+        # Else, this dataclass is *NOT* frozen. In this case...
+        else:
+            # Assert that this dataclass allows callers to set these fields to
+            # new values satisfying the hints annotating these fields.
+            great_mountain.that_man_may_be = (
+                'Through aged boughs, that yielded like the mist')
+            assert great_mountain.that_man_may_be == (
+                'Through aged boughs, that yielded like the mist')
+            great_mountain.thou_hast_a_voice = len(
+                'Which eagles cleave upmounting from their nest.')
+            assert great_mountain.thou_hast_a_voice == len(
+                'Which eagles cleave upmounting from their nest.')
 
         # ..................{ ASSERTS ~ InitVar              }..................
         # Assert that this dataclass does *NOT* expose initialization-only
@@ -167,12 +218,23 @@ def test_decor_pep577() -> None:
         # the expected initial values.
         assert great_mountain.with_nature_reconciled == True
 
-        # Assert that this dataclass permissively allows callers to erroneously
-        # modify these class variables to have invalid new values violating the
-        # hints annotating these variables. Although non-ideal, type-checking
-        # class variables would require @beartype to dangerously monkey-patch
-        # the metaclass of dataclasses -- a bridge too far over troubled waters.
-        great_mountain.with_nature_reconciled = (
-            'My strong identity, my real self,')
-        assert great_mountain.with_nature_reconciled == (
-            'My strong identity, my real self,')
+        # If this dataclass is frozen...
+        if IS_DATACLASS_FROZEN:
+            # Assert that this dataclass prohibits callers from modifying *ANY*
+            # attributes (including both instance and class variables) by
+            # raising the expected exception on attempting to do so.
+            with raises(FrozenInstanceError):
+                great_mountain.with_nature_reconciled = (
+                    'Thus brief; then with beseeching eyes she went')
+        # Else, this dataclass is *NOT* frozen. In this case...
+        else:
+            # Assert that this dataclass permissively allows callers to
+            # erroneously modify these class variables to have invalid new
+            # values violating the hints annotating these variables. Although
+            # non-ideal, type-checking class variables would require @beartype
+            # to dangerously monkey-patch the metaclass of dataclasses -- a
+            # bridge too far over troubled waters.
+            great_mountain.with_nature_reconciled = (
+                'My strong identity, my real self,')
+            assert great_mountain.with_nature_reconciled == (
+                'My strong identity, my real self,')

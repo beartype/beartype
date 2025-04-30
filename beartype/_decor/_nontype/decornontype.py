@@ -6,7 +6,7 @@
 '''
 **Unmemoized beartype non-type decorators** (i.e., low-level decorators
 decorating *all* types of decoratable objects except classes, which the sibling
-:mod:`beartype._decor._decortype` submodule handles, on behalf of the parent
+:mod:`beartype._decor._type.decortype` submodule handles, on behalf of the parent
 :mod:`beartype._decor.decorcore` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.

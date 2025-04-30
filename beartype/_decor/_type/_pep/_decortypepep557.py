@@ -21,8 +21,11 @@ from beartype._data.hint.datahintpep import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_DATACLASS_NONFIELDS)
 from beartype._data.kind.datakindiota import SENTINEL
+from beartype._util.cls.pep.clspep557 import (
+    die_unless_type_pep557_dataclass,
+    is_pep557_dataclass_frozen,
+)
 from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.cls.pep.clspep557 import die_unless_type_pep557_dataclass
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_name
@@ -143,15 +146,6 @@ def beartype_pep557_dataclass(
         f'{repr(conf)} not beartype configuration.')
 
     # ..................{ PREAMBLE                           }..................
-    #FIXME: Ho, ho, ho! Looks like we have a significant issue here: frozen
-    #dataclasses. Technically, we should *DEFINETELY* be type-checking their
-    #fields on dataclass assignment. But... we're not quite sure how to do that
-    #at the moment. Certainly, doing so requires special handling.
-    #
-    #For the moment, let's just ignore frozen dataclasses altogether. Consider:
-    #* Define a new is_dataclass_frozen() tester in "clspep557".
-    #* Call that here. If true, silently reduce to a noop by returning. Guh!
-
     # If this dataclass is *NOT* actually a dataclass, raise an exception.
     die_unless_type_pep557_dataclass(
         cls=datacls, exception_prefix=exception_prefix)
@@ -172,9 +166,8 @@ def beartype_pep557_dataclass(
     #     RuntimeError: super(): __class__ cell not found
     __class__ = datacls
 
-    # Existing __setattr__() dunder method directly defined on this dataclass if
-    # any *OR* "None" otherwise (i.e., if this dataclass fails to directly
-    # define that method).
+    # __setattr__() dunder method directly defined on this dataclass if any *OR*
+    # "None" (i.e., if this dataclass does *NOT* directly define this method).
     datacls_setattr = datacls.__dict__.get('__setattr__')
 
     # ..................{ SANIFICATION                       }..................
@@ -307,13 +300,9 @@ def beartype_pep557_dataclass(
         #  die_if_unbearable() functions. Instead:
         #  * Define new private-facing variants of those functions transparently
         #    accepting a "hint: HintSane" parameter. Call them:
-        #    * is_hint_or_sane_bearable().
-        #    * die_if_hint_or_sane_unbearable().
-        #    In theory, this shouldn't be *TOO* hard. Indeed, we should be able
-        #    to refactor:
-        #    * is_bearable() to internally call is_hint_or_sane_bearable().
-        #    * die_if_unbearable() to internally call
-        #      die_if_hint_or_sane_unbearable().
+        #    * is_hint_sane_bearable().
+        #    * die_if_hint_sane_unbearable().
+        #    In theory, this shouldn't be *TOO* hard.
         #  * Call these private- rather than public-facing variants below.
         #    Voila! Problem transparently resolved.
 
@@ -420,24 +409,61 @@ def beartype_pep557_dataclass(
         # Else, this dataclass attribute is unannotated and thus *NOT* a field.
         # In this case, this attribute is ignorable.
 
-        # Existing __setattr__() dunder method defined on this dataclass,
-        # defined as either...
-        datacls_superclass_setattr = (
-            # If this dataclass directly defines this method, this method;
-            datacls_setattr or
-            # Else, this dataclass does *NOT* directly define this method. In
-            # this case, fallback to the superclass __setattr__() dunder method
-            # *GUARANTEED* to be defined on at least one superclass of this
-            # dataclass. Why? Because the root superclass object.__setattr__()
-            # dunder method is *GUARANTEED* to exist on all objects.
-            super().__setattr__  # type: ignore[misc]
-        )
-        # print(f'datacls: {repr(self)}')
-
-        # Defer to the superclass __setattr__() implementation.
-        datacls_superclass_setattr(attr_name, attr_value)
+        # If this dataclass does *NOT* directly override the superclass
+        # __setattr__() dunder method with a non-default dataclass-specific
+        # __setattr__() dunder method, fallback to the former. The superclass
+        # __setattr__() dunder method is guaranteed to be defined on at least
+        # one superclass of this dataclass. Why? Because the root superclass
+        # type.__setattr__() dunder method is guaranteed to exist on all types.
+        #
+        # Note that:
+        # * This is the common case and thus tested first.
+        # * Unlike the below case, this method method is accessed via the
+        #   super() builtin and is thus a true method bound to this dataclass.
+        #   Ergo, the "self" parameter must *NOT* be explicitly passed.
+        if datacls_setattr is None:
+            super().__setattr__(attr_name, attr_value)  # type: ignore[misc]
+        # Else, this dataclass directly defines a non-default dataclass-specific
+        # implementation of this method overriding the superclass __setattr__()
+        # dunder method. In this case, defer to this override.
+        #
+        # Note that, unlike the above case, this method was accessed via the
+        # "__dict__" dunder dictionary and is thus an unbound function *NOT*
+        # bound to this dataclass. Ergo, the "self" parameter *MUST* be
+        # explicitly passed.
+        else:
+            datacls_setattr(self, attr_name, attr_value)
 
     # ..................{ DECORATORS                         }..................
+    # setattr()-like callable to be called to set this attribute on this
+    # dataclass, defined as either...
+    setattr_func = (
+        # If this dataclass is frozen, the standard setattr() builtin does *NOT*
+        # suffice. Why? Because frozen dataclasses guarantee immutability by
+        # overriding the __setattr__() dunder method (implicitly called by the
+        # setattr() builtin) to unconditionally raise an exception. While
+        # understandable, this behaviour prevents the set_type_attr() function
+        # called below from monkey-patching type-checking into this dataclass;
+        # attempting to do so would ironically invoke that same __setattr__()
+        # dunder method, which would then raises an exception. This behaviour
+        # can be circumvented by passing the type.__setattr__() dunder method as
+        # this parameter, which then applies the desired monkey-patch *WITHOUT*
+        # raising an exception. In short, stupid kludges is always the answer.
+        type.__setattr__
+        if is_pep557_dataclass_frozen(
+            datacls=datacls, exception_prefix=exception_prefix) else
+        # Else, this dataclass is *NOT* frozen. In this case, the standard
+        # setattr() builtin, which internally defers to the __setattr__() dunder
+        # method guaranteed to be defined by all dataclasses (due to the
+        # existence of the type.__setattr__() dunder method).
+        setattr
+    )
+
     # Safely replace this undecorated __setattr__() implementation with this
     # decorated __setattr__() implementation.
-    set_type_attr(datacls, '__setattr__', check_pep557_dataclass_field)
+    set_type_attr(
+        cls=datacls,
+        attr_name='__setattr__',
+        attr_value=check_pep557_dataclass_field,
+        setattr_func=setattr_func,  # pyright: ignore
+    )

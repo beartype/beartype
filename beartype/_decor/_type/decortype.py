@@ -26,7 +26,8 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
-from beartype._decor._nontype._pep._decorpep557 import beartype_pep557_dataclass
+from beartype._decor._type._pep._decortypepep557 import (
+    beartype_pep557_dataclass)
 from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.module.utilmodget import get_object_module_name_or_none
@@ -153,7 +154,7 @@ def beartype_type(
         cls_stack + (cls,)
     )
 
-    # ....................{ DECORATION                     }....................
+    # ....................{ DECORATE                       }....................
     # Clear *ALL* beartype-specific internal caches that have been shown to fail
     # when a class is redefined if the passed class is detected as having been
     # redefined in its module.
@@ -246,18 +247,21 @@ def beartype_type(
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
 
-    # ....................{ DECORATION ~ pep               }....................
+    # ....................{ DECORATE ~ pep : 557           }....................
     # If...
     if (
         # This beartype configuration enables type-checking of PEP 557-compliant
         # dataclasses *AND*...
         conf.is_pep557_fields and
-        # This class is a PEP 557-compliant dataclass...
+        # This type is a PEP 557-compliant dataclass...
         is_type_pep557_dataclass(cls)
     ):
         # Monkey-patch type-checking of *ALL* PEP 557-compliant dataclass fields
         # into this dataclass.
         beartype_pep557_dataclass(datacls=cls, conf=conf)
+    # Else, either this beartype configuration disables type-checking of PEP
+    # 557-compliant dataclasses *OR* this type is *NOT* a PEP 557-compliant
+    # dataclass. In either case, PEP 557 does *NOT* apply to this type.
 
     # ....................{ MONKEY-PATCH                   }....................
     # Pure-Python __sizeof__() dunder method wrapping the original C-based
