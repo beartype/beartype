@@ -36,15 +36,13 @@ from beartype._util.utilobject import get_object_type_name
 #* Generalize both is_bearable() and die_if_unbearable() to support quoted
 #  relative forward references. As always, the algorithm should iteratively
 #  search up the callstack for the first stack frame residing *OUTSIDE*
-#  @beartype. Actually... that doesn't suffice. We probably really do need to
-#  iteratively search up the entire call stack before raising an exception. It's
-#  fine. Just do it. The alternative is broken badness.
+#  @beartype. Actually... that doesn't suffice. Third-party frameworks
+#  leveraging @beartype could themselves be consuming other third-party type
+#  hints originating from users. Deciding where exactly those type hints were
+#  originally defined is *PROBABLY* infeasible in the general case. So, we
+#  really do need to iteratively search up the entire call stack before raising
+#  an exception. It's fine. Just do it. The alternative is broken badness.
 #FIXME: Unit test against all possible dataclass edge cases, including:
-#* "frozen=True".
-#* "slots=True".
-#* "frozen=True, slots=True".
-#* Dataclasses defining their own __setattr__() methods.
-#* PEP 563.
 #* Quoted relative forward references (e.g., "list['MuhUndefinedType']").
 #* "typing.Self". We're *NOT* passing "cls_stack" to either the is_bearable() or
 #  die_if_unbearable() functions, because those functions currently fail to
@@ -74,6 +72,7 @@ from beartype._util.utilobject import get_object_type_name
 #  Oh -- and note that we'll need to iteratively resolve PEP 563-postponed
 #  stringified type hints against each such superclass "__annotations__" as
 #  well. Jeez. This sure got ugly fast, huh? So much sighing! *sigh sigh*
+#* PEP 563, subject to the constraints detailed above.
 def beartype_pep557_dataclass(
     # Mandatory parameters.
     #
@@ -133,7 +132,7 @@ def beartype_pep557_dataclass(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this dataclass.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exceptions messages. Defaults
         to the empty string.
 
@@ -392,9 +391,15 @@ def beartype_pep557_dataclass(
                     self_repr = repr(get_object_type_name(datacls))
 
                 # Human-readable substring prefixing the exception raised below.
+                #
+                # Note that the die_if_unbearable() raiser implicitly suffixes
+                # this prefix by the substring "value". On the one hand, it
+                # probably shouldn't be doing that. On the other hand, it
+                # currently is doing that. On the gripping hand, we're too tired
+                # to do anything about it doing that. This is why bugs exist.
                 exception_prefix = (
                     f'Dataclass {self_repr} '
-                    f'attribute {repr(attr_name)} new value {repr(attr_value)} '
+                    f'attribute {repr(attr_name)} new '
                 )
 
                 # Raise this type of violation exception.

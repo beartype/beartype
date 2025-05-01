@@ -17,7 +17,7 @@ This submodule unit tests :pep:`577` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_decor_pep577() -> None:
+def test_decor_pep557() -> None:
     '''
     Test :pep:`557` support implemented in the :func:`beartype.beartype`
     decorator if the active Python interpreter targets Python >= 3.8 *or* skip
@@ -38,7 +38,7 @@ def test_decor_pep577() -> None:
         ClassVar,
         Optional,
     )
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from dataclasses import (
         FrozenInstanceError,
         InitVar,
@@ -48,10 +48,13 @@ def test_decor_pep577() -> None:
     from pytest import raises
 
     # ..................{ LOCALS                             }..................
-    # Modifiable list of **kwargs dictionaries to be passed as the keyword
+    # Beartype decorator type-checking *ALL* PEP 557-compliant dataclass fields.
+    beartype_pep557 = beartype(conf=BeartypeConf(is_pep557_fields=True))
+
+    # Modifiable list of "**kwargs" dictionaries to be passed as the keyword
     # parameters configuring each decoration of the dataclass below by the
     # @dataclass decorator.
-    DATACLASSES_KWARGS = [
+    dataclasses_kwargs = [
         # The default parameter-less @dataclass decorator.
         {},
 
@@ -63,17 +66,15 @@ def test_decor_pep577() -> None:
     #FIXME: Uncomment *AFTER* we actually test this properly below. Notably, it
     #looks like "ClassVar[...]"-annotated attributes *CANNOT* be modified on a
     #slotted dataclass. That's fine, but requires adjustment below.
-    # # If the active Python interpreter targets Python >= 3.10...
-    # if IS_PYTHON_AT_LEAST_3_10:
-    #     # The slotted @dataclass decorator, only supported under Python >= 3.10.
-    #     DATACLASSES_KWARGS.append(dict(slots=True))
-
-    # Beartype decorator type-checking *ALL* PEP 557-compliant dataclass fields.
-    beartype_pep557 = beartype(conf=BeartypeConf(is_pep557_fields=True))
+    # If the active Python interpreter targets Python >= 3.10...
+    if IS_PYTHON_AT_LEAST_3_10:
+        # Append a "**kwargs" dictionary configuring the slotted @dataclass
+        # decorator, only supported under Python >= 3.10.
+        dataclasses_kwargs.append(dict(slots=True))
 
     # ..................{ DATACLASSES                        }..................
     # For each dictionary of keyword parameters configuring this dataclass...
-    for dataclass_kwargs in DATACLASSES_KWARGS:
+    for dataclass_kwargs in dataclasses_kwargs:
         @beartype_pep557
         @dataclass(**dataclass_kwargs)
         class SoSolemnSoSerene(object):
@@ -161,6 +162,9 @@ def test_decor_pep577() -> None:
         # True only if this dataclass is frozen, defaulting to false.
         IS_DATACLASS_FROZEN = dataclass_kwargs.get('frozen', False)
 
+        # True only if this dataclass is slotted, defaulting to false.
+        IS_DATACLASS_SLOTTED = dataclass_kwargs.get('slots', False)
+
         # ..................{ ASSERTS ~ fields               }..................
         # Assert that this dataclass initializes these fields to have the
         # expected initial values.
@@ -222,11 +226,20 @@ def test_decor_pep577() -> None:
         if IS_DATACLASS_FROZEN:
             # Assert that this dataclass prohibits callers from modifying *ANY*
             # attributes (including both instance and class variables) by
-            # raising the expected exception on attempting to do so.
+            # raising the expected exception on doing so.
             with raises(FrozenInstanceError):
                 great_mountain.with_nature_reconciled = (
                     'Thus brief; then with beseeching eyes she went')
-        # Else, this dataclass is *NOT* frozen. In this case...
+        # Else, this dataclass is *NOT* frozen.
+        #
+        # If this dataclass is slotted...
+        elif IS_DATACLASS_SLOTTED:
+            # Assert that this dataclass prohibits callers from modifying *ONLY*
+            # class attributes by raising the expected exception on doing so.
+            with raises(AttributeError):
+                great_mountain.with_nature_reconciled = (
+                    'Meanwhile in other realms big tears were shed,')
+        # In this case...
         else:
             # Assert that this dataclass permissively allows callers to
             # erroneously modify these class variables to have invalid new

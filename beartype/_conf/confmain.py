@@ -793,7 +793,7 @@ class BeartypeConf(object):
                         'Beartype configuration parameter "is_check_pep557" '
                         'deprecated by new parameter "is_pep557_fields", '
                         'because beartype is here to annoy you when you were '
-                        'just about to go home.\n\n'
+                        'just about to go home.\n'
                         'tl;dr: pass "is_pep557_fields" instead, please. *sigh*'
                     ),
                 )
