@@ -83,10 +83,7 @@ if IS_PYTHON_AT_LEAST_3_10:
         if not hint_pep604_repr.startswith(hint_repr):
             raise BeartypeDecorHintPep604Exception(
                 f'Type hint {hint_repr} inconsistent with respect to '
-                f'repr() strings. Since @beartype requires consistency '
-                f'between type hints and repr() strings, this hint is '
-                f'unsupported by @beartype. Consider reporting this issue '
-                f'to the third-party developer implementing this hint: e.g.,\n'
+                f'repr() strings: e.g.,\n'
                 f'\t>>> repr({hint_repr})\n'
                 f'\t{hint_repr}  # <-- this is fine\n'
                 f'\t>>> repr({hint_repr} | int)\n'
@@ -94,7 +91,16 @@ if IS_PYTHON_AT_LEAST_3_10:
                 f'\n'
                 f'\t# Ideally, that output should instead resemble:\n'
                 f'\t>>> repr({hint_repr} | int)\n'
-                f'\t{hint_repr} | int  # <-- what @beartype wants!'
+                f'\t{hint_repr} | int  # <-- what @beartype wants!\n'
+                f'\n'
+                f'Inconsistent type hints are unsupported by @beartype, '
+                f'which requires consistency between type hints and '
+                f'repr() strings. Consider reporting this issue to the '
+                f'third-party developers implementing this hint, which '
+                f'(probably) fails to define the PEP 585-compliant '
+                f'"__args__" and "__origin__" dunder attributes standardized '
+                f'by the "types.GenericAlias" API. See also:\n'
+                f'\thttps://peps.python.org/pep-0585/#parameters-to-generics-are-available-at-runtime'
             )
         # Else, the representation of this new union is prefixed by the
         # representation of this hint as expected.

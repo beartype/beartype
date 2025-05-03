@@ -113,5 +113,4 @@ def _hint_overrides_pep484_tower() -> FrozenDict:
     '''
 
     # Beartype on the job, Sir!
-    return FrozenDict({
-        float: Pep484TowerFloat, complex: Pep484TowerComplex,})
+    return FrozenDict({float: Pep484TowerFloat, complex: Pep484TowerComplex,})
