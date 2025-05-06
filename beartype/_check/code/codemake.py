@@ -353,7 +353,7 @@ def make_check_expr(
         # Localize metadata for both efficiency and f-string purposes.
         hint_curr_sane = hints_meta.hint_curr_meta.hint_sane
         hint_curr = hint_curr_sane.hint
-        # print(f'Visiting type hint {repr(hint_curr)}...')
+        # print(f'Visiting type hint {repr(hint_curr_sane)}...')
 
         # ................{ PEP                                }................
         # If this hint is PEP-compliant...

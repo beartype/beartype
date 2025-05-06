@@ -13,6 +13,7 @@ cases in unit tests requiring non-trivial generics).
 # Defer fixture-specific imports.
 from beartype.typing import (
     Generic,
+    TypeVar,
 )
 from beartype._data.hint.datahinttyping import (
     S,
@@ -276,6 +277,15 @@ class Pep585ListListStr(list[list[str]]):
 # generics are necessarily subscripted; when unsubscripted, the corresponding
 # subclasses are simply standard types.
 
+class Pep585SequenceT(Pep585Sequence[T]):
+    '''
+    :pep:`585`-compliant generic sequence parametrized by one unconstrained type
+    variable.
+    '''
+
+    pass
+
+# ....................{ PEP 585 ~ T : list                 }....................
 class Pep585ListT(list[T]):
     '''
     :pep:`585`-compliant generic list subclassing the builtin :class:`list` type
@@ -287,15 +297,14 @@ class Pep585ListT(list[T]):
         return f'{self.__class__.__name__}({super().__repr__()})'
 
 
-class Pep585SequenceT(Pep585Sequence[T]):
-    '''
-    :pep:`585`-compliant generic sequence parametrized by one unconstrained type
-    variable.
-    '''
+T_Pep585ListT = TypeVar('T_Pep585ListT', bound=Pep585ListT)  # <-- clever, yet sickening
+'''
+**Indirectly recursive type variable** (i.e., :pep:`484`-compliant type variable
+inducing recursion when subscripting the otherwise non-recursive generic to
+which this type variable is bound).
+'''
 
-    pass
-
-
+# ....................{ PEP 585 ~ U                        }....................
 class Pep585SequenceU(Pep585Sequence[U]):
     '''
     :pep:`585`-compliant generic sequence parametrized by one unconstrained type

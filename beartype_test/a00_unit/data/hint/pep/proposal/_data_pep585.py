@@ -73,6 +73,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Pep585ListListStr,
         Pep585ListStr,
         Pep585ListT,
+        T_Pep585ListT,
     )
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -119,7 +120,13 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Pattern,
     )
 
-    # ..................{ PRIVATE ~ forwardref               }..................
+    # ..................{ LOCALS                             }..................
+    # Indirectly recursive list generic, exercising this non-trivial edge case:
+    #     https://github.com/beartype/beartype/issues/523
+    Pep585ListT_recursive = Pep585ListT()
+    Pep585ListT_recursive.append(Pep585ListT_recursive)
+
+    # ..................{ LOCALS ~ forwardref                }..................
     # Fully-qualified classname of an arbitrary class guaranteed to be
     # importable.
     _TEST_PEP585_FORWARDREF_CLASSNAME = (
@@ -645,6 +652,28 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                 ]),
             ),
         ),
+
+        #FIXME: Uncomment after worky, please. *sigh*
+        # # Generic subclassing a single parametrized builtin container type,
+        # # subscripted by a type variable bound to this same container type and
+        # # thus indirectly inducing recursion.
+        # HintPepMetadata(
+        #     hint=Pep585ListT[T_Pep585ListT],
+        #     pep_sign=HintSignPep484585GenericSubscripted,
+        #     generic_type=Pep585ListT,
+        #     is_pep585_generic=True,
+        #     typevars=(T_Pep585ListT,),
+        #     piths_meta=(
+        #         # Subclass-specific recursive generic list.
+        #         HintPithUnsatisfiedMetadata(Pep585ListT_recursive),
+        #         # Subclass-specific non-recursive generic list.
+        #         HintPithUnsatisfiedMetadata(Pep585ListT((
+        #             'More sorrow like to this, and such like woe,'))),
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             'Too huge for mortal tongue or pen of scribe:'),
+        #     ),
+        # ),
 
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same multiple type variables in the same order.
