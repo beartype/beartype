@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
-from beartype.roar import BeartypeDecorHintReduceException
+from beartype.roar import BeartypeDecorHintRecursionException
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert._reduce._redmap import (
@@ -177,11 +177,11 @@ def reduce_hint(
 
     Raises
     ------
-    BeartypeDecorHintReduceException
+    BeartypeDecorHintRecursionException
         If the number of total reductions internally performed by the current
         call to this function exceeds the maximum. This exception guards against
-        accidental infinite recursion between lower-level PEP-specific reducers
-        internally called by this higher-level reducer.
+        accidental infinite recursion between lower-level hint-specific reducers
+        internally called by this higher-level hint-agnostic reducer.
     '''
 
     # ....................{ PREAMBLE                       }....................
@@ -360,17 +360,18 @@ def reduce_hint(
         # by this call *BEFORE* detecting accidental recursion below.
         reductions_count += 1
 
+        #FIXME: Unit test this, please. No idea how yet. I sigh. *sigh*
         # If the current number of total reductions internally performed
         # by this call exceeds the maximum, raise an exception.
         #
         # Note that this should *NEVER* happen, but probably nonetheless will.
         if reductions_count >= _REDUCTIONS_COUNT_MAX:  # pragma: no cover
-            raise BeartypeDecorHintReduceException(
-                f'{exception_prefix}type hint {repr(hint_old)} irreducible; '
-                f'recursion detected when reducing between reduced type hints '
+            raise BeartypeDecorHintRecursionException(
+                f'{exception_prefix}type hint {repr(hint_old)} irreducible. '
+                f'Recursion detected when reducing between reduced type hints '
                 f'{repr(hint_or_sane_curr)} and {repr(hint_or_sane_prev)}. '
                 f'Please submit this exception traceback as a new issue '
-                f'on our friendly issue tracker:\n'
+                f'to our friendly issue tracker:\n'
                 f'\t{URL_ISSUES}\n'
                 f'Beartype thanks you for your noble (yet ultimately tragic) '
                 f'sacrifice.'

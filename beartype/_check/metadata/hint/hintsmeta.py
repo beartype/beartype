@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.meta import URL_ISSUES
+from beartype.roar import BeartypeDecorHintRecursionException
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
@@ -349,8 +351,8 @@ class HintsMeta(FixedList):
             Type hint type-checking metadata at this index.
         '''
         assert isinstance(hint_index, int), f'{repr(hint_index)} not integer.'
-        assert 0 <= hint_index <= len(self), (
-            f'{hint_index} not in [0, {len(self)}].')
+        assert 0 <= hint_index < FIXED_LIST_SIZE_MEDIUM, (
+            f'{hint_index} not in [0, {FIXED_LIST_SIZE_MEDIUM}].')
 
         # Type hint type-checking metadata at this hint_index.
         hint_curr_meta = super().__getitem__(hint_index)  # type: ignore[call-overload]
@@ -497,8 +499,8 @@ class HintsMeta(FixedList):
         Parameters
         ----------
         hint_sane : HintSane
-            **Sanified type hint metadata** (i.e., immutable and thus hashable
-            object encapsulating *all* metadata returned by
+            **Sanified child type hint metadata** (i.e., immutable and thus
+            hashable object encapsulating *all* metadata returned by
             :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
             this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
             describing this child hint.
@@ -560,15 +562,26 @@ class HintsMeta(FixedList):
         str
             Placeholder string to be subsequently replaced by code type-checking
             this child pith against this child hint.
+
+        Raises
+        ------
+        BeartypeDecorHintRecursionException
+            If the number of child type hints internally visited by this
+            breadth-first search (BFS) exceeds the length of this queue. This
+            exception guards against accidental infinite recursion when
+            dynamically generating code type-checking against this hint.
         '''
         assert isinstance(hint_sane, HintSane), (
             f'{repr(hint_sane)} not sanified hint metadata.')
         # print(f'Enqueing child hint {self.index_last+1} with {repr(kwargs)}...')
 
-        # If the caller did *NOT* pass a non-default sign identifying this hint,
-        # default this sign to the default sign identifying this hint.
+        # Child hint to be enqueued, localized mostly for readability.
+        hint_child = hint_sane.hint
+
+        # If the caller did *NOT* pass a non-default sign identifying this child
+        # hint, default this sign to the default sign identifying this hint.
         if hint_sign is SENTINEL:
-            hint_sign = get_hint_pep_sign_or_none(hint_sane.hint)
+            hint_sign = get_hint_pep_sign_or_none(hint_child)
         # Else, the caller passed a non-default sign identifying this hint.
         # Preserve this sign as is.
 
@@ -581,6 +594,34 @@ class HintsMeta(FixedList):
         # list. By prior validation, "FIXED_LIST_SIZE_MEDIUM" is guaranteed to
         # be substantially larger than "hints_meta_index_last".
         self.index_last += 1
+
+        #FIXME: Unit test this, please. No idea how yet. I sigh. *sigh*
+        # If the current number of child type hints internally visited by this
+        # breadth-first search (BFS) exceeds the length of this queue...
+        #
+        # Note that this should *NEVER* happen, but probably nonetheless will.
+        if self.index_last >= FIXED_LIST_SIZE_MEDIUM:  # pragma: no cover
+            # Metadata encapsulating the previously enqueued root hint.
+            root_hint_meta = self.__getitem__(0)
+
+            # This root hint.
+            root_hint = root_hint_meta.hint_sane.hint
+
+            # Raise an exception embedding this root hint.
+            raise BeartypeDecorHintRecursionException(
+                f'{self.exception_prefix}child type hint {repr(hint_child)} '
+                f'non-type-checkable. '
+                f'Recursion detected when generating code type-checking from '
+                f'root type hint {repr(root_hint)} to this child type hint. '
+                f'Please submit this exception traceback as a new issue '
+                f'to our friendly issue tracker:\n'
+                f'\t{URL_ISSUES}\n'
+                f'Beartype thanks you for your tragic (yet ultimately noble) '
+                f'sacrifice.'
+            )
+        # Else, the current number of child type hints internally visited by
+        # this breadth-first search (BFS) is still less than the length of this
+        # queue. In this case, continue.
 
         # Type hint type-checking metadata at this index.
         hint_meta = self.__getitem__(self.index_last)

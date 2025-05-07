@@ -190,7 +190,7 @@ def reduce_hint_pep484_typevar(
 
         # If this type variable is both unbounded *AND* unconstrained, this type
         # variable is currently *NOT* type-checkable and is thus ignorable.
-        # Reduce this type variable to the ignorable "HINT_SANE_IGNORABLE" singleton.
+        # Reduce this type variable to the ignorable singleton.
         if hint is None:
             hint = HINT_SANE_IGNORABLE
         # Else, this type variable is either bounded *OR* constrained. In either

@@ -473,14 +473,15 @@ class BeartypeDecorHintForwardRefException(
     pass
 
 
-class BeartypeDecorHintTypeException(BeartypeDecorHintException):
+class BeartypeDecorHintRecursionException(BeartypeDecorHintException):
     '''
-    **Beartype decorator class type hint exception.**
+    **Beartype decorator type hint recursion exception.**
 
     This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by an
-    **invalid class type hint** (i.e., class invalid for use as a type hint,
-    typically due to failing to support runtime :func:`isinstance` calls).
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more **infinitely recursive type hints** (i.e., hints that
+    erroneously induce infinite recursion on attempting to dynamically generate
+    pure-Python code type-checking against these hints).
     '''
 
     pass
@@ -832,20 +833,6 @@ class BeartypeDecorHintPep484TypeVarException(BeartypeDecorHintPep484Exception):
     one or more :pep:`484`-compliant **type hints** (i.e.,
     :class:`typing.TypeVar` objects) either violating :pep:`484` *or* this
     decorator's implementation of :pep:`484`.
-    '''
-
-    pass
-
-# ....................{ DECORATOR ~ hint : reduce          }....................
-class BeartypeDecorHintReduceException(BeartypeDecorHintException):
-    '''
-    **Beartype decorator type hint reduction exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated with
-    one or more **irreducible type hints** (e.g., hints inducing infinite
-    recursion on attempting to reduce these hints to alternative variants more
-    readily digestible by :mod:`beartype`).
     '''
 
     pass
