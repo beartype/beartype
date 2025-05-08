@@ -464,8 +464,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     #   subscripted generic.
     # * Map the child hint subscripting this subscripted generic to the PEP
     #   484-compliant type variable parametrizing that unsubscripted generic.
-    HintSignPep484585GenericSubscripted: (
-        reduce_hint_pep484585_generic_subbed),
+    HintSignPep484585GenericSubscripted: reduce_hint_pep484585_generic_subbed,
 
     # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
     # by an ignorable child hint (e.g., "object", "typing.Any"), silently

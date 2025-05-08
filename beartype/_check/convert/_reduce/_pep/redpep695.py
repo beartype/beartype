@@ -82,6 +82,7 @@ def reduce_hint_pep695_subbed(
     ``reduce_hint_pep484_subbed_typevars_to_hints``
         Further details.
     '''
+    # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
@@ -89,10 +90,8 @@ def reduce_hint_pep695_subbed(
         reduce_hint_pep484_subbed_typevars_to_hints)
 
     # ....................{ RECURSE                        }....................
-    # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
-
     # If this PEP 695-compliant subscripted type alias is recursive, ignore this
-    # alias to avoid infinite recursion.
+    # recursive alias to avoid infinite recursion.
     #
     # Certainly, various approaches to generating code type-checking recursive
     # hints exists. @beartype currently embraces the easiest, fastest, and
@@ -106,7 +105,7 @@ def reduce_hint_pep695_subbed(
         return HINT_SANE_RECURSIVE
     # Else, this hint is *NOT* recursive.
 
-    # ....................{ REDUCE                         }....................
+    # ....................{ PHASE                          }....................
     # This reducer is divided into two phases:
     # 1. The first phase decides the type variable lookup table for this alias.
     # 2. The second phase decides the recursion guard for this alias.
@@ -115,7 +114,7 @@ def reduce_hint_pep695_subbed(
     # metadata (i.e., a "HintSane" object) containing the result of the decision
     # problem decided by that phase.
 
-    # ....................{ REDUCE ~ phase : 1             }....................
+    # ....................{ PHASE ~ 1                      }....................
     # Decide the type variable lookup table for this alias. Specifically, reduce
     # this PEP 695-compliant subscripted type alias to:
     # * The semantically useful unsubscripted alias originating this
@@ -130,34 +129,45 @@ def reduce_hint_pep695_subbed(
         exception_prefix=exception_prefix,
     )
 
-    # ....................{ REDUCE ~ phase : 2             }....................
-    #FIXME: Revise comments, please. *sigh*
-    # Metadata encapsulating the sanification of both the parent hint (if any)
-    # *AND* the previously decided type variable lookup table for this alias.
-    # Since this new metadata is guaranteed to be the superset of the old
-    # metadata applying *ONLY* to the parent hint, we intentionally replace the
-    # latter with the former here.
+    # ....................{ PHASE ~ 2                      }....................
+    # If the prior phase generated metadata...
     if isinstance(hint_or_sane, HintSane):
-        hint_parent_sane = hint_or_sane
+        # Non-recursable form of this type alias, defined as the *UNSUBSCRIPTED*
+        # type alias encapsulated by this metadata.
         hint_nonrecursable = hint_or_sane.hint
+
+        # Sanified parent type hint metadata encapsulating the sanification of
+        # both the parent hint (if any) *AND* the previously decided type
+        # variable lookup table for this alias. Since this new metadata is
+        # guaranteed to be the superset of the old metadata applying *ONLY* to
+        # the parent hint, we intentionally replace the latter with the former
+        # here. See also further discussion below.
+        hint_parent_sane = hint_or_sane
+    # Else, the prior phase generated *NO* metadata. In this case...
     else:
+        # Non-recursable form of this type alias, defined as the *UNSUBSCRIPTED*
+        # type alias directly returned by the prior call to the
+        # reduce_hint_pep484_subbed_typevars_to_hints() reducer.
         hint_nonrecursable = hint_or_sane
 
     # Decide the recursion guard protecting this possibly recursive alias
     # against infinite recursion. Note that:
     # * This guard intentionally applies to the original *SUBSCRIPTED* PEP
     #   695-compliant type alias (rather rather than the *UNSUBSCRIPTED* PEP
-    #   695-compliant type alias decided by the prior phase). This is why we
-    #   pass "hint=hint" rather than "hint=hint_sane.hint" here.
+    #   695-compliant type alias decided by the prior phase). Thus, we pass
+    #   "hint_recursable=hint" rather than "hint_recursable=hint_or_sane.hint".
     # * The type variable lookup table decided in the first phase *MUST* also be
-    #   preserved. This is why we pass a new "hint_parent_sane" object rather
-    #   than the same "hint_parent_sane" as in the prior phase. Indeed, the new
+    #   preserved. Thus, we pass a new "hint_parent_sane" rather than the same
+    #   "hint_parent_sane" as in the prior phase. Indeed, the new
     #   "hint_parent_sane" object should safely encapsulate all metadata
     #   encapsulated by the prior "hint_parent_sane" object.
     hint_sane = make_hint_sane_recursable(
-        #FIXME: Document this. Kinda intense, yo. Copy-paste similar comments
-        #inside _reduce_hint_overrides() to here, please. *sigh*
+        # The recursable form of this type alias is the original *SUBSCRIPTED*
+        # type alias tested above by the is_hint_recursive() recursion guard.
         hint_recursable=hint,
+        # The non-recursable form of this type alias is the new *UNSUBSCRIPTED*
+        # type alias encapsulated by the metadata returned by the prior call to
+        # the reduce_hint_pep484_subbed_typevars_to_hints() reducer.
         hint_nonrecursable=hint_nonrecursable,
         hint_parent_sane=hint_parent_sane,
     )

@@ -20,8 +20,13 @@ from beartype.typing import (
     Optional,
     TypeVar,
 )
+from beartype._check.convert._reduce._redrecurse import (
+    is_hint_recursive,
+    make_hint_sane_recursable,
+)
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
+    HINT_SANE_RECURSIVE,
     HintOrSane,
     HintSane,
 )
@@ -54,7 +59,7 @@ def reduce_hint_pep484_typevar(
     hint_parent_sane: Optional[HintSane],
     exception_prefix: str,
     **kwargs
-) -> Hint:
+) -> HintSane:
     '''
     Reduce the passed :pep:`484`-compliant **type variable** (i.e.,
     :class:`typing.TypedDict` instance) to a lower-level type hint currently
@@ -85,11 +90,46 @@ def reduce_hint_pep484_typevar(
 
     Returns
     -------
-    Hint
-        Lower-level type hint currently supported by :mod:`beartype`.
+    HintSane
+        Either:
+
+        * If the type variable lookup table encapsulated by the passed sanified
+          parent type hint metadata maps this type variable to another type
+          hint, the latter.
+        * Else if this type variable is both unbounded and unconstrained, this
+          type variable is ignorable. In this case, the
+          :data:`.HINT_SANE_IGNORABLE` singleton.
+        * Else, this type variable's lover-level bounds or constraints.
     '''
     # print(f'Reducing PEP 484 type variable {hint} with parent hint {hint_parent_sane}...')
 
+    # ....................{ RECURSE                        }....................
+    # If this subscripted hint is recursive, ignore this subscripted hint to
+    # avoid infinite recursion.
+    if is_hint_recursive(
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        #FIXME: Globalize this magic constant, please.
+        hint_recursable_depth_max=1,
+        # hint_recursable_depth_max=_HINT_PEP695_RECURSABLE_DEPTH_MAX,
+    ):
+        # print(f'Ignoring recursive type variable {hint} with parent {hint_parent_sane}!')
+        return HINT_SANE_RECURSIVE
+    # Else, this subscripted hint is *NOT* recursive.
+
+    # ....................{ PHASE                          }....................
+    # This reducer is divided into two phases:
+    # 1. The first phase decides the type variable lookup table for this alias.
+    # 2. The second phase decides the recursion guard for this alias.
+    #
+    # Both phases are non-trivial. The output of each phase is sanified hint
+    # metadata (i.e., a "HintSane" object) containing the result of the decision
+    # problem decided by that phase.
+
+    # Reduced hint to be returned, defaulting to this type variable.
+    hint_reduced = hint
+
+    # ....................{ PHASE ~ 1 : lookup             }....................
     # If...
     if (
         # This type variable is not a root hint and thus has a parent hint
@@ -111,7 +151,7 @@ def reduce_hint_pep484_typevar(
             #
             # Note that this one-liner looks ridiculous, but actually works.
             # More importantly, this is the fastest way to accomplish this.
-            hint = typevar_to_hint.get(hint, hint)  # type: ignore[call-overload]
+            hint_reduced = typevar_to_hint.get(hint, hint)  # type: ignore[call-overload]
         # Else, a parent hint of this type variable mapped two or more type
         # variables. In this case, fallback to a slower and more complicated
         # approach that avoids worst-case edge cases. This includes recursion in
@@ -129,6 +169,10 @@ def reduce_hint_pep484_typevar(
         #     # mapping provokes infinite recursion unless explicitly handled.
         #     GenericLeaf[T]
         else:
+            # Type hints previously reduced from this type variable, initialized
+            # to this type variable.
+            hint_reduced_prev = hint
+
             # Shallow copy of this type variable lookup table, coerced from an
             # immutable frozen dictionary into a mutable standard dictionary.
             # This enables type variables reduced by the iteration below to be
@@ -154,45 +198,49 @@ def reduce_hint_pep484_typevar(
                 # yet to be reduced by this iteration *AND*...
                 typevar_to_hint_stack and
                 # This hint is still a type variable...
-                isinstance(hint, TypeVar)
+                isinstance(hint_reduced, TypeVar)
             ):
                 # Hint mapped to by this type variable if one or more parent
                 # hints previously mapped this type variable to a hint *OR* this
-                # hint as is otherwise (i.e., if this type variable is
-                # unmapped).
+                # hint as is (i.e., if this type variable is unmapped).
                 #
                 # Note that this one-liner destructively pops this type variable
-                # off this stack to prevent this type variable from being
-                # reduced more than once by an otherwise recursive mapping.
-                hint_reduced: Hint = typevar_to_hint_stack.pop(hint, hint)  # pyright: ignore
+                # off this temporary stack to prevent this type variable from
+                # being reduced more than once by an otherwise recursive
+                # mapping. Since this stack is local to this reducer, this
+                # behaviour is only locally destructive and thus safe.
+                hint_reduced = typevar_to_hint_stack.pop(
+                    hint_reduced_prev, hint_reduced_prev)  # pyright: ignore
 
                 # If this type variable maps to itself, this mapping is both
                 # ignorable *AND* terminates this reduction.
-                if hint_reduced is hint:
+                if hint_reduced is hint_reduced_prev:
                     break
                 # Else, this type variable does *NOT* map to itself.
 
                 # Map this type variable to this hint.
-                hint = hint_reduced
+                hint_reduced_prev = hint_reduced
         # print(f'...to hint {hint} via type variable lookup table!')
     # Else, this type variable is unmapped.
 
+    # ....................{ PHASE ~ 1 : bounds             }....................
     # If this hint is still a type variable (e.g., due to either not being
     # mapped by this lookup table *OR* being mapped by this lookup table to yet
     # another type variable)...
-    if isinstance(hint, TypeVar):
+    if isinstance(hint_reduced, TypeVar):
         # PEP-compliant hint synthesized from all bounded constraints
         # parametrizing this type variable if any *OR* "None" otherwise (i.e.,
         # if this type variable is both unbounded *AND* unconstrained).
         #
         # Note this call is passed positional parameters due to memoization.
-        hint = get_hint_pep484_typevar_bound_or_none(hint, exception_prefix)  # pyright: ignore
+        hint_reduced = get_hint_pep484_typevar_bound_or_none(
+            hint_reduced, exception_prefix)  # pyright: ignore
 
         # If this type variable is both unbounded *AND* unconstrained, this type
         # variable is currently *NOT* type-checkable and is thus ignorable.
         # Reduce this type variable to the ignorable singleton.
-        if hint is None:
-            hint = HINT_SANE_IGNORABLE
+        if hint_reduced is None:
+            return HINT_SANE_IGNORABLE
         # Else, this type variable is either bounded *OR* constrained. In either
         # case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
@@ -200,8 +248,27 @@ def reduce_hint_pep484_typevar(
     # Else, one or more transitive parent hints previously mapped this type
     # variable to another hint.
 
-    # Return this reduced hint.
-    return hint
+    # ....................{ PHASE ~ 2                      }....................
+    #FIXME: Revise commentary, please. *sigh*
+    # Decide the recursion guard protecting this possibly recursive hint against
+    # infinite recursion. Note that:
+    # * This guard intentionally applies to the original *SUBSCRIPTED* hint
+    #   (rather rather than the *UNSUBSCRIPTED* hint decided by the prior
+    #   phase). Thus, we pass "hint_recursable=hint" rather than
+    #   "hint_recursable=hint_or_sane.hint".
+    hint_sane = make_hint_sane_recursable(
+        # The recursable form of this type alias is the original subscripted
+        # hint tested above by the is_hint_recursive() recursion guard.
+        hint_recursable=hint,
+        # The non-recursable form of this type alias is the unsubscripted hint
+        # underlying the original subscripted hint.
+        hint_nonrecursable=hint_reduced,
+        hint_parent_sane=hint_parent_sane,
+    )
+
+    # ....................{ RETURN                         }....................
+    # Return this metadata.
+    return hint_sane
 
 
 def reduce_hint_pep484_subbed_typevars_to_hints(
@@ -330,7 +397,19 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     hint_childs = get_hint_pep_args(hint)
     # print(f'hint_childs: {repr(hint_childs)}')
 
-    # ....................{ NOOP                           }....................
+    # ....................{ PHASE ~ 1                      }....................
+    # Decide the type variable lookup table for this hint. Specifically, reduce
+    # this subscripted hint to:
+    # * The semantically useful unsubscripted hint originating this
+    #   semantically useless subscripted hint.
+    # * The type variable lookup table mapping all type variables parametrizing
+    #   this unsubscripted hint to all non-type variable hints subscripting
+    #   this subscripted hint.
+
+    # ....................{ PHASE ~ 1 : noop               }....................
+    #FIXME: Insufficient. We now need to incorporate this with our recursion
+    #guard. We sigh. *sigh*
+
     # If either...
     if (
         # This unsubscripted hint is parametrized by *NO* type variables, *NO*
@@ -350,27 +429,23 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
         # so would convey *NO* meaningful semantics and thus be pointless.
         hint_childs == hint_unsubbed_typevars
     # Then reduce this subscripted hint to simply this unsubscripted hint, as
-    # type variable lookup tables are then irrelevent.
+    # type variable lookup tables are then irrelevant.
     ):
         return hint_unsubbed
     # Else, this unsubscripted hint is parametrized by one or more type
     # variables. In this case, produce a type variable lookup table mapping
     # these type variables to child hints subscripting this subscripted hint.
 
-    # ....................{ MAPPING                        }....................
+    # ....................{ PHASE ~ 1 : map                }....................
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
     #
     # Note that we pass parameters positionally due to memoization.
     typevar_to_hint = _get_hint_pep484_typevars_to_hints(
-        hint,
-        hint_unsubbed_typevars,
-        hint_childs,
-        exception_prefix,
-    )
+        hint, hint_unsubbed_typevars, hint_childs, exception_prefix)
     # print(f'Mapped hint {hint} to type variable lookup table {typevar_to_hint}!')
 
-    # ....................{ RETURN                         }....................
+    # ....................{ PHASE ~ 1 : reduce             }....................
     # Sanified metadata to be returned.
     hint_sane: HintSane = None  # type: ignore[assignment]
 
@@ -407,8 +482,8 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
         hint_sane = hint_parent_sane.permute_sane(
             hint=hint_unsubbed, typevar_to_hint=typevar_to_hint)
 
-    # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint {repr(hint_unsubbed)} and...')
-    # print(f'...type variable lookup table {repr(typevar_to_hint)}.')
+    # ....................{ RETURN                         }....................
+    # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint metadata {repr(hint_sane)}.')
 
     # Return this metadata.
     return hint_sane

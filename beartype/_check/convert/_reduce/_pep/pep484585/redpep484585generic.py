@@ -148,7 +148,7 @@ def reduce_hint_pep484585_generic_subbed(
 
 
 def reduce_hint_pep484585_generic_unsubbed(
-    hint: Hint, exception_prefix: str) -> Hint:
+    hint: Hint, exception_prefix: str) -> HintOrSane:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **unsubscripted
     generic** (i.e., type originally subclassing at least one unsubscripted
@@ -167,8 +167,13 @@ def reduce_hint_pep484585_generic_unsubbed(
 
     Returns
     -------
-    Hint
-        This unsubscripted generic possibly reduced to a more suitable hint.
+    HintOrSane
+        Either:
+
+        * If this unsubscripted generic is ignorable, the
+          :data:`.HINT_SANE_IGNORABLE` singleton.
+        * Else, this unsubscripted generic possibly reduced to a more suitable
+          hint.
     '''
 
     # If this unsubscripted generic is the "typing.Generic" superclass, this
@@ -192,8 +197,7 @@ def reduce_hint_pep484585_generic_unsubbed(
 
     # Hint possibly reduced from this useless unsubscripted IO generic if this
     # hint is an unsubscripted IO generic *OR* this hint as is otherwise.
-    hint_reduced = _reduce_hint_pep484585_generic_io(
-        hint, exception_prefix)
+    hint_reduced = _reduce_hint_pep484585_generic_io(hint, exception_prefix)
 
     # Return this possibly reduced hint.
     return hint_reduced
