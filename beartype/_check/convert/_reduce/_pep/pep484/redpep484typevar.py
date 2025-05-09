@@ -109,9 +109,7 @@ def reduce_hint_pep484_typevar(
     if is_hint_recursive(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
-        #FIXME: Globalize this magic constant, please.
-        hint_recursable_depth_max=1,
-        # hint_recursable_depth_max=_HINT_PEP695_RECURSABLE_DEPTH_MAX,
+        hint_recursable_depth_max=_HINT_PEP484_TYPEVAR_RECURSABLE_DEPTH_MAX,
     ):
         # print(f'Ignoring recursive type variable {hint} with parent {hint_parent_sane}!')
         return HINT_SANE_RECURSIVE
@@ -249,13 +247,12 @@ def reduce_hint_pep484_typevar(
     # variable to another hint.
 
     # ....................{ PHASE ~ 2                      }....................
-    #FIXME: Revise commentary, please. *sigh*
-    # Decide the recursion guard protecting this possibly recursive hint against
-    # infinite recursion. Note that:
-    # * This guard intentionally applies to the original *SUBSCRIPTED* hint
-    #   (rather rather than the *UNSUBSCRIPTED* hint decided by the prior
-    #   phase). Thus, we pass "hint_recursable=hint" rather than
-    #   "hint_recursable=hint_or_sane.hint".
+    # Decide the recursion guard protecting this possibly recursive type
+    # variable against infinite recursion. Note that:
+    # * This guard intentionally applies to the original unreduced type variable
+    #   (rather rather than the newly reduced hint decided by the prior phase).
+    #   Thus, we pass "hint_recursable=hint" rather than
+    #   "hint_recursable=hint_reduced".
     hint_sane = make_hint_sane_recursable(
         # The recursable form of this type alias is the original subscripted
         # hint tested above by the is_hint_recursive() recursion guard.
@@ -397,7 +394,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     hint_childs = get_hint_pep_args(hint)
     # print(f'hint_childs: {repr(hint_childs)}')
 
-    # ....................{ PHASE ~ 1                      }....................
+    # ....................{ REDUCE                         }....................
     # Decide the type variable lookup table for this hint. Specifically, reduce
     # this subscripted hint to:
     # * The semantically useful unsubscripted hint originating this
@@ -406,10 +403,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     #   this unsubscripted hint to all non-type variable hints subscripting
     #   this subscripted hint.
 
-    # ....................{ PHASE ~ 1 : noop               }....................
-    #FIXME: Insufficient. We now need to incorporate this with our recursion
-    #guard. We sigh. *sigh*
-
+    # ....................{ REDUCE ~ noop                  }....................
     # If either...
     if (
         # This unsubscripted hint is parametrized by *NO* type variables, *NO*
@@ -436,7 +430,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     # variables. In this case, produce a type variable lookup table mapping
     # these type variables to child hints subscripting this subscripted hint.
 
-    # ....................{ PHASE ~ 1 : map                }....................
+    # ....................{ REDUCE ~ map                   }....................
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
     #
@@ -445,7 +439,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
         hint, hint_unsubbed_typevars, hint_childs, exception_prefix)
     # print(f'Mapped hint {hint} to type variable lookup table {typevar_to_hint}!')
 
-    # ....................{ PHASE ~ 1 : reduce             }....................
+    # ....................{ REDUCE ~ composite             }....................
     # Sanified metadata to be returned.
     hint_sane: HintSane = None  # type: ignore[assignment]
 
@@ -487,6 +481,54 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
 
     # Return this metadata.
     return hint_sane
+
+# ....................{ PRIVATE ~ constants                }....................
+_HINT_PEP484_TYPEVAR_RECURSABLE_DEPTH_MAX = 0
+'''
+Value of the optional ``hint_recursable_depth_max`` parameter passed to the
+:func:`.is_hint_recursive` tester by the :func:`.reduce_hint_pep484_typevar`
+reducer.
+
+This depth ensures that :pep:`484`-compliant type variables are considered to be
+recursive *only* after having been recursed into at most this many times before
+(i.e., *only* after having been visited exactly once as a child hint of an
+arbitrary parent hint). By definition, :pep:`484`-compliant type variables are
+guaranteed to *never* be parent hints. Ergo, recursing into type variables
+exactly once suffices to expand exactly one nesting level of non-trivial
+recursive data structures. This mirrors the restrained recursion allowed by
+other reducers.
+
+Consider :pep:`695`-compliant type aliases, for example. Unlike type variables,
+type aliases are guaranteed to *always* be parent hints. The value of the
+optional ``hint_recursable_depth_max`` parameter passed to the
+:func:`.is_hint_recursive` tester by :pep:`695`-specific reducers is thus one
+greater than the value of this global. Nonetheless, the real-world effect is
+exactly the same: exactly one nesting level of type aliases is expanded.
+
+Consider the following :pep:`484`-compliant generic recursively subscripted by
+itself via a :pep:`484`-compliant type variable ``T``:
+
+.. code-block:: python
+
+   class GenericList[T](): ...
+   RecursiveGenericList = GenericList[GenericList]
+
+Instances of this generic satisfying the type hint ``RecursiveGenericList``
+contain an arbitrary number of other instances of this generic, exhibiting this
+internal structure:
+
+.. code-block:: python
+
+   recursive_generic_list = GenericList()
+   recursive_generic_list.append(recursive_generic_list)
+
+Halting recursion at the first expansion of the type variable ``T`` then reduces
+the type hint ``RecursiveGenericList`` to
+``GenericList[GenericList[T]]``, , which reduces to
+``GenericList[GenericList[HINT_SANE_RECURSIVE]]``, , which reduces to
+``GenericList[GenericList]`` -- conveying exactly one layer of the internal
+semantics of this recursive data structure.
+'''
 
 # ....................{ PRIVATE ~ getters                  }....................
 @callable_cached

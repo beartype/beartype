@@ -344,10 +344,9 @@ above.
 This depth ensures that :pep:`695`-compliant type aliases are considered to be
 recursive *only* after having been recursed into at most this many times before
 (i.e., *only* after having been visited exactly twice, once as a parent alias
-and again as a transitive child hint of this parent alias). Unlike comparable
-kinds of recursable hints (e.g., hint overrides), :pep:`695`-compliant
-recursable type aliases typically describe non-trivial recursive data structures
-conveying internal semantics that merit deeper recursion.
+and again as a transitive child hint of this parent alias). :pep:`695`-compliant
+type aliases typically describe non-trivial recursive data structures conveying
+internal semantics that merit deeper recursion. This depth guarantees that.
 
 Consider the following :pep:`695`-compliant subscripted type alias:
 
@@ -355,9 +354,9 @@ Consider the following :pep:`695`-compliant subscripted type alias:
 
    type RecursiveList[T] = list[RecursiveList[T] | T]
 
-Lists satisfying the concrete type alias ``RecursiveList[int]`` alias contain an
+Lists satisfying the concrete type alias ``RecursiveList[int]`` contain an
 arbitrary number of integers and other lists containing an arbitrary number of
-integers, exhibiting an internal structure ala:
+integers, exhibiting this internal structure:
 
 .. code-block:: python
 
@@ -376,6 +375,6 @@ Halting recursion at the second expansion of the concrete type alias
 latter to ``list[list[RecursiveList[int] | int] | int]``, which reduces to
 ``list[list[HINT_SANE_RECURSIVE | int] | int]``, reducing to
 ``list[list[HINT_SANE_RECURSIVE] | int]``, which reduces to ``list[list |
-int]``, which superficially conveys a layer of the internal semantics of this
-data structure.
+int]`` -- conveying exactly one layer of the internal semantics of this
+recursive data structure.
 '''

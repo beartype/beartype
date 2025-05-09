@@ -653,27 +653,45 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        #FIXME: Uncomment after worky, please. *sigh*
-        # # Generic subclassing a single parametrized builtin container type,
-        # # subscripted by a type variable bound to this same container type and
-        # # thus indirectly inducing recursion.
-        # HintPepMetadata(
-        #     hint=Pep585ListT[T_Pep585ListT],
-        #     pep_sign=HintSignPep484585GenericSubscripted,
-        #     generic_type=Pep585ListT,
-        #     is_pep585_generic=True,
-        #     typevars=(T_Pep585ListT,),
-        #     piths_meta=(
-        #         # Subclass-specific recursive generic list.
-        #         HintPithUnsatisfiedMetadata(Pep585ListT_recursive),
-        #         # Subclass-specific non-recursive generic list.
-        #         HintPithUnsatisfiedMetadata(Pep585ListT((
-        #             'More sorrow like to this, and such like woe,'))),
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata(
-        #             'Too huge for mortal tongue or pen of scribe:'),
-        #     ),
-        # ),
+        # Generic subclassing a single parametrized builtin container type,
+        # subscripted by itself and thus indirectly inducing recursion.
+        HintPepMetadata(
+            hint=Pep585ListT[Pep585ListT],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585ListT,
+            is_pep585_generic=True,
+            piths_meta=(
+                # Subclass-specific recursive generic list.
+                HintPithSatisfiedMetadata(Pep585ListT_recursive),
+                # Subclass-specific non-recursive generic list.
+                HintPithUnsatisfiedMetadata(Pep585ListT((
+                    'The Titans fierce,', 'self-hid,', 'or prison-bound,',))),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    "Groan'd for the old allegiance once more,"),
+            ),
+        ),
+
+        # Generic subclassing a single parametrized builtin container type,
+        # subscripted by a type variable bound to this same container type and
+        # thus indirectly inducing recursion.
+        HintPepMetadata(
+            hint=Pep585ListT[T_Pep585ListT],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585ListT,
+            is_pep585_generic=True,
+            typevars=(T_Pep585ListT,),
+            piths_meta=(
+                # Subclass-specific recursive generic list.
+                HintPithSatisfiedMetadata(Pep585ListT_recursive),
+                # Subclass-specific non-recursive generic list.
+                HintPithUnsatisfiedMetadata(Pep585ListT((
+                    'More sorrow like to this,', 'and such like woe,',))),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Too huge for mortal tongue or pen of scribe:'),
+            ),
+        ),
 
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same multiple type variables in the same order.
