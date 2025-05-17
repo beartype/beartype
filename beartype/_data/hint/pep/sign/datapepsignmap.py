@@ -208,6 +208,17 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
         'NoneType': HintSignNone,
     },
 
+    # ..................{ ANNOTATIONLIB                      }..................
+    # Standard PEP 649- and 749-compliant annotation module.
+    'annotationlib': {
+        # ..................{ PEP (649|749)                  }..................
+        # The "annotationlib.ForwardRef" type is now the canonical location of
+        # this type under Python >= 3.14, which previously resided at
+        # "typing.ForwardRef". The latter still exists but is simply a lazy
+        # alias of the former.
+        'ForwardRef': HintSignForwardRef,
+    },
+
     # ..................{ DATACLASSES                        }..................
     # Standard PEP 557-compliant dataclass module.
     'dataclasses': {
@@ -389,6 +400,7 @@ def _init() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer initialization-specific imports.
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_MOST_3_13,
         IS_PYTHON_AT_LEAST_3_13,
         IS_PYTHON_3_11,
     )
@@ -448,10 +460,6 @@ def _init() -> None:
     # corresponding signs.
     _TYPING_ATTR_TYPE_BASENAME_TO_SIGN = {
         # ....................{ PEP 484                    }....................
-        # All PEP 484-compliant forward references are necessarily instances of
-        # the same class.
-        'ForwardRef' : HintSignForwardRef,
-
         # All PEP 484-compliant type variables are necessarily instances of the
         # same class.
         'TypeVar': HintSignTypeVar,
@@ -487,6 +495,19 @@ def _init() -> None:
     }
 
     # ..................{ INIT ~ versions                    }..................
+    # If the active Python interpreter targets Python <= 3.13...
+    if IS_PYTHON_AT_MOST_3_13:
+        # Map both the "typing.ForwardRef" and "typing_extensions.ForwardRef"
+        # types (the latter of which is simply an alias of the former) to the
+        # sign uniquely identifying forward references. All PEP 484-compliant
+        # forward references are necessarily instances of this type.
+        #
+        # Under Python >= 3.14, both of these types are simply aliases of
+        # "annotationlib.ForwardRef" type -- which is now the canonical
+        # implementation of this type but which resides outside a typing module.
+        _TYPING_ATTR_TYPE_BASENAME_TO_SIGN['ForwardRef'] = HintSignForwardRef
+    # Else, the active Python interpreter targets Python >= 3.14.
+
     # If the active Python interpreter targets Python >= 3.13...
     if IS_PYTHON_AT_LEAST_3_13:
         # Add all signs uniquely identifying one- or two-argument type hint
