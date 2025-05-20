@@ -518,15 +518,15 @@ def make_check_expr(
             elif hint_curr_sign is HintSignForwardRef:
                 # Render this forward reference accessible to the body of this
                 # wrapper function by populating:
-                # * A Python expression evaluating to the class referred to by
-                #   this forward reference when accessed via the private
-                #   "__beartypistry" parameter.
-                # * A set of the unqualified classnames referred to by all
-                #   relative forward references, including this reference if
-                #   relative. If this set was previously uninstantiated (i.e.,
-                #   "None"), this assignment initializes this local to the new
-                #   set instantiated by this call; else, this assignment
-                #   preserves this local set as is.
+                # * A Python expression evaluating to a new forward reference
+                #   proxy encapsulating the class referred to by this forward
+                #   reference.
+                # * A set of the unqualified classnames referred to by *ALL*
+                #   relative forward references visited by this BFS, including
+                #   this reference if relative. If this set was previously
+                #   uninstantiated (i.e., "None"), this assignment initializes
+                #   this local to the new set instantiated by this call; else,
+                #   this assignment preserves this local set as is.
                 (
                     hints_meta.hint_curr_expr,
                     hint_refs_type_basename,
@@ -1160,9 +1160,8 @@ def make_check_expr(
                 # If this hint is either a PEP 484- or 585-compliant subclass
                 # type hint...
                 elif hint_curr_sign is HintSignType:
-                    # Unignorable sane child hint sanified from this possibly
-                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
-                    # if this child hint is ignorable).
+                    # Metadata encapsulating the sanification of this possibly
+                    # insane child hint.
                     hint_child_sane = hints_meta.sanify_hint_child(
                         # Possibly ignorable insane child hint subscripting
                         # this parent hint, validated to be the *ONLY* child

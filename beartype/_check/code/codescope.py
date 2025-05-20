@@ -563,8 +563,8 @@ def express_func_scope_type_ref(
         relative to this scope) if any *or* :data:`None` otherwise (i.e., if no
         relative forward references have been expressed relative to this scope).
     exception_prefix : str, optional
-        Human-readable substring describing this forward reference in exception
-        exception message. Defaults to a sensible string.
+        Human-readable substring prefixing raised exception messages. Defaults
+        to a sensible string.
 
     Returns
     -------
@@ -580,8 +580,8 @@ def express_func_scope_type_ref(
             passed ``refs_type_basename`` set as is.
           * If this forward reference is an unqualified classname, either:
 
-            * If the passed ``refs_type_basename`` set is *not*
-              :data:`None`, this set with this classname added to it.
+            * If the passed ``refs_type_basename`` set is *not* :data:`None`,
+              this set with this classname added to it.
             * Else, a new set containing only this classname.
 
     Raises
