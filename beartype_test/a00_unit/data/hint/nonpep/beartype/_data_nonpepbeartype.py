@@ -29,7 +29,7 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     # Defer test-specific imports.
     from beartype.plug import BeartypeHintable
     from beartype.vale import Is
-    from beartype._util.api.standard.utiltyping import iter_typing_attrs
+    from beartype._util.api.standard.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonpepMetadata,
         HintPithSatisfiedMetadata,
@@ -105,7 +105,7 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
 
     # ..................{ FACTORIES                          }..................
     # For each "Annotated" type hint factory importable from a typing module...
-    for Annotated in iter_typing_attrs('Annotated'):
+    for Annotated in get_typing_attrs('Annotated'):
         # ..................{ LOCALS ~ plugin                }..................
         # Local variables requiring an "Annotated" type hint factory
         # additionally exercising beartype's plugin API.

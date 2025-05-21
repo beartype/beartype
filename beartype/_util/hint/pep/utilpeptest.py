@@ -457,7 +457,7 @@ def is_hint_pep_supported(hint: object) -> bool:
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
 #access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
 #* beartype._util.hint.pep.proposal.pep484.pep484.py
-#Thankfully, nobody really cares about generalizing this one edge case to
+#Thankfully, nobody really cares about generalizing that one edge case to
 #"testing_extensions", so it's mostly fine for various definitions of fine.
 def is_hint_pep_typing(hint: object) -> bool:
     '''

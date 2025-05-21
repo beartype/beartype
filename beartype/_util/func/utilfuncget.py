@@ -110,12 +110,12 @@ def get_func_annotations(
     ----------
     func : object
         Object to be inspected.
-    exception_cls : TypeException, optional
+    exception_cls : TypeException, default: _BeartypeUtilCallableException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------

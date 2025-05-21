@@ -206,7 +206,7 @@ class _TypeHintMeta(ABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._cls.util.doorclsget import get_typehint_subclass
+        from beartype.door._cls.util.doorclsmap import get_typehint_subclass
 
         # ................{ REDUCTION                          }................
         # Reduce this hint to a more amenable form suitable for mapping to a

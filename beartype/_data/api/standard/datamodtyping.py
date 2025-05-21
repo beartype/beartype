@@ -10,8 +10,6 @@ quasi-standard typing modules).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ SETS                               }....................
 TYPING_MODULE_NAMES_STANDARD = frozenset((
     # Official typing module bundled with the Python stdlib.

@@ -12,19 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeModuleAttributeNotFoundWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype.typing import (
-    Any,
-    Iterable,
-    Union,
-)
+from beartype.typing import Any
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.module.utilmodimport import import_module_attr_or_none
-from collections.abc import Iterable as IterableABC
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -359,8 +352,8 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
 
     # For the fully-qualified name of each quasi-standard typing module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # Attribute with this name dynamically imported from that module if
-        # that module defines this attribute *OR* "None" otherwise.
+        # Attribute with this name dynamically imported from that module if that
+        # module defines this attribute *OR* "None" otherwise.
         typing_attr = import_module_attr_or_none(
             f'{typing_module_name}.{typing_attr_basename}')
 
@@ -375,132 +368,3 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
 
     # Return this set, coerced into a frozen set for caching purposes.
     return frozenset(typing_attrs)
-
-# ....................{ ITERATORS                          }....................
-#FIXME: Replace *ALL* calls to this by calls to get_typing_attrs(), please.
-#FIXME: Currently unused but preserved for posterity. Consider excising, please.
-def iter_typing_attrs(
-    # Mandatory parameters.
-    typing_attr_basenames: Union[str, Iterable[str]],
-
-    # Optional parameters.
-    is_warn: bool = False,
-    typing_module_names: Iterable[str] = TYPING_MODULE_NAMES,
-) -> IterableABC:
-    '''
-    Generator iteratively yielding all attributes with the passed basename
-    declared by the quasi-standard typing modules with the passed
-    fully-qualified names, silently ignoring those modules failing to declare
-    such an attribute.
-
-    Attributes
-    ----------
-    typing_attr_basenames : Union[str, Iterable[str]]
-        Either:
-
-        * Unqualified name of the attribute to be dynamically imported from
-          each typing module, in which case either:
-
-          * If the currently iterated typing module defines this attribute,
-            this generator yields this attribute imported from that module.
-          * Else, this generator silently ignores that module.
-        * Iterable of one or more such names, in which case either:
-
-          * If the currently iterated typing module defines *all* attributes,
-            this generator yields a tuple whose items are these attributes
-            imported from that module (in the same order).
-          * Else, this generator silently ignores that module.
-    is_warn : bool
-        :data:`True` only if emitting non-fatal warnings for typing modules
-        failing to define all passed attributes. If ``typing_module_names`` is
-        passed, this parameter should typically also be passed as :data:`True`
-        for safety. Defaults to :data:`False`.
-    typing_module_names: Iterable[str]
-        Iterable of the fully-qualified names of all typing modules to
-        dynamically import this attribute from. Defaults to
-        :data:`.TYPING_MODULE_NAMES`.
-
-    Yields
-    ------
-    Union[object, Tuple[object, ...]]
-        Either:
-
-        * If passed only an attribute basename, the attribute with that
-          basename declared by each typing module.
-        * If passed an iterable of one or more attribute basenames, a tuple
-          whose items are the attributes with those basenames (in the same
-          order) declared by each typing module.
-    '''
-    assert isinstance(is_warn, bool), f'{is_warn} not boolean.'
-    assert isinstance(typing_attr_basenames, (str, IterableABC)), (
-        f'{typing_attr_basenames} not string.')
-    assert typing_attr_basenames, '"typing_attr_basenames" empty.'
-    assert isinstance(typing_module_names, IterableABC), (
-        f'{repr(typing_module_names)} not iterable.')
-    assert typing_module_names, '"typing_module_names" empty.'
-    assert all(
-        isinstance(typing_module_name, str)
-        for typing_module_name in typing_module_names
-    ), f'One or more {typing_module_names} items not strings.'
-
-    # If passed an attribute basename, pack this into a tuple containing only
-    # this basename for ease of use.
-    if isinstance(typing_attr_basenames, str):
-        typing_attr_basenames = (typing_attr_basenames,)
-    # Else, an iterable of attribute basenames was passed. In this case...
-    else:
-        assert all(
-            isinstance(typing_attr_basename, str)
-            for typing_attr_basename in typing_attr_basenames
-        ), f'One or more {typing_attr_basenames} items not strings.'
-    # In either case, this parameter is now a tuple of attribute basenames.
-
-    # List of all imported attributes to be yielded from each iteration of the
-    # generator implicitly returned by this generator function.
-    typing_attrs: list = []
-
-    # For the fully-qualified name of each quasi-standard typing module...
-    for typing_module_name in typing_module_names:
-        # Clear this list *BEFORE* appending to this list below.
-        typing_attrs.clear()
-
-        # For the basename of each attribute to be imported from that module...
-        for typing_attr_basename in typing_attr_basenames:
-            # Fully-qualified name of this attribute declared by that module.
-            typing_attr_name = f'{typing_module_name}.{typing_attr_basename}'
-
-            # Attribute with this name dynamically imported from that module if
-            # that module defines this attribute *OR* "None" otherwise.
-            typing_attr = import_module_attr_or_none(typing_attr_name)
-
-            # If that module fails to define this attribute...
-            if typing_attr is None:
-                # If emitting non-fatal warnings, do so.
-                if is_warn:
-                    issue_warning(
-                        cls=BeartypeModuleAttributeNotFoundWarning,
-                        message=(
-                            f'Ignoring undefined typing attribute '
-                            f'"{typing_attr_name}"...'
-                        ),
-                    )
-                # Else, silently reduce to a noop.
-
-                # Continue to the next module.
-                break
-            # Else, that module declares this attribute.
-
-            # Append this attribute to this list.
-            typing_attrs.append(typing_attr)
-        # If that module declares *ALL* attributes...
-        else:
-            # If exactly one attribute name was passed, yield this attribute as
-            # is (*WITHOUT* packing this attribute into a tuple).
-            if len(typing_attrs) == 1:
-                yield typing_attrs[0]
-            # Else, two or more attribute names were passed. In this case, yield
-            # these attributes as a tuple.
-            else:
-                yield tuple(typing_attrs)
-        # Else, that module failed to declare one or more attributes. In this
-        # case, silently continue to the next module.
