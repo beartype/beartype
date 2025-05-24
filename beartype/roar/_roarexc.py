@@ -756,6 +756,19 @@ class BeartypeDecorHintPep647Exception(BeartypeDecorHintPepException):
     pass
 
 
+class BeartypeDecorHintPep649Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`649`-compliant **type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving an object violating
+    :pep:`649` (e.g., due to defining neither the ``__annotations__`` dunder
+    dictionary nor ``__annotate__()`` dunder method).
+    '''
+
+    pass
+
+
 class BeartypeDecorHintPep673Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`673`-compliant **type hint exception.**

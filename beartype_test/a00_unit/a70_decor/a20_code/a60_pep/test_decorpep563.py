@@ -27,7 +27,6 @@ This submodule unit tests :pep:`563` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test._util.mark.pytskip import (
-    # skip,
     skip_if_pypy,
     skip_if_python_version_less_than,
     skip_if_python_version_greater_than_or_equal_to,
@@ -139,6 +138,10 @@ def test_pep563_module() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep604Exception
+    from beartype._util.hint.pep.proposal.pep649 import (
+        get_pep649_hintable_annotations,
+        set_pep649_hintable_annotations,
+    )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
@@ -150,9 +153,10 @@ def test_pep563_module() -> None:
     # ....................{ LOCALS                         }....................
     # Dictionary of these callables' annotations, localized to enable debugging
     # in the likely event of unit test failure. *sigh*
-    GET_MINECRAFT_END_TXT_ANNOTATIONS = get_minecraft_end_txt.__annotations__
-    GET_MINECRAFT_END_TXT_STANZA_ANNOTATIONS = (
-        get_minecraft_end_txt_stanza.__annotations__)
+    GET_MINECRAFT_END_TXT_ANNOTATIONS = get_pep649_hintable_annotations(
+        get_minecraft_end_txt)
+    GET_MINECRAFT_END_TXT_STANZA_ANNOTATIONS = get_pep649_hintable_annotations(
+        get_minecraft_end_txt_stanza)
 
     # ....................{ ASSERTS                        }....................
     # Assert that all annotations of a callable *NOT* decorated by @beartype
@@ -180,11 +184,14 @@ def test_pep563_module() -> None:
     # case that needlessly complicates code life.
     #
     # Manually resolve all postponed annotations on a callable.
-    get_minecraft_end_txt.__annotations__ = {
-        arg_name: eval(param_hint, get_minecraft_end_txt.__globals__)
-        for arg_name, param_hint in (
-            get_minecraft_end_txt.__annotations__.items())
-    }
+    set_pep649_hintable_annotations(
+        hintable=get_minecraft_end_txt,
+        annotations={
+            arg_name: eval(param_hint, get_minecraft_end_txt.__globals__)
+            for arg_name, param_hint in (
+                get_pep649_hintable_annotations(get_minecraft_end_txt).items())
+        },
+    )
 
     # Manually decorate this callable with @beartype.
     get_minecraft_end_txt_typed = beartype(get_minecraft_end_txt)

@@ -16,7 +16,6 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     TYPE_CHECKING,
     Callable,
-    # Dict,
     FrozenSet,
     Optional,
 )
@@ -37,12 +36,13 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
     get_func_codeobj_or_none,
 )
-from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+from beartype._util.hint.pep.proposal.pep649 import (
+    get_pep649_hintable_annotations)
 
 # ....................{ CLASSES                            }....................
 class BeartypeDecorMeta(object):
@@ -471,52 +471,6 @@ class BeartypeDecorMeta(object):
         #Since doing so is a negligible optimization, this is fine... for now.
         #FIXME: *WOOPS.* Due to PEP 649, we absolutely need to get out ahead of
         #this before Python 3.13 and catastrophe strike. Notably:
-        #* Define a new "beartype._data.hint.datahinttyping.Hintable" type hint
-        #  resembling:
-        #      from beartype._cave._cavefast import (
-        #          FunctionType,
-        #          MethodBoundInstanceOrClassType,
-        #      )
-        #
-        #      Hintable = Union[
-        #          FunctionType,                    # <-- pure-Python function
-        #          MethodBoundInstanceOrClassType,  # <-- pure-Python method
-        #          ModuleType,  # <-- C-based *OR* pure-Python module
-        #          type,        # <-- C-based *OR* pure-Python class
-        #      ]
-        #      '''
-        #      PEP-compliant type hint matching any **hintable** (i.e., ideally
-        #      pure-Python object defining the ``__annotations__`` dunder
-        #      attribute as well as the ``__annotate__`` dunder callable if the
-        #      active Python interpreter targets Python >= 3.13).
-        #      '''
-        #* Define a new "beartype._data.cls.datacls.HintableTypes" tuple union
-        #  resembling:
-        #      from beartype._cave._cavefast import (
-        #          FunctionType,
-        #          MethodBoundInstanceOrClassType,
-        #      )
-        #
-        #      HintableTypes = (
-        #          FunctionType,                    # <-- pure-Python function
-        #          MethodBoundInstanceOrClassType,  # <-- pure-Python method
-        #          ModuleType,  # <-- C-based *OR* pure-Python module
-        #          type,        # <-- C-based *OR* pure-Python class
-        #      )
-        #* Rename "HintAnnotations" to "HintableAnnotations" in that same
-        #  submodule.
-        #* Define a new "beartype._util.hintable" subpackage.
-        #* Define a new "beartype._util.hintable.utilhintableget" submodule.
-        #* Define a new get_hintable_hint_name_to_hint() getter in that
-        #  submodule whose signature resembles:
-        #      from beartype._data.hint.datahinttyping import (
-        #          Hintable,
-        #          HintableAnnotations,
-        #      )
-        #
-        #      def get_hintable_hint_name_to_hint(hintable: Hintable) -> (
-        #          HintableAnnotations):
-        #* Define a new "BeartypePep649Exception" exception type, please.
         #* Implement this getter conditionally depending on the active Python
         #  interpreter as follows:
         #      from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_13
@@ -685,7 +639,7 @@ class BeartypeDecorMeta(object):
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.func_arg_name_to_hint = get_func_annotations(wrapper)
+        self.func_arg_name_to_hint = get_pep649_hintable_annotations(wrapper)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_arg_name_to_hint}...')
 
         # dict.get() method bound to this dictionary.

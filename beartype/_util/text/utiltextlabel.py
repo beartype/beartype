@@ -23,6 +23,9 @@ from beartype._util.utilobject import (
 from collections.abc import Callable
 
 # ....................{ LABELLERS ~ beartypeable           }....................
+#FIXME: Generalize to all possible objects, please. Specifically:
+#* Rename to label_object_kind().
+#* Reduce the "obj: BeartypeableT" type hint to merely "obj: object".
 def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     '''
     Human-readable label describing the **kind** (i.e., single concise noun

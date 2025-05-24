@@ -338,15 +338,6 @@ PEP-compliant type hint matching a dictionary mapping from types to arbitrary
 objects.
 '''
 
-
-HintAnnotations = DictStrToAny
-'''
-PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
-the name of each annotated parameter or return of a callable or annotated
-variable of a class to the type hint annotating that parameter, return, or
-variable).
-'''
-
 # ....................{ SIGN                               }....................
 HintSignOrNoneOrSentinel = Union[Optional[HintSign], Iota]
 '''
@@ -676,7 +667,7 @@ low-level strings possibly signifying pathnames *or* high-level :class:`Path`
 instances definitely encapsulating pathnames).
 '''
 
-# ....................{ PEP 484                            }....................
+# ....................{ PEP ~ 484                          }....................
 # Type hints required to fully comply with PEP 484.
 #
 # Note that:
@@ -712,7 +703,7 @@ Pep484TowerFloat = (
 (i.e., both floating-point numbers and integers).
 '''
 
-# ....................{ PEP 484 ~ typevar                  }....................
+# ....................{ PEP ~ 484 : typevar                }....................
 S = TypeVar('S')
 '''
 **Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
@@ -746,7 +737,7 @@ NodeT = TypeVar('NodeT', bound=AST)
 syntax tree (AST) nodes).
 '''
 
-# ....................{ PEP 484 ~ typevar : container      }....................
+# ....................{ PEP ~ 484 : typevar : container    }....................
 SetTypeVars = Set[TypeVar]
 '''
 :pep:`585`-compliant type hint matching a mutable set of zero or more
@@ -760,7 +751,7 @@ TupleTypeVars = Tuple[TypeVar, ...]
 :pep:`484`-compliant **type variables** (i.e., :class:`.TypeVar` objects).
 '''
 
-# ....................{ PEP (484|585)                      }....................
+# ....................{ PEP ~ (484|585)                    }....................
 # Type hints required to fully comply with both PEP 484 *AND* 585.
 
 #FIXME: Shift into the more appropriate "datahintpep" submodule, please.
@@ -775,7 +766,7 @@ See Also
     Further details.
 '''
 
-# ....................{ PEP (484|612|646)                  }....................
+# ....................{ PEP ~ (484|612|646)                }....................
 # Type hints required to fully comply with PEP 484, 612, and 646 -- the
 # standards collectively covering type parameters.
 
@@ -794,31 +785,26 @@ parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
 parameter specifications, or :pep:`646`-compliant type variable tuples).
 '''
 
-# ....................{ PEP 649                            }....................
-# Type hints required to fully comply with PEP 649.
-
-# Objects defining PEP 649-compliant "__annotations__" dunder dictionaries
-# are either...
-Pep649Hintable = Union[
-    FunctionType,                    # <-- pure-Python function
-
-    # C-based bound method descriptor (i.e., a pure-Python unbound function
-    # bound to an object instance on Python's instantiation of that object)
-    # *OR*...
-    MethodBoundInstanceOrClassType,  # <-- pure-Python method
-    ModuleType,  # <-- C-based *OR* pure-Python module
-    type,        # <-- C-based *OR* pure-Python class
-]
+# ....................{ PEP ~ 649                          }....................
+# Objects defining PEP 649-compliant __annotate__() dunder methods are either...
+Pep649Hintable = Union[type, Callable, ModuleType]
 '''
 :pep:`649`-compliant type hint matching any **hintable** (i.e., ideally
 pure-Python object defining the ``__annotations__`` dunder attribute as well as
-the :pep:`649`-compliant ``__annotate__`` dunder callable if the active Python
+the :pep:`649`-compliant ``__annotate__`` dunder method if the active Python
 interpreter targets Python >= 3.14).
 '''
 
-# ....................{ PEP 695                            }....................
-# Type hints required to fully comply with PEP 695.
 
+Pep649HintableAnnotations = DictStrToAny
+'''
+:pep:`649`-compliant type hint matching any **hintable annotations** (i.e.,
+dictionary mapping from the name of each annotated parameter or return of a
+callable *or* annotated variable of a class or module to the type hint
+annotating that parameter, return, or variable).
+'''
+
+# ....................{ PEP ~ 695                          }....................
 Pep695Parameterizable = Union[type, FunctionType, HintPep695TypeAlias]
 '''
 :pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**

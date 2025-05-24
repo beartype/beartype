@@ -85,7 +85,6 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgMandatory,
     iter_func_args,
 )
-from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import is_func_codeobjable
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -93,6 +92,8 @@ from beartype._util.hint.pep.proposal.pep612 import (
     get_hint_pep612_paramspec,
     make_hint_pep612_concatenate_list_or_none,
 )
+from beartype._util.hint.pep.proposal.pep649 import (
+    get_pep649_hintable_annotations)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from collections.abc import (
     Callable as CallableABC,
@@ -272,7 +273,7 @@ def infer_hint_callable(func: CallableABC) -> object:
     #       # *NO* parameters should be annotated as such.
     #       >>> infer_hint(lambda: None)
     #       collections.abc.Callable[[], object]
-    pith_name_to_hint = get_func_annotations(func_wrapper)
+    pith_name_to_hint = get_pep649_hintable_annotations(func_wrapper)
 
     # dict.get() method bound to this dictionary, localized for efficiency.
     pith_name_to_hint_get = pith_name_to_hint.get

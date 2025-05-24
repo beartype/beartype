@@ -33,9 +33,7 @@ performance improvements.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing._typingcache import callable_cached_minimal
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_12,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 from typing import (  # type: ignore[attr-defined]
     EXCLUDED_ATTRIBUTES,  # pyright: ignore
     TYPE_CHECKING,
@@ -79,13 +77,13 @@ the :func:`isinstance` builtin in structural subtyping checks).
 '''
 
 
-_T_co = TypeVar("_T_co", covariant=True)
+_T_co = TypeVar('_T_co', covariant=True)
 '''
 Arbitrary covariant type variable.
 '''
 
 
-_TT = TypeVar("_TT", bound="_CachingProtocolMeta")
+_TT = TypeVar('_TT', bound='_CachingProtocolMeta')
 '''
 Arbitrary type variable bound (i.e., confined) to classes.
 '''
@@ -319,12 +317,36 @@ Empty dictionary.
 
 # ....................{ PRIVATE ~ functions                }....................
 #FIXME: Docstring us up, please.
-#FIXME: Comment us up, please.
 def _check_only_my_attrs(cls, inst: object) -> bool:
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep649 import (
+        get_pep649_hintable_annotations_or_none)
+
+    # Dictionary mapping from the name to value of each attribute declared by
+    # this protocol class.
     cls_attr_name_to_value = cls.__dict__
+
+    # Dictionary mapping from the name to type hint of each possibly undefined
+    # attribute declared by this protocol class if this class defines this
+    # dictionary *OR* .
+    #
+    # This minor edge cases handles
+    # attributes annotated by a type hint but lacking a value: e.g.,
+    #     class SomeProtocol(Protocol):
+    #         some_attr: int | str  # <-- note the lack of a value
+    # cls_attr_name_to_hint = get_pep649_hintable_annotations_or_none(cls)
+
+    #FIXME: Generalize to support Python 3.14. Super-nontrivial. We'll basically
+    #need to define a new get_pep649_hintable_dict_annotations_or_none() getter
+    #to perform *ONLY* the first half of the annotationslib.get_annotations()
+    #getter. *sigh*
     cls_attr_name_to_hint = cls_attr_name_to_value.get(
         '__annotations__', _EMPTY_DICT)
+
+    # Dictionary mapping from the name to either value of each attribute *OR*
+    # type hint of each possibly undefined attribute declared by this protocol
+    # class.
     cls_attr_names = cls_attr_name_to_value | cls_attr_name_to_hint
 
     # For the name of each attribute declared by this protocol class...

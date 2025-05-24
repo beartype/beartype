@@ -26,9 +26,9 @@ from beartype._check.forward.fwdresolve import resolve_hint
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import TypeStack
-from beartype._util.cache.pool.utilcachepoolinstance import (
-    release_instance)
-from beartype._util.func.utilfuncget import get_func_annotations
+from beartype._util.cache.pool.utilcachepoolinstance import release_instance
+from beartype._util.hint.pep.proposal.pep649 import (
+    get_pep649_hintable_annotations)
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
@@ -155,11 +155,8 @@ def resolve_pep563(
     # directly assigned to below, as the loop performing that assignment below
     # necessarily iterates over that dictionary. As with most languages, Python
     # containers cannot be safely mutated while being iterated.
-    arg_name_to_hint = get_func_annotations(
-        func=func,
-        exception_cls=BeartypePep563Exception,
-        exception_prefix='Callable ',
-    )
+    arg_name_to_hint = get_pep649_hintable_annotations(
+        hintable=func, exception_cls=BeartypePep563Exception)
 
     # If that callable is unannotated, silently reduce to a noop.
     if not arg_name_to_hint:

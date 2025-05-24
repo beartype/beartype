@@ -26,7 +26,8 @@ from beartype._util.cls.pep.clspep557 import (
     is_pep557_dataclass_frozen,
 )
 from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.func.utilfuncget import get_func_annotations
+from beartype._util.hint.pep.proposal.pep649 import (
+    get_pep649_hintable_annotations)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.utilobject import get_object_type_name
 
@@ -172,24 +173,6 @@ def beartype_pep557_dataclass(
     # ..................{ SANIFICATION                       }..................
     # Sanify (i.e., sanitize) this dictionary of type hints.
 
-    #FIXME: Inappropriate. Obviously, "dataclass" is an uncallable type rather
-    #than a callable. Instead:
-    #* Define a new "Annotationsable" type hint in the
-    #  "beartype._data.hint.datahinttyping" submodule resembling:
-    #      Annotationsable = Union[type, Callable]
-    #      '''
-    #      PEP-compliant type hint matching an **annotations-able** (i.e.,
-    #      object capable of being annotated by two or more type hints via an
-    #      ``__annotations__`` dunder dictionary defined on that object).
-    #      '''
-    #* Generalize the existing get_func_annotations() getter into a new
-    #  get_object_annotations() getter with signature resembling:
-    #      from beartype._data.hint.datahinttyping import (
-    #          Annotations,
-    #          Annotationsable,
-    #      )
-    #      def get_object_annotations(obj: Annotationsable) -> Annotations:
-    #* Call that getter here.
     #FIXME: Copy this dictionary via dict.copy() for safety. Directly modifying
     #"__annotations__" dunder dictionaries is probably unsafe in Python >= 3.14.
     #Since this is becoming a common operation, perhaps simply add a new
@@ -199,7 +182,7 @@ def beartype_pep557_dataclass(
     # Unsanified (i.e., original) dictionary mapping from the name of each
     # possible field of this dataclass to the possibly insane type hint
     # annotating that field *AFTER* resolving all PEP 563-postponed type hints.
-    attr_name_to_hint_insane = get_func_annotations(datacls)
+    attr_name_to_hint_insane = get_pep649_hintable_annotations(datacls)
 
     # Sanified (i.e., sanitized) dictionary mapping from the name of each
     # guaranteable field of this dataclass to the ostensibly sane type hint
