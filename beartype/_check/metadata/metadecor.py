@@ -342,7 +342,7 @@ class BeartypeDecorMeta(object):
               uncallable object whose type renders that object callable by
               defining the ``__call__()`` dunder method) *and* ``func`` is that
               ``__call__()`` dunder method. If that pseudo-callable wraps a
-              lower-level callable, then that pseudo-callable (rather than
+              lower-level callable, then that pseudo-callable (rather than that
               ``__call__()`` dunder method) defines the ``__wrapped__`` instance
               variable providing that callable.
 
@@ -639,7 +639,8 @@ class BeartypeDecorMeta(object):
         # thin isomorphic wrapper deferring to "wrapper" (i.e., the callable to
         # be unwrapped). Even if "func" were annotated with type hints, those
         # type hints would be useless for most intents and purposes.
-        self.func_arg_name_to_hint = get_pep649_hintable_annotations(wrapper)
+        self.func_arg_name_to_hint = get_pep649_hintable_annotations(
+            hintable=wrapper, exception_cls=BeartypeDecorWrappeeException)
         # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_arg_name_to_hint}...')
 
         # dict.get() method bound to this dictionary.

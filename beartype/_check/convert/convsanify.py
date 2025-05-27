@@ -132,7 +132,33 @@ def sanify_hint_root_func(
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     #FIXME: This attempt at mutating the "__annotations__" dunder dictionary is
-    #likely to fail under Python >= 3.13. Contemplate alternatives, please.
+    #likely to fail under Python >= 3.14. Contemplate alternatives, please.
+    #FIXME: Indeed, this absolutely fails. Instead:
+    #* Define these new "BeartypeDecorMeta" instance variables:
+    #  * "BeartypeDecorMeta.func_arg_name_to_hint_new", initialized to a copy of
+    #    the initial dictionary: e.g.,
+    #      self.func_arg_name_to_hint_new = func_arg_name_to_hint.copy()
+    #  * "BeartypeDecorMeta.func_wrapper", initialized to the passed "wrapper"
+    #    parameter (which we should probably rename to "func_wrapper" for both
+    #    sanity and searchability): e.g.,
+    #      self.func_wrapper = wrapper
+    #* Refactor cull_beartype_call() to additionally call
+    #  set_pep649_hintable_annotations() if at least one annotation has changed:
+    #      def cull_beartype_call(...):
+    #          ...
+    #
+    #          if (
+    #              decor_meta.func_arg_name_to_hint !=
+    #              decor_meta.func_arg_name_to_hint_new
+    #          ):
+    #              set_pep649_hintable_annotations(
+    #                  hintable=decor_meta.func_wrapper,
+    #                  annotations=decor_meta.func_arg_name_to_hint_new,
+    #              )
+    #* Refactor "beartype.peps._pep563" to leverage similar logic as well.
+    #* *WOOPS.* "beartype.peps._pep563" never calls cull_beartype_call()! Yikes.
+    #  Please do so with all haste.
+
     # PEP-compliant type hint coerced from this possibly (i.e., permanently
     # converted in the annotations dunder dictionary of the passed callable)
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is

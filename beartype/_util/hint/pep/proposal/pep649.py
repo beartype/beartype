@@ -211,5 +211,37 @@ def set_pep649_hintable_annotations(
     )
     # Else, this hintable is actually a hintable.
 
-    # Set the "__annotations__" dictionary dictionary on this hintable.
-    hintable.__annotations__ = annotations
+    # Attempt to...
+    try:
+        # Atomically (i.e., all-at-once) replace this hintable's existing
+        # "__annotations__" dunder dictionary with these new annotations. Do so
+        # atomically for both safety and efficiency.
+        hintable.__annotations__ = annotations
+    # If doing so fails with an exception resembling the following, this
+    # hintable is *NOT* pure-Python. The canonical example are C-based decorator
+    # objects (e.g., class, property, or static method descriptors), whose
+    # exception message reads:
+    #     AttributeError: 'method' object has no attribute '__annotations__'
+    #
+    # C-based decorator objects define a read-only "__annotations__" dunder
+    # attribute that proxies an original writeable "__annotations__" dunder
+    # attribute of the pure-Python callables they originally decorated. Ergo,
+    # detecting this edge case is non-trivial and most easily deferred to
+    # this late time. While non-ideal, simplicity >>>> idealism in this case.
+    except AttributeError:
+        #FIXME: *UGH.* PEP 649 and 749 do *NOT* want anyone to directly set
+        #annotations entries under Python >= 3.14. Consider options. Maybe just
+        #raise an explanatory exception under Python >= 3.14? *sigh*
+
+        # For the name of each annotated attribute of this hintable and the new
+        # hint which which to annotate this attribute, overwrite the prior hint
+        # originally annotating this attribute with this new hint.
+        #
+        # Note that:
+        # * The above assignment is an efficient O(1) operation and thus
+        #   intentionally performed first.
+        # * This iteration-based assignment is an inefficient O(n) operation
+        #   (where "n" is the number of annotated attributes of this hintable)
+        #   and thus intentionally performed last here.
+        for attr_name, attr_hint in annotations.items():
+            hintable.__annotations__[attr_name] = attr_hint

@@ -28,7 +28,9 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.pool.utilcachepoolinstance import release_instance
 from beartype._util.hint.pep.proposal.pep649 import (
-    get_pep649_hintable_annotations)
+    get_pep649_hintable_annotations,
+    set_pep649_hintable_annotations,
+)
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
@@ -150,11 +152,6 @@ def resolve_pep563(
     # parameter and return of the passed callable to the non-string type hint
     # resolved from the string type hint annotating that parameter or return --
     # raising an exception if that callable is *NOT* a pure-Python callable.
-    #
-    # Note that the "func.__annotations__" dictionary *CANNOT* be safely
-    # directly assigned to below, as the loop performing that assignment below
-    # necessarily iterates over that dictionary. As with most languages, Python
-    # containers cannot be safely mutated while being iterated.
     arg_name_to_hint = get_pep649_hintable_annotations(
         hintable=func, exception_cls=BeartypePep563Exception)
 
@@ -266,44 +263,19 @@ def resolve_pep563(
     # Release this beartype call metadata back to its object pool.
     release_instance(decor_meta)
 
-    #FIXME: Shift this logic into a new set_object_annotations() function. Under
-    #Python >= 3.14, this logic is likely to require delicate surgery. *sigh*
-    # Attempt to...
-    try:
-        # Atomically (i.e., all-at-once) replace that callable's postponed
-        # annotations with these resolved annotations for safety and efficiency.
-        #
-        # While the @beartype decorator goes to great lengths to preserve the
-        # originating "__annotations__" dictionary as is, PEP 563 is
-        # sufficiently expensive, non-trivial, and general-purpose to support
-        # that generically resolving postponed annotations for all downstream
-        # third-party callers is justified. Everyone benefits from replacing
-        # useless postponed annotations with useful real annotations; so, do so.
-        func.__annotations__ = arg_name_to_hint
-    # If doing so fails with an exception resembling the following, that
-    # callable is *NOT* a pure-Python callable but rather a C-based decorator
-    # object of some sort (e.g., class, property, or static method descriptor):
-    #     AttributeError: 'method' object has no attribute '__annotations__'
+    # Replace that callable's postponed hints with these resolved hints.
     #
-    # C-based decorator objects define a read-only "__annotations__" dunder
-    # attribute that proxies an original writeable "__annotations__" dunder
-    # attribute of the pure-Python callables they originally decorated. Ergo,
-    # detecting this edge case is non-trivial and most easily deferred to
-    # this late time. While non-ideal, simplicity >>>> idealism in this case.
-    except AttributeError:
-        # For the name of each annotated parameter and return of that callable
-        # and the destringified type hint annotating this parameter or return,
-        # overwrite the stringified type hint originally annotating this
-        # parameter or return with this destringified type hint.
-        #
-        # Note that:
-        # * The above assignment is an efficient O(1) operation and thus
-        #   intentionally performed first.
-        # * This iteration-based assignment is an inefficient O(n) operation
-        #   (where "n" is the number of annotated parameters and returns of that
-        #   callable) and thus intentionally performed last here.
-        for arg_name, arg_hint in arg_name_to_hint.items():
-            func.__annotations__[arg_name] = arg_hint
+    # While the @beartype decorator goes to great lengths to preserve the
+    # originating "__annotations__" dictionary as is, PEP 563 is sufficiently
+    # expensive, non-trivial, and general-purpose to support that generically
+    # resolving postponed annotations for all downstream third-party callers is
+    # justified. Everyone benefits from replacing useless postponed annotations
+    # with useful real annotations; so, do so.
+    set_pep649_hintable_annotations(
+        hintable=func,
+        annotations=arg_name_to_hint,
+        exception_cls=BeartypePep563Exception,
+    )
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'
