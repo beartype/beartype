@@ -250,7 +250,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
         return cls
 
 
-    def __instancecheck__(cls, inst: Any) -> bool:
+    def __instancecheck__(cls, obj: Any) -> bool:
         '''
         :data:`True` only if the passed object is a **structural subtype**
         (i.e., satisfies the protocol defined by) the passed protocol.
@@ -259,11 +259,11 @@ class _CachingProtocolMeta(_ProtocolMeta):
         ----------
         cls : type
             :pep:`544`-compliant protocol to check this object against.
-        inst : Any
+        obj : Any
             Arbitrary object to check against this protocol.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this object satisfies this protocol.
         '''
@@ -277,37 +277,58 @@ class _CachingProtocolMeta(_ProtocolMeta):
             # Return a pre-cached boolean indicating whether an object of
             # the same arbitrary type as the object passed to this call
             # satisfied the same protocol in a prior call of this method.
-            return cls._abc_inst_check_cache[type(inst)]
+            return cls._abc_inst_check_cache[type(obj)]
         # If this method has yet to be passed the same protocol *AND* an
         # object of the same type as the object passed to this call...
+        #
+        # Note that, if you're going to do *ANYTHING*, do it here. Try not to
+        # expand the rest of this method if you can avoid it.
         except KeyError:
-            # If you're going to do *anything*, do it here. Try not to
-            # expand the rest of this method if you can avoid it.
-            inst_t = type(inst)
-            bases_pass_muster = True
+            # True only if the type of this object subclasses *ALL* unignorable
+            # types in the method-order resolution of this protocol.
+            is_obj_type_subtype = True
 
+            # Type of this object.
+            obj_type = type(obj)
+
+            #FIXME: [Speed] *HMM.* This can be optimized a bit by pre-filtering
+            #out all ignorable superclasses from "cls.__bases__" in the
+            #__init__() method above rather than repeatedly doing so here.
             for base in cls.__bases__:
-                #FIXME: This branch probably erroneously matches unrelated
-                #user-defined types whose names just happen to be "Generic"
-                #or "Protocol". Ideally, we should tighten that up to only
-                #match the actual "{beartype,}.typing.{Generic,Protocol}"
-                #superclasses. Of course, note that
-                #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
-                #we'll want to explicitly test against both.
-                if base is cls or base.__name__ in (
-                    'Protocol',
-                    'Generic',
-                    'object',
+                if (
+                    base is cls or
+                    #FIXME: This branch probably erroneously matches unrelated
+                    #user-defined types whose names just happen to be "Generic"
+                    #or "Protocol". Ideally, we should tighten that up to only
+                    #match the actual "{beartype,}.typing.{Generic,Protocol}"
+                    #superclasses. Of course, note that
+                    #"beartype.typing.Protocol" is *NOT* "typing.Protocol', so
+                    #we'll want to explicitly test against both.
+                    base.__name__ in _PROTOCOL_SUPERCLASS_IGNORABLE_BASENAMES
                 ):
                     continue
-                if not isinstance(inst, base):
-                    bases_pass_muster = False
+
+                if not isinstance(obj, base):
+                    is_obj_type_subtype = False
                     break
 
-            cls._abc_inst_check_cache[inst_t] = bases_pass_muster and (
-                _check_only_my_attrs(cls, inst))
+            # True only if this object satisfies this protocol. Specifically,
+            # true only if both...
+            #
+            # Note that this test is computationally expensive and thus memoized
+            # for subsequent lookup in a beartype-specific cache bound to this
+            # protocol type.
+            is_obj_valid = cls._abc_inst_check_cache[obj_type] = (
+                # True only if the type of this object subclasses all
+                # unignorable types in the method-order resolution of this
+                # protocol *AND*...
+                is_obj_type_subtype and
+                # This object defines all attributes required by this protocol.
+                _is_obj_structural_subtype(cls, obj)
+            )
 
-            return cls._abc_inst_check_cache[inst_t]
+            # Return true only if this object satisfies this protocol.
+            return is_obj_valid
 
 # ....................{ PRIVATE ~ globals                  }....................
 _EMPTY_DICT: dict[str, object] = {}
@@ -315,21 +336,48 @@ _EMPTY_DICT: dict[str, object] = {}
 Empty dictionary.
 '''
 
+
+_PROTOCOL_SUPERCLASS_IGNORABLE_BASENAMES: frozenset[str] = frozenset((
+    'object',
+    'Protocol',
+    'Generic',
+))
+'''
+Frozen set of the unqualified basenames of all **ignorable protocol
+superclasses** (i.e., :pep:`544`-compliant superclasses that convey *no*
+meaningful semantics with respect to protocol detection and are thus ignorable).
+'''
+
 # ....................{ PRIVATE ~ functions                }....................
-#FIXME: Docstring us up, please.
-def _check_only_my_attrs(cls, inst: object) -> bool:
+def _is_obj_structural_subtype(cls, obj: Any) -> bool:
+    '''
+    :data:`True` only if the passed object is a **structural subtype**
+    (i.e., satisfies the protocol defined by) the passed protocol.
+
+    Parameters
+    ----------
+    cls : type
+        :pep:`544`-compliant protocol to check this object against.
+    obj : Any
+        Arbitrary object to check against this protocol.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object satisfies this protocol.
+    '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep649 import (
         get_pep649_hintable_annotations_or_none)
 
-    # Dictionary mapping from the name to value of each attribute declared by
-    # this protocol class.
+    # Dictionary mapping from the name to value of each attribute directly
+    # declared by this protocol class.
     cls_attr_name_to_value = cls.__dict__
 
     # Dictionary mapping from the name to type hint of each possibly undefined
-    # attribute declared by this protocol class if this class defines this
-    # dictionary *OR* .
+    # attribute directly declared by this protocol class if this class defines
+    # this dictionary *OR* .
     #
     # This minor edge cases handles
     # attributes annotated by a type hint but lacking a value: e.g.,
@@ -340,13 +388,16 @@ def _check_only_my_attrs(cls, inst: object) -> bool:
     #FIXME: Generalize to support Python 3.14. Super-nontrivial. We'll basically
     #need to define a new get_pep649_hintable_dict_annotations_or_none() getter
     #to perform *ONLY* the first half of the annotationslib.get_annotations()
-    #getter. *sigh*
+    #getter. For now, doing nothing is preferable. Doing nothing simply means
+    #that "beartype.typing.Protocol" users will be unable to use unquoted
+    #forward references in protocol type hints under Python >= 3.14. That's
+    #non-ideal, of course, but we can't be bothered to tackle this yet. *sigh*
     cls_attr_name_to_hint = cls_attr_name_to_value.get(
         '__annotations__', _EMPTY_DICT)
 
     # Dictionary mapping from the name to either value of each attribute *OR*
-    # type hint of each possibly undefined attribute declared by this protocol
-    # class.
+    # type hint of each possibly undefined attribute directly declared by this
+    # protocol class.
     cls_attr_names = cls_attr_name_to_value | cls_attr_name_to_hint
 
     # For the name of each attribute declared by this protocol class...
@@ -365,7 +416,7 @@ def _check_only_my_attrs(cls, inst: object) -> bool:
             # This attribute is either...
             ) and (
                 # Undefined by the passed object *OR*...
-                not hasattr(inst, cls_attr_name) or
+                not hasattr(obj, cls_attr_name) or
                 # Defined by the passed object as a "blocked" (i.e., omitted
                 # from being type-checked as part of this protocol) method.
                 # For unknown and indefensible reasons, PEP 544 explicitly
@@ -376,7 +427,7 @@ def _check_only_my_attrs(cls, inst: object) -> bool:
                     # A callable *AND*...
                     callable(getattr(cls, cls_attr_name, None)) and
                     # The passed object nullified this method. *facepalm*
-                    getattr(inst, cls_attr_name) is None
+                    getattr(obj, cls_attr_name) is None
                 )
             )
         ):

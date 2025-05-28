@@ -26,9 +26,6 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from beartype._util.text.utiltextlabel import label_beartypeable_kind
 
 # ....................{ GETTERS                            }....................
-#FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
-#attribute to instead call this high-level getter, please. The only remaining
-#one appears to be the higher-level "beartype.typing._typingpep544" submodule.
 #FIXME: See "FIXME:" comments in the "beartype._check.metadata.metadecor"
 #submodule for how this needs to be refactored to support Python >= 3.14. *sigh*
 #FIXME: Unit test us up, please.
@@ -107,9 +104,58 @@ def get_pep649_hintable_annotations(
     return hint_annotations
 
 
-#FIXME: Unit test us up, please.
-def get_pep649_hintable_annotations_or_none(
-    hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
+# If the active Python interpreter targets Python >= 3.14, defer to the PEP
+# 649-compliant __annotate__() dunder callable rather than the PEP 484-compliant
+# "__annotations__" dunder attribute. Why? Because the latter simply reduces to
+# calling "self.__annotate__(inspect.VALUE)", which raises a "NameError"
+# exception if the passed hintable is annotated by one or more unquoted forward
+# references. This is unacceptable API design. This is Python >= 3.14.
+#
+# Note that this getter is memoized *ONLY* under Python >= 3.14. Why? Because
+# __annotate__() *ONLY* memoizes the annotations dictionary it creates and
+# returns when passed "inspect.VALUE". When passed *ANY* other "format" value,
+# __annotate__() avoids avoids caching its return value. Creating this return
+# value is algorithmically non-trivial and computationally expensive. So, we are
+# effectively required to memoize this return value here.
+if IS_PYTHON_AT_LEAST_3_14:
+    #FIXME: Continue here tomorrow. Let's do this! Hoo-yah! \o/
+    # Defer version-specific imports.
+
+    #FIXME: Unit test us up, please.
+    def get_pep649_hintable_annotations_or_none(
+        hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
+
+        #FIXME: Replace with something meaningful, please. *sigh*
+        # Demonstrable monstrosity demons!
+        #
+        # Note that the "__annotations__" dunder attribute is guaranteed to exist
+        # *ONLY* for standard pure-Python hintables. Various other callables of
+        # interest (e.g., functions exported by the standard "operator" module) do
+        # *NOT* necessarily declare that attribute. Since this getter is commonly
+        # called in general-purpose contexts where this guarantee does *NOT*
+        # necessarily hold, we intentionally access that attribute safely albeit
+        # somewhat more slowly via getattr().
+        return getattr(hintable, '__annotations__', None)
+# Else, the active Python interpreter targets Python <= 3.13. In this case,
+# trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
+else:
+    #FIXME: Unit test us up, please.
+    def get_pep649_hintable_annotations_or_none(
+        hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
+
+        # Demonstrable monstrosity demons!
+        #
+        # Note that the "__annotations__" dunder attribute is guaranteed to exist
+        # *ONLY* for standard pure-Python hintables. Various other callables of
+        # interest (e.g., functions exported by the standard "operator" module) do
+        # *NOT* necessarily declare that attribute. Since this getter is commonly
+        # called in general-purpose contexts where this guarantee does *NOT*
+        # necessarily hold, we intentionally access that attribute safely albeit
+        # somewhat more slowly via getattr().
+        return getattr(hintable, '__annotations__', None)
+
+
+get_pep649_hintable_annotations_or_none.__doc__ = (
     '''
     **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary
     mapping from the name of each annotated child object of the passed hintable
@@ -135,18 +181,7 @@ def get_pep649_hintable_annotations_or_none(
           dunder dictionary defined by this hintable.
         * Else, :data:`None`.
     '''
-
-    # Demonstrable monstrosity demons!
-    #
-    # Note that:
-    # * The "__annotations__" dunder attribute is guaranteed to exist *ONLY* for
-    #   standard pure-Python callables. Various other callables of interest
-    #   (e.g., functions exported by the standard "operator" module) do *NOT*
-    #   necessarily declare that attribute. Since this getter is commonly called
-    #   in general-purpose contexts where this guarantee does *NOT*
-    #   necessarily hold, we intentionally access that attribute safely albeit
-    #   somewhat more slowly via getattr().
-    return getattr(hintable, '__annotations__', None)
+)
 
 # ....................{ SETTERS                            }....................
 #FIXME: Generalize to support Python >= 3.14, please.

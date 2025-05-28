@@ -158,6 +158,13 @@ def sanify_hint_root_func(
     #* Refactor "beartype.peps._pep563" to leverage similar logic as well.
     #* *WOOPS.* "beartype.peps._pep563" never calls cull_beartype_call()! Yikes.
     #  Please do so with all haste.
+    #FIXME: Actually, this is probably fine. *PROBABLY.* Why? Because this is
+    #just a caching optimization. It's more-or-less fine if a subsequent caller
+    #obliterates the caching we've performed by replacing the original
+    #__annotate__() dunder method with their own variant. Effectively nothing is
+    #lost except a minor (and probably negligible, in all honesty) increase in
+    #space complexity across the lifetime of the active Python process. "So
+    #what!", in other words. The worst case isn't worst at all.
 
     # PEP-compliant type hint coerced from this possibly (i.e., permanently
     # converted in the annotations dunder dictionary of the passed callable)
