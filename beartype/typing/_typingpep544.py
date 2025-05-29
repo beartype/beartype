@@ -392,6 +392,19 @@ def _is_obj_structural_subtype(cls, obj: Any) -> bool:
     #that "beartype.typing.Protocol" users will be unable to use unquoted
     #forward references in protocol type hints under Python >= 3.14. That's
     #non-ideal, of course, but we can't be bothered to tackle this yet. *sigh*
+    #FIXME: *HMM.* PEP 749 explicitly prohibits this behaviour:
+    #    Users should not access the class dictionary directly for accessing
+    #    annotations or the annotate function; the data stored in the class
+    #    dictionary is an implementation detail and its format may change in the
+    #    future. If only the class namespace dictionary is available (e.g.,
+    #    while the class is being constructed),
+    #    annotationlib.get_annotate_from_class_namespace() may be used to
+    #    retrieve the annotate function from the class dictionary.
+    #
+    #This... is becoming kinda ugly. At this point, perhaps we genuinely *DO*
+    #want to quietly remove this @beartype-specific protocol infrastructure at
+    #some point? I mean, we aren't CPython. We can't fulfill that obligation,
+    #however much we might like to pretend that we can. *sigh*
     cls_attr_name_to_hint = cls_attr_name_to_value.get(
         '__annotations__', _EMPTY_DICT)
 

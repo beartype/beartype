@@ -13,11 +13,19 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [DOCOS] Officially document both this and the public "beartype.peps"
-#submodule, please.
-
 #FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
+#FIXME: Actually, don't even bother. Instead, generalize the resolve_pep563()
+#function defined below to emit a non-fatal deprecation warning when Python 3.13
+#reaches its End-of-Life on October, 2029. At that point, PEP 563 will be
+#officially deprecated. Two minor CPython releases after that happens, the
+#entire "from __future__ import annotations" pragma and thus PEP 563 itself will
+#be officially *REMOVED* from the language specification. At that point, any
+#attempt by end users to use "from __future__ import annotations" will raise a
+#fatal "SyntaxError" from CPython itself. \o/
+
+#FIXME: [DOCOS] Officially document both this and the public "beartype.peps"
+#submodule, please.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception

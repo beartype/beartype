@@ -104,37 +104,94 @@ def get_pep649_hintable_annotations(
     return hint_annotations
 
 
-# If the active Python interpreter targets Python >= 3.14, defer to the PEP
-# 649-compliant __annotate__() dunder callable rather than the PEP 484-compliant
-# "__annotations__" dunder attribute. Why? Because the latter simply reduces to
-# calling "self.__annotate__(inspect.VALUE)", which raises a "NameError"
-# exception if the passed hintable is annotated by one or more unquoted forward
-# references. This is unacceptable API design. This is Python >= 3.14.
-#
-# Note that this getter is memoized *ONLY* under Python >= 3.14. Why? Because
-# __annotate__() *ONLY* memoizes the annotations dictionary it creates and
-# returns when passed "inspect.VALUE". When passed *ANY* other "format" value,
-# __annotate__() avoids avoids caching its return value. Creating this return
-# value is algorithmically non-trivial and computationally expensive. So, we are
-# effectively required to memoize this return value here.
+# If the active Python interpreter targets Python >= 3.14...
 if IS_PYTHON_AT_LEAST_3_14:
-    #FIXME: Continue here tomorrow. Let's do this! Hoo-yah! \o/
     # Defer version-specific imports.
+    from annotationlib import (  # type: ignore[import-not-found]
+        Format,
+        get_annotations,
+    )
 
     #FIXME: Unit test us up, please.
+    #FIXME: Contemplate how, actually, to safely memoize this. Hintables are
+    #externally user-defined. We can't retain references to hintables without
+    #risking memory leaks. What we *CAN* do, however, is retain references to
+    #strings -- notably, the "hintable.__qualname__" dunder attribute if that
+    #attribute exists. So, that's what we'll cache on. Naturally, we should
+    #implement this caching scheme manually via a global private dictionary
+    #declared below rather than a standard caching decorator.
+    #
+    #Note that, if the "hintable.__qualname__" dunder attribute does *NOT*
+    #exist, then we should simply avoid attempting to cache anything while still
+    #calling get_annotations().
+    #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
+    #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
+
+    # Note that this getter is memoized *ONLY* under Python >= 3.14. Why?
+    # Because the get_annotations() getter *ONLY* memoizes the annotations
+    # dictionary it creates and returns when passed the "format=Format.VALUE"
+    # keyword parameter. When passed *ANY* other "format" value,
+    # get_annotations() avoids avoids caching its return value. Creating this
+    # return value is algorithmically non-trivial and computationally expensive.
+    # So, we are effectively required to memoize this return value here.
     def get_pep649_hintable_annotations_or_none(
         hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
 
-        #FIXME: Replace with something meaningful, please. *sigh*
-        # Demonstrable monstrosity demons!
+        # If the passed hintable defines the PEP 649-compliant __annotate__()
+        # dunder method...
         #
-        # Note that the "__annotations__" dunder attribute is guaranteed to exist
-        # *ONLY* for standard pure-Python hintables. Various other callables of
-        # interest (e.g., functions exported by the standard "operator" module) do
-        # *NOT* necessarily declare that attribute. Since this getter is commonly
-        # called in general-purpose contexts where this guarantee does *NOT*
-        # necessarily hold, we intentionally access that attribute safely albeit
-        # somewhat more slowly via getattr().
+        # Note that:
+        # * The __annotate__() dunder method is guaranteed to exist *ONLY* for
+        #   standard pure-Python hintables. Various other hintables of interest
+        #   (e.g., functions exported by the standard "operator" module) do
+        #   *NOT* necessarily declare this method. Since this getter is commonly
+        #   called in general-purpose contexts where this guarantee does
+        #   *NOT* necessarily hold, we intentionally access this attribute
+        #   safely albeit somewhat more slowly via getattr().
+        # * The get_annotations() getter called below safely accepts the
+        #   "Format.FORWARDREF" format *ONLY* when this hintable defines the
+        #   __annotate__() dunder method. If this hintable does *NOT* define
+        #   __annotate__() and get_annotations() is passed "Format.FORWARDREF",
+        #   then get_annotations() raises either:
+        #   * If this hintable at least defines the "__annotations__" dunder
+        #     dictionary but this dictionary contains one or more unquoted
+        #     forward references, a "NameError" exception.
+        #   * Else, a "TypeError" exception.
+        #   However, this higher-level getter is designed exactly to avoid
+        #   raising these sorts of exceptions! Ergo, get_annotations() is safely
+        #   callable only when the __annotate__() dunder method exists.
+        if hasattr(hintable, '__annotate__'):
+            # Defer to the PEP 649-compliant high-level
+            # annotationlib.get_annotations() getter internally deferring to the
+            # PEP 649-compliant low-level __annotate__() dunder callable rather
+            # than the PEP 484-compliant "__annotations__" dunder attribute.
+            # Why? Because the latter reduces to calling
+            # "get_annotations(hintable, format=Format.VALUE)", which raises a
+            # "NameError" exception if the passed hintable is annotated by one
+            # or more unquoted forward references. This is unacceptable API
+            # design. Yet, this is Python >= 3.14.
+            return get_annotations(hintable, format=Format.FORWARDREF)
+        # Else, this hintable does *NOT* define __annotate__().
+
+        # Return either the PEP 484-compliant "__annotations__" dunder attribute
+        # if this hintable defines this attribute *OR* "None" otherwise
+        # (i.e., if this hintable fails to define this attribute).
+        #
+        # Note that:
+        # * The "__annotations__" dunder attribute is guaranteed to exist *ONLY*
+        #   for standard pure-Python hintables. See above for further details.
+        # * The "__annotations__" dunder attribute and __annotate__() dunder
+        #   method are strongly coupled. If one is defined, the other should
+        #   be defined. If one is undefined, the other should be undefined.
+        #   Ergo, it should *NEVER* be the case that the __annotate__() dunder
+        #   method is undefined but the "__annotations__" dunder attribute is.
+        #   Ergo, this edge case should *NEVER* arise. Naturally, this edge case
+        #   will often arise. Why? Because nothing prevents third-party packages
+        #   from manually defining "__annotations__" dunder attributes on
+        #   arbitrary objects. Although CPython *COULD* prohibit that (e.g., by
+        #   defining the "object.__annotations__" descriptor to do just that),
+        #   CPython currently does *NOT* prohibit that. In fact, no
+        #   "object.__annotations__" descriptor currently exists to even do so.
         return getattr(hintable, '__annotations__', None)
 # Else, the active Python interpreter targets Python <= 3.13. In this case,
 # trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
@@ -143,15 +200,17 @@ else:
     def get_pep649_hintable_annotations_or_none(
         hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
 
-        # Demonstrable monstrosity demons!
+        # Return either the PEP 484-compliant "__annotations__" dunder attribute
+        # if the passed hintable defines this attribute *OR* "None" otherwise
+        # (i.e., if this hintable fails to define this attribute).
         #
-        # Note that the "__annotations__" dunder attribute is guaranteed to exist
-        # *ONLY* for standard pure-Python hintables. Various other callables of
-        # interest (e.g., functions exported by the standard "operator" module) do
-        # *NOT* necessarily declare that attribute. Since this getter is commonly
-        # called in general-purpose contexts where this guarantee does *NOT*
-        # necessarily hold, we intentionally access that attribute safely albeit
-        # somewhat more slowly via getattr().
+        # Note that the "__annotations__" dunder attribute is guaranteed to
+        # exist *ONLY* for standard pure-Python hintables. Various other
+        # hintables of interest (e.g., functions exported by the standard
+        # "operator" module) do *NOT* necessarily declare this attribute. Since
+        # this getter is commonly called in general-purpose contexts where this
+        # guarantee does *NOT* necessarily hold, we intentionally access this
+        # attribute safely albeit somewhat more slowly via getattr().
         return getattr(hintable, '__annotations__', None)
 
 

@@ -156,6 +156,7 @@ def callable_cached(func: CallableT) -> CallableT:
     # below. For speed, this decorator violates DRY by duplicating logic.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    # ....................{ LOCALS                         }....................
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
     # if any (i.e., if that call did *NOT* raise an exception).
@@ -172,6 +173,7 @@ def callable_cached(func: CallableT) -> CallableT:
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_exception_get = args_flat_to_exception.get
 
+    # ....................{ CLOSURE                        }....................
     @wraps(func)
     def _callable_cached(*args):
         f'''
@@ -259,10 +261,20 @@ def callable_cached(func: CallableT) -> CallableT:
         # Return this value.
         return return_value
 
+    # ....................{ RETURN                         }....................
     # Return this wrapper.
     return _callable_cached  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ method                }....................
+#FIXME: *BIG MISTAKE.* Woops. Under CPython, object IDs are (mostly) simply the
+#underlying C-based memory addresses of those objects. Ergo, object IDs are
+#unique *ONLY* for the duration of those objects.
+#
+#This makes this decorator fundamentally unsound. Refactor as follows, please:
+#* Replace the two usages of this decorator in the
+#  "beartype.door._cls.doorsuper" submodule with a manual caching scheme
+#  leveraging a global dictionary mapping from the name 
+#* Permanently excise this decorator.
 def method_cached_arg_by_id(func: CallableT) -> CallableT:
     '''
     **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
@@ -279,12 +291,12 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
 
     **This decorator is only intended to decorate a method whose sole argument
     is guaranteed to be a memoized singleton** (e.g.,
-    :class:`beartype.door.TypeHint` singleton). In this case, the object
-    identifier of that argument uniquely identifies that argument across *all*
-    calls to that method -- enabling this decorator to memoize that method.
-    Conversely, if that argument is *not* guaranteed to be a memoized singleton,
-    this decorator will fail to memoize that method while wasting considerable
-    space and time attempting to do so. In short, care is warranted.
+    :class:`beartype.door.TypeHint` singleton). In this case, the object ID of
+    that argument uniquely identifies that argument across *all* calls to that
+    method -- enabling this decorator to memoize that method. Conversely, if
+    that argument is *not* guaranteed to be a memoized singleton, this decorator
+    will fail to memoize that method while wasting considerable space and time
+    attempting to do so. In short, care is warranted.
 
     This decorator is a micro-optimized variant of the more general-purpose
     :func:`callable_cached` decorator, which should be preferred in most cases.
@@ -347,9 +359,11 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncwrap import unwrap_func_all
 
+    # ....................{ PREAMBLE                       }....................
     # Lowest-level wrappee callable wrapped by this wrapper callable.
     func_wrappee = unwrap_func_all(func)
 
@@ -365,7 +379,8 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     )
     # Else, this wrappee accepts exactly one flexible parameter.
 
-    # If this wrappee accepts variadic arguments, raise an exception.
+    # If this wrappee accepts variadic arguments (either positional or keyword),
+    # raise an exception.
     if is_func_arg_variadic(func_wrappee):
         raise _BeartypeUtilCallableCachedException(
             f'@method_cached_arg_by_id {label_callable(func)} '
@@ -378,6 +393,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     # speed, this decorator violates DRY by duplicating logic.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    # ....................{ LOCALS                         }....................
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
     # if any (i.e., if that call did *NOT* raise an exception).
@@ -394,6 +410,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     # get() method of this dictionary, localized for efficiency.
     args_flat_to_exception_get = args_flat_to_exception.get
 
+    # ....................{ CLOSURE                        }....................
     @wraps(func)
     def _method_cached(self_or_cls, arg):
         f'''
@@ -438,8 +455,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
             # Value returned by a prior call to the decorated callable when
             # passed these parameters *OR* a sentinel placeholder otherwise
             # (i.e., if this callable has yet to be passed these parameters).
-            return_value = args_flat_to_return_value_get(
-                args_flat, SENTINEL)
+            return_value = args_flat_to_return_value_get(args_flat, SENTINEL)
 
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.
@@ -472,6 +488,7 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
         # Return this value.
         return return_value
 
+    # ....................{ RETURN                         }....................
     # Return this wrapper.
     return _method_cached  # type: ignore[return-value]
 
