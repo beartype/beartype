@@ -111,19 +111,19 @@ if IS_PYTHON_AT_LEAST_3_14:
         Format,
         get_annotations,
     )
+    from beartype.typing import Dict
+    from beartype._cave._cavefast import (
+        CallableOrClassTypes,
+        ModuleType,
+    )
+    from beartype._data.kind.datakindiota import SENTINEL
+    from beartype._util.module.utilmodget import (
+        get_module_name,
+        get_object_module_name_or_none,
+    )
+    from beartype._util.utilobject import get_object_basename_scoped
 
     #FIXME: Unit test us up, please.
-    #FIXME: Contemplate how, actually, to safely memoize this. Hintables are
-    #externally user-defined. We can't retain references to hintables without
-    #risking memory leaks. What we *CAN* do, however, is retain references to
-    #strings -- notably, the "hintable.__qualname__" dunder attribute if that
-    #attribute exists. So, that's what we'll cache on. Naturally, we should
-    #implement this caching scheme manually via a global private dictionary
-    #declared below rather than a standard caching decorator.
-    #
-    #Note that, if the "hintable.__qualname__" dunder attribute does *NOT*
-    #exist, then we should simply avoid attempting to cache anything while still
-    #calling get_annotations().
     #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
     #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
 
@@ -136,6 +136,138 @@ if IS_PYTHON_AT_LEAST_3_14:
     # So, we are effectively required to memoize this return value here.
     def get_pep649_hintable_annotations_or_none(
         hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
+
+        # If this hintable is either a callable *OR* class...
+        #
+        # Note that almost all hintables of interest are either callables or
+        # classes. This common case is intentionally detected first for speed.
+        if isinstance(hintable, CallableOrClassTypes):
+            # Fully-qualified name of the module defining this hintable if any
+            # *OR* "None" otherwise (e.g., if this hintable is defined in-memory
+            # outside a module namespace).
+            module_name = get_object_module_name_or_none(hintable)
+
+            # If a module defines this hintable...
+            if module_name:
+                # Dictionary mapping from the lexically scoped name of each
+                # hintable defined by this module previously memoized by a prior
+                # call to this getter if any *OR* the sentinel otherwise (i.e.,
+                # if this getter has yet to be passed such a hintable).
+                hintable_basename_to_annotations = (
+                    _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.get(
+                        module_name, SENTINEL))
+
+                # If such a dictionary was *NOT* memoized...
+                if hintable_basename_to_annotations is SENTINEL:
+                    # Default this dictionary to a new empty dictionary,
+                    # additionally memoized into this global cache for speed.
+                    hintable_basename_to_annotations = (
+                        _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
+                            module_name]) = {}
+                # Else, this dictionary was memoized.
+                #
+                # In either case, this dictionary now exists.
+
+                # Lexically scoped name of this hintable excluding the
+                # fully-qualified name of the module defining this hintable.
+                hintable_basename = get_object_basename_scoped(hintable)
+
+                # "__annotations__" dunder dictionary for this module previously
+                # memoized by a prior call to this getter if any *OR* the
+                # sentinel otherwise (i.e., if this getter has yet to be passed
+                # this module).
+                hintable_annotations = hintable_basename_to_annotations.get(  # type: ignore[union-attr]
+                    hintable_basename, SENTINEL)
+
+                # If such a dictionary was memoized, return this dictionary.
+                if hintable_annotations is not SENTINEL:
+                    return hintable_annotations  # type: ignore[return-value]
+                # Else, *NO* such dictionary was memoized.
+
+                # "__annotations__" dunder dictionary for this hintable.
+                hintable_annotations = (
+                    _get_pep649_hintable_annotations_or_none_uncached(hintable))
+
+                # Cache this dictionary under this hintable's basename.
+                hintable_basename_to_annotations[hintable_basename] = (  # type: ignore[index]
+                    hintable_annotations)
+
+                # Return this dictionary.
+                return hintable_annotations
+            # Else, *NO* module defines this hintable. In this case, fallback to
+            # unmemoized behaviour. Although non-ideal, a hintable residing
+            # outside a module arguably constitutes an erroneous edge case that
+            # should generally *NEVER* occur. Optimizing this is *NOT* worth it.
+        # Else, this hintable is neither a callable *NOR* class.
+        #
+        # If this hintable is a module...
+        elif isinstance(hintable, ModuleType):
+            # Fully-qualified name of this module.
+            module_name = get_module_name(hintable)
+
+            #FIXME: [SPEED] Globalize this getter for efficiency, please. *sigh*
+            # "__annotations__" dunder dictionary for this module previously
+            # memoized by a prior call to this getter if any *OR* the sentinel
+            # otherwise (i.e., if this getter has yet to be passed this module).
+            module_annotations = _MODULE_NAME_TO_ANNOTATIONS.get(
+                module_name, SENTINEL)
+
+            # If such a dictionary was memoized, return this dictionary.
+            if module_annotations is not SENTINEL:
+                return module_annotations  # type: ignore[return-value]
+            # Else, *NO* such dictionary was memoized.
+
+            # "__annotations__" dunder dictionary for this module.
+            module_annotations = (
+                _get_pep649_hintable_annotations_or_none_uncached(hintable))
+
+            # Cache this dictionary under this module's fully-qualified name.
+            _MODULE_NAME_TO_ANNOTATIONS[module_name] = module_annotations
+
+            # Return this dictionary.
+            return module_annotations
+        # Else, this hintable is an unknown type of object.
+
+        # Fallback to the unmemoized getter underlying this memoized getter.
+        # Although non-ideal, the only general-purpose alternative would be to
+        # memoize a reference to this object, preventing this object from *EVER*
+        # being garbage-collected, inviting memory leaks. In other words, there
+        # exist *NO* safe means of memoizing arbitrary user-defined objects.
+        return _get_pep649_hintable_annotations_or_none_uncached(hintable)
+
+
+    def _get_pep649_hintable_annotations_or_none_uncached(
+        hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
+        '''
+        **Unmemoized annotations** (i.e., possibly empty ``__annotations__``
+        dunder dictionary mapping from the name of each annotated child object
+        of the passed hintable to the type hint annotating that child object)
+        annotating the passed **hintable** (i.e., ideally pure-Python object
+        defining the ``__annotations__`` dunder attribute as well as the
+        :pep:`649`-compliant ``__annotate__`` dunder method if the active Python
+        interpreter targets Python >= 3.14) if this hintable defines the
+        ``__annotations__`` dunder dictionary *or* :data:`None` otherwise (i.e.,
+        if this hintable fails to define the ``__annotations__`` dunder
+        dictionary).
+
+        This getter exhibits non-amortized worst-case :math:`O(n)` linear time
+        complexity for :math:`n` the total number of unquoted forward references
+        across all type hints annotating this hintable.
+
+        Parameters
+        ----------
+        hintable : Pep649Hintable
+            Hintable to be inspected.
+
+        Returns
+        -------
+        Optional[Pep649HintableAnnotations]
+            Either:
+
+            * If this hintable is actually a hintable, the ``__annotations__``
+              dunder dictionary defined by this hintable.
+            * Else, :data:`None`.
+        '''
 
         # If the passed hintable defines the PEP 649-compliant __annotate__()
         # dunder method...
@@ -193,6 +325,40 @@ if IS_PYTHON_AT_LEAST_3_14:
         #   CPython currently does *NOT* prohibit that. In fact, no
         #   "object.__annotations__" descriptor currently exists to even do so.
         return getattr(hintable, '__annotations__', None)
+
+
+    _MODULE_NAME_TO_ANNOTATIONS: (
+        Dict[str, Optional[Pep649HintableAnnotations]]) = {}
+    '''
+    Dictionary mapping from the fully-qualified name of each module defining one
+    or more global variables annotated by type hints to that module's **memoized
+    annotations dictionary** (i.e., dictionary from the name of each such global
+    variable to the type hint annotating that global variable as returned by the
+    :func:`.get_pep649_hintable_annotations_or_none` getter when passed that
+    module).
+    '''
+
+
+    _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS: (
+        Dict[str, Dict[str, Optional[Pep649HintableAnnotations]]]) = {}
+    '''
+    Dictionary mapping from the fully-qualified name of each module to a nested
+    dictionary mapping from the unqualified basename of each:
+
+    * Callable in that module accepting one or more parameters annotated by type
+      hints and/or returning a value annotated by a type hint to that callable's
+      **memoized annotations dictionary** (i.e., dictionary from the name of
+      each such parameter or return to the type hint annotating that parameter
+      or return as returned by the
+      :func:`.get_pep649_hintable_annotations_or_none` getter when passed that
+      callable).
+    * Class in that module defining one or more class variables annotated by
+      type hints to that class' **memoized annotations dictionary** (i.e.,
+      dictionary from the name of each such class variable to the type hint
+      annotating that class variable as returned by the
+      :func:`.get_pep649_hintable_annotations_or_none` getter when passed that
+      class).
+    '''
 # Else, the active Python interpreter targets Python <= 3.13. In this case,
 # trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
 else:
@@ -216,15 +382,21 @@ else:
 
 get_pep649_hintable_annotations_or_none.__doc__ = (
     '''
-    **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary
-    mapping from the name of each annotated child object of the passed hintable
-    to the type hint annotating that child object) annotating the passed
-    **hintable** (i.e., ideally pure-Python object defining the
+    **Memoized annotations** (i.e., possibly empty ``__annotations__`` dunder
+    dictionary mapping from the name of each annotated child object of the
+    passed hintable to the type hint annotating that child object) annotating
+    the passed **hintable** (i.e., ideally pure-Python object defining the
     ``__annotations__`` dunder attribute as well as the :pep:`649`-compliant
     ``__annotate__`` dunder method if the active Python interpreter targets
     Python >= 3.14) if this hintable defines the ``__annotations__`` dunder
     dictionary *or* :data:`None` otherwise (i.e., if this hintable fails to
     define the ``__annotations__`` dunder dictionary).
+
+    This getter is memoized for efficiency, guaranteeing amortized worst-case
+    :math:`O(1)` constant time complexity. The first call to this getter passed
+    a new hintable annotated by one or more type hints containing :math:`n`
+    unquoted forward references exhibits non-amortized worst-case :math:`O(n)`
+    linear time complexity, justifying the memoization of this getter.
 
     Parameters
     ----------

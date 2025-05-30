@@ -274,6 +274,27 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))
 
+# ....................{ GETTERS ~ module                   }....................
+#FIXME: Unit test us up.
+def get_module_name(module: ModuleType) -> str:
+    '''
+    Fully-qualified name of the passed module.
+
+    Parameters
+    ----------
+    module : ModuleType
+        Module to be inspected.
+
+    Returns
+    -------
+    str
+        Fully-qualified name of this module.
+    '''
+
+    # Return the value of the "__name__" dunder attribute, which *ALL* modules
+    # are unconditionally guaranteed to define.
+    return module.__name__
+
 # ....................{ GETTERS ~ module : dir             }....................
 #FIXME: Unit test us up.
 def get_module_dir(module: ModuleType) -> Path:
@@ -369,7 +390,7 @@ def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
 
     * If this module is actually a package, the absolute filename of the
       ``"__init__.py"`` submodule directly contained in this package.
-    * Else, the absolute filename of this module as provided by the `__file__`
+    * Else, the absolute filename of this module as provided by the ``__file__``
       dunder attribute of this in-memory module object.
 
     In either case, the filename returned by this getter (if any) necessarily
