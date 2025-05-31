@@ -123,10 +123,18 @@ if IS_PYTHON_AT_LEAST_3_14:
     )
     from beartype._util.utilobject import get_object_basename_scoped
 
+
+    #FIXME: Unit test us up, please.
+    def clear_pep649_caches() -> None:
+
+        # Clear all dictionary globals declared below.
+        _MODULE_NAME_TO_ANNOTATIONS.clear()
+        _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.clear()
+
+
     #FIXME: Unit test us up, please.
     #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
     #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
-
     # Note that this getter is memoized *ONLY* under Python >= 3.14. Why?
     # Because the get_annotations() getter *ONLY* memoizes the annotations
     # dictionary it creates and returns when passed the "format=Format.VALUE"
@@ -362,7 +370,10 @@ if IS_PYTHON_AT_LEAST_3_14:
 # Else, the active Python interpreter targets Python <= 3.13. In this case,
 # trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
 else:
-    #FIXME: Unit test us up, please.
+    def clear_pep649_caches() -> None:
+        pass
+
+
     def get_pep649_hintable_annotations_or_none(
         hintable: Pep649Hintable) -> Optional[Pep649HintableAnnotations]:
 
@@ -380,6 +391,15 @@ else:
         return getattr(hintable, '__annotations__', None)
 
 
+
+
+clear_pep649_caches.__doc__ = (
+    '''
+    Clear (i.e., empty) *all* internal :pep:`649`-specific caches specifically
+    leveraged by this submodule, enabling callers to reset this submodule to its
+    initial state.
+    '''
+)
 get_pep649_hintable_annotations_or_none.__doc__ = (
     '''
     **Memoized annotations** (i.e., possibly empty ``__annotations__`` dunder

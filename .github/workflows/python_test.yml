@@ -297,7 +297,12 @@ jobs:
       # Type-check this package with "mypy".
       - name: 'Type-checking package with "mypy:"...'
         run: |
-          # Manually install "mypy" in the standard way.
+          # Manually install "mypy" in the standard way. Note that "mypy" itself
+          # requires the third-party "typing-extensions" package for support for
+          # backported type hint factories (e.g., the PEP 747-compliant
+          # "typing.TypeForm" hint factory under Python >= 3.14 backported as
+          # "typing_extensions.TypeForm" to prior Python versions). Ergo,
+          # "typing-extensions" need *NOT* be explicitly specified here.
           python3 -m pip --quiet install mypy
           # Log this "mypy" version for debuggability.
           mypy --version
