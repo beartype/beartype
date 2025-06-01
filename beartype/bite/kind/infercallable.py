@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural callable
-type hint inferrers** (i.e., lower-level functions dynamically subscripted type
-hints describing callable objects).
+**Beartype Inferential Type-hint Engine (BITE) callable type hint inferrers**
+(i.e., lower-level functions dynamically subscripted type hints describing
+callable objects).
 '''
 
 # ....................{ TODO                               }....................
@@ -55,7 +55,7 @@ hints describing callable objects).
 #saying *SOMETHING* about that case, even if that something is to just notify us
 #of how "creative" we are. Let's check back sometime in 2025, please.
 
-#    >>> from beartype.door import infer_hint
+#    >>> from beartype.bite import infer_hint
 #
 #    # Ideally, this...
 #    >>> infer_hint(lambda: None, True)

@@ -4,17 +4,17 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-type hint inferrers** (i.e., high-level functions dynamically inferring the type
-hints best describing arbitrary objects).
+**Beartype Inferential Type-hint Engine (BITE) type hint inferrers** (i.e.,
+high-level functions dynamically inferring the type hints best describing
+arbitrary objects).
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._func.infer.kind.infercallable import infer_hint_callable
-from beartype.door._func.infer.kind.inferthirdparty import infer_hint_thirdparty
-from beartype.door._func.infer.collection.infercollectionbuiltin import (
+from beartype.bite.kind.infercallable import infer_hint_callable
+from beartype.bite.kind.inferthirdparty import infer_hint_thirdparty
+from beartype.bite.collection.infercollectionbuiltin import (
     infer_hint_collection_builtin)
-from beartype.door._func.infer.collection.infercollectionsabc import (
+from beartype.bite.collection.infercollectionsabc import (
     infer_hint_collections_abc)
 from beartype.roar import BeartypeDoorInferHintRecursionWarning
 from beartype.typing import (
@@ -80,7 +80,7 @@ def infer_hint(
        >>> recursive_list.append(recursive_list)
 
        # Infer the type hint annotating this list.
-       >>> from beartype.door import infer_hint
+       >>> from beartype.bite import infer_hint
        >>> infer_hint(recursive_list)
        ##FIXME: INSERT SANE REPR HERE, PLEASE. *sigh*
 
@@ -127,7 +127,7 @@ def infer_hint(
         do exist, however. Downstream third-party consumers that only call this
         function to create an temporary in-memory type hint that is then passed
         to other runtime type-checking functionality (e.g.,
-        :func:`beartype.door.is_bearable`, :func:`beartype.door.is_subhint`)
+        :func:`beartype.bite.is_bearable`, :func:`beartype.bite.is_subhint`)
         often benefits from :math:`O(1)` constant-time type hint inference.
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard** (i.e., frozen set of the integers uniquely

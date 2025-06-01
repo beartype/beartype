@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-builtin collections type hint inferrers** (i.e., lower-level functions
-dynamically inferring subscripted type hints describing instances of builtin
-C-based container types).
+**Beartype Inferential Type-hint Engine (BITE) builtin collections type hint
+inferrers** (i.e., lower-level functions dynamically inferring subscripted type
+hints describing instances of builtin C-based container types).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -50,7 +49,7 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function. Moreover, this function exhibits
+    :func:`beartype.bite.infer_hint` function. Moreover, this function exhibits
     worst-case constant time complexity :math:`O(1)`; memoization is irrelevant.
 
     Parameters
@@ -59,7 +58,7 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
         Object to infer a type hint from.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`beartype.door._func.infer.collection.infercollectionitems.infer_hint_collection_items`
+    :func:`beartype.bite.collection.infercollectionitems.infer_hint_collection_items`
     function.
 
     Returns
@@ -89,7 +88,7 @@ def infer_hint_collection_builtin(obj: object, **kwargs) -> Optional[object]:
         # print(f'Inferring iterable {repr(obj_type_collections_abc)} subscription...')
 
         # Avoid circular import dependencies.
-        from beartype.door._func.infer.collection.infercollectionitems import (
+        from beartype.bite.collection.infercollectionitems import (
             infer_hint_collection_items)
 
         # Hint recursively validating this collection (including *ALL* items
@@ -120,7 +119,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
     word: efficiency. If this function recursively inferred and returned a full
     type hint, this function would need to guard against infinite recursion by
     accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
-    parent :func:`beartype.door._func.infer.inferhint.infer_hint` function;
+    parent :func:`beartype.bite.inferhint.infer_hint` function;
     doing so would prevent memoization, substantially reducing efficiency.
 
     This function is memoized for efficiency.
@@ -197,7 +196,7 @@ def _infer_hint_factory_collection_builtin(cls: type) -> Optional[object]:
 # Note that key-value pairs are intentionally defined in decreasing order of
 # real-world commonality to reduce time costs in the average case for downstream
 # functions leveraging this dictionary (e.g., the
-# beartype.door._func.infer.collection.infercollectionbuiltin.infer_hint_collection_builtin()
+# beartype.bite.collection.infercollectionbuiltin.infer_hint_collection_builtin()
 # function).
 _COLLECTION_BUILTIN_TYPE_TO_HINT_FACTORY: DictTypeToAny = {
     # Single-argument builtin reiterable types (i.e., C-based collections whose

@@ -56,7 +56,7 @@ def is_hint_pep484_typevar(hint: object) -> TypeIs[TypeVar]:
 #  constraint (i.e., the type hint of that object is exactly one of those
 #  constraints). Subclasses are thus prohibited. This is non-trivial to support,
 #  as the only means of performing exact type hint matching is probably to:
-#  * Call "beartype.door.infer_hint(obj)" to infer the type hint for an object.
+#  * Call "beartype.bite.infer_hint(obj)" to infer the type hint for an object.
 #  * Iteratively test whether that hint is one of these constraints.
 #
 #  That's pretty awful, though. We really shouldn't be calling infer_hint() on

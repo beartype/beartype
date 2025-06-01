@@ -68,7 +68,7 @@
 #satisfies an arbitrary "Callable[...]" type hint *DOES* seem non-trivial.
 #Thankfully, this decision is actually trivial. Pikachu shocked face!
 #
-#Consider our new beartype.door.infer_hint() function. When passed a type-hinted
+#Consider our new beartype.bite.infer_hint() function. When passed a type-hinted
 #callable, that function dynamically generates and returns a "Callable[...]"
 #type hint encapsulating the signature of that callable as a type hint: e.g.,
 #    >>> def dumb_func(muh_int: int) -> str: return str(muh_int)

@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-collection items type hint inferrers** (i.e., lower-level functions dynamically
-inferring subscripted type hints describing pure-Python containers containing
-one or more items).
+**Beartype Inferential Type-hint Engine (BITE) collection items type hint
+inferrers** (i.e., lower-level functions dynamically inferring subscripted type
+hints describing pure-Python containers containing one or more items).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -51,7 +50,7 @@ def infer_hint_collection_items(
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function.
+    :func:`beartype.bite.infer_hint` function.
 
     Parameters
     ----------
@@ -66,7 +65,7 @@ def infer_hint_collection_items(
         all settings configuring type-checking for the passed object).
     __beartype_obj_ids_seen__ : FrozenSet[int]
         **Recursion guard.** See also the parameter of the same name accepted by
-        the :func:`beartype.door._func.infer.inferhint.infer_hint` function.
+        the :func:`beartype.bite.inferhint.infer_hint` function.
     origin_type : Optional[type]
         Either:
 
@@ -170,7 +169,7 @@ _ROOT_TUPLE_FIXED_ITEMS_LEN_MAX = 10
 Maximum inclusive number of tuple items below which the private
 :func:`._infer_hint_reiterable_items` function infers a **root tuple** (i.e.,
 top-most object originally passed by the caller to the public
-:func:`beartype.door.infer_hint` function) to be validated by a **fixed-length
+:func:`beartype.bite.infer_hint` function) to be validated by a **fixed-length
 tuple type hint** of the form ``tuple[{hint_child1}, ???, {hint_childN}]``.
 
 Specifically, for each root tuple containing:
@@ -219,7 +218,7 @@ def _infer_hint_mapping_items(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype.door._func.infer.inferhint import infer_hint
+    from beartype.bite._infermain import infer_hint
 
     # ....................{ LOCALS                         }....................
     # Child key and value hints to subscript this factory with, defaulting to
@@ -296,7 +295,7 @@ def _infer_hint_mapping_items(
         raise BeartypeConfException(
             f'Beartype configuration {repr(conf)} '
             f'strategy {repr(conf.strategy)} currently unsupported by '
-            f'beartype.door.infer_hint() (i.e., neither '
+            f'beartype.bite.infer_hint() (i.e., neither '
             f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
         )
 
@@ -348,7 +347,7 @@ def _infer_hint_reiterable_items(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype.door._func.infer.inferhint import infer_hint
+    from beartype.bite._infermain import infer_hint
 
     # ....................{ RECURSION                      }....................
     # Note that the caller guarantees this mapping to be non-empty.
@@ -480,7 +479,7 @@ def _infer_hint_reiterable_items(
             raise BeartypeConfException(
                 f'Beartype configuration {repr(conf)} '
                 f'strategy {repr(conf.strategy)} currently unsupported by '
-                f'beartype.door.infer_hint() (i.e., neither '
+                f'beartype.bite.infer_hint() (i.e., neither '
                 f'"BeartypeStrategy.O1" nor "BeartypeStrategy.On").'
             )
 

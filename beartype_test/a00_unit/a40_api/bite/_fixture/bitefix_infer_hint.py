@@ -6,7 +6,7 @@
 '''
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) type hint inference
 fixtures** (i.e., :mod:`pytest`-specific context managers passed as parameters
-to unit tests exercising the :mod:`beartype.door.infer_hint` function).
+to unit tests exercising the :mod:`beartype.bite.infer_hint` function).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,7 +18,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def door_cases_infer_hint() -> (
+def bite_cases_infer_hint() -> (
     'Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]'):
     '''
     Session-scoped fixture returning a dictionary mapping from each relevant
@@ -42,7 +42,7 @@ def door_cases_infer_hint() -> (
         as follows:
 
         * ``obj`` is an arbitrary object to be passed as the first parameter to
-          the :func:`beartype.door.infer_hint` function.
+          the :func:`beartype.bite.infer_hint` function.
         * ``hint`` is the type hint returned by that function when passed that
           object.
     '''

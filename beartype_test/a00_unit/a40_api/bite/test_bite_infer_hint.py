@@ -7,7 +7,7 @@
 Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural type
 hint inference API** unit tests.
 
-This submodule unit tests the public :mod:`beartype.door.infer_hint` function.
+This submodule unit tests the public :mod:`beartype.bite.infer_hint` function.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,15 +18,15 @@ This submodule unit tests the public :mod:`beartype.door.infer_hint` function.
 from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
-def test_door_infer_hint(
-    door_cases_infer_hint: (
+def test_bite_infer_hint(
+    bite_cases_infer_hint: (
     'Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]')) -> None:
     '''
-    Test the :func:`beartype.door.infer_hint` function.
+    Test the :func:`beartype.bite.infer_hint` function.
 
     Parameters
     ----------
-    door_cases_infer_hint : Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]
+    bite_cases_infer_hint : Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]
         Dictionary mapping from each relevant beartype configuration to a
         corresponding iterable of all **type hint inference cases** specific to
         that configuration.
@@ -34,7 +34,7 @@ def test_door_infer_hint(
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.door import infer_hint
+    from beartype.bite import infer_hint
     from beartype.roar import BeartypeConfException
     from beartype._conf.confcommon import get_beartype_conf_strategy_on
     from pytest import raises
@@ -45,7 +45,7 @@ def test_door_infer_hint(
 
     # ....................{ PASS                           }....................
     # For each relevant beartype configuration...
-    for conf, cases in door_cases_infer_hint.items():
+    for conf, cases in bite_cases_infer_hint.items():
         # If this is the default linear-time configuration...
         if conf == CONF_STRATEGY_ON:
             # For each test object and expected type hint to be inferred from
@@ -72,9 +72,9 @@ def test_door_infer_hint(
         infer_hint('Red, yellow,', conf='or ethereally pale,')
 
 
-def test_door_infer_hint_recursion() -> None:
+def test_bite_infer_hint_recursion() -> None:
     '''
-    Test the :func:`beartype.door.infer_hint` function with respect to
+    Test the :func:`beartype.bite.infer_hint` function with respect to
     **container recursion** (i.e., objects self-referentially containing
     themselves as items inside themselves).
     '''
@@ -85,8 +85,8 @@ def test_door_infer_hint_recursion() -> None:
         BeartypeConf,
         BeartypeStrategy,
     )
-    from beartype.door import infer_hint
-    from beartype.door._func.infer.inferhint import (
+    from beartype.bite import infer_hint
+    from beartype.bite._infermain import (
         BeartypeInferHintContainerRecursion)
     from beartype.roar import BeartypeDoorInferHintRecursionWarning
     from beartype.typing import (
@@ -142,18 +142,18 @@ def test_door_infer_hint_recursion() -> None:
 # ....................{ TESTS ~ third-party                }....................
 # Tests exercising infer_hint() with respect to third-party packages.
 
-def test_door_infer_hint_numpy(
-    door_cases_infer_hint: 'Iterable[Tuple[object, object]]',
+def test_bite_infer_hint_numpy(
+    bite_cases_infer_hint: 'Iterable[Tuple[object, object]]',
     numpy_arrays: 'beartype_test.a00_unit.data.api.data_apinumpy._NumpyArrays',
 ) -> None:
     '''
-    Test the :func:`beartype.door.infer_hint` function with respect to
+    Test the :func:`beartype.bite.infer_hint` function with respect to
     third-party :mod:`numpy` arrays if :mod:`numpy` is importable *or* silently
     skip this test otherwise (i.e., if :mod:`numpy` is unimportable).
 
     Parameters
     ----------
-    door_cases_infer_hint : Iterable[Tuple[object, object]]
+    bite_cases_infer_hint : Iterable[Tuple[object, object]]
         Iterable of **type hint inference cases** (i.e., 2-tuples ``(obj,
         hint)`` describing the type hint matching an arbitrary object).
     numpy_arrays : beartype_test.a00_unit.data.api.data_apinumpy._NumpyArrays
@@ -163,7 +163,7 @@ def test_door_infer_hint_numpy(
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.door import infer_hint
+    from beartype.bite import infer_hint
     from beartype.vale import (
         IsAttr,
         IsEqual,
@@ -322,16 +322,16 @@ def test_door_infer_hint_numpy(
 
 
 @skip_unless_package('pygments')
-def test_door_infer_hint_pygments() -> None:
+def test_bite_infer_hint_pygments() -> None:
     '''
-    Test the :func:`beartype.door.infer_hint` function with respect to
+    Test the :func:`beartype.bite.infer_hint` function with respect to
     third-party :mod:`pygments` package if that package is importable *or*
     silently skip this test otherwise (i.e., if that package is unimportable).
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.door import infer_hint
+    from beartype.bite import infer_hint
     from beartype._data.hint.pep.sign.datapepsigns import HintSignList
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from pygments.lexers import PythonLexer
@@ -353,5 +353,5 @@ def test_door_infer_hint_pygments() -> None:
     # subscripting this hint. Why? Because these child hints include references
     # to private "pygments" types (e.g., "pygments._token.TokenType") dependent
     # on the current pygments version. For that reason, we intentionally omit
-    # this hint from the "door_cases_infer_hint" fixture leveraged above.
+    # this hint from the "bite_cases_infer_hint" fixture leveraged above.
     assert get_hint_pep_sign_or_none(root_tokens_hint) is HintSignList

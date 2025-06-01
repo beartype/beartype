@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-collections abstract base class (ABC) type hint inferrers** (i.e., lower-level
-functions dynamically inferring subscripted type hints describing instances of
-standard :mod:`collections.abc` protocols).
+**Beartype Inferential Type-hint Engine (BITE) collections abstract base class
+(ABC) type hint inferrers** (i.e., lower-level functions dynamically inferring
+subscripted type hints describing instances of standard :mod:`collections.abc`
+protocols).
 '''
 
 # ....................{ TODO                               }....................
@@ -19,7 +19,7 @@ standard :mod:`collections.abc` protocols).
 #protocol or the builtin "dict" type, which is registered with
 #"collections.abc.Mapping" and thus a hardcoded "virtual subclass" of
 #"collections.abc.Mapping" actually do satisfy "collections.abc.Mapping": e.g.,
-#    >>> from beartype.door import infer_hint
+#    >>> from beartype.bite import infer_hint
 #    >>> from beartype_test.a00_unit.data.data_type import ClassMapping
 #    >>> from collections.abc import Mapping
 #
@@ -82,7 +82,7 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function.
+    :func:`beartype.bite.infer_hint` function.
 
     Caveats
     -------
@@ -111,7 +111,7 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
         Object to infer a type hint from.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`beartype.door._func.infer.collection.infercollectionitems.infer_hint_collection_items`
+    :func:`beartype.bite.collection.infercollectionitems.infer_hint_collection_items`
     function.
 
     Returns
@@ -147,7 +147,7 @@ def infer_hint_collections_abc(obj: object, **kwargs) -> Optional[object]:
         # If this object is a collection...
         if isinstance(obj, CollectionABC):
             # Avoid circular import dependencies.
-            from beartype.door._func.infer.collection.infercollectionitems import (
+            from beartype.bite.collection.infercollectionitems import (
                 infer_hint_collection_items)
 
             # "collections.abc" protocol validating this type, defined this hint
@@ -232,7 +232,7 @@ def _infer_hint_factory_collections_abc(cls: type) -> Optional[object]:
     word: efficiency. If this function recursively inferred and returned a full
     type hint, this function would need to guard against infinite recursion by
     accepting the ``__beartype_obj_ids_seen__`` parameter also accepted by the
-    parent :func:`beartype.door._func.infer.inferhint.infer_hint` function;
+    parent :func:`beartype.bite.inferhint.infer_hint` function;
     doing so would prevent memoization, substantially reducing efficiency.
 
     This function is memoized for efficiency.
@@ -571,7 +571,7 @@ def get_finite_state_machine() -> _FiniteStateMachineNode:
     cost of creating this data structure. The former approach defers that
     to the first call to the :func:`.infer_hint_factory_collections_abc`
     function, whereas the latter approach would impose that cost on the first
-    importation of *anything* from the popular :mod:`beartype.door` subpackage.
+    importation of *anything* from the popular :mod:`beartype.bite` subpackage.
     Needless to say, the former approach is preferable.
 
     See Also

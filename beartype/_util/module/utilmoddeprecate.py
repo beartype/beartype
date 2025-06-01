@@ -19,16 +19,22 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.typing import (
     Any,
-    Dict,
+    Mapping,
 )
 from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from collections.abc import Mapping as MappingABC
 from warnings import warn
 
 # ....................{ IMPORTERS                          }....................
 def deprecate_module_attr(
+    # Mandatory parameters.
     attr_deprecated_name: str,
-    attr_deprecated_name_to_nondeprecated_name: Dict[str, str],
-    attr_nondeprecated_name_to_value: Dict[str, Any],
+    attr_nondeprecated_name_to_value: Mapping[str, Any],
+
+    # Optional parameters.
+    attr_deprecated_name_to_nondeprecated_name: Mapping[str, str] = (
+        FROZENDICT_EMPTY),
 ) -> object:
     '''
     Dynamically retrieve a deprecated attribute with the passed unqualified name
@@ -46,7 +52,7 @@ def deprecate_module_attr(
     ----------
     attr_deprecated_name : str
         Unqualified name of the deprecated attribute to be retrieved.
-    attr_deprecated_name_to_nondeprecated_name : Dict[str, str]
+    attr_deprecated_name_to_nondeprecated_name : Mapping[str, str]
         Dictionary mapping from the unqualified name of each deprecated
         attribute retrieved by this function to either:
 
@@ -54,12 +60,13 @@ def deprecate_module_attr(
           the unqualified name of that attribute.
         * If that submodule is deprecating that attribute *without* defining a
           corresponding non-deprecated attribute, :data:`None`.
-    attr_nondeprecated_name_to_value : Dict[str, object]
+    attr_nondeprecated_name_to_value : Mapping[str, object], default: FROZENDICT_EMPTY
         Dictionary mapping from the unqualified name to value of each
         module-scoped attribute defined by the caller's submodule, typically
         passed as the ``globals()`` builtin. This function intentionally does
         *not* implicitly inspect this dictionary from the call stack, as call
-        stack inspection is non-portable under Python.
+        stack inspection is non-portable under Python. Defaults to the empty
+        frozen dictionary.
 
     Returns
     -------
@@ -88,15 +95,15 @@ def deprecate_module_attr(
     '''
     assert isinstance(attr_deprecated_name, str), (
         f'{repr(attr_deprecated_name)} not string.')
-    assert isinstance(attr_deprecated_name_to_nondeprecated_name, dict), (
-        f'{repr(attr_deprecated_name_to_nondeprecated_name)} not dictionary.')
-    assert isinstance(attr_nondeprecated_name_to_value, dict), (
-        f'{repr(attr_nondeprecated_name_to_value)} not dictionary.')
+    assert isinstance(attr_deprecated_name_to_nondeprecated_name, MappingABC), (
+        f'{repr(attr_deprecated_name_to_nondeprecated_name)} not mapping.')
+    assert isinstance(attr_nondeprecated_name_to_value, MappingABC), (
+        f'{repr(attr_nondeprecated_name_to_value)} not mapping.')
 
     # Fully-qualified name of the caller's submodule. Since all physical
     # submodules (i.e., those defined on-disk) define this dunder attribute
-    # *AND* this function is only ever called by such submodules, this attribute
-    # is effectively guaranteed to exist.
+    # *AND* since this function is only ever called by such submodules, this
+    # attribute is effectively guaranteed to exist.
     MODULE_NAME = attr_nondeprecated_name_to_value['__name__']
 
     # Unqualified basename of the non-deprecated attribute originating this
@@ -116,6 +123,11 @@ def deprecate_module_attr(
         # non-deprecated attribute).
         attr_nondeprecated_value = attr_nondeprecated_name_to_value.get(
             attr_nondeprecated_name, SENTINEL)
+
+        # True only if this name of this non-deprecated attribute is an absolute
+        # fully-qualified name external to that module (rather than an
+        # unqualified basename relative to that module).
+        is_attr_nondeprecated_name_absolute = '.' in attr_nondeprecated_name
 
         # If that module fails to define this non-deprecated attribute, raise an
         # exception.
@@ -142,16 +154,30 @@ def deprecate_module_attr(
             )
         # Else, that module defines this non-deprecated attribute.
 
-        # Substring suffixing the warning message emitted below.
-        warning_suffix = ''
+        # Warning message to be emitted below.
+        warning_message = (
+            f'Deprecated attribute '
+            f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
+            f'scheduled for removal under a future release.'
+        )
 
         # If this deprecated attribute originates from a public non-deprecated
         # attribute, inform users of the existence of the latter.
         if not attr_nondeprecated_name.startswith('_'):
-            warning_suffix = (
+            warning_message += (
                 f' Please globally replace all references to this '
                 f'attribute with its non-deprecated equivalent '
-                f'"{attr_nondeprecated_name}" from the same submodule.'
+                f'"{attr_nondeprecated_name}"'
+            )
+
+            # If the name of this non-deprecated attribute is *NOT* an absolute
+            # fully-qualified name external to that module, this name is an
+            # unqualified basename relative to that module. In this case, append
+            # a substring explaining this relativity.
+            warning_message += (
+                '.'
+                if is_attr_nondeprecated_name_absolute else
+                ' from the same submodule.'
             )
         # Else, this deprecated attribute originates from a private
         # non-deprecated attribute. In this case, avoid informing users of the
@@ -167,15 +193,7 @@ def deprecate_module_attr(
         # * Do *NOT* call the higher-level issue_warning() function, which would
         #   erroneously declare that this deprecation originates from the
         #   external caller rather than this codebase itself.
-        warn(
-            (
-                f'Deprecated attribute '
-                f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
-                f'scheduled for removal under a future release.'
-                f'{warning_suffix}'
-            ),
-            DeprecationWarning,
-        )
+        warn(warning_message, DeprecationWarning)
 
         # Return the value of this deprecated attribute.
         return attr_nondeprecated_value

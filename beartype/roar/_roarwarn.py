@@ -335,7 +335,7 @@ class BeartypeDoorInferHintWarning(BeartypeDoorWarning):
 
     Instances of subclasses of this warning are emitted at usage (e.g.,
     instantiation, method call) time from the public
-    :func:`beartype.door.infer_hint` function, typically due to suspicious (but
+    :func:`beartype.bite.infer_hint` function, typically due to suspicious (but
     *not* necessarily erroneous) PEP-compliant type hints warranting non-fatal
     warnings *without* raising fatal exceptions.
     '''
@@ -349,7 +349,7 @@ class BeartypeDoorInferHintRecursionWarning(BeartypeDoorInferHintWarning):
     inference recursion warning.**
 
     This warning is emitted on passing the public
-    :func:`beartype.door.infer_hint` function a **recursive object** (i.e., an
+    :func:`beartype.bite.infer_hint` function a **recursive object** (i.e., an
     object that self-referentially refers to itself, typically due to being a
     container containing one or more items that self-referentially refer to that
     same container).

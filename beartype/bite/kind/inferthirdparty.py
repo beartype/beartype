@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) procedural
-third-party type hint inferrers** (i.e., lower-level functions dynamically
-inferring subscripted type hints describing non-standard popular third-party
-objects such as NumPy arrays and PyTorch tensors).
+**Beartype Inferential Type-hint Engine (BITE) third-party type hint inferrers**
+(i.e., lower-level functions dynamically inferring subscripted type hints
+describing non-standard popular third-party objects such as NumPy arrays and
+PyTorch tensors).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -33,7 +33,7 @@ def infer_hint_thirdparty(obj: object, **kwargs) -> Optional[object]:
 
     This function *cannot* be memoized, due to necessarily accepting the
     ``__beartype_obj_ids_seen__`` parameter unique to each call to the parent
-    :func:`beartype.door.infer_hint` function. Moreover, this function exhibits
+    :func:`beartype.bite.infer_hint` function. Moreover, this function exhibits
     worst-case constant time complexity :math:`O(1)`; memoization is irrelevant.
 
     Parameters

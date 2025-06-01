@@ -1404,7 +1404,7 @@ class BeartypeLibraryNumpyException(BeartypeLibraryException):
     :class:`beartype._util.api.external.utilnumpy` submodule internally called by
     various public APIs interfacing with the third-party :mod:`numpy` package
     (e.g., NumPy array type hint inference implemented by the public
-    :func:`beartype.door.infer_hint` function).
+    :func:`beartype.bite.infer_hint` function).
     '''
 
     pass

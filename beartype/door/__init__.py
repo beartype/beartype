@@ -65,6 +65,67 @@ from beartype.door._func.doorcheck import (
     is_bearable as is_bearable,
     is_subhint as is_subhint,
 )
-from beartype.door._func.infer.inferhint import (
-    infer_hint as infer_hint,
-)
+
+# ....................{ DUNDERS                            }....................
+def __getattr__(attr_name: str) -> object:
+    '''
+    Dynamically retrieve a deprecated attribute with the passed unqualified name
+    from this submodule and emit a non-fatal deprecation warning on each such
+    retrieval if this submodule defines this attribute *or* raise an exception
+    otherwise.
+
+    The Python interpreter implicitly calls this :pep:`562`-compliant module
+    dunder function under Python >= 3.7 *after* failing to directly retrieve an
+    explicit attribute with this name from this submodule. Since this dunder
+    function is only called in the event of an error, neither space nor time
+    efficiency are a concern here.
+
+    Parameters
+    ----------
+    attr_name : str
+        Unqualified name of the deprecated attribute to be retrieved.
+
+    Returns
+    -------
+    object
+        Value of this deprecated attribute.
+
+    Warns
+    -----
+    DeprecationWarning
+        If this attribute is deprecated.
+
+    Raises
+    ------
+    AttributeError
+        If this attribute is unrecognized and thus erroneous.
+    '''
+
+    # Isolate imports to avoid polluting the module namespace.
+    from beartype._util.module.utilmoddeprecate import deprecate_module_attr
+
+    # Package scope (i.e., dictionary mapping from the names to values of all
+    # non-deprecated attributes defined by this package).
+    attr_nondeprecated_name_to_value = globals()
+
+    # If this deprecated attribute is the deprecated infer_hint() function,
+    # forcibly import the non-deprecated "beartype.bite" subpackage now defining
+    # this function into this package scope. For efficiency, this subpackage
+    # does *NOT* unconditionally import and expose the "beartype.bite"
+    # subpackage above. That subpackage does *NOT* exist in the globals()
+    # dictionary defaulted to above and *MUST* now be forcibly injected there.
+    if attr_name == 'infer_hint':
+        from beartype.bite import infer_hint
+        attr_nondeprecated_name_to_value = {
+            'beartype.bite.infer_hint': infer_hint}
+        attr_nondeprecated_name_to_value.update(globals())
+    # Else, this deprecated attribute is any other attribute.
+
+    # Return the value of this deprecated attribute and emit a warning.
+    return deprecate_module_attr(
+        attr_deprecated_name=attr_name,
+        attr_deprecated_name_to_nondeprecated_name={
+            'infer_hint': 'beartype.bite.infer_hint',
+        },
+        attr_nondeprecated_name_to_value=attr_nondeprecated_name_to_value,
+    )
