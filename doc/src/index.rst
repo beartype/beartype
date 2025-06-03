@@ -64,6 +64,12 @@ If seeing is believing, prepare to do both those things.
 .. #placeholder as well as the icon links below. kthx
 .. #    |icon-for-glorious-sponsor|
 
+.. #FIXME: Replace most or all of the following code blocks with a
+.. #Javascript-animated terminal widget implemented as an Mkdocs plugin named
+.. #"termynal.py". Extensive research suggests this to be the *ONLY* modern
+.. #actively maintained Javascript-animated terminal widget, interestingly:
+.. #    https://github.com/termynal/termynal.py
+
 .. code-block:: bash
 
    # Install beartype.

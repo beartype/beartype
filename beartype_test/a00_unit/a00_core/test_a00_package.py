@@ -61,6 +61,7 @@ def test_api_deprecations() -> None:
     ATTR_DEPRECATED_TO_NONDEPRECATED_NAME = {
         'beartype.BeartypeHintOverrides': 'beartype.FrozenDict',
         'beartype.abby': 'beartype.door',
+        'beartype.door.infer_hint': 'beartype.bite.infer_hint',
     }
 
     # Tuple of the fully-qualified names of all deprecated attributes associated
