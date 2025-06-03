@@ -46,11 +46,17 @@ from beartype_test._util.mark.pytskip import (
 #
 # Skip this "mypy"-specific functional test unless all of the following apply:
 # * The "mypy" package is importable under the active Python interpreter.
+# * Tests are *NOT* running remotely under GitHub Actions-based continuous
+#   integration (CI). Since our CI workflow already explicitly exercises this
+#   package against "mypy", explicitly exercising this package against "mypy"
+#   yet again would only needlessly complicate CI workflows and consume excess
+#   CI minutes for *NO* gain.
 # * The active Python interpreter is *NOT* PyPy. mypy is currently incompatible
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 @skip_unless_package('mypy')
+@skip_if_ci()
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
