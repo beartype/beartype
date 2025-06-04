@@ -66,7 +66,7 @@ def get_pep649_hintable_annotations(
     Returns
     -------
     Pep649HintableAnnotations
-        ``__annotations__`` dunder dictionary defined by this hintable.
+        ``__annotations__`` dunder dictionary set on this hintable.
 
     Raises
     ------
@@ -276,6 +276,12 @@ if IS_PYTHON_AT_LEAST_3_14:
         )
         # Else, this hintable is actually a hintable.
 
+        # Existing __annotate__() dunder method set on this hintable if any *OR*
+        # "None" otherwise (e.g., if an external caller has already explicitly
+        # set the "__annotations__" dunder attribute on this hintable, which
+        # implicitly sets the __annotate__() dunder method to "None").
+        original_hintable_annotate = getattr(hintable, '__annotate__', None)
+
         #FIXME: Implement us up, please. Notably:
         #* Defer to the existing __annotate__.
         #* Conflate "format.VALUE" and "format.FORWARDREF". By definition, the
@@ -295,15 +301,152 @@ if IS_PYTHON_AT_LEAST_3_14:
         #  Notably, __annotate__() isn't settable on classmethods. Ugh! For this
         #  reason, we currently fallback to setting "__annotations__" instead
         #  piecemeal as we currently do for Python <= 3.13. Whatevahs.
-        def hintable_annotate_dunder_method(
-            self, format: Format) -> Pep649HintableAnnotations:
-            return annotations
+        def beartype_hintable_annotate(
+            self, annotate_format: Format) -> Pep649HintableAnnotations:
+            f'''
+            Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
+            ``__annotate__()`` dunder method, modifying the user-defined
+            ``__annotations__`` dunder dictionary for this hintable with
+            :mod:`beartype`-specific improvements.
 
-        #FIXME: Improve commentary, please.
-        # Attempt to replace this hintable's existing __annotate__() dunder
-        # method with this new beartype-specific method.
+            These improvements include:
+
+            * **Memoization** (i.e., caching) across root type hints, reducing
+              space consumption.
+            * :pep:`563`-compliant conversion of unquoted forward references
+              under the ``from __future__ import annotations`` pragma into
+              equivalent :mod:`beartype`-specific **forward reference proxies**
+              (i.e., objects transparently proxying undefined types).
+
+            Parameters
+            ----------
+            annotate_format : Format
+                Kind of annotation format to be returned. See also :pep:`647`
+                and :pep:`747` for further details.
+
+            Returns
+            -------
+            Pep649HintableAnnotations
+                New ``__annotations__`` dunder dictionary set on this hintable.
+            '''
+
+            # If the caller requested a value-like format, trivially return the
+            # "__annotations__" dunder dictionary passed to the parent
+            # set_pep649_hintable_annotations() setter of this closure.
+            #
+            # If this dictionary contains:
+            # * *NO* unquoted forward references, this dictionary already
+            #   complies with the "Format.VALUE" format.
+            # * One or more unquoted forward references, this dictionary
+            #   already complies with the "Format.FORWARDREF" format. Why? A
+            #   complex and non-obvious chain of casuistry. Bear with us. If
+            #   this dictionary did *NOT* already comply with the
+            #   "Format.FORWARDREF" format, then (by process of elimination)
+            #   this dictionary *MUST* at least comply with the "Format.VALUE"
+            #   format. However, since this dictionary contains unquoted forward
+            #   references, the annotationlib.get_annotations() getter would
+            #   have raised a "NameError" exception when attempting to return
+            #   this dictionary under the "Format.VALUE" format, in which case
+            #   this dictionary could *NOT* possibly exist. Clearly, however,
+            #   this dictionary exists. Since this is an obvious contradiction,
+            #   this dictionary *MUST* necessarily already comply with the
+            #   "Format.FORWARDREF" format.
+            #
+            # There now exist four possible cases:
+            # * The caller passed "Format.VALUE" and this dictionary already
+            #   complies with the "Format.VALUE" format. *WONDERFUL!*
+            # * The caller passed "Format.FORWARDREF" and this dictionary
+            #   complies with the "Format.FORWARDREF" format. *WONDERFUL!*
+            # * The caller passed "Format.FORWARDREF" and this dictionary only
+            #   complies with the "Format.VALUE" format, which implies this
+            #   dictionary contains *NO* unquoted forward references. Since the
+            #   "Format.FORWARDREF" format simply reduces to "Format.VALUE" if a
+            #   dictionary contains *NO* unquoted forward references, this case
+            #   is still *WONDERFUL!*
+            # * The caller passed "Format.VALUE" and this dictionary actually
+            #   complies with the "Format.FORWARDREF" format instead.
+            #   Unsurprisingly, this case is awkward. If the caller passed
+            #   "Format.VALUE", they presumably expect this __annotate__()
+            #   function to raise a "NameError" exception if this dictionary
+            #   contains unquoted forward references. This dictionary actually
+            #   complies with the "Format.FORWARDREF" format and thus actually
+            #   contains unquoted forward references. Sadly, there is *NO*
+            #   efficient means of differentiating this case from the case in
+            #   which this dictionary contains *NO* unquoted forward references.
+            #   Even if an efficient means did exist, there would still exist
+            #   *NO* reason to do so. The "Format.VALUE" format has little to
+            #   *NO* intrinsic value in and of itself. The only reason that
+            #   "Format.VALUE" exists is to inform the high-level
+            #   call_annotate_function() and get_annotations() functions defined
+            #   by the standard "annotationslib" module that this dictionary
+            #   contains unquoted forward references, which then respond by
+            #   wrapping unquoted forward references in "ForwardRef" proxies to
+            #   comply with the "Format.FORWARDREF" format. But this dictionary
+            #   already complies with this format! In this case, no further work
+            #   is required or desired. This __annotate__() monkey-patch thus
+            #   intentionally conflates the largely useless "Format.VALUE"
+            #   format with the largely useful "Format.FORWARDREF" format.
+            #   Although not exactly wonderful, this approach is the best that
+            #   we can reasonably do without rendering this API insane.
+            if annotate_format in _ANNOTATE_FORMATS_VALUELIKE:
+                return annotations
+            # Else, the caller did *NOT* request a value-like format.
+            #
+            # If...
+            elif (
+                # The caller requested the documentation-oriented string
+                # format *AND*...
+                annotate_format is Format.STRING and
+                # An existing __annotate__() dunder method is set on this
+                # hintable...
+                original_hintable_annotate is not None
+            ):
+                # Then defer to the existing __annotate__() dunder method set on
+                # this hintable. While this beartype-specific monkey-patch of
+                # that method *COULD* attempt to manually redefine this format
+                # without simply deferring to that method, doing so would be
+                # both non-trivial and undesirable. Callers requesting
+                # documentation are ultimately requesting human-readable string
+                # representations of the *ORIGINAL* type hints annotating this
+                # hintable. Those type hints are what the third-party packages
+                # defining those hintables intended those hintables to be
+                # annotated as. Those type hints embody those intentions, thus
+                # constituting the most readable description of those hintables.
+                return original_hintable_annotate(annotate_format)
+            # Else, the caller either requested an unknown format *OR* no
+            # existing __annotate__() dunder method is set on this hintable.
+            #
+            # In the latter case, this beartype-specific implementation of that
+            # method *MUST* either:
+            # * Attempt to manually redefine this format. Although feasible,
+            #   doing so would be both non-trivial and undesirable. See above
+            #   for further discussion.
+            # * Raise the builtin "NotImplementedError" exception. The caller is
+            #   then expected to manually implement this format. Thankfully, the
+            #   high-level call_annotate_function() and get_annotations()
+            #   functions defined by the standard "annotationslib" module do
+            #   just that; they explicitly catch this exception and respond by
+            #   manually implementing the "Format.STRING" format in the expected
+            #   way. This is the only sane solution.
+            #
+            # Unsurprisingly, we opt for the latter approach by simply falling
+            # through to the fallback defined below.
+
+            # Notify the caller that this __annotate__() implementation fails to
+            # support this format by raising a "NotImplementedError" exception.
+            #
+            # Note that PEP 647 itself encourages user-defined __annotate__()
+            # implementations to simply raise a bare "NotImplementedError"
+            # exception *WITHOUT* any message. Indeed, the aforementioned
+            # call_annotate_function() and get_annotations() functions trivially
+            # catch this exception and ignore any associated message.
+            raise NotImplementedError()
+
+        # Attempt to silently replace this hintable's existing __annotate__()
+        # dunder method with this new beartype-specific monkey-patch.
         try:
-            hintable.__annotate__ = hintable_annotate_dunder_method  # type: ignore[union-attr]
+            hintable.__annotate__ = beartype_hintable_annotate  # type: ignore[union-attr]
+        #FIXME: Improve commentary, please.
         # If doing so fails with an exception resembling the following, this
         # hintable is *NOT* pure-Python. The canonical example are C-based
         # decorator objects (e.g., class, property, or static method
@@ -332,6 +475,16 @@ if IS_PYTHON_AT_LEAST_3_14:
                 hintable.__annotations__[attr_name] = attr_hint
 
     # ....................{ PRIVATE ~ globals              }....................
+    _ANNOTATE_FORMATS_VALUELIKE = frozenset((Format.FORWARDREF, Format.VALUE,))
+    '''
+    Frozen set of all :class:`.Format` enumeration members that are
+    **value-like** (i.e., which cause ``__annotate__()`` dunder methods passed
+    these members to return standard ``__annotations__`` dunder dictionaries
+    mapping from the names of hintable attributes to the type hints annotating
+    those attributes).
+    '''
+
+    # ....................{ PRIVATE ~ globals : dict       }....................
     _MODULE_NAME_TO_ANNOTATIONS: (
         Dict[str, Optional[Pep649HintableAnnotations]]) = {}
     '''
@@ -395,7 +548,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             Either:
 
             * If this hintable is actually a hintable, the ``__annotations__``
-              dunder dictionary defined by this hintable.
+              dunder dictionary set on this hintable.
             * Else, :data:`None`.
         '''
 
@@ -635,7 +788,7 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
         Either:
 
         * If this hintable is actually a hintable, the ``__annotations__``
-          dunder dictionary defined by this hintable.
+          dunder dictionary set on this hintable.
         * Else, :data:`None`.
     '''
 )
