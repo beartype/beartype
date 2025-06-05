@@ -321,8 +321,8 @@ if IS_PYTHON_AT_LEAST_3_14:
             Parameters
             ----------
             annotate_format : Format
-                Kind of annotation format to be returned. See also :pep:`647`
-                and :pep:`747` for further details.
+                Kind of annotation format to be returned. See also :pep:`649`
+                and :pep:`749` for further details.
 
             Returns
             -------
@@ -435,31 +435,96 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Notify the caller that this __annotate__() implementation fails to
             # support this format by raising a "NotImplementedError" exception.
             #
-            # Note that PEP 647 itself encourages user-defined __annotate__()
-            # implementations to simply raise a bare "NotImplementedError"
-            # exception *WITHOUT* any message. Indeed, the aforementioned
-            # call_annotate_function() and get_annotations() functions trivially
-            # catch this exception and ignore any associated message.
+            # Note that:
+            # * PEP 649 itself encourages user-defined __annotate__()
+            #   implementations to raise bare "NotImplementedError" exceptions
+            #   lacking messages. Indeed, the call_annotate_function() and
+            #   get_annotations() functions trivially catch these exceptions and
+            #   ignore associated messages.
+            # * PEP 749 explicitly instructs user-defined __annotate__()
+            #   implementations to raise "NotImplementedError" exceptions when
+            #   passed the private "Format.VALUE_WITH_FAKE_GLOBALS" format:
+            #       Users who manually write annotate functions should raise
+            #       NotImplementedError if the VALUE_WITH_FAKE_GLOBALS format is
+            #       requested, so the standard library will not call the
+            #       manually written annotate function with “fake globals”,
+            #       which could have unpredictable results.
             raise NotImplementedError()
 
         # Attempt to silently replace this hintable's existing __annotate__()
         # dunder method with this new beartype-specific monkey-patch.
         try:
             hintable.__annotate__ = beartype_hintable_annotate  # type: ignore[union-attr]
-        #FIXME: Improve commentary, please.
         # If doing so fails with an exception resembling the following, this
         # hintable is *NOT* pure-Python. The canonical example are C-based
         # decorator objects (e.g., class, property, or static method
         # descriptors), whose exception message reads:
-        #     AttributeError: 'method' object has no attribute '__annotations__'
+        #     AttributeError: 'method' object has no attribute '__annotate__'
+        #     and no __dict__ for setting new attributes. Did you mean:
+        #     '__getstate__'?
         #
-        # C-based decorator objects define a read-only "__annotations__" dunder
-        # attribute that proxies an original writeable "__annotations__" dunder
-        # attribute of the pure-Python callables they originally decorated.
-        # Ergo, detecting this edge case is non-trivial and most easily deferred
-        # to this late time. While non-ideal, simplicity >>>> idealism in this
-        # case.
+        # C-based decorator objects only define:
+        # * A read-only __annotate__() dunder method that proxies an original
+        #   writeable __annotate__() dunder method of the pure-Python callables
+        #   they originally decorated.
+        # * A read-only "__annotations__" dunder attribute that proxies an
+        #   original writeable "__annotations__" dunder attribute of the
+        #   pure-Python callables they originally decorated.
+        #
+        # Detecting this edge case is non-trivial and most easily deferred to
+        # this late time. While non-ideal, simplicity >>>> idealism here.
         except AttributeError:
+            #FIXME: *NON-IDEAL.* This edge case will almost certainly arise with
+            #standard @classmethod and @staticmethod objects. The solution is to
+            #explicitly detect objects defining the reasonably standard
+            #"__func__" wrapper and, if this is such an object, recursively call
+            #this setter passed this wrapper instead: e.g.,
+            #      hintable_func = getattr(hintable, '__func__', None)
+            #      if (
+            #          hintable_func is not None and
+            #          # Explicitly avoid recursion! Gulp.
+            #          hintable_func is not hintable
+            #      ):
+            #          return set_pep649_hintable_annotations(
+            #              hintable=hintable_func,
+            #              annotations=annotations,
+            #              exception_cls=exception_cls,
+            #              exception_prefix=exception_prefix,
+            #          )
+            #
+            #It's a bit inefficient, but who cares? CPython 3.14 currently
+            #violates PEP 749 by failing to implement this paragraph:
+            #    The constructors for classmethod() and staticmethod() currently
+            #    copy the __annotations__ attribute from the wrapped object to
+            #    the wrapper. They will instead have writable attributes for
+            #    __annotate__ and __annotations__. Reading these attributes will
+            #    retrieve the corresponding attribute from the underlying
+            #    callable and cache it in the wrapper’s __dict__. Writing to
+            #    these attributes will directly update the __dict__, without
+            #    affecting the wrapped callable.
+            #
+            #Presumably, CPython will start doing that at some point. Once
+            #CPython does, this whole issue becomes a non-issue. Thus,
+            #efficiently is irrelevant. We just need this to work now. *sigh*
+
+            # If the "__annotations__" dunder attribute of this hintable is
+            # *NOT* a dictionary, this dunder attribute has *PROBABLY* been
+            # nullified to "None", *PROBABLY* due to another decorator having
+            # previously set the __annotate__() dunder method of the presumably
+            # pure-Python callable underlying this C-based decorator object.
+            # Yes, there are a lot of assumptions *PROBABLY* happening here.
+            #
+            # Technically, this constitutes a valid use case. , utility function *CANNOT* set the passed
+            # annotations dictionary on this hintable. Why? Because, if
+            # attempting to set the __annotate__() dunder method raises an
+            # "AttributeError", then attempting to set the "__annotations__"
+            # dunder dictionary almost certainly raises the same exception.
+            # Since this "AttributeError" is non-human-readable, raise a more
+            # readable exception as a caller convenience.
+            if not isinstance(hintable.__annotations__, dict):
+                #FIXME: Actually raise a reasonable exception here, please.
+                raise ValueError()
+
             # For the name of each annotated attribute of this hintable and the
             # new hint which which to annotate this attribute, overwrite the
             # prior hint originally annotating this attribute with this new
@@ -471,6 +536,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             # * This iteration-based assignment is an inefficient O(n) operation
             #   (where "n" is the number of annotated attributes of this
             #   hintable) and thus intentionally performed last here.
+            # * 
             for attr_name, attr_hint in annotations.items():
                 hintable.__annotations__[attr_name] = attr_hint
 
@@ -733,9 +799,8 @@ else:
         # C-based decorator objects define a read-only "__annotations__" dunder
         # attribute that proxies an original writeable "__annotations__" dunder
         # attribute of the pure-Python callables they originally decorated.
-        # Ergo, detecting this edge case is non-trivial and most easily deferred
-        # to this late time. While non-ideal, simplicity >>>> idealism in this
-        # case.
+        # Detecting this edge case is non-trivial and most easily deferred to
+        # this late time. While non-ideal, simplicity >>>> idealism here.
         except AttributeError:
             # For the name of each annotated attribute of this hintable and the
             # new hint which which to annotate this attribute, overwrite the

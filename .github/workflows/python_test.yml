@@ -295,28 +295,20 @@ jobs:
       #    https://github.com/jpetrucciani/mypy-check/issues/31
       #    https://github.com/jpetrucciani/mypy-check/issues/30
 
-      #FIXME: *TEMPORARILY DISABLED.* For unknown reasons (probably pertaining
-      #to PEP 747 support), mypy >= 1.16.0 now hates @beartype -- but only
-      #remotely under this GitHub Actions-hosted continuous integration (CI)
-      #workflow. mypy >= 1.16.0 continues passing locally, which is baffling.
-      #Until resolved, we have little choice but to disable mypy-based checks.
-      #See also this (possibly) relevant upstream pull request:
-      #    https://github.com/python/mypy/pull/18690
-
       # Type-check this package with "mypy".
-      # - name: 'Type-checking package with "mypy:"...'
-      #   run: |
-      #     # Manually install "mypy" in the standard way. Note that "mypy" itself
-      #     # requires the third-party "typing-extensions" package for support for
-      #     # backported type hint factories (e.g., the PEP 747-compliant
-      #     # "typing.TypeForm" hint factory under Python >= 3.14 backported as
-      #     # "typing_extensions.TypeForm" to prior Python versions). Ergo,
-      #     # "typing-extensions" need *NOT* be explicitly specified here.
-      #     python3 -m pip --quiet install mypy
-      #     # Log this "mypy" version for debuggability.
-      #     mypy --version
-      #     # Run this "mypy" instance against our main package.
-      #     mypy ./beartype/
+      - name: 'Type-checking package with "mypy:"...'
+        run: |
+          # Manually install "mypy" in the standard way. Note that "mypy" itself
+          # requires the third-party "typing-extensions" package for support for
+          # backported type hint factories (e.g., the PEP 747-compliant
+          # "typing.TypeForm" hint factory under Python >= 3.14 backported as
+          # "typing_extensions.TypeForm" to prior Python versions). Ergo,
+          # "typing-extensions" need *NOT* be explicitly specified here.
+          python3 -m pip --quiet install mypy
+          # Log this "mypy" version for debuggability.
+          mypy --version
+          # Run this "mypy" instance against our main package.
+          mypy ./beartype/
 
       # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'

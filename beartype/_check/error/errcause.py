@@ -571,8 +571,8 @@ class ViolationCause(object):
 
             # Getter function returning the desired string for this attribute if
             # any *OR* "None" otherwise.
-            cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(
-                self.hint_sign, None)  # type: ignore[arg-type]
+            cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(  # type: ignore[assignment]
+                self.hint_sign, None)
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.

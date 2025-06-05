@@ -58,6 +58,10 @@ from beartype._util.api.standard.utiltyping import (
 # defines this type factory across all Python versions, whereas "typing" only
 # conditionally defines these type factories under particular Python versions.
 if TYPE_CHECKING:
+    #FIXME: Actually, this now seems to reduce to a noop. Excise us up, please.
+    # # See discussion below, please. *sigh*
+    # from typing_extensions import TypeAlias
+
     # ....................{ PEP 742                        }....................
     # PEP 742-compliant "TypeIs[...]" type hints first introduced by Python
     # >= 3.13 are a high internal priority for @beartype. Hinting the return of
@@ -72,7 +76,7 @@ if TYPE_CHECKING:
 
     # ....................{ PEP 747                        }....................
     # PEP 747-compliant "TypeForm[...]" type hints first introduced by Python
-    # >= 3.14 are a high internal priority for @beartype. Hinting parameters,
+    # >= 3.15 are a high internal priority for @beartype. Hinting parameters,
     # returns, and local variables of both private and public @beartype
     # callables (including the common first parameter "hint" accepted by most
     # callables) with type forms created by this factory enables static
@@ -82,15 +86,52 @@ if TYPE_CHECKING:
     # name. The term "type form" does *NOT* especially mean much within the
     # context of Python type hints. The term "hint", on the other hand, does.
 
-    #FIXME: Replace "typing_extensions" with simply "typing" this *AFTER*
-    #dropping Python 3.13.
-    from typing_extensions import (  # type: ignore[attr-defined]
-        TypeForm as Hint,
-        TypeForm as HintBare,
-    )
+    # If this static type-checker is mypy, avoid importing PEP 747-compliant
+    # type hint factories. Mypy currently lacks official support for PEP 747.
+    # Instead, import standard PEP 484-compliant type hint factories guaranteed
+    # to be supported by mypy that trivially reduce to the "Any" noop.
+    #
+    # See also these relevant mypy threads:
+    #     https://github.com/python/mypy/pull/18690
+    #     https://github.com/python/mypy/issues/19227
+    MYPY = False  # <-- don't ask, don't tell
+    if MYPY:  # <------ don't see what you don't want to see
+        from beartype.typing import (
+            Any as Hint,
+            Generic,
+        )
 
-    # See discussion below, please. *sigh*
-    from typing_extensions import TypeAlias
+        _T = TypeVar('_T')
+        '''
+        Arbitrary type variable.
+        '''
+
+        class HintBare(Generic[_T]):
+            '''
+            Arbitrary generic type hint factory returning the :obj:`typing.Any`
+            singleton when subscripted by *any* type hint.
+
+            This factory is intentionally defined as a generic to prevent mypy
+            from emitting false positives resembling:
+
+                beartype/door/_func/doorcheck.py:131: error: "HintBare" expects
+                no type arguments, but 1 given  [type-arg]
+            '''
+
+            @classmethod
+            def __class_getitem__(cls, item: Any) -> Any:
+                return Any
+    # Else, this static type-checker is *NOT* mypy. Since the only other static
+    # type-checker officially supported by beartype is pyright, this static
+    # type-checker *MUST* by definition be pyright. Since pyright officially
+    # supports PEP 747, import PEP 747-compliant type hint factories.
+    else:
+        #FIXME: Replace "typing_extensions" with simply "typing" this *AFTER*
+        #dropping Python 3.14.
+        from typing_extensions import (
+            TypeForm as Hint,
+            TypeForm as HintBare,  # pyright: ignore
+        )
 # Else, this submodule is currently being imported at runtime by Python. In this
 # case, dynamically import these type factories from whichever of the standard
 # "typing" module *OR* the third-party "typing_extensions" module declares these
@@ -130,6 +171,7 @@ else:
 __all__ = [
     'Hint',
     'HintBare',
+    'TypeIs',
 ]
 
 # ....................{ HINTS                              }....................

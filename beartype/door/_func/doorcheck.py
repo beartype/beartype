@@ -224,7 +224,7 @@ def is_bearable(
     # Since make_func_tester() is memoized, passing parameters by keyword would
     # raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    func_tester = make_func_tester(hint, conf)
+    func_tester = make_func_tester(hint, conf)  # pyright: ignore
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore

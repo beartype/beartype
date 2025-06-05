@@ -664,7 +664,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
         '''
 
         # One-liners justify their own existence.
-        return is_bearable(obj=obj, hint=self._hint, conf=conf)
+        return is_bearable(obj=obj, hint=self._hint, conf=conf)  # pyright: ignore
 
     # ..................{ TESTERS ~ subhint                  }..................
     # Note that the @method_cached_arg_by_id rather than @callable_cached

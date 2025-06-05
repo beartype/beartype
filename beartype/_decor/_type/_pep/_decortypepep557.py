@@ -321,7 +321,7 @@ def beartype_pep557_dataclass(
             # die_if_unbearable() raiser below is required. Pragmatically, this
             # preliminary test avoids various needlessly expensive operations in
             # the common case that this value satisfies this hint.
-            if not is_bearable(obj=attr_value, hint=attr_hint, conf=conf):
+            if not is_bearable(obj=attr_value, hint=attr_hint, conf=conf):  # pyright: ignore
                 #FIXME: *UGLY LOGIC.* Sure. Technically, this works. But we
                 #repeat the *EXACT* same logic in our currently unused
                 #_die_if_arg_default_unbearable() validator, which we will
