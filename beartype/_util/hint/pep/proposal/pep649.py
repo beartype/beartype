@@ -100,7 +100,8 @@ def get_pep649_hintable_annotations(
             f'{exception_prefix}'
             f'{label_beartypeable_kind(hintable)} {repr(hintable)} '  # type: ignore[type-var]
             f'not annotatable by type hints '
-            f'(i.e., fails to define "__annotations__" dunder dictionary).'
+            f'(i.e., PEP 649 "__annotate__" and "__annotations__" '
+            f'dunder attributes undefined).'
         )
     # Else, that hintable is a hintable.
 
@@ -274,7 +275,10 @@ if IS_PYTHON_AT_LEAST_3_14:
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
-        # Else, this hintable is actually a hintable.
+        # Else, this hintable is actually a hintable defining the requisite pair
+        # of PEP 649- and 749-compliant dunder attributes:
+        # * __annotate__().
+        # * "__annotations__"
 
         # Existing __annotate__() dunder method set on this hintable if any *OR*
         # "None" otherwise (e.g., if an external caller has already explicitly
@@ -473,7 +477,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         #
         # Detecting this edge case is non-trivial and most easily deferred to
         # this late time. While non-ideal, simplicity >>>> idealism here.
-        except AttributeError:
+        except AttributeError as exception:
             #FIXME: *NON-IDEAL.* This edge case will almost certainly arise with
             #standard @classmethod and @staticmethod objects. The solution is to
             #explicitly detect objects defining the reasonably standard
@@ -513,17 +517,28 @@ if IS_PYTHON_AT_LEAST_3_14:
             # previously set the __annotate__() dunder method of the presumably
             # pure-Python callable underlying this C-based decorator object.
             # Yes, there are a lot of assumptions *PROBABLY* happening here.
-            #
-            # Technically, this constitutes a valid use case. , utility function *CANNOT* set the passed
-            # annotations dictionary on this hintable. Why? Because, if
-            # attempting to set the __annotate__() dunder method raises an
-            # "AttributeError", then attempting to set the "__annotations__"
-            # dunder dictionary almost certainly raises the same exception.
-            # Since this "AttributeError" is non-human-readable, raise a more
-            # readable exception as a caller convenience.
+            # The only remaining means of setting the passed annotations
+            # dictionary on this hintable would be to set the "__annotations__"
+            # dunder attribute to this dictionary. However, attempting to set
+            # the __annotate__() dunder method raised an "AttributeError"!
+            # Ergo, attempting to set the "__annotations__" dunder dictionary
+            # would almost certainly raise the same exception. Since there exist
+            # *NO* remaining means of setting the passed annotations dictionary
+            # on this hintable, we have *NO* recourse but to notify the caller
+            # of this modern tragedy by raising an exception.
             if not isinstance(hintable.__annotations__, dict):
-                #FIXME: Actually raise a reasonable exception here, please.
-                raise ValueError()
+                raise exception_cls(
+                    f'{exception_prefix}'
+                    f'{label_beartypeable_kind(hintable)} {repr(hintable)} '  # type: ignore[type-var]
+                    f'type hints not settable to '
+                    f'annotations dictionary {repr(annotations)} '
+                    f'(i.e., PEP 649 "__annotate__" and "__annotations__" '
+                    f'dunder attributes not settable, but "__annotations__" '
+                    f'dunder attribute set to '
+                    f'non-dictionary value {repr(hintable.__annotations__)}).'
+                ) from exception
+            # Else, the "__annotations__" dunder attribute of this hintable is a
+            # dictionary.
 
             # For the name of each annotated attribute of this hintable and the
             # new hint which which to annotate this attribute, overwrite the
@@ -536,7 +551,6 @@ if IS_PYTHON_AT_LEAST_3_14:
             # * This iteration-based assignment is an inefficient O(n) operation
             #   (where "n" is the number of annotated attributes of this
             #   hintable) and thus intentionally performed last here.
-            # * 
             for attr_name, attr_hint in annotations.items():
                 hintable.__annotations__[attr_name] = attr_hint
 
