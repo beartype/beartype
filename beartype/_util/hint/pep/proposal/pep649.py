@@ -478,26 +478,24 @@ if IS_PYTHON_AT_LEAST_3_14:
         # Detecting this edge case is non-trivial and most easily deferred to
         # this late time. While non-ideal, simplicity >>>> idealism here.
         except AttributeError as exception:
-            #FIXME: *NON-IDEAL.* This edge case will almost certainly arise with
-            #standard @classmethod and @staticmethod objects. The solution is to
-            #explicitly detect objects defining the reasonably standard
-            #"__func__" wrapper and, if this is such an object, recursively call
-            #this setter passed this wrapper instead: e.g.,
-            #      hintable_func = getattr(hintable, '__func__', None)
-            #      if (
-            #          hintable_func is not None and
-            #          # Explicitly avoid recursion! Gulp.
-            #          hintable_func is not hintable
-            #      ):
-            #          return set_pep649_hintable_annotations(
-            #              hintable=hintable_func,
-            #              annotations=annotations,
-            #              exception_cls=exception_cls,
-            #              exception_prefix=exception_prefix,
-            #          )
+            # Lower-level presumably pure-Python callable wrapped by this
+            # higher-level presumably C-based decorator object if this decorator
+            # object wraps such a callable *OR* "None" otherwise (i.e., if this
+            # object does *NOT* wrap such a callable).
             #
-            #It's a bit inefficient, but who cares? CPython 3.14 currently
-            #violates PEP 749 by failing to implement this paragraph:
+            # Note that this callable is intentionally accessed as the
+            # "__func__" dunder attribute on this decorator object, as the
+            # following standard decorator objects *ALL* wrap their decorated
+            # callables with this attribute:
+            # * Bound instance method descriptors.
+            # * @classmethod-decorated class method descriptors.
+            # * @staticmethod-decorated static method descriptors.
+            #
+            # See also the "beartype._util.func.utilfuncwrap" submodule.
+            hintable_func = getattr(hintable, '__func__', None)
+
+            #FIXME: Remove this edge case *AFTER* some future Python version
+            #fully satisfies PEP 749 by implementing this paragraph:
             #    The constructors for classmethod() and staticmethod() currently
             #    copy the __annotations__ attribute from the wrapped object to
             #    the wrapper. They will instead have writable attributes for
@@ -507,9 +505,47 @@ if IS_PYTHON_AT_LEAST_3_14:
             #    these attributes will directly update the __dict__, without
             #    affecting the wrapped callable.
             #
-            #Presumably, CPython will start doing that at some point. Once
-            #CPython does, this whole issue becomes a non-issue. Thus,
-            #efficiently is irrelevant. We just need this to work now. *sigh*
+            #Currently, Python does *NOT* do that. Neither the __annotate__()
+            #nor "__annotate__" dunder attributes are settable on @classmethod
+            #or @staticmethod descriptors.
+            #
+            #Presumably, Python will start doing that at some point. Once Python
+            #does, this issue becomes a non-issue. For the moment, efficiency is
+            #irrelevant. We just need this to work for a temporary span of time.
+
+            # If...
+            if (
+                # This higher-level presumably C-based decorator object wraps a
+                # lower-level presumably pure-Python callable *AND*...
+                hintable_func is not None and
+                # This decorator object does *NOT* wrap itself...
+                #
+                # Note that:
+                # * This edge case should never occur. Indeed, if this
+                #   decorator object is one of the standard decorator objects
+                #   listed above, this edge case is guaranteed to *NOT* occur.
+                # * This identity test is a Poor Man's Recursion Guard. Clearly,
+                #   this identity test does *NOT* actually constitute a
+                #   recursion guard. Implementing a "true" recursion guard would
+                #   require tracking a set of all previously seen hintables
+                #   across recursive calls. Since it's unclear whether this edge
+                #   case will even arise in practice, it's unclear whether the
+                #   effort is worth investing in a "true" recursion guard. For
+                #   the moment, the Poor Man's Recursion Guard suffices...
+                hintable_func is not hintable
+            ):
+                # Then attempt to set this annotations dictionary on this
+                # lower-level presumably pure-Python callable instead.
+                return set_pep649_hintable_annotations(
+                    hintable=hintable_func,
+                    annotations=annotations,
+                    exception_cls=exception_cls,
+                    exception_prefix=exception_prefix,
+                )
+            # Else, either this higher-level presumably C-based decorator object
+            # does not wrap a lower-level presumably pure-Python callable *OR*
+            # this decorator object wraps itself. In either case, unwrapping
+            # this decorator object would be harmful. Avoid doing so.
 
             # If the "__annotations__" dunder attribute of this hintable is
             # *NOT* a dictionary, this dunder attribute has *PROBABLY* been
@@ -534,7 +570,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                     f'annotations dictionary {repr(annotations)} '
                     f'(i.e., PEP 649 "__annotate__" and "__annotations__" '
                     f'dunder attributes not settable, but "__annotations__" '
-                    f'dunder attribute set to '
+                    f'dunder attribute already set to '
                     f'non-dictionary value {repr(hintable.__annotations__)}).'
                 ) from exception
             # Else, the "__annotations__" dunder attribute of this hintable is a
