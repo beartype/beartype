@@ -249,8 +249,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         return _get_pep649_hintable_annotations_or_none_uncached(hintable)
 
     # ....................{ SETTERS                        }....................
-    #FIXME: Completely reimplement us up, please. *ONLY* set the __annotate__()
-    #dunder method, which should generally be the ultimate arbiter of truth.
+    #FIXME: Unit test us up, please.
     def set_pep649_hintable_annotations(
         # Mandatory parameters.
         hintable: Pep649Hintable,
@@ -286,25 +285,6 @@ if IS_PYTHON_AT_LEAST_3_14:
         # implicitly sets the __annotate__() dunder method to "None").
         original_hintable_annotate = getattr(hintable, '__annotate__', None)
 
-        #FIXME: Implement us up, please. Notably:
-        #* Defer to the existing __annotate__.
-        #* Conflate "format.VALUE" and "format.FORWARDREF". By definition, the
-        #  passed dictionary exists and thus *MUST* be of "format.FORWARDREF"
-        #  rather than "format.VALUE". Honestly, who cares. Nobody wants
-        #  "format.VALUE" anyway. It's of utterly no value. *sigh*
-        #* File an upstream CPython issue. This PEP 749 paragraph doesn't appear
-        #  to work at the moment:
-        #      The constructors for classmethod() and staticmethod() currently
-        #      copy the __annotations__ attribute from the wrapped object to the
-        #      wrapper. They will instead have writable attributes for
-        #      __annotate__ and __annotations__. Reading these attributes will
-        #      retrieve the corresponding attribute from the underlying callable
-        #      and cache it in the wrapper’s __dict__. Writing to these
-        #      attributes will directly update the __dict__, without affecting
-        #      the wrapped callable.
-        #  Notably, __annotate__() isn't settable on classmethods. Ugh! For this
-        #  reason, we currently fallback to setting "__annotations__" instead
-        #  piecemeal as we currently do for Python <= 3.13. Whatevahs.
         def beartype_hintable_annotate(
             self, annotate_format: Format) -> Pep649HintableAnnotations:
             f'''
@@ -494,6 +474,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             # See also the "beartype._util.func.utilfuncwrap" submodule.
             hintable_func = getattr(hintable, '__func__', None)
 
+            #FIXME: File an upstream CPython issue about this, please. *sigh*
             #FIXME: Remove this edge case *AFTER* some future Python version
             #fully satisfies PEP 749 by implementing this paragraph:
             #    The constructors for classmethod() and staticmethod() currently
