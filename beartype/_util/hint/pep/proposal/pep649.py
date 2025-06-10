@@ -13,6 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: It's no longer safe to return mutable dictionaries from either
+#get_pep649_hintable_annotations() or get_pep649_hintable_annotations_or_none().
+#These getters are both memoized. Even if they weren't, PEP 649 renders
+#"__annotations__" unsafe for mutation. For safety, these getters should now
+#return "FrozenDict" objects. See to it, please. *sigh*
+
 #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
 #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
 
@@ -30,8 +36,6 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from beartype._util.text.utiltextlabel import label_beartypeable_kind
 
 # ....................{ GETTERS                            }....................
-#FIXME: See "FIXME:" comments in the "beartype._check.metadata.metadecor"
-#submodule for how this needs to be refactored to support Python >= 3.14. *sigh*
 #FIXME: Unit test us up, please.
 def get_pep649_hintable_annotations(
     # Mandatory parameters.
@@ -488,7 +492,21 @@ if IS_PYTHON_AT_LEAST_3_14:
             #
             #Currently, Python does *NOT* do that. Neither the __annotate__()
             #nor "__annotate__" dunder attributes are settable on @classmethod
-            #or @staticmethod descriptors.
+            #or @staticmethod descriptors:
+            #    class Yum(object):
+            #        @classmethod
+            #        def guh(cls) -> None: pass
+            #
+            #    def ugh_annotate(): return {}
+            #
+            #    yim = Yum()
+            #    print(Yum.guh.__annotate__)          # <-- reading this works
+            #    Yum.guh.__annotate__ = ugh_annotate  # <-- writing this fails
+            #
+            #The above example currently raises:
+            #    AttributeError: 'method' object has no attribute '__annotate__'
+            #    and no __dict__ for setting new attributes. Did you mean:
+            #    '__getstate__'?
             #
             #Presumably, Python will start doing that at some point. Once Python
             #does, this issue becomes a non-issue. For the moment, efficiency is

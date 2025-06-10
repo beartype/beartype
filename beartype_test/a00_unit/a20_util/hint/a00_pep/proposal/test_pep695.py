@@ -26,8 +26,7 @@ def test_is_hint_pep695_subbed() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep695 import (
-        is_hint_pep695_subbed)
+    from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 
     # If the active Python interpreter targets Python >= 3.12 and thus supports
