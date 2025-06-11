@@ -80,7 +80,7 @@ def unit_test_decor_pep646() -> None:
     #tree of all possible parent type hints. In the worst case, a child type
     #hint could conceivably need that. It might be saner, therefore, to... hmmm.
     #
-    #What, exactly? The issue is that the get_hint_pep_sign_or_now() getter now
+    #What, exactly? The issue is that the get_hint_pep_sign_or_none() getter now
     #discriminates between fixed-length and variadic type hints! However,
     #deciding whether a tuple type hint is fixed-length or variadic is
     #increasingly non-trivial. Specifically:
@@ -94,19 +94,7 @@ def unit_test_decor_pep646() -> None:
     #
     #We still need to handle "Tuple[Unpack[Ts]] == Tuple[object, ...]"
     #reduction, however. Or maybe not? Maybe everything will magically work!?
-    #FIXME: Actually, even detecting is insufficient. In truth, there no longer
-    #exists a hard distinction between "fixed-length" and "variadic" tuple
-    #hints. A tuple hint may now contain effectively arbitrary combinations
-    #of either form by unpacking tuple hints inside other tuple hints.
-    #
-    #Sadly, this suggests that:
-    #* We'll want to unwind our prior detection of:
-    #  * Fixed-length tuple hints as "HintSignTupleFixed".
-    #  * Variadic tuple hints as "HintSignTuple".
-    #* Instead, handle both fixed-length and variadic tuple hints under the same
-    #  "HintSignTuple" sign. *WOOPS.*
-    #* Remove the "HintSignTupleFixed" sign, which is no longer required.
-    #* Handle tuple hint unpacking inside tuple hints.
+
     @beartype
     def of_all_the_grace(
         and_to_the_damp_leaves: ItsMotions,

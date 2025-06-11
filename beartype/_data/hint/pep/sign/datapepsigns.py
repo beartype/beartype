@@ -170,8 +170,10 @@ Sign uniquely identifying **variable-length tuple type hints,** including:
 
 See Also
 --------
-HintSignTupleFixed
+HintSignPep484585TupleFixed
     Sign uniquely identifying **fixed-length tuple type hints.**
+HintSignPep646TupleFixedVariadic
+    Sign uniquely identifying mixed fixed-variadic tuple type hints.
 '''
 
 HintSignType         = _make_typing_hint_sign('Type')
@@ -323,35 +325,6 @@ module:
     type(None).
 '''
 
-
-#FIXME: *WOOPS.* Turns out this was an awful idea, thanks to PEP 646 (i.e.,
-#tuple type hint unpacking). Probably should have seen that coming. See the
-#"data_pep646" test submodule for clarity on what to do now. It's not pretty.
-#FIXME: Actually, this is fine. This obviously fails to suffice to support PEP
-#646, but... who cares? The type-checking code generator for the "HintSignTuple"
-#sign will need to be generalized to support that. This sign is unaffected.
-HintSignTupleFixed = _HintSign(name='TupleFixed')
-'''
-Sign uniquely identifying **fixed-length tuple type hints,** including:
-
-* :pep:`484`-compliant type hints of the form ``typing.Tuple[{hint_child_1},
-  ..., {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
-  ``"..."`` string, :data:`Ellipses` singleton).
-* :pep:`585`-compliant type hints of the form ``tuple[{hint_child_1}, ...,
-  {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
-  ``"..."`` string, :data:`Ellipses` singleton).
-
-Note that:
-
-* The ``"..."`` substring above is *not* a literal ellipses but simply denotes
-  an arbitrary number of non-ellipses child type hints.
-* The existing :data:`.HintSignTuple` sign uniquely identifies variable-length
-  tuple type hints. Why? Because that sign naturally matches the unsubscripted
-  :obj:`typing.Tuple` type hint factory, which is semantically equivalent to the
-  ``typing.Tuple[object, ...]`` type hint, which is the widest possible
-  variable-length tuple type hint.
-'''
-
 # ....................{ SIGNS ~ implicit : lib             }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #
@@ -380,6 +353,36 @@ by:
 
 * Defining this catch-all singleton for Pandera type hints here.
 * Denoting this singleton to be unconditionally ignorable elsewhere.
+'''
+
+# ....................{ SIGNS ~ implicit : pep : (484|585) }....................
+HintSignPep484585TupleFixed = _HintSign(name='TupleFixed')
+'''
+Sign uniquely identifying **fixed-length tuple type hints,** including:
+
+* :pep:`484`-compliant type hints of the form ``typing.Tuple[{hint_child_1},
+  ..., {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
+  ``"..."`` string, :data:`Ellipses` singleton).
+* :pep:`585`-compliant type hints of the form ``tuple[{hint_child_1}, ...,
+  {hint_child_N}]`` where ``{hint_child_N}`` is *not* an ellipses (i.e.,
+  ``"..."`` string, :data:`Ellipses` singleton).
+
+Note that:
+
+* The ``"..."`` substring above is *not* a literal ellipses but simply denotes
+  an arbitrary number of non-ellipses child type hints.
+* The existing :data:`.HintSignTuple` sign uniquely identifies variable-length
+  tuple type hints. Why? Because that sign naturally matches the unsubscripted
+  :obj:`typing.Tuple` type hint factory, which is semantically equivalent to the
+  ``typing.Tuple[object, ...]`` type hint, which is the widest possible
+  variable-length tuple type hint.
+
+See Also
+--------
+HintSignTuple
+    Sign uniquely identifying variadic-length tuple type hints.
+HintSignPep646TupleFixedVariadic
+    Sign uniquely identifying mixed fixed-variadic tuple type hints.
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 557       }....................
@@ -412,6 +415,31 @@ Examples include:
 Unsurprisingly, :mod:`beartype` reduces C-based unrecognized subscripted builtin
 type hints (which are *not* type-checkable as is) to their unsubscripted
 pure-Python origin classes (which are type-checkable as is).
+'''
+
+# ....................{ SIGNS ~ implicit : pep : (484|585) }....................
+HintSignPep646TupleFixedVariadic = _HintSign(name='TupleFixed')
+'''
+Sign uniquely identifying **mixed fixed-variadic tuple type hints,** defined as
+:pep:`646`-compliant type hints of the form ``tuple[{hint_child_1},
+..., {hint_child_N}]`` where:
+
+* Exactly one ``{hint_child_I}`` for some :math:`1 <= I <= N` is a
+  :pep:`646`-compliant **type variable tuple** (i.e., type hint of either the
+  implicit form ``*T`` *or* explicit form ``typing.Unpack[T]`` for an arbitrary
+  Python identifier ``T``).
+* ``{hint_child_N}`` is *not* an ellipses (i.e., ``"..."`` string,
+  :data:`Ellipses` singleton).
+
+Note that the ``"..."`` substring above is *not* a literal ellipses but simply
+denotes an arbitrary number of non-ellipses child type hints.
+
+See Also
+--------
+HintSignTuple
+    Sign uniquely identifying variadic-length tuple type hints.
+HintSignPep484585TupleFixed
+    Sign uniquely identifying fixed-length tuple type hints.
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 695       }....................

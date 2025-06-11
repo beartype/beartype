@@ -49,7 +49,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
     HintSignTuple,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
     HintSignTypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -166,7 +166,7 @@ _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignLiteral:    LiteralTypeHint,
     HintSignNewType:    NewTypeTypeHint,
     HintSignTuple:      TupleVariableTypeHint,
-    HintSignTupleFixed: TupleFixedTypeHint,
+    HintSignPep484585TupleFixed: TupleFixedTypeHint,
     HintSignTypeVar:    TypeVarTypeHint,
     HintSignPep484585GenericSubscripted:   GenericTypeHint,
     HintSignPep484585GenericUnsubscripted: GenericTypeHint,

@@ -114,7 +114,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSet,
     HintSignSized,
     HintSignTuple,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignTypeAlias,
     HintSignTypeGuard,
@@ -452,7 +452,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignSet: reduce_hint_pep484_deprecated,
     HintSignSized: reduce_hint_pep484_deprecated,
     HintSignTuple: reduce_hint_pep484_deprecated,
-    HintSignTupleFixed: reduce_hint_pep484_deprecated,
+    HintSignPep484585TupleFixed: reduce_hint_pep484_deprecated,
     HintSignValuesView: reduce_hint_pep484_deprecated,
 
     # Note that the reducers for these signs mapped below call this reducer.

@@ -20,7 +20,7 @@ from beartype._check.logic.logmap import (
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._data.hint.pep.sign.datapepsigns import HintSignTupleFixed
+from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585TupleFixed
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -185,8 +185,8 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
         Output violation cause finder type-checking this input.
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignTupleFixed, (
-        f'{repr(cause.hint_sign)} not "HintSignTupleFixed".')
+    assert cause.hint_sign is HintSignPep484585TupleFixed, (
+        f'{repr(cause.hint_sign)} not "HintSignPep484585TupleFixed".')
 
     # Shallow output cause describing the failure of this path to be a shallow
     # instance of the type originating this hint (e.g., "tuple" for the hint

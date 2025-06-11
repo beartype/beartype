@@ -110,7 +110,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignPep484585GenericUnsubscripted,
     HintSignLiteral,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignUnion,
 )
@@ -713,7 +713,7 @@ def make_check_expr(
                 #   ellipses.
                 #
                 # This is what happens when unreadable APIs are promoted.
-                elif hint_curr_sign is HintSignTupleFixed:
+                elif hint_curr_sign is HintSignPep484585TupleFixed:
                     # Initialize the code type-checking this pith against this
                     # tuple to the substring prefixing all such code.
                     hints_meta.func_curr_code = CODE_PEP484585_TUPLE_FIXED_PREFIX

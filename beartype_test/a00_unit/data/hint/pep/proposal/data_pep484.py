@@ -140,7 +140,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignSet,
         HintSignSized,
         HintSignTuple,
-        HintSignTupleFixed,
+        HintSignPep484585TupleFixed,
         HintSignType,
         HintSignTypeVar,
         HintSignUnion,
@@ -3206,7 +3206,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         #     TypeError: Parameters to generic types must be types. Got [].
         HintPepMetadata(
             hint=Tuple[()],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
@@ -3230,7 +3230,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of only ignorable child hints.
         HintPepMetadata(
             hint=Tuple[Any, object,],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
@@ -3254,7 +3254,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of at least one ignorable child hint.
         HintPepMetadata(
             hint=Tuple[float, Any, str,],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             piths_meta=(
@@ -3354,7 +3354,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Generic fixed-length tuple.
         HintPepMetadata(
             hint=Tuple[S, T],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             isinstanceable_type=tuple,
             typevars=(S, T,),

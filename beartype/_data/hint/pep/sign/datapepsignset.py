@@ -78,7 +78,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSized,
     HintSignTextIO,
     HintSignTuple,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignTypedDict,
     HintSignTypeGuard,
@@ -272,7 +272,7 @@ This set intentionally excludes the:
 * :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
   :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
   thus handled elsewhere as a PEP-noncompliant type hint.
-* :data:`.HintSignTupleFixed` sign, identifying fixed-length tuple type hints
+* :data:`.HintSignPep484585TupleFixed` sign, identifying fixed-length tuple type hints
   subscripted by an arbitrary number of child type hints and thus requiring
   special-cased handling.
 
@@ -403,7 +403,7 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE: FrozenSetHintSign = frozenset((
     HintSignSet,
     HintSignSized,
     HintSignTuple,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignValuesView,
 
@@ -635,7 +635,7 @@ HINT_SIGNS_SUPPORTED_DEEP: FrozenSetHintSign = (
         # ..................{ PEP (484|585)                  }..................
         HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,
-        HintSignTupleFixed,
+        HintSignPep484585TupleFixed,
         HintSignType,
 
         # ..................{ PEP 544                        }..................

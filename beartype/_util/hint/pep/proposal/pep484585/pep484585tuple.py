@@ -16,7 +16,8 @@ from beartype.typing import Tuple
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
-    HintSignTupleFixed,
+    HintSignPep484585TupleFixed,
+    HintSignPep646TupleFixedVariadic,
 )
 from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
@@ -24,21 +25,33 @@ from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 
 # ....................{ GETTERS                            }....................
+#FIXME: *WEIRD API.* Why do we need the caller to explicitly pass "hint_sign".
+#Shouldn't the caller only ever call this function when the caller knows that
+#"hint_sign is HintSignTuple"? Ideally, the signature should be reduced to:
+#    def get_hint_pep484585646_sign_tuple(hint: object) -> HintSign:
+#FIXME: Shift this into a new "pep484585646" submodule, please.
+#FIXME: Detect "HintSignPep646TupleFixedVariadic"-style tuple type hints. *sigh*
 #FIXME: Docstring us up, please.
 #FIXME: Unit test us up, please.
-def get_hint_pep484585_sign_tuplefixed_or_same(
+def get_hint_pep484585646_sign_tuple(
     hint: object, hint_sign: HintSign) -> HintSign:
     '''
-    The passed sign as is if this any sign other than the ambiguous
-    :data:`.HintSignTuple` sign *or* the unambiguous :data:`.HintSignTupleFixed`
-    sign if the passed hint is a fixed-length tuple hint.
+    The passed sign as is if this sign is other than the ambiguous
+    :data:`.HintSignTuple` sign *or* the unambiguous
+    :data:`.HintSignPep484585TupleFixed` sign if the passed hint is a
+    fixed-length tuple hint.
 
     This low-level getter assists the higher-level
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter to
-    disambiguate the originally ambiguous :data:`.HintSignTuple` sign into:
+    disambiguate the originally ambiguous :data:`.HintSignTuple` sign as
+    follows. If this hint is a:
 
-    * If this hint is a fixed-length tuple hint, :data:`.HintSignTupleFixed`.
-    * If this hint is a variable-length tuple hint, :data:`.HintSignTuple`.
+    * :pep:`484`- or :pep:`585`-compliant fixed-length tuple hint,
+      :data:`.HintSignPep484585TupleFixed`.
+    * :pep:`484`- or :pep:`585`-compliant variable-length tuple hint,
+      :data:`.HintSignTuple`.
+    * :pep:`646`-compliant mixed fixed-variable tuple hint,
+      :data:`.HintSignPep646TupleFixedVariadic`.
 
     Parameters
     ----------
@@ -54,11 +67,11 @@ def get_hint_pep484585_sign_tuplefixed_or_same(
     '''
     assert isinstance(hint_sign, HintSign), f'{repr(hint_sign)} not sign.'
 
-    # If this is a tuple hint, disambiguate between the following two
+    # If this is a tuple hint, disambiguate between the following three
     # fundamentally distinct kinds of tuple hints:
     # * Fixed-length tuple type hints of the form
     #   "tuple[{hint_child_1}, ..., {hint_child_N}]", which this getter
-    #   unambiguously reassigns the sign "HintSignTupleFixed".
+    #   unambiguously reassigns the sign "HintSignPep484585TupleFixed".
     # * Variable-length tuple type hints of the form
     #   "tuple[{hint_child_1}, ...]", which this getter unambiguously
     #   preserves the sign "HintSignTuple".
@@ -93,7 +106,7 @@ def get_hint_pep484585_sign_tuplefixed_or_same(
                 )
             ) else
             # Fixed-length tuple hints otherwise.
-            HintSignTupleFixed
+            HintSignPep484585TupleFixed
         )
     # Else, this is *NOT* a tuple hint.
 

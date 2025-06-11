@@ -49,7 +49,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic_unsubbed,
 )
 from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
-    get_hint_pep484585_sign_tuplefixed_or_same)
+    get_hint_pep484585646_sign_tuple)
 from beartype._util.hint.pep.proposal.pep484604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.hint.pep.proposal.pep585 import (
@@ -386,8 +386,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # print(f'hint: {hint}; sign: {hint_sign}')
         # Return this sign as is if this is any sign other than the ambiguous
         # "HintSignTuple" sign *OR* reassign this sign to the unambiguous
-        # "HintSignTupleFixed" sign if this is a fixed-length tuple hint.
-        return get_hint_pep484585_sign_tuplefixed_or_same(
+        # "HintSignPep484585TupleFixed" sign if this is a fixed-length tuple hint.
+        return get_hint_pep484585646_sign_tuple(
             hint=hint, hint_sign=hint_sign)
     # Else, this hint is *NOT* identifiable by its possibly unsubscripted
     # representation.
@@ -405,9 +405,9 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         if hint_sign:
             # Return this sign as is if this is any sign other than the
             # ambiguous "HintSignTuple" sign *OR* reassign this sign to the
-            # unambiguous "HintSignTupleFixed" sign if this is a fixed-length
+            # unambiguous "HintSignPep484585TupleFixed" sign if this is a fixed-length
             # tuple hint.
-            return get_hint_pep484585_sign_tuplefixed_or_same(
+            return get_hint_pep484585646_sign_tuple(
                 hint=hint, hint_sign=hint_sign)
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.

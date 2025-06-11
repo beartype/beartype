@@ -61,7 +61,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignPattern,
         HintSignSequence,
         HintSignTuple,
-        HintSignTupleFixed,
+        HintSignPep484585TupleFixed,
         HintSignType,
         HintSignValuesView,
     )
@@ -2275,7 +2275,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         #     TypeError: Parameters to generic types must be types. Got [].
         HintPepMetadata(
             hint=tuple[()],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subbed=True,
             piths_meta=(
@@ -2299,7 +2299,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of only ignorable child hints.
         HintPepMetadata(
             hint=tuple[Any, object,],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subbed=True,
             piths_meta=(
@@ -2323,7 +2323,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Fixed-length tuple of at least one ignorable child hint.
         HintPepMetadata(
             hint=tuple[float, Any, str,],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subbed=True,
             piths_meta=(
@@ -2421,7 +2421,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # Generic fixed-length tuple.
         HintPepMetadata(
             hint=tuple[S, T],
-            pep_sign=HintSignTupleFixed,
+            pep_sign=HintSignPep484585TupleFixed,
             isinstanceable_type=tuple,
             is_pep585_builtin_subbed=True,
             typevars=(S, T,),
