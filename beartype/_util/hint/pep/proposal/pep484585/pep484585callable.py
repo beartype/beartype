@@ -18,6 +18,10 @@ from beartype.typing import (
     TYPE_CHECKING,
     Union,
 )
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -35,7 +39,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 if TYPE_CHECKING:
     _HINT_PEP484585_CALLABLE_PARAMS = Union[
         # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
-        tuple,
+        TupleHints,
         # For hints of the form "Callable[typing.ParamSpec[...], {return_hint}]".
         typing.ParamSpec
     ]
@@ -43,7 +47,7 @@ if TYPE_CHECKING:
 else:
     _HINT_PEP484585_CALLABLE_PARAMS = Union[
         # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
-        tuple,
+        TupleHints,
         # For hints of the form "Callable[..., {return_hint}]".
         type(Ellipsis),
         # If the active Python interpreter targets Python >= 3.10, a union
@@ -68,7 +72,7 @@ else:
 # ....................{ VALIDATORS                         }....................
 def _die_unless_hint_pep484585_callable(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -81,7 +85,7 @@ def _die_unless_hint_pep484585_callable(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Object to be validated.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of fatal error. Defaults to
@@ -130,7 +134,7 @@ def _die_unless_hint_pep484585_callable(
 # ....................{ GETTERS                            }....................
 def get_hint_pep484585_callable_params(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -159,7 +163,7 @@ def get_hint_pep484585_callable_params(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Callable type hint to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
@@ -327,12 +331,12 @@ def get_hint_pep484585_callable_params(
 
 def get_hint_pep484585_callable_return(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> object:
+) -> Hint:
     '''
     **Return type hint** (i.e., PEP-compliant child type hint typing the return
     returned by a passed or returned callable) of the passed
@@ -350,7 +354,7 @@ def get_hint_pep484585_callable_return(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Callable type hint to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to

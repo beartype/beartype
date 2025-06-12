@@ -16,35 +16,6 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester                     }....................
-def test_is_hint_pep484585_tuple_empty() -> None:
-    '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585tuple.is_hint_pep484585_tuple_empty`
-    tester.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
-        is_hint_pep484585_tuple_empty)
-    from typing import Tuple  # <-- intentionally import the PEP 484 variant
-
-    # Assert this tester returns true for PEP 484-compliant empty tuple type
-    # hints.
-    assert is_hint_pep484585_tuple_empty(Tuple[()]) is True
-
-    # Assert this tester returns false for PEP 484-compliant non-empty tuple
-    # type hints.
-    assert is_hint_pep484585_tuple_empty(Tuple[int, ...]) is False
-
-    # Assert this tester returns true for PEP 585-compliant empty tuple type
-    # hints.
-    assert is_hint_pep484585_tuple_empty(tuple[()]) is True
-
-    # Assert this tester returns false for PEP 585-compliant non-empty tuple
-    # type hints.
-    assert is_hint_pep484585_tuple_empty(tuple[int, ...]) is False
-
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep484585_args() -> None:
     '''

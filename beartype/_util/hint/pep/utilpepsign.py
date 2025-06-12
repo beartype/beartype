@@ -14,10 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPepSignException
 from beartype.typing import (
-    Any,
+    # Any,
     Optional,
 )
 from beartype._cave._cavefast import CallableOrClassTypes
+from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.datahinttyping import (
     TypeException,
 )
@@ -40,7 +41,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep695TypeAliasSubscripted,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-# from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
     is_hint_pep484_newtype_pre_python310)
@@ -48,7 +48,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic_subbed,
     is_hint_pep484585_generic_unsubbed,
 )
-from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
+from beartype._util.hint.pep.proposal.pep484585646 import (
     get_hint_pep484585646_sign_tuple)
 from beartype._util.hint.pep.proposal.pep484604 import (
     die_if_hint_pep604_inconsistent)
@@ -61,7 +61,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 # ....................{ GETTERS ~ sign                     }....................
 def get_hint_pep_sign(
     # Mandatory parameters.
-    hint: object,
+    hint: Hint,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPepSignException,
@@ -69,8 +69,8 @@ def get_hint_pep_sign(
 ) -> HintSign:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
-    PEP-compliant type hint if PEP-compliant *or* raise an exception otherwise
-    (i.e., if this hint is *not* PEP-compliant).
+    PEP-compliant type hint if this hint is PEP-compliant *or* raise an
+    exception otherwise (i.e., if this hint is *not* PEP-compliant).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -78,14 +78,14 @@ def get_hint_pep_sign(
 
     Parameters
     ----------
-    hint : object
+    hint : Hint
         Type hint to be inspected.
-    exception_cls : TypeException, optional
+    exception_cls : TypeException, default: BeartypeDecorHintPepSignException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPepSignException`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
@@ -145,11 +145,11 @@ def get_hint_pep_sign(
 
 #FIXME: Revise us up the docstring, most of which is now obsolete.
 @callable_cached
-def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
+def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
-    PEP-compliant type hint if PEP-compliant *or* :data:`None` otherwise (i.e.,
-    if this hint is *not* PEP-compliant).
+    PEP-compliant type hint if this hint is PEP-compliant *or* :data:`None`
+    otherwise (i.e., if this hint is *not* PEP-compliant).
 
     This getter function associates the passed hint with a public attribute of
     the :mod:`typing` module effectively acting as a superclass of this hint
@@ -201,7 +201,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     Parameters
     ----------
-    hint : Any
+    hint : Hint
         Type hint to be inspected.
 
     Returns
@@ -383,10 +383,12 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # If this hint is identifiable by its possibly unsubscripted representation,
     # return this sign.
     if hint_sign:
+        #FIXME: Revise commentary, please.
         # print(f'hint: {hint}; sign: {hint_sign}')
         # Return this sign as is if this is any sign other than the ambiguous
         # "HintSignTuple" sign *OR* reassign this sign to the unambiguous
-        # "HintSignPep484585TupleFixed" sign if this is a fixed-length tuple hint.
+        # "HintSignPep484585TupleFixed" sign if this is a fixed-length tuple
+        # hint.
         return get_hint_pep484585646_sign_tuple(
             hint=hint, hint_sign=hint_sign)
     # Else, this hint is *NOT* identifiable by its possibly unsubscripted
@@ -403,10 +405,11 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # If this hint is identifiable by its necessarily subscripted
         # representation...
         if hint_sign:
+            #FIXME: Revise commentary, please.
             # Return this sign as is if this is any sign other than the
             # ambiguous "HintSignTuple" sign *OR* reassign this sign to the
-            # unambiguous "HintSignPep484585TupleFixed" sign if this is a fixed-length
-            # tuple hint.
+            # unambiguous "HintSignPep484585TupleFixed" sign if this is a
+            # fixed-length tuple hint.
             return get_hint_pep484585646_sign_tuple(
                 hint=hint, hint_sign=hint_sign)
         # Else, this hint is *NOT* identifiable by its necessarily subscripted

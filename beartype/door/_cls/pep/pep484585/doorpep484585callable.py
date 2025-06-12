@@ -108,9 +108,8 @@ class CallableTypeHint(TypeHint):
             # Return type hint subscripting this callable type hint.
             args_return = get_hint_pep484585_callable_return(self._hint)
 
-            # Sign uniquely identifying this parameter list if any *OR*
-            # "None" otherwise.
-            hint_args_sign = get_hint_pep_sign_or_none(args_params)
+            # Sign uniquely identifying this parameter list if any *OR* "None".
+            hint_args_sign = get_hint_pep_sign_or_none(args_params)  # pyright: ignore
 
             # If this hint was first subscripted by a PEP 612-compliant
             # parameter type hint, raise an exception. *sigh*

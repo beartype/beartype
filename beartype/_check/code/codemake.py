@@ -135,8 +135,8 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg,
     get_hint_pep484585_args,
 )
-from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
-    is_hint_pep484585_tuple_empty)
+from beartype._util.hint.pep.proposal.pep484585646 import (
+    is_hint_pep484585646_tuple_empty)
 from beartype._util.hint.pep.proposal.pep586 import get_hint_pep586_literals
 from beartype._util.hint.pep.proposal.pep593 import (
     get_hint_pep593_metadata,
@@ -721,7 +721,7 @@ def make_check_expr(
                     # If this hint is the empty fixed-length tuple, generate
                     # and append code type-checking the current pith to be the
                     # empty tuple. This edge case constitutes a code smell.
-                    if is_hint_pep484585_tuple_empty(hint_curr):
+                    if is_hint_pep484585646_tuple_empty(hint_curr):
                         hints_meta.func_curr_code += (
                             CODE_PEP484585_TUPLE_FIXED_EMPTY_format(
                                 pith_curr_var_name=hints_meta.pith_curr_var_name))

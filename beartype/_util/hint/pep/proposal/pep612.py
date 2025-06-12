@@ -51,7 +51,8 @@ def get_hint_pep612_paramspec(
     paramspec_var: Union[
         HintPep612ParamSpecArgType,
         HintPep612ParamSpecKwargType,
-    ]) -> HintPep612ParamSpecType:
+    ]
+) -> HintPep612ParamSpecType:
     '''
     :pep:`612`-compliant **parameter specification** (i.e., low-level C-based
     :obj:`typing.ParamSpec` object) containing the passed **parameter
@@ -547,7 +548,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     # Else, the other variadic parameter is annotated by a hint.
 
     # Sign uniquely identifying the hint annotating other variadic parameter.
-    other_arg_hint_sign = get_hint_pep_sign_or_none(other_arg_hint)
+    other_arg_hint_sign = get_hint_pep_sign_or_none(other_arg_hint)  # pyright: ignore
 
     # If the hint annotating the other variadic parameter is *NOT* the other
     # variadic positional or keyword parameter hint required by PEP

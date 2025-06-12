@@ -19,6 +19,10 @@ from beartype.roar import (
 from beartype.typing import (
     NoReturn,
 )
+from beartype._data.hint.datahintpep import (
+    Hint,
+    TypeIs,
+)
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
@@ -281,12 +285,11 @@ def die_if_hint_pep_unsupported(
 #     return is_hint_pep_supported_test
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep(hint: object) -> bool:
+def is_hint_pep(hint: object) -> TypeIs[Hint]:
     '''
     :data:`True` only if the passed object is a **PEP-compliant type hint**
-    (i.e., object either directly defined by the :mod:`typing` module *or* whose
-    type subclasses one or more classes directly defined by the :mod:`typing`
-    module).
+    (i.e., object complying with one or more :mod:`typing`-centric Python
+    Enhancement Proposals (PEPs)).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -325,7 +328,7 @@ def is_hint_pep(hint: object) -> bool:
 
     # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
     # "None" otherwise (i.e., if this hint is *NOT* PEP-compliant).
-    hint_sign = get_hint_pep_sign_or_none(hint)
+    hint_sign = get_hint_pep_sign_or_none(hint)  # pyright: ignore
     # print(f'hint: {repr(hint)}; sign: {repr(hint_sign)}')
 
     # Return true *ONLY* if this hint is uniquely identified by a sign and thus
@@ -459,9 +462,9 @@ def is_hint_pep_supported(hint: object) -> bool:
 #* beartype._util.hint.pep.proposal.pep484.pep484.py
 #Thankfully, nobody really cares about generalizing that one edge case to
 #"testing_extensions", so it's mostly fine for various definitions of fine.
-def is_hint_pep_typing(hint: object) -> bool:
+def is_hint_pep_typing(hint: Hint) -> bool:
     '''
-    :data:`True` only if the passed object is an attribute of a **typing
+    :data:`True` only if the passed type hint is an attribute of a **typing
     module** (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type checkers).
 
@@ -471,13 +474,13 @@ def is_hint_pep_typing(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
-        Object to be inspected.
+    hint : Hint
+        Type hint to be inspected.
 
     Returns
     -------
     bool
-        :data:`True` only if this object is an attribute of a typing module.
+        :data:`True` only if this type hint is an attribute of a typing module.
     '''
     # print(f'is_hint_pep_typing({repr(hint)}')
 
@@ -491,17 +494,17 @@ def is_hint_pep_typing(hint: object) -> bool:
         get_object_module_name_or_none(hint) in TYPING_MODULE_NAMES or
         # Any PEP-compliant type hint defined by a typing module maliciously
         # masquerading as another type entirely.
-        get_hint_pep_sign_or_none(hint) in HINT_SIGNS_TYPE_MIMIC
+        get_hint_pep_sign_or_none(hint) in HINT_SIGNS_TYPE_MIMIC  # pyright: ignore
     )
 
 
-def is_hint_pep_type_typing(hint: object) -> bool:
+def is_hint_pep_type_typing(hint: Hint) -> bool:
     '''
-    :data:`True` only if either the passed object is defined by a **typing
+    :data:`True` only if either the passed type hint is defined by a **typing
     module** (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type checkers)
-    if this object is a class *or* the class of this object is defined by a
-    typing module otherwise (i.e., if this object is *not* a class).
+    if this hint is a class *or* the class of this hint is defined by a typing
+    module otherwise (i.e., if this object is *not* a class).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`.callable_cached` decorator), as the implementation trivially reduces
@@ -509,16 +512,16 @@ def is_hint_pep_type_typing(hint: object) -> bool:
 
     Parameters
     ----------
-    hint : object
-        Object to be inspected.
+    hint : Hint
+        Type hint to be inspected.
 
     Returns
     -------
     bool
         :data:`True` only if either:
 
-        * If this object is a class, this class is defined by a typing module.
-        * Else, the class of this object is defined by a typing module.
+        * If this hint is a class, this class is defined by a typing module.
+        * Else, the class of this hint is defined by a typing module.
     '''
 
     # This hint if this hint is a class *OR* this hint's class otherwise.

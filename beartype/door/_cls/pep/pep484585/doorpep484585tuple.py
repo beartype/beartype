@@ -15,8 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.door._cls.doorsuper import TypeHint
 from beartype.door._cls.pep.pep484585.doorpep484585subscripted import (
     SubscriptedTypeHint)
-from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
-    is_hint_pep484585_tuple_empty)
+from beartype._util.hint.pep.proposal.pep484585646 import (
+    is_hint_pep484585646_tuple_empty)
 
 # ....................{ SUBCLASSES                         }....................
 class TupleFixedTypeHint(TypeHint):
@@ -39,7 +39,7 @@ class TupleFixedTypeHint(TypeHint):
         # return an awkward nested-empty-tuple-in-a-1-tuple, we couldn't. Why?
         # Because an empty tuple is *NOT* otherwise a valid type hint and
         # *CANNOT* thus be wrapped by an instance of the "TypeHint" superclass.
-        if is_hint_pep484585_tuple_empty(self._hint):
+        if is_hint_pep484585646_tuple_empty(self._hint):
             args = ()
         # Else, this is a non-empty fixed-length tuple type hint (e.g.,
         # "tuple[int, str]"). In this case, preserve these child hints as is.

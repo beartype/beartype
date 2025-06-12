@@ -157,7 +157,22 @@ HintSignParamSpecArgs   = _make_typing_hint_sign('ParamSpecArgs')
 HintSignParamSpecKwargs = _make_typing_hint_sign('ParamSpecKwargs')
 HintSignProtocol        = _make_typing_hint_sign('Protocol')
 
-HintSignTuple           = _make_typing_hint_sign('Tuple')
+#FIXME: Rename all *UNAMBIGUOUS* references to "HintSignTuple" to
+#"HintSignPep484585TupleVariadic" for disambiguity. Note, however, that some
+#references to "HintSignTuple" are ambiguous (in the sense that it is unclear in
+#that early context whether the tuple type hint in question refers to a fixed-
+#or variadic-length tuple type hint). Ergo, this rename *CANNOT* be automated
+#with a global regex but should be applied manually one-by-one. *sigh*
+
+# Note that the name of this sign is intentionally the ambiguous name "Tuple"
+# rather than the unambiguous name "Pep484585TupleVariadic". Why? Because...
+# actually, we have no particularly good reason. For disambiguity, the name of
+# this sign should ideally be the latter. Sadly, doing so currently induces
+# spurious test failures. We can't bother to dissect this at the moment. Ergo,
+# the unctuous status quo prevails. Laziness: "It's not always a virtue."
+HintSignTuple = HintSignPep484585TupleVariadic = _make_typing_hint_sign('Tuple')
+# HintSignTuple = HintSignPep484585TupleVariadic = _make_typing_hint_sign(
+#     'Pep484585TupleVariadic')
 '''
 Sign uniquely identifying **variable-length tuple type hints,** including:
 
@@ -356,7 +371,7 @@ by:
 '''
 
 # ....................{ SIGNS ~ implicit : pep : (484|585) }....................
-HintSignPep484585TupleFixed = _HintSign(name='TupleFixed')
+HintSignPep484585TupleFixed = _HintSign(name='Pep484585TupleFixed')
 '''
 Sign uniquely identifying **fixed-length tuple type hints,** including:
 
@@ -418,7 +433,7 @@ pure-Python origin classes (which are type-checkable as is).
 '''
 
 # ....................{ SIGNS ~ implicit : pep : (484|585) }....................
-HintSignPep646TupleFixedVariadic = _HintSign(name='TupleFixed')
+HintSignPep646TupleFixedVariadic = _HintSign(name='Pep646TupleFixedVariadic')
 '''
 Sign uniquely identifying **mixed fixed-variadic tuple type hints,** defined as
 :pep:`646`-compliant type hints of the form ``tuple[{hint_child_1},

@@ -47,6 +47,8 @@ from beartype._check.convert._reduce._pep.redpep585 import (
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
+from beartype._check.convert._reduce._pep.redpep646692 import (
+    reduce_hint_pep646692_unpack)
 from beartype._check.convert._reduce._pep.redpep647742 import (
     reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
@@ -132,8 +134,6 @@ from beartype._util.hint.pep.proposal.pep612 import (
     reduce_hint_pep612_kwargs,
 )
 from beartype._util.hint.pep.proposal.pep613 import reduce_hint_pep613
-from beartype._util.hint.pep.proposal.pep646692 import (
-    reduce_hint_pep646692_unpack)
 from collections.abc import Callable
 
 # ....................{ PRIVATE ~ hints                    }....................

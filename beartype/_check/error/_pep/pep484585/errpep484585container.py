@@ -25,8 +25,8 @@ from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1)
-from beartype._util.hint.pep.proposal.pep484585.pep484585tuple import (
-    is_hint_pep484585_tuple_empty)
+from beartype._util.hint.pep.proposal.pep484585646 import (
+    is_hint_pep484585646_tuple_empty)
 from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
@@ -201,7 +201,7 @@ def find_cause_pep484585_tuple_fixed(cause: ViolationCause) -> ViolationCause:
     #
     # If this hint is the empty fixed-length tuple, validate this pith to be
     # the empty tuple.
-    elif is_hint_pep484585_tuple_empty(cause.hint):
+    elif is_hint_pep484585646_tuple_empty(cause.hint):
         # If this pith is the empty tuple, this path satisfies this hint.
         #
         # Note that this test *CANNOT* safely be optimized away to simply:

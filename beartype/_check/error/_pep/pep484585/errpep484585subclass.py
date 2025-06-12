@@ -82,7 +82,7 @@ def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
     hint_child: TypeOrTupleTypes = hint_child_sane.hint  # type: ignore[assignment]
 
     # Arbitrary object uniquely identifying this superclass.
-    hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+    hint_child_sign = get_hint_pep_sign_or_none(hint_child)  # pyright: ignore
 
     # If this child hint is a forward reference to a superclass...
     if hint_child_sign is HintSignForwardRef:

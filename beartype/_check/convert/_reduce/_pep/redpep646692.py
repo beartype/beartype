@@ -4,100 +4,79 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`646`- or :pep:`692`-compliant **unpack type hint** (i.e.,
-``typing.Unpack[...]`` type hint subscripted by either a :pep:`646`-compliant
-type variable tuple *or* :pep:`692`-compliant :class:`typing.TypedDict`
-subclass) utilities.
+Project-wide :pep:`646`- and :pep:`692`-compliant **unpack reducers** (i.e.,
+low-level callables converting ``typing.Unpack[...]`` type hints subscripted by
+either :pep:`646`-compliant type variable tuples *or* :pep:`692`-compliant
+:class:`typing.TypedDict` subclasses to lower-level type hints more readily
+consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [PEP 646] Actually implement *SUPERFICIAL* type-checking support for PEP
-#646-compliant tuple type hint unpacking:
-#    Tuple[int, *Tuple[str, ...], str] - a tuple type where the first element is
-#    guaranteed to be of type int, the last element is guaranteed to be of type
-#    str, and the elements in the middle are zero or more elements of type str..
+#FIXME: Currently, we only shallowly type-check PEP 646-compliant mixed
+#fixed-variadic tuple hints as... tuples. It's not much. Obviously, we need to
+#deeply type-check these tuple data structures as soon as feasible. There exist
+#two distinct use cases here:
+#* Fixed-variadic tuple hints containing exactly one unpacked child tuple hint
+#  (e.g., "tuple[int, *tuple[str, ...], float]"). We're currently unsure about
+#  the (probably many) edge cases that arise here, as child tuple hint unpacking
+#  is considerably less trivial than fixed-variadic tuple hints containing
+#  exactly one type variable tuple. Most notably, can fixed-variadic tuple hints
+#  contain two or more unpacked child tuple hints? We know that they can contain
+#  only one type variable tuple, but we're unsure whether this constraint
+#  applies to unpacked child tuple hints as well.
+#* Fixed-variadic tuple hints containing exactly one type variable tuple, either
+#  as:
+#  * The first child hint (e.g., "tuple[*Ts, int]").
+#  * The last child hint (e.g., "tuple[str, bytes, *Ts]"). Note that this case
+#    has a prominent edge case. Fixed-variadic tuple hints of the form
+#    "tuple[hint_child, *Ts]" for *ANY* "hint_child" and type variable tuple
+#    "Ts" trivially reduce to variadic tuple hints of the form
+#    "tuple[hint_child, ...]" at the moment, as we silently ignore *ALL* type
+#    variable tuples. Ergo, if a hint is a fixed-variadic tuple hint whose last
+#    child hint is a type variable tuple, this hint *MUST* by definition be
+#    prefixed by two or more child hints that are *NOT* type variable tuples.
+#  * Any child hint other than the first or last (e.g.,
+#    "tuple[float, *Ts, bool]").
 #
-#Interestingly, even detecting accursed objects like "*Tuple[str, ...]" at
-#runtime is highly non-trivial. They do *NOT* have a sane unambiguous type,
-#significantly complicating detection. For some utterly inane reason, their type
-#is simply the ambiguous "types.GenericAlias" type. That... wasn't what we were
-#expecting *AT ALL*. For example, under Python 3.13:
-#    # Note that Python *REQUIRES* unpacked tuple type hints to be embedded in
-#    # some larger syntactic construct. So, just throw it into a list. This is
-#    # insane, because we're only going to rip it right back out of that list.
-#    # Blame the CPython interpreter. *shrug*
-#    >>> yam = [*tuple[int, str]]
+#  Note that:
+#  * A parent tuple hint can contain at most *ONE* unpacked child tuple hint.
+#    So, we'll now need to record the number of unpacked child tuple hints that
+#    have been previously visited and raise an exception if two or more are
+#    seen. Ugh!
+#  * Again, these cases have a prominent edge case. Fixed-variadic tuple hints
+#    of the form "tuple[*Ts]" for *ANY* type variable tuple "Ts" trivially
+#    reduce to the builtin type "tuple" at the moment, as we silently ignore
+#    *ALL* type variable tuples.
 #
-#    # Arbitrary unpacked tuple type hint.
-#    >>> yim = yam[0]
-#    >>> repr(yim)
-#    *tuple[int, str]  # <-- gud
-#    >>> type(yim)
-#    <class 'types.GenericAlias'>  # <-- *TOTALLY NOT GUD. WTF, PYTHON!?*
+#Unsure whether fixed-variadic tuple hints can contain both a type variable
+#tuple *AND* unpacked child tuple hint (e.g., "tuple[*Ts, *tuple[int, ...]]")?
+#Probably. Yet more edge cases arise, of course. PEP 646 is a beast with many
+#backs, indeed.
 #
-#    # Now look at this special madness. The type of this object isn't even in
-#    # its method-resolution order (MRO)!?!? I've actually never seen that
-#    # before. The type of any object is *ALWAYS* the first item in its
-#    # method-resolution order (MRO), isn't it? I... guess not. *facepalm*
-#    >>> yim.__mro__
-#    (<class 'tuple'>, <class 'object'>)
+#The first place to start with all of this is implementing a new code generation
+#algorithm for the new "HintSignPep646TupleFixedVariadic" sign, which currently
+#just shallowly reduces to the builtin "tuple" type. Obviously, that's awful.
+#The first-draft implementation of this algorithm should just focus on
+#fixed-variadic tuple hints containing exactly one type variable tuple (e.g.,
+#"tuple[float, *Ts, bool]") for now, as that's the simpler use case. Of course,
+#even that's *NOT* simple -- but it's a more reasonable start than unpacked
+#child tuple hints, which spiral into madness far faster and harder.
 #
-#    # So, "*tuple[int, str]" is literally both a tuple *AND* a "GenericAlias"
-#    # at the same time. That makes no sense, but here we are. What are the
-#    # contents of this unholy abomination?
-#    >>> dir(yim)
-#    ['__add__', '__args__', '__bases__', '__class__', '__class_getitem__',
-#    '__contains__', '__copy__', '__deepcopy__', '__delattr__', '__dir__',
-#    '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__',
-#    '__getitem__', '__getnewargs__', '__getstate__', '__gt__', '__hash__',
-#    '__init__', '__init_subclass__', '__iter__', '__le__', '__len__', '__lt__',
-#    '__mro_entries__', '__mul__', '__ne__', '__new__', '__origin__',
-#    '__parameters__', '__reduce__', '__reduce_ex__', '__repr__', '__rmul__',
-#    '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
-#    '__typing_unpacked_tuple_args__', '__unpacked__', 'count', 'index']
+#This code generation algorithm should manually detect and handle both type
+#variable tuples *AND* unpacked child tuple hints *BEFORE* performing child
+#hint reductions by calling reduce_hint_child(). Why? Because the reducers
+#defined below currently unconditionally ignore type variable tuples. We don't
+#even bother ignoring unpacked child tuple hints at the moment, because they can
+#*ONLY* appear inside a "tuple[...]" context.
 #
-#    # Lotsa weird stuff there, honestly. Let's poke around a bit.
-#    >>> yim.__args__
-#    (<class 'int'>, <class 'str'>)  # <-- gud
-#    >>> yim.__typing_unpacked_tuple_args__
-#    (<class 'int'>, <class 'str'>)  # <-- gud, albeit weird
-#    >>> yim.__unpacked__
-#    True  # <-- *WTF!?!? what the heck is this nonsense?*
-#    >>> yim.__origin__
-#    tuple  # <-- so you lie about everything, huh?
-#
-#Basically, the above means that the only means of reliably detecting an
-#unpacked tuple type hint at runtime is as follows:
-#def is_pep646_hint_tuple_unpacked(obj: object) -> bool:
-#    return (
-#        obj.__class__ is types.GenericAlias and
-#        #FIXME: Globalize this magic constant for efficiency. *shrug*
-#        obj.__mro__ == (tuple, object) and
-#        getattr(obj, '__unpacked__', None) is True
-#        (
-#            getattr(obj, '__args__', False) ==
-#            getattr(obj, '__typing_unpacked_tuple_args__', True)
-#        )
-#    )
-#
-#That's super-inefficient *AND* fragile across Python versions, but... what you
-#gonna do, huh? PEP 646 authors *REALLY* dropped the ball on this one, sadly.
-#
-#Of course, all of that only gets us to just detecting these accursed objects.
-#We then need to actually *TYPE-CHECK* their contents, somehow. A few ideas:
-#* A parent tuple hint can contain at most *ONE* unpacked child tuple hint. So,
-#  we'll now need to record the number of unpacked child tuple hints that have
-#  been previously handled and raise an exception if two or more are seen. Ugh!
-#* If the child tuple hint being unpacked is variadic (i.e., it's last item is
-#  "...") while the parent tuple hint containing that child tuple hint is
-#  fixed-length, we're now in trouble. This is exactly the example shown above.
-#  Supporting this requires possibly intense generalizations to our code
-#  generation algorithm for tuple hints, which previously partitioned support
-#  for fixed-length and variadic tuple hints into two separate logic paths. Now,
-#  the fixed-length tuple hint code path will need to detect and handle unpacked
-#  child variadic tuple hints. Kinda madness, honestly. We sigh. *sigh*
+#Lastly, note that we can trivially handle unpacked child tuple hints in a
+#simple, effective way *WITHOUT* actually investing any effort in doing so. How?
+#By simply treating each unpacked child tuple hint as a type variable tuple
+#(e.g., by treating "tuple[str, *tuple[int, ...], bytes]" as equivalent to
+#"tuple[str, *Ts, bytes]"). Since we already need to initially handle type
+#variable tuples anyway, we shatter two birds with one hand. Yes! Yes!
 
 #FIXME: [PEP 692] *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]"
 #after reduction, a fixed-length tuple hint. Clearly, however,
