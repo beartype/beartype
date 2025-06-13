@@ -36,6 +36,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
     HintSignNewType,
+    HintSignTuple,
     HintSignTypedDict,
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignPep695TypeAliasSubscripted,
@@ -49,7 +50,7 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic_unsubbed,
 )
 from beartype._util.hint.pep.proposal.pep484585646 import (
-    get_hint_pep484585646_sign_tuple)
+    get_hint_pep484585646_tuple_sign_unambiguous)
 from beartype._util.hint.pep.proposal.pep484604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.hint.pep.proposal.pep585 import (
@@ -381,16 +382,27 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
 
     # If this hint is identifiable by its possibly unsubscripted representation,
-    # return this sign.
     if hint_sign:
-        #FIXME: Revise commentary, please.
         # print(f'hint: {hint}; sign: {hint_sign}')
-        # Return this sign as is if this is any sign other than the ambiguous
-        # "HintSignTuple" sign *OR* reassign this sign to the unambiguous
-        # "HintSignPep484585TupleFixed" sign if this is a fixed-length tuple
-        # hint.
-        return get_hint_pep484585646_sign_tuple(
-            hint=hint, hint_sign=hint_sign)
+
+        # If this is a tuple hint ambiguously identified by the "HintSignTuple"
+        # sign, disambiguate between these distinct kinds of tuple hints:
+        # * Fixed-length tuple hints of the form
+        #   "tuple[{hint_child_1}, ..., {hint_child_N}]", which this getter
+        #   unambiguously reassigns the sign "HintSignPep484585TupleFixed".
+        # * Variable-length tuple hints of the form
+        #   "tuple[{hint_child_1}, ...]", which this getter unambiguously
+        #   reassigns the sign "HintSignPep484585TupleVariadic".
+        # * Fixed-variadic tuple hints of the form
+        #   "tuple[{hint_child_1}, ..., {type_var_tuple}, ..., {hint_child_N}]",
+        #   which this getter unambiguously reassigns the sign
+        #   "HintSignPep646TupleFixedVariadic".
+        if hint_sign is HintSignTuple:
+            return get_hint_pep484585646_tuple_sign_unambiguous(hint)
+        # Else, this is *NOT* a tuple hint.
+
+        # Return this sign as is.
+        return hint_sign
     # Else, this hint is *NOT* identifiable by its possibly unsubscripted
     # representation.
     #
@@ -405,13 +417,15 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
         # If this hint is identifiable by its necessarily subscripted
         # representation...
         if hint_sign:
-            #FIXME: Revise commentary, please.
-            # Return this sign as is if this is any sign other than the
-            # ambiguous "HintSignTuple" sign *OR* reassign this sign to the
-            # unambiguous "HintSignPep484585TupleFixed" sign if this is a
-            # fixed-length tuple hint.
-            return get_hint_pep484585646_sign_tuple(
-                hint=hint, hint_sign=hint_sign)
+            # If this is a tuple hint ambiguously identified by the
+            # "HintSignTuple" sign, disambiguate between the distinct kinds of
+            # tuple hints described above.
+            if hint_sign is HintSignTuple:
+                return get_hint_pep484585646_tuple_sign_unambiguous(hint)
+            # Else, this is *NOT* a tuple hint.
+
+            # Return this sign as is.
+            return hint_sign
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
     # Else, this representation (and thus this hint) is unsubscripted.

@@ -20,7 +20,7 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
 
-# ....................{ TESTS ~ iterator                   }....................
+# ....................{ TESTS ~ decorator                  }....................
 def unit_test_decor_pep646() -> None:
     '''
     Test :pep:`646` support implemented in the :func:`beartype.beartype`

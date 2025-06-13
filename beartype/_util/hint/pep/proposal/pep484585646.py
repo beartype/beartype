@@ -88,92 +88,78 @@ def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
     )
 
 # ....................{ GETTERS                            }....................
-#FIXME: *WEIRD API.* Why do we need the caller to explicitly pass "hint_sign".
-#Shouldn't the caller only ever call this function when the caller knows that
-#"hint_sign is HintSignTuple"? Ideally, the signature should be reduced to:
-#    def get_hint_pep484585646_sign_tuple(hint: object) -> HintSign:
 #FIXME: Detect "HintSignPep646TupleFixedVariadic"-style tuple type hints. *sigh*
-#FIXME: Docstring us up, please.
 #FIXME: Unit test us up, please.
-def get_hint_pep484585646_sign_tuple(
-    hint: Hint, hint_sign: HintSign) -> HintSign:
+def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     '''
-    The passed sign as is if this sign is other than the ambiguous
-    :data:`.HintSignTuple` sign *or* the unambiguous
-    :data:`.HintSignPep484585TupleFixed` sign if the passed hint is a
-    fixed-length tuple hint.
+    Disambiguate the passed **tuple type hint** (i.e., :pep:`484`- or
+    :pep:`585`-compliant purely fixed- and variable-length tuple type hint *or*
+    :pep:`646`-compliant mixed fixed-variadic tuple type hint) ambiguously
+    identified by the :data:`.HintSignTuple` sign into whichever of the
+    unambiguous :data:`.HintSignPep484585TupleFixed`,
+    :data:`HintSignPep484585TupleVariadic`, or
+    :data:`HintSignPep646TupleFixedVariadic` signs uniquely identify this kind
+    of tuple type hint.
 
     This low-level getter assists the higher-level
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter to
-    disambiguate the originally ambiguous :data:`.HintSignTuple` sign as
-    follows. If this hint is a:
-
-    * :pep:`484`- or :pep:`585`-compliant fixed-length tuple hint,
-      :data:`.HintSignPep484585TupleFixed`.
-    * :pep:`484`- or :pep:`585`-compliant variable-length tuple hint,
-      :data:`.HintSignTuple`.
-    * :pep:`646`-compliant mixed fixed-variable tuple hint,
-      :data:`.HintSignPep646TupleFixedVariadic`.
+    disambiguate the originally ambiguous :data:`.HintSignTuple` sign.
 
     Parameters
     ----------
     hint : Hint
         Type hint to be inspected.
-    hint_sign : HintSign
-        Sign uniquely (but possibly ambiguously) identifying this hint.
 
     Returns
     -------
     HintSign
-        Sign uniquely and unambiguously identifying this hint.
+        Sign uniquely and unambiguously identifying this hint. Specifically, if
+        this hint is a:
+
+        * :pep:`484`- or :pep:`585`-compliant **fixed-length tuple hint** (e.g.,
+          of the form ``tuple[{hint_child_1}, ..., {hint_child_N}]``), this
+          getter returns :data:`.HintSignPep484585TupleFixed`.
+        * :pep:`484`- or :pep:`585`-compliant **variable-length tuple hint**
+          (e.g., of the form ``tuple[{hint_child}, ...]``), this getter returns
+          :data:`.HintSignPep484585TupleVariadic`.
+        * :pep:`646`-compliant **fixed-variable tuple hint** (e.g., of the form
+          ``tuple[{hint_child_1}, ..., {type_var_tuple}, ...,
+          {hint_child_N}]``), this getter returns
+          :data:`.HintSignPep646TupleFixedVariadic`.
     '''
-    assert isinstance(hint_sign, HintSign), f'{repr(hint_sign)} not sign.'
 
-    # If this is a tuple hint, disambiguate between the following three
-    # fundamentally distinct kinds of tuple hints:
-    # * Fixed-length tuple type hints of the form
-    #   "tuple[{hint_child_1}, ..., {hint_child_N}]", which this getter
-    #   unambiguously reassigns the sign "HintSignPep484585TupleFixed".
-    # * Variable-length tuple type hints of the form
-    #   "tuple[{hint_child_1}, ...]", which this getter unambiguously
-    #   preserves the sign "HintSignTuple".
-    if hint_sign is HintSignTuple:
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
-        # Child hints subscripting this parent tuple hint.
-        hint_childs = get_hint_pep_args(hint)
-        # print(f'hint_childs: {hint_childs}')
+    # Child hints subscripting this parent tuple hint.
+    hint_childs = get_hint_pep_args(hint)
+    # print(f'hint_childs: {hint_childs}')
 
-        # Number of child hints subscripting this parent tuple hint.
-        hint_childs_len = len(hint_childs)
+    # Number of child hints subscripting this parent tuple hint.
+    hint_childs_len = len(hint_childs)
 
-        # Return the sign uniquely identifying either...
-        return (
-            # Variable-length tuple hints if either...
-            HintSignPep484585TupleVariadic
-            if (
-                # This parent tuple hint is subscripted by *NO* child hints
-                # and is thus the unsubscripted "typing.Tuple" type hint factory
-                # semantically equivalent to the variable-length tuple hint
-                # "typing.Tuple[object, ...]" *OR*...
-                hint_childs_len == 0 or
-                (
-                    # This parent tuple hint is subscripted by exactly two child
-                    # hints *AND*...
-                    hint_childs_len == 2 and
-                    # The second child hint is the ellipsis singleton (i.e.,
-                    # the unquoted character sequence "...")...
-                    hint_childs[1] is Ellipsis
-                )
-            ) else
-            # Fixed-length tuple hints otherwise.
-            HintSignPep484585TupleFixed
-        )
-    # Else, this is *NOT* a tuple hint.
-
-    # Return this sign.
-    return hint_sign
+    # Return the sign uniquely identifying either...
+    return (
+        # Variable-length tuple hints if either...
+        HintSignPep484585TupleVariadic
+        if (
+            # This parent tuple hint is subscripted by *NO* child hints
+            # and is thus the unsubscripted "typing.Tuple" type hint factory
+            # semantically equivalent to the variable-length tuple hint
+            # "typing.Tuple[object, ...]" *OR*...
+            hint_childs_len == 0 or
+            (
+                # This parent tuple hint is subscripted by exactly two child
+                # hints *AND*...
+                hint_childs_len == 2 and
+                # The second child hint is the ellipsis singleton (i.e.,
+                # the unquoted character sequence "...")...
+                hint_childs[1] is Ellipsis
+            )
+        ) else
+        # Fixed-length tuple hints otherwise.
+        HintSignPep484585TupleFixed
+    )
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
