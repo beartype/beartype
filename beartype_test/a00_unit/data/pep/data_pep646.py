@@ -20,6 +20,45 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
 
+# ....................{ TESTS ~ tester                     }....................
+def unit_test_is_pep646_hint_tuple_unpacked() -> None:
+    '''
+    Test the :pep:`649`-compliant implementation of the private
+    :mod:`beartype._util.hint.pep.proposal.pep646.is_pep646_hint_tuple_unpacked`
+    tester under Python >= 3.14.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep646 import (
+        is_pep646_hint_tuple_unpacked)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # ....................{ LOCALS                         }....................
+    # PEP 585-compliant tuple hint subscripted by arbitrary children and a PEP
+    # 646-compliant unpacked tuple child hint. This is insane, because we're
+    # only going to rip this tuple child hint right back out of this parent
+    # tuple hint. Blame the Python interpreter. *shrug*
+    #
+    # Note that Python *REQUIRES* unpacked tuple child hints to be syntactically
+    # embedded inside a larger container -- even if that unpacked tuple child
+    # hint is semantically invalid inside that container: e.g.,
+    #     >>> [*tuple[int, str]]
+    #     [*tuple[int, str]]  # <-- makes no sense, but ok.
+    #     >>> *tuple[int, str]
+    #     SyntaxError: can't use starred expression here  # <-- this is awful.
+    pep585_hint_tuple = tuple[bool, *tuple[int, float], complex]
+
+    # Tuple of all child hints subscripting this parent tuple hint.
+    pep585_hint_tuple_hints_child = get_hint_pep_args(pep585_hint_tuple)
+
+    # PEP 646-compliant unpacked tuple child hint subscripting this parent.
+    pep646_hint_tuple_unpacked = pep585_hint_tuple_hints_child[1]
+
+    # ....................{ PASS                           }....................
+    # Assert this tester accepts PEP 646-compliant unpacked tuple hints.
+    assert is_pep646_hint_tuple_unpacked(pep646_hint_tuple_unpacked) is True
+
 # ....................{ TESTS ~ decorator                  }....................
 def unit_test_decor_pep646() -> None:
     '''

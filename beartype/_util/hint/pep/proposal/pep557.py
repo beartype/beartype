@@ -31,8 +31,8 @@ def get_hint_pep557_initvar_arg(
     subscription of the :class:`dataclasses.InitVar` type hint factory).
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------

@@ -18,7 +18,7 @@ Python 3.14.0.** If this is *not* the case, importing this submodule raises
 :exc:`NameError` exceptions.
 '''
 
-# ....................{ TESTS ~ iterator                   }....................
+# ....................{ TESTS ~ getter                     }....................
 def unit_test_get_pep649_hintable_annotations() -> None:
     '''
     Test the :pep:`649`-compliant implementation of the private

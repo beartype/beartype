@@ -14,10 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
+from beartype._cave._cavefast import (
+    EllipsisType,
+    HintPep646TypeVarTupleType,
+)
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignTuple,
     HintSignPep484585TupleFixed,
     HintSignPep484585TupleVariadic,
     HintSignPep646TupleFixedVariadic,
@@ -26,6 +29,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
@@ -149,14 +153,78 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
             # "typing.Tuple[object, ...]" *OR*...
             hint_childs_len == 0 or
             (
+                # This parent tuple hint is subscripted by exactly one child
+                # hint *AND*...
+                hint_childs_len == 1 and
+                # This child hint is a PEP 646-compliant type variable tuple
+                # (e.g., the "*Ts" in "tuple[*Ts]"). The justification here is
+                # somewhat subtle. @beartype ultimately silently ignores all
+                # type hints resembling type variables. This includes type
+                # variable tuples. Whereas a conventional type variable is
+                # trivially reducible to the ignorable "typing.Any" singleton,
+                # however, type variable tuples are only reducible to the less
+                # ignorable PEP 646-compliant unpacked child tuple hint
+                # "*tuple[typing.Any, ...]". Equivalently, type variable tuples
+                # imply *VARIADICITY* (i.e., a requirement that zero or more
+                # tuple items be matched). This requirement *CANNOT* be
+                # trivially ignored. Ergo, any PEP 646-complaint parent tuple
+                # hint of the form "tuple[*Ts]" for *ANY* type variable tuple
+                # "*Ts" is reducible to the also PEP 646-compliant parent tuple
+                # hint "tuple[*tuple[typing.Any, ...]]", which unpacks to the
+                # PEP 646-*AGNOSTIC* parent tuple hint "tuple[typing.Any, ...]",
+                # which then simply reduces to the builtin "tuple" type. Since
+                # this PEP 646-compliant hint semantically reduces to the
+                # simplest PEP 484- or 585-compliant variable-length hint,
+                # treating PEP 646-compliant hints of this form as equivalent to
+                # PEP 484- or 585-compliant variable-length hints is sensible.
+                isinstance(hint_childs[0], HintPep646TypeVarTupleType)
+            ) or
+            (
                 # This parent tuple hint is subscripted by exactly two child
                 # hints *AND*...
                 hint_childs_len == 2 and
-                # The second child hint is the ellipsis singleton (i.e.,
-                # the unquoted character sequence "...")...
-                hint_childs[1] is Ellipsis
+                # The second child hint is either:
+                # * The PEP 484- or 585-compliant ellipsis singleton (e.g., the
+                #   unquoted character sequence "..." in "tuple[str, ...]").
+                # * A PEP 646-compliant type variable tuple (e.g., the "*Ts" in
+                #   "tuple[float, *Ts]").
+                #
+                # The justification for the latter is similar to the prior
+                # justification for the treatment of PEP 646-compliant tuple
+                # type hints of the form "tuple[*Ts]" as equivalent to "tuple".
+                # Recall that the PEP 646-complaint unpacked child tuple hint
+                # "*tuple[typing.Any, ...]" conveys a requirement that zero or
+                # more tuple items be matched. Then in this related case, a PEP
+                # 646-compliant tuple type hint of the longer form
+                # "tuple[hint_child, *Ts]" for *ANY* child hint "hint_child" and
+                # type variable tuple "*Ts" is reducible by the same argument to
+                # "tuple[hint_child, *tuple[typing.Any, ...]]", which unpacks to
+                # the familiar PEP 484- or 585-compliant parent tuple hint
+                # "tuple[hint_child, ...]". Again, this reduction is sensible.
+                isinstance(
+                    hint_childs[1], _HintPep484585TupleVariadicSecondItemTypes)
             )
         ) else
+        #FIXME: Differentiate "HintSignPep484585TupleFixed"- from
+        #"HintSignPep646TupleFixedVariadic"-style tuple type hints here, please.
+        #The distinction here is as follows:
+        #* If this parent tuple hint contains one or more child hints satisfying
+        #  the following condition, return "HintSignPep646TupleFixedVariadic";
+        #  else, return "HintSignPep484585TupleFixed": e.g.,
+        #      hints_child = get_hint_pep_args(hint)
+        #      for hint_child in hints_child:
+        #          if (
+        #              isinstance(child_hint, HintPep646TypeVarTupleType) or
+        #              is_pep646_hint_tuple_unpacked(child_hint)
+        #          ):
+        #              return HintSignPep646TupleFixedVariadic
+        #      return HintSignPep484585TupleFixed
+        #
+        #  Note that this getter now exhibits worst-case O(n) time complexity
+        #  for n the number of child hints subscripting this tuple hint. Since
+        #  this getter is only called by the memoized parent
+        #  get_hint_pep_sign_or_none() getter, this inefficiency is ignorable.
+
         # Fixed-length tuple hints otherwise.
         HintSignPep484585TupleFixed
     )
@@ -196,3 +264,17 @@ def make_hint_pep484585646_tuple_fixed(hints: tuple) -> Hint:
         # Dynamically subscript the builtin "tuple" type.
         Tuple.__class_getitem__(hints)  # type: ignore[attr-defined]
     )
+
+# ....................{ PRIVATE                            }....................
+_HintPep484585TupleVariadicSecondItemTypes = (
+    # PEP 484- or 585-compliant ellipsis (e.g., the "..." in "tuple[str, ...]").
+    EllipsisType,
+    # PEP 646-compliant type variable tuple (e.g., the "*Ts" in
+    # "tuple[float, *Ts]").
+    HintPep646TypeVarTupleType,
+)
+'''
+Tuple of all :pep:`484`- and :pep:`585`-compliant **purely variable-length tuple
+type hint second item types** (i.e., types of all child hints permissible as the
+second and final items subscripting purely variable-length tuple type hints).
+'''
