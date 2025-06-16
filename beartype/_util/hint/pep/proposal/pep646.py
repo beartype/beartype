@@ -122,27 +122,36 @@ def is_pep646_hint_tuple_unpacked(hint: Hint) -> bool:
 
     # Return true only if...
     return (
-        # This hint's type is that of all unpacked child tuple hints *AND*...
+        # This hint's type is that of all unpacked child tuple hints (as well as
+        # many other unrelated first- and third-party hints, sadly) *AND*...
         hint.__class__ is HintGenericSubscriptedType and
-        # This hint's method-resolution order (MRO) is that of all unpacked
-        # child tuple hints *AND*...
-        hint.__mro__ == _PEP646_HINT_TUPLE_UNPACKED_MRO and  # pyright: ignore
-        # This hint defines a dunder attribute uniquely defined *ONLY* by
-        # unpacked child tuple hints with a value guaranteed to be set by all
-        # unpacked child tuple hints.
-        getattr(hint, '__unpacked__', None) is True
+        (
+            # The tuple of all child hints subscripting this parent hint is also
+            # the tuple of all child hints subscripting this unpacked child
+            # tuple hint. Since only unpacked child tuple hints *SHOULD* define
+            # the PEP 646-compliant and frankly outrageously verbose
+            # "__typing_unpacked_tuple_args__" dunder attribute, this
+            # equivalence *SHOULD* suffice to disambiguate this hint as an
+            # unpacked child tuple hint.
+            getattr(hint, '__args__', False) ==
+            getattr(hint, '__typing_unpacked_tuple_args__', True)
+        )
         #FIXME: Probably unnecessary for the moment. Let's avoid violating
         #fragile privacy encapsulation any more than we must, please. *sigh*
-        # (
-        #     getattr(hint, '__args__', False) ==
-        #     getattr(hint, '__typing_unpacked_tuple_args__', True)
-        # )
+        # # This hint's method-resolution order (MRO) is that of all unpacked
+        # # child tuple hints *AND*...
+        # getattr(hint, '__mro__', None) == _PEP646_HINT_TUPLE_UNPACKED_MRO and  # pyright: ignore
+        # # This hint defines a dunder attribute uniquely defined *ONLY* by
+        # # unpacked child tuple hints with a value guaranteed to be set by all
+        # # unpacked child tuple hints.
+        # getattr(hint, '__unpacked__', None) is True
     )
 
 # ....................{ PRIVATE ~ globals                  }....................
-_PEP646_HINT_TUPLE_UNPACKED_MRO = (tuple, object)
-'''
-Method-resolution order (MRO) of *all* :pep:`646`-compliant **unpacked tuple
-child type hints** (e.g., the child hint ``*tuple[int, ...]`` subscripting the
-parent tuple type hint ``tuple[str, *tuple[int, ...], float]``).
-'''
+#FIXME: Excise us up, please.
+# _PEP646_HINT_TUPLE_UNPACKED_MRO = (tuple, object)
+# '''
+# Method-resolution order (MRO) of *all* :pep:`646`-compliant **unpacked tuple
+# child type hints** (e.g., the child hint ``*tuple[int, ...]`` subscripting the
+# parent tuple type hint ``tuple[str, *tuple[int, ...], float]``).
+# '''

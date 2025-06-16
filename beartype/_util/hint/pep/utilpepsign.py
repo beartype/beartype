@@ -33,13 +33,14 @@ from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignNewType,
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
-    HintSignNewType,
+    HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep646TupleUnpacked,
+    HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTypedDict,
-    HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep695TypeAliasSubscripted,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
@@ -56,6 +57,8 @@ from beartype._util.hint.pep.proposal.pep484604 import (
 from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
+from beartype._util.hint.pep.proposal.pep646 import (
+    is_pep646_hint_tuple_unpacked)
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 
@@ -587,11 +590,22 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     # C-based type hint instantiated by subscripting a pure-Python origin class
     # unrecognized by @beartype and thus PEP-noncompliant)...
     if is_hint_pep585_builtin_subbed(hint):
+        # If this hint is a PEP 646-compliant unpacked child tuple hint (i.e.,
+        # object created by unpacking a tuple hint inside another tuple hint via
+        # the unary unpack operator "*" and thus of the form
+        # "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
+        # {hint_child_child_M}], ..., {hint_child_N}]"), return the
+        # corresponding sign.
+        if is_pep646_hint_tuple_unpacked(hint):
+            return HintSignPep646TupleUnpacked
+        # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
+        # hint.
+        #
         # If this hint is a PEP 695-compliant subscripted type alias (i.e.,
         # object created by subscripting an object created by a statement of the
         # form "type {alias_name}[{type_var}] = {alias_value}" by one or more
         # child type hints), return the corresponding sign.
-        if is_hint_pep695_subbed(hint):
+        elif is_hint_pep695_subbed(hint):
             return HintSignPep695TypeAliasSubscripted
         # Else, this hint is *NOT* a PEP 695-compliant subscripted type alias.
 

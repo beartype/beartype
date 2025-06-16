@@ -29,7 +29,6 @@ from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
@@ -92,7 +91,10 @@ def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
     )
 
 # ....................{ GETTERS                            }....................
-#FIXME: Detect "HintSignPep646TupleFixedVariadic"-style tuple type hints. *sigh*
+#FIXME: Note that this getter now exhibits worst-case O(n) time complexity for n
+#the number of child hints subscripting this tuple hint. Since this getter is
+#only called by the memoized parent get_hint_pep_sign_or_none() getter, this
+#inefficiency is ignorable.
 #FIXME: Unit test us up, please.
 def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     '''
@@ -132,9 +134,13 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
           :data:`.HintSignPep646TupleFixedVariadic`.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep646 import (
+        is_pep646_hint_tuple_unpacked)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 
+    # ....................{ LOCALS                         }....................
     # Child hints subscripting this parent tuple hint.
     hint_childs = get_hint_pep_args(hint)
     # print(f'hint_childs: {hint_childs}')
@@ -142,6 +148,36 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     # Number of child hints subscripting this parent tuple hint.
     hint_childs_len = len(hint_childs)
 
+    # ....................{ PEP (484|585) ~ variadic       }....................
+    # If this parent tuple hint is subscripted by *NO* child hints, this hint is
+    # the unsubscripted "typing.Tuple" type hint factory semantically equivalent
+    # to the PEP 484-compliant variable-length tuple hint "typing.Tuple[object,
+    # ...]". In this case, return the sign uniquely identifying these hints.
+    if not hint_childs_len:
+        return HintSignPep484585TupleVariadic
+    # Else, this parent tuple hint is subscripted by one or more child hints.
+
+    # ....................{ PEP 646                        }....................
+    # For each child hint subscripting this parent tuple hint...
+    for hint_child in hint_childs:
+        # If this child hint is either...
+        if (
+            #FIXME: *NO*. Check signs instead, please. *sigh*
+            # A PEP 646-compliant type variable tuple *OR*...
+            isinstance(hint_child, HintPep646TypeVarTupleType) or
+            # A PEP 646-compliant unpacked child tuple hint...
+            is_pep646_hint_tuple_unpacked(hint_child)
+        ):
+            # Then this parent tuple hint is PEP 646-compliant. In this case,
+            # return the sign uniquely identifying these hints.
+            return HintSignPep646TupleFixedVariadic
+        # Else, this child hint is PEP 484- or 585-compliant.
+    # Else, all child hints subscripting this parent tuple hint are *ONLY* PEP
+    # 484- or 585-compliant, implying this parent tuple hint to itself be PEP
+    # 484- or 585-compliant.
+
+    # ....................{ PEP (484|585) ~ variadic       }....................
+    #FIXME: Move most of this into reduce_hint_pep646_tuple(), please. *sigh*
     # Return the sign uniquely identifying either...
     return (
         # Variable-length tuple hints if either...
@@ -156,6 +192,7 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
                 # This parent tuple hint is subscripted by exactly one child
                 # hint *AND*...
                 hint_childs_len == 1 and
+                #FIXME: *NO*. Check signs instead, please. *sigh*
                 # This child hint is a PEP 646-compliant type variable tuple
                 # (e.g., the "*Ts" in "tuple[*Ts]"). The justification here is
                 # somewhat subtle. @beartype ultimately silently ignores all
@@ -183,6 +220,14 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
                 # This parent tuple hint is subscripted by exactly two child
                 # hints *AND*...
                 hint_childs_len == 2 and
+
+                #FIXME: *NO*. Check signs instead, please. *sigh*
+                #FIXME: Remove the "_HintPep484585TupleVariadicSecondItemTypes"
+                #tuple global, please. Nice idea, but it simply doesn't work.
+                #Instead, consider defining a new frozenset global
+                #"HINT_SIGNS_PEP484585_TUPLE_VARIADIC_HINT_CHILD_LAST" somewhere
+                #-- but only if we decide we actually still need this.
+
                 # The second child hint is either:
                 # * The PEP 484- or 585-compliant ellipsis singleton (e.g., the
                 #   unquoted character sequence "..." in "tuple[str, ...]").
@@ -219,11 +264,6 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
         #          ):
         #              return HintSignPep646TupleFixedVariadic
         #      return HintSignPep484585TupleFixed
-        #
-        #  Note that this getter now exhibits worst-case O(n) time complexity
-        #  for n the number of child hints subscripting this tuple hint. Since
-        #  this getter is only called by the memoized parent
-        #  get_hint_pep_sign_or_none() getter, this inefficiency is ignorable.
 
         # Fixed-length tuple hints otherwise.
         HintSignPep484585TupleFixed
