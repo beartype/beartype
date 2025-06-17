@@ -65,8 +65,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPattern,
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585TupleFixed,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep646TupleUnpacked,
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignTypeAlias,
@@ -78,7 +80,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSized,
     HintSignTextIO,
     HintSignTuple,
-    HintSignPep484585TupleFixed,
     HintSignType,
     HintSignTypedDict,
     HintSignTypeGuard,
@@ -144,6 +145,26 @@ This frozen set intentionally excludes:
 '''
 
 # ....................{ SETS ~ args : container            }....................
+HINT_SIGNS_MAPPING: FrozenSetHintSign = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignChainMap,
+    HintSignCounter,
+    HintSignDefaultDict,
+    HintSignDict,
+    HintSignMapping,
+    HintSignMutableMapping,
+    HintSignOrderedDict,
+))
+'''
+Frozen set of all **mapping signs** (i.e., arbitrary objects uniquely
+identifying :pep:`484`- or :pep:`585`-compliant type hints subscripted by
+exactly two child type hints constraining *all* key-value pairs of compliant
+mappings, which necessarily satisfy the :class:`collections.abc.Mapping`
+protocol with guaranteed :math:`O(1)` indexation of at least the first key-value
+pair).
+'''
+
+
 HINT_SIGNS_QUASIITERABLE: FrozenSetHintSign = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignContainer,
@@ -317,26 +338,6 @@ HINT_SIGNS_GENERIC: FrozenSetHintSign = frozenset((
 Frozen set of all **generic signs** (i.e., arbitrary objects uniquely
 identifying :pep:`484`- or :pep:`585`-compliant type hints describing generic
 types, including both subscripted and unsubscripted variants).
-'''
-
-
-HINT_SIGNS_MAPPING: FrozenSetHintSign = frozenset((
-    # ..................{ PEP (484|585)                      }..................
-    HintSignChainMap,
-    HintSignCounter,
-    HintSignDefaultDict,
-    HintSignDict,
-    HintSignMapping,
-    HintSignMutableMapping,
-    HintSignOrderedDict,
-))
-'''
-Frozen set of all **mapping signs** (i.e., arbitrary objects uniquely
-identifying :pep:`484`- or :pep:`585`-compliant type hints subscripted by
-exactly two child type hints constraining *all* key-value pairs of compliant
-mappings, which necessarily satisfy the :class:`collections.abc.Mapping`
-protocol with guaranteed :math:`O(1)` indexation of at least the first key-value
-pair).
 '''
 
 
@@ -546,6 +547,7 @@ at class scope in dataclasses decorated by the :pep:`557`-compliant
 '''
 
 # ....................{ SETS ~ pep : 612                   }....................
+#FIXME: Rename to "HINT_SIGNS_PEP612_CALLABLE_PARAMS", please.
 HINT_SIGNS_CALLABLE_PARAMS: FrozenSetHintSign = frozenset((
     # ..................{ PEP 612                            }..................
     HintSignConcatenate,
@@ -562,6 +564,25 @@ This set necessarily excludes:
   which are specified as standard lists and thus identified by *no* signs.
 * **Ellipsis callable argument lists** (e.g., ``Callable[..., str]``), which are
   specified as the ellipsis singleton and thus identified by *no* signs.
+'''
+
+# ....................{ SETS ~ pep : 646                   }....................
+HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED: FrozenSetHintSign = frozenset((
+    # ..................{ PEP 646                            }..................
+    # Sign uniquely identifying unpacked type variable tuples (e.g., the child
+    # hint "*Ts" subscripting the parent tuple hint "tuple[int, *Ts]").
+    HintSignUnpack,
+
+    # Sign uniquely identifying unpacked child tuple hints (e.g., the child
+    # hint "*tuple[float, ...]" subscripting the parent tuple hint
+    # "tuple[complex, *tuple[float, ...], str]").
+    HintSignPep646TupleUnpacked,
+))
+'''
+Frozen set of all :pep:`646`-compliant **parent tuple hint unpacked child hint
+signs** (i.e., arbitrary objects uniquely identifying :pep:`646`-compliant child
+hints produced by the unary prefix unpack operator ``*``, unpacking larger
+sequences of child hints into parent tuple hints).
 '''
 
 # ....................{ SETS ~ supported                   }....................

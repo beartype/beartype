@@ -146,12 +146,3 @@ def is_pep646_hint_tuple_unpacked(hint: Hint) -> bool:
         # # unpacked child tuple hints.
         # getattr(hint, '__unpacked__', None) is True
     )
-
-# ....................{ PRIVATE ~ globals                  }....................
-#FIXME: Excise us up, please.
-# _PEP646_HINT_TUPLE_UNPACKED_MRO = (tuple, object)
-# '''
-# Method-resolution order (MRO) of *all* :pep:`646`-compliant **unpacked tuple
-# child type hints** (e.g., the child hint ``*tuple[int, ...]`` subscripting the
-# parent tuple type hint ``tuple[str, *tuple[int, ...], float]``).
-# '''

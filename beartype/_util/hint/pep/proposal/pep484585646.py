@@ -25,6 +25,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585TupleVariadic,
     HintSignPep646TupleFixedVariadic,
 )
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.pep585 import (
@@ -136,9 +138,8 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep646 import (
-        is_pep646_hint_tuple_unpacked)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
     # ....................{ LOCALS                         }....................
     # Child hints subscripting this parent tuple hint.
@@ -160,16 +161,16 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     # ....................{ PEP 646                        }....................
     # For each child hint subscripting this parent tuple hint...
     for hint_child in hint_childs:
-        # If this child hint is either...
-        if (
-            #FIXME: *NO*. Check signs instead, please. *sigh*
-            # A PEP 646-compliant type variable tuple *OR*...
-            isinstance(hint_child, HintPep646TypeVarTupleType) or
-            # A PEP 646-compliant unpacked child tuple hint...
-            is_pep646_hint_tuple_unpacked(hint_child)
-        ):
-            # Then this parent tuple hint is PEP 646-compliant. In this case,
-            # return the sign uniquely identifying these hints.
+        # Sign uniquely identifying this child hint if this child hint is
+        # PEP-compliant *OR* "None" otherwise.
+        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+
+        # If this child hint is either:
+        # * A PEP 646-compliant type variable tuple *OR*...
+        # * A PEP 646-compliant unpacked child tuple hint...
+        # ...then this parent tuple hint is PEP 646-compliant. In this case,
+        # return the sign uniquely identifying these hints.
+        if hint_child_sign in HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED:
             return HintSignPep646TupleFixedVariadic
         # Else, this child hint is PEP 484- or 585-compliant.
     # Else, all child hints subscripting this parent tuple hint are *ONLY* PEP
