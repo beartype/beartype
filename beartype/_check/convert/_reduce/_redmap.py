@@ -47,6 +47,8 @@ from beartype._check.convert._reduce._pep.redpep585 import (
 from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
+from beartype._check.convert._reduce._pep.redpep646 import (
+    reduce_hint_pep646_tuple)
 from beartype._check.convert._reduce._pep.redpep646692 import (
     reduce_hint_pep646692_unpack)
 from beartype._check.convert._reduce._pep.redpep647742 import (
@@ -511,7 +513,13 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # this reducer is intentionally uncached rather than cached.
     HintSignTypeAlias: reduce_hint_pep613,
 
-    # ..................{ PEP (646|692)                      }..................
+    # ..................{ PEP 646                            }..................
+    #FIXME: More fully document exactly what's going on here, please. *sigh*
+    # Reduce PEP 646-compliant tuple type hints to either:
+    # * If this hint is a ..., the ignorable "object" superclass.
+    # * Else, preserve this hint as is.
+    HintSignUnpack: reduce_hint_pep646692_unpack,
+
     # Reduce PEP 646- or 692-compliant "typing.Unpack[...]" type hints to
     # either:
     # * If this hint annotates the variadic positional argument of some

@@ -120,10 +120,10 @@ def reduce_hint_pep646692_unpack(
     #     >>> Unpack['shaking', 'my', 'head']
     #     TypeError: typing.Unpack accepts only single type. Got ('shaking',
     #     'my', 'head').
-    hints_child = get_hint_pep_args(hint)
+    hint_childs = get_hint_pep_args(hint)
 
     # Child hint subscripting this parent unpack hint.
-    hint_child = hints_child[0]
+    hint_child = hint_childs[0]
 
     # Sign uniquely identifying this child hint if any *OR* "None".
     hint_child_sign = get_hint_pep_sign_or_none(hint_child)
