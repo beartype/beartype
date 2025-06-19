@@ -14,10 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
-from beartype._cave._cavefast import (
-    EllipsisType,
-    HintPep646TypeVarTupleType,
-)
+from beartype._cave._cavefast import EllipsisType
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -166,7 +163,7 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
         hint_child_sign = get_hint_pep_sign_or_none(hint_child)
 
         # If this child hint is either:
-        # * A PEP 646-compliant type variable tuple *OR*...
+        # * A PEP 646-compliant unpacked type variable tuple *OR*...
         # * A PEP 646-compliant unpacked child tuple hint...
         # ...then this parent tuple hint is PEP 646-compliant. In this case,
         # return the sign uniquely identifying these hints.
@@ -192,21 +189,6 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
             # "tuple[str, ...]").
             hint_childs[1] is Ellipsis
         ) else
-        #FIXME: Differentiate "HintSignPep484585TupleFixed"- from
-        #"HintSignPep646TupleFixedVariadic"-style tuple type hints here, please.
-        #The distinction here is as follows:
-        #* If this parent tuple hint contains one or more child hints satisfying
-        #  the following condition, return "HintSignPep646TupleFixedVariadic";
-        #  else, return "HintSignPep484585TupleFixed": e.g.,
-        #      hints_child = get_hint_pep_args(hint)
-        #      for hint_child in hints_child:
-        #          if (
-        #              isinstance(child_hint, HintPep646TypeVarTupleType) or
-        #              is_pep646_hint_tuple_unpacked(child_hint)
-        #          ):
-        #              return HintSignPep646TupleFixedVariadic
-        #      return HintSignPep484585TupleFixed
-
         # Fixed-length tuple hints otherwise.
         HintSignPep484585TupleFixed
     )

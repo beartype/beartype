@@ -543,6 +543,10 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
     #well... but, ultimately, the implementation is so convoluted that it's
     #better that we violate privacy encapsulation by detecting that the type of
     #this type is the private "typing._TypedDictMeta" metaclass instead. *shrug*
+    #FIXME: Note that the "typing" module now provides a public is_typeddict()
+    #tester function, which trivially detects that the type of this type is the
+    #private "typing._TypedDictMeta" metaclass. Just defer to that, please. \o/
+
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):
         return HintSignTypedDict
