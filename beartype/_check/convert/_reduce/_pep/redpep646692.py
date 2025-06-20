@@ -96,6 +96,8 @@ def reduce_hint_pep646692_unpack(
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
+    All remaining keyword-only parameters are silently ignored.
+
     Returns
     -------
     Hint

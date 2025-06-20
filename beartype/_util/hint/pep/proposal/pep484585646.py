@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
-from beartype._cave._cavefast import EllipsisType
 from beartype._data.hint.datahintpep import Hint
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -30,22 +29,72 @@ from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 
 # ....................{ TESTERS                            }....................
+#FIXME: Grep the codebase for any DRY violations referencing the "Ellipsis"
+#singleton. Most of those references should be refactored to instead call this
+#higher-level tester, please. *sigh*
+def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
+    '''
+    :data:`True` only if the passed object is either a :pep:`484`-, :pep:`585`-,
+    or :pep:`646`-compliant **variable-length tuple hint** (i.e., parent hint
+    subscripted by exactly two child hints, the former of which is any arbitrary
+    hint and the latter of which is an **ellipsis** (i.e., the :data:`Ellipsis`
+    singleton specified in code as an unquoted ``...``)).
+
+    This tester returns :data:`True` if this hint is either:
+
+    * A :pep:`484`-compliant variable-length tuple hint of the form
+      ``typing.Tuple[{hint_child}, ...]`` for any ``{hint_child}``.
+    * A :pep:`585`-compliant variable-length tuple hint of the form
+      ``tuple[{hint_child}, ...]`` for any ``{hint_child}``.
+    * A :pep:`646`-compliant unpacked variable-length child tuple hint of the
+      form ``*tuple[{hint_child}, ...]`` for any ``{hint_child}``.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as this tester trivially reduces to an
+    efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a variable-length tuple hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # Child hints subscripting this tuple hint.
+    hint_childs = get_hint_pep_args(hint)
+
+    # Return true only if...
+    return (
+        # This parent tuple hint is subscripted by two child hints *AND*...
+        len(hint_childs) == 2 and
+        # This second child hint is the PEP 484- and 585-compliant ellipsis
+        # singleton (e.g., the unquoted character sequence "..." in
+        # "tuple[str, ...]").
+        hint_childs[1] is Ellipsis
+    )
+
+
 def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **empty fixed-length tuple type hint** (i.e., hint
     constraining objects to be the empty tuple).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as this tester is only called under fairly
-    uncommon edge cases.
-
-    Motivation
-    ----------
     Since type variables are not themselves types but rather placeholders
     dynamically replaced with types by type checkers according to various
     arcane heuristics, both type variables and types parametrized by type
     variables warrant special-purpose handling.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as this tester trivially reduces to an
+    efficient one-liner and, in any case, is only called under rare edge cases.
 
     Parameters
     ----------
@@ -90,10 +139,6 @@ def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
     )
 
 # ....................{ GETTERS                            }....................
-#FIXME: Note that this getter now exhibits worst-case O(n) time complexity for n
-#the number of child hints subscripting this tuple hint. Since this getter is
-#only called by the memoized parent get_hint_pep_sign_or_none() getter, this
-#inefficiency is ignorable.
 #FIXME: Unit test us up, please.
 def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     '''
@@ -110,10 +155,22 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter to
     disambiguate the originally ambiguous :data:`.HintSignTuple` sign.
 
+    This low-level getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as only function calling this getter is the
+    aforementioned higher-level getter, which itself is memoized.
+
+    Caveats
+    -------
+    **This getter exhibits worst-case** :math:`O(n)` **linear time complexity**
+    for :math:`n` the number of child hints subscripting this tuple hint. Since
+    this low-level getter is only called by higher-level memoized getters, this
+    getter nonetheless effectively exhibits amortized worst-case :math:`O(1)`
+    constant time complexity.
+
     Parameters
     ----------
     hint : Hint
-        Type hint to be inspected.
+        Tuple type hint to be disambiguated.
 
     Returns
     -------

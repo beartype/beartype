@@ -18,6 +18,47 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ tester                     }....................
+def test_is_hint_pep484585646_tuple_variadic() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585646.is_hint_pep484585646_tuple_variadic`
+    tester.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep484585646 import (
+        is_hint_pep484585646_tuple_variadic)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+    from typing import Tuple  # <-- intentionally import the PEP 484 variant
+
+    # ....................{ PASS                           }....................
+    # Assert this tester returns true for PEP 484-compliant variable-length
+    # tuple type hints.
+    assert is_hint_pep484585646_tuple_variadic(Tuple[int, ...])
+
+    # Assert this tester returns true for PEP 585-compliant variable-length
+    # tuple type hints.
+    assert is_hint_pep484585646_tuple_variadic(tuple[str, ...])
+
+    # If the active Python interpreter targets Python >= 3.11 and thus supports
+    # PEP 646...
+    if IS_PYTHON_AT_LEAST_3_11:
+        # Defer version-specific imports.
+        from beartype_test.a00_unit.data.pep.data_pep646 import (
+            unit_test_is_hint_pep484585646_tuple_variadic)
+
+        # Perform this test.
+        unit_test_is_hint_pep484585646_tuple_variadic()
+    # Else, the active Python interpreter targets Python <= 3.10 and thus fails
+    # to support PEP 646.
+
+    # ....................{ FAIL                           }....................
+    # Assert this tester returns false for arbitrary objects.
+    assert is_hint_pep484585646_tuple_variadic(
+        "And listen'd in sharp pain for Saturn's voice.") is False
+
+
 def test_is_hint_pep484585646_tuple_empty() -> None:
     '''
     Test the
@@ -25,23 +66,30 @@ def test_is_hint_pep484585646_tuple_empty() -> None:
     tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep484585646 import (
         is_hint_pep484585646_tuple_empty)
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
 
+    # ....................{ PASS                           }....................
     # Assert this tester returns true for PEP 484-compliant empty tuple type
     # hints.
     assert is_hint_pep484585646_tuple_empty(Tuple[()]) is True
-
-    # Assert this tester returns false for PEP 484-compliant non-empty tuple
-    # type hints.
-    assert is_hint_pep484585646_tuple_empty(Tuple[int, ...]) is False
 
     # Assert this tester returns true for PEP 585-compliant empty tuple type
     # hints.
     assert is_hint_pep484585646_tuple_empty(tuple[()]) is True
 
+    # ....................{ FAIL                           }....................
+    # Assert this tester returns false for PEP 484-compliant non-empty tuple
+    # type hints.
+    assert is_hint_pep484585646_tuple_empty(Tuple[int, ...]) is False
+
     # Assert this tester returns false for PEP 585-compliant non-empty tuple
     # type hints.
     assert is_hint_pep484585646_tuple_empty(tuple[int, ...]) is False
+
+    # Assert this tester returns false for arbitrary objects.
+    assert is_hint_pep484585646_tuple_empty(
+        "Groan'd for the old allegiance once more,") is False

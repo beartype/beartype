@@ -18,7 +18,7 @@ from beartype._data.hint.datahintpep import Hint
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_pep646_hint_tuple_unpacked(hint: Hint) -> bool:
+def is_hint_pep646_unpacked_tuple(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed hint is a :pep:`646`-compliant **unpacked
     child tuple hint** (e.g., the child hint ``*tuple[str, ...]`` subscripting

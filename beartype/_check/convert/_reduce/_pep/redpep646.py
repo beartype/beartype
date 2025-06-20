@@ -44,11 +44,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    of the form "tuple[*Ts]" for *ANY* type variable tuple "Ts" trivially
 #    reduce to the builtin type "tuple" at the moment, as we silently ignore
 #    *ALL* type variable tuples.
-#
-#Unsure whether fixed-variadic tuple hints can contain both a type variable
-#tuple *AND* unpacked child tuple hint (e.g., "tuple[*Ts, *tuple[int, ...]]")?
-#Probably. Yet more edge cases arise, of course. PEP 646 is a beast with many
-#backs, indeed.
+#  * Fixed-variadic tuple hints *CANNOT* contain both an unpacked type variable
+#    tuple *AND* unpacked child tuple hint (e.g., "tuple[*Ts, *tuple[int,
+#    ...]]"). Fixed-variadic tuple hints can contain at most one unpacked child
+#    hint. Hopefully, this constraint reduces the complexity of code generation.
 #
 #The first place to start with all of this is implementing a new code generation
 #algorithm for the new "HintSignPep646TupleFixedVariadic" sign, which currently
@@ -58,13 +57,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #"tuple[float, *Ts, bool]") for now, as that's the simpler use case. Of course,
 #even that's *NOT* simple -- but it's a more reasonable start than unpacked
 #child tuple hints, which spiral into madness far faster and harder.
-#
-#This code generation algorithm should manually detect and handle both type
-#variable tuples *AND* unpacked child tuple hints *BEFORE* performing child
-#hint reductions by calling reduce_hint_child(). Why? Because the reducers
-#defined below currently unconditionally ignore type variable tuples. We don't
-#even bother ignoring unpacked child tuple hints at the moment, because they can
-#*ONLY* appear inside a "tuple[...]" context.
 #
 #Lastly, note that we can trivially handle unpacked child tuple hints in a
 #simple, effective way *WITHOUT* actually investing any effort in doing so. How?
@@ -111,6 +103,8 @@ def reduce_hint_pep646_tuple(
         :pep:`646`-compliant tuple hint to be reduced.
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
+
+    All remaining keyword-only parameters are silently ignored.
 
     Returns
     -------
@@ -343,27 +337,9 @@ def reduce_hint_pep646_tuple(
         #The algorithm to do this requires maintaining a list "hint_childs_new =
         #[]", which iteration then iteratively appends the new child hints onto.
         #Super-trivial stuff, honestly.
-        #FIXME: Fixed-length unpacked child tuple hints are any *EXCEPT*
-        #variable-length unpacked child tuple hints, detected as 2-tuples suffixed
-        #by an ellipsis. We probably want to define a new utility tester resembling:
-        #    def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
-        #        # Child hints subscripting this tuple hint.
-        #        hint_childs = get_hint_pep_args(hint)
-        #
-        #        return (
-        #            # This parent tuple hint is subscripted by exactly two child hints
-        #            # *AND*...
-        #            len(hint_childs) == 2 and
-        #            # This second child hint is the PEP 484- and 585-compliant ellipsis
-        #            # singleton (e.g., the unquoted character sequence "..." in
-        #            # "tuple[str, ...]").
-        #            hint_childs[1] is Ellipsis
-        #        )
         #FIXME: Replace the DRY violation repeating this test in
         #get_hint_pep484585646_tuple_sign_unambiguous() with a call to this new
         #is_hint_pep484585646_tuple_variadic() tester.
-        #FIXME: Grep the codebase for any similar DRY violations referencing the
-        #"Ellipsis" singleton as well, please. *sigh*
 
         #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
         # For the 0-based index of each child hint subscripting this parent

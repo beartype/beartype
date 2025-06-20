@@ -58,7 +58,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_builtin_subbed)
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.pep646 import (
-    is_pep646_hint_tuple_unpacked)
+    is_hint_pep646_unpacked_tuple)
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 
@@ -600,7 +600,7 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
         # "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
         # {hint_child_child_M}], ..., {hint_child_N}]"), return the
         # corresponding sign.
-        if is_pep646_hint_tuple_unpacked(hint):
+        if is_hint_pep646_unpacked_tuple(hint):
             return HintSignPep646TupleUnpacked
         # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
         # hint.

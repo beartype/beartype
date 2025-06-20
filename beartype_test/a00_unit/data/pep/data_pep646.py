@@ -21,43 +21,40 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 '''
 
 # ....................{ TESTS ~ tester                     }....................
-def unit_test_is_pep646_hint_tuple_unpacked() -> None:
+def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
     '''
     Test the :pep:`649`-compliant implementation of the private
-    :mod:`beartype._util.hint.pep.proposal.pep646.is_pep646_hint_tuple_unpacked`
+    :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
     tester under Python >= 3.14.
     '''
 
-    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.hint.pep.proposal.pep484585646 import (
+        is_hint_pep484585646_tuple_variadic)
+
+    # PEP 646-compliant variable-length unpacked child tuple type hint.
+    hint_pep646_unpacked_tuple_variadic = _hint_pep646_unpacked_tuple_variadic()
+
+    # Assert this tester returns true for PEP 646-compliant variable-length
+    # unpacked child tuple type hints.
+    assert is_hint_pep484585646_tuple_variadic(
+        hint_pep646_unpacked_tuple_variadic) is True
+
+
+def unit_test_is_hint_pep646_unpacked_tuple() -> None:
+    '''
+    Test the :pep:`649`-compliant implementation of the private
+    :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
+    tester under Python >= 3.14.
+    '''
+
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep646 import (
-        is_pep646_hint_tuple_unpacked)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+        is_hint_pep646_unpacked_tuple)
 
-    # ....................{ LOCALS                         }....................
-    # PEP 585-compliant tuple hint subscripted by arbitrary children and a PEP
-    # 646-compliant unpacked tuple child hint. This is insane, because we're
-    # only going to rip this tuple child hint right back out of this parent
-    # tuple hint. Blame the Python interpreter. *shrug*
-    #
-    # Note that Python *REQUIRES* unpacked tuple child hints to be syntactically
-    # embedded inside a larger container -- even if that unpacked tuple child
-    # hint is semantically invalid inside that container: e.g.,
-    #     >>> [*tuple[int, str]]
-    #     [*tuple[int, str]]  # <-- makes no sense, but ok.
-    #     >>> *tuple[int, str]
-    #     SyntaxError: can't use starred expression here  # <-- this is awful.
-    pep585_hint_tuple = tuple[bool, *tuple[int, float], complex]
-
-    # Tuple of all child hints subscripting this parent tuple hint.
-    pep585_hint_tuple_hints_child = get_hint_pep_args(pep585_hint_tuple)
-
-    # PEP 646-compliant unpacked tuple child hint subscripting this parent.
-    pep646_hint_tuple_unpacked = pep585_hint_tuple_hints_child[1]
-
-    # ....................{ PASS                           }....................
     # Assert this tester accepts PEP 646-compliant unpacked tuple hints.
-    assert is_pep646_hint_tuple_unpacked(pep646_hint_tuple_unpacked) is True
+    assert is_hint_pep646_unpacked_tuple(
+        _hint_pep646_unpacked_tuple_fixed()) is True
 
 # ....................{ TESTS ~ decorator                  }....................
 def unit_test_decor_pep646() -> None:
@@ -106,38 +103,11 @@ def unit_test_decor_pep646() -> None:
     render_up_its_majesty = ItsMotions()
 
     # ....................{ CALLABLES                      }....................
-    #FIXME: *LOL*. "Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object]" after
-    #reduction, a fixed-length tuple hint. Clearly, however, "Tuple[Unpack[Ts]]"
-    #should instead be semantically equivalent to a variadic tuple hint: e.g.,
-    #    # This is what we want!
-    #    Tuple[*Ts] == Tuple[Unpack[Ts]] == Tuple[object, ...]
-    #
-    #In other words, how exactly we reduce "Unpack[Ts]" conditionally depends on
-    #the parent type hint containing this "Unpack[Ts]". Although we could begin
-    #passing parent type hints around, that seems pretty crazy. Maybe? Or maybe
-    #not. This reducer is uncached anyway. That said, consider the recursive
-    #tree of all possible parent type hints. In the worst case, a child type
-    #hint could conceivably need that. It might be saner, therefore, to... hmmm.
-    #
-    #What, exactly? The issue is that the get_hint_pep_sign_or_none() getter now
-    #discriminates between fixed-length and variadic type hints! However,
-    #deciding whether a tuple type hint is fixed-length or variadic is
-    #increasingly non-trivial. Specifically:
-    #
-    #* A parent tuple hint is variadic if subscripted by either:
-    #  * A single child type hint with sign "HintSignUnpack".
-    #  * Exactly two child type hints, the last of which is an ellipsis.
-    #* Else, that hint is fixed-length.
-    #
-    #That takes care of detection. Pretty insane, but certainly feasible.
-    #
-    #We still need to handle "Tuple[Unpack[Ts]] == Tuple[object, ...]"
-    #reduction, however. Or maybe not? Maybe everything will magically work!?
-
     @beartype
     def of_all_the_grace(
         and_to_the_damp_leaves: ItsMotions,
         *and_beauty_that_endued: *Ts
+    #FIXME: Uncomment once supported, please. *shrug*
     # ) -> Tuple[ItsMotions, *Ts]:
     ) -> object:
         '''
@@ -170,3 +140,76 @@ def unit_test_decor_pep646() -> None:
         def scatter_its_music(
             *on_the_unfeeling_storm: Unpack[Tuple[str]]) -> str:
             return on_the_unfeeling_storm[0]
+
+# ....................{ PRIVATE ~ fixtures                 }....................
+# Note that the following private getters would ideally have instead by defined
+# as fixtures. Sadly, pytest permits that *ONLY* when the caller is a
+# pytest-specific unit test. *shrug*
+
+def _hint_pep646_unpacked_tuple_fixed() -> object:
+    '''
+    Session-scoped fixture yielding a :pep:`646`-compliant **unpacked
+    fixed-length tuple hint** (e.g., the child hint ``*tuple[int, str]`` in the
+    parent hint ``tuple[float, *tuple[int, str], complex]``).
+
+    This fixture exists to streamline access to unpacked child tuple hints,
+    whose definition is otherwise non-trivial. Python requires unpacked child
+    tuple hints to be syntactically embedded inside larger containers -- even if
+    those hints are semantically invalid inside those containers: e.g.,
+
+    .. code-block:: pycon
+
+       >>> [*tuple[int, str]]
+       [*tuple[int, str]]  # <-- makes no sense, but ok.
+       >>> *tuple[int, str]
+       SyntaxError: can't use starred expression here  # <-- this is awful.
+    '''
+
+    # Defer fixture-specific imports.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # PEP 646-compliant tuple hint subscripted by arbitrary children and a PEP
+    # 646-compliant unpacked tuple child hint. This is insane, because we're
+    # only going to rip this tuple child hint right back out of this parent
+    # tuple hint. Blame the Python interpreter. *shrug*
+    pep646_tuple = tuple[bool, *tuple[int, float], complex]
+
+    # Tuple of all child hints subscripting this parent tuple hint.
+    pep646_tuple_hints_child = get_hint_pep_args(pep646_tuple)
+
+    # PEP 646-compliant unpacked child tuple hint subscripting this parent.
+    pep646_unpacked_tuple = pep646_tuple_hints_child[1]
+
+    # Yield this unpacked child tuple hint to the calling unit test.
+    return pep646_unpacked_tuple
+
+
+def _hint_pep646_unpacked_tuple_variadic() -> object:
+    '''
+    Session-scoped fixture yielding a :pep:`646`-compliant **unpacked
+    variable-length tuple hint** (e.g., the child hint ``*tuple[str, ...]`` in
+    the parent hint ``tuple[int, *tuple[str, ...], bool]``).
+
+    See Also
+    --------
+    hint_pep646_unpacked_tuple_fixed
+        Further details.
+    '''
+
+    # Defer fixture-specific imports.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # PEP 646-compliant tuple hint subscripted by arbitrary children and a PEP
+    # 646-compliant unpacked tuple child hint. This is insane, because we're
+    # only going to rip this tuple child hint right back out of this parent
+    # tuple hint. Blame the Python interpreter. *shrug*
+    pep646_tuple = tuple[int, *tuple[str, ...], float]
+
+    # Tuple of all child hints subscripting this parent tuple hint.
+    pep646_tuple_hints_child = get_hint_pep_args(pep646_tuple)
+
+    # PEP 646-compliant unpacked child tuple hint subscripting this parent.
+    pep646_unpacked_tuple = pep646_tuple_hints_child[1]
+
+    # Yield this unpacked child tuple hint to the calling unit test.
+    return pep646_unpacked_tuple

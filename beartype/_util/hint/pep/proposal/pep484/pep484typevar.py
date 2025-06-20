@@ -152,10 +152,10 @@ def get_hint_pep484_typevar_bound_or_none(
     analogous operations, due to runtime space and time constraints.
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). If this type variable was parametrized
-    by one or more constraints, the :attr:`typing.Union` type hint factory
-    already caches these constraints; else, this getter performs no work. In
-    any case, this getter effectively performs to work.
+    ``callable_cached`` decorator). If this type variable was parametrized by
+    one or more constraints, the :attr:`typing.Union` type hint factory already
+    caches these constraints; else, this getter performs no work. In any case,
+    this getter effectively performs to work.
 
     Parameters
     ----------
