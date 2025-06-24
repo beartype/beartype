@@ -13,7 +13,89 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: It's no longer safe to return mutable dictionaries from either
+#FIXME: [USABILITY] Our get_pep649_hintable_annotations() dictionary currently
+#assumes that *ALL* formats except "Format.FORWARDREF" are useless. That was a
+#profound API mistake. Our is_subhint() implementation for PEP 589-compliant
+#"TypedDict" subclasses *ABSOLUTELY* requires an API that allows callers to
+#explicitly pass this format to other members. Refactor as follows, please:
+#    def get_pep649_hintable_annotations_or_none(
+#        # Mandatory parameters.
+#        hintable: Pep649Hintable,
+#
+#        # Optional keyword-only parameters.
+#        *,
+#        annotate_format: Format = Format.FORWARDREF,
+#    ) -> Pep649HintableAnnotations:
+#
+#Significant (but not insurmountable) issues with that include:
+#* Our Python <= 3.13 implementation has *NO* access to the
+#  "annotationlib.Format.FORWARDREF" member. While we could fabricate some sort
+#  of absurd fake placeholder for both this and the "annotationlib.Format"
+#  enumeration, doing so would probably be overkill. Instead, just declare the
+#  Python <= 3.13-version of get_pep649_hintable_annotations_or_none() as:
+#      def get_pep649_hintable_annotations_or_none(
+#          # Mandatory parameters.
+#          hintable: Pep649Hintable,
+#
+#          # Optional parameters.
+#          **kwarg
+#      ) -> Pep649HintableAnnotations:
+#  The "annotate_format" parameter has no meaning or relevance under Python <=
+#  3.13. Thus, we just silently ignore it. *shrug*
+#* get_pep649_hintable_annotations_or_none() should *FIRST* test whether
+#  "annotate_format is Format.VALUE". If so, this getter should *IMMEDIATELY*
+#  just trivially return the unmemoized value returned by get_annotations().
+#  Why? Because *ALL* hintables already implicitly cache the
+#  "Format.VALUE"-style value of their "__annotations__" dictionaries. Ergo, no
+#  additional memoization is required. Consider this:
+#      def get_pep649_hintable_annotations_or_none(
+#          # Mandatory parameters.
+#          hintable: Pep649Hintable,
+#
+#          # Optional parameters.
+#          annotate_format: Format = Format.FORWARDREF,
+#      ) -> Pep649HintableAnnotations:
+#          # Note that we *ALWAYS* explicitly pass the desired format to the
+#          # lower-level get_annotations() getter, even when this format
+#          # corresponds to the current default value for this parameter. Why?
+#          # Because there is *NO* guarantee that this default value will
+#          # continue to be "Format.VALUE". Indeed, we strongly suspect that
+#          # some subsequent CPython version will break backward compatibility
+#          # by changing this default value to "Format.FORWARDREF". In other
+#          # words, we profoundly lack trust in typing-centric CPython APIs.
+#          # Given the prior history, this mistrust is well-founded.
+#          if annotate_format is Format.VALUE:
+#              return get_annotations(hintable, format=Format.VALUE)
+#
+#          ...
+#* That still leaves two remaining formats: "Format.FORWARDREF" and
+#  "Format.STRING". Our current memoization strategy assumes the former. So,
+#  we'll need to generalize our memoizing data structures to account for an
+#  explicit format. In other words:
+#      # Instead of this and this...
+#      _MODULE_NAME_TO_ANNOTATIONS: (
+#          Dict[str, Optional[Pep649HintableAnnotations]]) = {}.
+#      _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS: (
+#          Dict[str, Dict[str, Optional[Pep649HintableAnnotations]]]) = {}
+#
+#      # ...we want this and this.
+#      _MODULE_NAME_TO_FORMAT_TO_ANNOTATIONS: (
+#          Dict[str, Dict[Format, Optional[Pep649HintableAnnotations]]]) = {}
+#      _MODULE_NAME_TO_HINTABLE_BASENAME_TO_FORMAT_TO_ANNOTATIONS: (
+#          Dict[str,
+#              Dict[str,
+#                  Dict[Format,
+#                      Optional[Pep649HintableAnnotations]
+#                  ]
+#              ]
+#          ]
+#      ) = {}
+#* get_pep649_hintable_annotations_or_none() will then need to be refactored to
+#  accommodate those significant improvements.
+#* We'll also need to refactor the private
+#  _get_pep649_hintable_annotations_or_none_uncached() getter accordingly.
+
+#FIXME: [SAFETY] It's no longer safe to return mutable dictionaries from either
 #get_pep649_hintable_annotations() or get_pep649_hintable_annotations_or_none().
 #These getters are both memoized. Even if they weren't, PEP 649 renders
 #"__annotations__" unsafe for mutation. For safety, these getters should now
@@ -317,6 +399,32 @@ if IS_PYTHON_AT_LEAST_3_14:
             Pep649HintableAnnotations
                 New ``__annotations__`` dunder dictionary set on this hintable.
             '''
+
+            #FIXME: [SPEED] Globalize access to frequently accessed "Format"
+            #members and reference those globals instead below. This method
+            #*COULD* be frequently called enough to warrant micro-optimization.
+
+            #FIXME: *NO*. Sadly, it turns out that the "Format.VALUE" format has
+            #demonstrable real-world value. See our is_subhint() implementation
+            #for PEP 589-compliant "TypedDict" subclasses, which *ABSOLUTELY*
+            #requires this format. Succinctly, the "Format.VALUE" format enables
+            #callers to detect whether an annotations dictionary contains one or
+            #more unquoted forward references, which then enables callers to
+            #conditionally modify runtime behaviour accordingly.
+            #
+            #In other words:
+            #* Excise the "_ANNOTATE_FORMATS_VALUELIKE" set global, which no
+            #  longer has any demonstrable value. (Get it, "value"? Ugh.)
+            #* Refactor this implementation to resemble:
+            #      if annotate_format is Format.FORWARDREF:
+            #          return annotations
+            #      elif original_hintable_annotate is not None:
+            #          return original_hintable_annotate(annotate_format)
+            #
+            #      raise NotImplementedError()
+            #
+            #Surprisingly trivial, actually. That's a bit simpler but more
+            #broadly useful and specific than the current heavy-handed tactic.
 
             # If the caller requested a value-like format, trivially return the
             # "__annotations__" dunder dictionary passed to the parent
@@ -666,6 +774,20 @@ if IS_PYTHON_AT_LEAST_3_14:
               dunder dictionary set on this hintable.
             * Else, :data:`None`.
         '''
+
+        #FIXME: *NO*. The current implementation is unsafe. Instead, we *MUST*
+        #always defer to get_annotations() as follows:
+        #    return (
+        #        get_annotations(hintable, format=Format.FORWARDREF)
+        #        if (
+        #            getattr(hintable, '__annotate__', None) is not None or
+        #            getattr(hintable, '__annotations__', None) is not None or
+        #        ) else
+        #        None
+        #    )
+        #
+        #Refactor the current implementation to resemble the above while
+        #preserving existing deep commentary, please. *sigh*
 
         # If the passed hintable defines the PEP 649-compliant __annotate__()
         # dunder method to be anything *OTHER* than "None", this hintable is
