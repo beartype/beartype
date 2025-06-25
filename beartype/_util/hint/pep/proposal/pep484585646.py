@@ -29,9 +29,6 @@ from beartype._util.hint.pep.proposal.pep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 
 # ....................{ TESTERS                            }....................
-#FIXME: Grep the codebase for any DRY violations referencing the "Ellipsis"
-#singleton. Most of those references should be refactored to instead call this
-#higher-level tester, please. *sigh*
 def is_hint_pep484585646_tuple_variadic(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed object is either a :pep:`484`-, :pep:`585`-,
@@ -232,20 +229,11 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     # 484- or 585-compliant.
 
     # ....................{ PEP (484|585) ~ variadic       }....................
-    #FIXME: Move most of this into reduce_hint_pep646_tuple(), please. *sigh*
     # Return the sign uniquely identifying either...
     return (
-        # Variable-length tuple hints if either...
+        # Variable-length tuple hints if this hint is variadic;
         HintSignPep484585TupleVariadic
-        if (
-            # This parent tuple hint is subscripted by exactly two child hints
-            # *AND*...
-            hint_childs_len == 2 and
-            # This second child hint is the PEP 484- and 585-compliant ellipsis
-            # singleton (e.g., the unquoted character sequence "..." in
-            # "tuple[str, ...]").
-            hint_childs[1] is Ellipsis
-        ) else
+        if is_hint_pep484585646_tuple_variadic(hint) else
         # Fixed-length tuple hints otherwise.
         HintSignPep484585TupleFixed
     )

@@ -80,7 +80,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484585646 import (
-    make_hint_pep484585646_tuple_fixed)
+    is_hint_pep484585646_tuple_variadic,
+    make_hint_pep484585646_tuple_fixed,
+)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
@@ -320,26 +322,24 @@ def reduce_hint_pep646_tuple(
         hint_child_pep646_index: Optional[int] = None
 
         #FIXME: [SPEED] Acquire and release a cached list instead, please.
-        # List of the zero or more new child hints with which to subscript a new
-        # PEP 585-compliant parent tuple hint to reduce this PEP 646-compliant
-        # parent tuple hint to.
-        hint_pep585_childs_list: Optional[ListHints] = []
-
-        #FIXME: Interestingly, there's a final reduction that can be performed.
-        #Fixed-length unpacked child tuple hints (e.g., "tuple[int, *tuple[str,
-        #float]]") are nonsensical, because the child child hints subscripting those
-        #child tuple hints could have simply directly subscripted this parent tuple
-        #hint as a PEP 585-compliant fixed-length tuple hint. Thus, do so (e.g.,
-        #from "tuple[int, *tuple[str, float]]" to "tuple[int, str, float]"). This
-        #reduction is useful as it then guarantees during subsequent code generation
-        #that *ALL* unpacked child tuple hints are variadic.
+        # Either:
+        # * If this hint is subscripted somewhere by a PEP 646-compliant
+        #   unpacked child fixed-length tuple hint (e.g., the "*tuple[str,
+        #   float]" in "tuple[int, *tuple[str, float]]") and thus semantically
+        #   reducible to a PEP 585-compliant parent fixed-length tuple hint
+        #   (e.g., from "tuple[int, *tuple[str, float]]" to "tuple[int, str,
+        #   float]"), the list of zero or more child hints with which to
+        #   subscript a PEP 585-compliant parent fixed-length tuple hint to
+        #   reduce this PEP 646-compliant parent tuple hint to.
+        # * Else (i.e., if this PEP 646-compliant hint is *NOT* reducible to
+        #   such a PEP 585-compliant hint), "None".
         #
-        #The algorithm to do this requires maintaining a list "hint_childs_new =
-        #[]", which iteration then iteratively appends the new child hints onto.
-        #Super-trivial stuff, honestly.
-        #FIXME: Replace the DRY violation repeating this test in
-        #get_hint_pep484585646_tuple_sign_unambiguous() with a call to this new
-        #is_hint_pep484585646_tuple_variadic() tester.
+        # PEP 646-compliant unpacked child fixed-length tuple hints are entirely
+        # superfluous and supported by PEP 646 merely for orthogonality.
+        # Although it is unlikely that *ANYONE* will everyone use PEP
+        # 646-compliant unpacked child fixed-length tuple hints, the possibility
+        # that someone might requires us to support this obscure edge case.
+        hint_pep585_childs_list: Optional[ListHints] = []
 
         #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
         # For the 0-based index of each child hint subscripting this parent
@@ -359,21 +359,43 @@ def reduce_hint_pep646_tuple(
                     hint_child_pep646 = hint_child
                     hint_child_pep646_index = hint_child_index
 
-                    #FIXME: Only conditionally do this as follows:
-                    #* If this child hint is a fixed-length unpacked child tuple
-                    #  hint, instead of doing this:
-                    #  * If "hint_pep585_childs_list is not None":
-                    #    * Extend "hint_pep585_childs_list" by the child child
-                    #      hints subscripting this child tuple hint.
-                    #    * Continue to the next child hint! This is pivotal to
-                    #      avoid the list append below.
-                    #* Else, do this. However, do *NOT* halt iteration
-                    #  immediately.
+                    # If...
+                    if (
+                        # This list still exists, it is still unknown whether
+                        # this hint is subscripted anywhere by a PEP
+                        # 646-compliant unpacked child hint -- implying that
+                        # this hint *COULD* still be subscripted somewhere by a
+                        # PEP 646-compliant unpacked child fixed-length tuple
+                        # hint (e.g., the "*tuple[str, float]" in "tuple[int,
+                        # *tuple[str, float]]") *AND*...
+                        hint_pep585_childs_list is not None and
+                        # This child hint is *NOT* a PEP 646-compliant unpacked
+                        # child variable-length tuple hint, this child hint
+                        # *MUST* by elimination be a PEP 646-compliant unpacked
+                        # child fixed-length tuple hint.
+                        not is_hint_pep484585646_tuple_variadic(hint_child)
+                    ):
+                        # Tuple of the zero or more child child hints
+                        # subscripting this PEP 646-compliant unpacked child
+                        # fixed-length tuple hint.
+                        hint_child_childs = get_hint_pep_args(hint_child)
 
-                    # Notify logic below that this PEP 646-compliant parent
-                    # tuple hint is *NOT* reducible to a PEP 585-compliant
+                        # Append all child child hints subscripting this PEP
+                        # 646-compliant unpacked child fixed-length tuple hint
+                        # to the end of this list, effectively unpacking this
+                        # child hint directly into the new PEP 585-compliant
+                        # parent fixed-length tuple hint to be returned.
+                        hint_pep585_childs_list.extend(hint_child_childs)
+                    # Else, this child hint is *NOT* a PEP 646-compliant
+                    # unpacked child fixed-length tuple hint. But this child
+                    # hint is PEP 646-compliant! By process of elimination, this
+                    # child hint *MUST* be a PEP 646-compliant unpacked type
+                    # variable tuple (e.g., the "*Ts" in "tuple[str, *Ts]"). In
+                    # this case, notify logic below that this PEP 646-compliant
+                    # parent tuple hint is irreducible to a PEP 585-compliant
                     # parent tuple hint.
-                    hint_pep585_childs_list = None
+                    else:
+                        hint_pep585_childs_list = None
                 # Else, this iteration has already discovered a PEP
                 # 646-compliant child hint of this parent tuple hint. Since the
                 # currently visited child hint is also PEP 646-compliant, this

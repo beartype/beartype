@@ -109,6 +109,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585GenericUnsubscripted,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep646TupleFixedVariadic,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignPep695TypeAliasSubscripted,
     HintSignProtocol,
@@ -332,6 +333,13 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ignore all annotations on this hint by reducing this hint to the
     # lower-level hint it annotates.
     HintSignAnnotated: reduce_hint_pep593,
+
+    # ..................{ PEP 646                            }..................
+    # If this hint is a PEP 646-compliant tuple hint (i.e., tuple hint
+    # subscripted by one or more PEP 646-compliant unpacked child hints), reduce
+    # this hint to the semantically equivalent PEP 585-compliant fixed- or
+    # variable-length tuple hint if feasible.
+    HintSignPep646TupleFixedVariadic: reduce_hint_pep646_tuple,
 
     # ..................{ PEP 675                            }..................
     #FIXME: Remove *AFTER* deeply type-checking literal strings. Note that doing

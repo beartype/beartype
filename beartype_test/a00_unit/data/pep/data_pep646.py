@@ -20,6 +20,28 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
 
+# ....................{ TESTS ~ reducer                    }....................
+def unit_test_reduce_hint_pep646_tuple() -> None:
+    '''
+    Test the :pep:`649`-compliant implementation of the private
+    :mod:`beartype._check.convert._reduce._pep.redpep646.reduce_hint_pep646_tuple`
+    reducer under Python >= 3.14.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._check.convert._reduce.redhint import reduce_hint
+    from beartype._check.metadata.hint.hintsane import HintSane
+
+    # ....................{ PASS                           }....................
+    # Assert this reducer reduces a PEP 646-compliant tuple hint subscripted by
+    # a PEP 646-compliant unpacked fixed-length child tuple hint to the
+    # semantically equivalent PEP 585-compliant fixed-length tuple hint.
+    hint_pep646_sane = reduce_hint(tuple[int, *tuple[str, bool], float])
+    assert hint_pep646_sane == HintSane(tuple[int, str, bool, float])
+
+    #FIXME: Implement *ALL* remaining edge cases in reduce_hint_pep646_tuple()!
+
 # ....................{ TESTS ~ tester                     }....................
 def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
     '''

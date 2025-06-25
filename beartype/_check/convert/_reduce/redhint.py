@@ -52,7 +52,8 @@ def reduce_hint(
     # Mandatory parameters.
     hint: Hint,
 
-    # Optional parameters.
+    # Optional keyword-only parameters.
+    *,
     arg_kind: Optional[ArgKind] = None,
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
