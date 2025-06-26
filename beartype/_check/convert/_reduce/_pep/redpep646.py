@@ -139,6 +139,7 @@ def reduce_hint_pep646_tuple(
     hint_childs_len = len(hint_childs)
 
     # Assert this parent tuple hint is subscripted by at least one child hint.
+    #
     # Note that the previously called
     # get_hint_pep484585646_tuple_sign_unambiguous() getter should have already
     # guaranteed this. Ergo, we avoid raising a full-blown exception here.
@@ -222,19 +223,18 @@ def reduce_hint_pep646_tuple(
             #     tuple[*tuple[()]]
             hint_pep585_childs = get_hint_pep_args(hint_child)
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked child
-        # tuple hint.
-
-        # Raise a fatal exception. Why? Because the previously called
-        # get_hint_pep484585646_tuple_sign_unambiguous() getter already
-        # validated this tuple hint to be PEP 646-compliant and thus be
-        # subscripted by one or more PEP 646-compliant child hints... Yet this
-        # hint is subscripted by only one PEP 646-noncompliant child hint!
-        raise BeartypeDecorHintPep646Exception(  # pragma: no cover
-            f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
-            f'child hint {repr(hint_child)} not PEP 646-compliant '
-            f'(i.e., neither unpacked type variable tuple nor '
-            f'unpacked child tuple type hint).'
-        )
+        # tuple hint. In this case, raise a fatal exception. Why? Because the
+        # previously called get_hint_pep484585646_tuple_sign_unambiguous()
+        # getter already validated this tuple hint to be PEP 646-compliant and
+        # thus be subscripted by one or more PEP 646-compliant child hints, but
+        # this hint is subscripted by only one PEP 646-noncompliant child hint!
+        else:  # pragma: no cover
+            raise BeartypeDecorHintPep646Exception(
+                f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
+                f'child hint {repr(hint_child)} not PEP 646-compliant '
+                f'(i.e., neither unpacked type variable tuple nor '
+                f'unpacked child tuple type hint).'
+            )
     # Else, this parent tuple hint is *NOT* subscripted by one child hint.
     #
     # If this parent tuple hint is subscripted by exactly two child hints...

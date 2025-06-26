@@ -30,17 +30,104 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep646Exception
+    from beartype.typing import TypeVarTuple
     from beartype._check.convert._reduce.redhint import reduce_hint
     from beartype._check.metadata.hint.hintsane import HintSane
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary PEP 646-compliant type variable tuples.
+    Ts = TypeVarTuple('Ts')
+    Us = TypeVarTuple('Us')
+
+    #FIXME: This and the following "hint_reductions_invalid" tuple are a
+    #considerable improvement over the manual approach currently implemented by
+    #the parent test_reduce_hint() unit test. Consider generalizing that unit
+    #test with this approach, please. *sigh*
+
+    # Tuple of all PEP 646-compliant reductions to be tested, each defined as a
+    # 2-tuple "(hint_unreduced, hint_reduced)" such that:
+    # * "hint_unreduced" is the input hint to be reduced.
+    # * "hint_reduced" is the output hint produced by reducing this input hint.
+    hint_reductions_valid = (
+        # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
+        # 646-compliant unpacked type variable tuple reduces to the semantically
+        # equivalent builtin "tuple" type.
+        (tuple[*Ts], tuple),
+
+        # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
+        # 646-compliant unpacked child variable-length tuple hint reduces to the
+        # semantically equivalent PEP 585-compliant variable-length tuple hint
+        # subscripted by the same child hints as that unpacked child hint.
+        (tuple[*tuple[str, ...]], tuple[str, ...]),
+
+        # A PEP 646-compliant tuple hint subscripted by exactly two child hints
+        # whose second child hint is a PEP 646-compliant unpacked type variable
+        # tuple reduces to the semantically equivalent PEP 585-compliant tuple
+        # hint subscripted by the same first child hint followed by an ellipsis.
+        (tuple[str, *Ts], tuple[str, ...]),
+
+        # A PEP 646-compliant tuple hint subscripted by a PEP 646-compliant
+        # unpacked child fixed-length tuple hint reduces to the semantically
+        # equivalent PEP 585-compliant fixed-length tuple hint.
+        (tuple[int, *tuple[str, bool], float], tuple[int, str, bool, float]),
+    )
+
+    # Tuple of all PEP 646-noncompliant reductions to be tested, each defined as
+    # a 2-tuple "(hint_unreduced, exception_type)" such that:
+    # * "hint_unreduced" is the invalid input hint to be reduced.
+    # * "exception_type" is the type of exception raised by attempting to reduce
+    #   this invalid input hint.
+    hint_reductions_invalid = (
+        # A PEP 646-compliant tuple hint subscripted by two PEP 646-compliant
+        # unpacked child fixed-length tuple hint separated by other unrelated
+        # child hints is invalid.
+        (
+            tuple[str, *tuple[int, float], bool, *tuple[complex, list], bytes],
+            BeartypeDecorHintPep646Exception,
+        ),
+
+        # A PEP 646-compliant tuple hint subscripted by two PEP 646-compliant
+        # unpacked type variable tuples separated by other unrelated child hints
+        # is invalid.
+        (
+            tuple[str, *Ts, bool, *Us, bytes],
+            BeartypeDecorHintPep646Exception,
+        ),
+
+        # A PEP 646-compliant tuple hint subscripted by one PEP 646-compliant
+        # unpacked child variable-length tuple hint *AND* one PEP 646-compliant
+        # unpacked child type variable tuple separated by other unrelated child
+        # hints is invalid.
+        #
+        # Order is probably insignificant -- but could be. Ergo, we test both
+        # orders for fuller coverage.
+        (
+            tuple[str, *tuple[int, float], bool, *Ts, bytes],
+            BeartypeDecorHintPep646Exception,
+        ),
+        (
+            tuple[str, *Ts, bool, *tuple[int, float], bytes],
+            BeartypeDecorHintPep646Exception,
+        ),
+    )
 
     # ....................{ PASS                           }....................
-    # Assert this reducer reduces a PEP 646-compliant tuple hint subscripted by
-    # a PEP 646-compliant unpacked fixed-length child tuple hint to the
-    # semantically equivalent PEP 585-compliant fixed-length tuple hint.
-    hint_pep646_sane = reduce_hint(tuple[int, *tuple[str, bool], float])
-    assert hint_pep646_sane == HintSane(tuple[int, str, bool, float])
+    # For each input hint to be reduced and the corresponding output hint...
+    for hint_unreduced, hint_reduced in hint_reductions_valid:
+        # Sanified metadata encapsulating the reduction of this input hint.
+        hint_reduced_sane = reduce_hint(hint_unreduced)
 
-    #FIXME: Implement *ALL* remaining edge cases in reduce_hint_pep646_tuple()!
+        # Assert that this reduction produced the expected output hint.
+        assert hint_reduced_sane == HintSane(hint_reduced)
+
+    # ....................{ FAIL                           }....................
+    # For each invalid input hint to be reduced and the corresponding type of
+    # exception expected to be raised by attempting to do so...
+    for hint_unreduced, exception_type in hint_reductions_invalid:
+        with raises(exception_type):
+            reduce_hint(hint_unreduced)
 
 # ....................{ TESTS ~ tester                     }....................
 def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
