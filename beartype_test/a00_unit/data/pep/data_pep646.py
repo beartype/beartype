@@ -62,12 +62,6 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
         # subscripted by the same child hints as that unpacked child hint.
         (tuple[*tuple[str, ...]], tuple[str, ...]),
 
-        # A PEP 646-compliant tuple hint subscripted by exactly two child hints
-        # whose second child hint is a PEP 646-compliant unpacked type variable
-        # tuple reduces to the semantically equivalent PEP 585-compliant tuple
-        # hint subscripted by the same first child hint followed by an ellipsis.
-        (tuple[str, *Ts], tuple[str, ...]),
-
         # A PEP 646-compliant tuple hint subscripted by a PEP 646-compliant
         # unpacked child fixed-length tuple hint reduces to the semantically
         # equivalent PEP 585-compliant fixed-length tuple hint.
@@ -216,9 +210,7 @@ def unit_test_decor_pep646() -> None:
     def of_all_the_grace(
         and_to_the_damp_leaves: ItsMotions,
         *and_beauty_that_endued: *Ts
-    #FIXME: Uncomment once supported, please. *shrug*
-    # ) -> Tuple[ItsMotions, *Ts]:
-    ) -> object:
+    ) -> Tuple[ItsMotions, *Ts]:
         '''
         Arbitrary callable simply returning the tuple of all passed variadic
         positional parameters prepended by the passed generic, decorated by

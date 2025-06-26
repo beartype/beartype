@@ -235,58 +235,8 @@ def reduce_hint_pep646_tuple(
                 f'(i.e., neither unpacked type variable tuple nor '
                 f'unpacked child tuple type hint).'
             )
-    # Else, this parent tuple hint is *NOT* subscripted by one child hint.
-    #
-    # If this parent tuple hint is subscripted by exactly two child hints...
-    elif hint_childs_len == 2:
-        # Signs uniquely identifying the first and second child hints
-        # subscripting this parent tuple hint if these child hints are
-        # PEP-compliant *OR* "None" otherwise.
-        hint_child_1_sign = get_hint_pep_sign_or_none(hint_childs[0])
-        hint_child_2_sign = get_hint_pep_sign_or_none(hint_childs[1])
-
-        # If this first child hint is not PEP 646-compliant but this second
-        # child hint is a PEP 646-compliant unpacked type variable tuple (e.g.,
-        # the "*Ts" in "tuple[str, *Ts]"), reduce this PEP 646-compliant tuple
-        # hint to the semantically equivalent PEP 585-compliant tuple hint
-        # subscripted by the same first child hint followed by an ellipsis
-        # (e.g., from "tuple[str, *Ts]" to "tuple[str, ...]").
-        #
-        # The justification here is similar to the prior justification for the
-        # treatment of PEP 646-compliant tuple type hints of the form
-        # "tuple[*Ts]" as equivalent to "tuple". Recall that the PEP
-        # 646-complaint unpacked child tuple hint "*tuple[typing.Any, ...]"
-        # conveys a requirement that zero or more tuple items be matched. Then
-        # in this related case, a PEP 646-compliant tuple type hint of the
-        # longer form "tuple[hint_child, *Ts]" for *ANY* child hint "hint_child"
-        # and type variable tuple "*Ts" is reducible by the same argument to
-        # "tuple[hint_child, *tuple[typing.Any, ...]]", which unpacks to the
-        # familiar PEP 484- or 585-compliant parent tuple hint
-        # "tuple[hint_child, ...]".
-        #
-        # Specifically...
-        if (
-            # If this first child hint is neither:
-            # * A PEP 646-compliant type variable tuple *OR*...
-            # * A PEP 646-compliant unpacked child tuple hint...
-            #
-            # ...then this first child hint is *NOT* PEP 646-compliant. In this
-            # case, this PEP 646-compliant tuple hint *COULD* be reducible to a
-            # simpler PEP 585-compliant variable-length tuple hint.
-            hint_child_1_sign not in (
-                HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED) and
-            # *AND* this second child hint is a PEP 646-compliant unpacked type
-            # variable tuple...
-            hint_child_2_sign is HintSignUnpack
-        ):
-            # Reduce this PEP 646-compliant tuple hint to the semantically
-            # equivalent PEP 585-compliant tuple hint subscripted by this first
-            # PEP 646-noncompliant child hint followed by an ellipsis, matching
-            # tuples containing zero or more items matching this child hint.
-            hint_pep585_childs = (hint_childs[0], ...)
-        # Else, this second child hint is *NOT* a PEP 646-compliant unpacked
-        # type variable tuple.
-    # Else, this parent tuple hint is subscripted by three or more child hints.
+    # Else, this parent tuple hint is *NOT* subscripted by one child hint,
+    # implying this parent tuple hint is subscripted by two or more child hints.
     # Since this hint is irreducible, preserve this hint as is.
 
     # ....................{ SEARCH                         }....................
@@ -369,6 +319,9 @@ def reduce_hint_pep646_tuple(
                         # hint (e.g., the "*tuple[str, float]" in "tuple[int,
                         # *tuple[str, float]]") *AND*...
                         hint_pep585_childs_list is not None and
+                        # This child hint is a PEP 646-compliant unpacked child
+                        # tuple hint *AND*...
+                        hint_child_sign is HintSignPep646TupleUnpacked and
                         # This child hint is *NOT* a PEP 646-compliant unpacked
                         # child variable-length tuple hint, this child hint
                         # *MUST* by elimination be a PEP 646-compliant unpacked
@@ -379,6 +332,7 @@ def reduce_hint_pep646_tuple(
                         # subscripting this PEP 646-compliant unpacked child
                         # fixed-length tuple hint.
                         hint_child_childs = get_hint_pep_args(hint_child)
+                        # print(f'Appending PEP 646 unpacked fixed-length tuple hint children {hint_child}...')
 
                         # Append all child child hints subscripting this PEP
                         # 646-compliant unpacked child fixed-length tuple hint
@@ -395,6 +349,7 @@ def reduce_hint_pep646_tuple(
                     # parent tuple hint is irreducible to a PEP 585-compliant
                     # parent tuple hint.
                     else:
+                        # print(f'Ignoring PEP 646 non-unpacked fixed-length tuple hint {hint_child}...')
                         hint_pep585_childs_list = None
                 # Else, this iteration has already discovered a PEP
                 # 646-compliant child hint of this parent tuple hint. Since the
@@ -420,6 +375,7 @@ def reduce_hint_pep646_tuple(
             # PEP 646-noncompliant child hint to the list of all such hints to
             # subscript this PEP 585-compliant parent tuple hint by.
             elif hint_pep585_childs_list is not None:
+                # print(f'Appending non-PEP 646 child hint {hint_child}...')
                 hint_pep585_childs_list.append(hint_child)
             # Else, this PEP 646-compliant parent tuple hint is no longer
             # reducible to a PEP 585-compliant parent tuple hint (presumably due
@@ -437,7 +393,7 @@ def reduce_hint_pep646_tuple(
 
     # ....................{ RETURN                         }....................
     # Reduce this non-trivial PEP 646-compliant tuple hint to either...
-    return (
+    hint_reduced = (
         #FIXME: *STOP DOING THIS* as soon as we implement a proper code
         #generator for PEP 646-compliant tuple hints, please. *sigh*
         # If this PEP 646-compliant parent tuple hint is irreducible to a PEP
@@ -452,3 +408,5 @@ def reduce_hint_pep646_tuple(
         # 585-compliant parent tuple hint. In this case, the latter.
         make_hint_pep484585646_tuple_fixed(hint_pep585_childs)
     )
+    # print(f'Reduced PEP 646 tuple hint {hint} to {hint_reduced}!')
+    return hint_reduced
