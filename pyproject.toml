@@ -325,10 +325,9 @@ test-tox = [
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.13 support *AFTER* Numba resolves:
-    #    https://github.com/numba/numba/issues/9413
+    #FIXME: Reenable Python >= 3.14 support *AFTER* Numba supports Python 3.14.
     # Required by optional numba-specific integration tests.
-    "numba; python_version < '3.13.0'",
+    "numba; python_version < '3.14.0'",
 
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
@@ -383,6 +382,12 @@ test-tox = [
     # improve the likelihood of success on both local and remote workflows,
     # these dependencies are intentionally confined to Linux.
 
+    # Required by optional PyTorch-specific integration tests if the current
+    # platform is a Linux distribution.
+    #
+    # Note that PyTorch has yet to release a Python >= 3.14-compatible version.
+    "torch; sys_platform == 'linux' and python_version < '3.14.0'",
+
     # ....................{ SCIENCE ~ data : ml : jax      }....................
     # JAX-specific optional test-time dependencies.
 
@@ -406,12 +411,6 @@ test-tox = [
     # Required by optional Equinox-specific integration tests. Note that Equinox
     # requires JAX.
     "equinox; sys_platform == 'linux'",
-
-    #FIXME: Temporarily disabled for sanity.
-    # Required by optional PyTorch-specific integration tests.
-    #
-    # Note that PyTorch has yet to release a Python >= 3.12-compatible version.
-    # 'torch; python_version < "3.12.0"',
 
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
