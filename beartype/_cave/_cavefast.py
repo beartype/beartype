@@ -46,6 +46,7 @@ import typing as _typing
 from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_14,
     IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10,
@@ -1189,6 +1190,42 @@ Tuple of all **type parameters types** (i.e., types of :pep:`484`-compliant type
 variables, pep:`612`-compliant parameter specifications, and
 :pep:`646`-compliant type variable tuples).
 '''
+
+# ....................{ TYPES ~ hint : pep : 649           }....................
+#FIXME: After dropping Python 3.13 support, globally replace:
+#    # All imports like this...
+#    from beartype._cave._cavefast import Format
+#
+#    # ...with imports like this! \o/
+#    from annotationlib import Format
+#
+#Then remove *ALL* of the PEP 649-specific logic below.
+
+# If either...
+if (
+    # This submodule is currently being statically type-checked by a pure static
+    # type-checker *OR*...
+    TYPE_CHECKING or
+    # The active Python interpreter targets Python >= 3.14...
+    IS_PYTHON_AT_LEAST_3_14
+):
+    # Import the standard PEP 649-compliant "annotationlib.Format" enum defined
+    # *ONLY* under Python >= 3.14.
+    from annotationlib import Format as Format  # type: ignore[import-not-found]
+# Else, this submodule is currently being imported at runtime under an active
+# Python interpreter targets that targets at most Python <= 3.13 and thus
+# fails to define the standard PEP 649-compliant "annotationlib.Format" enum. In
+# this case, define a placeholder enum declaring the same members.
+else:
+    import enum
+
+    # For simplicity, copy-paste the *EXACT SAME* definition of this enum as
+    # appears at the head of the standard "annotationlib" module.
+    class Format(enum.IntEnum):
+        VALUE = 1
+        VALUE_WITH_FAKE_GLOBALS = 2
+        FORWARDREF = 3
+        STRING = 4
 
 # ....................{ TYPES ~ hint : pep : 695           }....................
 # If this submodule is currently being statically type-checked by a pure static

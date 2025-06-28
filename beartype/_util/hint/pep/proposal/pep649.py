@@ -13,88 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [USABILITY] Our get_pep649_hintable_annotations() dictionary currently
-#assumes that *ALL* formats except "Format.FORWARDREF" are useless. That was a
-#profound API mistake. Our is_subhint() implementation for PEP 589-compliant
-#"TypedDict" subclasses *ABSOLUTELY* requires an API that allows callers to
-#explicitly pass this format to other members. Refactor as follows, please:
-#    def get_pep649_hintable_annotations_or_none(
-#        # Mandatory parameters.
-#        hintable: Pep649Hintable,
-#
-#        # Optional keyword-only parameters.
-#        *,
-#        annotate_format: Format = Format.FORWARDREF,
-#    ) -> Pep649HintableAnnotations:
-#
-#Significant (but not insurmountable) issues with that include:
-#* Our Python <= 3.13 implementation has *NO* access to the
-#  "annotationlib.Format.FORWARDREF" member. While we could fabricate some sort
-#  of absurd fake placeholder for both this and the "annotationlib.Format"
-#  enumeration, doing so would probably be overkill. Instead, just declare the
-#  Python <= 3.13-version of get_pep649_hintable_annotations_or_none() as:
-#      def get_pep649_hintable_annotations_or_none(
-#          # Mandatory parameters.
-#          hintable: Pep649Hintable,
-#
-#          # Optional parameters.
-#          **kwarg
-#      ) -> Pep649HintableAnnotations:
-#  The "annotate_format" parameter has no meaning or relevance under Python <=
-#  3.13. Thus, we just silently ignore it. *shrug*
-#* get_pep649_hintable_annotations_or_none() should *FIRST* test whether
-#  "annotate_format is Format.VALUE". If so, this getter should *IMMEDIATELY*
-#  just trivially return the unmemoized value returned by get_annotations().
-#  Why? Because *ALL* hintables already implicitly cache the
-#  "Format.VALUE"-style value of their "__annotations__" dictionaries. Ergo, no
-#  additional memoization is required. Consider this:
-#      def get_pep649_hintable_annotations_or_none(
-#          # Mandatory parameters.
-#          hintable: Pep649Hintable,
-#
-#          # Optional parameters.
-#          annotate_format: Format = Format.FORWARDREF,
-#      ) -> Pep649HintableAnnotations:
-#          # Note that we *ALWAYS* explicitly pass the desired format to the
-#          # lower-level get_annotations() getter, even when this format
-#          # corresponds to the current default value for this parameter. Why?
-#          # Because there is *NO* guarantee that this default value will
-#          # continue to be "Format.VALUE". Indeed, we strongly suspect that
-#          # some subsequent CPython version will break backward compatibility
-#          # by changing this default value to "Format.FORWARDREF". In other
-#          # words, we profoundly lack trust in typing-centric CPython APIs.
-#          # Given the prior history, this mistrust is well-founded.
-#          if annotate_format is Format.VALUE:
-#              return get_annotations(hintable, format=Format.VALUE)
-#
-#          ...
-#* That still leaves two remaining formats: "Format.FORWARDREF" and
-#  "Format.STRING". Our current memoization strategy assumes the former. So,
-#  we'll need to generalize our memoizing data structures to account for an
-#  explicit format. In other words:
-#      # Instead of this and this...
-#      _MODULE_NAME_TO_ANNOTATIONS: (
-#          Dict[str, Optional[Pep649HintableAnnotations]]) = {}.
-#      _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS: (
-#          Dict[str, Dict[str, Optional[Pep649HintableAnnotations]]]) = {}
-#
-#      # ...we want this and this.
-#      _MODULE_NAME_TO_FORMAT_TO_ANNOTATIONS: (
-#          Dict[str, Dict[Format, Optional[Pep649HintableAnnotations]]]) = {}
-#      _MODULE_NAME_TO_HINTABLE_BASENAME_TO_FORMAT_TO_ANNOTATIONS: (
-#          Dict[str,
-#              Dict[str,
-#                  Dict[Format,
-#                      Optional[Pep649HintableAnnotations]
-#                  ]
-#              ]
-#          ]
-#      ) = {}
-#* get_pep649_hintable_annotations_or_none() will then need to be refactored to
-#  accommodate those significant improvements.
-#* We'll also need to refactor the private
-#  _get_pep649_hintable_annotations_or_none_uncached() getter accordingly.
-
 #FIXME: [SAFETY] It's no longer safe to return mutable dictionaries from either
 #get_pep649_hintable_annotations() or get_pep649_hintable_annotations_or_none().
 #These getters are both memoized. Even if they weren't, PEP 649 renders
@@ -106,15 +24,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import BeartypeDecorHintPep649Exception
-from beartype.typing import (
-    Optional,
-)
+from beartype.typing import Optional
+from beartype._cave._cavefast import Format  # pyright: ignore
 from beartype._data.hint.datahinttyping import (
     Pep649Hintable,
     Pep649HintableAnnotations,
     TypeException,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
+from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from beartype._util.text.utiltextlabel import label_beartypeable_kind
 
@@ -125,6 +43,7 @@ def get_pep649_hintable_annotations(
     hintable: Pep649Hintable,
 
     # Optional parameters.
+    hint_format: Format = Format.FORWARDREF,
     exception_cls: TypeException = BeartypeDecorHintPep649Exception,
     exception_prefix: str = '',
 ) -> Pep649HintableAnnotations:
@@ -143,6 +62,33 @@ def get_pep649_hintable_annotations(
     ----------
     hintable : Pep649Hintable
         Hintable to be inspected.
+    hint_format : Format, default: Format.FORWARDREF
+        Format of annotated hints to be returned. Defaults to
+        :attr:`Format.FORWARDREF`, in which case this getter safely encapsulates
+        each otherwise unsafe unquoted forward reference transitively
+        subscripting each hint annotating this hintable with a safe
+        :class:`annotationlib.ForwardRef` object. Note that the remaining
+        formats are situational at best. Specifically:
+
+        * The :attr:`Format.VALUE` format is useful *only* to detect whether
+          this hintable is annotated by one or more unquoted forward references
+          or not. These hintables occasionally require special-case handling
+          elsewhere, which this format facilitates. Notably, if this hintable is
+          annotated by one or more unquoted forward references, this getter
+          raises a :exc:`NameError` exception when passed this format.
+        * The :attr:`Format.STRING` format is useful mostly just for
+          documentation purposes. A tangential use case does *occasionally*
+          arise, though: comparing annotations dictionaries of two hintables
+          annotated by one or more unquoted forward references such that one of
+          those dictionaries was postponed under :pep:`563` (i.e., ``from
+          __future__ import annotations``). These dictionaries are comparable
+          under this format but *not* the default :attr:`Format.FORWARDREF`
+          format. Why? **Forward reference proxies** (i.e.,
+          :class:`annotationlib.ForwardRef` objects). Whereas
+          :attr:`Format.FORWARDREF` injects incomparable forward reference
+          proxies into these dictionaries that effectively prohibit dictionary
+          comparisons, this format just preserves unquoted forward references
+          in the strings it returns.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep649Exception`.
@@ -171,7 +117,12 @@ def get_pep649_hintable_annotations(
 
     # "__annotations__" dictionary dictionary defined by this hintable if this
     # hintable is actually a hintable *OR* "None" otherwise.
-    hint_annotations = get_pep649_hintable_annotations_or_none(hintable)
+    hint_annotations = get_pep649_hintable_annotations_or_none(
+        hintable=hintable,
+        hint_format=hint_format,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # If this hintable is *NOT* actually a hintable, raise an exception.
     if hint_annotations is None:
@@ -199,10 +150,7 @@ def get_pep649_hintable_annotations(
 if IS_PYTHON_AT_LEAST_3_14:
     # ....................{ IMPORTS                        }....................
     # Defer version-specific imports.
-    from annotationlib import (  # type: ignore[import-not-found]
-        Format,
-        get_annotations,
-    )
+    from annotationlib import get_annotations  # type: ignore[import-not-found]
     from beartype.typing import Dict
     from beartype._cave._cavefast import (
         CallableOrClassTypes,
@@ -220,8 +168,8 @@ if IS_PYTHON_AT_LEAST_3_14:
     def clear_pep649_caches() -> None:
 
         # Clear all dictionary globals declared below.
-        _MODULE_NAME_TO_ANNOTATIONS.clear()
-        _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.clear()
+        _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS.clear()
+        _FORMAT_TO_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.clear()
 
     # ....................{ GETTERS                        }....................
     #FIXME: Unit test us up, please.
@@ -237,7 +185,9 @@ if IS_PYTHON_AT_LEAST_3_14:
         # Mandatory parameters.
         hintable: Pep649Hintable,
 
-        # Optional parameters.
+        # Optional keyword-only parameters.
+        *,
+        hint_format: Format = Format.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
         exception_prefix: str = '',
     ) -> Optional[Pep649HintableAnnotations]:
@@ -254,12 +204,26 @@ if IS_PYTHON_AT_LEAST_3_14:
 
             # If a module defines this hintable...
             if module_name:
+                # Lexically scoped name of this hintable excluding the
+                # fully-qualified name of the module defining this hintable.
+                hintable_basename = get_object_basename_scoped(hintable)
+
+                # Dictionary mapping from this format to the fully-qualified
+                # name of each module defining a hintable to the lexically
+                # scoped name of that hintable to the annotations dictionary of
+                # that hintable previously memoized by a prior call to this
+                # getter if any.
+                module_name_to_hintable_basename_to_annotations = (
+                    _FORMAT_TO_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
+                        hint_format])
+
                 # Dictionary mapping from the lexically scoped name of each
-                # hintable defined by this module previously memoized by a prior
+                # hintable defined by this module to the annotations dictionary
+                # of that hintable previously memoized by a prior
                 # call to this getter if any *OR* the sentinel otherwise (i.e.,
                 # if this getter has yet to be passed such a hintable).
                 hintable_basename_to_annotations = (
-                    _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.get(
+                    module_name_to_hintable_basename_to_annotations.get(
                         module_name, SENTINEL))
 
                 # If such a dictionary was *NOT* memoized...
@@ -267,20 +231,16 @@ if IS_PYTHON_AT_LEAST_3_14:
                     # Default this dictionary to a new empty dictionary,
                     # additionally memoized into this global cache for speed.
                     hintable_basename_to_annotations = (
-                        _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
+                        module_name_to_hintable_basename_to_annotations[
                             module_name]) = {}
                 # Else, this dictionary was memoized.
                 #
                 # In either case, this dictionary now exists.
 
-                # Lexically scoped name of this hintable excluding the
-                # fully-qualified name of the module defining this hintable.
-                hintable_basename = get_object_basename_scoped(hintable)
-
-                # "__annotations__" dunder dictionary for this module previously
-                # memoized by a prior call to this getter if any *OR* the
-                # sentinel otherwise (i.e., if this getter has yet to be passed
-                # this module).
+                # "__annotations__" dunder dictionary for this hintable
+                # previously memoized by a prior call to this getter if any *OR*
+                # the sentinel otherwise (i.e., if this getter has yet to be
+                # passed this hintable).
                 hintable_annotations = hintable_basename_to_annotations.get(  # type: ignore[union-attr]
                     hintable_basename, SENTINEL)
 
@@ -293,6 +253,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                 hintable_annotations = (
                     _get_pep649_hintable_annotations_or_none_uncached(
                         hintable=hintable,
+                        hint_format=hint_format,
                         exception_cls=exception_cls,
                         exception_prefix=exception_prefix,
                     ))
@@ -314,11 +275,16 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Fully-qualified name of this module.
             module_name = get_module_name(hintable)
 
-            #FIXME: [SPEED] Globalize this getter for efficiency, please. *sigh*
+            # Dictionary mapping from this format to the fully-qualified name of
+            # each module to the annotations dictionary of that module
+            # previously memoized by a prior call to this getter if any.
+            module_name_to_annotations = _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS[
+                hint_format]
+
             # "__annotations__" dunder dictionary for this module previously
             # memoized by a prior call to this getter if any *OR* the sentinel
             # otherwise (i.e., if this getter has yet to be passed this module).
-            module_annotations = _MODULE_NAME_TO_ANNOTATIONS.get(
+            module_annotations = module_name_to_annotations.get(
                 module_name, SENTINEL)
 
             # If such a dictionary was memoized, return this dictionary.
@@ -330,12 +296,13 @@ if IS_PYTHON_AT_LEAST_3_14:
             module_annotations = (
                 _get_pep649_hintable_annotations_or_none_uncached(
                     hintable=hintable,
+                    hint_format=hint_format,
                     exception_cls=exception_cls,
                     exception_prefix=exception_prefix,
                 ))
 
             # Cache this dictionary under this module's fully-qualified name.
-            _MODULE_NAME_TO_ANNOTATIONS[module_name] = module_annotations
+            module_name_to_annotations[module_name] = module_annotations
 
             # Return this dictionary.
             return module_annotations
@@ -348,6 +315,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         # exist *NO* safe means of memoizing arbitrary user-defined objects.
         return _get_pep649_hintable_annotations_or_none_uncached(
             hintable=hintable,
+            hint_format=hint_format,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
@@ -390,7 +358,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         original_hintable_annotate = getattr(hintable, '__annotate__', None)
 
         def beartype_hintable_annotate(
-            self, annotate_format: Format) -> Pep649HintableAnnotations:
+            self, hint_format: Format) -> Pep649HintableAnnotations:
             f'''
             Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
             ``__annotate__()`` dunder method, modifying the user-defined
@@ -408,7 +376,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
             Parameters
             ----------
-            annotate_format : Format
+            hint_format : Format
                 Kind of annotation format to be returned. See also :pep:`649`
                 and :pep:`749` for further details.
 
@@ -434,10 +402,10 @@ if IS_PYTHON_AT_LEAST_3_14:
             #* Excise the "_ANNOTATE_FORMATS_VALUELIKE" set global, which no
             #  longer has any demonstrable value. (Get it, "value"? Ugh.)
             #* Refactor this implementation to resemble:
-            #      if annotate_format is Format.FORWARDREF:
+            #      if hint_format is Format.FORWARDREF:
             #          return annotations
             #      elif original_hintable_annotate is not None:
-            #          return original_hintable_annotate(annotate_format)
+            #          return original_hintable_annotate(hint_format)
             #
             #      raise NotImplementedError()
             #
@@ -502,7 +470,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             #   format with the largely useful "Format.FORWARDREF" format.
             #   Although not exactly wonderful, this approach is the best that
             #   we can reasonably do without rendering this API insane.
-            if annotate_format in _ANNOTATE_FORMATS_VALUELIKE:
+            if hint_format in _ANNOTATE_FORMATS_VALUELIKE:
                 return annotations
             # Else, the caller did *NOT* request a value-like format.
             #
@@ -510,7 +478,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             elif (
                 # The caller requested the documentation-oriented string
                 # format *AND*...
-                annotate_format is Format.STRING and
+                hint_format is Format.STRING and
                 # An existing __annotate__() dunder method is set on this
                 # hintable...
                 original_hintable_annotate is not None
@@ -526,7 +494,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                 # defining those hintables intended those hintables to be
                 # annotated as. Those type hints embody those intentions, thus
                 # constituting the most readable description of those hintables.
-                return original_hintable_annotate(annotate_format)
+                return original_hintable_annotate(hint_format)
             # Else, the caller either requested an unknown format *OR* no
             # existing __annotate__() dunder method is set on this hintable.
             #
@@ -725,8 +693,9 @@ if IS_PYTHON_AT_LEAST_3_14:
     '''
 
     # ....................{ PRIVATE ~ globals : dict       }....................
-    _MODULE_NAME_TO_ANNOTATIONS: (
-        Dict[str, Optional[Pep649HintableAnnotations]]) = {}
+    # Initialized by the __init__() function below.
+    _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS: (
+        Dict[Format, Dict[str, Optional[Pep649HintableAnnotations]]]) = {}
     '''
     Dictionary mapping from the fully-qualified name of each module defining one
     or more global variables annotated by type hints to that module's **memoized
@@ -737,8 +706,10 @@ if IS_PYTHON_AT_LEAST_3_14:
     '''
 
 
-    _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS: (
-        Dict[str, Dict[str, Optional[Pep649HintableAnnotations]]]) = {}
+    # Initialized by the __init__() function below.
+    _FORMAT_TO_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS: (
+        Dict[Format, Dict[str, Dict[str, Optional[Pep649HintableAnnotations]]]]
+    ) = {}
     '''
     Dictionary mapping from the fully-qualified name of each module to a nested
     dictionary mapping from the unqualified basename of each:
@@ -758,14 +729,28 @@ if IS_PYTHON_AT_LEAST_3_14:
       class).
     '''
 
+    # ....................{ PRIVATE ~ initializers         }....................
+    def __init__() -> None:
+        '''
+        Initialize this submodule.
+        '''
+
+        # For each format of annotated hints accepted by the
+        # get_pep649_hintable_annotations() and
+        # get_pep649_hintable_annotations_or_none() getters...
+        for hint_format in Format:
+            # Add a mapping to each of the private dictionary caches defined
+            # above from this format to an empty dictionary.
+            _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS[hint_format] = {}
+            _FORMAT_TO_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
+                hint_format] = {}
+
     # ....................{ PRIVATE ~ getters              }....................
     def _get_pep649_hintable_annotations_or_none_uncached(
-        # Mandatory parameters.
         hintable: Pep649Hintable,
-
-        # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintPep649Exception,
-        exception_prefix: str = '',
+        hint_format: Format,
+        exception_cls: TypeException,
+        exception_prefix: str,
     ) -> Optional[Pep649HintableAnnotations]:
         '''
         **Unmemoized annotations** (i.e., possibly empty ``__annotations__``
@@ -787,12 +772,12 @@ if IS_PYTHON_AT_LEAST_3_14:
         ----------
         hintable : Pep649Hintable
             Hintable to be inspected.
-        exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
+        hint_format : Format
+            Format of annotated hints to be returned.
+        exception_cls : TypeException
             Type of exception to be raised in the event of a fatal error.
-            Defaults to :exc:`.BeartypeDecorHintPep649Exception`.
-        exception_prefix : str, default: ''
+        exception_prefix : str
             Human-readable substring prefixing raised exception messages.
-            Defaults to the empty string.
 
         Returns
         -------
@@ -819,166 +804,187 @@ if IS_PYTHON_AT_LEAST_3_14:
         # *OR* "None" otherwise (i.e., if this hintable is unannotated).
         hintable_annotations: Optional[Pep649HintableAnnotations] = None
 
-        # ....................{ PEP 649                    }....................
-        # If the passed hintable defines the PEP 649-compliant __annotate__()
-        # dunder method to be anything *OTHER* than "None", this hintable is
-        # expected to be annotated by one or more type hints.
-        #
-        # Note that:
-        # * The __annotate__() dunder method is guaranteed to exist *ONLY* for
-        #   standard pure-Python hintables. Various other hintables of interest
-        #   (e.g., functions exported by the standard "operator" module) do
-        #   *NOT* necessarily declare this method. Since this getter is commonly
-        #   called in general-purpose contexts where this guarantee does
-        #   *NOT* necessarily hold, we intentionally access this attribute
-        #   safely albeit somewhat more slowly via getattr().
-        # * PEP 649 supports external nullification of the __annotate__() dunder
-        #   method (i.e., by setting this dunder attribute to "None"). Indeed,
-        #   PEP 649 explicitly requires nullification as a means of efficiently
-        #   declaring a hintable to be unannotated:
-        #       If an object has no annotations, __annotate__ should be
-        #       initialized to None, rather than to a function that returns
-        #       an empty dict.
-        # * The __annotate__() dunder method and "__annotations__" dunder
-        #   dictionary invalidate one another. Setting one nullifies the other:
-        #       * Setting o.__annotate__ to a callable invalidates the cached
-        #         annotations dict.
-        #       * Setting o.__annotations__ to a legal value automatically sets
-        #         o.__annotate__ to None.
-        #   Thus, the __annotate__() dunder method being "None" does *NOT* imply
-        #   this hintable to be unannotated. The "__annotations__" dunder
-        #   attribute may be a non-"None" non-empty dictionary, in which case
-        #   this hintable would be annotated. Where annotations are concerned,
-        #   there are now multiple sources of objective truth. This is awful.
-        # * The get_annotations() getter called below safely accepts the
-        #   "Format.FORWARDREF" format *ONLY* when this hintable defines the
-        #   __annotate__() dunder method. If this hintable does *NOT* define
-        #   __annotate__() and get_annotations() is passed "Format.FORWARDREF",
-        #   then get_annotations() raises either:
-        #   * If this hintable at least defines the "__annotations__" dunder
-        #     dictionary but this dictionary contains one or more unquoted
-        #     forward references, a "NameError" exception.
-        #   * Else, a "TypeError" exception.
-        #   However, this higher-level getter is designed exactly to avoid
-        #   raising these sorts of exceptions! Ergo, get_annotations() is safely
-        #   callable only when the __annotate__() dunder method exists.
-        if getattr(hintable, '__annotate__', None) is not None:
-            # Defer to the PEP 649-compliant high-level
-            # annotationlib.get_annotations() getter internally deferring to the
-            # PEP 649-compliant low-level __annotate__() dunder callable rather
-            # than the PEP 484-compliant "__annotations__" dunder attribute.
-            # Why? Because the latter reduces to calling
-            # "get_annotations(hintable, format=Format.VALUE)", which raises a
-            # "NameError" exception if the passed hintable is annotated by one
-            # or more unquoted forward references. This is unacceptable API
-            # design. Yet, this is Python >= 3.14.
+        # ....................{ FORMAT ~ forwardref        }....................
+        # If this format requests that unquoted forward references be wrapped by
+        # "annotationlib.ForwardRef" objects, do *NOT* unconditionally call the
+        # annotationlib.get_annotations() getter. Why? Because that getter
+        # raises unreadable exceptions when passed this format under various
+        # common edge cases. Instead...
+        if hint_format is Format.FORWARDREF:
+            # ....................{ PEP 649                }....................
+            # If this hintable defines the PEP 649-compliant __annotate__()
+            # dunder method to be anything *OTHER* than "None", this hintable is
+            # expected to be annotated by one or more type hints.
             #
             # Note that:
-            # * get_annotations() is guaranteed to *NEVER* return "None". If
-            #   the __annotate__() dunder method and "__annotations__" dunder
-            #   attribute are both "None", then get_annotations() raises a
-            #   "TypeError" exception. However, get_annotations() is the
-            #   canonical means of retrieving annotations under Python >= 3.14.
-            #   Thus, we infer that at most one of but *NOT* both of
-            #   __annotate__() and "__annotations__" may be "None".
-            # * get_annotations() is guaranteed to *ALWAYS* return a new
-            #   dictionary rather than the same value as that of the
-            #   "__annotations__" dunder dictionary when the passed format is
-            #   "Format.FORWARDREF". This inefficiency is baked into the
-            #   get_annotations() implementation and thus *CANNOT* be avoided.
-            hintable_annotations = get_annotations(
-                hintable, format=Format.FORWARDREF)
-        # Else, this hintable does *NOT* define __annotate__().
-
-        # ....................{ PEP 484                    }....................
-        # Return either the PEP 484-compliant "__annotations__" dunder
-        # dictionary if this hintable defines this dictionary *OR* "None"
-        # otherwise (i.e., if this hintable fails to define this dictionary).
-        #
-        # Note that:
-        # * The "__annotations__" dunder attribute is guaranteed to exist *ONLY*
-        #   for standard pure-Python hintables. See above for further details.
-        # * The "__annotations__" dunder attribute is expected to either:
-        #   * If this hintable actually is a hintable, be non-"None". Why?
-        #     Because the __annotate__() dunder method was "None". By the logic
-        #     given above, it should *NEVER* be the case that both
-        #     __annotate__() and "__annotations__" are "None". However,
-        #     __annotate__() was "None". It follows that "__annotations__"
-        #     should now be non-"None" (and thus a valid dictionary).
-        #   * Else, *NOT* exist. Ideally, unhintable objects should *NEVER*
-        #     define the "__annotations__" dunder attribute.
-        #
-        #   Ergo, it follows that this getter returns "None" *ONLY* when this
-        #   hintable is *NOT* actually a hintable. Phew! Sanity is preserved.
-        # * The "__annotations__" dunder attribute is *NOT* safely accessible
-        #   under Python >= 3.14 in the worst case. If this dictionary contains
-        #   one or more type hints subscripted by one or more unquoted forward
-        #   references, then directly accessing this attribute is guaranteed to
-        #   raise a non-human-readable "NameError" exception. Consequently, we
-        #   perform this unsafe fallback *ONLY* when the __annotate__() dunder
-        #   method does *NOT* exist. Although non-ideal, PEP 649 explicitly
-        #   permits callers to set this attribute -- presumably as an unsafe
-        #   means of preserving backward compatibility. That would be fine,
-        #   except that setting this attribute nullifies and thus destroys any
-        #   previously set __annotate__() dunder method! Again:
-        #       * Setting o.__annotations__ to a legal value automatically sets
-        #         o.__annotate__ to None.
-        # * The "__annotations__" dunder dictionary and __annotate__() dunder
-        #   method are strongly coupled. If one is defined, the other should be
-        #   defined. If one is undefined, the other should be undefined. Ergo,
-        #   it should *NEVER* be the case that the __annotate__() dunder method
-        #   is undefined but the "__annotations__" dunder dictionary is defined.
-        #   Ergo, this edge case should *NEVER* arise. Naturally, this edge case
-        #   will often arise. Why? Because nothing prevents third-party packages
-        #   from manually defining "__annotations__" dunder dictionaries on
-        #   arbitrary objects. Although CPython *COULD* prohibit that (e.g., by
-        #   defining the "object.__annotations__" descriptor to do just that),
-        #   CPython currently does *NOT* prohibit that. In fact, no
-        #   "object.__annotations__" descriptor currently exists to even do so.
-        else:
-            # Attempt to fallback to the PEP 484-compliant "__annotations__"
-            # dunder dictionary if this hintable defines this dictionary *OR*
-            # "None" otherwise.
-            try:
-                hintable_annotations = getattr(
-                    hintable, '__annotations__', None)
-            # If accessing this dictionary raises an unreadable "NameError"
-            # exception, this hintable is annotated by one or more type hints
-            # transitively subscripted by one or more unquoted forward
-            # references. However, this hintable's __annotate__() dunder method
-            # has been nullified (i.e., previously set to "None" and thus
-            # destroyed)! In this case, calling the get_annotations() getter
-            # called above would simply re-raise the same unreadable exception:
-            #     NameError: name 'UndefinedType' is not defined
+            # * The __annotate__() dunder method is guaranteed to exist *ONLY*
+            #   for standard pure-Python hintables. Various other hintables of
+            #   interest (e.g., functions exported by the standard "operator"
+            #   module) do *NOT* necessarily declare this method. Since this
+            #   getter is commonly called in general-purpose contexts where this
+            #   guarantee does *NOT* necessarily hold, we intentionally access
+            #   this attribute safely albeit somewhat more slowly via getattr().
+            # * PEP 649 supports external nullification of the __annotate__()
+            #   dunder method (i.e., by setting this dunder attribute to
+            #   "None"). Indeed, PEP 649 explicitly requires nullification as a
+            #   means of efficiently declaring a hintable to be unannotated:
+            #       If an object has no annotations, __annotate__ should be
+            #       initialized to None, rather than to a function that returns
+            #       an empty dict.
+            # * The __annotate__() dunder method and "__annotations__" dunder
+            #   dictionary invalidate one another. Setting one nullifies the
+            #   other:
+            #       * Setting o.__annotate__ to a callable invalidates the
+            #         cached annotations dict.
+            #       * Setting o.__annotations__ to a legal value automatically
+            #         sets o.__annotate__ to None.
+            #   Thus, the __annotate__() dunder method being "None" does *NOT*
+            #   imply this hintable to be unannotated. The "__annotations__"
+            #   dunder attribute may be a non-"None" non-empty dictionary, in
+            #   which case this hintable would be annotated. Where annotations
+            #   are concerned, there are now multiple sources of objective
+            #   truth. This is awful.
+            # * The get_annotations() getter called below safely accepts the
+            #   "Format.FORWARDREF" format *ONLY* when this hintable defines the
+            #   __annotate__() dunder method. If this hintable does *NOT* define
+            #   __annotate__() and get_annotations() is passed
+            #   "Format.FORWARDREF", then get_annotations() raises either:
+            #   * If this hintable at least defines the "__annotations__" dunder
+            #     dictionary but this dictionary contains one or more unquoted
+            #     forward references, a "NameError" exception.
+            #   * Else, a "TypeError" exception.
             #
-            # While uncommon, this edge case arises when a some previously
-            # applied obsolete PEP 649-noncompliant decorator unsafely set the
-            # "__annotations__" dunder dictionary on this hintable, which then
-            # implicitly nullified the __annotate__() dunder method. Since this
-            # constitutes a fatal issue the caller should be informed about,
-            # raise a more readable exception explaining the core issue here.
-            except NameError as exception:
-                # Name of the currently undefined attribute referred to be the
-                # first unquoted forward reference possibly deeply nested in the
-                # first hint annotating this hintable.
-                hint_ref_name = get_name_error_attr_name(exception)
+            #   However, this higher-level getter is designed exactly to avoid
+            #   raising these sorts of exceptions! Ergo, get_annotations() is
+            #   safely callable only when the __annotate__() dunder method
+            #   exists.
+            if getattr(hintable, '__annotate__', None) is not None:
+                # Defer to the PEP 649-compliant high-level
+                # annotationlib.get_annotations() getter internally deferring to
+                # the PEP 649-compliant low-level __annotate__() dunder callable
+                # rather than the PEP 484-compliant "__annotations__" dunder
+                # attribute. Why? Because the latter reduces to calling
+                # "get_annotations(hintable, format=Format.VALUE)", which raises
+                # a "NameError" exception if the passed hintable is annotated by
+                # one or more unquoted forward references. This is unacceptable
+                # API design. Yet, this is Python >= 3.14.
+                #
+                # Note that:
+                # * get_annotations() is guaranteed to *NEVER* return "None". If
+                #   the __annotate__() dunder method and "__annotations__"
+                #   dunder attribute are both "None", then get_annotations()
+                #   raises a "TypeError" exception. However, get_annotations()
+                #   is the canonical means of retrieving annotations under
+                #   Python >= 3.14. Thus, we infer that at most one of but *NOT*
+                #   both of __annotate__() and "__annotations__" may be "None".
+                # * get_annotations() is guaranteed to *ALWAYS* return a new
+                #   dictionary rather than the same value as that of the
+                #   "__annotations__" dunder dictionary when the passed format
+                #   is "Format.FORWARDREF". This inefficiency is baked into
+                #   get_annotations() and thus *CANNOT* be avoided.
+                hintable_annotations = get_annotations(
+                    hintable, format=hint_format)
+            # Else, this hintable does *NOT* define __annotate__().
 
-                # Raise an exception embedding this name.
-                raise exception_cls(
-                    f'{exception_prefix}{_prefix_hintable(hintable)}'
-                    f'unsafely annotated by unresolvable type hints, as:\n'
-                    f'* One or more type hints transitively subscripted by '
-                    f'unquoted forward reference "{hint_ref_name}".\n'
-                    f'* __annotate__() dunder method nullified '
-                    f'(i.e., previously set to "None" and thus destroyed).\n'
-                    f'{repr(hintable)} is presumably decorated by an obsolete '
-                    f'PEP 649-noncompliant decorator unsafely setting the '
-                    f'"__annotations__" dunder attribute, '
-                    f'which no decorators should do under Python >= 3.14. '
-                    f'Consider submitting an upstream issue report to '
-                    f'the authors of that decorator. Politely request that '
-                    f'they join the modern world and support PEP 649.'
-                ) from exception
+            # ....................{ PEP 484                }....................
+            # Return either the PEP 484-compliant "__annotations__" dunder
+            # dictionary if this hintable defines this dictionary *OR* "None"
+            # (i.e., if this hintable fails to define this dictionary).
+            #
+            # Note that:
+            # * The "__annotations__" dunder attribute is guaranteed to exist
+            #   *ONLY* for standard pure-Python hintables. See above.
+            # * The "__annotations__" dunder attribute is expected to either:
+            #   * If this hintable actually is a hintable, be non-"None". Why?
+            #     Because the __annotate__() dunder method was "None". By the
+            #     logic given above, it should *NEVER* be the case that both
+            #     __annotate__() and "__annotations__" are "None". However,
+            #     __annotate__() was "None". It follows that "__annotations__"
+            #     should now be non-"None" (and thus a valid dictionary).
+            #   * Else, *NOT* exist. Ideally, unhintable objects should *NEVER*
+            #     define the "__annotations__" dunder attribute.
+            #
+            #   Ergo, it follows that this getter returns "None" *ONLY* when
+            #   this hintable is *NOT* actually a hintable. Sanity preserved!
+            # * The "__annotations__" dunder attribute is *NOT* safely
+            #   accessible under Python >= 3.14 in the worst case. If this
+            #   dictionary contains one or more type hints subscripted by one or
+            #   more unquoted forward references, then directly accessing this
+            #   attribute is guaranteed to raise a non-human-readable
+            #   "NameError" exception. Consequently, we perform this unsafe
+            #   fallback *ONLY* when the __annotate__() dunder method does *NOT*
+            #   exist. Although non-ideal, PEP 649 explicitly permits callers to
+            #   set this attribute -- presumably as an unsafe means of
+            #   preserving backward compatibility. That would be fine, except
+            #   that setting this attribute nullifies and thus destroys any
+            #   previously set __annotate__() dunder method! Again:
+            #       * Setting o.__annotations__ to a legal value automatically
+            #         sets o.__annotate__ to None.
+            # * The "__annotations__" dunder dictionary and __annotate__()
+            #   dunder method are strongly coupled. If one is defined, the other
+            #   should be defined. If one is undefined, the other should be
+            #   undefined. Ergo, it should *NEVER* be the case that the
+            #   __annotate__() dunder method is undefined but the
+            #   "__annotations__" dunder dictionary is defined. Ergo, this edge
+            #   case should *NEVER* arise. Naturally, this edge case will often
+            #   arise. Why? Because nothing prevents third-party packages from
+            #   manually defining "__annotations__" dunder dictionaries on
+            #   arbitrary objects. Although CPython *COULD* prohibit that (e.g.,
+            #   by defining the "object.__annotations__" descriptor to do just
+            #   that), CPython currently does *NOT* prohibit that. In fact, no
+            #   "object.__annotations__" descriptor exists to even do so.
+            else:
+                # Attempt to fallback to the PEP 484-compliant "__annotations__"
+                # dunder dictionary if this hintable defines this dictionary
+                # *OR* "None" otherwise.
+                try:
+                    hintable_annotations = getattr(
+                        hintable, '__annotations__', None)
+                # If accessing this dictionary raises an unreadable "NameError"
+                # exception, this hintable is annotated by one or more type
+                # hints transitively subscripted by one or more unquoted forward
+                # references. However, this hintable's __annotate__() dunder
+                # method has been nullified (i.e., previously set to "None" and
+                # thus destroyed)! In this case, calling the get_annotations()
+                # getter called above would simply re-raise the same:
+                #     NameError: name 'UndefinedType' is not defined
+                #
+                # While uncommon, this edge case arises when a some previously
+                # applied obsolete PEP 649-noncompliant decorator unsafely set
+                # the "__annotations__" dunder dictionary on this hintable,
+                # which then implicitly nullified the __annotate__() dunder
+                # method. Since this constitutes a fatal issue that the caller
+                # should be informed about, raise a more readable exception.
+                except NameError as exception:
+                    # Name of the currently undefined attribute referred to be
+                    # the first unquoted forward reference possibly deeply
+                    # nested in the first hint annotating this hintable.
+                    hint_ref_name = get_name_error_attr_name(exception)
+
+                    # Raise an exception embedding this name.
+                    raise exception_cls(
+                        f'{exception_prefix}{_prefix_hintable(hintable)}'
+                        f'unsafely annotated by unresolvable type hints, as:\n'
+                        f'* One or more type hints transitively subscripted by '
+                        f'unquoted forward reference "{hint_ref_name}".\n'
+                        f'* __annotate__() dunder method nullified '
+                        f'(i.e., previously set to "None" and thus destroyed).\n'
+                        f'{repr(hintable)} is presumably decorated by a '
+                        f'PEP 649-noncompliant decorator unsafely setting the '
+                        f'"__annotations__" dunder attribute, '
+                        f'which no decorators should do under Python >= 3.14. '
+                        f'Consider submitting an upstream issue report to '
+                        f'the authors of that decorator. Politely request that '
+                        f'they join the modern world and support PEP 649.'
+                    ) from exception
+        # ....................{ FORMAT ~ other             }....................
+        # Else, this is any format *EXCEPT* the format requesting that unquoted
+        # forward references be wrapped by "annotationlib.ForwardRef" objects.
+        # In this case, unconditionally call the annotationlib.get_annotations()
+        # getter, which does *NOT* raise unexpected exceptions and is thus
+        # safely callable when passed this format.
+        else:
+            hintable_annotations = get_annotations(hintable, format=hint_format)
 
         # ....................{ RETURN                     }....................
         # Return this annotations dictionary.
@@ -1097,6 +1103,18 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
     ----------
     hintable : Pep649Hintable
         Hintable to be inspected.
+    hint_format : Format, default: Format.FORWARDREF
+        Format of annotated hints to be returned. Defaults to
+        :attr:`Format.FORWARDREF`, in which case this getter safely encapsulates
+        each otherwise unsafe unquoted forward reference transitively
+        subscripting each hint annotating this hintable with a safe
+        :class:`annotationlib.ForwardRef` object.
+    exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep649Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Returns
     -------
