@@ -13,12 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: [SAFETY] It's no longer safe to return mutable dictionaries from either
-#get_pep649_hintable_annotations() or get_pep649_hintable_annotations_or_none().
-#These getters are both memoized. Even if they weren't, PEP 649 renders
-#"__annotations__" unsafe for mutation. For safety, these getters should now
-#return "FrozenDict" objects. See to it, please. *sigh*
-
 #FIXME: Also, don't neglect to *IMMEDIATELY* excise the
 #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
 
@@ -32,7 +26,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+# from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from beartype._util.text.utiltextlabel import label_beartypeable_kind
 
@@ -48,7 +42,8 @@ def get_pep649_hintable_annotations(
     exception_prefix: str = '',
 ) -> Pep649HintableAnnotations:
     '''
-    **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary
+    **Immutable memoized annotations** (i.e., :class:`.FrozenDict` instance
+    encapsulating the possibly empty ``__annotations__`` dunder dictionary
     mapping from the name of each annotated child object of the passed hintable
     to the type hint annotating that child object) annotating the passed
     **hintable** (i.e., ideally pure-Python object defining the
@@ -57,6 +52,12 @@ def get_pep649_hintable_annotations(
     Python >= 3.14) if this hintable defines the ``__annotations__`` dunder
     dictionary *or* raise an exception otherwise (i.e., if this hintable fails
     to define the ``__annotations__`` dunder dictionary).
+
+    This getter is memoized for efficiency, guaranteeing amortized worst-case
+    :math:`O(1)` constant time complexity. The first call to this getter passed
+    a new hintable annotated by one or more type hints containing :math:`n`
+    unquoted forward references exhibits non-amortized worst-case :math:`O(n)`
+    linear time complexity, justifying the memoization of this getter.
 
     Parameters
     ----------
@@ -753,9 +754,10 @@ if IS_PYTHON_AT_LEAST_3_14:
         exception_prefix: str,
     ) -> Optional[Pep649HintableAnnotations]:
         '''
-        **Unmemoized annotations** (i.e., possibly empty ``__annotations__``
-        dunder dictionary mapping from the name of each annotated child object
-        of the passed hintable to the type hint annotating that child object)
+        **Immutable unmemoized annotations** (i.e., :class:`.FrozenDict`
+        instance encapsulating the possibly empty ``__annotations__`` dunder
+        dictionary mapping from the name of each annotated child object of the
+        passed hintable to the type hint annotating that child object)
         annotating the passed **hintable** (i.e., ideally pure-Python object
         defining the ``__annotations__`` dunder attribute as well as the
         :pep:`649`-compliant ``__annotate__`` dunder method if the active Python
@@ -987,7 +989,21 @@ if IS_PYTHON_AT_LEAST_3_14:
             hintable_annotations = get_annotations(hintable, format=hint_format)
 
         # ....................{ RETURN                     }....................
-        # Return this annotations dictionary.
+        #FIXME: Actually, let's just return this mutable annotations dictionary
+        #as is for the moment. Although non-ideal, this is mostly fine. Why?
+        #Because when "hint_format" is the default "Format.FORWARDREF" (which is
+        #the case for 99.99% of all calls to this getter), this annotations
+        #dictionary is guaranteed to be a copy of the underlying
+        #"__annotations__" dunder dictionary. Mutating a copy is always fine. Of
+        #course, we then memoize this copy. Ordinarily, mutating a memoized
+        #object would absolutely *NOT* be fine. In this case, though, mutating
+        #this memoized object is actually ideal. Why? Because then we only need
+        #to coerce hints once (e.g., via a call to the coerce_func_hint_root()
+        #function), because the result of doing so is then memoized.
+
+        # Return this annotations dictionary, coerced into an immutable frozen
+        # dictionary for safety (e.g., to prevent accidental external mutation).
+        # return FrozenDict(hintable_annotations)
         return hintable_annotations
 # Else, the active Python interpreter targets Python <= 3.13. In this case,
 # trivially defer to the PEP 484-compliant "__annotations__" dunder attribute.
@@ -1083,10 +1099,11 @@ clear_pep649_caches.__doc__ = (
 )
 get_pep649_hintable_annotations_or_none.__doc__ = (
     '''
-    **Memoized annotations** (i.e., possibly empty ``__annotations__`` dunder
-    dictionary mapping from the name of each annotated child object of the
-    passed hintable to the type hint annotating that child object) annotating
-    the passed **hintable** (i.e., ideally pure-Python object defining the
+    **Immutable memoized annotations** (i.e., :class:`.FrozenDict` instance
+    encapsulating the possibly empty ``__annotations__`` dunder dictionary
+    mapping from the name of each annotated child object of the passed hintable
+    to the type hint annotating that child object) annotating the passed
+    **hintable** (i.e., ideally pure-Python object defining the
     ``__annotations__`` dunder attribute as well as the :pep:`649`-compliant
     ``__annotate__`` dunder method if the active Python interpreter targets
     Python >= 3.14) if this hintable defines the ``__annotations__`` dunder
@@ -1108,7 +1125,8 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
         :attr:`Format.FORWARDREF`, in which case this getter safely encapsulates
         each otherwise unsafe unquoted forward reference transitively
         subscripting each hint annotating this hintable with a safe
-        :class:`annotationlib.ForwardRef` object.
+        :class:`annotationlib.ForwardRef` object. See also the higher-level
+        :func`.get_pep649_hintable_annotations` getter for further details.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep649Exception`.
