@@ -314,8 +314,8 @@ def _init() -> None:
     # ..................{ INITIALIZATION                     }..................
     # For the fully-qualified name of each quasi-standard typing module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # For each deprecated PEP 484-compliant typing attribute name,
-        # add that attribute relative to this module to this set.
+        # For each deprecated PEP 484-compliant typing attribute name, add that
+        # attribute relative to this module to this set.
         for typing_attr_basename in (
             _HINT_PEP484_TYPING_ATTR_BASENAMES_DEPRECATED):
             # print(f'[datapeprepr] Registering deprecated "{typing_module_name}.{typing_attr_basename}"...')

@@ -151,6 +151,9 @@ HintSignFinal           = _make_typing_hint_sign('Final')
 HintSignForwardRef      = _make_typing_hint_sign('ForwardRef')
 # Generic  <-- ambiguous between subscripted and unsubscripted variants (disambiguated below)
 HintSignLiteral         = _make_typing_hint_sign('Literal')
+
+#FIXME: Excise this *AFTER* dropping Python <= 3.13 support. Python >= 3.14
+#unifies all unions under "HintSignUnion", thankfully. Phew!
 HintSignOptional        = _make_typing_hint_sign('Optional')
 HintSignParamSpec       = _make_typing_hint_sign('ParamSpec')
 HintSignParamSpecArgs   = _make_typing_hint_sign('ParamSpecArgs')

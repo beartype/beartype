@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 
 # ....................{ TESTERS                            }....................
 def is_hint_pep589(hint: object) -> bool:
@@ -108,11 +109,24 @@ def is_hint_pep589(hint: object) -> bool:
     )
 
 # ....................{ PRIVATE ~ globals                  }....................
+# The is_hint_pep589() tester defined above uniquely identifies "TypedDict"
+# subclasses as types declaring *ALL* of:
 _TYPED_DICT_UNIQUE_ATTR_NAMES = frozenset((
-    '__annotations__',
-    '__total__',
-    '__required_keys__',
+    (
+        # If the active Python interpreter targets Python >= 3.14, this PEP
+        # 649-compliant dunder attribute. CPython now dynamically creates the
+        # "__annotations__" dunder dictionary on first access. Ergo, the
+        # "__annotations__" dunder dictionary is no longer guaranteed to exist
+        # as an item of the "__dict__" dunder dictionary of "TypedDict" types.
+        '__annotate_func__'
+        if IS_PYTHON_AT_LEAST_3_14 else
+        # Else, the active Python interpreter targets Python <= 3.13. In this
+        # case, this PEP 484-compliant dunder attribute.
+        '__annotations__'
+    ),
     '__optional_keys__',
+    '__required_keys__',
+    '__total__',
 ))
 '''
 Frozen set of the names of all class attributes universally unique to *all*

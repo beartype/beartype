@@ -391,37 +391,20 @@ if IS_PYTHON_AT_LEAST_3_14:
             #members and reference those globals instead below. This method
             #*COULD* be frequently called enough to warrant micro-optimization.
 
-            #FIXME: *NO*. Sadly, it turns out that the "Format.VALUE" format has
-            #demonstrable real-world value. See our is_subhint() implementation
-            #for PEP 589-compliant "TypedDict" subclasses, which *ABSOLUTELY*
-            #requires this format. Succinctly, the "Format.VALUE" format enables
-            #callers to detect whether an annotations dictionary contains one or
-            #more unquoted forward references, which then enables callers to
-            #conditionally modify runtime behaviour accordingly.
-            #
-            #In other words:
-            #* Excise the "_ANNOTATE_FORMATS_VALUELIKE" set global, which no
-            #  longer has any demonstrable value. (Get it, "value"? Ugh.)
-            #* Refactor this implementation to resemble:
-            #      if hint_format is Format.FORWARDREF:
-            #          return annotations
-            #      elif original_hintable_annotate is not None:
-            #          return original_hintable_annotate(hint_format)
-            #
-            #      raise NotImplementedError()
-            #
-            #Surprisingly trivial, actually. That's a bit simpler but more
-            #broadly useful and specific than the current heavy-handed tactic.
-
-            # If the caller requested a value-like format, trivially return the
-            # "__annotations__" dunder dictionary passed to the parent
+            # If the caller requested the default "Format.FORWARDREF" format,
+            # trivially return the "__annotations__" dunder dictionary passed by
+            # the original earlier caller to the parent
             # set_pep649_hintable_annotations() setter of this closure.
             #
             # If this dictionary contains:
             # * *NO* unquoted forward references, this dictionary already
-            #   complies with the "Format.VALUE" format.
-            # * One or more unquoted forward references, this dictionary
-            #   already complies with the "Format.FORWARDREF" format. Why? A
+            #   complies with the "Format.VALUE" format. However, the
+            #   "Format.FORWARDREF" format simply reduces to "Format.VALUE" if a
+            #   dictionary contains *NO* unquoted forward references. Ergo, this
+            #   dictionary also complies with the "Format.FORWARDREF" format
+            #   (which implements the superset of "Format.VALUE").
+            # * One or more unquoted forward references, this dictionary already
+            #   complies with the default "Format.FORWARDREF" format. Why? A
             #   complex and non-obvious chain of casuistry. Bear with us. If
             #   this dictionary did *NOT* already comply with the
             #   "Format.FORWARDREF" format, then (by process of elimination)
@@ -435,9 +418,7 @@ if IS_PYTHON_AT_LEAST_3_14:
             #   this dictionary *MUST* necessarily already comply with the
             #   "Format.FORWARDREF" format.
             #
-            # There now exist four possible cases:
-            # * The caller passed "Format.VALUE" and this dictionary already
-            #   complies with the "Format.VALUE" format. *WONDERFUL!*
+            # There now exist two possible cases:
             # * The caller passed "Format.FORWARDREF" and this dictionary
             #   complies with the "Format.FORWARDREF" format. *WONDERFUL!*
             # * The caller passed "Format.FORWARDREF" and this dictionary only
@@ -471,39 +452,20 @@ if IS_PYTHON_AT_LEAST_3_14:
             #   format with the largely useful "Format.FORWARDREF" format.
             #   Although not exactly wonderful, this approach is the best that
             #   we can reasonably do without rendering this API insane.
-            if hint_format in _ANNOTATE_FORMATS_VALUELIKE:
+            if hint_format is Format.FORWARDREF:
                 return annotations
-            # Else, the caller did *NOT* request a value-like format.
+            # Else, the caller did *NOT* request the default "Format.FORWARDREF"
+            # format.
             #
-            # If...
-            elif (
-                # The caller requested the documentation-oriented string
-                # format *AND*...
-                hint_format is Format.STRING and
-                # An existing __annotate__() dunder method is set on this
-                # hintable...
-                original_hintable_annotate is not None
-            ):
-                # Then defer to the existing __annotate__() dunder method set on
-                # this hintable. While this beartype-specific monkey-patch of
-                # that method *COULD* attempt to manually redefine this format
-                # without simply deferring to that method, doing so would be
-                # both non-trivial and undesirable. Callers requesting
-                # documentation are ultimately requesting human-readable string
-                # representations of the *ORIGINAL* type hints annotating this
-                # hintable. Those type hints are what the third-party packages
-                # defining those hintables intended those hintables to be
-                # annotated as. Those type hints embody those intentions, thus
-                # constituting the most readable description of those hintables.
+            # If an existing __annotate__() dunder method was previously defined
+            # on this hintable...
+            elif original_hintable_annotate is not None:
                 return original_hintable_annotate(hint_format)
-            # Else, the caller either requested an unknown format *OR* no
-            # existing __annotate__() dunder method is set on this hintable.
-            #
-            # In the latter case, this beartype-specific implementation of that
-            # method *MUST* either:
+            # Else, *NO* existing __annotate__() dunder method was previously
+            # defined on this hintable. This beartype-specific implementation of
+            # that method *MUST* now either:
             # * Attempt to manually redefine this format. Although feasible,
-            #   doing so would be both non-trivial and undesirable. See above
-            #   for further discussion.
+            #   doing so would be non-trivial and undesirable. See above.
             # * Raise the builtin "NotImplementedError" exception. The caller is
             #   then expected to manually implement this format. Thankfully, the
             #   high-level call_annotate_function() and get_annotations()
@@ -683,16 +645,6 @@ if IS_PYTHON_AT_LEAST_3_14:
             for attr_name, attr_hint in annotations.items():
                 hintable.__annotations__[attr_name] = attr_hint
 
-    # ....................{ PRIVATE ~ globals              }....................
-    _ANNOTATE_FORMATS_VALUELIKE = frozenset((Format.FORWARDREF, Format.VALUE,))
-    '''
-    Frozen set of all :class:`.Format` enumeration members that are
-    **value-like** (i.e., which cause ``__annotate__()`` dunder methods passed
-    these members to return standard ``__annotations__`` dunder dictionaries
-    mapping from the names of hintable attributes to the type hints annotating
-    those attributes).
-    '''
-
     # ....................{ PRIVATE ~ globals : dict       }....................
     # Initialized by the __init__() function below.
     _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS: (
@@ -731,7 +683,7 @@ if IS_PYTHON_AT_LEAST_3_14:
     '''
 
     # ....................{ PRIVATE ~ initializers         }....................
-    def __init__() -> None:
+    def _init() -> None:
         '''
         Initialize this submodule.
         '''
@@ -745,6 +697,9 @@ if IS_PYTHON_AT_LEAST_3_14:
             _FORMAT_TO_MODULE_NAME_TO_ANNOTATIONS[hint_format] = {}
             _FORMAT_TO_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
                 hint_format] = {}
+
+    # Initialize this submodule.
+    _init()
 
     # ....................{ PRIVATE ~ getters              }....................
     def _get_pep649_hintable_annotations_or_none_uncached(
@@ -1153,6 +1108,68 @@ set_pep649_hintable_annotations.__doc__ = (
     attribute as well as the :pep:`649`-compliant ``__annotate__`` dunder method
     if the active Python interpreter targets Python >= 3.14) to the passed
     dictionary.
+
+    Caveats
+    -------
+    **This setter preserves unmodified the existing** :attr:`Format.VALUE`
+    **and** :attr:`Format.STRING` **formats of the** ``__annotations__``
+    **dunder dictionary of the passed hintable,** as originally created and
+    returned by the original ``__annotate__`` dunder method bound to this
+    hintable. This setter *only* modifies the :attr:`Format.FORWARDREF` format.
+    Why? Because there exist two distinct cases, which although distinct imply
+    the same conclusion:
+
+    * When the caller of an ``__annotate__`` dunder method passes the
+      :attr:`Format.VALUE` format, they expect that method to raise a
+      :exc:`NameError` exception if the ``__annotations__`` dunder dictionary
+      underlying that call contains one or more unquoted forward references.
+      Indeed, this is the *only* efficient (and thus reasonable) means of
+      detecting whether a hintable is annotated by unquoted forward references.
+      This is also the only valid use case for passing the :attr:`Format.VALUE`
+      format. Although this valid use case is of marginal utility, it is still
+      of utility and *must* be preserved as such. But the passed ``annotations``
+      dictionary exists (rather than raising a :exc:`NameError` exception) and
+      thus contains *no* unquoted forward references! Ergo, this ``annotations``
+      dictionary *cannot* be returned if the caller passes the
+      :attr:`Format.VALUE` format. Doing so would destroy this format's only
+      valid use case, which can only be preserved by deferring to the original
+      ``__annotate__`` dunder method bound to this hintable.
+    * When the caller of an ``__annotate__`` dunder method passes the
+      :attr:`Format.STRING` format, they expect that method to return
+      human- and machine-readable string representations of the *original* type
+      hints annotating this hintable. These strings are expected to be readably
+      concise and machine-comparable. These strings are, in particular, *not*
+      expected to contain **forward reference proxies** (e.g., either standard
+      :class:`annotationlib.ForwardRef` objects or non-standard
+      beartype-specific objects behaving similarly). Forward reference proxies
+      typically have verbose string representations, confounding
+      human-readability. They also do *not* necessarily compare equal to other
+      objects, confounding machine-comparability. In short, the string
+      representation of ``__annotations__`` dunder dictionaries should contain
+      *no* forward reference proxies. However, the dictionaries passed to this
+      setter often contain forward reference proxies! Ergo, this ``annotations``
+      dictionary *cannot* be returned if the caller passes the
+      :attr:`Format.STRING` format. Doing so would destroy this format's most
+      common use cases, which can only be preserved by deferring to the original
+      ``__annotate__`` dunder method bound to this hintable.
+
+      More generally (and ignoring the above concerns about forward reference
+      proxies), we can say that callers requesting documentation are ultimately
+      requesting human-readable string representations of the *original* type
+      hints annotating this hintable. Those type hints are what the third-party
+      packages defining those hintables intended those hintables to be annotated
+      as. Those type hints embody those intentions, thus constituting the most
+      readable description of those hintables.
+
+    **This setter replaces the original** ``__annotate__`` **dunder method bound
+    to this hintable,** monkey-patching that method with a new ``__annotate__``
+    dunder method that returns either:
+
+    * If the caller passed the :attr:`Format.FORWARDREF` format, the
+      ``annotations`` parameter passed to this higher-level setter.
+    * Else (e.g., if the caller passed either the :attr:`Format.VALUE` or
+      :attr:`Format.STRING` formats), the result of calling the original
+      ``__annotate__`` dunder method bound to this hintable.
 
     Parameters
     ----------

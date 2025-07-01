@@ -19,6 +19,7 @@ from beartype._data.hint.datahintpep import (
     TupleHints,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 
 # ....................{ FACTORIES                          }....................
 @callable_cached
@@ -65,5 +66,23 @@ def make_hint_pep484_union(hints: TupleHints) -> Hint:
         raise BeartypeDecorHintPep484Exception('"hints" tuple empty.')
     # Else, this tuple contains one or more child type hints.
 
-    # These are the one-liners of our lives.
-    return Union.__getitem__(hints)  # type: ignore[return-value]
+    # Return either...
+    return (
+        # If the active Python interpreter targets Python >= 3.14, the PEP
+        # 484-compliant union dynamically created by deferring to the C-based
+        # typing.Union.__class_getitem__() class method.
+        #
+        # Note that this method does *NOT* exist under older Python versions.
+        Union.__class_getitem__(hints)  # type: ignore[attr-defined]
+        if IS_PYTHON_AT_LEAST_3_14 else
+        # Else, the active Python interpreter targets Python <= 3.13. In this
+        # case, the PEP 484-compliant union dynamically created by deferring to
+        # the pure-Python typing.Union.__getitem__() instance method.
+        #
+        # Note that this method still exists but is *NOT* safely callable under
+        # newer Python versions, where doing so raises "TypeError" exceptions
+        # resembling:
+        #     TypeError: descriptor '__getitem__' requires a 'typing.Union'
+        #     object but received a 'tuple'
+        Union.__getitem__(hints)  # type: ignore[return-value]
+    )

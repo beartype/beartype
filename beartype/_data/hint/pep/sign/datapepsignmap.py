@@ -232,8 +232,8 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
     # Standard module containing common low-level C-based types.
     'types': {
         # ..................{ PEP 604                        }..................
-        # PEP 604-compliant |-style unions (e.g., "int | float") are internally
-        # implemented as instances of the low-level C-based "types.UnionType"
+        # Python <= 3.13 implements PEP 604-compliant |-style unions (e.g., "int
+        # | float") as instances of the low-level C-based "types.UnionType"
         # type. Thankfully, these unions are semantically interchangeable with
         # comparable PEP 484-compliant unions (e.g., "typing.Union[int,
         # float]"); both kinds expose equivalent dunder attributes (e.g.,
@@ -255,9 +255,28 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
         # * Regardless of the current Python version,
         #   "typing_extensions.NewType" type hints remain implemented in the
         #   manner of Python < 3.10 -- which is to say, as closures of that
-        #   function. Ergo, . See also:
+        #   function. See also:
         #       https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
         'NewType': HintSignNewType,
+
+        # ..................{ PEP 604                        }..................
+        # Python >= 3.14 implements both PEP 484-compliant old-school unions
+        # (e.g., "typing.Union[int, float]") *AND* PEP 604-compliant new-school
+        # unions (e.g., "int | float") as instances of the low-level C-based
+        # "typing.Union" type. Doing so unifies the syntactic treatment of
+        # unions, mildly simplifying union detection: e.g.,
+        #     >>> from typing import Optional, Union
+        #
+        #     >>> type(int | None)
+        #     <class 'typing.Union'>  # <-- *GOOD*
+        #     >>> type(Union[int, None])
+        #     <class 'typing.Union'>  # <-- *GOOD*
+        #     >>> type(Optional[int])
+        #     <class 'typing.Union'>  # <-- *GOOD*
+        #
+        #     >>> int | None == Optional[int] == Union[int, None]
+        #     True  # <-- woah. CPython mad lads finally did it, huh?
+        'Union': HintSignUnion,
     },
 })
 '''

@@ -136,6 +136,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_15  as _IS_PYTHON_AT_MOST_3_15,
     IS_PYTHON_AT_MOST_3_13  as _IS_PYTHON_AT_MOST_3_13,
+    IS_PYTHON_AT_LEAST_3_14 as _IS_PYTHON_AT_LEAST_3_14,
     IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
     IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
@@ -261,6 +262,12 @@ if _IS_PYTHON_AT_LEAST_3_10:
                     get_protocol_members as get_protocol_members,  # pyright: ignore
                     is_protocol as is_protocol,  # pyright: ignore
                 )
+
+                # If the active Python interpreter targets Python >= 3.14...
+                if _IS_PYTHON_AT_LEAST_3_14:
+                    from typing import (  # type: ignore[attr-defined]
+                        evaluate_forward_ref as evaluate_forward_ref,  # pyright: ignore
+                    )
 
 # ....................{ IMPORTS ~ version : at most        }....................
 # Import all public attributes of the "typing" module both available under at
