@@ -147,6 +147,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignValuesView,
     )
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_14,
         IS_PYTHON_AT_MOST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
     )
@@ -249,6 +250,17 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     )
 
     # ....................{ CONSTANTS ~ forwardref         }....................
+    # Sign uniquely identifying "typing.Optional[...]" hints. Specifically:
+    # * Under Python >= 3.14, "typing.Optional[...]" hints trivially reduce to
+    #   "typing.Union[...]" hints additionally subscripted by "None" and are
+    #   thus identified by the "HintSignUnion" sign.
+    # * Under Python <= 3.13, "typing.Optional[...]" hints do *NOT* reduce to
+    #   "typing.Union[...]" hints additionally subscripted by "None". The two
+    #   have distinct string representations and are thus partially distinct.
+    #   Ergo, the former are thus identified by the "HintSignOptional" sign.
+    HINT_SIGN_OPTIONAL = (
+        HintSignUnion if IS_PYTHON_AT_LEAST_3_14 else HintSignOptional)
+
     # Fully-qualified classname of an arbitrary class guaranteed to be
     # importable.
     FORWARDREF_CLASSNAME = 'beartype_test.a00_unit.data.data_type.Subclass'
@@ -3938,6 +3950,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         # Ignorable unsubscripted "Optional" attribute.
         HintPepMetadata(
             hint=Optional,
+            # The unsubscripted "Optional" attribute is *ALWAYS* identified by
+            # its own unique sign, even under Python >= 3.14 where subscripted
+            # "Optional[...]" hints are identified by the "HintSignUnion" sign.
             pep_sign=HintSignOptional,
             typehint_cls=UnionTypeHint,
             is_ignorable=True,
@@ -3949,7 +3964,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             # Subscriptions of the "Optional" attribute reduce to
             # fundamentally different unsubscripted typing attributes depending
             # on Python version.
-            pep_sign=HintSignOptional,
+            pep_sign=HINT_SIGN_OPTIONAL,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             typehint_cls=UnionTypeHint,
             piths_meta=(

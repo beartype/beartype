@@ -16,6 +16,7 @@ from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype.typing import (
     Any,
     Optional,
+    Union,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
@@ -96,6 +97,12 @@ def get_hint_pep_args(hint: object) -> tuple:
           that attribute.
         * Else, the empty tuple.
 
+    Raises
+    ------
+    BeartypeDecorHintPepException
+        If this hint defines an ``__args__`` dunder attribute whose value is
+        *not* a tuple.
+
     Examples
     --------
     .. code-block:: pycon
@@ -109,9 +116,9 @@ def get_hint_pep_args(hint: object) -> tuple:
        (int, str, typing.Dict[str, str])
     '''
 
-    # Tuple of the zero or more child type hints subscripting this hint if
-    # this hint defines of the "__args__" dunder attribute *OR* "None"
-    # otherwise (i.e., if this hint fails to define this attribute).
+    # Tuple of the zero or more child type hints subscripting this hint if this
+    # hint defines of the "__args__" dunder attribute *OR* "None" otherwise
+    # (i.e., if this hint fails to define this attribute).
     hint_args = getattr(hint, '__args__', None)
 
     # If this hint does *NOT* define this attribute, return the empty tuple.
@@ -119,31 +126,50 @@ def get_hint_pep_args(hint: object) -> tuple:
         return ()
     # Else, this hint defines this attribute.
     #
+    # If this attribute is *NOT* a tuple...
+    elif not isinstance(hint_args, tuple):
+        # If this hint is the unsubscripted "typing.Union" hint semantically
+        # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
+        # hint is a C-based type whose "__args__" dunder attribute is
+        # implemented as a C-based slotted class attribute of some obscure type
+        # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
+        # valid hints, this "__args__" implementation is *TECHNICALLY* also
+        # valid albeit semantically meaningless. In this case, simply return the
+        # empty tuple.
+        if hint is Union:
+            return ()
+        # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
+        # this case, raise an exception.
+        else:
+            raise BeartypeDecorHintPepException(
+                f'PEP-noncompliant hint {repr(hint)} '
+                f'"__args__" dunder attribute {repr(hint_args)} '
+                f'invalid (i.e., not tuple of child hints).'
+            )
+    # Else, this attribute is a tuple.
     # If this hint is subscripted by zero child type hints, this hint only
-    # superficially appears to be unsubscripted but was actually subscripted
-    # by the empty tuple (e.g., "tuple[()]", "typing.Tuple[()]"). Why?
-    # Because:
+    # superficially appears to be unsubscripted but was actually subscripted by
+    # the empty tuple (e.g., "tuple[()]", "typing.Tuple[()]"). Why? Because:
     # * Python 3.11 made the unfortunate decision of ambiguously conflating
-    #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type
-    #   hints subscripted by the empty tuple, preventing downstream
-    #   consumers from reliably distinguishing these two orthogonal cases.
+    #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type hints
+    #   subscripted by the empty tuple, preventing downstream consumers from
+    #   reliably distinguishing these two orthogonal cases.
     # * Python 3.9 made a similar decision but constrained to only PEP
     #   585-compliant empty tuple type hints (i.e., "tuple[()]"). PEP
     #   484-compliant empty tuple type hints (i.e., "typing.Tuple[()]")
-    #   continued to correctly declare an "__args__" dunder attribute of
-    #   "((),)" until Python 3.11.
+    #   continued to correctly declare an "__args__" dunder attribute of "((),)"
+    #   until Python 3.11.
     #
-    # Disambiguate these two cases on behalf of callers by returning a
-    # 1-tuple containing only the empty tuple (i.e., "((),)") rather than
-    # returning the empty tuple (i.e., "()").
+    # Disambiguate these two cases on behalf of callers by returning a 1-tuple
+    # containing only the empty tuple (i.e., "((),)") rather than returning the
+    # empty tuple (i.e., "()").
     elif not hint_args:
         return _HINT_ARGS_EMPTY_TUPLE
-    # Else, this hint is either subscripted *OR* is unsubscripted but not
-    # PEP 585-compliant.
+    # Else, this hint is either subscripted *OR* is unsubscripted but not PEP
+    # 585-compliant.
 
     # In this case, return this tuple as is.
     return hint_args
-
 
 # ....................{ GETTERS ~ typevars                 }....................
 def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
@@ -214,16 +240,11 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
           value of that attribute.
         * Else, the empty tuple.
 
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a PEP-compliant type hint
-        parametrized by one or more type variables.
+    Raises
+    ------
+    BeartypeDecorHintPepException
+        If this hint defines a ``__parameters__`` dunder attribute whose value
+        is *not* a tuple.
 
     Examples
     --------
@@ -252,13 +273,13 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
     # unsubscripted generic) *OR* "None" otherwise (e.g., is such a generic).
-    hint_pep_typevars = getattr(hint, '__parameters__', None)
+    hint_typevars = getattr(hint, '__parameters__', None)
 
     # If this object defines *NO* such attribute, synthetically reconstruct
     # this attribute for PEP 585-compliant unsubscripted generics. Notably...
-    if hint_pep_typevars is None:
+    if hint_typevars is None:
         # Reconstruct this attribute as either...
-        hint_pep_typevars = (
+        hint_typevars = (
             # If this hint is a PEP 585-compliant unsubscripted generic, the
             # tuple of all type variables parametrizing all pseudo-superclasses
             # of this generic;
@@ -269,9 +290,30 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
             ()
         )
     # Else, this object defines this attribute.
+    #
+    # If this attribute is *NOT* a tuple...
+    elif not isinstance(hint_typevars, tuple):
+        # If this hint is the unsubscripted "typing.Union" hint semantically
+        # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
+        # hint is a C-based type whose "__parameters__" dunder attribute is
+        # implemented as a C-based slotted class attribute of some obscure type
+        # under Python >= 3.14. Since unsubscripted "typing.Union" hints are
+        # valid hints, this "__parameters__" implementation is *TECHNICALLY*
+        # also valid albeit semantically meaningless. In this case, simply
+        # return the empty tuple.
+        if hint is Union:
+            return ()
+        # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
+        # this case, raise an exception.
+        else:
+            raise BeartypeDecorHintPepException(
+                f'PEP-noncompliant hint {repr(hint)} '
+                f'"__parameters__" dunder attribute {repr(hint_typevars)} '
+                f'invalid (i.e., not tuple of child hints).'
+            )
 
     # Return this attribute.
-    return hint_pep_typevars
+    return hint_typevars
 
 # ....................{ GETTERS ~ origin                   }....................
 def get_hint_pep_origin(
@@ -711,7 +753,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
 _HINT_ARGS_EMPTY_TUPLE = ((),)
 '''
 Tuple containing only the empty tuple, to be returned from the
-:func:`get_hint_pep_args` getter when passed either:
+:func:`.get_hint_pep_args` getter when passed either:
 
 * A :pep:`585`-compliant type hint subscripted by the empty tuple (e.g.,
   ``tuple[()]``).

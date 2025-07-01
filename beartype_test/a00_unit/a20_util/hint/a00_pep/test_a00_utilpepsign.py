@@ -33,13 +33,17 @@ def test_get_hint_pep_sign(hints_pep_meta) -> None:
     from beartype.roar import BeartypeDecorHintPepSignException
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
-        HINTS_NONPEP, NonpepCustomFakeTyping)
+        HINTS_NONPEP,
+        NonpepCustomFakeTyping,
+    )
     from pytest import raises
 
     # Assert this getter returns the expected unsubscripted "typing" attribute
     # for all PEP-compliant type hints associated with such an attribute.
     for hint_pep_meta in hints_pep_meta:
-        assert get_hint_pep_sign(hint_pep_meta.hint) is hint_pep_meta.pep_sign
+        # Localize this hint to simplify debugging.
+        hint = hint_pep_meta.hint
+        assert get_hint_pep_sign(hint) is hint_pep_meta.pep_sign
 
     # Assert this getter raises the expected exception for an instance of a
     # class erroneously masquerading as a "typing" class.

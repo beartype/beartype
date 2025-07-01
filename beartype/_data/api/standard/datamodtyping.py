@@ -26,6 +26,15 @@ This set includes both the standard :mod:`typing` module and comparatively
 more standard :mod:`beartype.typing` submodule while excluding the third-party
 :mod:`typing_extensions` module, whose runtime behaviour often significantly
 diverges in non-standard fashion from that of the aforementioned modules.
+
+This set excludes:
+
+* The standard :mod:`annotationlib` module. Technically, that module *does* now
+  define the single :class:`annotationlib.ForwardRef` type whose instances are
+  valid hints. However, no other attributes defined by that module are also
+  valid hints. Moreover, end users are unlikely to actually use
+  :class:`annotationlib.ForwardRef` instances as hints. Including this module
+  here would thus do considerably more harm than good.
 '''
 
 

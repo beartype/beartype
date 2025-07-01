@@ -214,8 +214,8 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
         # ..................{ PEP (649|749)                  }..................
         # The "annotationlib.ForwardRef" type is now the canonical location of
         # this type under Python >= 3.14, which previously resided at
-        # "typing.ForwardRef". The latter still exists but is simply a lazy
-        # alias of the former.
+        # "typing.ForwardRef". The latter still exists but simply as a lazy
+        # shallow alias of the former.
         'ForwardRef': HintSignForwardRef,
     },
 
@@ -231,6 +231,7 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
     # ..................{ TYPES                              }..................
     # Standard module containing common low-level C-based types.
     'types': {
+        #FIXME: Excise this *AFTER* dropping Python 3.13 support, please.
         # ..................{ PEP 604                        }..................
         # Python <= 3.13 implements PEP 604-compliant |-style unions (e.g., "int
         # | float") as instances of the low-level C-based "types.UnionType"
@@ -259,7 +260,7 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
         #       https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
         'NewType': HintSignNewType,
 
-        # ..................{ PEP 604                        }..................
+        # ..................{ PEP (484|604)                  }..................
         # Python >= 3.14 implements both PEP 484-compliant old-school unions
         # (e.g., "typing.Union[int, float]") *AND* PEP 604-compliant new-school
         # unions (e.g., "int | float") as instances of the low-level C-based
@@ -579,14 +580,14 @@ def _init() -> None:
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
                 typing_module_name][type_basename] = hint_sign
 
-        # If the active Python interpreter targets Python 3.11.x, identify PEP 646-
-        # and 692-compliant hints that are instances of the private
+        # If the active Python interpreter targets Python 3.11, identify PEP
+        # 646- and 692-compliant hints that are instances of the private
         # "typing._UnpackGenericAlias" as "Unpack[...]" hints.
         #
-        # Note that this fragile violation of privacy encapsulation is *ONLY* needed
-        # under Python 3.11.x, where the machine-readable representation of unpacked
-        # type variable tuples is ambiguously idiosyncratic and thus *NOT* a
-        # reasonable heuristic for detecting such unpacking: e.g.,
+        # Note that this fragile violation of privacy encapsulation is *ONLY*
+        # needed under Python 3.11, where the machine-readable representation of
+        # unpacked type variable tuples is ambiguously idiosyncratic and thus
+        # *NOT* a reasonable heuristic for detecting such unpacking: e.g.,
         #     $ python3.11
         #     >>> from typing import TypeVarTuple
         #     >>> Ts = TypeVarTuple('Ts')
@@ -603,7 +604,7 @@ def _init() -> None:
         if IS_PYTHON_3_11:
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
                 typing_module_name]['_UnpackGenericAlias'] = HintSignUnpack
-        # Else, the active Python interpreter does *NOT* target Python 3.11.x.
+        # Else, the active Python interpreter does *NOT* target Python 3.11.
 
     # ..................{ DEBUGGING                          }..................
     # Uncomment as needed to display the contents of these objects.

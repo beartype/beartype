@@ -64,6 +64,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTextIO,
     HintSignTuple,
     HintSignType,
+    HintSignUnion,
     HintSignValuesView,
 )
 
@@ -87,6 +88,25 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
     "<class 'typing.IO'>":       HintSignPep484585GenericUnsubscripted,
     "<class 'typing.BinaryIO'>": HintSignBinaryIO,
     "<class 'typing.TextIO'>":   HintSignTextIO,
+
+    # ..................{ PEP (484|604)                      }..................
+    # Python >= 3.14 implements both PEP 484-compliant old-school unions
+    # (e.g., "typing.Union[int, float]") *AND* PEP 604-compliant new-school
+    # unions (e.g., "int | float") as instances of the low-level C-based
+    # "typing.Union" type. This has two implications:
+    # * The unsubscripted "typing.Union" hint semantically equivalent to the
+    #   subscripted "typing.Union[typing.Any]" hint is thus identical to the
+    #   C-based "typing.Union" type, which is then also a valid hint.
+    # * The type of *ALL* union hints (e.g., "type(typing.Union[str, float])",
+    #   "type(int | bytes)") is invalid as a type hint but remains
+    #   indistinguishable at runtime from the unsubscripted "typing.Union" hint.
+    #   This implies that beartype is no longer capable of flagging the type of
+    #   union hints as an invalid hint, which implies that beartype now emits
+    #   false negatives for this type. That's not great, but also not the worst
+    #   thing to ever happen to beartype. Pragmatically, there should exist *NO*
+    #   real-world attempts by end users to use the union type as a hint. These
+    #   false negatives should *NEVER* arise in real-world usage.
+    "<class 'typing.Union'>": HintSignUnion,
 }
 '''
 Dictionary mapping from the **possibly unsubscripted PEP-compliant type hint
