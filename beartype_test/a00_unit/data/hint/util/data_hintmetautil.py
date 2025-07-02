@@ -113,7 +113,7 @@ def iter_hints_piths_meta(hints_meta) -> (
     from beartype_test._util.pytcontext import noop_context_manager
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
-    RANGE_2 = (None, None)
+    RANGE_2 = (None, None,)
 
     # ....................{ CLOSURE                        }....................
     def hints_piths_meta() -> 'Iterable[HintPithMetadata]':
@@ -182,8 +182,8 @@ def iter_hints_piths_meta(hints_meta) -> (
                             # message are *NOT* strings, as commonly occurs when
                             # accidentally omitting a trailing comma in tuples
                             # containing only one string: e.g.,
-                            # * "('This is a tuple, yo.',)" is a 1-tuple containing
-                            #   one string.
+                            # * "('This is a tuple, yo.',)" is a 1-tuple
+                            #   containing one string.
                             # * "('This is a string, bro.')" is a string *NOT*
                             #   contained in a 1-tuple.
                             assert not isinstance(

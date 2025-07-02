@@ -71,8 +71,9 @@ def test_is_hint_pep_type_typing(hints_pep_meta) -> None:
     # Assert this tester accepts PEP-compliant type hints defined by the
     # "typing" module.
     for hint_pep_meta in hints_pep_meta:
-        assert is_hint_pep_type_typing(hint_pep_meta.hint) is (
-            hint_pep_meta.is_type_typing)
+        # Localize this hint to simplify debugging.
+        hint = hint_pep_meta.hint
+        assert is_hint_pep_type_typing(hint) is hint_pep_meta.is_type_typing
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:

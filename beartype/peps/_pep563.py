@@ -29,10 +29,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
-from beartype._check.metadata.metadecor import make_beartype_call
 from beartype._check.forward.fwdresolve import resolve_hint
-from beartype._conf.confmain import BeartypeConf
+from beartype._check.metadata.metadecor import make_beartype_call
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.pool.utilcachepoolinstance import release_instance
 from beartype._util.hint.pep.proposal.pep649 import (

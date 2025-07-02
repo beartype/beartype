@@ -147,7 +147,7 @@ def get_object_name(obj: Any) -> str:
     #   object.
     object_module_name = (
         get_object_module_name_or_none(obj)
-        if isinstance(object, CallableOrClassTypes) else
+        if isinstance(obj, CallableOrClassTypes) else
         get_object_type_module_name_or_none(obj)
     )
 

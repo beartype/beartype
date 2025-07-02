@@ -25,7 +25,9 @@ def test_is_object_hashable() -> None:
     # Defer test-specific imports.
     from beartype._util.utilobject import is_object_hashable
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_HASHABLE, NOT_HINTS_UNHASHABLE,)
+        NOT_HINTS_HASHABLE,
+        NOT_HINTS_UNHASHABLE,
+    )
 
     # Assert this tester accepts unhashable objects.
     for object_hashable in NOT_HINTS_HASHABLE:
@@ -115,11 +117,13 @@ def test_get_object_name() -> None:
         '''
 
         return and_one_majestic_river
+    # print(f'meet_in_the_vale.__module__: {meet_in_the_vale.__module__}')
 
     # ....................{ PASS                           }....................
     # Assert this getter returns the expected name for a nested function.
-    assert get_object_name(meet_in_the_vale) == (
-        'beartype_test.a00_unit.a20_util.test_utilobject.'
+    meet_in_the_vale_name = get_object_name(meet_in_the_vale)
+    assert meet_in_the_vale_name == (
+        'beartype_test.a00_unit.a20_util.a00_core.test_utilobject.'
         'test_get_object_name.meet_in_the_vale'
     )
 

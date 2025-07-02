@@ -47,7 +47,7 @@ def test_resolve_pep563() -> None:
     # called below.
     and_thrones_radiant_with_chrysolite = FrequentWith()
 
-    # .....................{ PASS                          }....................
+    # .....................{ FAIL                          }....................
     # Assert that this function unsuccessfully raises the expected exception
     # *BEFORE* resolving all PEP 563-postponed type hints annotating these
     # callables.
@@ -60,6 +60,7 @@ def test_resolve_pep563() -> None:
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Nor had that scene of ampler majesty')
 
+    # .....................{ PASS                          }....................
     # Resolve all PEP 563-postponed type hints annotating these callables.
     resolve_pep563(their_starry_domes)
     resolve_pep563(FrequentWith.until_the_doves)
@@ -73,7 +74,7 @@ def test_resolve_pep563() -> None:
     assert FrequentWith.until_the_doves(numberless_and_immeasurable_halls) is (
         numberless_and_immeasurable_halls)
 
-    # .....................{ FAIL                          }....................
+    # .....................{ FAIL ~ more                   }....................
     # Assert that this resolver raises the expected exception when passed an
     # uncallable object.
     with raises(BeartypePep563Exception):

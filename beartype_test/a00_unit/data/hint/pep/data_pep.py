@@ -49,6 +49,7 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep589.hints_pep589_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep649.hints_pep649_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep695.hints_pep695_meta',
 

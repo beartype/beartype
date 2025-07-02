@@ -1046,6 +1046,9 @@ else:
     '''
 
 # ....................{ TYPES ~ hint : pep : 604           }....................
+#FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
+#support, please. Under Python >= 3.14, this type is a trivial alias of the
+#standard "typing.Union" type.
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
 if TYPE_CHECKING:

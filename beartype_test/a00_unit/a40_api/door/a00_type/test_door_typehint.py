@@ -123,11 +123,16 @@ def test_door_typehint_mapping(iter_hints_piths_meta) -> None:
         assert isinstance(wrapper, hint_meta.typehint_cls)
 
         # ....................{ PROPERTIES                 }....................
-        # Assert that the type hint wrapped by this instance is the same hint.
+        # Assert that the type hint wrapped by this instance is equal to the
+        # same hint. Note that, due to memoization, the type hint wrapped by
+        # this instance is only typically but *NOT* necessarily identical to the
+        # same hint. In theory, an "is"-based identity test would be preferable
+        # to an "=="-based equality test; in practice, the former would induce
+        # false positives in common edge cases.
         wrapper_hint = wrapper.hint
         # print(f'wrapper_hint: {repr(wrapper_hint), id(wrapper_hint), type(wrapper_hint)}')
         # print(f'hint: {repr(hint),  id(hint), type(hint)}')
-        assert wrapper_hint is hint
+        assert wrapper_hint == hint
 
 # ....................{ TESTS ~ dunders                    }....................
 #FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.

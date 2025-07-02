@@ -24,7 +24,7 @@ def make_container_from_funcs(func_names: 'Iterable[str]') -> list:
     List created by iterating over the passed iterable and, for the
     fully-qualified name of each callable in that iterable, dynamically
     importing that callable, calling that callable, and adding the items of the
-    container returned by that callable to this list..
+    container returned by that callable to this list.
 
     Parameters
     ----------

@@ -29,7 +29,7 @@ from beartype._util.hint.pep.proposal.pep649 import (
 # ....................{ CLASSES                            }....................
 class ToAvariceOrPride(Generic[T]):
     '''
-    Arbitrary generic.
+    Arbitrary :pep:`484`-compliant generic.
     '''
 
     pass
@@ -108,13 +108,18 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
         :func:`beartype.peps.resolve_pep563` resolver.
     '''
 
+    # "__annotations__" dunder dictionary of all hints annotating this function.
+    their_starry_domes_hints = get_pep649_hintable_annotations(
+        their_starry_domes)
+
     # Subscripted generic type alias, resolved to this global attribute that has
     # yet to be defined by the resolve_pep563() function called by the caller.
-    ExpandAbove_resolved = get_pep649_hintable_annotations(
-        their_starry_domes)['of_diamond_and_of_gold']
+    ExpandAbove_resolved = their_starry_domes_hints['of_diamond_and_of_gold']
 
-    # If this parameter violates this subscripted generic, raise an exception.
+    # If this parameter unexpectedly violates this subscripted generic, raise an
+    # exception.
     die_if_unbearable(of_diamond_and_of_gold, ExpandAbove_resolved)
+    # Else, this parameter satisfies this subscripted generic as expected.
 
     # Return this parameter as is.
     return of_diamond_and_of_gold

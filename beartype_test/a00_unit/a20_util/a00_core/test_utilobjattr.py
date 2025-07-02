@@ -73,50 +73,56 @@ def test_get_object_attrs_name_to_value_explicit() -> None:
     # Arbitrary instance of this subclass.
     of_fever = RousedBy()
 
-    # ....................{ ASSERTS ~ attribute            }....................
+    # ....................{ PASS ~ attribute               }....................
     # Assert this getter returns the expected dictionary when passed this
     # instance *WITHOUT* a predicate. Note that asserting the exact contents of
     # this dictionary is non-trivial across Python versions and thus avoided,
     # due to this dictionary containing *ALL* slot wrappers implicitly inherited
     # from the root "object" superclass (e.g., object.__str__()).
-    he_did_move = get_object_attrs_name_to_value_explicit(of_fever)
-    assert he_did_move['as_one'] is of_fever.as_one
-    assert he_did_move['from_his_burning_limbs'] is (
-        StrongShuddering.from_his_burning_limbs)
-    assert he_did_move['some_joyous_madness'] is RousedBy.some_joyous_madness
-    assert he_did_move['from_the_couch'] is (
-        type(of_fever).__dict__['from_the_couch'])
+    of_fever_attrs_expect = {
+        'as_one': of_fever.as_one,
+        'from_his_burning_limbs': StrongShuddering.from_his_burning_limbs,
+        'some_joyous_madness': RousedBy.some_joyous_madness,
+        'from_the_couch': type(of_fever).__dict__['from_the_couch'],
+    }
+    of_fever_attrs_actual = get_object_attrs_name_to_value_explicit(of_fever)
+    assert of_fever_attrs_expect.items() <= of_fever_attrs_actual.items()
 
     # Assert this getter returns the expected dictionary when passed this
     # instance *WITH* a predicate.
     assert get_object_attrs_name_to_value_explicit(
         obj=of_fever,
         predicate=lambda attr_name, attr_value: not is_dunder(attr_name)
-    ) == {
-        'as_one': of_fever.as_one,
-        'from_his_burning_limbs': StrongShuddering.from_his_burning_limbs,
-        'some_joyous_madness': RousedBy.some_joyous_madness,
-        'from_the_couch': type(of_fever).__dict__['from_the_couch'],
-    }
+    ) == of_fever_attrs_expect
 
-    # ....................{ ASSERTS ~ method               }....................
+    # ....................{ PASS ~ method                  }....................
     # Assert this getter returns the expected dictionary when passed this
-    # instance with this list.
-    assert get_object_methods_name_to_value_explicit(of_fever) == {
+    # instance *WITHOUT* a predicate. Note that asserting the exact contents of
+    # this dictionary is non-trivial across Python versions and thus avoided.
+    # Although asserting the contents of this dictionary was trivial under
+    # Python <= 3.13, Python >= 3.14 complicates comparisons by introducing
+    # dynamically instantiated bound methods for certain contexts, including:
+    # * The __annotate_func__() dunder method, which CPython now implicitly
+    #   defines for *ALL* types declaring one or more class variables annotated
+    #   by type hints.
+    of_fever_methods_expect = {
         'from_his_burning_limbs': StrongShuddering.from_his_burning_limbs,
         'some_joyous_madness': RousedBy.some_joyous_madness,
     }
+    of_fever_methods_actual = (
+        get_object_methods_name_to_value_explicit(of_fever))
+    assert of_fever_methods_expect.items() <= of_fever_methods_actual.items()
 
+    # ....................{ PASS ~ method : dir            }....................
     # List of the names of all attributes bound to this object.
     of_fever_dir = dir(of_fever)
 
     # Remove an arbitrary method name from this list.
     of_fever_dir.remove('some_joyous_madness')
+    of_fever_methods_expect.pop('some_joyous_madness')
 
     # Assert this getter returns the expected dictionary when passed this
     # instance with an arbitrary method name removed from this list.
-    yet_not_like_him = get_object_methods_name_to_value_explicit(
+    of_fever_methods_actual = get_object_methods_name_to_value_explicit(
         obj=of_fever, obj_dir=of_fever_dir)
-    assert yet_not_like_him == {
-        'from_his_burning_limbs': StrongShuddering.from_his_burning_limbs,
-    }
+    assert of_fever_methods_expect.items() <= of_fever_methods_actual.items()

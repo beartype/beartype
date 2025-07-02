@@ -25,6 +25,22 @@ Note that:
   Python < 3.8. Why? Because the implementation of these ABCs under Python < 3.8
   is unusable at runtime, which is nonsensical and awful, but that's
   :mod:`typing` for you. What you goin' do?
+* **Forward reference proxies** (i.e., :class:`annotationlib.ForwardRef`
+  objects) are intentionally tested in the
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep649` submodule
+  rather than here despite being specified by :pep:`484` and available under
+  Python < 3.14. Why? Because the implementation of this API under Python < 3.14
+  was *never* officially standardized with a PEP. Older implementations are thus
+  fragile and frequently non-portable at runtime. Only :pep:`649` standardized
+  the API for forward reference proxies.
+* **Unions** are intentionally tested in the
+  :mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep604` submodule
+  rather than here despite being specified by :pep:`484` and available under
+  Python < 3.10. Why? Because CPython now implicitly reduces *all* unions --
+  including older :pep:`484`-compliant ``typing.Union[...]`` and
+  ``typing.Optional[...]`` hints -- to newer :pep:`604`-compliant
+  ``|``-delimited unions under Python >= 3.14. Centralizing union logic into a
+  single submodule reflects the centralization performed by CPython itself.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -93,7 +109,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         CallableTypeHint,
         NewTypeTypeHint,
         TypeVarTypeHint,
-        UnionTypeHint,
     )
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
     from beartype._cave._cavefast import (
@@ -117,7 +132,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignDefaultDict,
         HintSignDeque,
         HintSignDict,
-        HintSignForwardRef,
         HintSignFrozenSet,
         HintSignKeysView,
         HintSignHashable,
@@ -127,27 +141,22 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignMapping,
         HintSignMatch,
         HintSignMutableMapping,
-        HintSignMutableSequence,
         HintSignMutableSet,
         HintSignNewType,
         HintSignNone,
-        HintSignOptional,
         HintSignOrderedDict,
         HintSignPattern,
         HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,
-        HintSignSequence,
         HintSignSet,
         HintSignSized,
         HintSignTuple,
         HintSignPep484585TupleFixed,
         HintSignType,
         HintSignTypeVar,
-        HintSignUnion,
         HintSignValuesView,
     )
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_14,
         IS_PYTHON_AT_MOST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
     )
@@ -172,8 +181,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         Pep484ListStr,
         Pep484ListListStr,
         Pep484ListUnsubscripted,
-        # Pep484585GenericSTSequenceU,
-        # Pep484585GenericIntTSequenceU,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -197,7 +204,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         KeysView as KeysViewABC,
         Mapping as MappingABC,
         MutableMapping as MutableMappingABC,
-        MutableSequence as MutableSequenceABC,
         MutableSet as MutableSetABC,
         Set as SetABC,
         Sized as SizedABC,
@@ -205,7 +211,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     )
 
     # Intentionally import from the standard "typing" module rather than the
-    # forward-compatible "beartype.typing" subpackage to ensure PEP 484-compliance.
+    # non-standard "beartype.typing" subpackage to ensure PEP 484-compliance.
     from typing import (
         AbstractSet,
         Any,
@@ -220,7 +226,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         DefaultDict,
         Deque,
         Dict,
-        ForwardRef,
         FrozenSet,
         Generic,
         Hashable,
@@ -249,24 +254,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ValuesView,
     )
 
-    # ....................{ CONSTANTS ~ forwardref         }....................
-    # Sign uniquely identifying "typing.Optional[...]" hints. Specifically:
-    # * Under Python >= 3.14, "typing.Optional[...]" hints trivially reduce to
-    #   "typing.Union[...]" hints additionally subscripted by "None" and are
-    #   thus identified by the "HintSignUnion" sign.
-    # * Under Python <= 3.13, "typing.Optional[...]" hints do *NOT* reduce to
-    #   "typing.Union[...]" hints additionally subscripted by "None". The two
-    #   have distinct string representations and are thus partially distinct.
-    #   Ergo, the former are thus identified by the "HintSignOptional" sign.
-    HINT_SIGN_OPTIONAL = (
-        HintSignUnion if IS_PYTHON_AT_LEAST_3_14 else HintSignOptional)
-
+    # ....................{ CONSTANTS                      }....................
     # Fully-qualified classname of an arbitrary class guaranteed to be
     # importable.
     FORWARDREF_CLASSNAME = 'beartype_test.a00_unit.data.data_type.Subclass'
-
-    # Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
-    ForwardRefType = Subclass
 
     # ..................{ LISTS                              }..................
     # List of all PEP-specific type hint metadata to be returned.
@@ -322,40 +313,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 )),
                 # Boolean constant.
                 HintPithUnsatisfiedMetadata(False),
-            ),
-        ),
-
-        # ................{ UNSUBSCRIPTED ~ forwardref         }................
-        # Forward references defined below are *ONLY* intended to shallowly
-        # exercise support for types of forward references across the codebase;
-        # they are *NOT* intended to deeply exercise resolution of forward
-        # references to undeclared classes, which requires more finesse.
-        #
-        # See the "data_hintref" submodule for the latter.
-
-        # Unsubscripted forward reference defined as a simple string.
-        HintPepMetadata(
-            hint=FORWARDREF_CLASSNAME,
-            pep_sign=HintSignForwardRef,
-            is_type_typing=False,
-            piths_meta=(
-                # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(ForwardRefType()),
-                # String object.
-                HintPithUnsatisfiedMetadata(
-                    'Empirical Ṗath after‐mathematically harvesting agro‐'),
-            ),
-        ),
-
-        # Unsubscripted forward reference defined as a typing object.
-        HintPepMetadata(
-            hint=ForwardRef(FORWARDREF_CLASSNAME),
-            pep_sign=HintSignForwardRef,
-            piths_meta=(
-                # Instance of the class referred to by this reference.
-                HintPithSatisfiedMetadata(ForwardRefType()),
-                # String object.
-                HintPithUnsatisfiedMetadata('Silvicultures of'),
             ),
         ),
 
@@ -3548,535 +3505,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPithSatisfiedMetadata(int),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Obligation, and'),
-            ),
-        ),
-
-        # ................{ UNION                              }................
-        # Note that unions of one argument (e.g., "Union[str]") *CANNOT* be
-        # listed here, as the "typing" module implicitly reduces these unions
-        # to only that argument (e.g., "str") on our behalf.
-        #
-        # Thanks. Thanks alot, "typing".
-        #
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: The Python < 3.7.0-specific implementations of "Union"
-        # are defective, in that they silently filter out various subscripted
-        # arguments that they absolutely should *NOT*, including "bool": e.g.,
-        #     $ python3.6
-        #     >>> import typing
-        #     >>> Union[bool, float, int, Sequence[
-        #     ...     Union[bool, float, int, Sequence[str]]]]
-        #     Union[float, int, Sequence[Union[float, int, Sequence[str]]]]
-        # For this reason, these arguments *MUST* be omitted below.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # Ignorable unsubscripted "Union" attribute.
-        HintPepMetadata(
-            hint=Union,
-            pep_sign=HintSignUnion,
-            typehint_cls=UnionTypeHint,
-            is_ignorable=True,
-        ),
-
-        # Union of one non-"typing" type and an originative "typing" type,
-        # exercising a prominent edge case when raising human-readable
-        # exceptions describing the failure of passed parameters or returned
-        # values to satisfy this union.
-        HintPepMetadata(
-            hint=Union[int, Sequence[str]],
-            pep_sign=HintSignUnion,
-            typehint_cls=UnionTypeHint,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            piths_meta=(
-                # Integer constant.
-                HintPithSatisfiedMetadata(21),
-                # Sequence of string items.
-                HintPithSatisfiedMetadata((
-                    'To claim all ͼarth a number, penumbraed'
-                    'By blessed Pendragon’s flagon‐bedraggling constancies',
-                )),
-                # Floating-point constant.
-                #
-                # Note that a string constant is intentionally *NOT* listed
-                # here, as strings are technically sequences of strings of
-                # length one commonly referred to as Unicode code points or
-                # simply characters.
-                HintPithUnsatisfiedMetadata(
-                    pith=802.11,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bSequence\b',
-                        r'\bint\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # Tuple of integers.
-                HintPithUnsatisfiedMetadata(
-                    pith=(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89,),
-                    # Match that the exception message raised for this
-                    # object...
-                    exception_str_match_regexes=(
-                        # Contains a bullet point declaring the non-"typing"
-                        # type *NOT* satisfied by this object.
-                        r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of the
-                        # random tuple item *NOT* satisfying this hint.
-                        r'\n\*\s.*\b[Tt]uple index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # Union of three non-"typing" types and an originative "typing" type of
-        # a union of three non-"typing" types and an originative "typing" type,
-        # exercising a prominent edge case when raising human-readable
-        # exceptions describing the failure of passed parameters or returned
-        # values to satisfy this union.
-        HintPepMetadata(
-            hint=Union[dict, float, int,
-                Sequence[Union[dict, float, int, MutableSequence[str]]]],
-            pep_sign=HintSignUnion,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            typehint_cls=UnionTypeHint,
-            piths_meta=(
-                # Empty dictionary.
-                HintPithSatisfiedMetadata({}),
-                # Floating-point number constant.
-                HintPithSatisfiedMetadata(777.777),
-                # Integer constant.
-                HintPithSatisfiedMetadata(777),
-                # Sequence of dictionary, floating-point number, integer, and
-                # sequence of string constant items.
-                HintPithSatisfiedMetadata((
-                    # Non-empty dictionary.
-                    {
-                        'Of': 'charnal memories,',
-                        'Or': 'coterminously chordant‐disarmed harmonies',
-                    },
-                    # Floating-point number constant.
-                    666.666,
-                    # Integer constant.
-                    666,
-                    # Mutable sequence of string constants.
-                    [
-                        'Ansuded scientifically pontifical grapheme‐',
-                        'Denuded hierography, professedly, to emulate ascen-',
-                    ],
-                )),
-                # Complex number constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=356+260j,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bSequence\b',
-                        r'\bdict\b',
-                        r'\bfloat\b',
-                        r'\bint\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # Sequence of bytestring items.
-                HintPithUnsatisfiedMetadata(
-                    pith=(b"May they rest their certainties' Solicitousness to",),
-                    # Match that the exception message raised for this
-                    # object...
-                    exception_str_match_regexes=(
-                        # Contains a bullet point declaring one of the
-                        # non-"typing" types *NOT* satisfied by this object.
-                        r'\n\*\s.*\bint\b',
-                        # Contains a bullet point declaring the index of the
-                        # random tuple item *NOT* satisfying this hint.
-                        r'\n\*\s.*\b[Tt]uple index \d+ item\b',
-                    ),
-                ),
-
-                # Sequence of mutable sequences of bytestring items.
-                HintPithUnsatisfiedMetadata(
-                    pith=([b'Untaint these ties',],),
-                    # Match that the exception message raised for this
-                    # object...
-                    exception_str_match_regexes=(
-                        # Contains an unindented bullet point declaring one of
-                        # the non-"typing" types unsatisfied by this object.
-                        r'\n\*\s.*\bfloat\b',
-                        # Contains an indented bullet point declaring one of
-                        # the non-"typing" types unsatisfied by this object.
-                        r'\n\s+\*\s.*\bint\b',
-                        # Contains an unindented bullet point declaring the
-                        # index of the random tuple item *NOT* satisfying
-                        # this hint.
-                        r'\n\*\s.*\b[Tt]uple index \d+ item\b',
-                        # Contains an indented bullet point declaring the index
-                        # of the random list item *NOT* satisfying this hint.
-                        r'\n\s+\*\s.*\b[Ll]ist index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # Union of one non-"typing" type and one concrete generic.
-        HintPepMetadata(
-            hint=Union[str, Iterable[Tuple[S, T]]],
-            pep_sign=HintSignUnion,
-            typehint_cls=UnionTypeHint,
-            typevars=(S, T,),
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            piths_meta=(
-                # String constant.
-                HintPithSatisfiedMetadata(
-                    "O'er the wide aëry wilderness: thus driven"),
-                # Iterable of 2-tuples of arbitrary items.
-                HintPithSatisfiedMetadata([
-                    ('By the bright shadow', 'of that lovely dream,',),
-                    (b'Beneath the cold glare', b'of the desolate night,'),
-                ]),
-                # Integer constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=0xCAFEFEED,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bstr\b',
-                        r'\bIterable\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-            ),
-        ),
-
-        # Union of *ONLY* subscripted type hints, exercising an edge case.
-        HintPepMetadata(
-            hint=Union[List[str], Tuple[bytes, ...]],
-            pep_sign=HintSignUnion,
-            typehint_cls=UnionTypeHint,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            piths_meta=(
-                # List of string items.
-                HintPithSatisfiedMetadata(
-                    ['Through tangled swamps', 'and deep precipitous dells,']),
-                # Tuples of bytestring items.
-                HintPithSatisfiedMetadata(
-                    (b'Startling with careless step', b'the moonlight snake,')),
-                # Integer constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=0xFEEDBEEF,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\blist\b',
-                        r'\btuple\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ UNION ~ nested                     }................
-        # Nested unions exercising edge cases induced by Python >= 3.8
-        # optimizations leveraging PEP 572-style assignment expressions.
-
-        # Nested union of multiple non-"typing" types.
-        HintPepMetadata(
-            hint=List[Union[int, str,]],
-            pep_sign=HintSignList,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            isinstanceable_type=list,
-            piths_meta=(
-                # List containing a mixture of integer and string constants.
-                HintPithSatisfiedMetadata([
-                    'Un‐seemly preening, pliant templar curs; and',
-                    272,
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    pith='Un‐seemly preening, pliant templar curs; and',
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bint\b',
-                        r'\bstr\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # List of bytestring items.
-                HintPithUnsatisfiedMetadata(
-                    pith=[
-                        b'Blamelessly Slur-chastened rights forthwith, affrighting',
-                        b"Beauty's lurid, beleaguered knolls, eland-leagued and",
-                    ],
-                    # Match that the exception message raised for this
-                    # object...
-                    exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by a
-                        # random list item *NOT* satisfying this hint.
-                        r'\bint\b',
-                        r'\bstr\b',
-                        # Declares the index of the random list item *NOT*
-                        # satisfying this hint.
-                        r'\b[Ll]ist index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # Nested union of one non-"typing" type and one "typing" type.
-        HintPepMetadata(
-            hint=Sequence[Union[str, bytes]],
-            pep_sign=HintSignSequence,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            isinstanceable_type=SequenceABC,
-            piths_meta=(
-                # Sequence of string and bytestring constants.
-                HintPithSatisfiedMetadata((
-                    b'For laconically formulaic, knavish,',
-                    u'Or sordidly sellsword‐',
-                    f'Horded temerities, bravely unmerited',
-                )),
-                # Integer constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=7898797,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bbytes\b',
-                        r'\bstr\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # Sequence of integer items.
-                HintPithUnsatisfiedMetadata(
-                    pith=((144, 233, 377, 610, 987, 1598, 2585, 4183, 6768,)),
-                    # Match that the exception message raised for this object...
-                    exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by a
-                        # random tuple item *NOT* satisfying this hint.
-                        r'\bbytes\b',
-                        r'\bstr\b',
-                        # Declares the index of the random tuple item *NOT*
-                        # satisfying this hint.
-                        r'\b[Tt]uple index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # Nested union of *NO* isinstanceable type and multiple "typing" types.
-        HintPepMetadata(
-            hint=MutableSequence[Union[bytes, Callable]],
-            pep_sign=HintSignMutableSequence,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            isinstanceable_type=MutableSequenceABC,
-            piths_meta=(
-                # Mutable sequence of string and bytestring constants.
-                HintPithSatisfiedMetadata([
-                    b"Canonizing Afrikaans-kennelled Mine canaries,",
-                    lambda: 'Of a floridly torrid, hasty love — that league',
-                ]),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    pith='Effaced.',
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bbytes\b',
-                        r'\bCallable\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-
-                # Mutable sequence of string constants.
-                HintPithUnsatisfiedMetadata(
-                    pith=[
-                        'Of genteel gentle‐folk — that that Ƹsper',
-                        'At my brand‐defaced, landless side',
-                    ],
-                    # Match that the exception message raised for this
-                    # object...
-                    exception_str_match_regexes=(
-                        # Declares all non-"typing" types *NOT* satisfied by a
-                        # random list item *NOT* satisfying this hint.
-                        r'\bbytes\b',
-                        r'\bCallable\b',
-                        # Declares the index of the random list item *NOT*
-                        # satisfying this hint.
-                        r'\b[Ll]ist index \d+ item\b',
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ UNION ~ optional                   }................
-        # Ignorable unsubscripted "Optional" attribute.
-        HintPepMetadata(
-            hint=Optional,
-            # The unsubscripted "Optional" attribute is *ALWAYS* identified by
-            # its own unique sign, even under Python >= 3.14 where subscripted
-            # "Optional[...]" hints are identified by the "HintSignUnion" sign.
-            pep_sign=HintSignOptional,
-            typehint_cls=UnionTypeHint,
-            is_ignorable=True,
-        ),
-
-        # Optional isinstance()-able "typing" type.
-        HintPepMetadata(
-            hint=Optional[Sequence[str]],
-            # Subscriptions of the "Optional" attribute reduce to
-            # fundamentally different unsubscripted typing attributes depending
-            # on Python version.
-            pep_sign=HINT_SIGN_OPTIONAL,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            typehint_cls=UnionTypeHint,
-            piths_meta=(
-                # None singleton.
-                HintPithSatisfiedMetadata(None),
-                # Sequence of string items.
-                HintPithSatisfiedMetadata((
-                    'Of cuticular currents (...wide, wildly articulate,',
-                    'And canting free, physico-stipulatingly) -',
-                )),
-                # Floating-point constant.
-                #
-                # Note that a string constant is intentionally *NOT* listed
-                # here, as strings are technically sequences of strings of
-                # length one commonly referred to as Unicode code points or
-                # simply characters.
-                HintPithUnsatisfiedMetadata(
-                    pith=802.2,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bNoneType\b',
-                        r'\bSequence\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-            ),
-        ),
-
-        # ................{ UNION ~ tower                      }................
-        # Type hints pertaining to the implicit numeric tower (i.e., optional
-        # PEP 484-compliant (sub)standard in which type hints defined as broad
-        # numeric types implicitly match all narrower numeric types as well by
-        # enabling the "beartype.BeartypeConf.is_pep484_tower" parameter). When
-        # enabled, @beartype implicitly expands:
-        # * "float" to "float | int".
-        # * "complex" to "complex | float | int".
-        #
-        # See also the "_data_nonpep484" submodule, which defines additional
-        # PEP 484-compliant raw types pertaining to the implicit numeric tower
-        # (e.g., "float", "complex").
-
-        # Implicit numeric tower type *AND* an arbitrary type hint outside the
-        # implicit numeric tower with the implicit numeric tower disabled.
-        HintPepMetadata(
-            hint=Union[float, Sequence[str]],
-            pep_sign=HintSignUnion,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            typehint_cls=UnionTypeHint,
-            piths_meta=(
-                # Floating-point constant.
-                HintPithSatisfiedMetadata(42.4242424242424242),
-                # Sequence of string items.
-                HintPithSatisfiedMetadata((
-                    'No sister-flower would be forgiven',
-                    'If it disdained its brother;',
-                )),
-                # Integer constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=0xBABEBABE,  # <-- 3133061822
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object.
-                    exception_str_match_regexes=(
-                        r'\bfloat\b',
-                        r'\bSequence\b',
-                    ),
-                    # Match that the exception message raised for this object
-                    # does *NOT* contain a newline or bullet delimiter.
-                    exception_str_not_match_regexes=(
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
-            ),
-        ),
-
-        # Implicit numeric tower type *AND* an arbitrary type hint outside the
-        # implicit numeric tower with the implicit numeric tower enabled.
-        HintPepMetadata(
-            hint=Union[float, Sequence[str]],
-            conf=BeartypeConf(is_pep484_tower=True),
-            pep_sign=HintSignUnion,
-            warning_type=BeartypeDecorHintPep585DeprecationWarning,
-            typehint_cls=UnionTypeHint,
-            piths_meta=(
-                # Floating-point constant.
-                HintPithSatisfiedMetadata(24.2424242424242424),
-                # Integer constant.
-                HintPithSatisfiedMetadata(0xABBAABBA),  # <-- 2881137594
-                # Sequence of string items.
-                HintPithSatisfiedMetadata((
-                    'And the sunlight clasps the earth',
-                    'And the moonbeams kiss the sea:',
-                )),
-                # Complex constant.
-                HintPithUnsatisfiedMetadata(
-                    pith=42 + 24j,
-                    # Match that the exception message raised for this object
-                    # declares the types *NOT* satisfied by this object as well
-                    # as a newline and bullet delimiter.
-                    exception_str_match_regexes=(
-                        r'\bfloat\b',
-                        r'\bSequence\b',
-                        r'\n',
-                        r'\*',
-                    ),
-                ),
             ),
         ),
 
