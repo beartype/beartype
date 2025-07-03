@@ -4,7 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **unbounded cache** utilities.
+Project-wide **strongly unbounded cache** (i.e., mapping of unlimited size from
+strongly referenced arbitrary keys onto strongly referenced arbitrary values,
+whose methods are guaranteed to behave thread-safely) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -70,7 +72,7 @@ class CacheUnboundedStrong(object):
         **Instance-specific thread lock** (i.e., low-level thread locking
         mechanism implemented as a highly efficient C extension, defined as an
         instance variable for non-reentrant reuse by the public API of this
-        class). Although CPython, the canonical Python interpreter, *does*
+        type). Although CPython, the canonical Python interpreter, *does*
         prohibit conventional multithreading via its Global Interpreter Lock
         (GIL), CPython still coercively preempts long-running threads at
         arbitrary execution points. Ergo, multithreading concerns are *not*
@@ -141,13 +143,13 @@ class CacheUnboundedStrong(object):
             this key has yet to be associated with any value.
 
         Returns
-        ----------
+        -------
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
 
-        # Thread-safely (but non-reentrantly)...
+        # Thread-safely...
         with self._lock:
             # Value previously cached under this key if any *OR* the sentinel
             # placeholder otherwise.
@@ -184,8 +186,8 @@ class CacheUnboundedStrong(object):
         passed **value factory** (i.e., caller-defined function accepting this
         key and returning the value to be associated with this key) if this
         cache has yet to cache this key (i.e., if this method has yet to be
-        passed this key) and, in any case, return the value associated with
-        this key.
+        passed this key) and, in any case, return the value associated with this
+        key.
 
         Caveats
         ----------
@@ -208,14 +210,14 @@ class CacheUnboundedStrong(object):
             Arbitrary object to be passed as is to this value factory.
 
         Returns
-        ----------
+        -------
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''
         # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
         # assert callable(value_factory), f'{repr(value_factory)} uncallable.'
 
-        # Thread-safely (but non-reentrantly)...
+        # Thread-safely...
         with self._lock:
             # Value previously cached under this key if any *OR* the sentinel
             # placeholder otherwise.
@@ -243,5 +245,7 @@ class CacheUnboundedStrong(object):
         Clear (i.e., empty) this cache.
         '''
 
-        # Clear your head and be at peace, one-liner.
-        self._key_to_value.clear()
+        # Thread-safely...
+        with self._lock:
+            # Clear your head and be at peace, one-liner.
+            self._key_to_value.clear()

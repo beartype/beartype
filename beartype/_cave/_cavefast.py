@@ -434,8 +434,9 @@ MethodDecoratorPropertyType = property
 '''
 Type of all **C-based unbound property method descriptors** (i.e., non-callable
 instances of the builtin :class:`property` decorator class implemented in
-low-level C, associated with property getter and setter methods implemented in
-pure Python, and accessed as class rather than instance attributes).
+low-level C, associated with property getter, setter, and deleter methods
+implemented in pure-Python, and accessed as class rather than instance
+attributes).
 
 Caveats
 -------
@@ -1562,10 +1563,9 @@ encapsulating read-only access to some kind of method).
 
 MethodDescriptorTypes = (
     # @classmethod, @staticmethod, and @property descriptor types.
-    MethodDecoratorBuiltinTypes + (
-        # Method descriptor type.
-        MethodBoundInstanceOrClassType,
-    )
+    MethodDecoratorBuiltinTypes +
+    # Method descriptor type.
+    (MethodBoundInstanceOrClassType,)
 )
 '''
 Tuple of all **builtin method descriptor types** (i.e., C-based descriptors

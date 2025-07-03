@@ -19,7 +19,7 @@ from beartype.typing import (
     Set,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.checkcache import clear_checker_caches
+from beartype._util.cache.utilcacheclear import clear_caches
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
@@ -412,7 +412,7 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # possibly containing those references must now be assumed to be
             # invalid. Failing to clear these caches causes @beartype-decorated
             # wrapper functions to raise erroneous type-checking violations.
-            clear_checker_caches()
+            clear_caches()
         # Else, this is the first decoration of this class by this decorator.
 
         # Record that this class has now been decorated by this decorator.

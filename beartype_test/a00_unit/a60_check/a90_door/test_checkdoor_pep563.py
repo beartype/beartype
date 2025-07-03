@@ -32,6 +32,7 @@ def test_resolve_pep563() -> None:
         BeartypeDecorHintForwardRefException,
         BeartypePep563Exception,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve import (
         ToAvariceOrPride,
         FrequentWith,

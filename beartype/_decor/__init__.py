@@ -77,17 +77,6 @@
 #  *NEVER* invokes itself recursively. A non-reentrant "Lock" suffices.
 #* Rip out all now-redundant "with lock:" expressions throughout the codebase.
 
-#FIXME: [SPEED] As a useful microoptimization, consider memoizing "repr(hint)"
-#calls. We strongly suspect these calls to be a performance bottleneck, because
-#we repeat them so frequently for the same hint throughout the codebase. The
-#best approach to doing so is to:
-#* Define a new memoized "beartype._util.hint.utilhintget" getter: e.g.,
-#      @callable_cached
-#      def get_hint_repr(hint: object) -> str:
-#          return repr(hint)
-#* Globally replace all calls to the repr() builtin throughout the codebase
-#  passed a hint with calls to get_hint_repr() instead.
-
 #FIXME: [SPEED] As a useful microoptimization, unroll *ALL* calls to the any()
 #and all() builtins into equivalent "for" loops in our critical path. Since we
 #typically pass these builtins generator comprehensions created and destroyed

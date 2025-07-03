@@ -50,12 +50,16 @@ class FrequentWith(object):
         :func:`beartype.peps.resolve_pep563` resolver.
         '''
 
+        # "__annotations__" dunder dictionary of all hints annotating this
+        # class method.
+        until_the_doves_hints = get_pep649_hintable_annotations(
+            FrequentWith.until_the_doves)
+
         # Subscripted generic type alias, resolved to this global attribute that
         # has yet to be defined by the resolve_pep563() function called by the
         # caller.
-        ExpandAbove_resolved = get_pep649_hintable_annotations(
-            FrequentWith.until_the_doves.__func__)[
-                'and_squirrels_would_partake']
+        ExpandAbove_resolved = until_the_doves_hints[
+            'and_squirrels_would_partake']
 
         # If this parameter violates this type, raise an exception.
         die_if_unbearable(and_squirrels_would_partake, ExpandAbove_resolved)
@@ -78,17 +82,21 @@ class FrequentWith(object):
             Unconditionally.
         '''
 
+        # "__annotations__" dunder dictionary of all hints annotating this
+        # class method.
+        crystal_column_hints = get_pep649_hintable_annotations(
+            FrequentWith.crystal_column)
+
         # Missing forward reference, defined merely as a placeholder forward
         # reference proxy after the caller passes this method to the
         # resolve_pep563() function.
-        OfPearl_resolved = get_pep649_hintable_annotations(
-            FrequentWith.crystal_column)['and_clear_shrines']
+        OfPearl_resolved = crystal_column_hints['and_clear_shrines']
 
         # Raise an exception. Since this forward reference is guaranteed to be
         # missing, this call is guaranteed to fail.
         die_if_unbearable(and_clear_shrines, OfPearl_resolved)
 
-        # Return this parameter as is.
+        # Return this parameter as is. Note that this will *NEVER* happen.
         return and_clear_shrines
 
 # ....................{ FUNCTIONS                          }....................

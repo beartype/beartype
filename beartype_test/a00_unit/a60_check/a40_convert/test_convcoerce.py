@@ -71,7 +71,7 @@ def test_coerce_hint_any() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._check.checkcache import clear_checker_caches
+    from beartype._util.cache.utilcacheclear import clear_caches
     from beartype._check.convert._convcoerce import coerce_hint_any
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
@@ -82,7 +82,7 @@ def test_coerce_hint_any() -> None:
     # which this test exercises below. Failure to clear this cache beforehand
     # would render this test non-idempotent and thus non-deterministic with
     # respect to test order, resulting in spurious test failures.
-    clear_checker_caches()
+    clear_caches()
 
     # ..................{ CORE                               }..................
     # Assert this coercer preserves an isinstanceable type as is.

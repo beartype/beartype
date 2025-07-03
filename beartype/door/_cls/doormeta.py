@@ -156,6 +156,7 @@ class _TypeHintMeta(ABCMeta):
             id(hint)
         )
 
+        #FIXME: [SPEED] Globalize this bound method as a negligible speedup.
         # Type hint wrapper wrapping this hint, efficiently cached such that
         # each hint that evaluates to the same key is wrapped by the same
         # instance of the "TypeHint" class under this Python interpreter.
@@ -261,8 +262,8 @@ class _TypeHintMeta(ABCMeta):
 
 
 _HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(
-    # Prefer the slower reentrant lock type for safety. As the subpackage
-    # name implies, the DOOR API is recursive and requires reentrancy.
+    # Prefer the slower reentrant lock type for safety. As the subpackage name
+    # implies, the DOOR API is recursive and thus requires reentrancy.
     lock_type=RLock,
 )
 '''
@@ -311,6 +312,6 @@ collisions and why we are *not* going to do so.
 Likewise, this dictionary intentionally caches machine-readable representations
 of low-level type hints rather than those hints themselves. Since increasingly
 many hints are no longer self-caching (e.g., PEP 585-compliant type hints like
-"list[str]"), the latter *CANNOT* be guaranteed to be singletons and thus safely
-used as cache keys. Also:
+"list[str]"), the latter *cannot* be guaranteed to be singletons and thus safely
+used as cache keys.
 '''
