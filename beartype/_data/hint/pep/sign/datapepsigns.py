@@ -465,7 +465,7 @@ HintSignPep484585TupleFixed
 '''
 
 
-HintSignPep646TupleUnpacked = _HintSign(name='Pep646TupleUnpacked')
+HintSignPep646UnpackedTuple = _HintSign(name='Pep646TupleUnpacked')
 '''
 Sign uniquely identifying :pep:`646`-compliant **unpacked tuple type hints,**
 defined as child tuple hints of the form "*tuple[{hint_child_child_1}, ...,

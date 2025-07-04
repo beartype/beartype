@@ -37,7 +37,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep646TupleUnpacked,
+    HintSignPep646UnpackedTuple,
     HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTypedDict,
@@ -601,7 +601,7 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
         # {hint_child_child_M}], ..., {hint_child_N}]"), return the
         # corresponding sign.
         if is_hint_pep646_unpacked_tuple(hint):
-            return HintSignPep646TupleUnpacked
+            return HintSignPep646UnpackedTuple
         # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
         # hint.
         #

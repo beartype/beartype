@@ -29,7 +29,7 @@ https://github.com/pytest-dev/pytest-asyncio/blob/master/pytest_asyncio/plugin.p
 
 # ....................{ IMPORTS                            }....................
 from asyncio import (
-    get_event_loop_policy,
+    get_event_loop,
     new_event_loop,
     set_event_loop,
 )
@@ -70,6 +70,9 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
        https://docs.pytest.org/en/6.2.x/writing_plugins.html#hookwrapper-executing-around-other-hooks
     '''
 
+    # Defer package-specific imports.
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+
     # Test function to be called by this hook.
     test_func = pyfuncitem.obj
 
@@ -90,48 +93,74 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
             coroutine.
             '''
 
-            # With a warning context manager...
-            with catch_warnings():
-                # Ignore *ALL* deprecating warnings emitted by the
-                # get_event_loop() function called below. For unknown reasons,
-                # CPython 3.11 devs thought that emitting a "There is no current
-                # event loop" warning (erroneously classified as a
-                # "deprecation") was a wonderful idea. "asyncio" is arduous
-                # enough to portably support as it is. Work with me here, guys!
-                simplefilter('ignore', DeprecationWarning)
+            # If the active Python interpreter targets Python >= 3.14, avoid
+            # calling the deprecated get_event_loop_policy() getter preferred
+            # under Python <= 3.13. Specifically...
+            if IS_PYTHON_AT_LEAST_3_14:
+                # Attempt to...
+                try:
+                    # Current event loop for the current threading context if
+                    # any *OR* raise a "RuntimeError" otherwise.
+                    event_loop_old = get_event_loop()
 
-                # Current event loop for the current threading context if any
-                # *OR* create a new event loop otherwise. Note that the
-                # higher-level asyncio.get_event_loop() getter is intentionally
-                # *NOT* called here, as Python 3.10 broke backward compatibility
-                # by refactoring that getter to be an alias for the wildly
-                # different asyncio.get_running_loop() getter, which *MUST* be
-                # called only from within either an asynchronous callable or
-                # running event loop. In either case, asyncio.get_running_loop()
-                # and thus asyncio.get_event_loop() is useless in this context.
-                # Instead, we call the lower-level
-                # get_event_loop_policy().get_event_loop() getter -- which
-                # asyncio.get_event_loop() used to wrap. *facepalm*
-                #
-                # This getter should ideally return "None" rather than creating
-                # a new event loop without our permission if no loop has been
-                # set. This getter instead does the latter, implying that this
-                # closure will typically instantiate two event loops per
-                # asynchronous coroutine test function:
-                # * The first useless event loop implicitly created by this
-                #   get_event_loop() call.
-                # * The second useful event loop explicitly created by the
-                #   subsequent new_event_loop() call.
-                #
-                # Since there exists *NO* other means of querying the current
-                # event loop, we reluctantly bite the bullet and pay the piper.
-                event_loop_old = get_event_loop_policy().get_event_loop()
+                    # Close this loop.
+                    event_loop_old.close()
+                # If attempting to retrieve the current event loop raised a
+                # "RuntimeError", there is *NO* current event loop to be closed.
+                # Silently reduce to a noop.
+                except RuntimeError:
+                    pass
+            # Else, the active Python interpreter targets Python <= 3.13. In
+            # this case, prefer calling the get_event_loop_policy() getter
+            # deprecated under Python >= 3.14. Specifically...
+            else:
+                # Defer version-specific imports.
+                from asyncio import get_event_loop_policy
 
-                # Close this loop, regardless of whether the prior
-                # get_event_loop() call just implicitly created this loop,
-                # because the "asyncio" API offers *NO* means of differentiating
-                # these two common edge cases. *double facepalm*
-                event_loop_old.close()
+                # With a warning context manager...
+                with catch_warnings():
+                    # Ignore *ALL* deprecating warnings emitted by the
+                    # get_event_loop() function called below. For unknown
+                    # reasons, CPython 3.11 devs thought that emitting a "There
+                    # is no current event loop" warning (erroneously classified
+                    # as a "deprecation") was a wonderful idea. "asyncio" is
+                    # arduous enough to portably support as it is.
+                    simplefilter('ignore', DeprecationWarning)
+
+                    # Current event loop for the current threading context if
+                    # any *OR* create a new event loop otherwise. Note that the
+                    # higher-level asyncio.get_event_loop() getter is
+                    # intentionally *NOT* called here, as Python 3.10 broke
+                    # backward compatibility by refactoring that getter to be an
+                    # alias for the wildly different asyncio.get_running_loop()
+                    # getter, which *MUST* be called only from within either an
+                    # asynchronous callable or running event loop. In either
+                    # case, asyncio.get_running_loop() and thus
+                    # asyncio.get_event_loop() is useless in this context.
+                    # Instead, we call the lower-level
+                    # get_event_loop_policy().get_event_loop() getter -- which
+                    # asyncio.get_event_loop() used to wrap. *facepalm*
+                    #
+                    # This getter should ideally return "None" rather than
+                    # creating a new event loop without our permission if no
+                    # loop has been set. This getter instead does the latter,
+                    # implying that this closure will typically instantiate two
+                    # event loops per asynchronous coroutine test function:
+                    # * The first useless event loop implicitly created by this
+                    #   get_event_loop() call.
+                    # * The second useful event loop explicitly created by the
+                    #   subsequent new_event_loop() call.
+                    #
+                    # Since there exists *NO* other means of querying the
+                    # current event loop, we reluctantly bite the bullet and pay
+                    # the piper. Work with me here, guys!
+                    event_loop_old = get_event_loop_policy().get_event_loop()
+
+                    # Close this loop, regardless of whether the prior
+                    # get_event_loop() call just implicitly created this loop,
+                    # because the "asyncio" API offers *NO* means of
+                    # differentiating these two common edge cases. *facepalm*
+                    event_loop_old.close()
 
             # New event loop isolated to this coroutine.
             #

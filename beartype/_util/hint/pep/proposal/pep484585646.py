@@ -149,8 +149,8 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
     of tuple type hint.
 
     This low-level getter assists the higher-level
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter to
-    disambiguate the originally ambiguous :data:`.HintSignTuple` sign.
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign_or_none` getter
+    to disambiguate the originally ambiguous :data:`.HintSignTuple` sign.
 
     This low-level getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as only function calling this getter is the

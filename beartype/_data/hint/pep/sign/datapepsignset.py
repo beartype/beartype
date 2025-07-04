@@ -68,7 +68,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585TupleFixed,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep646TupleUnpacked,
+    HintSignPep646UnpackedTuple,
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignTypeAlias,
@@ -576,7 +576,7 @@ HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED: FrozenSetHintSign = frozenset((
     # Sign uniquely identifying unpacked child tuple hints (e.g., the child
     # hint "*tuple[float, ...]" subscripting the parent tuple hint
     # "tuple[complex, *tuple[float, ...], str]").
-    HintSignPep646TupleUnpacked,
+    HintSignPep646UnpackedTuple,
 ))
 '''
 Frozen set of all :pep:`646`-compliant **parent tuple hint unpacked child hint

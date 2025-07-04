@@ -14,6 +14,30 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *WOOPS.* We're ambiguously (and thus incorrectly) detecting *ALL*
+#"typing.Unpack[...]" hints as if they were unpacked type variable tuples.
+#That's totally incorrect, though. "typing.Unpack[...]" hints can now be
+#subscripted by a variety of child hints, including:
+#* "typing.Unpack[*Ts]", an unpacked type variable tuple.
+#* "typing.Unpack[TypedDictSubclass]", an unpacked typed dictionary.
+#
+#By definition, "typing.Unpack[...]" hints are thus ambiguous. We now need to
+#disambiguate these hints by taking inspiration from the approach currently
+#taken by the get_hint_pep484585646_tuple_sign_unambiguous() getter.
+#Specifically:
+#* Define the following new signs:
+#  * "HintSignPep646UnpackedTypeVarTuple".
+#  * "HintSignPep692UnpackedTypedDict".
+#* Define a new get_hint_646692_unpacked_sign_unambiguous() getter accepting an
+#  ambiguous "HintSignUnpack" sign and returning either
+#  "HintSignPep646UnpackedTypeVarTuple" or "HintSignPep692UnpackedTypedDict".
+#* Refactor get_hint_pep_sign_or_none() to call
+#  get_hint_646692_unpacked_sign_unambiguous() when the current sign is the
+#  ambiguous "HintSignUnpack" sign.
+#* Replace most (if not all) references to the ambiguous "HintSignUnpack" sign
+#  throughout the codebase with either "HintSignPep646UnpackedTypeVarTuple" or
+#  "HintSignPep692UnpackedTypedDict" as appropriate.
+
 #FIXME: Currently, we only shallowly type-check PEP 646-compliant mixed
 #fixed-variadic tuple hints as... tuples. It's not much. Obviously, we need to
 #deeply type-check these tuple data structures as soon as feasible. There exist
@@ -74,7 +98,7 @@ from beartype._data.hint.datahintpep import (
     TupleHints,
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignPep646TupleUnpacked,
+    HintSignPep646UnpackedTuple,
     HintSignUnpack,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -205,7 +229,7 @@ def reduce_hint_pep646_tuple(
         # conveying *NO* meaningful typing not already conveyed by the simpler
         # PEP 585-compliant tuple hint that this PEP 646-compliant tuple hint
         # reduces to. So it goes, Pythonistas. So it goes.
-        elif hint_child_sign is HintSignPep646TupleUnpacked:
+        elif hint_child_sign is HintSignPep646UnpackedTuple:
             # Reduce this PEP 646-compliant tuple hint to the semantically
             # equivalent PEP 585-compliant tuple hint subscripted by the zero or
             # more child child hints subscripting this unpacked child tuple
@@ -321,7 +345,7 @@ def reduce_hint_pep646_tuple(
                         hint_pep585_childs_list is not None and
                         # This child hint is a PEP 646-compliant unpacked child
                         # tuple hint *AND*...
-                        hint_child_sign is HintSignPep646TupleUnpacked and
+                        hint_child_sign is HintSignPep646UnpackedTuple and
                         # This child hint is *NOT* a PEP 646-compliant unpacked
                         # child variable-length tuple hint, this child hint
                         # *MUST* by elimination be a PEP 646-compliant unpacked

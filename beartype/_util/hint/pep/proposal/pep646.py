@@ -13,8 +13,18 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.hint.datahintpep import Hint
+from beartype._cave._cavefast import (
+    HintGenericSubscriptedType,
+    # HintPep646TypeVarTupleType,
+)
+from beartype._data.hint.datahintpep import (
+    Hint,
+    # TypeIs,
+)
+# from beartype._data.hint.pep.sign.datapepsigns import (
+#     HintSignPep646UnpackedTuple,
+#     HintSignUnpack,
+# )
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.

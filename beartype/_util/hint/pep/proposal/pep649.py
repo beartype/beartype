@@ -201,202 +201,220 @@ if IS_PYTHON_AT_LEAST_3_14:
         # ....................{ PEP 649                    }....................
         # If the caller requested the default "FORWARDREF" format...
         if hint_format is Format.FORWARDREF:
-            # print(f'FTMNTHBTA: {_MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS}')
-
-            # ....................{ LOCALS                 }....................
-            # Fully-qualified name of the module defining this hintable if
-            # any *OR* "None" otherwise (e.g., if this hintable is defined
-            # in-memory outside a module namespace).
-            module_name: Optional[str] = None
-
-            # Lexically scoped name of this hintable excluding the
-            # fully-qualified name of the module defining this hintable if
-            # any *OR* "None" otherwise (e.g., if this hintable has no such
-            # name, typically due to being a module, which only has a
-            # fully-qualified name).
-            hintable_basename: Optional[str] = None
-
-            #FIXME: *WOOPS.* This caching scheme fundamentally doesn't work...
-            #because property getters, setters, and deleters all share the same
-            #names! Wild stuff. We also have *NO* means of detecting that
-            #property getters, setters, and deleters are actually
-            #property getters, setters, and deleters here. They just look like
-            #standard pure-Python functions from the perspective of this getter.
-            #
-            #The *ONLY* means of resolving this is to cache hintables under both
-            #their names *AND* their IDs. That sounds great, until you realize
-            #the trivial way to do that is with a string format ala:
-            #    hintable_basename = (
-            #        f'{get_object_basename_scoped(hintable)}'
-            #        f'#{id(hintable)}'
-            #    )
-            #
-            #Sounds great, right? Sure. Except that string formats are
-            #*SUPER-SLOW*, which defeats the entire point of caching in the
-            #first place. Truly, a facepalm.
-            #
-            #So... guess what we do? That's right. Another friggin' nested
-            #dictionary, this time mapping "hintable_basename_to_id". Absurd.
-            #Yet, no other solution presents itself. I know what you're thinking
-            #now, too: "Why not just drop all this stupid nested dictionary
-            #stuff and just cache hintable IDs straight-away?"
-            #
-            #Garbage-collection, obviously. Hintable IDs are non-unique across
-            #the lifetime of the active Python interpreter. They're only unique
-            #at any given slice of that lifetime. In other words, we truly do
-            #need to cache both hintable names *AND* IDs to guarantee
-            #uniqueness. Truly, a double-facepalm.
-            #FIXME: An alternative presents itself, people. Clearly, we should
-            #*NOT* be monkey-patching arbitrary beartype-specific attributes
-            #into modules and classes. On the other hand, it's perfectly fine to
-            #monkey-patch arbitrary beartype-specific attributes into
-            #*PURE-PYTHON FUNCTIONS.* Beartype already does that all the
-            #friggin' time. Thus, the lame yet preferable alternative is as
-            #obviously follows:
-            #* If this hintable is a pure-Python function (but *NOT* a C-based
-            #  callable), cache this annotations dictionary with a *COMPLETELY*
-            #  different approach. Instead of caching into...
-            #FIXME: *WAIT*. Sure, we could do crazy stuff for pure-Python
-            #functions -- but should we? Consider classes defined dynamically
-            #in-memory, for example. They have no "__module__"; thus, dynamic
-            #classes of the same name will collide into the same cache entry
-            #below! In other words, the current caching strategy truly *IS*
-            #fundamentally flawed. Maybe.
-            #FIXME: *WAIT*. We were totally on to something there. This whole
-            #caching strategy truly does break down in common edge cases,
-            #because hintable names simply are *NOT* unique enough to be robust.
-            #And beartype *NEEDS* this getter to be *SUPER-ROBUST.* The only way
-            #to make this getter robust is pretty obvious:
-            #* If this hintable is a module, pursue the current cache strategy.
-            #  Modules are pretty much the only things that actually *DO* have
-            #  robust names, because they absolutely have to. Anyway, there's
-            #  *NO* alternative. Modules don't have anything to safely
-            #  monkey-patch into. Or... do they? Hmm. I suppose we could examine
-            #  their contents. Probably, they don't, though. *shrug*
-            #* If this hintable is a pure-Python function, avoid the current
-            #  cache strategy. Instead, cache this dictionary into a new
-            #  "__beartype_annotations__" dunder dictionary monkey-patched onto
-            #  this function. *WHATEVAH.* Just do it.
-            #* If this hintable is a pure-Python class, avoid the current cache
-            #  strategy. Instead, cache this dictionary into a new
-            #  "__beartype_annotations__" dunder dictionary monkey-patched onto
-            #  the __sizeof__() dunder method. Note that this is kinda
-            #  non-trivial, as we'll now need to reconcile this approach with
-            #  that performed by "decortype". We should probably make a new
-            #  family of caching utilities to manage this. Specifically:
-            #  * Define a new "beartype._util.cache.utilcachetype" submodule.
-            #  * In this submodule, define these new functions:
-            #       def get_type_attr_cached(
-            #           cls: type, attr_name: str) -> object:
-            #
-            #       # Note that this setter should check whether __sizeof__() is
-            #       # already pure-Python and, if so, preserve that method.
-            #       def set_type_attr_cached(
-            #           cls: type, attr_name: str, attr_value: object) -> None:
-            #  * Refactor "decortype" to call those functions.
-            #FIXME: Also, we should stop caching "None" entries. If
-            #_get_pep649_hintable_annotations_or_none_uncached() returns "None",
-            #then we should directly return "None" *WITHOUT* caching that.
-            #There's no point, right? Just takes up space for no good reason. A
-            #*LOT* of space, probably. Beartype never does anything with
-            #unannotated hintables, anyway.
-
-            # If this hintable is either a callable *OR* class...
-            #
-            # Note that most hintables of interest are either callables or
-            # classes. This common case is intentionally detected first as a
-            # negligible microoptimization.
-            if isinstance(hintable, CallableOrClassTypes):
-                # Fully-qualified name of the module defining this hintable
-                # if any *OR* "None" otherwise (e.g., if this hintable is
-                # defined in-memory outside a module namespace).
-                module_name = get_object_module_name_or_none(hintable)
+            # For efficiency, attempt to first assume that this hintable's
+            # "__annotations__" dunder dictionary complies with the non-default
+            # "VALUE" format (i.e., if this hintable is annotated by type hints
+            # transitively subscripted by *NO* unquoted forward references).
+            # Unquoted forward references are expected to be reasonably rare.
+            # So, this is the common case and thus a helpful optimization goal.
+            try:
+                return getattr(hintable, '__annotations__', None)
+            # If this hintable's __annotate__() dunder method underlying its
+            # "__annotations__" dunder dictionary raised a "NameError" exception
+            # when passed the non-default "VALUE" format by CPython, this
+            # hintable does *NOT* comply with the format and is thus annotated
+            # by type hints transitively subscripted by one or more unquoted
+            # forward references. In this case, fallback to support unquoted
+            # forward references via full-blown memoized "FORWARDREF" handling.
+            except NameError:
+                # ....................{ LOCALS                 }....................
+                # Fully-qualified name of the module defining this hintable if
+                # any *OR* "None" otherwise (e.g., if this hintable is defined
+                # in-memory outside a module namespace).
+                module_name: Optional[str] = None
 
                 # Lexically scoped name of this hintable excluding the
-                # fully-qualified name of the module defining this hintable.
-                hintable_basename = get_object_basename_scoped(hintable)
-            # Else, this hintable is neither a callable *NOR* class.
-            #
-            # If this hintable is a module...
-            elif isinstance(hintable, ModuleType):
-                # Fully-qualified name of this module.
-                module_name = get_module_name(hintable)
+                # fully-qualified name of the module defining this hintable if
+                # any *OR* "None" otherwise (e.g., if this hintable has no such
+                # name, typically due to being a module, which only has a
+                # fully-qualified name).
+                hintable_basename: Optional[str] = None
 
-                # Arbitrary unique non-string placeholder enabling the
-                # "__annotations__" dunder dictionaries for modules to be
-                # conveniently cached with the same cache as the
-                # "__annotations__" dunder dictionaries for callables and
-                # classes, despite the former having no associated basename.
+                #FIXME: *WOOPS.* This caching scheme fundamentally doesn't work...
+                #because property getters, setters, and deleters all share the same
+                #names! Wild stuff. We also have *NO* means of detecting that
+                #property getters, setters, and deleters are actually
+                #property getters, setters, and deleters here. They just look like
+                #standard pure-Python functions from the perspective of this getter.
                 #
-                # Look. Go with it. Hackiness is beartype's entire name.
-                hintable_basename = None
-            # Else, this hintable is an unknown type of object.
+                #The *ONLY* means of resolving this is to cache hintables under both
+                #their names *AND* their IDs. That sounds great, until you realize
+                #the trivial way to do that is with a string format ala:
+                #    hintable_basename = (
+                #        f'{get_object_basename_scoped(hintable)}'
+                #        f'#{id(hintable)}'
+                #    )
+                #
+                #Sounds great, right? Sure. Except that string formats are
+                #*SUPER-SLOW*, which defeats the entire point of caching in the
+                #first place. Truly, a facepalm.
+                #
+                #So... guess what we do? That's right. Another friggin' nested
+                #dictionary, this time mapping "hintable_basename_to_id". Absurd.
+                #Yet, no other solution presents itself. I know what you're thinking
+                #now, too: "Why not just drop all this stupid nested dictionary
+                #stuff and just cache hintable IDs straight-away?"
+                #
+                #Garbage-collection, obviously. Hintable IDs are non-unique across
+                #the lifetime of the active Python interpreter. They're only unique
+                #at any given slice of that lifetime. In other words, we truly do
+                #need to cache both hintable names *AND* IDs to guarantee
+                #uniqueness. Truly, a double-facepalm.
+                #FIXME: An alternative presents itself, people. Clearly, we should
+                #*NOT* be monkey-patching arbitrary beartype-specific attributes
+                #into modules and classes. On the other hand, it's perfectly fine to
+                #monkey-patch arbitrary beartype-specific attributes into
+                #*PURE-PYTHON FUNCTIONS.* Beartype already does that all the
+                #friggin' time. Thus, the lame yet preferable alternative is as
+                #obviously follows:
+                #* If this hintable is a pure-Python function (but *NOT* a C-based
+                #  callable), cache this annotations dictionary with a *COMPLETELY*
+                #  different approach. Instead of caching into...
+                #FIXME: *WAIT*. Sure, we could do crazy stuff for pure-Python
+                #functions -- but should we? Consider classes defined dynamically
+                #in-memory, for example. They have no "__module__"; thus, dynamic
+                #classes of the same name will collide into the same cache entry
+                #below! In other words, the current caching strategy truly *IS*
+                #fundamentally flawed. Maybe.
+                #FIXME: *WAIT*. We were totally on to something there. This whole
+                #caching strategy truly does break down in common edge cases,
+                #because hintable names simply are *NOT* unique enough to be robust.
+                #And beartype *NEEDS* this getter to be *SUPER-ROBUST.* The only way
+                #to make this getter robust is pretty obvious:
+                #* If this hintable is a module, pursue the current cache strategy.
+                #  Modules are pretty much the only things that actually *DO* have
+                #  robust names, because they absolutely have to. Anyway, there's
+                #  *NO* alternative. Modules don't have anything to safely
+                #  monkey-patch into. Or... do they? Hmm. I suppose we could examine
+                #  their contents. Probably, they don't, though. *shrug*
+                #  Actually, let's just comment out this caching strategy at the
+                #  moment. We're not going to test it for some time, because we
+                #  simply don't care about module annotations at the moment. So, all
+                #  work spent here is simply an untestable waste of scarce time.
+                #* If this hintable is a pure-Python function, avoid the current
+                #  cache strategy. Instead, cache this dictionary into a new
+                #  "__beartype_annotations__" dunder dictionary monkey-patched onto
+                #  this function. *WHATEVAH.* Just do it.
+                #* If this hintable is a pure-Python class, avoid the current cache
+                #  strategy. Instead, cache this dictionary into a new
+                #  "__beartype_annotations__" dunder dictionary monkey-patched onto
+                #  the __sizeof__() dunder method. Note that this is kinda
+                #  non-trivial, as we'll now need to reconcile this approach with
+                #  that performed by "decortype". We should probably make a new
+                #  family of caching utilities to manage this. Specifically:
+                #  * Define a new "beartype._util.cache.utilcachetype" submodule.
+                #  * In this submodule, define these new functions:
+                #       def get_type_attr_cached(
+                #           cls: type, attr_name: str) -> object:
+                #
+                #       # Note that this setter should check whether __sizeof__() is
+                #       # already pure-Python and, if so, preserve that method.
+                #       def set_type_attr_cached(
+                #           cls: type, attr_name: str, attr_value: object) -> None:
+                #  * Refactor "decortype" to call those functions.
+                #FIXME: Also, we should stop caching "None" entries. If
+                #_get_pep649_hintable_annotations_or_none_uncached() returns "None",
+                #then we should directly return "None" *WITHOUT* caching that.
+                #There's no point, right? Just takes up space for no good reason. A
+                #*LOT* of space, probably. Beartype never does anything with
+                #unannotated hintables, anyway.
 
-            # ....................{ CACHE                  }....................
-            # If this hintable has some sort of name, this hintable's
-            # "__annotations__" dunder dictionary can be cached under this
-            # name. In this case...
-            if module_name or hintable_basename:
-                # Thread-safely...
-                with _ANNOTATIONS_LOCK:
-                    #FIXME: [SPEED] Globalize this bound method. *sigh*
-                    # Dictionary mapping from the lexically scoped name of each
-                    # hintable defined by this module to the annotations
-                    # dictionary of that hintable previously memoized by a prior
-                    # call to this getter if any *OR* the sentinel (i.e., if
-                    # this getter has yet to be passed such a hintable).
-                    hintable_basename_to_annotations = (
-                        _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.get(
-                            module_name, SENTINEL))
+                # If this hintable is either a callable *OR* class...
+                #
+                # Note that most hintables of interest are either callables or
+                # classes. This common case is intentionally detected first as a
+                # negligible microoptimization.
+                if isinstance(hintable, CallableOrClassTypes):
+                    # Fully-qualified name of the module defining this hintable
+                    # if any *OR* "None" otherwise (e.g., if this hintable is
+                    # defined in-memory outside a module namespace).
+                    module_name = get_object_module_name_or_none(hintable)
 
-                    # If no such dictionary has been memoized, default this
-                    # dictionary to a new empty dictionary,
-                    if hintable_basename_to_annotations is SENTINEL:
+                    # Lexically scoped name of this hintable excluding the
+                    # fully-qualified name of the module defining this hintable.
+                    hintable_basename = get_object_basename_scoped(hintable)
+                # Else, this hintable is neither a callable *NOR* class.
+                #
+                # If this hintable is a module...
+                elif isinstance(hintable, ModuleType):
+                    # Fully-qualified name of this module.
+                    module_name = get_module_name(hintable)
+
+                    # Arbitrary unique non-string placeholder enabling the
+                    # "__annotations__" dunder dictionaries for modules to be
+                    # conveniently cached with the same cache as the
+                    # "__annotations__" dunder dictionaries for callables and
+                    # classes, despite the former having no associated basename.
+                    #
+                    # Look. Go with it. Hackiness is beartype's entire name.
+                    hintable_basename = None
+                # Else, this hintable is an unknown type of object.
+
+                # ....................{ CACHE                  }....................
+                # If this hintable has some sort of name, this hintable's
+                # "__annotations__" dunder dictionary can be cached under this
+                # name. In this case...
+                if module_name or hintable_basename:
+                    # Thread-safely...
+                    with _ANNOTATIONS_LOCK:
+                        #FIXME: [SPEED] Globalize this bound method. *sigh*
+                        # Dictionary mapping from the lexically scoped name of each
+                        # hintable defined by this module to the annotations
+                        # dictionary of that hintable previously memoized by a prior
+                        # call to this getter if any *OR* the sentinel (i.e., if
+                        # this getter has yet to be passed such a hintable).
                         hintable_basename_to_annotations = (
-                            _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
-                                module_name]) = {}
-                    # Else, this dictionary has already been memoized.
-                    #
-                    # In either case, this dictionary now exists.
+                            _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS.get(
+                                module_name, SENTINEL))
 
-                    # "__annotations__" dunder dictionary for this hintable
-                    # previously memoized by a prior call to this getter if any
-                    # *OR* the sentinel otherwise (i.e., if this getter has yet
-                    # to be passed this hintable).
-                    hintable_annotations = hintable_basename_to_annotations.get(  # type: ignore[union-attr]
-                        hintable_basename, SENTINEL)
-                    # print(f'Getting hintable {hintable} annotations...')
+                        # If no such dictionary has been memoized, default this
+                        # dictionary to a new empty dictionary,
+                        if hintable_basename_to_annotations is SENTINEL:
+                            hintable_basename_to_annotations = (
+                                _MODULE_NAME_TO_HINTABLE_BASENAME_TO_ANNOTATIONS[
+                                    module_name]) = {}
+                        # Else, this dictionary has already been memoized.
+                        #
+                        # In either case, this dictionary now exists.
 
-                    # If *NO* such dictionary was memoized...
-                    if hintable_annotations is SENTINEL:
-                        # print(f'Caching hintable {hintable} annotations...')
+                        # "__annotations__" dunder dictionary for this hintable
+                        # previously memoized by a prior call to this getter if any
+                        # *OR* the sentinel otherwise (i.e., if this getter has yet
+                        # to be passed this hintable).
+                        hintable_annotations = hintable_basename_to_annotations.get(  # type: ignore[union-attr]
+                            hintable_basename, SENTINEL)
+                        # print(f'Getting hintable {hintable} annotations...')
 
-                        # Retrieve and memoize this dictionary under this
-                        # hintable's basename.
-                        hintable_annotations = (
-                            hintable_basename_to_annotations[hintable_basename]) = (  # type: ignore[index]
-                            _get_pep649_hintable_annotations_or_none_uncached(  # type: ignore[assignment]
-                                hintable=hintable,
-                                hint_format=hint_format,
-                                exception_cls=exception_cls,
-                                exception_prefix=exception_prefix,
-                            ))
-                    # Else, such a dictionary was memoized.
-                    #
-                    # If the caller requests this memoized dictionary be marked
-                    # "dirty" and thus unmemoized from this cache...
-                    elif is_dirty:
-                        # print(f'Clearing dirty hintable {hintable} annotations...')
-                        del hintable_basename_to_annotations[hintable_basename]  # type: ignore[union-attr]
-                    # Else, the caller requests this memoized dictionary be
-                    # preserved in this cache.
+                        # If *NO* such dictionary was memoized...
+                        if hintable_annotations is SENTINEL:
+                            # print(f'Caching hintable {hintable} annotations...')
 
-                    # Return this dictionary.
-                    # print(f'Returning hintable {hintable} annotations {hintable_annotations}...')
-                    return hintable_annotations  # type: ignore[return-value]
-                # Else, this hintable has *NO* such name. In this case, this
-                # hintable's "__annotations__" dunder dictionary cannot be
-                # cached and must instead simply be retrieved at great expense.
+                            # Retrieve and memoize this dictionary under this
+                            # hintable's basename.
+                            hintable_annotations = (
+                                hintable_basename_to_annotations[hintable_basename]) = (  # type: ignore[index]
+                                _get_pep649_hintable_annotations_or_none_uncached(  # type: ignore[assignment]
+                                    hintable=hintable,
+                                    hint_format=hint_format,
+                                    exception_cls=exception_cls,
+                                    exception_prefix=exception_prefix,
+                                ))
+                        # Else, such a dictionary was memoized.
+                        #
+                        # If the caller requests this memoized dictionary be marked
+                        # "dirty" and thus unmemoized from this cache...
+                        elif is_dirty:
+                            # print(f'Clearing dirty hintable {hintable} annotations...')
+                            del hintable_basename_to_annotations[hintable_basename]  # type: ignore[union-attr]
+                        # Else, the caller requests this memoized dictionary be
+                        # preserved in this cache.
+
+                        # Return this dictionary.
+                        # print(f'Returning hintable {hintable} annotations {hintable_annotations}...')
+                        return hintable_annotations  # type: ignore[return-value]
+                    # Else, this hintable has *NO* such name. In this case, this
+                    # hintable's "__annotations__" dunder dictionary cannot be
+                    # cached and must instead simply be retrieved at great expense.
         # Else, the caller did *NOT* request the default "FORWARDREF" format.
 
         # ....................{ PEP 484                    }....................
