@@ -861,7 +861,7 @@ if IS_PYTHON_AT_LEAST_3_14:
     '''
     **Reentrant annotations dictionary thread lock** (i.e., low-level thread
     locking mechanism implemented as a highly efficient C extension, defined as
-    an global for non-reentrant reuse elsewhere as a context manager).
+    a global for reentrant reuse elsewhere as a context manager).
 
     Note that a reentrant :class:`threading.RLock` is required, as the locked
     :func:`.set_pep649_hintable_annotations` function invokes the also locked.

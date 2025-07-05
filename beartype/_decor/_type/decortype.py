@@ -19,20 +19,24 @@ from beartype.typing import (
     Set,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._util.cache.utilcacheclear import clear_caches
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._decor._type._pep._decortypepep557 import (
     beartype_pep557_dataclass)
-from beartype._util.cls.utilclsset import set_type_attr
+from beartype._util.cache.utilcacheclear import clear_caches
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
+from beartype._util.cls.utilclsset import set_type_attr
+from beartype._util.cache.utilcachetypeattr import (
+    get_type_attr_cached_or_sentinel,
+    set_type_attr_cached,
+)
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from collections import defaultdict
-from functools import wraps
 
 # ....................{ DECORATORS ~ type                  }....................
 def beartype_type(
@@ -75,63 +79,14 @@ def beartype_type(
     from beartype._decor.decorcore import beartype_object
 
     # ....................{ NOOP                           }....................
-    # Original C-based __sizeof__() dunder method defined by this class, which
-    # this decorator subsequently wraps with a pure-Python __sizeof__() dunder
-    # method. Why? Tangential reasons that are obscure, profane, and have
-    # absolutely *NOTHING* to do with the __sizeof__() dunder method itself.
-    # Succinctly, @beartype needs a reasonably safe place to persist
-    # @beartype-specific attributes pertaining to this class.
-    #
-    # Clearly, the obvious place would be this class itself. However, doing so
-    # would fundamentally modify this class and thus *ALL* instances of this
-    # class in an unexpected and thus possibly unsafe manner. Consider common
-    # use cases like slots, introspection, pickling, and sizing. Clearly,
-    # monkey-patching attributes into class dictionaries without the explicit
-    # consent of class designers is an ill-advised approach.
-    #
-    # A less obvious but safer place is required. A method of this class would
-    # be the ideal candidate; whereas everybody cares about object attributes
-    # and thus class dictionaries, nobody cares about method attributes. This is
-    # why @beartype safely monkey-patches attributes into @beartype-decorated
-    # methods. However, which method? Most methods are *NOT* guaranteed to exist
-    # across all possible classes. Adding a new method to this class would be no
-    # better than adding a new attribute to this class; both modify class
-    # dictionaries. Fortunately, Python currently guarantees *ALL* classes to
-    # define at least 24 dunder methods as of Python 3.11. How? Via the root
-    # "object" superclass. Unfortunately, *ALL* of these methods are C-based and
-    # thus do *NOT* directly support monkey-patching: e.g.,
-    #     >>> class AhMahGoddess(object): pass
-    #     >>> AhMahGoddess.__init__.__beartyped_cls = AhMahGoddess
-    #     AttributeError: 'wrapper_descriptor' object has no attribute
-    #     '__beartyped_cls'
-    #
-    # Fortunately, *ALL* of these methods may be wrapped by pure-Python
-    # equivalents whose implementations defer to their original C-based methods.
-    # Unfortunately, doing so slightly reduces the efficiency of calling these
-    # methods. Fortunately, a subset of these methods are rarely called under
-    # production workloads; slightly reducing the efficiency of calling these
-    # methods is irrelevant to almost all use cases. Of these, the most obscure,
-    # largely useless, poorly documented, and single-use is the __sizeof__()
-    # dunder method -- which is only ever called by the sys.getsizeof() utility
-    # function, which itself is only ever called manually in a REPL or by
-    # third-party object sizing packages. In short, __sizeof__() is perfect.
-    cls_sizeof_old = cls.__sizeof__
-
-    # True only if this decorator has already decorated this class, as indicated
-    # by the @beartype-specific class variable "__beartyped_cls" monkey-patched
-    # into a pure-Python __sizeof__() dunder method wrapper by a prior call to
-    # this decorator passed this class.
-    is_cls_beartyped = getattr(cls_sizeof_old, '__beartyped_cls', None)
-
-    # If the value of this variable is that of this class, a prior call to this
-    # decorator has already decorated this class. In this case, silently reduce
-    # to a noop by returning this class as is.
-    #
-    # See where this variable is set below for further details.
-    if is_cls_beartyped is cls:
+    # If the memoized type beartyped attribute already exists for this type, a
+    # prior call to this decorator has already decorated this class. In this
+    # case, silently reduce to a noop by returning this class as is.
+    if get_type_attr_cached_or_sentinel(
+        cls, _TYPE_ATTR_NAME_IS_BEARTYPED) is not SENTINEL:
         # print(f'Ignoring repeat decoration of {repr(cls)}...')
         return cls  # type: ignore[return-value]
-    # Else, this decorator has yet to decorate this class.
+    # # Else, this decorator has yet to decorate this class.
 
     # ....................{ LOCALS                         }....................
     # Replace the passed class stack with a new class stack appending this
@@ -263,38 +218,27 @@ def beartype_type(
     # 557-compliant dataclasses *OR* this type is *NOT* a PEP 557-compliant
     # dataclass. In either case, PEP 557 does *NOT* apply to this type.
 
-    # ....................{ MONKEY-PATCH                   }....................
-    # Pure-Python __sizeof__() dunder method wrapping the original C-based
-    # __sizeof__() dunder method declared by this class.
-    @wraps(cls_sizeof_old)
-    def cls_sizeof_new(self) -> int:
-        return cls_sizeof_old(self)  # type: ignore[call-arg]
-
-    # Monkey-patch a @beartype-specific instance variable into this wrapper,
-    # recording that this decorator has now decorated this class.
-    #
-    # Note that we intentionally set this variable to this class rather than an
-    # arbitrary value (e.g., "False", "None"). Why? Because subclasses of this
-    # class will inherit this wrapper. If we simply set this variable to an
-    # arbitrary value, we would be unable to decide above between the following
-    # two cases:
-    # * Whether this wrapper was inherited from its superclass, in which case
-    #   this class has yet to be decorated by @beartype.
-    # * Whether this wrapper was *NOT* inherited from its superclass, in which
-    #   case this class has already been decorated by @beartype.
-    cls_sizeof_new.__beartyped_cls = cls  # type: ignore[attr-defined]
-
-    # Replace the original C-based __sizeof__() dunder method with this wrapper.
-    # We intentionally call our set_type_attr() setter rather than attempting to
-    # set this attribute directly. The latter approach efficiently succeeds for
-    # standard pure-Python mutable classes but catastrophically fails for
-    # non-standard C-based immutable classes (e.g., "enum.Enum" subclasses).
-    set_type_attr(cls, '__sizeof__', cls_sizeof_new)
+    # ....................{ RETURN                         }....................
+    # Memoize the type beartyped attribute for this type to notify subsequent
+    # calls to this decorator that this type has already been decorated.
+    set_type_attr_cached(cls, _TYPE_ATTR_NAME_IS_BEARTYPED, True)
 
     # Return this class as is.
     return cls  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ globals                  }....................
+_TYPE_ATTR_NAME_IS_BEARTYPED = 'is_beartyped'
+'''
+Unique name of the **memoized type beartyped attribute** (i.e., attribute cached
+for each type passed to the :func:`.beartype_type` decorator whose existence
+suggests this type to already have been decorated by that decorator and thus
+neither require nor desire re-decoration by that decorator).
+
+The value of this attribute is equally arbitrary but typically :data:`True`,
+merely as a readability and debuggability aid.
+'''
+
+
 _BEARTYPED_MODULE_TO_TYPE_NAME: Dict[str, Set[str]] = defaultdict(set)
 '''
 **Decorated classname registry (i.e., dictionary mapping from the
@@ -366,29 +310,6 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             #ever becomes computationally intensive, please.
             # print(f'@beartyped class "{module_name}.{type_name}" redefined!')
 
-            # Clear the previously accessed set of the unqualified basenames of
-            # *ALL* classes in that module previously decorated by this
-            # decorator. Technically, this is optional. Pragmatically, this
-            # *SHOULD* significantly improve the space and time constraints
-            # associated with this class redefinition. Why? Because this class
-            # being redefined implies that the module defining this class is
-            # being redefined, which implies that all classes in that module are
-            # being redefined as well. If we did *NOT* clear this set here, then
-            # this set would continue to contain the unqualified basenames of
-            # those other classes in that module; each @beartype-decorated
-            # redefinition of those other classes would then unnecessarily clear
-            # the same caches already cleared by the first @beartype-decorated
-            # redefinition of a class in that module. Since doing so would be
-            # overly aggressive and thus inefficient, avoiding doing so improves
-            # efficiency in the common case of module redefinition.
-            _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
-
-            # Set of the unqualified basenames of *ALL* classes in that module
-            # previously decorated by this decorator, redefined *AFTER* clearing
-            # that set above to enable the addition of this type back to this
-            # new set below. Nobody ever said type-checking was gonna be easy.
-            type_names_beartyped = _BEARTYPED_MODULE_TO_TYPE_NAME[module_name]
-
             # Clear *ALL* type-checking caches. Notably:
             # * The forward reference referee cache (i.e., private
             #   "beartype._check.forward.reference.fwdrefmeta._forwardref_to_referent"
@@ -413,6 +334,29 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # invalid. Failing to clear these caches causes @beartype-decorated
             # wrapper functions to raise erroneous type-checking violations.
             clear_caches()
+
+            # Clear the previously accessed set of the unqualified basenames of
+            # *ALL* classes in that module previously decorated by this
+            # decorator. Technically, this is optional. Pragmatically, this
+            # *SHOULD* significantly improve the space and time constraints
+            # associated with this class redefinition. Why? Because this class
+            # being redefined implies that the module defining this class is
+            # being redefined, which implies that all classes in that module are
+            # being redefined as well. If we did *NOT* clear this set here, then
+            # this set would continue to contain the unqualified basenames of
+            # those other classes in that module; each @beartype-decorated
+            # redefinition of those other classes would then unnecessarily clear
+            # the same caches already cleared by the first @beartype-decorated
+            # redefinition of a class in that module. Since doing so would be
+            # overly aggressive and thus inefficient, avoiding doing so improves
+            # efficiency in the common case of module redefinition.
+            _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
+
+            # Set of the unqualified basenames of *ALL* classes in that module
+            # previously decorated by this decorator, redefined *AFTER* clearing
+            # that set above to enable the addition of this type back to this
+            # new set below. Nobody ever said type-checking was gonna be easy.
+            type_names_beartyped = _BEARTYPED_MODULE_TO_TYPE_NAME[module_name]
         # Else, this is the first decoration of this class by this decorator.
 
         # Record that this class has now been decorated by this decorator.
