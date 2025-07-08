@@ -1596,6 +1596,21 @@ class _BeartypeUtilCacheLruException(_BeartypeUtilCachedException):
 
     pass
 
+
+class _BeartypeUtilCacheObjectAttributeException(_BeartypeUtilCachedException):
+    '''
+    **Beartype memoized object attribute exception.**
+
+    This exception is raised by the :mod:`beartype._util.cache.utilcacheobjattr`
+    submodule on various fatal errors (e.g., when the passed object *not* a
+    positive integer).
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util : cache : pool        }..................
 class _BeartypeUtilCachedKeyPoolException(_BeartypeUtilException):
     '''

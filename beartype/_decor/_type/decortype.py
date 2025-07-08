@@ -25,13 +25,12 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
-from beartype._data.kind.datakindiota import SENTINEL
 from beartype._decor._type._pep._decortypepep557 import (
     beartype_pep557_dataclass)
 from beartype._util.cache.utilcacheclear import clear_caches
 from beartype._util.cls.pep.clspep557 import is_type_pep557_dataclass
 from beartype._util.cls.utilclsset import set_type_attr
-from beartype._util.cache.utilcachetypeattr import (
+from beartype._util.cache.utilcacheobjattr import (
     get_type_attr_cached_or_sentinel,
     set_type_attr_cached,
 )
@@ -83,7 +82,7 @@ def beartype_type(
     # prior call to this decorator has already decorated this class. In this
     # case, silently reduce to a noop by returning this class as is.
     if get_type_attr_cached_or_sentinel(
-        cls, _TYPE_ATTR_NAME_IS_BEARTYPED) is not SENTINEL:
+        cls, _TYPE_ATTR_NAME_IS_BEARTYPED) is True:
         # print(f'Ignoring repeat decoration of {repr(cls)}...')
         return cls  # type: ignore[return-value]
     # # Else, this decorator has yet to decorate this class.

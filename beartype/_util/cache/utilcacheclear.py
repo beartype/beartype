@@ -52,10 +52,10 @@ def clear_caches() -> None:
         _forwardref_args_to_forwardref)
     from beartype._check.forward.reference.fwdrefmeta import (
         _forwardref_to_referent)
-    from beartype._util.hint.pep.proposal.pep649 import clear_pep649_caches
+    from beartype._util.cache.utilcacheobjattr import clear_object_attr_caches
 
     # Clear all relevant caches used throughout this subpackage.
-    clear_pep649_caches()
+    clear_object_attr_caches()
     _HINT_KEY_TO_WRAPPER.clear()
     _forwardref_args_to_forwardref.clear()
     _forwardref_to_referent.clear()
