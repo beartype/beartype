@@ -153,10 +153,18 @@ def test_pep563_module() -> None:
     # ....................{ LOCALS                         }....................
     # Dictionary of these callables' annotations, localized to enable debugging
     # in the likely event of unit test failure. *sigh*
-    GET_MINECRAFT_END_TXT_ANNOTATIONS = get_pep649_hintable_annotations(
+    get_minecraft_end_txt_annotations = get_pep649_hintable_annotations(
         get_minecraft_end_txt)
-    GET_MINECRAFT_END_TXT_STANZA_ANNOTATIONS = get_pep649_hintable_annotations(
+    get_minecraft_end_txt_stanza_annotations = get_pep649_hintable_annotations(
         get_minecraft_end_txt_stanza)
+
+    # from annotationlib import Format
+    # hintable = get_minecraft_end_txt_stanza
+    # print(f'{hintable}.__annotate__: {hintable.__annotate__}')
+    # print(f'{hintable}.__annotations__: {hintable.__annotations__}')
+    # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(Format.FORWARDREF)}')
+    # hintable_annotations_cached = get_pep649_hintable_annotations(hintable)
+    # print(f'{hintable}.__annotate__(3) [cached]: {hintable_annotations_cached}')
 
     # ....................{ ASSERTS                        }....................
     # Assert that all annotations of a callable *NOT* decorated by @beartype
@@ -164,7 +172,7 @@ def test_pep563_module() -> None:
     assert all(
         isinstance(param_hint, str)
         for arg_name, param_hint in (
-            GET_MINECRAFT_END_TXT_ANNOTATIONS.items())
+            get_minecraft_end_txt_annotations.items())
     )
 
     # Assert that *NO* annotations of a @beartype-decorated callable are
@@ -172,7 +180,7 @@ def test_pep563_module() -> None:
     assert all(
         not isinstance(param_hint, str)
         for arg_name, param_hint in (
-            GET_MINECRAFT_END_TXT_STANZA_ANNOTATIONS.items())
+            get_minecraft_end_txt_stanza_annotations.items())
     )
 
     # Assert that a @beartype-decorated callable works under PEP 563.

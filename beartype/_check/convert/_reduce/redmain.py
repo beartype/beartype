@@ -121,7 +121,7 @@ def reduce_hint(
         * Else, the passed hint is a **child** of some parent hint. In this
           case, the **sanified parent type hint metadata** (i.e., immutable and
           thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          by :mod:`beartype._check.convert.convmain` sanifiers after
           sanitizing the possibly PEP-noncompliant parent hint of this child
           hint into a fully PEP-compliant parent hint).
 
@@ -489,7 +489,7 @@ def _reduce_hint_overrides(
         * Else, the passed hint is a **child** of some parent hint. In this
           case, the **sanified parent type hint metadata** (i.e., immutable and
           thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          by :mod:`beartype._check.convert.convmain` sanifiers after
           sanitizing the possibly PEP-noncompliant parent hint of this child
           hint into a fully PEP-compliant parent hint).
 

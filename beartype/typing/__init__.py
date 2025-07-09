@@ -289,7 +289,7 @@ if _IS_PYTHON_AT_MOST_3_15:
         #
         # Import the PEP 585-compliant "collections.abc.ByteString" attribute
         # under 3.9 <= Python <= 3.13.
-        from collections.abc import ByteString as ByteString
+        from collections.abc import ByteString as ByteString  # type: ignore[attr-defined]
 
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is performing static type-checking (e.g., via mypy), defer

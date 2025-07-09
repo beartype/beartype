@@ -18,7 +18,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
-#FIXME: Heavily refactor according to the discussion in the "redhint" submodule,
+#FIXME: Heavily refactor according to the discussion in the "redmain" submodule,
 #please. *sigh*
 def reduce_hint_pep585_builtin_subbed_unknown(
     hint: Hint, exception_prefix: str) -> type:

@@ -68,7 +68,8 @@ pushd "${script_dirname}" >/dev/null
 # command python3.10 -m mypy "${@}"
 # command python3.11 -m mypy "${@}"
 # command python3.12 -m mypy "${@}"
-command python3.13 -m mypy "${@}"
+# command python3.13 -m mypy "${@}"
+command python3.14 -m mypy "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

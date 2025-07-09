@@ -91,9 +91,14 @@ def make_func(
         special dunder attributes will be propagated (i.e., copied) from this
         wrapped callable into this created function; these include:
 
-        * ``__name__``, this function's unqualified name.
-        * ``__doc__``, this function's docstring.
-        * ``__module__``, the fully-qualified name of this function's module.
+        * ``__annotate__()``, providing this function's :pep:`649`-compliant
+          annotations factory method.
+        * ``__annotations__``, providing this function's :pep:`649`-compliant
+          annotations dunder dictionary.
+        * ``__name__``, providing this function's unqualified name.
+        * ``__module__``, providing the fully-qualified name of this function's
+          module.
+        * ``__name__``, providing this function's unqualified name.
 
         Defaults to :data:`None`.
     is_debug : bool, optional
@@ -192,10 +197,10 @@ def make_func(
     # with this function.
     func_filename_name: str = None  # type: ignore[assignment]
 
-    # If this function is a high-level wrapper wrapping a lower-level
-    # wrappee, uniquify the subsequent filename against this wrappee. This
-    # wrappee's fully-qualified name guarantees the uniqueness of this
-    # filename. Ergo, this is the ideal case.
+    # If this function is a high-level wrapper wrapping a lower-level wrappee,
+    # uniquify the subsequent filename against this wrappee. This wrappee's
+    # fully-qualified name guarantees the uniqueness of this filename. Ergo,
+    # this is the ideal case.
     if func_wrapped:
         func_filename_name = get_object_name(func_wrapped)
         func_filename_object = func_wrapped

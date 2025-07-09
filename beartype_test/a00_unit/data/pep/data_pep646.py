@@ -32,7 +32,7 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep646Exception
     from beartype.typing import TypeVarTuple
-    from beartype._check.convert._reduce.redhint import reduce_hint
+    from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype._check.metadata.hint.hintsane import HintSane
     from pytest import raises
 

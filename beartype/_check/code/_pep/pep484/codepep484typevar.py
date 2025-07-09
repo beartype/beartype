@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # # ....................{ IMPORTS                            }....................
 # from beartype.typing import Optional
 # from beartype._check.code.codecls import HintMeta
-# from beartype._check.convert.convsanify import (
+# from beartype._check.convert.convmain import (
 #     sanify_hint_child)
 # from beartype._conf.confmain import BeartypeConf
 # from beartype._data.hint.datahintpep import Hint

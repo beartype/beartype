@@ -290,6 +290,35 @@ if IS_PYTHON_AT_LEAST_3_14:
         )
 
     # ....................{ SETTERS                        }....................
+    #FIXME: Detect and handle the (possibly common) edge case in which this
+    #setter has already been passed this hintable at least once, in which case
+    #this hintable's __annotate__() dunder method has *ALREADY* been replaced
+    #with an __annotate_beartype__() monkey-patch. We *DEFINITELY* shouldn't
+    #keep doing that ad nauseum. Instead, any existing __annotate_beartype__()
+    #monkey-patch should be replaced inline *WITHOUT* deferring to
+    #"hintable_annotate_old", which in this case will be that existing
+    #__annotate_beartype__(). Basically, we just need to generalize this:
+    #    hintable_annotate_old = getattr(hintable, '__annotate__', None)
+    #
+    #...to additionally check whether that hintable is already an
+    #__annotate_beartype__() monkey-patch and, if so, defer to the *TRUE*
+    #original __annotate__() dunder method. What's the catch? We don't currently
+    #preserve the original __annotate__() dunder method in a @beartype-specific
+    #dunder attribute on our __annotate_beartype__() monkey-patches. I suppose
+    #we'll need to start doing that. The logic resembles:
+    #    hintable_annotate_old = getattr(hintable, '__annotate__', None)
+    #    hintable_annotate_old_wrappee = getattr(
+    #        hintable_annotate_old, '__beartype_annotate_wrappee__', None)
+    #    if hintable_annotate_old_wrappee is not None:
+    #        hintable_annotate_old = hintable_annotate_old_wrappee
+    #
+    #Then we'll just need to monkey-patch the "__beartype_annotate_wrappee__"
+    #attribute into our __annotate_beartype__() monkey-patch. *sigh*
+    #FIXME: Oh. Right. The above is *BASICALLY* almost perfect, except that
+    #there's no need for a @beartype-specific "__beartype_annotate_wrappee__"
+    #monkey-patch. Instead, just use @functools.wraps(hintable_annotate_old) as
+    #Guido intended. High fives all around, Team Bear! \o/
+
     #FIXME: Unit test us up, please.
     def set_pep649_hintable_annotations(
         # Mandatory parameters.
@@ -310,10 +339,11 @@ if IS_PYTHON_AT_LEAST_3_14:
         # ....................{ PREAMBLE                   }....................
         # Thread-safely...
         with OBJECT_ATTR_CACHE_LOCK:
+            # ....................{ CACHE                  }....................
             # If this hintable is *NOT* actually a hintable, raise an exception.
             # Amusingly, the simplest means of implementing this validation is
             # to simply retrieve the existing "__annotations__" dunder
-            # dictionary currently set on this hintable.
+            # dictionary currently defined on this hintable.
             get_pep649_hintable_annotations(
                 hintable=hintable,
                 exception_cls=exception_cls,
@@ -322,7 +352,25 @@ if IS_PYTHON_AT_LEAST_3_14:
             # Else, this hintable is actually a hintable defining the requisite
             # pair of PEP 649- and 749-compliant dunder attributes:
             # * __annotate__().
-            # * "__annotations__"
+            # * "__annotations__".
+
+            # If this hintable is a pure-Python function, type, or module, this
+            # hintable supports caching of arbitrary attributes. In this case,
+            # re-cache this dictionary onto this hintable to avoid
+            # desynchronization with a prior "__annotations__" dunder dictionary
+            # cached previously onto this hintable.
+            if isinstance(hintable, ObjectAttrTypes):
+                set_object_attr_cached(
+                    obj=hintable,
+                    attr_name_if_obj_function=(
+                        _ANNOTATIONS_ATTR_NAME_IF_OBJ_FUNC),
+                    attr_name_if_obj_type_or_module=(
+                        _ANNOTATIONS_ATTR_NAME_IF_OBJ_TYPE_OR_MODULE),
+                    attr_value=annotations,
+                )
+            # Else, this hintable is neither a pure-Python function, type, *NOR*
+            # module, implying this hintable does *NOT* support caching of
+            # arbitrary attributes.
 
             # ....................{ LOCALS                 }....................
             # Existing __annotate__() dunder method set on this hintable if any
@@ -359,7 +407,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                 hintable_annotations_old_name_error = exception
 
             # ....................{ CLOSURE                }....................
-            def hintable_annotate_new(
+            def __annotate_beartype__(
                 hint_format: Format) -> Pep649HintableAnnotations:
                 f'''
                 Hintable {repr(hintable)} :pep:`649`- and :pep:`749`-compliant
@@ -375,6 +423,9 @@ if IS_PYTHON_AT_LEAST_3_14:
                   under the ``from __future__ import annotations`` pragma into
                   equivalent :mod:`beartype`-specific **forward reference
                   proxies** (i.e., objects proxying undefined types).
+
+                This getter dunder method is intentionally given a
+                :mod:`beartype`-specific name to aid in external debugging.
 
                 Parameters
                 ----------
@@ -525,7 +576,8 @@ if IS_PYTHON_AT_LEAST_3_14:
             try:
                 # Silently replace this hintable's existing __annotate__()
                 # dunder method with this new beartype-specific monkey-patch
-                hintable.__annotate__ = hintable_annotate_new  # type: ignore[union-attr]
+                hintable.__annotate__ = __annotate_beartype__  # type: ignore[union-attr]
+                # print(f'new annotations: {annotations}')
                 # print(f'{hintable}.__annotate__: {hintable.__annotate__}')
                 # print(f'{hintable}.__annotations__: {hintable.__annotations__}')
                 # print(f'{hintable}.__annotate__(3): {hintable.__annotate__(Format.FORWARDREF)}')
@@ -695,22 +747,6 @@ if IS_PYTHON_AT_LEAST_3_14:
                     #   this hintable) and thus intentionally performed last.
                     for attr_name, attr_hint in annotations.items():
                         hintable.__annotations__[attr_name] = attr_hint
-
-            # ....................{ CACHE                  }....................
-            # If this hintable is a pure-Python function, type, or module, this
-            # hintable supports caching of arbitrary attributes. In this case,
-            # re-cache this dictionary onto this hintable to avoid
-            # desynchronization with a prior "__annotations__" dunder dictionary
-            # cached previously onto this hintable.
-            if isinstance(hintable, ObjectAttrTypes):
-                set_object_attr_cached(
-                    obj=hintable,
-                    attr_name_if_obj_function=(
-                        _ANNOTATIONS_ATTR_NAME_IF_OBJ_FUNC),
-                    attr_name_if_obj_type_or_module=(
-                        _ANNOTATIONS_ATTR_NAME_IF_OBJ_TYPE_OR_MODULE),
-                    attr_value=annotations,
-                )
 
     # ....................{ PRIVATE ~ globals : str        }....................
     _ANNOTATIONS_ATTR_NAME_IF_OBJ_FUNC = '__beartype_annotations'

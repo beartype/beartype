@@ -59,7 +59,7 @@ def reduce_hint_pep695_subbed(
         * Else, the passed hint is a **child** of some parent hint. In this
           case, the **sanified parent type hint metadata** (i.e., immutable and
           thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          by :mod:`beartype._check.convert.convmain` sanifiers after
           sanitizing the possibly PEP-noncompliant parent hint of this child
           hint into a fully PEP-compliant parent hint).
     exception_prefix : str
@@ -204,7 +204,7 @@ def reduce_hint_pep695_unsubbed(
         * Else, the passed hint is a **child** of some parent hint. In this
           case, the **sanified parent type hint metadata** (i.e., immutable and
           thus hashable object encapsulating *all* metadata previously returned
-          by :mod:`beartype._check.convert.convsanify` sanifiers after
+          by :mod:`beartype._check.convert.convmain` sanifiers after
           sanitizing the possibly PEP-noncompliant parent hint of this child
           hint into a fully PEP-compliant parent hint).
     exception_prefix : str

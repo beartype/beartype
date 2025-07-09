@@ -478,7 +478,7 @@ def make_check_expr(
             #   "pith_curr_expr" accesses this pith extremely inefficiently.
             # * Ignorable type-checking code (i.e., code ignoring this hint but
             #   otherwise unsuitable for implementation as a reducer called by
-            #   the "beartype._check.convert._reduce.redhint" submodule, typically
+            #   the "beartype._check.convert._reduce.redmain" submodule, typically
             #   due to useful side effects intentionally interacting with this
             #   BFS) should follow the design pattern established by the
             #   "HintSignPep695TypeAliasSubscripted" branch below.

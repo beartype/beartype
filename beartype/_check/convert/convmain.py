@@ -18,7 +18,7 @@ from beartype._check.convert._convcoerce import (
     coerce_func_hint_root,
     coerce_hint_root,
 )
-from beartype._check.convert._reduce.redhint import reduce_hint
+from beartype._check.convert._reduce.redmain import reduce_hint
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confmain import BeartypeConf
@@ -131,52 +131,29 @@ def sanify_hint_root_func(
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    #FIXME: This attempt at mutating the "__annotations__" dunder dictionary is
-    #likely to fail under Python >= 3.14. Contemplate alternatives, please.
-    #FIXME: Indeed, this absolutely fails. Instead:
-    #* Define these new "BeartypeDecorMeta" instance variables:
-    #  * "BeartypeDecorMeta.func_arg_name_to_hint_new", initialized to a copy of
-    #    the initial dictionary: e.g.,
-    #      self.func_arg_name_to_hint_new = func_arg_name_to_hint.copy()
-    #  * "BeartypeDecorMeta.func_wrapper", initialized to the passed "wrapper"
-    #    parameter (which we should probably rename to "func_wrapper" for both
-    #    sanity and searchability): e.g.,
-    #      self.func_wrapper = wrapper
-    #* Refactor cull_beartype_call() to additionally call
-    #  set_pep649_hintable_annotations() if at least one annotation has changed:
-    #      def cull_beartype_call(...):
-    #          ...
-    #
-    #          if (
-    #              decor_meta.func_arg_name_to_hint !=
-    #              decor_meta.func_arg_name_to_hint_new
-    #          ):
-    #              set_pep649_hintable_annotations(
-    #                  hintable=decor_meta.func_wrapper,
-    #                  annotations=decor_meta.func_arg_name_to_hint_new,
-    #              )
-    #* Refactor "beartype.peps._pep563" to leverage similar logic as well.
-    #* *WOOPS.* "beartype.peps._pep563" never calls cull_beartype_call()! Yikes.
-    #  Please do so with all haste.
-    #FIXME: Actually, this is probably fine. *PROBABLY.* Why? Because this is
-    #just a caching optimization. It's more-or-less fine if a subsequent caller
-    #obliterates the caching we've performed by replacing the original
-    #__annotate__() dunder method with their own variant. Effectively nothing is
-    #lost except a minor (and probably negligible, in all honesty) increase in
-    #space complexity across the lifetime of the active Python process. "So
-    #what!", in other words. The worst case isn't worst at all.
-
-    # PEP-compliant type hint coerced from this possibly (i.e., permanently
-    # converted in the annotations dunder dictionary of the passed callable)
-    # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
-    # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
-    # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
+    # PEP-compliant hint coerced from this possibly PEP-noncompliant hint if
+    # this hint is coercible *OR* this hint as is otherwise. Since the passed
+    # hint is *NOT* necessarily PEP-compliant, perform this coercion *BEFORE*
+    # validating this hint to be PEP-compliant.
+    hint_coerced = coerce_func_hint_root(
         decor_meta=decor_meta,
         hint=hint,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
+
+    # If this possibly PEP-noncompliant hint was actually coerced into a
+    # PEP-compliant hint...
+    if hint_coerced is not hint:
+        # Note this coercion.
+        hint = hint_coerced
+
+        # Safely set the hint annotating the parameter or return with the passed
+        # name of the decorated callable to the passed hint in a portable manner
+        # consistent with both PEP 649 and Python >= 3.14.
+        decor_meta.set_func_pith_hint(pith_name=pith_name, hint=hint)
+    # Else, this possibly PEP-noncompliant hint was *NOT* coerced into a
+    # PEP-compliant hint, implying this hint to already be PEP-compliant.
 
     # If this hint annotates the return, then (in order):
     # * If this hint is contextually invalid for this callable (e.g., generator
@@ -192,7 +169,7 @@ def sanify_hint_root_func(
     if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
             func=decor_meta.func_wrappee,
-            func_arg_name_to_hint=decor_meta.func_arg_name_to_hint,
+            func_annotations=decor_meta.func_annotations,
             exception_prefix=exception_prefix,
         )
     # Else, this hint annotates a parameter.
@@ -344,7 +321,7 @@ def sanify_hint_child(
         * If this hint is actually a **root type hint,** :data:`None`.
         * Else, **Sanified parent type hint metadata** (i.e., immutable and thus
           hashable object encapsulating *all* metadata previously returned by
-          :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+          :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
 
@@ -463,7 +440,7 @@ def sanify_hint_any(
         * If this hint is actually a **root type hint,** :data:`None`.
         * Else, **Sanified parent type hint metadata** (i.e., immutable and thus
           hashable object encapsulating *all* metadata previously returned by
-          :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+          :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
 

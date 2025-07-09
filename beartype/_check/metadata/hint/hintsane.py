@@ -5,7 +5,7 @@
 
 '''
 **Beartype sanified type hint metadata dataclass** (i.e., class aggregating
-*all* metadata returned by :mod:`beartype._check.convert.convsanify` functions).
+*all* metadata returned by :mod:`beartype._check.convert.convmain` functions).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -68,7 +68,7 @@ class HintSane(object):
     '''
     **Sanified type hint metadata** (i.e., immutable and thus hashable object
     encapsulating *all* metadata returned by
-    :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing a
+    :mod:`beartype._check.convert.convmain` sanifiers after sanitizing a
     possibly PEP-noncompliant hint into a fully PEP-compliant hint).
 
     For efficiency, sanifiers only conditionally return this metadata for the
@@ -90,7 +90,7 @@ class HintSane(object):
     hint : Hint
         Type hint sanified (i.e., sanitized) from a possibly insane type hint
         into a hopefully sane type hint by a
-        :mod:`beartype._check.convert.convsanify` function.
+        :mod:`beartype._check.convert.convmain` function.
     hint_recursable_to_depth : FrozenDictHintToInt
         Recursion guard implemented as a frozen dictionary mapping from each
         **transitive recursable parent hint** (i.e., direct or indirect parent
@@ -195,7 +195,7 @@ class HintSane(object):
         hint : Hint
             Type hint sanified (i.e., sanitized) from a possibly insane type
             hint into a hopefully sane type hint by a
-            :mod:`beartype._check.convert.convsanify` function.
+            :mod:`beartype._check.convert.convmain` function.
         hint_recursable_to_depth : FrozenDictHintToInt, default: FROZENDICT_EMPTY
             Recursion guard implemented as a frozen dictionary mapping from each
             **transitive recursable parent hint** (i.e., direct or indirect
@@ -340,7 +340,7 @@ HINT_IGNORABLE = Any
 '''
 **Ignorable sanified type hint** (i.e., singleton :class:`.Any` type hint
 encapsulated by the metadata to which *all* deeply or shallowly ignorable type
-hints are reduced by :mod:`beartype._check.convert.convsanify` sanifiers).
+hints are reduced by :mod:`beartype._check.convert.convmain` sanifiers).
 '''
 
 
@@ -348,7 +348,7 @@ HINT_SANE_IGNORABLE = HintSane(hint=HINT_IGNORABLE)
 '''
 **Ignorable sanified type hint metadata** (i.e., singleton :class:`.HintSane`
 instance to which *all* deeply or shallowly ignorable type hints are reduced by
-:mod:`beartype._check.convert.convsanify` sanifiers).
+:mod:`beartype._check.convert.convmain` sanifiers).
 
 This singleton enables callers to trivially differentiate ignorable from
 unignorable hints. After sanification, if a hint is sanified to:
@@ -363,7 +363,7 @@ HINT_SANE_RECURSIVE = HintSane(hint=HINT_IGNORABLE)
 **Recursive sanified type hint metadata** (i.e., singleton :class:`.HintSane`
 instance to which **deeply recursive type hints** (i.e., recursive type hints
 whose reducers recursively expand to at least two levels of of recursion) are
-reduced by :mod:`beartype._check.convert.convsanify` sanifiers).
+reduced by :mod:`beartype._check.convert.convmain` sanifiers).
 
 This singleton enables callers to trivially differentiate deeply recursive from
 ignorable hints. While deeply recursive hints are ignorable in *most* contexts,

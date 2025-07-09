@@ -7,7 +7,7 @@
 Project-wide **PEP-agnostic type hint reduction** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.convert._reduce.redhint` submodule.
+:mod:`beartype._check.convert._reduce.redmain` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 def test_reduce_hint() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce.redhint.reduce_hint` reducer.
+    :func:`beartype._check.convert._reduce.redmain.reduce_hint` reducer.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -32,7 +32,7 @@ def test_reduce_hint() -> None:
     )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
-    from beartype._check.convert._reduce.redhint import reduce_hint
+    from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._conf.confmain import BeartypeConf
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
@@ -173,7 +173,7 @@ def test_reduce_hint() -> None:
 def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce.redhint.reduce_hint` reducer with
+    :func:`beartype._check.convert._reduce.redmain.reduce_hint` reducer with
     respect to ignorable hints.
 
     Parameters
@@ -187,7 +187,7 @@ def test_reduce_hint_ignorable(hints_pep_meta, hints_ignorable) -> None:
 
     # Defer test-specific imports.
     from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-    from beartype._check.convert._reduce.redhint import reduce_hint
+    from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_NONPEP_UNIGNORABLE)
 

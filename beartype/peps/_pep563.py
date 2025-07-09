@@ -30,11 +30,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
 from beartype._check.forward.fwdresolve import resolve_hint
-from beartype._check.metadata.metadecor import make_beartype_call
+from beartype._check.metadata.metadecor import (
+    cull_beartype_call,
+    make_beartype_call,
+)
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.hint.datahinttyping import TypeStack
-from beartype._util.cache.pool.utilcachepoolinstance import release_instance
 from beartype._util.hint.pep.proposal.pep649 import (
     get_pep649_hintable_annotations,
     set_pep649_hintable_annotations,
@@ -160,11 +162,11 @@ def resolve_pep563(
     # parameter and return of the passed callable to the non-string type hint
     # resolved from the string type hint annotating that parameter or return --
     # raising an exception if that callable is *NOT* a pure-Python callable.
-    arg_name_to_hint = get_pep649_hintable_annotations(
+    func_annotations = get_pep649_hintable_annotations(
         hintable=func, exception_cls=BeartypePep563Exception)
 
     # If that callable is unannotated, silently reduce to a noop.
-    if not arg_name_to_hint:
+    if not func_annotations:
         return
     # Else, that callable is annotated by one or more type hints.
 
@@ -201,7 +203,7 @@ def resolve_pep563(
     #
     # For the name of each annotated parameter and return of the passed callable
     # and the type hint annotating that parameter or return...
-    for hint in arg_name_to_hint.values():
+    for hint in func_annotations.values():
         # If this hint is *NOT* stringified, this hint was either:
         # * Never postponed under PEP 563 (i.e., the module defining that
         #   callable did *NOT* import "from __future__ import annotations").
@@ -245,7 +247,7 @@ def resolve_pep563(
     # below, as the loop performing that assignment below necessarily iterates
     # over that dictionary. As with most languages, Python containers cannot be
     # safely mutated while being iterated.
-    arg_name_to_hint = arg_name_to_hint.copy()
+    func_annotations = func_annotations.copy()
 
     # ..................{ RESOLUTION                         }..................
     # For the name of each annotated parameter and return of the passed callable
@@ -258,32 +260,30 @@ def resolve_pep563(
     # * largely pointless (e.g., due to dictionary comprehensions being either
     #   no faster or even slower than explicit iteration for small dictionary
     #   sizes, as "func.__annotations__" usually is).
-    for arg_name, hint in arg_name_to_hint.items():
-        # Resolve this stringified type hint to the non-string type hint to
-        # which this string refers.
-        arg_name_to_hint[arg_name] = resolve_hint(
+    for pith_name, hint in func_annotations.items():
+        # Non-string hint to which this stringified hint refers
+        hint = resolve_hint(
             hint=hint,
             decor_meta=decor_meta,
             exception_cls=BeartypePep563Exception,
         )
 
-    # ..................{ RETURN                             }..................
-    # Release this beartype call metadata back to its object pool.
-    release_instance(decor_meta)
+        # Safely set the hint annotating the parameter or return with the passed
+        # name of the decorated callable to the passed hint in a portable manner
+        # consistent with both PEP 649 and Python >= 3.14.
+        decor_meta.set_func_pith_hint(pith_name=pith_name, hint=hint)
 
-    # Replace that callable's postponed hints with these resolved hints.
+    # ..................{ RETURN                             }..................
+    # Deinitialize this beartype call metadata.
     #
-    # While the @beartype decorator goes to great lengths to preserve the
-    # originating "__annotations__" dictionary as is, PEP 563 is sufficiently
-    # expensive, non-trivial, and general-purpose to support that generically
-    # resolving postponed annotations for all downstream third-party callers is
-    # justified. Everyone benefits from replacing useless postponed annotations
-    # with useful real annotations; so, do so.
-    set_pep649_hintable_annotations(
-        hintable=func,
-        annotations=arg_name_to_hint,
-        exception_cls=BeartypePep563Exception,
-    )
+    # Note that this implicitly replaces that callable's postponed hints with
+    # these resolved hints. While the @beartype decorator goes to great lengths
+    # to preserve the originating "__annotations__" dictionary as is, PEP 563 is
+    # sufficiently expensive, non-trivial, and general-purpose to support that
+    # generically resolving postponed annotations for all downstream third-party
+    # callers is justified. Everyone benefits from replacing useless postponed
+    # annotations with useful real annotations; so, do so.
+    cull_beartype_call(decor_meta)
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'

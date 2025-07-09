@@ -78,7 +78,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
         Human-readable substring prefixing raised exception messages.
 
     All remaining passed keyword parameters are passed to the parent
-    :func:`beartype._check.convert._reduce.redhint.reduce_hint` function
+    :func:`beartype._check.convert._reduce.redmain.reduce_hint` function
     recursively called by this reducer.
 
     Returns
@@ -94,7 +94,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce.redhint import reduce_hint_child
+    from beartype._check.convert._reduce.redmain import reduce_hint_child
 
     # ....................{ LOCALS                         }....................
     # Tuple of the two or more child hints subscripting this union.

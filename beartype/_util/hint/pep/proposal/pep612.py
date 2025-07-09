@@ -299,7 +299,7 @@ parameter.
 # ....................{ PRIVATE ~ reducers                 }....................
 def _reduce_hint_pep612_args_or_kwargs(
     # General-purpose parameters passed by the higher-level
-    # beartype._check.convert._reduce.redhint.reduce_hint() reducer to this
+    # beartype._check.convert._reduce.redmain.reduce_hint() reducer to this
     # lower-level reducer.
     hint: object,
     decor_meta: Optional[BeartypeDecorMeta],
@@ -319,7 +319,7 @@ def _reduce_hint_pep612_args_or_kwargs(
     other_pith_name_label: str,
 
     # Ignorable general-purpose parameters passed by the higher-level
-    # beartype._check.convert._reduce.redhint.reduce_hint() reducer *NOT* required
+    # beartype._check.convert._reduce.redmain.reduce_hint() reducer *NOT* required
     # by this lower-level reducer.
     **kwargs
 ) -> object:
@@ -529,7 +529,7 @@ def _reduce_hint_pep612_args_or_kwargs(
 
     # Type hint subscripting the other variadic parameter if any *OR* the
     # sentinel placeholder otherwise.
-    other_arg_hint = decor_meta.func_arg_name_to_hint_get(
+    other_arg_hint = decor_meta.func_annotations_get(
         other_arg_name, SENTINEL)
 
     # If the other variadic parameter is unannotated, raise an exception.

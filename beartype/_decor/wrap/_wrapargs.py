@@ -27,7 +27,7 @@ from beartype.typing import (
 )
 from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
-from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.convert.convmain import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -103,10 +103,10 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     # parameters *OR* one or more parameters, all of which are unannotated.
     if (
         # That callable is annotated by only one type hint *AND*...
-        len(decor_meta.func_arg_name_to_hint) == 1 and
+        len(decor_meta.func_annotations) == 1 and
         # That type hint annotates that callable's return rather than a
         # parameter accepted by that callable...
-        ARG_NAME_RETURN in decor_meta.func_arg_name_to_hint
+        ARG_NAME_RETURN in decor_meta.func_annotations
     ):
         return ''
     # Else, one or more callable parameters are annotated.
@@ -235,7 +235,7 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         # Note that "None" is a semantically meaningful PEP 484-compliant type
         # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
         # distinguish between that type hint and unannotated parameters.
-        hint_insane = decor_meta.func_arg_name_to_hint_get(  # type: ignore[assignment]
+        hint_insane = decor_meta.func_annotations_get(  # type: ignore[assignment]
             arg_name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.

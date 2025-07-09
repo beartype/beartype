@@ -46,7 +46,7 @@ class HintMeta(object):
     hint_sane : HintSane
         **Sanified type hint metadata** (i.e., immutable and thus hashable
         object encapsulating *all* metadata returned by
-        :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+        :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
         this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
         describing the type hint currently visited by this BFS.
     hint_sign : Optional[HintSign]

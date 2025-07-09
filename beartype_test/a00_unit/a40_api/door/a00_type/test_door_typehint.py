@@ -397,7 +397,7 @@ def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
     from beartype.typing import TypeVar
-    from beartype._check.convert.convsanify import sanify_hint_any
+    from beartype._check.convert.convmain import sanify_hint_any
     from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bound_or_none)

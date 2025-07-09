@@ -31,7 +31,7 @@ from beartype.typing import (
     Tuple,
     overload,
 )
-from beartype._check.convert.convsanify import sanify_hint_any
+from beartype._check.convert.convmain import sanify_hint_any
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT

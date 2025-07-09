@@ -395,6 +395,15 @@ def beartype_func(
         return func  # type: ignore[return-value]
     # Else, that callable requires type-checking. Let's *REALLY* do this, fam.
 
+    # If the type hint dictionary associated with the decorated callable is
+    # dirty (i.e., changed from the original "__annotations__" dunder dictionary
+    # annotating that callable), register these changes in a manner compliant
+    # with both PEP 649 and Python >= 3.14 *BEFORE* calling the make_func()
+    # factory function below, which internally propagates these changes from the
+    # "decor_meta.func_wrapper" callable into the created type-checking wrapper
+    # function returned by the @beartype decorator. Look. It's complicated.
+    decor_meta.set_func_annotations_if_dirty()
+
     # Function wrapping that callable with type-checking to be returned.
     #
     # For efficiency, this wrapper accesses *ONLY* local rather than global
@@ -406,7 +415,7 @@ def beartype_func(
         func_name=decor_meta.func_wrapper_name,
         func_code=func_wrapper_code,
         func_locals=decor_meta.func_wrapper_scope,
-        func_wrapped=func,  # pyright: ignore
+        func_wrapped=decor_meta.func_wrapper,  # pyright: ignore
         func_labeller=decor_meta.label_func_wrapper,
         is_debug=conf.is_debug,
         exception_cls=BeartypeDecorWrapperException,

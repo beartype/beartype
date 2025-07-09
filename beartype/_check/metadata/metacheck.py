@@ -58,7 +58,7 @@ class BeartypeCheckMeta(object):
     func : Callable
         **Decorated callable** (i.e., high-level callable currently being
         decorated by the :func:`beartype.beartype` decorator).
-    func_arg_name_to_hint : dict[str, Hint]
+    func_annotations : dict[str, Hint]
         **Type hint dictionary** (i.e., mapping from the name of each annotated
         parameter accepted by the decorated callable to the type hint annotating
         that parameter).
@@ -73,7 +73,7 @@ class BeartypeCheckMeta(object):
         'cls_stack',
         'conf',
         'func',
-        'func_arg_name_to_hint',
+        'func_annotations',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -82,7 +82,7 @@ class BeartypeCheckMeta(object):
         cls_stack: TypeStack
         conf: BeartypeConf
         func: Callable
-        func_arg_name_to_hint: DictStrToHint
+        func_annotations: DictStrToHint
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
@@ -102,7 +102,7 @@ class BeartypeCheckMeta(object):
         conf: BeartypeConf,
         cls_stack: TypeStack,
         func: Callable,
-        func_arg_name_to_hint: DictStrToHint,
+        func_annotations: DictStrToHint,
     ) -> None:
         '''
         Initialize this metadata with the passed parameters.
@@ -129,7 +129,7 @@ class BeartypeCheckMeta(object):
         func : Callable
             **Decorated callable** (i.e., high-level callable currently being
             decorated by the :func:`beartype.beartype` decorator).
-        func_arg_name_to_hint : dict[str, Hint]
+        func_annotations : dict[str, Hint]
             **Type hint dictionary** (i.e., mapping from the name of each
             annotated parameter accepted by the decorated callable to the type
             hint annotating that parameter).
@@ -139,14 +139,14 @@ class BeartypeCheckMeta(object):
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
         assert callable(func), f'{repr(func)} uncallable.'
-        assert isinstance(func_arg_name_to_hint, dict), (
-            f'{repr(func_arg_name_to_hint)} not dictionary.')
+        assert isinstance(func_annotations, dict), (
+            f'{repr(func_annotations)} not dictionary.')
 
         # Classify all passed parameters as instance variables.
         self.cls_stack = cls_stack
         self.conf = conf
         self.func = func
-        self.func_arg_name_to_hint = func_arg_name_to_hint
+        self.func_annotations = func_annotations
 
     # ..................{ CLASS METHODS                      }..................
     @classmethod
@@ -173,7 +173,7 @@ class BeartypeCheckMeta(object):
             conf=decor_meta.conf,
             cls_stack=decor_meta.cls_stack,
             func=decor_meta.func_wrappee,
-            func_arg_name_to_hint=decor_meta.func_arg_name_to_hint,
+            func_annotations=decor_meta.func_annotations,
         )
 
 

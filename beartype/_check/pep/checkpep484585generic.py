@@ -101,7 +101,7 @@ from beartype.typing import (
     Iterable,
     Tuple,
 )
-from beartype._check.convert.convsanify import sanify_hint_child
+from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,

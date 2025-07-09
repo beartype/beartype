@@ -61,7 +61,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.convert.convsanify import sanify_hint_child
+from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
@@ -721,13 +721,13 @@ class ViolationCause(object):
         hint_parent_sane : HintSane
             **Sanified parent type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata previously returned by
-            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
             the possibly PEP-noncompliant parent hint of this child hint into a
             fully PEP-compliant parent hint).
         hint_parent_sane : Optional[HintSane], default: None
             **Sanified parent type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata previously returned by
-            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
             the possibly PEP-noncompliant parent hint of this child hint into a
             fully PEP-compliant parent hint). Defaults to :data:`None`, in which
             case this parameter actually defaults to ``self.hint_sane``, the

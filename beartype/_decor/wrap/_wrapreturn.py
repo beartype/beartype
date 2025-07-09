@@ -20,7 +20,7 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
-from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._check.convert.convmain import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     # HintSane,
@@ -92,7 +92,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # Note that "None" is a semantically meaningful PEP 484-compliant hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish between
     # "None" and an unannotated return with a sentinel.
-    hint_insane: Hint = decor_meta.func_arg_name_to_hint_get(  # type: ignore[assignment]
+    hint_insane: Hint = decor_meta.func_annotations_get(  # type: ignore[assignment]
         ARG_NAME_RETURN, SENTINEL)
     # print(f'func {decor_meta} return hint_insane: {hint_insane}')
 

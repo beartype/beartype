@@ -86,7 +86,7 @@ def beartype_click_command(
 
     # Avoid circular and third-party import dependencies.
     from beartype._decor._nontype.decornontype import beartype_func
-    from click.core import Command
+    from click.core import Command  # pyright: ignore
 
     # If this Click command is *NOT* actually a @click.command()-decorated
     # callable, raise an exception.
@@ -98,14 +98,14 @@ def beartype_click_command(
     # Else, this Click command is a @click.command()-decorated callable.
 
     # Old pure-Python callable decorated by the @click.command() decorator.
-    func = click_command.callback
+    func = click_command.callback  # pyright: ignore
 
     # New pure-Python callable decorating that callable with type-checking.
     func_checked = beartype_func(func=func, **kwargs)  # type: ignore[type-var]
 
     # Replace the old with new pure-Python callable in the Click command created
     # and returned by the @click.command() decorator.
-    click_command.callback = func_checked
+    click_command.callback = func_checked  # pyright: ignore
 
     # Return the same Click command.
     return click_command  # type: ignore[return-value]

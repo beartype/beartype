@@ -54,6 +54,6 @@ def test_metadata_check() -> None:
     assert check_meta.conf is conf
     assert check_meta.cls_stack is cls_stack
     assert (
-        check_meta.func_arg_name_to_hint is
-        decor_meta.func_arg_name_to_hint
+        check_meta.func_annotations is
+        decor_meta.func_annotations
     )

@@ -22,7 +22,7 @@ from beartype.typing import (
 from beartype._check.code.codemagic import EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL
 from beartype._check.code.codescope import add_func_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-from beartype._check.convert.convsanify import sanify_hint_child
+from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
@@ -501,7 +501,7 @@ class HintsMeta(FixedList):
         hint_sane : HintSane
             **Sanified child type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata returned by
-            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
             this possibly PEP-noncompliant hint into a fully PEP-compliant hint)
             describing this child hint.
         pith_expr : str
@@ -669,7 +669,7 @@ class HintsMeta(FixedList):
         hint_parent_sane : Optional[HintSane], default: None
             **Sanified parent type hint metadata** (i.e., immutable and thus
             hashable object encapsulating *all* metadata previously returned by
-            :mod:`beartype._check.convert.convsanify` sanifiers after sanitizing
+            :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
             the possibly PEP-noncompliant parent hint of this child hint into a
             fully PEP-compliant parent hint). Defaults to :data:`None`, in which
             case this parameter actually defaults to

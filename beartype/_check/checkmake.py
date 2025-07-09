@@ -28,7 +28,7 @@ from beartype._check.checkmagic import (
     CODE_PITH_ROOT_NAME_PLACEHOLDER,
     FUNC_CHECKER_NAME_PREFIX,
 )
-from beartype._check.convert.convsanify import sanify_hint_root_statement
+from beartype._check.convert.convmain import sanify_hint_root_statement
 from beartype._check.code.codemake import make_check_expr
 from beartype._check.error.errmain import (
     get_func_pith_violation,

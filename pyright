@@ -70,7 +70,8 @@ pushd "${script_dirname}" >/dev/null
 # command pyright --pythonversion 3.9 beartype "${@}"
 # command pyright --pythonversion 3.10 beartype "${@}"
 # command pyright --pythonversion 3.11 beartype "${@}"
-command pyright --pythonversion 3.13 beartype "${@}"
+# command pyright --pythonversion 3.13 beartype "${@}"
+command pyright --pythonversion 3.14 beartype "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

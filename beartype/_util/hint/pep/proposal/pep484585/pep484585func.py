@@ -46,7 +46,7 @@ from collections.abc import (
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
     func: Callable,
-    func_arg_name_to_hint: DictStrToHint,
+    func_annotations: DictStrToHint,
     exception_prefix: str,
 ) -> Hint:
     '''
@@ -58,7 +58,7 @@ def reduce_hint_pep484585_func_return(
     ----------
     func : Callable
         Callable to be type-checked.
-    func_arg_name_to_hint : dict[str, Hint]
+    func_annotations : dict[str, Hint]
         Dictionary mapping from the name of each annotated parameter
         semantically (but possibly *not* physically in the edge case in which
         the passed callable to be type-checked differs from the callable
@@ -83,8 +83,8 @@ def reduce_hint_pep484585_func_return(
         * An asynchronous generator *not* annotated by a type hint identified
           by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
-    assert isinstance(func_arg_name_to_hint, dict), (
-        f'{repr(func_arg_name_to_hint)} not dictionary.')
+    assert isinstance(func_annotations, dict), (
+        f'{repr(func_annotations)} not dictionary.')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
@@ -93,7 +93,7 @@ def reduce_hint_pep484585_func_return(
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
-    hint = func_arg_name_to_hint[ARG_NAME_RETURN]
+    hint = func_annotations[ARG_NAME_RETURN]
 
     # Sign uniquely identifying this hint if any *OR* "None" otherwise (e.g.,
     # if this hint is an isinstanceable class).
