@@ -378,7 +378,7 @@ def _get_hint_pep484604_union_args_flattened(
         of metadata describing all visitable type hints currently discovered by
         the breadth-first search (BFS) dynamically generating pure-Python
         type-checking code snippets in the
-        :func:`beartype._check.code.codemake.make_check_expr` factory).
+        :func:`beartype._check.code.codemain.make_check_expr` factory).
 
     Returns
     -------

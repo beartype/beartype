@@ -159,11 +159,11 @@ def reduce_hint_pep484_typevar(
         #     from typing import Generic
         #     class GenericRoot[T](Generic[T]): pass
         #
-        #     # This directly maps {T: S}.
-        #     class GenericLeaf[S](GenericStem[S]): pass
+        #     # This directly maps "{T: S}".
+        #     class GenericLeaf[S](GenericRoot[S]): pass
         #
-        #     # This directly maps {S: T}, which then combines with the above
-        #     # mapping to indirectly map {S: T, T: S}. Clearly, this indirect
+        #     # This directly maps "{S: T}", which then combines with the above
+        #     # mapping to indirectly map "{S: T, T: S}". Clearly, this indirect
         #     # mapping provokes infinite recursion unless explicitly handled.
         #     GenericLeaf[T]
         else:
@@ -248,14 +248,15 @@ def reduce_hint_pep484_typevar(
 
     # ....................{ PHASE ~ 2                      }....................
     # Decide the recursion guard protecting this possibly recursive type
-    # variable against infinite recursion. Note that:
-    # * This guard intentionally applies to the original unreduced type variable
-    #   (rather rather than the newly reduced hint decided by the prior phase).
-    #   Thus, we pass "hint_recursable=hint" rather than
-    #   "hint_recursable=hint_reduced".
+    # variable against infinite recursion.
+    #
+    # Note that this guard intentionally applies to the original unreduced type
+    # variable rather than the newly reduced hint decided by the prior phase.
+    # Thus, we pass "hint_recursable=hint" rather than
+    # "hint_recursable=hint_reduced".
     hint_sane = make_hint_sane_recursable(
         # The recursable form of this type alias is the original subscripted
-        # hint tested above by the is_hint_recursive() recursion guard.
+        # hint tested by the is_hint_recursive() recursion guard above.
         hint_recursable=hint,
         # The non-recursable form of this type alias is the unsubscripted hint
         # underlying the original subscripted hint.
@@ -397,8 +398,8 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     # ....................{ REDUCE                         }....................
     # Decide the type variable lookup table for this hint. Specifically, reduce
     # this subscripted hint to:
-    # * The semantically useful unsubscripted hint originating this
-    #   semantically useless subscripted hint.
+    # * The semantically useful unsubscripted hint originating this semantically
+    #   useless subscripted hint.
     # * The type variable lookup table mapping all type variables parametrizing
     #   this unsubscripted hint to all non-type variable hints subscripting
     #   this subscripted hint.
@@ -406,10 +407,10 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     # ....................{ REDUCE ~ noop                  }....................
     # If either...
     if (
-        # This unsubscripted hint is parametrized by *NO* type variables, *NO*
-        # type variable lookup table can be produced by this reduction.
+        # This unsubscripted hint is parametrized by no type variables *OR*...
         #
-        # Note this this is an uncommon edge case. Examples include:
+        # In this case, *NO* type variable lookup table can be produced by this
+        # reduction. Note this is an uncommon edge case. Examples include:
         # * Parametrizations of the PEP 484-compliant "typing.Generic"
         #   superclass (e.g., "typing.Generic[S, T]"). In this case, the
         #   original unsubscripted "typing.Generic" superclass remains

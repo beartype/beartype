@@ -19,7 +19,7 @@ from beartype._data.code.datacodeindent import CODE_INDENT_1
 VALE_CODE_INDENT_1 = f'{{indent}}{CODE_INDENT_1}'
 '''
 Code snippet prefixed by the placeholder substring ``"{indent}"`` (which the
-:func:`beartype._check.code.codemake.make_func_pith_code` replaces with
+:func:`beartype._check.code.codemain.make_func_pith_code` replaces with
 the indentation level required by the current beartype validator) followed by a
 single level of indentation.
 '''

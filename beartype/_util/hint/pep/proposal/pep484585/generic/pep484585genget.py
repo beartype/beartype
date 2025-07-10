@@ -925,8 +925,8 @@ def get_hint_pep484585_generic_base_extrinsic_sign_or_none(
     # with multiple phases performed in descending order of average time
     # complexity (i.e., expected efficiency).
     #
-    # Note that we intentionally avoid validating this pseudo-superclass to
-    # be a PEP-compliant type hint (e.g., by calling the die_unless_hint_pep()
+    # Note that we intentionally avoid validating this pseudo-superclass to be a
+    # PEP-compliant type hint (e.g., by calling the die_unless_hint_pep()
     # validator). Why? Because some pseudo-superclasses are *NOT* PEP-compliant
     # type hints in the global sense; they're only PEP-compliant when
     # contextually listed as a pseudo-superclass (e.g., the "typing.NamedTuple"
@@ -1438,7 +1438,7 @@ def get_hint_pep484585_generic_type(
 
     See Also
     --------
-    :func:`get_hint_pep484585_generic_type_or_none`
+    :func:`.get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
 

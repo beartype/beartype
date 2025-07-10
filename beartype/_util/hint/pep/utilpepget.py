@@ -632,7 +632,7 @@ def get_hint_pep_origin_type_or_none(
                 is_self_fallback and
                 # This hint is itself a type, this hint could be euphemistically
                 # said to originate from "itself." Fallback to this hint itself.
-                # Look. Just go with it. We wave our hands in the air
+                # Look. Just go with it. We wave our hands in the air, fam.
                 isinstance(hint, type)
             ) else
             # Else, either the caller did not request the "self" fallback logic

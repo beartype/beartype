@@ -290,6 +290,12 @@ def sanify_hint_root_statement(
     return hint_sane
 
 # ....................{ SANIFIERS ~ any                    }....................
+#FIXME: This function accepting a "pith_name" parameter is *SUPER-WEIRD.* If
+#this function did *NOT* accept a "pith_name" parameter, then the implementation
+#could internally reduce to calling the safer reduce_hint_child() function.
+#Instead, the current implementation has *NO* choice but to call the less safe
+#reduce_hint() function. Clearly, the docstring below suggests this has
+#something suspicious to do with error-handling. Investigate, please. *sigh*
 #FIXME: Unit test us up, please.
 def sanify_hint_child(
     # Mandatory parameters.
@@ -379,6 +385,7 @@ def sanify_hint_child(
     # improve decoration-time speed (which is *SORTA* good) while demonstrably
     # harming code maintainability (which is *DEFINITELY* bad). Ergo, we
     # intentionally maintain this sanifier as a distinct and separate function.
+    # You'll thank me ten years from now, older self. *high five*
 
     # Metadata encapsulating the sanification of this child hint.
     #

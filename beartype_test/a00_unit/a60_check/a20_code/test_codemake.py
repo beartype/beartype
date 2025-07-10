@@ -7,7 +7,7 @@
 **Beartype decorator PEP-compliant type-checking code generator unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.code.codemake` submodule.
+:mod:`beartype._check.code.codemain` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,12 +19,12 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ pass : check               }....................
 def test_make_check_code_decoration() -> None:
     '''
-    Test the :func:`beartype._check.code.codemake.make_check_expr`
+    Test the :func:`beartype._check.code.codemain.make_check_expr`
     function.
     '''
 
     # Defer test-specific imports.
-    from beartype._check.code.codemake import make_check_expr
+    from beartype._check.code.codemain import make_check_expr
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 

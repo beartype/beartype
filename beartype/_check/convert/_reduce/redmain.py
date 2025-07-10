@@ -270,8 +270,9 @@ def reduce_hint(
                     # print(f'[reduce_hint] Ignorably reduced!')
                     return HINT_SANE_IGNORABLE
                 # Else, this hint is currently unignorable.
-
                 # print(f'[reduce_hint] Incrementally reduced!')
+
+                # Halt reducing immediately.
                 break
             # Else, this unreduced hint remains unmodified. Since this reducer
             # failed to reduce this hint, silently continue to the next reducer.
@@ -413,12 +414,11 @@ def reduce_hint(
     return hint_or_sane_curr
 
 
-def reduce_hint_child(
-    hint: Hint, kwargs: DictStrToAny) -> HintSane:
+def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     '''
     Lower-level child type hint reduced (i.e., converted) from the passed
-    higher-level child type hint if reducible *or* this child type hint as
-    is otherwise (i.e., if this child type hint is irreducible).
+    higher-level child type hint if reducible *or* this child type hint as is
+    otherwise (i.e., if this child type hint is irreducible).
 
     This reducer is a convenience wrapper for the more general-purpose
     :func:`.reduce_hint` reducer, simplifying calls to that reducer when passed

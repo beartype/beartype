@@ -31,7 +31,7 @@ class HintMeta(object):
     metadata describing the possibly nested type hint visited by the current
     iteration of the breadth-first search (BFS) dynamically generating
     pure-Python type-checking code snippets in the
-    :func:`beartype._check.code.codemake.make_check_expr` factory).
+    :func:`beartype._check.code.codemain.make_check_expr` factory).
 
     Attributes
     ----------
@@ -39,7 +39,7 @@ class HintMeta(object):
         **Type-checking placeholder substring** to be globally replaced in the
         **type-checking wrapper function code snippet** (i.e., the
         ``func_wrapper_code`` local defined by the
-        :func:`beartype._check.code.codemake.make_check_expr` factory) by a
+        :func:`beartype._check.code.codemain.make_check_expr` factory) by a
         Python code snippet type-checking the **current pith expression** (i.e.,
         the ``pith_var_name`` local) against the **currently visited type hint**
         (i.e., the :attr:`hint` instance variable).

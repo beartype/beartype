@@ -112,9 +112,34 @@ def is_hint_pep484585_generic_user(hint: Hint) -> bool:
     return (
         # This object is a generic that is neither...
         is_hint_pep484585_generic(hint) and not (
-            # A subscripted PEP 585-compliant superclass (e.g., "list[T]")
+            # A PEP 585-compliant subscripted superclass (e.g., "list[T]")
             # *NOR*...
             is_hint_pep585_builtin_subbed(hint) or
+
+            #FIXME: *YIKES.* This approach omits "typing_extensions.Protocol",
+            #which is a distinct type from "typing.Protocol". Instead of
+            #dogmatically testing raw types, consider a more flexible approach
+            #that portably tests higher-level names: e.g.,
+            #    hint_origin = get_hint_pep_origin_type_or_none(
+            #        hint=hint,
+            #        # Preserve "typing.Generic" and "typing.Protocol" as themselves,
+            #        # as doing so dramatically simplifies this test. *shrug*
+            #        is_self_fallback=True,
+            #    )
+            #    if (
+            #        is_hint_pep_type_typing(hint_origin) and
+            #        hint_origin.__name__ in frozenset(('Generic', 'Protocol',))
+            #    ):
+            #        return False
+            #FIXME: *HMM.* The above approach is certainly better, but still
+            #falls short. Below, we suggest that the PEP 484-compliant
+            #subscripted pseudo-superclass "typing.Generic[S]" should also be
+            #seen as *NOT* a user-defined generic. Makes sense... except that
+            #the above logic erroneously returns "True" for "typing.Generic[S]"!
+            #Clearly, we also need to discard subscriptions. *sigh*
+            #FIXME: Excise "TYPES_PEP484544_GENERIC" entirely. That tuple is
+            #implicitly non-portable and thus bad news all around, really.
+
             # A subscripted or unsubscripted PEP 484- or 544-compliant
             # superclass defined by the standard "typing" module, including:
             # * "typing.Generic".

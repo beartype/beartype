@@ -29,7 +29,7 @@ from beartype._check.checkmagic import (
     FUNC_CHECKER_NAME_PREFIX,
 )
 from beartype._check.convert.convmain import sanify_hint_root_statement
-from beartype._check.code.codemake import make_check_expr
+from beartype._check.code.codemain import make_check_expr
 from beartype._check.error.errmain import (
     get_func_pith_violation,
     get_hint_object_violation,
@@ -686,7 +686,7 @@ def _make_func_checker(
             #  introspect up the call stack for the first stack frame residing
             #  in a non-"beartype" module, which these objects then resolve each
             #  relative forward reference against.
-            #* Consider refactoring our "codemake" algorthm to unconditionally
+            #* Consider refactoring our "codemain" algorthm to unconditionally
             #  do this for *ALL* relative forward references. Doing so would
             #  (probably) be a lot faster than the current global string
             #  replacement approach... maybe. Okay, maybe not. But maybe.
@@ -703,7 +703,7 @@ def _make_func_checker(
             #statement-level type-checkers actually do run in the same scopes
             #that their type hints are defined in. Huh. Pretty nifty, eh? This
             #then suggests that:
-            #* We'll need to generalize our "codemake" function to accept a new
+            #* We'll need to generalize our "codemain" function to accept a new
             #  optional "is_refs_relative_proxy: bool = False" parameter. When:
             #  * "True", code generation replaces all relative forward
             #    references with corresponding "ForwardRefRelativeProxy" objects

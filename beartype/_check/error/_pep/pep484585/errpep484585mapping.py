@@ -101,7 +101,7 @@ def find_cause_pep484585_mapping(cause: ViolationCause) -> ViolationCause:
     hint_value_sane = (
         # If this hint describes a "collections.Counter" dictionary subclass,
         # the standard "int" type. See related logic in the
-        # beartype._check.code.codemake.make_check_expr() factory for details.
+        # beartype._check.code.codemain.make_check_expr() factory for details.
         cause.sanify_hint_child(int)
         # Else, this hint does *NOT* describes a "collections.Counter"
         # dictionary subclass. In this case, this child value hint as is.

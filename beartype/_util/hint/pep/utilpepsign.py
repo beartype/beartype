@@ -11,6 +11,94 @@ uniquely identifying PEP-compliant type hints by singleton instances of the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Generalize to support generic "TypedDict" and "NamedTuple" subclasses as
+#follows:
+#* Improve the iter_hint_pep484585_generic_unsubbed_bases_unerased() iterator as
+#  follows:
+#      hint_sign_nongeneric = get_hint_pep_sign_or_none(
+#          hint, _IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
+#
+#      # Note that this constitutes an *EXTREMELY* rare edge case. In fact, it
+#      # took ten years for the first @beartype user to even hit this case.
+#      # Ergo, efficiency is absolutely *NOT* a concern. Maintainability is.
+#      if hint_sign_nongeneric is not None:
+#          hint_bases_direct = (hint,) + hint_bases_direct
+#* Exhaustively unit test this edge case.
+#
+#Pretty sure that should do it. Insanity, but surprisingly amenable to hacky.
+#FIXME: *WOAH.* Okay. The above commentary absolutely *DID NOT DO IT.* The key
+#insight from all of this is that, although *MOST* type hints are indeed
+#uniquely identifiably by a single sign, *SOME* type hints are (sadly) only
+#uniquely identifiably by two or more signs. These are the latter sort.
+#
+#Sure, we could try to hack around that. But those hacks will inevitably fail.
+#It'd be *A LOT* saner to get out ahead of this issue by just acknowledging
+#that, in the general case, only a tuple of signs suffices to identify a hint.
+#But you are now cogitating: "Uhh... but doesn't the *ENTIRE* codebase assume a
+#one-to-one relation between a hint and a sign?" The answer, of course, is:
+#"Yes. Yes, it does."
+#
+#But that doesn't mean we can't have our cake and eat it, too. That just means
+#we need to be careful about the way we our cake and eat it, too. Notably:
+#* Define a new "beartype._util.hint.pep.utilpepsign" submodule. This submodule
+#  should contain *ALL* sign-related functionality, which is rapidly becoming
+#  non-trivial. It was always non-trivial, but now it's *REALLY* non-trivial.
+#* In this submodule:
+#  * Define a new private _get_hint_pep_sign_unique_or_none() getter, refactored
+#    from the existing get_hint_pep_sign_or_none() getter by dropping all
+#    reference to the "HintSignPep484585GenericUnsubscripted" sign. Otherwise,
+#    the implementation should be the exact same as get_hint_pep_sign_or_none().
+#  * Abandon the new optional "ignore_hint_signs" parameter passed to the
+#    get_hint_pep_signs_or_none() getter. Nice idea, but ultimately flawed. We
+#    can and must do *SUBSTANTIALLY* better than that chaos.
+#  * Define a new get_hint_pep_signs_or_none() getter, refactored from the
+#    existing get_hint_pep_sign_or_none() getter with modifications as follows:
+#    @callable_cached
+#    def get_hint_pep_signs_or_none(hint: Any) -> TupleHintSign:
+#        hint_signs_list = acquire_instance(list)
+#
+#        if is_hint_pep484585_generic_unsubbed(hint):
+#            hint_signs_list.append(HintSignPep484585GenericUnsubscripted)
+#
+#        hint_sign_unique = _get_hint_pep_sign_unique_or_none(hint)
+#        hint_signs_list.append(hint_sign_unique)
+#
+#        hint_signs = tuple(hint_signs_list)
+#        release_instance(hint_signs_list)
+#        return hint_signs
+#  * Refactor the existing get_hint_pep_sign_or_none() getter to trivially defer
+#    to the new get_hint_pep_signs_or_none() getter as follows:
+#    # Note: don't bother caching this! get_hint_pep_signs_or_none() is already
+#    # memoized, which is more than enough.
+#    def get_hint_pep_sign_or_none(hint: Any) -> TupleHintSign:
+#        hint_signs = get_hint_pep_signs_or_none(hint)
+#        return hint_signs[0]
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#* Refactor "codemain" to call get_hint_pep_signs_or_none() instead of
+#  get_hint_pep_sign_or_none() and then iterate over the result: e.g.,
+#    hint_curr_signs = get_hint_pep_signs_or_none(hint_curr)
+#
+#    #FIXME: [SPEED] Refactor into a "while" loop for speed. whatevah!
+#    for hint_curr_sign in hint_curr_signs:
+#        ...
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#* Refactor "errcause" similarly.
+#* *TEST THAT EVERYTHING STILL WORKS.*
+#
+#Pretty cool, right? And it genuinely is. Most callers shouldn't need to care
+#about this distinction. They can continue to call get_hint_pep_sign_or_none()
+#and just pretend that hints have only one sign. Hopefully, the only callers
+#that care are our low-level code generators. Let's pretend this is the case.
+#*shudders*
+#FIXME: Actually... belay that. While useful, the above is overkill for the
+#moment. Instead, we just call the
+#get_hint_pep484585_generic_base_extrinsic_sign_or_none() getter from that
+#iterator to resolve this.
+#
+#Nonetheless, let's preserve the above commentary. We might want multiple signs
+#at some point. When we do, there we go. We sigh. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPepSignException
 from beartype.typing import (

@@ -51,7 +51,7 @@ class HintsMeta(FixedList):
     **Type hint type-checking metadata queue** (i.e., low-level fixed list of
     metadata describing all visitable type hints currently discovered by the
     breadth-first search (BFS) dynamically generating pure-Python type-checking
-    code snippets in the :func:`beartype._check.code.codemake.make_check_expr`
+    code snippets in the :func:`beartype._check.code.codemain.make_check_expr`
     factory).
 
     This list acts as a standard First In First Out (FILO) queue, enabling that
@@ -313,7 +313,7 @@ class HintsMeta(FixedList):
         **Type hint type-checking metadata** (i.e., :class:`.HintMeta` object)
         describing the currently visited type hint at the passed index by the
         breadth-first search (BFS) in the
-        :func:`beartype._check.code.codemake.make_check_expr` factory.
+        :func:`beartype._check.code.codemain.make_check_expr` factory.
 
         For both efficiency and simplicity, this dunder method *always* returns
         a valid :class:`HintMeta` object for all valid indices. This list thus

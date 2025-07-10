@@ -28,7 +28,7 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 #Ergo, the only safe means of performing this test is to ensure that this test
 #internally clears all relevant beartype caches *BEFORE* performing any work. To
 #the best of our understanding, the only relevant beartype cache is that of our
-#core beartype._check.code.codemake.make_check_expr() function. Let us consider
+#core beartype._check.code.codemain.make_check_expr() function. Let us consider
 #how to sanitize this, please. Hmm... Actually, we're pretty sure there are more
 #than one relevant caches. This is probably extremely non-trivial. The only
 #other alternative would be for the @callable_cached decorator to append each

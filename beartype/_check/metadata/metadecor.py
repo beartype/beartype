@@ -71,7 +71,7 @@ class BeartypeDecorMeta(object):
     -------
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
-    :func:`beartype._check.code.codemake.make_func_pith_code`) **and
+    :func:`beartype._check.code.codemain.make_func_pith_code`) **and
     high-level unmemoized callables** (e.g.,
     :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, low-level
     memoized callables *must* return that state as additional return values up

@@ -176,7 +176,7 @@
 #* Set this variable to the corresponding "BeartypeStrategyKind" enumeration
 #  member based on which of the three decorators listed above was called.
 #* Explicitly pass the value of the "BeartypeDecorMeta.strategy_kind" instance
-#  variable to the beartype._check.code.codemake.make_func_pith_code()
+#  variable to the beartype._check.code.codemain.make_func_pith_code()
 #  function as a new memoized "strategy_kind" parameter.
 #* Conditionally generate type-checking code throughout that function depending
 #  on the value of that parameter.
