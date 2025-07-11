@@ -265,12 +265,21 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # print(f'generic {hint} hint_bases_direct: {hint_bases_direct}')
 
     # ....................{ LOCALS ~ bases : indirect      }....................
-    #FIXME: Revise commentary to properly describe this as a fixed list of
-    #2-tuples "(hint_base, hint_base_subclass_sane)".
-    # Fixed list of the one or more unerased transitive pseudo-superclasses
-    # originally listed as superclasses prior to their type erasure by this
-    # generic that have yet to be visited by the breadth-first search (BFS) over
-    # these pseudo-superclasses performed below.
+    # Fixed list of 2-tuples "(hint_base, hint_base_subclass_sane)" describing
+    # the one or more unerased transitive pseudo-superclasses originally listed
+    # as superclasses prior to their type erasure by this generic that have yet
+    # to be visited by the breadth-first search (BFS) over these
+    # pseudo-superclasses performed below, where:
+    # * "hint_base" is each such pseudo-superclass.
+    # * "hint_base_subclass_sane" is the sanified hint metadata encapsulating
+    #   the direct pseudo-*SUBCLASS* of this "hint_base", which will then be
+    #   passed as the "hint_parent_sane" parameter to sanify this "hint_base".
+    #   Specifically, this is either:
+    #   * If this "hint_base" is a direct pseudo-superclass of the passed
+    #     generic, the passed "hint_sane" metadata as is.
+    #   * Else, this "hint_base" is a transitive pseudo-superclass two or more
+    #     class levels above the passed generic. In this case, this is the
+    #     "hint_base_sane" local calculated below.
     hint_bases = acquire_fixed_list(size=FIXED_LIST_SIZE_MEDIUM)
 
     # 0-based index of the currently visited pseudo-superclass of this list.
@@ -281,8 +290,11 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
 
     #FIXME: Improve commentary, please. *sigh*
     #FIXME: [SPEED] Optimize into a "while" loop. *sigh*
-    # Initialize this list to these direct pseudo-superclasses of this generic.
+    # For the 0-based index of each direct pseudo-superclass of the passed
+    # generic *AND* this direct pseudo-superclass...
     for hint_base_direct_index, hint_base_direct in enumerate(hint_bases_direct):
+        # Enqueue this direct pseudo-superclass and the sanified hint metadata
+        # applicable to this pseudo-superclass onto the "hint_bases" list.
         hint_bases[hint_base_direct_index] = (hint_base_direct, hint_sane)
     # print(f'generic pseudo-superclasses [initial]: {repr(hint_bases_direct}')
 
@@ -297,8 +309,11 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # the distinction between the two.
     while hint_bases_index_curr < hint_bases_index_past_last:
         # ....................{ LOCALS                     }....................
-        #FIXME: Improve commentary, please. *sigh*
-        # Current pseudo-superclass of this unsubscripted generic.
+        # Dismantled, this is:
+        # * "hint_base", the currently visited transitive pseudo-superclass of
+        #   the passed generic.
+        # * "hint_base_subclass_sane", the sanified hint metadata applicable to
+        #   this "hint_base". See the "hint_bases" definition above for details.
         hint_base, hint_base_subclass_sane = hint_bases[hint_bases_index_curr]
 
         # ....................{ PHASE ~ extrinsic          }....................
@@ -353,81 +368,6 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         # as intrinsic by returning both this pseudo-superclass *AND* the sign
         # uniquely identifying this pseudo-superclass. This is the common case.
         else:
-            #FIXME: *WUT.* This doesn't quite parse at all. I mean, sure. This
-            #absolutely works for simplistic generics hierarchies. But how does
-            #this work for non-trivial generics hierarchies? The issue is the
-            #"hint_parent_sane=hint_sane" parameter. That... *DEFINITELY*
-            #doesn't seem right. Instead, we should be:
-            #* Generalizing the "hint_bases" list of simple generics into a list
-            #  of 2-tuples "(hint_base, hint_base_parent_sane)", where:
-            #  * "hint_base" is that pseudo-superclass to be visited.
-            #  * "hint_base_parent_sane" is the "hint_base_sane" that we
-            #    calculate below *OF THE PARENT PSEUDO-SUPERCLASS" of that
-            #    pseudo-superclass to be visited. Note that "parent
-            #    pseudo-superclass" is defined here to mean the parent node in
-            #    the tree of all nodes visited by this algorithm; "parent
-            #    pseudo-superclass" does *NOT* mean the literal superclass of a
-            #    pseudo-superclass. In fact, it's the opposite. As we traverse
-            #    up the hierarchy from child generic to superclass generic, we
-            #    necessarily visit superclasses *AFTER* children (and thus have
-            #    no means of passing those superclasses to sanify_hint_child()
-            #    below, for the obvious reason that we haven't visited them
-            #    yet). Indeed, this is all super-confusing. A better word than
-            #    "parent" should probably be used in this context.
-            #    "hint_base_subclass_sane" would seem to be more appropriate for
-            #    disambiguity. Thus, we sigh. *sigh*
-            #FIXME: Very well. Let's try again. We should be:
-            #* Generalizing the "hint_bases" list of simple generics into a list
-            #  of 2-tuples "(hint_base, hint_base_subclass_sane)", where:
-            #  * "hint_base" is that pseudo-superclass to be visited.
-            #  * "hint_base_subclass_sane" is the "hint_base_sane" that we
-            #    calculate below *OF THE PREVIOUSLY VISITED CHILD
-            #    PSEUDO-SUPERCLASS" of that parent pseudo-superclass to be
-            #    subsequently visited.
-            #* Initializing above:
-            #      hint_bases[0:hint_bases_index_past_last] = (
-            #          hint_bases_direct, hint_sane)
-            #* Unpacking above:
-            #      hint_base, hint_base_subclass_sane = hint_bases[hint_bases_index_curr]
-            #* Calling sanify_hint_child() like so below:
-            #      hint_base_sane = sanify_hint_child(
-            #          hint=hint_base,
-            #          hint_parent_sane=hint_base_subclass_sane,
-            #          ...
-            #      )
-            #* Enqueueing these superclasses manually. Currently, we do this
-            #  efficiently with a single statement ala:
-            #       hint_bases[
-            #           hint_bases_index_past_last_prev:
-            #           hint_bases_index_past_last
-            #       ] = hint_base_bases
-            #
-            #  That's not gonna work anymore. We'll now need to do this
-            #  iteratively ala:
-            #      #FIXME: [SPEED] Optimize into a "while" loop. *sigh*
-            #      for hint_base_base_index, hint_base_base in enumerate(hint_base_bases):
-            #          hint_bases[hint_bases_index_past_last_prev + hint_base_base_index] = (
-            #              hint_base_base, hint_base_sane)
-            #FIXME: First, though, let's find a test case that actually exhibits
-            #this issue. Let's not break something if it ain't actually broke. I
-            #mean, it's almost certainly broke. But we need to *PROVE* it first.
-            #FIXME: *YUP*. The following example replicates this:
-            #    class GenericRoot[U](list[U]): pass
-            #    class GenericStem[T](GenericRoot[T]): pass
-            #    class GenericLeaf[S](GenericStem[S]): pass
-            #
-            #    # yam = GenericRoot(['ok',])
-            #    yom = GenericStem(['ok',])
-            #    yim = GenericLeaf(['ok',])
-            #
-            #    # die_if_unbearable(yam, GenericRoot[int])
-            #    die_if_unbearable(yom, GenericStem[int])
-            #    die_if_unbearable(yim, GenericLeaf[int])
-            #
-            #The latter two die_if_unbearable() statements should fail. Instead,
-            #they silently succeed. Welp. This is awful, huh? *sigh*
-            #FIXME: Exercise this with a unit test, please. Ugh!
-
             # Metadata encapsulating the sanification of this possibly insane
             # pseudo-superclass.
             hint_base_sane = sanify_hint_child(
@@ -467,9 +407,14 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
                     # *AFTER* adding onto this list.
                     hint_bases_index_past_last += len(hint_base_bases)
 
-                    # Enqueue these superclasses onto this list.
+                    # For the 0-based index of each parent pseudo-superclass of
+                    # this child pseudo-superclass *AND* that parent
+                    # pseudo-superclass...
                     for hint_base_base_index, hint_base_base in enumerate(
                         hint_base_bases):
+                        # Enqueue this parent pseudo-superclass and the sanified
+                        # hint metadata applicable to this pseudo-superclass
+                        # onto the "hint_bases" list.
                         hint_bases[
                             hint_bases_index_past_last_prev +
                             hint_base_base_index
@@ -506,8 +451,8 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
             #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')
             #     print(f'Is generic {hint} base {repr(hint_base)} type? {isinstance(hint_base, type)}')
 
-        #FIXME: *NICE*. For safety, we also be doing something similar in our
-        #make_check_expr()-driven dynamic code generator as well.
+        #FIXME: *NICE*. For safety, we should also be doing something similar in
+        #our make_check_expr()-driven dynamic code generator as well.
         # Nullify the previously visited pseudo-superclass in this list,
         # avoiding spurious memory leaks by encouraging garbage collection.
         hint_bases[hint_bases_index_curr] = None

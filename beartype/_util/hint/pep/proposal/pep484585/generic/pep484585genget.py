@@ -1182,7 +1182,10 @@ def get_hint_pep484585_generic_bases_unerased(
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
+
+        #FIXME: This test appears to be failing. Fascinating. *sigh*
         if is_hint_pep585_generic(hint) else
+
         # Else, this *MUST* be a PEP 484-compliant generic. In this case, all
         # unerased pseudo-superclasses of this PEP 484-compliant generic.
         #

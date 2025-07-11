@@ -33,7 +33,11 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Union,
     )
     from beartype._cave._cavefast import IntType
-    from beartype._data.hint.datahinttyping import S, T
+    from beartype._data.hint.datahinttyping import (
+        S,
+        T,
+        U,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAbstractSet,
         HintSignByteString,
@@ -73,6 +77,9 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Pep585ListListStr,
         Pep585ListStr,
         Pep585ListT,
+        # Pep585ListRootU,
+        Pep585ListStemT,
+        Pep585ListLeafS,
         T_Pep585ListT,
     )
     from beartype_test.a00_unit.data.data_type import (
@@ -629,6 +636,31 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
+        # Generic subclassing a single parametrized builtin container, itself
+        # parametrized by the same multiple type variables in the same order.
+        HintPepMetadata(
+            hint=Pep585DictST[S, T],
+            pep_sign=HintSignPep484585GenericSubscripted,
+            generic_type=Pep585DictST,
+            is_pep585_generic=True,
+            typevars=(S, T,),
+            piths_meta=(
+                # Subclass-specific generic dictionary of string constants.
+                HintPithSatisfiedMetadata(Pep585DictST({
+                    'Bandage‐managed': 'Into Faithless redaction’s',
+                    'didact enactment': '— crookedly',
+                })),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Down‐bound'),
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'To prayer',
+                    'To Ɯṙaith‐like‐upwreathed ligaments',
+                ]),
+            ),
+        ),
+
+        # ................{ GENERICS ~ single : recursion      }................
         # Generic subclassing a single parametrized builtin container type.
         HintPepMetadata(
             hint=Pep585ListT,
@@ -693,29 +725,51 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Generic subclassing a single parametrized builtin container, itself
-        # parametrized by the same multiple type variables in the same order.
-        HintPepMetadata(
-            hint=Pep585DictST[S, T],
-            pep_sign=HintSignPep484585GenericSubscripted,
-            generic_type=Pep585DictST,
-            is_pep585_generic=True,
-            typevars=(S, T,),
-            piths_meta=(
-                # Subclass-specific generic dictionary of string constants.
-                HintPithSatisfiedMetadata(Pep585DictST({
-                    'Bandage‐managed': 'Into Faithless redaction’s',
-                    'didact enactment': '— crookedly',
-                })),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Down‐bound'),
-                # List of string constants.
-                HintPithUnsatisfiedMetadata([
-                    'To prayer',
-                    'To Ɯṙaith‐like‐upwreathed ligaments',
-                ]),
-            ),
-        ),
+        # ................{ GENERICS ~ single : hierarchy      }................
+        #FIXME: Sadly broken at the moment. Resume us up tomorrow, please!
+
+        # # Subscripted generic subclassing a parametrized generic subclassing a
+        # # single parametrized builtin container type.
+        # HintPepMetadata(
+        #     hint=Pep585ListStemT[str],
+        #     pep_sign=HintSignPep484585GenericSubscripted,
+        #     generic_type=Pep585ListStemT,
+        #     is_pep585_generic=True,
+        #     typevars=(T, U,),
+        #     piths_meta=(
+        #         # Subclass-specific generic list of string constants.
+        #         HintPithSatisfiedMetadata(Pep585ListStemT((
+        #             'Blazing Hyperion on', 'his orbed fire',))),
+        #         # Subclass-specific generic list of integer constants.
+        #         HintPithUnsatisfiedMetadata(Pep585ListStemT((
+        #             len("From man to the sun's God;"), len('yet unsecure:'),))),
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             "Still sat, still snuff'd the incense, teeming up"),
+        #     ),
+        # ),
+        #
+        # # Subscripted generic subclassing a parametrized generic subclassing
+        # # another parametrized generic subclassing a single parametrized builtin
+        # # container type. Type hierarchies go hard and so do we. \o/
+        # HintPepMetadata(
+        #     hint=Pep585ListLeafS[str],
+        #     pep_sign=HintSignPep484585GenericSubscripted,
+        #     generic_type=Pep585ListLeafS,
+        #     is_pep585_generic=True,
+        #     typevars=(S, T, U,),
+        #     piths_meta=(
+        #         # Subclass-specific generic list of string constants.
+        #         HintPithSatisfiedMetadata(Pep585ListStemT((
+        #             'For as among us mortals', 'omens drear',))),
+        #         # Subclass-specific generic list of integer constants.
+        #         HintPithUnsatisfiedMetadata(Pep585ListStemT((
+        #             len('Fright and perplex,'), len('so also shuddered he—'),))),
+        #         # String constant.
+        #         HintPithUnsatisfiedMetadata(
+        #             "Not at dog's howl, or gloom-bird's hated screech,"),
+        #     ),
+        # ),
 
         # ................{ GENERICS ~ multiple                }................
         # Generic subclassing multiple unparametrized "collection.abc" abstract

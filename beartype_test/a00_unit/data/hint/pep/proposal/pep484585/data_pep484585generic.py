@@ -478,3 +478,35 @@ class Pep585IterableTupleSTContainerTupleST(
 
     def __len__(self) -> bool:
         return len(self._sequence)
+
+# ....................{ PEP 585 ~ usable : S, T, U         }....................
+# Generics that are actually instantiable and usable as valid objects.
+
+class Pep585ListRootU(list[U]):
+    '''
+    :pep:`585`-compliant generic list subclassing the builtin :class:`list` type
+    parametrized by one unconstrained type variable.
+    '''
+
+    pass
+
+
+class Pep585ListStemT(Pep585ListRootU[T]):
+    '''
+    :pep:`585`-compliant generic parametrized by one unconstrained type variable
+    subclassing a :pep:`585`-compliant generic list subclassing the builtin
+    :class:`list` type parametrized by a different unconstrained type variable.
+    '''
+
+    pass
+
+
+class Pep585ListLeafS(Pep585ListStemT[S]):
+    '''
+    :pep:`585`-compliant generic parametrized by one unconstrained type variable
+    subclassing a similar :pep:`585`-compliant generic subclassing a
+    :pep:`585`-compliant generic list subclassing the builtin :class:`list` type
+    parametrized by a different unconstrained type variable.
+    '''
+
+    pass

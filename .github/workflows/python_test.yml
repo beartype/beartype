@@ -123,23 +123,19 @@ jobs:
           # - pypy38-coverage
           # - pypy39-coverage
 
-        # Avoid problematic combinations of Python versions and platforms.
-        exclude:
-          # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
-          # GitHub Actions-based Windows runner appears to ship a GIL-free
-          # "free-threading" build of Python 3.13.0, which then appears to
-          # produce cataclysmic failures at "pytest" test collection time.
-          #
-          # See also this currently open upstream CPython issue:
-          #     https://github.com/python/cpython/issues/118973
-          - platform: windows-latest
-            tox-env: py313-coverage
+        #FIXME: Preserved in the likelihood we'll need something similar again.
+        # # Avoid problematic combinations of Python versions and platforms.
+        # exclude:
+        #   # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
+        #   # GitHub Actions-based Windows runner appears to ship a GIL-free
+        #   # "free-threading" build of Python 3.13.0, which then appears to
+        #   # produce cataclysmic failures at "pytest" test collection time.
+        #   - platform: windows-latest
+        #     tox-env: py313-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
-        # "actions/setup-python" GitHub Action run below.
-        #
-        # Note that:
+        # "actions/setup-python" GitHub Action run below. Note that:
         # * Python version specifiers *MUST* be quoted: e.g.,
         #     # Do this.
         #     python-version: "3.10"
@@ -151,45 +147,23 @@ jobs:
         #   truncating 3.10 to 3.1). That then results in non-human-readable CI
         #   errors, as discussed upstream at:
         #     https://github.com/actions/setup-python/issues/160#issuecomment-724485470
-        # * Python pre-releases may be selected with a space-delimited range
+        # * CPython free-threading (i.e., GIL-less, no-GIL) variants may be
+        #   selected with the "t" suffix (e.g., "3.14t", the free-threading
+        #   variant of CPython 3.14).
+        # * CPython pre-releases may be selected with a space-delimited range
         #   embedded in a single quoted version specifier. For example,
         #   selecting the Python 3.11 pre-release reduces to:
         #     python-version: "3.11.0-alpha - 3.11.0"
         include:
-          - tox-env: py39-coverage
-            python-version: "3.9"
-          - tox-env: py310-coverage
-            python-version: "3.10"
-          - tox-env: py311-coverage
-            python-version: "3.11"
-          - tox-env: py312-coverage
-            python-version: "3.12"
-          - tox-env: py313-coverage
-            python-version: "3.13"
+          - { python-version: "3.9",   tox-env: "py39-coverage" }
+          - { python-version: "3.10",  tox-env: "py310-coverage" }
+          - { python-version: "3.11",  tox-env: "py311-coverage" }
+          - { python-version: "3.12",  tox-env: "py312-coverage" }
+          - { python-version: "3.13",  tox-env: "py313-coverage" }
+          - { python-version: "3.13t", tox-env: "py313t-coverage" }
+          - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
+          - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
 
-          #FIXME: Add support for testing the free-threaded CPython. In theory,
-          #this should just work "out-of-the-box" by uncommenting the following:
-          #    - tox-env: py313-coverage
-          #      python-version: "3.13t"
-          #
-          #The "t" is the official suffix reserved by CPython for free-threaded
-          #builds. Since the "setup-python" action already explicitly supports
-          #this syntax, this *SHOULD* just work. Sadly, issues arise with "tox".
-          #Ideally, we would add support for the free-threaded CPython by
-          #adding the following to our "tox.ini" configuration:
-          #    envlist = py{39,310,311,312,313,313t}-coverage
-          #
-          #Unfortunately, "tox" currently fails to support this syntax. See also
-          #this currently open issue on the topic:
-          #    https://github.com/tox-dev/tox/issues/3391
-          #
-          #Note there exists a "tox"-specific workaround for this issue: the
-          #"--discover" option. If testing free-threaded CPython ever becomes a
-          #pressing concern, see this wiki topic describing this workaround:
-          #    https://tox.wiki/en/4.21.2/cli_interface.html#tox-run---discover
-
-          # - tox-env: py314-coverage
-          #   python-version: "3.14"
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage
           #   python-version: "pypy-3.10"
