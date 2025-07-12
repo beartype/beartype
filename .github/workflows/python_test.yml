@@ -115,6 +115,10 @@ jobs:
           - py311-coverage
           - py312-coverage
           - py313-coverage
+          - py313t-coverage
+          - py314-coverage
+          - py314t-coverage
+
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
           #recently broken by work generalizing @beartype to decorate builtin
@@ -161,21 +165,8 @@ jobs:
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.13t", tox-env: "py313t-coverage" }
-
-          #FIXME: We'd love to enable these, but they sadly appear to be
-          #causing spurious GitHub Actions failures resembling:
-          #    Error when evaluating 'runs-on' for job 'tests'.
-          #    .github/workflows/python_test.yml (Line: 176, Col: 14):
-          #    Unexpected value ''
-          #
-          #The underlying issue appears to be that the "actions/setup-python"
-          #GitHub Action fails to support these Python versions under all
-          #available platforms. Presumably, Windows is the issue. How can we
-          #selectively enable these *ONLY* for Linux? No idea, honestly. Even
-          #more honestly, does any of this matter? Let's just wait until Python
-          #3.14 officially drops. Testing against pre-releases is... not good.
-          # - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
-          # - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
+          - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
+          - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage
@@ -232,10 +223,18 @@ jobs:
         uses: 'actions/setup-python@v5'
         with:
           python-version: "${{ matrix.python-version }}"
+          allow-prereleases: true
       - name: 'Displaying Python metadata...'
         run: |
           python3 -VV
           python3 -m site
+
+          # Print either:
+          # * For free-threading Python builds:
+          #       Py_GIL_DISABLED: 1
+          # * For GIL-encumbered Python builds:
+          #       Py_GIL_DISABLED: 0
+          python3 -c "import sysconfig; print('Py_GIL_DISABLED:', sysconfig.get_config_var('Py_GIL_DISABLED'))"
 
       # ..................{ INSTALL                          }..................
       # Note that:
