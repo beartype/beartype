@@ -115,7 +115,7 @@ jobs:
           - py311-coverage
           - py312-coverage
           - py313-coverage
-          - py313t-coverage
+          # - py313t-coverage
           - py314-coverage
           # - py314t-coverage
 
@@ -164,7 +164,14 @@ jobs:
           - { python-version: "3.11",  tox-env: "py311-coverage" }
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
-          - { python-version: "3.13t", tox-env: "py313t-coverage" }
+
+          #FIXME: Actually, let's just avoid free-threading builds for now. It'd
+          #be great to test them, but only 20% of all C extensions support them
+          #as of 2025 Q3 -- which means it is effectively impossible to test
+          #@beartype against them, because the @beartype test suite requires an
+          #*EXTREME* number of C extensions (e.g., NumPy, SciPy, PyTorch).
+          # - { python-version: "3.13t", tox-env: "py313t-coverage" }
+
           - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
 
           #FIXME: Uncomment *AFTER* Python 3.14 officially lands. Pretty sure
