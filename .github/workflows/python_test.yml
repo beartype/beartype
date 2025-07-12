@@ -166,7 +166,12 @@ jobs:
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.13t", tox-env: "py313t-coverage" }
           - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
-          - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
+
+          #FIXME: Uncomment *AFTER* Python 3.14 officially lands. Pretty sure
+          #"action/setup-python" does *NOT* currently support pre-release
+          #free-threading variants. At least, we have *NO* idea how to specify
+          #them with sane syntax. *shrug*
+          # - { python-version: "3.14.0t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage
