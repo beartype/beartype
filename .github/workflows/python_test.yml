@@ -161,8 +161,21 @@ jobs:
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.13t", tox-env: "py313t-coverage" }
-          - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
-          - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
+
+          #FIXME: We'd love to enable these, but they sadly appear to be
+          #causing spurious GitHub Actions failures resembling:
+          #    Error when evaluating 'runs-on' for job 'tests'.
+          #    .github/workflows/python_test.yml (Line: 176, Col: 14):
+          #    Unexpected value ''
+          #
+          #The underlying issue appears to be that the "actions/setup-python"
+          #GitHub Action fails to support these Python versions under all
+          #available platforms. Presumably, Windows is the issue. How can we
+          #selectively enable these *ONLY* for Linux? No idea, honestly. Even
+          #more honestly, does any of this matter? Let's just wait until Python
+          #3.14 officially drops. Testing against pre-releases is... not good.
+          # - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
+          # - { python-version: "3.14.0t-alpha - 3.14.0t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage

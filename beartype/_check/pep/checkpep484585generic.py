@@ -44,6 +44,9 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
+#FIXME: Note that this would be, ideally, internally refactored to leverage the
+#lower-level iter_hint_pep560_generic_bases_unerased() iterator. We tried,
+#actually... and failed hard. The current approach is "good enough." *shrug*
 def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # Mandatory parameters.
     hint_sane: HintSane,
@@ -70,6 +73,18 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     unavoidable stack exhaustion and avoidable infinite recursion) tree of
     recursive function calls.
 
+    This generator is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator). Memoization is the caller's responsibility.
+
+    Caveats
+    -------
+    **This generator exhibits** :math:`O(n)` **linear time complexity for**
+    :math:`n` the number of transitive pseudo-superclasses of this generic. So,
+    this generator is slow. The caller is expected to memoize *all* calls to
+    this generator, which is itself *not* memoized.
+
+    Design
+    ------
     Note that there exist two kinds of pseudo-superclasses with respect to
     type-checking. Each pseudo-superclass yielded by this generator is either:
 
@@ -216,18 +231,17 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    exception_cls : TypeException
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
-    exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to the empty string.
+    exception_cls : TypeException, default: BeartypeDecorHintPep484585Exception
+        Type of exception to be raised in the event of fatal error. Defaults to
+        :exc:`.BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
-    Returns
-    -------
-    Iterable[Tuple[HintSane, HintSign]]
-        Generator iteratively yielding one or more 2-tuples ``(hint_sane,
-        hint_sign)``, where:
+    Yields
+    ------
+    Tuple[HintSane, HintSign]
+        2-tuple ``(hint_sane, hint_sign)``, where:
 
         * ``hint_sane`` is an unignorable unerased transitive pseudo-superclass
           originally declared as a superclass prior to its type erasure of this
@@ -251,7 +265,7 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     assert isinstance(hint_sane, HintSane), (
         f'{repr(hint_sane)} not sanified metadata.')
 
-    # ....................{ LOCALS ~ bases : direct        }....................
+    # ....................{ LOCALS                         }....................
     # This unsubscripted generic.
     hint = hint_sane.hint
 
@@ -288,7 +302,6 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # 0-based index of one *PAST* the last pseudo-superclass of this list.
     hint_bases_index_past_last = len(hint_bases_direct)
 
-    #FIXME: Improve commentary, please. *sigh*
     #FIXME: [SPEED] Optimize into a "while" loop. *sigh*
     # For the 0-based index of each direct pseudo-superclass of the passed
     # generic *AND* this direct pseudo-superclass...

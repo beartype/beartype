@@ -69,8 +69,8 @@ def die_unless_hint_pep484585_generic_unsubbed(
 
         # Raise an exception of this type prefixed by this prefix.
         raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'not PEP 484 or 585 unsubscripted generic.'
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 or 585 unsubscripted generic.'
         )
     # Else, this hint is an unsubscripted generic.
 

@@ -367,6 +367,9 @@ def get_hint_pep484_generic_bases_unerased(
     #    eliminate duplicates at the end.
     #  * Return a frozenset of this list, thus implicitly eliminating
     #    duplicate superclasses.
+    #FIXME: Actually, a simpler implementation could now be defined in terms of
+    #the new iter_hint_pep560_generic_bases_unerased() iterator. Still, let's
+    #avoid doing so until we *ABSOLUTELY* must. *sigh*
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
@@ -384,10 +387,10 @@ def get_hint_pep484_generic_bases_unerased(
     # raise an exception.
     if not is_hint_pep484_generic_unsubbed(hint):
         raise exception_cls(
-            f'{exception_prefix}type hint {repr(hint)} neither '
-            f'PEP 484 generic nor PEP 544 protocol.'
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 or 585 unsubscripted generic.'
         )
-    # Else, this hint is a PEP 484- or 544-compliant generic.
+    # Else, this hint is a PEP 484- or 544-compliant unsubscripted generic.
     #
     # If this hint is a PEP 484- or 544-compliant generic superclass in either
     # unsubscripted form (e.g., "typing.Generic", "typing.Protocol") or
