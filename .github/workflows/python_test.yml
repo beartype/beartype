@@ -117,7 +117,7 @@ jobs:
           - py313-coverage
           - py313t-coverage
           - py314-coverage
-          - py314t-coverage
+          # - py314t-coverage
 
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
@@ -171,6 +171,8 @@ jobs:
           #"action/setup-python" does *NOT* currently support pre-release
           #free-threading variants. At least, we have *NO* idea how to specify
           #them with sane syntax. *shrug*
+          #
+          #On doing so, uncomment "- py314t-coverage" above as well. *sigh*
           # - { python-version: "3.14.0t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
