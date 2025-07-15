@@ -368,7 +368,7 @@ def get_hint_pep484_generic_bases_unerased(
     #  * Return a frozenset of this list, thus implicitly eliminating
     #    duplicate superclasses.
     #FIXME: Actually, a simpler implementation could now be defined in terms of
-    #the new iter_hint_pep560_generic_bases_unerased() iterator. Still, let's
+    #the new iter_hint_pep560_bases_unerased() iterator. Still, let's
     #avoid doing so until we *ABSOLUTELY* must. *sigh*
 
     # Avoid circular import dependencies.

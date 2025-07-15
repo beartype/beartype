@@ -232,7 +232,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.proposal.pep560 import (
         is_hint_pep560,
-        iter_hint_pep560_generic_bases_unerased,
+        iter_hint_pep560_bases_unerased,
     )
 
     # If it is *NOT* the case that...
@@ -301,7 +301,7 @@ def is_hint_pep585_generic_unsubbed(hint: Hint) -> bool:
     # __class_getitem__() dunder method. Since that test would *NOT* suffice to
     # ensure that this hint is a PEP 585-compliant generic, however, there
     # exists little benefit to doing so.
-    for hint_base in iter_hint_pep560_generic_bases_unerased(hint):
+    for hint_base in iter_hint_pep560_bases_unerased(hint):
         # If this transitive pseudo-superclass is itself a PEP 585-compliant
         # subscripted generic (e.g., "list[str]"), the passed hint transitively
         # subclasses a PEP 585-compliant generic. By transitivity, this hint

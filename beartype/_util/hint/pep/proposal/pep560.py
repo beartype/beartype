@@ -48,7 +48,7 @@ def is_hint_pep560(hint: Hint) -> bool:
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
-def iter_hint_pep560_generic_bases_unerased(
+def iter_hint_pep560_bases_unerased(
     # Mandatory parameters.
     hint: Hint,
 

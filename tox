@@ -11,7 +11,6 @@
 # This script is defined as a Bash rather than Bourne script purely for the
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
-#
 
 # ....................{ PREAMBLE                           }....................
 # Enable strictness for sanity.

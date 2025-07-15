@@ -10,14 +10,15 @@
 .. _pep:pep:
 
 ########
-BigData™
+Features
 ########
 
-.. code-block:: text
-
-   It's a big bear AAAAAAAAFTER all!
-   It's a big bear AAAAAAAAFTER all!
-   It's a big b——— *squelching sound, then blessed silence*
+.. #FIXME: This preamble turned out to be a *LOT* less funny than I thought.
+.. .. code-block:: text
+..
+..    It's a big bear AAAAAAAAFTER all!
+..    It's a big bear AAAAAAAAFTER all!
+..    It's a big b——— *squelching sound, then blessed silence*
 
 Beartype complies with vast swaths of Python's :mod:`typing` landscape and
 lint-filled laundry list of `Python Enhancement Proposals (PEPs) <PEPs_>`__ –

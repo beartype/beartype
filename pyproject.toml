@@ -266,6 +266,13 @@ doc-rtd = [
     # La-Z-Boy.
     "pydata-sphinx-theme <=0.7.2",
 
+    # The older version of "pydata-sphinx-theme" currently required above to
+    # build this documentation assumes that Python bundles the "distutils"
+    # package, which Python >= 3.12 no longer does. Instead, explicitly install
+    # the third-party "setuptools" toolchain, which implicitly installs
+    # "distutils" as well... via a horribly antiquated hack. Just do it. \o/
+    "setuptools",
+
     # Third-party Sphinx extensions.
     "autoapi >=0.9.0",
     "sphinxext-opengraph >=0.7.5",
@@ -651,8 +658,7 @@ include = [
 ]
 
 # ....................{ NON-PEP ~ pyright                  }....................
-# PEP-noncompliant section declaring pyright-specific version settings. See
-# also:
+# PEP-noncompliant section declaring pyright-specific settings. See also:
 # * Official documentation for this section.
 #   https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 [tool.pyright]

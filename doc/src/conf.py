@@ -163,11 +163,9 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   `Feed the bear! The bear is rooting around in your refuse pile <GitHub
-   Sponsors_>`__. You feel sadness.
+   `Please consider sponsoring us <GitHub Sponsors_>`__. Your support is our
+   quality control. `💗 <GitHub Sponsors_>`__.
 '''
-   # `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
-   # <beadspace9_>`__! *What is even going on with this banner!?*
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
@@ -524,8 +522,12 @@ python_maximum_signature_line_length = 80
 # ....................{ BUILD ~ html                       }....................
 # Relative filename or URL of a small image (i.e., no wider than 200px) to be
 # rendered in the upper left-hand corner of the sidebar for this theme.
-html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg'
+html_logo = '_static/beartype_logo.svg'
+# html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg'
+# html_logo = 'https://img.shields.io/badge/%F0%9F%91%8C%F0%9F%90%BB-Bear--ified%E2%84%A2-dead80'
+# html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/refs/heads/main/badge/bear-ified.svg'
 
+#FIXME: Currently unused. *shrug*
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files;
 # ergo, a file named "default.css" will overwrite the builtin "default.css".
@@ -558,15 +560,17 @@ html_theme_options = {
     #FIXME: Add favicon support here, please. See also:
     #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#adding-favicons
 
-    # Announcement banner defined as a string of arbitrary HTML, temporarily
-    # displayed at the top of each page until the user begins scrolling.
-    'announcement': (
-        '<p>'
-        '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
-        '<a href="https://www.etsy.com/ca/shop/BeadSpace9">Animals wearing jewelry</a>! '
-        '<i>What is even going on with this banner!?</i>'
-        '</p>'
-    ),
+    #FIXME: The "rst_prolog" approach above is currently preferred for some
+    #arcane reason we can no longer remember. *sigh*
+    # # Announcement banner defined as a string of arbitrary HTML, temporarily
+    # # displayed at the top of each page until the user begins scrolling.
+    # 'announcement': (
+    #     '<p>'
+    #     '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
+    #     '<a href="https://www.etsy.com/ca/shop/BeadSpace9">Animals wearing jewelry</a>! '
+    #     '<i>What is even going on with this banner!?</i>'
+    #     '</p>'
+    # ),
 
     # List of one or more icon link descriptions. See also:
     # * Official theme-specific documentation for this setting:

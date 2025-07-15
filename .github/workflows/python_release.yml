@@ -1,12 +1,12 @@
 ---
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2024 Beartype authors.
+# Copyright (c) 2014-2025 Beartype authors.
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
 # GitHub-specific continuous deployment (CD) configuration, enabling automated
 # publication of both source tarballs and binary wheels in various popular
-# formats to both GitHub itself and PyPI on each push of a tag to the "master"
+# formats to both GitHub itself and PyPI on each push of a tag to the "main"
 # branch of this repository.
 #
 # --------------------( SEE ALSO                           )--------------------
@@ -102,11 +102,6 @@ jobs:
           hatch build -t sdist -t wheel
       - name: "Publishing PyPI release from tag..."
         uses: 'pypa/gh-action-pypi-publish@release/v1'
-        #FIXME: This should no longer be required. See also:
-        #    https://github.com/pypa/gh-action-pypi-publish
-        # with:
-        #   user: __token__
-        #   password: ${{ secrets.PYPI_API_TOKEN }}
 
       #FIXME: Enable after integrating this "pypi" job into the "release" job
       #above. In theory, this should be trivial. Let's test this later, eh?

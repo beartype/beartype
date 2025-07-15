@@ -365,7 +365,6 @@
    https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
 
 .. # ------------------( LINKS ~ py : package : numba        )------------------
-.. _Numba:
 .. _numba:
    https://numba.pydata.org
 .. _numba.njit:
@@ -830,8 +829,6 @@
    https://github.com/RussBaz/enforce
 .. _enforce_typing:
    https://github.com/matchawine/python-enforce-typing
-.. _pydantic:
-   https://pydantic-docs.helpmanual.io
 .. _pytypes:
    https://github.com/Stewori/pytypes
 .. _typeen:

@@ -45,7 +45,7 @@ from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
 #FIXME: Note that this would be, ideally, internally refactored to leverage the
-#lower-level iter_hint_pep560_generic_bases_unerased() iterator. We tried,
+#lower-level iter_hint_pep560_bases_unerased() iterator. We tried,
 #actually... and failed hard. The current approach is "good enough." *shrug*
 def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # Mandatory parameters.
