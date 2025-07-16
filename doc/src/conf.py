@@ -163,8 +163,8 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   `Please consider sponsoring us <GitHub Sponsors_>`__. Your support is our
-   quality control. `💗 <GitHub Sponsors_>`__.
+   `Please consider sponsoring us <GitHub Sponsors_>`__. **Your support is our
+   quality assurance.** `💗 <GitHub Sponsors_>`__.
 '''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the

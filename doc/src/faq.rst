@@ -1220,13 +1220,13 @@ How do I \*ONLY\* type-check while running my test suite?
 *********************************************************
 
 Your test suite uses pytest_, of course. You are sane. Therefore, you're lucky!
-The aptly-named `pytest-beartype <pytest-beartype PyPI_>`__ package officially
-supports your valid use case.
+The aptly-named `pytest-beartype`_ package officially supports your valid use
+case.
 
 Isolate :mod:`beartype` to tests today. If everything blows up, at least you can
 say you tried:
 
-#. Install `pytest-beartype <pytest-beartype PyPI_>`__:
+#. Install `pytest-beartype`_:
 
    .. code-block:: bash
 

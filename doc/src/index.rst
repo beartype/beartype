@@ -290,6 +290,23 @@ things @beartype. It's "typing_ or bust!" as you...
 
 .. # ------------------( DESCRIPTION                         )------------------
 
+########
+See Also
+########
+
+Beartype plugins adjacent to your interests include:
+
+* `ipython-beartype`_, beartype's official IPython_ plugin. Type-check all:
+
+  * Browser-based Jupyter_, Marimo_, and `Google Colab`_ **notebook cells.**
+  * IDE-based Zasper_ **notebook cells.**
+  * Terminal-based IPython__ **REPLs.**
+
+* `pytest-beartype`_, beartype's official pytest_ plugin. Type-check your
+  package *only* at pytest_ test-time. Fatally obsessed with speed? Openly
+  permissive of critical failures? Can't bear to type-check at package runtime?
+  When you lack trust, you choose `pytest-beartype`_.
+
 #######
 License
 #######
@@ -340,7 +357,7 @@ History
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
    :target: https://github.com/beartype/beartype/graphs/contributors
    :alt: Beartype contributors
-.. |beartype-stars| image:: https://star-history.com/#beartype/beartype&Date
+.. |beartype-stars| image:: https://api.star-history.com/svg?repos=beartype/beartype&type=Date
    :target: https://github.com/beartype/beartype/stargazers
    :alt: Beartype stargazers
 

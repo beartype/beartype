@@ -618,7 +618,8 @@ include = [
 
     # Relative basenames of all requisite top-level installation-time files.
     "/LICENSE",
-    "/README.rst",
+    "/*.md",
+    "/*.rst",
     "/conftest.py",
     "/mypy",
     "/mypy.ini",
@@ -638,6 +639,7 @@ include = [
     # * All files documenting this project.
     "/doc/Makefile",
     "/doc/*.bat",
+    "/doc/*.md",
     "/doc/*.rst",
     "/doc/src",
 

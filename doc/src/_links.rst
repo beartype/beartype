@@ -113,14 +113,22 @@
    https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
    https://pypi.org/project/beartype
-.. _pytest-beartype PyPI:
-   https://pypi.org/project/pytest-beartype
 
 .. # ------------------( LINKS ~ beartype : package : meta   )------------------
 .. _Libraries.io:
    https://libraries.io
 .. _beartype dependents:
    https://libraries.io/pypi/beartype/dependents
+
+.. # ------------------( LINKS ~ beartype : plugin           )------------------
+.. _ipython-beartype:
+   https://pypi.org/project/ipython-beartype
+.. _ipython-beartype GitHub:
+   https://github.com/beartype/ipython-beartype
+.. _pytest-beartype:
+   https://pypi.org/project/pytest-beartype
+.. _pytest-beartype GitHub:
+   https://github.com/beartype/pytest-beartype
 
 .. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:
@@ -355,6 +363,18 @@
    https://docs.kidger.site/equinox/api/module/module
 .. _equinox.filter_jit:
    https://docs.kidger.site/equinox/api/transformations/#equinox.filter_jit
+
+.. # ------------------( LINKS ~ py : package : ipython      )------------------
+.. _Google Colab:
+   https://colab.research.google.com
+.. _IPython:
+   https://ipython.org
+.. _Jupyter:
+   https://jupyter.org
+.. _Marimo:
+   https://marimo.io
+.. _Zasper:
+   https://zasper.io
 
 .. # ------------------( LINKS ~ py : package : jax          )------------------
 .. _jax:

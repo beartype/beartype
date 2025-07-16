@@ -40,14 +40,14 @@ Procedure
 
 Beartype is releasable to all supported platforms as follows:
 
-#. (\ *Optional*\ ) **Validate reStructuredText (reST) rendering.** The
-   human-readable description for this release derives directly from `the
-   top-level README.rst file <readme_>`__ for this project. Sadly, PyPI's reST
-   renderer supports only a proper subset of the syntax supported by the reST
-   standard – itself only a proper subset of the syntax supported by Sphinx. If
-   `this file <readme_>`__ contains syntax unsupported by PyPI's reST renderer,
-   PyPI erroneously preserves this file as plaintext rather than rendering this
-   file as HTML. To avoid this:
+#. (\ *Optional*\ ) **Validate README rendering.** The human-readable
+   description for this release derives directly from `the top-level README.\*
+   file <readme_>`__ for this project. Sadly, PyPI's reST renderer supports only
+   a proper subset of the syntax supported by the reST standard – itself only a
+   proper subset of the syntax supported by Sphinx. If `this file <readme_>`__
+   contains syntax unsupported by PyPI's reST renderer, PyPI erroneously
+   preserves this file as plaintext rather than rendering this file as HTML. To
+   avoid this:
 
    #. Install the ``collective.checkdocs`` Python package.
 
@@ -88,6 +88,14 @@ Beartype is releasable to all supported platforms as follows:
    .. code-block:: shell-session
 
       $ tar -tvzf dist/beartype-${version}.tar.gz | less
+
+#. (\ *Optional*\ ) **List the contents of this binary wheel,** where
+   ``${version}`` is the purely numeric version of this release (e.g.,
+   ``0.4.1``). Verify by inspection that no unwanted paths were packaged.
+
+   .. code-block:: shell-session
+
+      $ zipinfo dist/beartype-${version}-py3-none-any.whl | less
 
 #. (\ *Optional*\ ) **Test the local installation of this release.** If
    installation of this release differs from that of prior releases, testing
