@@ -14,30 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *WOOPS.* We're ambiguously (and thus incorrectly) detecting *ALL*
-#"typing.Unpack[...]" hints as if they were unpacked type variable tuples.
-#That's totally incorrect, though. "typing.Unpack[...]" hints can now be
-#subscripted by a variety of child hints, including:
-#* "typing.Unpack[*Ts]", an unpacked type variable tuple.
-#* "typing.Unpack[TypedDictSubclass]", an unpacked typed dictionary.
-#
-#By definition, "typing.Unpack[...]" hints are thus ambiguous. We now need to
-#disambiguate these hints by taking inspiration from the approach currently
-#taken by the get_hint_pep484585646_tuple_sign_unambiguous() getter.
-#Specifically:
-#* Define the following new signs:
-#  * "HintSignPep646UnpackedTypeVarTuple".
-#  * "HintSignPep692UnpackedTypedDict".
-#* Define a new get_hint_646692_unpacked_sign_unambiguous() getter accepting an
-#  ambiguous "HintSignUnpack" sign and returning either
-#  "HintSignPep646UnpackedTypeVarTuple" or "HintSignPep692UnpackedTypedDict".
-#* Refactor get_hint_pep_sign_or_none() to call
-#  get_hint_646692_unpacked_sign_unambiguous() when the current sign is the
-#  ambiguous "HintSignUnpack" sign.
-#* Replace most (if not all) references to the ambiguous "HintSignUnpack" sign
-#  throughout the codebase with either "HintSignPep646UnpackedTypeVarTuple" or
-#  "HintSignPep692UnpackedTypedDict" as appropriate.
-
 #FIXME: Currently, we only shallowly type-check PEP 646-compliant mixed
 #fixed-variadic tuple hints as... tuples. It's not much. Obviously, we need to
 #deeply type-check these tuple data structures as soon as feasible. There exist
@@ -103,6 +79,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
+from beartype._util.hint.pep.proposal.pep646 import (
+    is_hint_pep646_unpacked_type_variable_tuple)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_variadic,
     make_hint_pep484585646_tuple_fixed,
@@ -212,6 +190,18 @@ def reduce_hint_pep646_tuple(
         # 646-*AGNOSTIC* parent tuple hint "tuple[typing.Any, ...]", which then
         # simply reduces to the builtin "tuple" type.
         if hint_child_sign is HintSignUnpack:
+            # If this child hint is *NOT* actually a PEP 646-compliant unpacked
+            # type variable tuple, raise an exception.
+            if not is_hint_pep646_unpacked_type_variable_tuple(hint_child):
+                raise BeartypeDecorHintPep646Exception(
+                    f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
+                    f'child hint {repr(hint_child)} not PEP 646-compliant '
+                    f'unpacked type variable tuple (e.g., "*Ts").'
+                )
+            # Else, this child hint is a PEP 646-compliant unpacked type
+            # variable tuple.
+
+            # Reduce this PEP 646-compliant tuple hint to the "tuple" type.
             return tuple
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked type
         # variable tuple.

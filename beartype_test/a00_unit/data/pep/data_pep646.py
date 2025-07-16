@@ -23,18 +23,30 @@ Python 3.11.0.** If this is *not* the case, importing this submodule raises an
 # ....................{ TESTS ~ reducer                    }....................
 def unit_test_reduce_hint_pep646_tuple() -> None:
     '''
-    Test the :pep:`649`-compliant implementation of the private
+    Test the :pep:`646`-compliant implementation of the private
     :mod:`beartype._check.convert._reduce._pep.redpep646.reduce_hint_pep646_tuple`
-    reducer under Python >= 3.14.
+    reducer under Python >= 3.11.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep646Exception
-    from beartype.typing import TypeVarTuple
+    from beartype.typing import (
+        TypeVarTuple,
+        TypedDict,
+        Unpack,
+    )
     from beartype._check.convert._reduce.redmain import reduce_hint
     from beartype._check.metadata.hint.hintsane import HintSane
     from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class GloomBird(TypedDict):
+        '''
+        Arbitrary :pep:`589`-compliant typed dictionary.
+        '''
+
+        pass
 
     # ....................{ LOCALS                         }....................
     # Arbitrary PEP 646-compliant type variable tuples.
@@ -74,6 +86,13 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
     # * "exception_type" is the type of exception raised by attempting to reduce
     #   this invalid input hint.
     hint_reductions_invalid = (
+        # A PEP 646-compliant tuple hint subscripted by a PEP 692-compliant
+        # unpacked type dictionary is invalid.
+        (
+            tuple[Unpack[GloomBird]],
+            BeartypeDecorHintPep646Exception,
+        ),
+
         # A PEP 646-compliant tuple hint subscripted by two PEP 646-compliant
         # unpacked child fixed-length tuple hint separated by other unrelated
         # child hints is invalid.
@@ -126,9 +145,9 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
 # ....................{ TESTS ~ tester                     }....................
 def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
     '''
-    Test the :pep:`649`-compliant implementation of the private
+    Test the :pep:`646`-compliant implementation of the private
     :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
-    tester under Python >= 3.14.
+    tester under Python >= 3.11.
     '''
 
     # Defer test-specific imports.
@@ -146,9 +165,9 @@ def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
 
 def unit_test_is_hint_pep646_unpacked_tuple() -> None:
     '''
-    Test the :pep:`649`-compliant implementation of the private
+    Test the :pep:`646`-compliant implementation of the private
     :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
-    tester under Python >= 3.14.
+    tester under Python >= 3.11.
     '''
 
     # Defer test-specific imports.

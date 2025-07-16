@@ -55,12 +55,10 @@
    https://github.com/beartype
 .. _beartype pulls:
    https://github.com/beartype/beartype/pulls
+.. _beartype stars:
+   https://github.com/beartype/beartype/stargazers
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
-
-.. # ------------------( LINKS ~ beartype : github : related )------------------
-.. _pytest-beartype:
-   https://github.com/beartype/pytest-beartype
 
 .. # ------------------( LINKS ~ beartype : github : time    )------------------
 .. _beartype profiler:
@@ -433,7 +431,7 @@
    https://docs.pydantic.dev
 .. _LangChain:
    https://www.langchain.com
-   
+
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
    https://www.sphinx-doc.org

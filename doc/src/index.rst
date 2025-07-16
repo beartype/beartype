@@ -296,16 +296,16 @@ See Also
 
 Beartype plugins adjacent to your interests include:
 
-* `ipython-beartype`_, beartype's official IPython_ plugin. Type-check all:
+* `ipython-beartype`_, beartype's official IPython_ plugin. Type-check:
 
-  * Browser-based Jupyter_, Marimo_, and `Google Colab`_ **notebook cells.**
-  * IDE-based Zasper_ **notebook cells.**
-  * Terminal-based IPython__ **REPLs.**
+  * Browser-based Jupyter_, Marimo_, and `Google Colab`_ notebook cells.
+  * IDE-based Zasper_ notebook cells.
+  * Terminal-based IPython_ REPLs.
 
-* `pytest-beartype`_, beartype's official pytest_ plugin. Type-check your
-  package *only* at pytest_ test-time. Fatally obsessed with speed? Openly
-  permissive of critical failures? Can't bear to type-check at package runtime?
-  When you lack trust, you choose `pytest-beartype`_.
+* `pytest-beartype`_, beartype's official pytest_ plugin. Type-check packages
+  *only* at pytest_ test-time. Fatally obsessed with speed? Fatally accepting of
+  critical failure? Can't bear to type-check at runtime? When your team lacks
+  trust, your team chooses `pytest-beartype`_.
 
 #######
 License
@@ -347,6 +347,11 @@ It's a heavy weight they bear. Applaud them as they buckle under the load!
 #######
 History
 #######
+
+Beartype's histrionic past is checkered with drama, papered over in propaganda,
+and chock full of the stuff of stars. Gaze upon their glistening visage as they
+grow monotonically. But do the stars matter? Neither to mortal nor to bear. Yet,
+by starlight, we all howl to commit by dawn.
 
 |beartype-stars|
 

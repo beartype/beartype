@@ -15,16 +15,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import (
     HintGenericSubscriptedType,
-    # HintPep646TypeVarTupleType,
+    HintPep646TypeVarTupleType,
 )
 from beartype._data.hint.datahintpep import (
     Hint,
     # TypeIs,
 )
-# from beartype._data.hint.pep.sign.datapepsigns import (
-#     HintSignPep646UnpackedTuple,
-#     HintSignUnpack,
-# )
+from beartype._data.hint.pep.sign.datapepsigns import (
+    # HintSignPep646UnpackedTuple,
+    HintSignUnpack,
+)
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -156,3 +156,63 @@ def is_hint_pep646_unpacked_tuple(hint: Hint) -> bool:
         # # unpacked child tuple hints.
         # getattr(hint, '__unpacked__', None) is True
     )
+
+
+#FIXME: Unit test us up, please.
+def is_hint_pep646_unpacked_type_variable_tuple(hint: Hint) -> bool:
+    '''
+    :data:`True` only if the passed hint is a :pep:`646`-compliant **unpacked
+    type variable tuple** (e.g., the child hint ``*Ts`` subscripting the parent
+    tuple hint ``tuple[str, *Ts, bool]``).
+
+    This getter enables callers to disambiguate between otherwise ambiguous
+    unpacked type hints sharing the same ambiguous sign of
+    :data:`.HintSignUnpack`. This includes:
+
+    * :pep:`646`-compliant **unpacked type variable tuples.**
+    * :pep:`692`-compliant **unpacked typed dictionaries** (e.g.,
+      ``typing.Unpack[SomeTypedDict]`` where ``SomeTypedDict`` is a subclass of
+      :class:`typing.TypedDict`).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this hint is an unpacked type variable tuple.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
+
+    # Sign uniquely identifying this hint.
+    hint_sign = get_hint_pep_sign_or_none(hint)
+
+    # If this is a PEP 646- or 692-compliant "typing.Unpack[...]" hint, this
+    # *COULD* be a PEP 646-compliant unpacked type variable tuple. Why? Because
+    # CPython unpacks type variable tuples of the form "*Ts" into semantically
+    # equivalent hints of the form "typing.Unpack[Ts]". Why? No idea. Who cares!
+    if hint_sign is HintSignUnpack:
+        # Tuple of the zero or more child hints subscripting this hint.
+        hint_childs = get_hint_pep_args(hint)
+
+        # Return true only if...
+        return (
+            # This hint is subscripted by exactly one child hint *AND*...
+            len(hint_childs) == 1 and
+            # This child hint is a PEP 646-compliant type variable tuple.
+            isinstance(hint_childs[0], HintPep646TypeVarTupleType)
+        )
+    # Else, this is *NOT* PEP 646- or 692-compliant "typing.Unpack[...]" hint.
+    # This hint *CANNOT* be a PEP 646-compliant unpacked type variable tuple.
+
+    # Return false as a fallback.
+    return False
