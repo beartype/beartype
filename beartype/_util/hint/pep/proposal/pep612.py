@@ -19,12 +19,16 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import (
+    EllipsisType,
     HintPep612ParamSpecType,
     HintPep612ParamSpecArgType,
     HintPep612ParamSpecKwargType,
-    # HintPep612ParamSpecVarTypes,
 )
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._data.hint.datahintpep import (
+    Hint,
+    ListHints,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpecArgs,
@@ -84,10 +88,11 @@ def get_hint_pep612_paramspec(
     return paramspec_var.__origin__  # type: ignore[union-attr]
 
 # ....................{ FACTORIES                          }....................
+#FIXME: This should probably be memoized by @callable_cached. Probably. *sigh*
 def make_hint_pep612_concatenate_list_or_none(
-    hints_child_first: list,
-    hint_child_last: object,
-) -> object:
+    hints_child_first: ListHints,
+    hint_child_last: Union[Hint, EllipsisType],  # type: ignore[valid-type]
+) -> Hint:
     '''
     :pep:`612`-compliant **parameter concatenation** (i.e., high-level
     pure-Python object created and returned by subscripting the standard
@@ -99,10 +104,10 @@ def make_hint_pep612_concatenate_list_or_none(
 
     Parameters
     ----------
-    hints_child_first : list
+    hints_child_first : ListHints
         List of all leading child type hints to subscript the returned
         ``typing.Concatenate[...]`` type hint with.
-    hint_child_last : object
+    hint_child_last : Union[Hint, EllipsisType]
         Trailing child type hint to subscript the returned
         ``typing.Concatenate[...]`` type hint with. Note that both :pep:`612`
         *and* the runtime implementation of the :func:`typing.Concatenate` type
@@ -117,7 +122,7 @@ def make_hint_pep612_concatenate_list_or_none(
 
     Returns
     -------
-    object
+    Hint
         Either:
 
         * If :func:`typing.Concatenate` is importable, the
@@ -128,8 +133,10 @@ def make_hint_pep612_concatenate_list_or_none(
     Raises
     ------
     TypeError
-        If ``hint_child_last`` is neither a parameter specification *nor* an
-        ellipsis.
+        If ``hint_child_last`` is neither:
+
+        * A parameter specification.
+        * An ellipsis.
     '''
     assert isinstance(hints_child_first, list), (
         f'{repr(hints_child_first)} not list.')
@@ -152,6 +159,7 @@ def make_hint_pep612_concatenate_list_or_none(
         # Note that the Concatenate.__getitem__() implementation *REQUIRES* that
         # the passed parameter be a tuple. Sanity is out the window, folks.
         hints_child = tuple(hints_child_first) + (hint_child_last,)
+        # print(f'hints_child_first: {hints_child_first}; hint_child_last: {hint_child_last}')
 
         # "Concatenate[...]" hint dynamically subscripted by this tuple.
         hint = Concatenate.__getitem__(hints_child)  # type: ignore[misc]
@@ -159,7 +167,7 @@ def make_hint_pep612_concatenate_list_or_none(
     # returning "None".
 
     # Return this "Concatenate[...]" hint.
-    return hint
+    return hint  # pyright: ignore
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep612_args(hint: object, **kwargs,) -> object:

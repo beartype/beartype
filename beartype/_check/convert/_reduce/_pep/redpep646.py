@@ -4,11 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`646`-compliant **tuple type hint reducers** (i.e., low-level
-callables converting parent tuple hints subscripted by either a
-:pep:`646`-compliant type variable tuples *or* :pep:`646`-compliant unpacked
-child tuple hint to lower-level type hints more readily consumable by
-:mod:`beartype`).
+Project-wide :pep:`646`-compliant **type hint reducers** (i.e., low-level
+callables converting :pep:`646`-compliant hints to lower-level type hints more
+readily consumable by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -64,10 +62,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #(e.g., by treating "tuple[str, *tuple[int, ...], bytes]" as equivalent to
 #"tuple[str, *Ts, bytes]"). Since we already need to initially handle type
 #variable tuples anyway, we shatter two birds with one hand. Yes! Yes!
+#FIXME: Actually, it's *DEFINITELY* not the case that we "silently ignore *ALL*
+#type variable tuples." We reduce both type variables and type variable tuples
+#to lookup tables. So, stop ignoring type variable tuples below, please.
+#
+#Otherwise, everything above seems great -- by which I mean, exhausting.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep646Exception
 from beartype.typing import Optional
+from beartype._check.metadata.hint.hintsane import (
+    HINT_SANE_IGNORABLE,
+    HintSane,
+)
 from beartype._data.hint.datahintpep import (
     Hint,
     ListHints,
@@ -75,12 +82,10 @@ from beartype._data.hint.datahintpep import (
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep646UnpackedTuple,
-    HintSignUnpack,
+    HintSignPep646UnpackedTypeVarTuple,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
-from beartype._util.hint.pep.proposal.pep646 import (
-    is_hint_pep646_unpacked_type_variable_tuple)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_variadic,
     make_hint_pep484585646_tuple_fixed,
@@ -126,6 +131,7 @@ def reduce_hint_pep646_tuple(
         * A :pep:`646`-compliant type variable tuple *and* an unpacked child
           tuple hint.
     '''
+    # print(f'Reducing PEP 646 tuple hint {repr(hint)}...')
 
     # ....................{ LOCALS                         }....................
     # Tuple of the one or more child hints subscripting this parent tuple hint.
@@ -170,6 +176,7 @@ def reduce_hint_pep646_tuple(
         # Sign uniquely identifying the child hint subscripting this parent
         # tuple hint if this child hint is PEP-compliant *OR* "None" otherwise.
         hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+        # print(f'hint_child_sign: {hint_child_sign}')
 
         # If this child hint is a PEP 646-compliant unpacked type variable tuple
         # (e.g., the "*Ts" in "tuple[*Ts]"), reduce this PEP 646-compliant tuple
@@ -189,18 +196,7 @@ def reduce_hint_pep646_tuple(
         # hint "tuple[*tuple[typing.Any, ...]]", which unpacks to the PEP
         # 646-*AGNOSTIC* parent tuple hint "tuple[typing.Any, ...]", which then
         # simply reduces to the builtin "tuple" type.
-        if hint_child_sign is HintSignUnpack:
-            # If this child hint is *NOT* actually a PEP 646-compliant unpacked
-            # type variable tuple, raise an exception.
-            if not is_hint_pep646_unpacked_type_variable_tuple(hint_child):
-                raise BeartypeDecorHintPep646Exception(
-                    f'{exception_prefix}PEP 646 tuple type hint {repr(hint)} '
-                    f'child hint {repr(hint_child)} not PEP 646-compliant '
-                    f'unpacked type variable tuple (e.g., "*Ts").'
-                )
-            # Else, this child hint is a PEP 646-compliant unpacked type
-            # variable tuple.
-
+        if hint_child_sign is HintSignPep646UnpackedTypeVarTuple:
             # Reduce this PEP 646-compliant tuple hint to the "tuple" type.
             return tuple
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked type
@@ -422,5 +418,49 @@ def reduce_hint_pep646_tuple(
         # 585-compliant parent tuple hint. In this case, the latter.
         make_hint_pep484585646_tuple_fixed(hint_pep585_childs)
     )
+
     # print(f'Reduced PEP 646 tuple hint {hint} to {hint_reduced}!')
     return hint_reduced
+
+
+#FIXME: Refactor to resemble the reduce_hint_pep484_typevar() reducer, please!
+def reduce_hint_pep646_unpacked_typevartuple(hint: Hint, **kwargs) -> HintSane:
+    '''
+    Reduce the passed :pep:`646`-compliant **unpacked type variable tuple**
+    (i.e., child hint of the form "*{typevartuple}" where "{typevartuple}" is an
+    instance of the :class:`typing.TypeVarTuple` type) to a more readily
+    digestible hint.
+
+    This reducer effectively ignores this hint by reduction to the ignorable
+    :class:`object` superclass (e.g., from ``typing.Unpack[Ts]`` to simply
+    ``object``). Although non-ideal, generating code type-checking these hints
+    is sufficiently non-trivial to warrant a (hopefully) temporary delay in
+    doing so properly. Note that:
+
+    * Python itself unconditionally expands every unpacking of a
+      :pep:`646`-compliant type variable tuple to this form of a
+      :pep:`646`-compliant unpack type hint (e.g., from ``*Ts`` to
+      ``typing.Unpack[Ts]``).
+    * As a consequence of the prior note, :pep:`646`-compliant unpack type
+      hints are as common as unpackings of :pep:`646`-compliant type variable
+      tuples -- which is to say, increasingly common.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as reducers cannot be memoized.
+
+    Parameters
+    ----------
+    hint : Hint
+        :pep:`646`- or :pep:`692`-compliant unpack type hint to be reduced.
+
+    All remaining keyword-only parameters are silently ignored.
+
+    Returns
+    -------
+    Hint
+        Lower-level type hint currently supported by :mod:`beartype`.
+    '''
+
+    # Silently reduce to a noop by returning this ignorable singleton global.
+    # While non-ideal, worky is preferable to non-worky.
+    return HINT_SANE_IGNORABLE

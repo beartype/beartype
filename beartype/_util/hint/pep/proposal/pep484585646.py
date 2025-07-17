@@ -135,17 +135,17 @@ def is_hint_pep484585646_tuple_empty(hint: Hint) -> bool:
         hint == HINT_PEP484_TUPLE_EMPTY
     )
 
-# ....................{ GETTERS                            }....................
+# ....................{ DISAMBIGUATORS                     }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
+def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
     '''
     Disambiguate the passed **tuple type hint** (i.e., :pep:`484`- or
     :pep:`585`-compliant purely fixed- and variable-length tuple type hint *or*
     :pep:`646`-compliant mixed fixed-variadic tuple type hint) ambiguously
     identified by the :data:`.HintSignTuple` sign into whichever of the
     unambiguous :data:`.HintSignPep484585TupleFixed`,
-    :data:`HintSignPep484585TupleVariadic`, or
-    :data:`HintSignPep646TupleFixedVariadic` signs uniquely identify this kind
+    :data:`.HintSignPep484585TupleVariadic`, or
+    :data:`.HintSignPep646TupleFixedVariadic` signs uniquely identify this kind
     of tuple type hint.
 
     This low-level getter assists the higher-level
@@ -186,6 +186,7 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
           {hint_child_N}]``), this getter returns
           :data:`.HintSignPep646TupleFixedVariadic`.
     '''
+    # print(f'Disambiguating tuple hint {repr(hint)}...')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
@@ -215,6 +216,7 @@ def get_hint_pep484585646_tuple_sign_unambiguous(hint: Hint) -> HintSign:
         # Sign uniquely identifying this child hint if this child hint is
         # PEP-compliant *OR* "None" otherwise.
         hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+        # print(f'Detected hint child {hint_child} sign {hint_child_sign}...')
 
         # If this child hint is either:
         # * A PEP 646-compliant unpacked type variable tuple *OR*...

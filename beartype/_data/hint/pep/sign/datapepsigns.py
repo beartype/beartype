@@ -436,24 +436,27 @@ pure-Python origin classes (which are type-checkable as is).
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 646       }....................
+#FIXME: Excise after generalizing our dynamic code generator for tuple hints to
+#flexibly support PEP 646-compliant tuple hints. *sigh*
+
 HintSignPep646TupleFixedVariadic = _HintSign(name='Pep646TupleFixedVariadic')
 '''
 Sign uniquely identifying :pep:`646`-compliant **mixed fixed-variadic tuple type
-hints,** defined as hints of the form ``tuple[{hint_child_1}, ...,
-{hint_child_N}]`` where:
+hints,** defined as hints of the form "tuple[{hint_child_1}, ...,
+{hint_child_N}]" where:
 
-* Exactly one ``{hint_child_I}`` for some :math:`1 <= I <= N` is either:
+* Exactly one "{hint_child_I}" for some :math:`1 <= I <= N` is either:
 
   * A :pep:`646`-compliant **unpacked type variable tuple** (i.e., type hint of
-    either the implicit form ``*T`` *or* explicit form "typing.Unpack[T]" for an
-    arbitrary Python identifier ``T``) .
+    either the implicit form "*T" *or* explicit form "typing.Unpack[T]" for an
+    arbitrary Python identifier "T") .
   * A :pep:`646`-compliant **unpacked child tuple hint** (i.e., type hint of the
     form "*tuple[{hint_child_child_1}, ..., {hint_child_child_M}]").
 
-* ``{hint_child_N}`` is *not* an ellipses (i.e., "..." string, :data:`Ellipses`
+* "{hint_child_N}" is *not* an ellipses (i.e., "..." string, :data:`Ellipses`
   singleton).
 
-Note that the ``"..."`` substring above is *not* a literal ellipses but simply
+Note that the "..." substring above is *not* a literal ellipses but simply
 denotes an arbitrary number of non-ellipses child type hints.
 
 See Also
@@ -463,6 +466,7 @@ HintSignTuple
 HintSignPep484585TupleFixed
     Sign uniquely identifying fixed-length tuple type hints.
 '''
+
 
 
 HintSignPep646UnpackedTuple = _HintSign(name='Pep646TupleUnpacked')
@@ -475,6 +479,29 @@ defined as child tuple hints of the form "*tuple[{hint_child_child_1}, ...,
 
 Note that the ``"..."`` substring above is *not* a literal ellipses but simply
 denotes an arbitrary number of non-ellipses child type hints.
+'''
+
+
+HintSignPep646UnpackedTypeVarTuple = _HintSign(
+    name='HintSignPep646UnpackedTypeVarTuple')
+'''
+Sign uniquely identifying :pep:`646`-compliant **unpacked type variable
+tuples,** defined as child tuple hints of the form "*{typevartuple}" (where
+"{typevartuple}" is an instance of the :class:`typing.TypeVarTuple` type)
+subscripting parent tuple hints of the form
+"tuple[{hint_child_1}, ..., *{typevartuple}, ..., {hint_child_N}]".
+
+Note that the ``"..."`` substring above is *not* a literal ellipses but simply
+denotes an arbitrary number of non-ellipses child type hints.
+'''
+
+# ....................{ SIGNS ~ implicit : pep : 692       }....................
+HintSignPep692UnpackedTypedDict = _HintSign(
+    name='HintSignPep692UnpackedTypedDict')
+'''
+Sign uniquely identifying :pep:`692`-compliant **unpacked typed dictionaries,**
+defined as type hints of the form "typing.Unpack[{typeddict}]" where
+"{typeddict}" is a :class:`typing.TypedDict` subclass.
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 695       }....................

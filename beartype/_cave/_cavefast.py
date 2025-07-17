@@ -175,6 +175,21 @@ either as C extensions or in pure Python).
 '''
 
 # ....................{ TYPES ~ core : singleton           }....................
+#FIXME: Uncomment this after dropping Python 3.9. Pyright hates this under
+#Python 3.9. *sigh*
+# # If this submodule is currently being statically type-checked by a pure static
+# # type-checker, ignore false positives complaining that these types are not
+# # types.
+# if TYPE_CHECKING:
+#     from types import (  # type: ignore[attr-defined]
+#         EllipsisType as EllipsisType,  # pyright: ignore
+#         NoneType as NoneType,  # pyright: ignore
+#         NotImplementedType as NotImplementedType,  # pyright: ignore
+#     )
+# # Else, this submodule is *NOT* currently being statically type-checked by a
+# # pure static type-checker. In this case, define these types properly. *sigh*
+#else:
+
 EllipsisType: type = type(Ellipsis)
 '''
 Type of the :data:`Ellipsis` singleton.
@@ -185,10 +200,10 @@ NoneType: type = type(None)
 '''
 Type of the :data:`None` singleton.
 
-Curiously, although the type of the :data:`None` object is a class object whose
-``__name__`` attribute is ``NoneType``, there exists no globally accessible
-class by that name. To circumvents this obvious oversight, this global globally
-exposes this class.
+Curiously, although the type of the :data:`None` object is a class object
+whose ``__name__`` attribute is ``"NoneType"``, there exists no globally
+accessible class by that name. To circumvents this obvious oversight, this
+global globally exposes this class.
 
 This class is principally useful for annotating both:
 
@@ -196,20 +211,13 @@ This class is principally useful for annotating both:
 * Callables returning :data:`None` as a valid value.
 
 Note that, for obscure and uninteresting reasons, the standard :mod:`types`
-module defined the same type with the same name under Python 2.x but *not* 3.x.
-Depressingly, this type must now be manually redefined everywhere.
+module defined the same type with the same name under Python 2.x but *not*
+3.x. Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
 # Define this type as either...
-NotImplementedType: type = (
-    # If the active Python interpreter targets at least Python >= 3.10 and thus
-    # exposes this type in the standard "types" module, this type;
-    _types.NotImplementedType  # type: ignore[assignment,attr-defined]
-    if IS_PYTHON_AT_LEAST_3_10 else
-    # Else, this type manually introspected from this builtin singleton.
-    type(NotImplemented)  # type: ignore[misc]
-)
+NotImplementedType: type = type(NotImplemented)
 '''
 Type of the :data:`NotImplemented` singleton.
 '''

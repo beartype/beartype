@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Dict,
+    # Dict,
     Set,
 )
 from beartype._data.hint.datahinttyping import (
@@ -263,23 +263,26 @@ def _init() -> None:
     global HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
     # ..................{ HINTS ~ repr                       }..................
-    # Dictionary mapping from the unqualified names of typing attributes whose
-    # names are erroneously desynchronized from their bare machine-readable
-    # representations to the actual representations of those attributes.
-    #
-    # The unqualified names and representations of *MOST* typing attributes are
-    # rigorously synchronized. However, those two strings are desynchronized
-    # for a proper subset of Python versions and typing attributes:
-    #     $ ipython3.8
-    #     >>> import typing
-    #     >>> repr(typing.List[str])
-    #     typing.List[str]   # <-- this is good
-    #     >>> repr(typing.ContextManager[str])
-    #     typing.AbstractContextManager[str]   # <-- this is pants
-    #
-    # This dictionary enables subsequent logic to transparently resynchronize
-    # the unqualified names and representations of pants typing attributes.
-    _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
+    #FIXME: Odd. This appears to have been once used to map
+    #"AbstractContextManager" to "typing.ContextManager" or something, but is no
+    #longer used anywhere. Contemplate excising! *sigh*
+    # # Dictionary mapping from the unqualified names of typing attributes whose
+    # # names are erroneously desynchronized from their bare machine-readable
+    # # representations to the actual representations of those attributes.
+    # #
+    # # The unqualified names and representations of *MOST* typing attributes are
+    # # rigorously synchronized. However, those two strings are desynchronized
+    # # for a proper subset of Python versions and typing attributes:
+    # #     $ ipython3.8
+    # #     >>> import typing
+    # #     >>> repr(typing.List[str])
+    # #     typing.List[str]   # <-- this is good
+    # #     >>> repr(typing.ContextManager[str])
+    # #     typing.AbstractContextManager[str]   # <-- this is pants
+    # #
+    # # This dictionary enables subsequent logic to transparently resynchronize
+    # # the unqualified names and representations of pants typing attributes.
+    # _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX: Dict[str, str] = {}
 
     # ..................{ HINTS ~ deprecated                 }..................
     # Set of the unqualified names of all deprecated PEP 484-compliant typing
@@ -350,18 +353,21 @@ def _init() -> None:
             # by this sign.
             typing_attr_basename = hint_sign_typing.name
 
-            # Substring prefixing the machine-readable representation of this
-            # attribute, conditionally defined as either:
-            # * If this name is erroneously desynchronized from this
-            #   representation under the active Python interpreter, the actual
-            #   representation of this attribute under this interpreter (e.g.,
-            #   "AbstractContextManager" for the "typing.ContextManager" hint).
-            # * Else, this name is correctly synchronized with this
-            #   representation under the active Python interpreter. In this
-            #   case, fallback to this name as is (e.g., "List" for the
-            #   "typing.List" hint).
-            hint_repr_prefix = _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.get(
-                typing_attr_basename, typing_attr_basename)
+            #FIXME: Odd. This appears to have been once used to map
+            #"AbstractContextManager" to "typing.ContextManager" or something,
+            #but is no longer used anywhere. Contemplate excising! *sigh*
+            # # Substring prefixing the machine-readable representation of this
+            # # attribute, conditionally defined as either:
+            # # * If this name is erroneously desynchronized from this
+            # #   representation under the active Python interpreter, the actual
+            # #   representation of this attribute under this interpreter (e.g.,
+            # #   "AbstractContextManager" for the "typing.ContextManager" hint).
+            # # * Else, this name is correctly synchronized with this
+            # #   representation under the active Python interpreter. In this
+            # #   case, fallback to this name as is (e.g., "List" for the
+            # #   "typing.List" hint).
+            # hint_repr_prefix = _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.get(
+            #     typing_attr_basename, typing_attr_basename)
 
             #FIXME: It'd be great to eventually generalize this to support
             #aliases from one unwanted sign to another wanted sign. Perhaps
@@ -382,9 +388,30 @@ def _init() -> None:
             #        f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign_replaced
             # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
 
-            # Map from that attribute in this module to this sign.
+            #FIXME: Not quite right, obviously. The "HINT_SIGNS_TYPING" set used
+            #to define this mapping includes *TONS* of unsubscriptable typing
+            #attributes (e.g., "typing.TypeVar", "typing.TypeVarTuple"). The
+            #only reason this works at all is that the higher-level
+            #get_hint_pep_sign_or_none() getter internally leveraging this
+            #mapping only accesses this mapping as a fallback *AFTER* accessing
+            #type-specific mappings (e.g.,
+            #"HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN") first. Oh, well.
+            #Nobody cares, huh? *sigh*
+
+            # Map from the fully-qualified name of this typing attribute
+            # relative to this module to this sign.
+            #
+            # Note that most typing attributes are subscriptable type hint
+            # factories. Moreover, note that most subscriptable type hint
+            # factories are implicitly subscripted by the "typing.Any" child
+            # hint when unsubscripted (e.g., the unsubscripted "typing.Union"
+            # factory is equivalent to "typing.Union[typing.Any]") and are thus
+            # themselves valid hints. Ergo, we intentionally map these
+            # attributes onto the "HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN"
+            # rather than "HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN" factory.
             HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
-                f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign_typing
+                f'{typing_module_name}.{typing_attr_basename}'] = (
+                hint_sign_typing)
 
     # ..................{ SYNTHESIS                          }..................
     # Freeze all relevant global sets for safety.

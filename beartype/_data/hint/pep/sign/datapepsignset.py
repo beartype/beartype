@@ -69,6 +69,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignPep646UnpackedTuple,
+    HintSignPep646UnpackedTypeVarTuple,
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignTypeAlias,
@@ -569,14 +570,14 @@ This set necessarily excludes:
 # ....................{ SETS ~ pep : 646                   }....................
 HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED: FrozenSetHintSign = frozenset((
     # ..................{ PEP 646                            }..................
-    # Sign uniquely identifying unpacked type variable tuples (e.g., the child
-    # hint "*Ts" subscripting the parent tuple hint "tuple[int, *Ts]").
-    HintSignUnpack,
-
     # Sign uniquely identifying unpacked child tuple hints (e.g., the child
     # hint "*tuple[float, ...]" subscripting the parent tuple hint
     # "tuple[complex, *tuple[float, ...], str]").
     HintSignPep646UnpackedTuple,
+
+    # Sign uniquely identifying unpacked type variable tuples (e.g., the child
+    # hint "*Ts" subscripting the parent tuple hint "tuple[int, *Ts]").
+    HintSignPep646UnpackedTypeVarTuple,
 ))
 '''
 Frozen set of all :pep:`646`-compliant **parent tuple hint unpacked child hint
@@ -603,6 +604,8 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
 
     # ..................{ PEP 646                            }..................
     HintSignUnpack,
+    # HintSignPep646UnpackedTuple,
+    # HintSignPep646UnpackedTypeVarTuple,
 
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
@@ -683,9 +686,9 @@ decorator generates deeply type-checking code).
 
 This set contains *every* sign explicitly supported by one or more conditional
 branches in the body of the
-:func:`beartype._check.code.codemain.make_func_pith_code` function
-generating code deeply type-checking the current pith against the PEP-compliant
-type hint annotated by a subscription of that attribute.
+:func:`beartype._check.code.codemain.make_func_pith_code` function generating
+code deeply type-checking the current pith against the PEP-compliant type hint
+annotated by a subscription of that attribute.
 '''
 
 

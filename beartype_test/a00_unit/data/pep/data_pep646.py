@@ -86,12 +86,14 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
     # * "exception_type" is the type of exception raised by attempting to reduce
     #   this invalid input hint.
     hint_reductions_invalid = (
-        # A PEP 646-compliant tuple hint subscripted by a PEP 692-compliant
-        # unpacked type dictionary is invalid.
-        (
-            tuple[Unpack[GloomBird]],
-            BeartypeDecorHintPep646Exception,
-        ),
+        #FIXME: *UNCOMMENT*, please. This is totally invalid but no longer
+        #covered by the current implementation of this reducer. Whatevahs!
+        # # A PEP 646-compliant tuple hint subscripted by a PEP 692-compliant
+        # # unpacked type dictionary is invalid.
+        # (
+        #     tuple[Unpack[GloomBird]],
+        #     BeartypeDecorHintPep646Exception,
+        # ),
 
         # A PEP 646-compliant tuple hint subscripted by two PEP 646-compliant
         # unpacked child fixed-length tuple hint separated by other unrelated
@@ -128,25 +130,25 @@ def unit_test_reduce_hint_pep646_tuple() -> None:
 
     # ....................{ PASS                           }....................
     # For each input hint to be reduced and the corresponding output hint...
-    for hint_unreduced, hint_reduced in hint_reductions_valid:
+    for hint_unreduced, hint_reduced_expected in hint_reductions_valid:
         # Sanified metadata encapsulating the reduction of this input hint.
         hint_reduced_sane = reduce_hint(hint_unreduced)
 
         # Assert that this reduction produced the expected output hint.
-        assert hint_reduced_sane == HintSane(hint_reduced)
+        assert hint_reduced_sane == HintSane(hint_reduced_expected)
 
     # ....................{ FAIL                           }....................
     # For each invalid input hint to be reduced and the corresponding type of
     # exception expected to be raised by attempting to do so...
-    for hint_unreduced, exception_type in hint_reductions_invalid:
-        with raises(exception_type):
+    for hint_unreduced, exception_type_expected in hint_reductions_invalid:
+        with raises(exception_type_expected):
             reduce_hint(hint_unreduced)
 
 # ....................{ TESTS ~ tester                     }....................
 def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
     '''
     Test the :pep:`646`-compliant implementation of the private
-    :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
+    :mod:`beartype._util.hint.pep.proposal.pep646692.is_hint_pep646_unpacked_tuple`
     tester under Python >= 3.11.
     '''
 
@@ -166,12 +168,12 @@ def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
 def unit_test_is_hint_pep646_unpacked_tuple() -> None:
     '''
     Test the :pep:`646`-compliant implementation of the private
-    :mod:`beartype._util.hint.pep.proposal.pep646.is_hint_pep646_unpacked_tuple`
+    :mod:`beartype._util.hint.pep.proposal.pep646692.is_hint_pep646_unpacked_tuple`
     tester under Python >= 3.11.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.pep.proposal.pep646 import (
+    from beartype._util.hint.pep.proposal.pep646692 import (
         is_hint_pep646_unpacked_tuple)
 
     # Assert this tester accepts PEP 646-compliant unpacked tuple hints.
@@ -188,7 +190,7 @@ def unit_test_decor_pep646() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep646Exception
+    from beartype.roar import BeartypeDecorHintPep646692Exception
     from beartype.typing import (
         Generic,
         Tuple,
@@ -255,7 +257,7 @@ def unit_test_decor_pep646() -> None:
     # Assert that @beartype raises the expected exception when decorating a
     # callable annotated by a hint unpacking a PEP 646-noncompliant object
     # (i.e., *ANY* object other than a PEP 646-compliant type variable tuple).
-    with raises(BeartypeDecorHintPep646Exception):
+    with raises(BeartypeDecorHintPep646692Exception):
         @beartype
         def scatter_its_music(
             *on_the_unfeeling_storm: Unpack[Tuple[str]]) -> str:

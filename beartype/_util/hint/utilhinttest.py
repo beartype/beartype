@@ -107,9 +107,6 @@ def die_unless_hint(
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
 
-#FIXME: This same exception message is repeated ad naseum throughout the
-#codebase at least three or four times. Reduce DRY by instead deferring to this
-#function, please. *sigh*
 def die_as_hint_unsupported(
     # Mandatory parameters.
     hint: object,

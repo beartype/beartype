@@ -48,13 +48,14 @@ from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep646 import (
-    reduce_hint_pep646_tuple)
-from beartype._check.convert._reduce._pep.redpep646692 import (
-    reduce_hint_pep646692_unpack)
+    reduce_hint_pep646_tuple,
+    reduce_hint_pep646_unpacked_typevartuple,
+)
 from beartype._check.convert._reduce._pep.redpep647742 import (
     reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
 from beartype._check.convert._reduce._pep.redpep675 import reduce_hint_pep675
+from beartype._check.convert._reduce._pep.redpep692 import reduce_hint_pep692
 from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_subbed,
     reduce_hint_pep695_unsubbed,
@@ -110,6 +111,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignPep646TupleFixedVariadic,
+    HintSignPep646UnpackedTypeVarTuple,
+    HintSignPep692UnpackedTypedDict,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignPep695TypeAliasSubscripted,
     HintSignProtocol,
@@ -127,7 +130,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignTypedDict,
     HintSignUnion,
-    HintSignUnpack,
     HintSignValuesView,
 )
 from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
@@ -522,24 +524,24 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     HintSignTypeAlias: reduce_hint_pep613,
 
     # ..................{ PEP 646                            }..................
-    #FIXME: More fully document exactly what's going on here, please. *sigh*
-    # Reduce PEP 646-compliant tuple type hints to either:
-    # * If this hint is a ..., the ignorable "object" superclass.
-    # * Else, preserve this hint as is.
-    HintSignUnpack: reduce_hint_pep646692_unpack,
+    # Reduce PEP 646-compliant unpacked type variable tuples (i.e., hints of the
+    # form "typing.Unpack[{typevartuple}]" hints where "{typevartuple}" is a
+    # "typing.TypeVarTuple" object) that have subsequently been semantically
+    # (but *NOT* syntactically) "replaced" by concrete hints to those hints,
+    # usually due to higher-level hints initially parametrized by those type
+    # variable tuples then being subscripted by those concrete hints.
+    #
+    # tl;dr: the "typevar_to_hint" dictionary, which is uncached.
+    HintSignPep646UnpackedTypeVarTuple: (
+        reduce_hint_pep646_unpacked_typevartuple),
 
-    # Reduce PEP 646- or 692-compliant "typing.Unpack[...]" type hints to
-    # either:
-    # * If this hint annotates the variadic positional argument of some
-    #   callable *AND* this is a PEP 692-compliant
-    #   "typing.Unpack[{SomeTypedDict}]" for "{SomeTypedDict}" some user-defined
-    #   PEP 589-compliant "typing.TypedDict" subclass, the ignorable "object"
-    #   superclass.
-    # * Else if this is a PEP 646-compliant "typing.Unpack[TypeVarTuple(...)]"
-    #   for some user-defined PEP 646-compliant type variable tuple
-    #   "TypeVarTuple(...)", the ignorable "object" superclass.
-    # * Else, raise an exception.
-    HintSignUnpack: reduce_hint_pep646692_unpack,
+    # ..................{ PEP 692                            }..................
+    # Reduce PEP 692-compliant unpacked typed dictionaries (i.e., hints of the
+    # form "typing.Unpack[{typeddict}]" hints where "{typeddict}" is a PEP
+    # 589-compliant "typing.TypedDict" subclass) annotating the variadic
+    # positional argument of some callable to the ignorable
+    # "HINT_SANE_IGNORABLE" singleton.
+    HintSignPep692UnpackedTypedDict: reduce_hint_pep692,
 
     # ..................{ PEP 647                            }..................
     # Reduce PEP 647-compliant "typing.TypeIs[...]" type hints to either:

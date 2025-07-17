@@ -30,7 +30,7 @@ def test_decor_pep692() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep692Exception
+    from beartype.roar import BeartypeDecorHintPep646692Exception
     from beartype.typing import (
         Tuple,
         TypedDict,
@@ -84,7 +84,7 @@ def test_decor_pep692() -> None:
         # callable accepting a variadic keyword parameter annotated by a hint
         # unpacking a PEP 692-noncompliant object (i.e., *ANY* object other than
         # a PEP 692-compliant typed dictionary subclass).
-        with raises(BeartypeDecorHintPep692Exception):
+        with raises(BeartypeDecorHintPep646692Exception):
             @beartype
             def that_snowy_breast(
                 **those_dark_and_drooping_eyes: Unpack[Tuple[str]]) -> str:
