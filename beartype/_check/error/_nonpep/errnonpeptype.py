@@ -20,7 +20,7 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
 from beartype._check.error.errcause import ViolationCause
-from beartype._data.hint.datahinttyping import TupleTypes
+from beartype._data.typing.datatyping import TupleTypes
 from beartype._data.hint.pep.sign.datapepsigns import HintSignForwardRef
 from beartype._util.cls.pep.clspep3119 import die_unless_type_isinstanceable
 from beartype._util.func.arg.utilfuncargtest import (

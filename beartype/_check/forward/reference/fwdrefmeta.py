@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.typing import Dict
-from beartype._data.hint.datahinttyping import BeartypeForwardRef
+from beartype._data.typing.datatyping import BeartypeForwardRef
 from beartype._util.cls.pep.clspep3119 import (
     die_unless_object_isinstanceable)
 # from beartype._util.func.utilfuncframe import is_frame_caller_beartype

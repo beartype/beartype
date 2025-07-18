@@ -31,7 +31,7 @@ from beartype._data.decor.datadecornontype import (
     MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get,
     MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get,
 )
-from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._data.typing.datatyping import BeartypeableT
 from beartype._decor.wrap.wrapmain import generate_code
 from beartype._util.api.utilbeartype import (
     is_func_unbeartypeable,

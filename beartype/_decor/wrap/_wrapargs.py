@@ -35,8 +35,8 @@ from beartype._check.metadata.hint.hintsane import (
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     # EXCEPTION_PREFIX_DEFAULT,

@@ -10,12 +10,17 @@ with custom behaviours, including backward compatibility with older Python
 versions that would otherwise *not* support those factories).
 
 This private submodule is intentionally distinct from the lower-level private
-:data:`beartype._data.hint.datahinttyping` submodule.
+:data:`beartype._data.typing.datatyping` submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: This submodule *CANNOT* import from the companion "datatyping"
+# submodule due to circular import dependencies between these two submodules.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
@@ -30,9 +35,9 @@ from beartype.typing import (
     TypeVar,
     Union,
 )
-from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.api.standard.utiltyping import (
     import_typing_attr_or_fallback)
+from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ FACTORIES                          }....................
@@ -126,7 +131,7 @@ if TYPE_CHECKING:
     # type-checker *MUST* by definition be pyright. Since pyright officially
     # supports PEP 747, import PEP 747-compliant type hint factories.
     else:
-        #FIXME: Replace "typing_extensions" with simply "typing" this *AFTER*
+        #FIXME: Replace "typing_extensions" with simply "typing" *AFTER*
         #dropping Python 3.14.
         from typing_extensions import (
             TypeForm as Hint,
@@ -234,18 +239,6 @@ DictStrToHint = Dict[str, Hint]
 PEP-compliant type hints.
 '''
 
-
-TypeVarToHint = Dict[TypeVar, Hint]
-'''
-:pep:`585`-compliant type hint matching a **type variable lookup table** (i.e.,
-dictionary mapping from :pep:`484`-compliant type variables to the arbitrary
-type hints those type variables map to).
-
-Type variable lookup tables are commonly employed throughout the :mod:`beartype`
-codebase to record **type variable substitutions** (i.e., the dynamic
-replacement of type variables by non-type variables in larger type hints).
-'''
-
 # ....................{ HINTS ~ container : tuple          }....................
 TupleHints = Tuple[Hint, ...]
 '''
@@ -258,4 +251,33 @@ HintOrTupleHints = Union[Hint, TupleHints]
 '''
 :pep:`585`-compliant type hint matching either a single type hint *or* a tuple
 of zero or more type hints.
+'''
+
+# ....................{ PEP ~ 484                          }....................
+Pep484TypeVarToHint = Dict[TypeVar, Hint]
+'''
+:pep:`585`-compliant type hint matching a **type variable lookup table** (i.e.,
+dictionary mapping from :pep:`484`-compliant type variables to the arbitrary
+type hints those type variables map to).
+
+Type variable lookup tables are commonly employed throughout the :mod:`beartype`
+codebase to record **type variable substitutions** (i.e., the dynamic
+replacement of type variables by non-type variables in larger type hints).
+'''
+
+# ....................{ PEP ~ (484|646)                    }....................
+#FIXME: *CAN* we actually import from "datatyping" above? No idea. *sigh*
+Pep484646TypeArgToHint = Pep484TypeVarToHint
+# Pep484646TypeArgToHint = Dict[Pep484646TypeArg, Hint]
+'''
+:pep:`585`-compliant type hint matching a :pep:`484`- and :pep:`646`-compliant
+**type parameter lookup table** (i.e., dictionary mapping from **type
+parameters** (i.e., :pep:`484`-compliant type variables and :pep:`646`-compliant
+unpacked type variable tuples) to the arbitrary type hints those type parameters
+map to).
+
+Type parameter lookup tables are commonly employed throughout the
+:mod:`beartype` codebase to record **type parameter substitutions** (i.e., the
+dynamic replacement of type parameter by non-type parameter in larger type
+hints).
 '''

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import CallableStrFormat
+from beartype._data.typing.datatyping import CallableStrFormat
 
 # ....................{ CODE                               }....................
 CODE_PEP484604_UNION_PREFIX = '''('''

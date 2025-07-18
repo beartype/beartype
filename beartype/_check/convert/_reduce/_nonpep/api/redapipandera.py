@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintNonpepPanderaException
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ REDUCERS                           }....................

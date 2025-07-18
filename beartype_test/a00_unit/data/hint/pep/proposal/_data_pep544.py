@@ -32,7 +32,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         AnyStr,
         runtime_checkable,
     )
-    from beartype._data.hint.datahinttyping import T
+    from beartype._data.typing.datatyping import T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignBinaryIO,
         HintSignPep484585GenericSubscripted,
@@ -627,7 +627,7 @@ def hints_pep544_ignorable_deep() -> list:
 
     # ..................{ IMPORTS                            }..................
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
     )

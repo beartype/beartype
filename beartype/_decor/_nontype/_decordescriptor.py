@@ -17,7 +17,7 @@ from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
     MethodDecoratorPropertyType,
 )
-from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._data.typing.datatyping import BeartypeableT
 from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfunctest import is_func_boundmethod
 from beartype._util.func.utilfuncwrap import (

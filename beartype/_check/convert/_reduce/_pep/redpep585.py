@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.utilpepget import get_hint_pep_origin_type
 
 # ....................{ REDUCERS                           }....................

@@ -17,7 +17,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep544 import (
     HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,
     init_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL,

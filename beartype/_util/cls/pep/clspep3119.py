@@ -16,8 +16,8 @@ from beartype.roar import BeartypeDecorHintPep3119Exception
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
 from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
-from beartype._data.hint.datahintpep import TypeIs
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import TypeIs
+from beartype._data.typing.datatyping import (
     IsBuiltinOrSubclassableTypes,
     TypeException,
 )

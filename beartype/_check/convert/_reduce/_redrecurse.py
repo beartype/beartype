@@ -16,7 +16,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ TESTERS                            }....................

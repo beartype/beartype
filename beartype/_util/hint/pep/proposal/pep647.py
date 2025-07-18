@@ -16,7 +16,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
 # ....................{ REDUCERS                           }....................

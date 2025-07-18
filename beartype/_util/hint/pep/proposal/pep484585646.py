@@ -14,7 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Tuple
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep484585TupleFixed,
@@ -242,26 +245,26 @@ def disambiguate_hint_pep484585646_tuple_sign(hint: Hint) -> HintSign:
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_hint_pep484585646_tuple_fixed(hints: tuple) -> Hint:
+def make_hint_pep484585_tuple_fixed(hints_child: TupleHints) -> Hint:
     '''
-    :pep:`484`- or :pep:`585`-compliant **fixed-length tuple type hint** of the
-    form ``tuple[{hint_child1}, ???, {hint_childN}]`` subscripted by all
-    PEP-compliant child type hints in the passed tuple.
+    Dynamically create and return a new :pep:`484`- or :pep:`585`-compliant
+    **fixed-length tuple hint** of the form ``tuple[{hint_child1}, ...,
+    {hint_childN}]`` subscripted by all child hints in the passed tuple.
 
     Parameters
     ----------
-    hints : tuple
-        Tuple of all child type hints to subscript this tuple type hint with.
+    hints_child : TupleHints
+        Tuple of all child hints with which to subscript the returned hint.
 
     Returns
     -------
     Hint
-        Fixed-length tuple type hint subscripted by these child type hints.
+        Fixed-length tuple hint subscripted by these child hints.
     '''
-    assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
+    assert isinstance(hints_child, tuple), f'{repr(hints_child)} not tuple.'
 
-    # Return a fixed-length tuple type hint subscripted by these child type
-    # hints, defined as either...
+    # Return a fixed-length tuple type hint subscripted by these child hints,
+    # defined as either...
     return (
         #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
         #"SyntaxError" if we even try doing this. *SADNESS*
@@ -273,5 +276,5 @@ def make_hint_pep484585646_tuple_fixed(hints: tuple) -> Hint:
         # Else, the active Python interpreter targets Python <= 3.10.
         #
         # Dynamically subscript the builtin "tuple" type.
-        Tuple.__class_getitem__(hints)  # type: ignore[attr-defined]
+        Tuple.__class_getitem__(hints_child)  # type: ignore[attr-defined]
     )

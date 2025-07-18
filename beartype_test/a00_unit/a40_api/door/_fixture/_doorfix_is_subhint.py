@@ -50,7 +50,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     import collections.abc
     import typing
     from abc import ABCMeta
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
     )

@@ -27,7 +27,7 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import get_beartype_conf_strategy_on
 from beartype._conf.conftest import die_unless_conf
 from beartype._data.cls.datacls import TYPES_BUILTIN_SCALAR
-from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._data.typing.datatyping import FrozenSetInts
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpeptest import is_hint_pep

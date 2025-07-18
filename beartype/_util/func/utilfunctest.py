@@ -24,8 +24,8 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._data.hint.datahintpep import TypeIs
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import TypeIs
+from beartype._data.typing.datatyping import (
     Codeobjable,
     MethodDescriptorBuiltin,
     TypeException,

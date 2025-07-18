@@ -53,7 +53,7 @@ from beartype._conf.conftest import (
     sanify_conf_kwargs,
 )
 from beartype._conf._confget import get_is_color
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     BoolTristateUnpassable,
     CollectionStrs,
     DictStrToAny,

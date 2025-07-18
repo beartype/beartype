@@ -365,7 +365,7 @@
 #
 #When generating type-checking for the "muh_arg" parameter, make_check_expr()
 #should establish a mapping resembling:
-#    typevar_to_hint = {
+#    typearg_to_hint = {
 #        S: int,
 #        T: float,
 #    }

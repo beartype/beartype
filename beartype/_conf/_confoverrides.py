@@ -12,7 +12,7 @@ parameter accepted by the :class:`beartype.BeartypeConf.__init__` method).
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfParamException
 from beartype.typing import Optional
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictStrToAny,
     Pep484TowerComplex,
     Pep484TowerFloat,

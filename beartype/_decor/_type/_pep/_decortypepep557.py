@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintPep557FieldViolation
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     DictStrToHint,
     Hint,
 )

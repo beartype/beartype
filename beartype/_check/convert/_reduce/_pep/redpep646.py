@@ -71,11 +71,18 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep646Exception
 from beartype.typing import Optional
+from beartype._cave._cavefast import HintPep646TypeVarTupleType
+from beartype._check.convert._reduce._redrecurse import (
+    is_hint_recursive,
+    make_hint_sane_recursable,
+)
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
+    HINT_SANE_RECURSIVE,
+    # HintOrSane,
     HintSane,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
     TupleHints,
@@ -88,7 +95,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_variadic,
-    make_hint_pep484585646_tuple_fixed,
+    make_hint_pep484585_tuple_fixed,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
@@ -100,8 +107,8 @@ def reduce_hint_pep646_tuple(
     '''
     Reduce the passed :pep:`646`-compliant **tuple hint** (i.e., parent tuple
     hints subscripted by either a :pep:`646`-compliant type variable tuples *or*
-    :pep:`646`-compliant unpacked child tuple hint) to a more readily digestible
-    hint.
+    :pep:`646`-compliant unpacked child tuple hint) to a lower-level type hint
+    currently supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.
@@ -416,34 +423,35 @@ def reduce_hint_pep646_tuple(
         if hint_pep585_childs is None else
         # Else, this PEP 646-compliant parent tuple hint is reducible to a PEP
         # 585-compliant parent tuple hint. In this case, the latter.
-        make_hint_pep484585646_tuple_fixed(hint_pep585_childs)
+        make_hint_pep484585_tuple_fixed(hint_pep585_childs)
     )
 
     # print(f'Reduced PEP 646 tuple hint {hint} to {hint_reduced}!')
     return hint_reduced
 
 
-#FIXME: Refactor to resemble the reduce_hint_pep484_typevar() reducer, please!
-def reduce_hint_pep646_unpacked_typevartuple(hint: Hint, **kwargs) -> HintSane:
+#FIXME: [DRY] This reducer and the reduce_hint_pep484_typevar() reducer are
+#nearly verbatim copies of one another. Preserve DRY as follows:
+#* Define a new "redpep484646" submodule. In that submodule:
+#  * Define a new reduce_hint_pep484646_typearg() reducer accepting a hint that
+#    is either a type variables *OR* an unpacked type variable tuple.
+#* Refactor both this reducer and the reduce_hint_pep484_typevar() reducer to
+#  internally defer to reduce_hint_pep484646_typearg().
+#
+#Only do this *AFTER* we actually get this reducer to behave as expected,
+#however. Unexpected differences could crop up at any time. Violating DRY in the
+#interim is "fine." *shrug*
+def reduce_hint_pep646_unpacked_typevartuple(
+    hint: Hint,
+    hint_parent_sane: Optional[HintSane],
+    exception_prefix: str,
+    **kwargs
+) -> HintSane:
     '''
     Reduce the passed :pep:`646`-compliant **unpacked type variable tuple**
     (i.e., child hint of the form "*{typevartuple}" where "{typevartuple}" is an
-    instance of the :class:`typing.TypeVarTuple` type) to a more readily
-    digestible hint.
-
-    This reducer effectively ignores this hint by reduction to the ignorable
-    :class:`object` superclass (e.g., from ``typing.Unpack[Ts]`` to simply
-    ``object``). Although non-ideal, generating code type-checking these hints
-    is sufficiently non-trivial to warrant a (hopefully) temporary delay in
-    doing so properly. Note that:
-
-    * Python itself unconditionally expands every unpacking of a
-      :pep:`646`-compliant type variable tuple to this form of a
-      :pep:`646`-compliant unpack type hint (e.g., from ``*Ts`` to
-      ``typing.Unpack[Ts]``).
-    * As a consequence of the prior note, :pep:`646`-compliant unpack type
-      hints are as common as unpackings of :pep:`646`-compliant type variable
-      tuples -- which is to say, increasingly common.
+    instance of the :class:`typing.TypeVarTuple` type) to a lower-level type
+    hint currently supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as reducers cannot be memoized.
@@ -451,16 +459,207 @@ def reduce_hint_pep646_unpacked_typevartuple(hint: Hint, **kwargs) -> HintSane:
     Parameters
     ----------
     hint : Hint
-        :pep:`646`- or :pep:`692`-compliant unpack type hint to be reduced.
+        Unpacked type variable tuple to be reduced.
+    hint_parent_sane : Optional[HintSane]
+        **Sanified parent type hint metadata** (i.e., immutable and thus
+        hashable object encapsulating *all* metadata previously returned by
+        :mod:`beartype._check.convert.convmain` sanifiers after sanitizing the
+        possibly PEP-noncompliant parent hint of this child hint into a fully
+        PEP-compliant parent hint).
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
 
     All remaining keyword-only parameters are silently ignored.
 
     Returns
     -------
-    Hint
-        Lower-level type hint currently supported by :mod:`beartype`.
-    '''
+    HintSane
+        Either:
 
-    # Silently reduce to a noop by returning this ignorable singleton global.
-    # While non-ideal, worky is preferable to non-worky.
+        * If this type variable tuple is **recursive** (i.e., previously
+          transitively mapped to itself by a prior call to this reducer), this
+          type variable tuple *must* be ignored to avoid infinite recursion. In
+          this case, the :data:`.HINT_SANE_RECURSIVE` singleton.
+        * If the type variable lookup table encapsulated by the passed sanified
+          parent type hint metadata maps this type variable tuple to a tuple of
+          type hints, the latter.
+        * Else, this type variable tuple is ignorable. In this case, the
+          :data:`.HINT_SANE_IGNORABLE` singleton.
+    '''
+    # print(f'Reducing PEP 646 type variable tuple {hint} with parent hint {hint_parent_sane}...')
+
+    #FIXME: Excise this *AFTER* this reducer actually behaves as expected.
     return HINT_SANE_IGNORABLE
+
+    # ....................{ PHASE                          }....................
+    # This reducer is divided into three phases:
+    # 0. The zeroth phase decides whether this type variable tuple is recursive.
+    # 1. The first phase maps this type variable tuple to its associated target
+    #    hint via lookup table associated with this type variable tuple (if
+    #    any).
+    # 2. The third phase decides the recursion guard for this type variable.
+    #
+    # All phases are non-trivial. The output of each phase is sanified hint
+    # metadata (i.e., a "HintSane" object) containing the result of the decision
+    # problem decided by that phase.
+
+    # ....................{ PHASE ~ 0 : recurse            }....................
+    # If this subscripted hint is recursive, ignore this subscripted hint to
+    # avoid infinite recursion.
+    if is_hint_recursive(
+        hint=hint,
+        hint_parent_sane=hint_parent_sane,
+        hint_recursable_depth_max=_TYPEVARTUPLE_RECURSABLE_DEPTH_MAX,
+    ):
+        # print(f'Ignoring recursive type variable {hint} with parent {hint_parent_sane}!')
+        return HINT_SANE_RECURSIVE
+
+    # ....................{ PHASE ~ 1 : lookup             }....................
+    # Reduced hint to be returned, defaulting to this type variable.
+    hint_reduced = hint
+
+    #FIXME: Uncomment tomorrow after importing
+    #"HintPep646UnpackedTypeVarTupleType", please. *sigh*
+    # # If...
+    # if (
+    #     # This type variable is not a root hint and thus has a parent hint
+    #     # *AND*...
+    #     hint_parent_sane is not None and
+    #     # A parent hint of this type variable maps one or more type variables...
+    #     hint_parent_sane.typearg_to_hint
+    # ):
+    #     # Type variable lookup table of this parent hint, localized for
+    #     # usability and negligible efficiency.
+    #     typearg_to_hint = hint_parent_sane.typearg_to_hint
+    #
+    #     # If a parent hint of this type variable maps exactly one type variable,
+    #     # prefer a dramatically faster and simpler approach.
+    #     if len(typearg_to_hint) == 1:
+    #         # Hint mapped to by this type variable if one or more parent hints
+    #         # previously mapped this type variable to a hint *OR* this hint as
+    #         # is otherwise (i.e., if this type variable is unmapped).
+    #         #
+    #         # Note that this one-liner looks ridiculous, but actually works.
+    #         # More importantly, this is the fastest way to accomplish this.
+    #         hint_reduced = typearg_to_hint.get(hint, hint)  # type: ignore[call-overload]
+    #     # Else, a parent hint of this type variable mapped two or more type
+    #     # variables. In this case, fallback to a slower and more complicated
+    #     # approach that avoids worst-case edge cases. This includes recursion in
+    #     # type variable mappings, which arises in non-trivial class hierarchies
+    #     # involving two or more generics subscripted by two or more type
+    #     # variables that circularly cycle between one another: e.g.,
+    #     #     from typing import Generic
+    #     #     class GenericRoot[T](Generic[T]): pass
+    #     #
+    #     #     # This directly maps "{T: S}".
+    #     #     class GenericLeaf[S](GenericRoot[S]): pass
+    #     #
+    #     #     # This directly maps "{S: T}", which then combines with the above
+    #     #     # mapping to indirectly map "{S: T, T: S}". Clearly, this indirect
+    #     #     # mapping provokes infinite recursion unless explicitly handled.
+    #     #     GenericLeaf[T]
+    #     else:
+    #         # Type hints previously reduced from this type variable, initialized
+    #         # to this type variable.
+    #         hint_reduced_prev = hint
+    #
+    #         # Shallow copy of this type variable lookup table, coerced from an
+    #         # immutable frozen dictionary into a mutable standard dictionary.
+    #         # This enables type variables reduced by the iteration below to be
+    #         # popped off this copy as a simple (but effective) recursion guard.
+    #         typearg_to_hint_stack = typearg_to_hint.copy()
+    #
+    #         #FIXME: [SPEED] *INEFFICIENT.* This has to be done either way, but
+    #         #rather than reperform this O(n) algorithm on every single instance
+    #         #of this type variable, this algorithm should simply be performed
+    #         #exactly *ONCE* in the
+    #         #reduce_hint_pep484_subbed_typevars_to_hints() reducer. Please
+    #         #refactor this iteration over there *AFTER* the dust settles here.
+    #         #FIXME: Actually, it's unclear how exactly this could be refactored
+    #         #into the reduce_hint_pep484_subbed_typevars_to_hints()
+    #         #reducer. This reduction here only searches for a single typevar in
+    #         #O(n) time. Refactoring this over to
+    #         #reduce_hint_pep484_subbed_typevars_to_hints() would require
+    #         #generalizing this into an O(n**2) algorithm there, probably. Yow!
+    #
+    #         # While...
+    #         while (
+    #             # This stack still contains one or more type variables that have
+    #             # yet to be reduced by this iteration *AND*...
+    #             typearg_to_hint_stack and
+    #             # This hint is still a type variable...
+    #             isinstance(hint_reduced, TypeVar)
+    #         ):
+    #             # Hint mapped to by this type variable if one or more parent
+    #             # hints previously mapped this type variable to a hint *OR* this
+    #             # hint as is (i.e., if this type variable is unmapped).
+    #             #
+    #             # Note that this one-liner destructively pops this type variable
+    #             # off this temporary stack to prevent this type variable from
+    #             # being reduced more than once by an otherwise recursive
+    #             # mapping. Since this stack is local to this reducer, this
+    #             # behaviour is only locally destructive and thus safe.
+    #             hint_reduced = typearg_to_hint_stack.pop(
+    #                 hint_reduced_prev, hint_reduced_prev)  # pyright: ignore
+    #
+    #             # If this type variable maps to itself, this mapping is both
+    #             # ignorable *AND* terminates this reduction.
+    #             if hint_reduced is hint_reduced_prev:
+    #                 break
+    #             # Else, this type variable does *NOT* map to itself.
+    #
+    #             # Map this type variable to this hint.
+    #             hint_reduced_prev = hint_reduced
+    #     # print(f'...to hint {hint} via type variable lookup table!')
+    # # Else, this type variable is unmapped.
+
+    # ....................{ PHASE ~ 2 : bounds             }....................
+    # If this hint is still a type variable tuple (e.g., due to either not being
+    # mapped by this lookup table *OR* being mapped by this lookup table to yet
+    # another type variable tuple)...
+    if isinstance(hint_reduced, HintPep646TypeVarTupleType):
+        # All type variable tuples are currently both unbounded *AND*
+        # unconstrained and thus are currently *NOT* type-checkable and thus are
+        # ignorable. Reduce this type variable tuple to the ignorable singleton.
+        return HINT_SANE_IGNORABLE
+        # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
+        # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
+    # Else, one or more transitive parent hints previously mapped this type
+    # variable tuple to another hint.
+
+    # ....................{ PHASE ~ 3 : guard              }....................
+    # Decide the recursion guard protecting this possibly recursive type
+    # variable tuple against infinite recursion.
+    #
+    # Note that this guard intentionally applies to the original unreduced type
+    # variable tuple rather than the newly reduced hint decided by the prior
+    # phase. Thus, we pass "hint_recursable=hint" rather than
+    # "hint_recursable=hint_reduced".
+    hint_sane = make_hint_sane_recursable(
+        # The recursable form of this type variable tuple is its original
+        # unreduced form tested by the is_hint_recursive() recursion guard
+        # above.
+        hint_recursable=hint,
+        # The non-recursable form of this type variable tuple is its new reduced
+        # form.
+        hint_nonrecursable=hint_reduced,
+        hint_parent_sane=hint_parent_sane,
+    )
+
+    # ....................{ RETURN                         }....................
+    # Return this metadata.
+    return hint_sane
+
+# ....................{ PRIVATE ~ constants                }....................
+_TYPEVARTUPLE_RECURSABLE_DEPTH_MAX = 0
+'''
+Value of the optional ``hint_recursable_depth_max`` parameter passed to the
+:func:`.is_hint_recursive` tester by the
+:func:`.reduce_hint_pep646_unpacked_typevartuple` reducer.
+
+See Also
+--------
+:data:`beartype._check.convert._reduce._pep.pep484.redpep484typevar._TYPEVAR_RECURSABLE_DEPTH_MAX`
+    Further details. The same argument that applies to that magic constant
+    orthogonally applies to this magic constant as well.
+'''

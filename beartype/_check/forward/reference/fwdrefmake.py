@@ -21,7 +21,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     BeartypeForwardRef,
     BeartypeForwardRefArgs,
     TupleTypes,

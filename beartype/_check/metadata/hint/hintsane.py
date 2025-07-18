@@ -31,9 +31,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #  context-free "HintSane" instances are readily memoizable.
 #* Contextual "HintSane" instances are initialized with both a "hint" and one or
 #  more supplemental parameters supplying contextual metadata (e.g.,
-#  "hint_recursable_to_depth", "typevar_to_hint"). They are *NOT* context-free. Ergo,
-#  contextual "HintSane" instances are *NOT* readily memoizable. Don't even
-#  bother wasting space or time attempting to do so.
+#  "hint_recursable_to_depth", "typearg_to_hint"). They are *NOT* context-free.
+#  Ergo, contextual "HintSane" instances are *NOT* readily memoizable. Don't
+#  even bother wasting space or time attempting to do so.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
@@ -47,9 +47,9 @@ from beartype.typing import (
     Tuple,
     Union,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
-    TypeVarToHint,
+    Pep484646TypeArgToHint,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -60,6 +60,12 @@ FrozenDictHintToInt = Dict[Hint, int]
 '''
 PEP-compliant type hint matching any dictionary itself mapping from
 PEP-compliant type hints to integers.
+
+Caveats
+-------
+This hint currently erroneously matches mutable rather than immutable
+dictionaries. While the latter would be preferable, Python lacks a builtin
+immutable dictionary type and thus support for typing such types. So it goes.
 '''
 
 # ....................{ CLASSES                            }....................
@@ -104,14 +110,15 @@ class HintSane(object):
         are valid (rather than constituting an unexpected error), the caller is
         expected to detect this use case and silently short-circuit infinite
         recursion by avoiding revisiting previously visited recursive hints.
-    typevar_to_hint : TypeVarToHint
-        **Type variable lookup table** (i.e., immutable dictionary mapping from
-        the **type variables** (i.e., :pep:`484`-compliant
-        :class:`typing.TypeVar` objects) originally parametrizing the origins of
-        all transitive parent hints of this hint if any to the corresponding
-        child hints subscripting those parent hints). This table enables
-        :func:`beartype.beartype` to efficiently reduce a proper subset of type
-        variables to non-type variables at decoration time, including:
+    typearg_to_hint : Pep484646TypeArgToHint
+        **Type parameter lookup table** (i.e., immutable dictionary mapping from
+        the **type parameter** (i.e., :pep:`484`-compliant type variable or
+        :pep:`646`-compliant unpacked type variable tuple) originally
+        parametrizing the origins of all transitive parent hints of this hint if
+        any to the corresponding child hints subscripting those parent hints).
+        This table enables :func:`beartype.beartype` to efficiently reduce a
+        proper subset of type parameters to non-type parameters at decoration
+        time, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
           example, this table enables runtime type-checkers to reduce the
@@ -149,7 +156,7 @@ class HintSane(object):
     __slots__ = (
         'hint',
         'hint_recursable_to_depth',
-        'typevar_to_hint',
+        'typearg_to_hint',
         '_hash',
     )
 
@@ -159,7 +166,7 @@ class HintSane(object):
     if TYPE_CHECKING:
         hint: Hint
         hint_recursable_to_depth: FrozenDictHintToInt
-        typevar_to_hint: TypeVarToHint
+        typearg_to_hint: Pep484646TypeArgToHint
 
 
     _INIT_ARG_NAMES = frozenset((
@@ -185,7 +192,7 @@ class HintSane(object):
 
         # Optional parameters.
         hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
-        typevar_to_hint: TypeVarToHint = FROZENDICT_EMPTY,
+        typearg_to_hint: Pep484646TypeArgToHint = FROZENDICT_EMPTY,
     ) -> None:
         '''
         Initialize this sanified type hint metadata with the passed parameters.
@@ -204,7 +211,7 @@ class HintSane(object):
             depth** (i.e., total number of times that parent hint has been
             visited during the current search from the root type hint down to
             this sanified type hint). Defaults to the empty frozen dictionary.
-        typevar_to_hint : TypeVarToHint, default: FROZENDICT_EMPTY
+        typearg_to_hint : Pep484646TypeArgToHint, default: FROZENDICT_EMPTY
             **Type variable lookup table** (i.e., immutable dictionary mapping
             from the **type variables** (i.e., :pep:`484`-compliant
             :class:`typing.TypeVar` objects) originally parametrizing the
@@ -216,16 +223,16 @@ class HintSane(object):
         '''
         assert isinstance(hint_recursable_to_depth, FrozenDict), (
             f'{repr(hint_recursable_to_depth)} not frozen dictionary.')
-        assert isinstance(typevar_to_hint, FrozenDict), (
-            f'{repr(typevar_to_hint)} not frozen dictionary.')
+        assert isinstance(typearg_to_hint, FrozenDict), (
+            f'{repr(typearg_to_hint)} not frozen dictionary.')
 
         # Classify all passed parameters as instance variables.
         self.hint = hint
         self.hint_recursable_to_depth = hint_recursable_to_depth
-        self.typevar_to_hint = typevar_to_hint
+        self.typearg_to_hint = typearg_to_hint
 
         # Hash identifying this object, precomputed for efficiency.
-        self._hash = hash((hint, hint_recursable_to_depth, typevar_to_hint))
+        self._hash = hash((hint, hint_recursable_to_depth, typearg_to_hint))
 
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:
@@ -271,7 +278,7 @@ class HintSane(object):
             (
                 self.hint == other.hint and
                 self.hint_recursable_to_depth == other.hint_recursable_to_depth and
-                self.typevar_to_hint == other.typevar_to_hint
+                self.typearg_to_hint == other.typearg_to_hint
             )
             if isinstance(other, HintSane) else
             # Else, this other object is *NOT* also sanified hint metadata. In
@@ -299,7 +306,7 @@ class HintSane(object):
             f'{self.__class__.__name__}('
             f'hint={repr(self.hint)}, '
             f'hint_recursable_to_depth={repr(self.hint_recursable_to_depth)}, '
-            f'typevar_to_hint={repr(self.typevar_to_hint)}'
+            f'typearg_to_hint={repr(self.typearg_to_hint)}'
             f')'
         )
 
@@ -312,7 +319,8 @@ class HintSane(object):
         Parameters
         ----------
         Keyword parameters of the same name and type as instance variables of
-        this object (e.g., ``hint: Hint``, ``typevar_to_hint: TypeVarToHint``).
+        this object (e.g., ``hint: Hint``, ``typearg_to_hint:
+        Pep484646TypeArgToHint``).
 
         Returns
         -------

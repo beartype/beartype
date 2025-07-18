@@ -23,8 +23,8 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
     TypeStack,

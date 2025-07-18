@@ -21,7 +21,7 @@ from beartype._check.signature._sigsnip import (
     CODE_INIT_RANDOM_INT,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
 )
 from beartype._util.text.utiltextrepr import represent_object

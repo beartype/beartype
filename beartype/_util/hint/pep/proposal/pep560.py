@@ -14,11 +14,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep560Exception
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     IterableHints,
 )
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,

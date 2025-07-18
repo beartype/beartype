@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import MappingStrToAny
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import MappingStrToAny
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,

@@ -18,7 +18,7 @@ from beartype._cave._cavefast import (
     FunctionType,
     MethodBoundInstanceOrClassType,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
 )

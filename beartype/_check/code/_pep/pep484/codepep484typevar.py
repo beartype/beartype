@@ -20,8 +20,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype._check.convert.convmain import (
 #     sanify_hint_child)
 # from beartype._conf.confmain import BeartypeConf
-# from beartype._data.hint.datahintpep import Hint
-# from beartype._data.hint.datahinttyping import TypeStack
+# from beartype._data.typing.datatypingport import Hint
+# from beartype._data.typing.datatyping import TypeStack
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 #     get_hint_pep484_typevar_bound_or_none)
 #
@@ -91,7 +91,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #     # Hint mapped to by this type variable if one or more transitive parent
 #     # hints previously mapped this type variable to a hint *OR* "None".
-#     hint_child: Optional[Hint] = hint_meta.typevar_to_hint.get(hint)  # pyright: ignore
+#     hint_child: Optional[Hint] = hint_meta.typearg_to_hint.get(hint)  # pyright: ignore
 #
 #     # ....................{ REDUCTION                      }....................
 #     # If *NO* transitive parent hints previously mapped this type variable to a
@@ -140,7 +140,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #             indent_level=hint_meta.indent_level + 1,
 #             pith_expr=pith_curr_assign_expr,
 #             pith_var_name_index=pith_curr_var_name_index,
-#             typevar_to_hint=hint_meta.typevar_to_hint,
+#             typearg_to_hint=hint_meta.typearg_to_hint,
 #         )
 #     # Else, this type variable is *NOT* reducible to an unignorable hint. Since
 #     # @beartype currently fails to generate type-checking code for type

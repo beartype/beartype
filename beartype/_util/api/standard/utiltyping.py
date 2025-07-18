@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Any
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.module.utilmodimport import import_module_attr_or_none

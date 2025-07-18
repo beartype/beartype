@@ -24,8 +24,8 @@ from beartype.typing import Optional
 from beartype._cave._cavefast import FunctionType
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdscope import BeartypeForwardScope
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
 )

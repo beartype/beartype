@@ -30,8 +30,8 @@ from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.error.dataerrmagic import (
     EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
     LexicalScope,
     TypeOrSetOrTupleTypes,

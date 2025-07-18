@@ -24,7 +24,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahinttyping import CollectionStrs
+from beartype._data.typing.datatyping import CollectionStrs
 from collections.abc import (
     Collection as CollectionABC,
 )

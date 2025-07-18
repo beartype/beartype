@@ -15,7 +15,7 @@ from beartype.typing import (
     Generic,
     TypeVar,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     S,
     T,
     U,

@@ -33,7 +33,7 @@ from beartype._cave._cavefast import (
     # ModuleType,
     NoneType,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictStrToType,
     FrozenSetTypes,
     TupleTypes,

@@ -34,7 +34,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Type
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._check.forward.reference.fwdrefabc import (
     _BeartypeForwardRefIndexableABC)
 from beartype._check.forward.reference.fwdrefmake import (

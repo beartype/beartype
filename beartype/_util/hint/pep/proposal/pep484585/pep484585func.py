@@ -16,11 +16,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import Tuple
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     DictStrToHint,
     Hint,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine

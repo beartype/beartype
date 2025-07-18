@@ -30,7 +30,7 @@ from beartype.typing import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.conftest import die_unless_conf
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
     BeartypeableT,

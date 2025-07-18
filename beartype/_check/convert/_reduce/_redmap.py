@@ -414,7 +414,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # those hints, usually due to higher-level hints initially parametrized by
     # those type variables then being subscripted by those concrete hints.
     #
-    # tl;dr: the "typevar_to_hint" dictionary, which is uncached.
+    # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
     HintSignTypeVar: reduce_hint_pep484_typevar,
 
     # Preserve deprecated PEP 484-compliant hints while emitting one non-fatal
@@ -531,7 +531,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # usually due to higher-level hints initially parametrized by those type
     # variable tuples then being subscripted by those concrete hints.
     #
-    # tl;dr: the "typevar_to_hint" dictionary, which is uncached.
+    # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
     HintSignPep646UnpackedTypeVarTuple: (
         reduce_hint_pep646_unpacked_typevartuple),
 

@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #residing in the new "beartype._data.code.pep" subpackage, please. *sigh*
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import CallableStrFormat
+from beartype._data.typing.datatyping import CallableStrFormat
 
 # ....................{ HINT ~ placeholder : forwardref    }....................
 CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX = '${FORWARDREF:'

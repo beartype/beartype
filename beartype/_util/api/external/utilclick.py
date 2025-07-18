@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorWrappeeException
-from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._data.typing.datatyping import BeartypeableT
 
 # ....................{ DECORATORS                         }....................
 def beartype_click_command(

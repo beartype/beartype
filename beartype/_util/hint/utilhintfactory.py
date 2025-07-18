@@ -18,7 +18,7 @@ from beartype.typing import (
     Generic,
     Type,
 )
-from beartype._data.hint.datahinttyping import T
+from beartype._data.typing.datatyping import T
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ METACLASSES                        }....................

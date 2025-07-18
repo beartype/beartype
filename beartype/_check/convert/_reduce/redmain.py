@@ -37,8 +37,8 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import (
     DictStrToAny,
     TypeStack,
 )

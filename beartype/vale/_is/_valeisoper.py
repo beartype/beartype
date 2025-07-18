@@ -66,7 +66,7 @@ from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISEQUAL_TEST_format)
 from beartype.vale._core._valecore import BeartypeValidator
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.typing.datatyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 

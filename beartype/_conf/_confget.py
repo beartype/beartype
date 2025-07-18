@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeConfShellVarException
 from beartype.roar._roarwarn import BeartypeConfShellVarWarning
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     BoolTristateUnpassable,
     BoolTristate,
 )

@@ -30,14 +30,12 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
+    Pep484646TypeArgToHint,
     TupleHints,
-    TypeVarToHint,
 )
-from beartype._data.hint.datahinttyping import (
-    TupleTypeVars,
-)
+from beartype._data.typing.datatyping import TupleTypeVars
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
@@ -86,16 +84,20 @@ def reduce_hint_pep484_typevar(
     exception_prefix : str
         Human-readable substring prefixing raised exception messages.
 
-    All remaining passed arguments are silently ignored.
+    All remaining keyword-only parameters are silently ignored.
 
     Returns
     -------
     HintSane
         Either:
 
-        * If the type variable lookup table encapsulated by the passed sanified
-          parent type hint metadata maps this type variable to another type
-          hint, the latter.
+        * If this type variable is **recursive** (i.e., previously transitively
+          mapped to itself by a prior call to this reducer), this type variable
+          *must* be ignored to avoid infinite recursion. In this case, the
+          :data:`.HINT_SANE_RECURSIVE` singleton.
+        * Else if the type variable lookup table encapsulated by the passed
+          sanified parent type hint metadata maps this type variable to another
+          type hint, the latter.
         * Else if this type variable is both unbounded and unconstrained, this
           type variable is ignorable. In this case, the
           :data:`.HINT_SANE_IGNORABLE` singleton.
@@ -103,53 +105,58 @@ def reduce_hint_pep484_typevar(
     '''
     # print(f'Reducing PEP 484 type variable {hint} with parent hint {hint_parent_sane}...')
 
-    # ....................{ RECURSE                        }....................
-    # If this subscripted hint is recursive, ignore this subscripted hint to
+    # ....................{ PHASE                          }....................
+    # This reducer is divided into four phases:
+    # 0. The zeroth phase decides whether this type variable is recursive.
+    # 1. The first phase maps this type variable to its associated target hint
+    #    via lookup table associated with this type variable (if any).
+    # 2. The second phase reduces this type variable to its bounded constraints
+    #    (if any).
+    # 3. The third phase decides the recursion guard for this type variable.
+    #
+    # All phases are non-trivial. The output of each phase is sanified hint
+    # metadata (i.e., a "HintSane" object) containing the result of the decision
+    # problem decided by that phase.
+
+    # ....................{ PHASE ~ 0 : recurse            }....................
+    # If this type variable is recursive (i.e., previously transitively mapped
+    # to itself by a prior call to this reducer), ignore this type variable to
     # avoid infinite recursion.
     if is_hint_recursive(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
-        hint_recursable_depth_max=_HINT_PEP484_TYPEVAR_RECURSABLE_DEPTH_MAX,
+        hint_recursable_depth_max=_TYPEVAR_RECURSABLE_DEPTH_MAX,
     ):
         # print(f'Ignoring recursive type variable {hint} with parent {hint_parent_sane}!')
         return HINT_SANE_RECURSIVE
-    # Else, this subscripted hint is *NOT* recursive.
+    # Else, this type variable is *NOT* recursive.
 
-    # ....................{ PHASE                          }....................
-    # This reducer is divided into two phases:
-    # 1. The first phase decides the type variable lookup table for this alias.
-    # 2. The second phase decides the recursion guard for this alias.
-    #
-    # Both phases are non-trivial. The output of each phase is sanified hint
-    # metadata (i.e., a "HintSane" object) containing the result of the decision
-    # problem decided by that phase.
-
+    # ....................{ PHASE ~ 1 : lookup             }....................
     # Reduced hint to be returned, defaulting to this type variable.
     hint_reduced = hint
 
-    # ....................{ PHASE ~ 1 : lookup             }....................
     # If...
     if (
         # This type variable is not a root hint and thus has a parent hint
         # *AND*...
         hint_parent_sane is not None and
         # A parent hint of this type variable maps one or more type variables...
-        hint_parent_sane.typevar_to_hint
+        hint_parent_sane.typearg_to_hint
     ):
         # Type variable lookup table of this parent hint, localized for
         # usability and negligible efficiency.
-        typevar_to_hint = hint_parent_sane.typevar_to_hint
+        typearg_to_hint = hint_parent_sane.typearg_to_hint
 
         # If a parent hint of this type variable maps exactly one type variable,
         # prefer a dramatically faster and simpler approach.
-        if len(typevar_to_hint) == 1:
+        if len(typearg_to_hint) == 1:
             # Hint mapped to by this type variable if one or more parent hints
             # previously mapped this type variable to a hint *OR* this hint as
             # is otherwise (i.e., if this type variable is unmapped).
             #
             # Note that this one-liner looks ridiculous, but actually works.
             # More importantly, this is the fastest way to accomplish this.
-            hint_reduced = typevar_to_hint.get(hint, hint)  # type: ignore[call-overload]
+            hint_reduced = typearg_to_hint.get(hint, hint)  # type: ignore[call-overload]
         # Else, a parent hint of this type variable mapped two or more type
         # variables. In this case, fallback to a slower and more complicated
         # approach that avoids worst-case edge cases. This includes recursion in
@@ -175,7 +182,7 @@ def reduce_hint_pep484_typevar(
             # immutable frozen dictionary into a mutable standard dictionary.
             # This enables type variables reduced by the iteration below to be
             # popped off this copy as a simple (but effective) recursion guard.
-            typevar_to_hint_stack = typevar_to_hint.copy()
+            typearg_to_hint_stack = typearg_to_hint.copy()
 
             #FIXME: [SPEED] *INEFFICIENT.* This has to be done either way, but
             #rather than reperform this O(n) algorithm on every single instance
@@ -194,7 +201,7 @@ def reduce_hint_pep484_typevar(
             while (
                 # This stack still contains one or more type variables that have
                 # yet to be reduced by this iteration *AND*...
-                typevar_to_hint_stack and
+                typearg_to_hint_stack and
                 # This hint is still a type variable...
                 isinstance(hint_reduced, TypeVar)
             ):
@@ -207,7 +214,7 @@ def reduce_hint_pep484_typevar(
                 # being reduced more than once by an otherwise recursive
                 # mapping. Since this stack is local to this reducer, this
                 # behaviour is only locally destructive and thus safe.
-                hint_reduced = typevar_to_hint_stack.pop(
+                hint_reduced = typearg_to_hint_stack.pop(
                     hint_reduced_prev, hint_reduced_prev)  # pyright: ignore
 
                 # If this type variable maps to itself, this mapping is both
@@ -221,7 +228,7 @@ def reduce_hint_pep484_typevar(
         # print(f'...to hint {hint} via type variable lookup table!')
     # Else, this type variable is unmapped.
 
-    # ....................{ PHASE ~ 1 : bounds             }....................
+    # ....................{ PHASE ~ 2 : bounds             }....................
     # If this hint is still a type variable (e.g., due to either not being
     # mapped by this lookup table *OR* being mapped by this lookup table to yet
     # another type variable)...
@@ -246,7 +253,7 @@ def reduce_hint_pep484_typevar(
     # Else, one or more transitive parent hints previously mapped this type
     # variable to another hint.
 
-    # ....................{ PHASE ~ 2                      }....................
+    # ....................{ PHASE ~ 3 : guard              }....................
     # Decide the recursion guard protecting this possibly recursive type
     # variable against infinite recursion.
     #
@@ -255,11 +262,10 @@ def reduce_hint_pep484_typevar(
     # Thus, we pass "hint_recursable=hint" rather than
     # "hint_recursable=hint_reduced".
     hint_sane = make_hint_sane_recursable(
-        # The recursable form of this type alias is the original subscripted
-        # hint tested by the is_hint_recursive() recursion guard above.
+        # The recursable form of this type variable is its original unreduced
+        # form tested by the is_hint_recursive() recursion guard above.
         hint_recursable=hint,
-        # The non-recursable form of this type alias is the unsubscripted hint
-        # underlying the original subscripted hint.
+        # The non-recursable form of this type variable is its new reduced form.
         hint_nonrecursable=hint_reduced,
         hint_parent_sane=hint_parent_sane,
     )
@@ -432,13 +438,24 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     # these type variables to child hints subscripting this subscripted hint.
 
     # ....................{ REDUCE ~ map                   }....................
+    #FIXME: [SPEED] Passing "exception_prefix" here largely defeats the purpose
+    #of memoization. Of course, on the other hand, readable exceptions are
+    #critical too. Of course, we could also have our speedy cake and eat it too
+    #by:
+    #* Refactoring _get_hint_pep484_typevars_to_hints() to raise general-purpose
+    #  placeholder exceptions.
+    #* Catching those exceptions here and re-raising with the proper
+    #  "{exception_prefix}".
+    #Anyway. For the most part, nobody cares. This is all just to satisfy my own
+    #peculiar obsession with O(1) time complexity. *lolbro*
+
     # Type variable lookup table mapping from each of these type variables to
     # each of these corresponding child hints.
     #
     # Note that we pass parameters positionally due to memoization.
-    typevar_to_hint = _get_hint_pep484_typevars_to_hints(
+    typearg_to_hint = _get_hint_pep484_typevars_to_hints(
         hint, hint_unsubbed_typevars, hint_childs, exception_prefix)
-    # print(f'Mapped hint {hint} to type variable lookup table {typevar_to_hint}!')
+    # print(f'Mapped hint {hint} to type variable lookup table {typearg_to_hint}!')
 
     # ....................{ REDUCE ~ composite             }....................
     # Sanified metadata to be returned.
@@ -448,26 +465,26 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     if hint_parent_sane is None:
         # Metadata encapsulating this hint and type variable lookup table.
         hint_sane = HintSane(
-            hint=hint_unsubbed, typevar_to_hint=typevar_to_hint)
+            hint=hint_unsubbed, typearg_to_hint=typearg_to_hint)
     # Else, this hint has a parent. In this case...
     else:
         # If the parent hint is also associated with a type variable lookup
         # table...
-        if hint_parent_sane.typevar_to_hint:
+        if hint_parent_sane.typearg_to_hint:
             # Full type variable lookup table merging the table associated this
             # parent hint with the table just decided above for this child hint,
             # efficiently defined as...
-            typevar_to_hint = (
+            typearg_to_hint = (
                 # The type variable lookup table describing all transitive
                 # parent hints of this hint with...
-                hint_parent_sane.typevar_to_hint |  # type: ignore[operator]
+                hint_parent_sane.typearg_to_hint |  # type: ignore[operator]
                 # The type variable lookup table describing this hint.
                 #
                 # Note that this table is intentionally the second rather than
                 # first operand of this "|" operation, efficiently ensuring that
                 # type variables mapped by this hint take precedence over type
                 # variables mapped by transitive parent hints of this hint.
-                typevar_to_hint
+                typearg_to_hint
             )
         # Else, the parent hint is associated with *NO* such table.
 
@@ -475,7 +492,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
         # "cascading" any other metadata associated with this parent hint (e.g.,
         # recursable hint IDs) down onto this child hint as well.
         hint_sane = hint_parent_sane.permute_sane(
-            hint=hint_unsubbed, typevar_to_hint=typevar_to_hint)
+            hint=hint_unsubbed, typearg_to_hint=typearg_to_hint)
 
     # ....................{ RETURN                         }....................
     # print(f'Reduced subscripted hint {repr(hint)} to unsubscripted hint metadata {repr(hint_sane)}.')
@@ -484,7 +501,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     return hint_sane
 
 # ....................{ PRIVATE ~ constants                }....................
-_HINT_PEP484_TYPEVAR_RECURSABLE_DEPTH_MAX = 0
+_TYPEVAR_RECURSABLE_DEPTH_MAX = 0
 '''
 Value of the optional ``hint_recursable_depth_max`` parameter passed to the
 :func:`.is_hint_recursive` tester by the :func:`.reduce_hint_pep484_typevar`
@@ -532,6 +549,7 @@ semantics of this recursive data structure.
 '''
 
 # ....................{ PRIVATE ~ getters                  }....................
+#FIXME: Rename to _get_hint_pep484646_typeargs_to_hints(), please. *sigh*
 @callable_cached
 def _get_hint_pep484_typevars_to_hints(
     # Mandatory parameters.
@@ -541,16 +559,16 @@ def _get_hint_pep484_typevars_to_hints(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> TypeVarToHint:
+) -> Pep484646TypeArgToHint:
     '''
-    Type variable lookup table mapping from the passed :pep:`484`-compliant
-    **type variables** (i.e., :class:`.TypeVar` objects) to the associated
+    Type parameter lookup table mapping from the passed :pep:`484`-compliant
+    **type parameters** (i.e., :class:`.TypeVar` objects) to the associated
     passed type hints as key-value pairs of this table.
 
     This getter is memoized for efficiency. Notably, this getter creates and
-    returns a dictionary mapping each type variable in the passed tuple of type
-    variables to the associated type hint in the passed tuple of type hints with
-    the same 0-based tuple index as that type variable.
+    returns a dictionary mapping each type parameter in the passed tuple of type
+    parameters to the associated type hint in the passed tuple of type hints with
+    the same 0-based tuple index as that type parameter.
 
     Parameters
     ----------
@@ -559,32 +577,33 @@ def _get_hint_pep484_typevars_to_hints(
         parent hint is currently only used to generate human-readable exception
         messages in the event of fatal errors.
     hint_child_typevars : TupleTypeVars
-        Tuple of one or more child type variables originally subscripting the
+        Tuple of one or more child type parameters originally subscripting the
         origin underlying this parent hint.
     hint_child_hints : TupleHints
         Tuple of one or more child type hints subscripting this parent hint,
-        which those type variables map to.
+        which those type parameters map to.
     exception_prefix: str, optional
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
     Returns
     -------
-    TypeVarToHint
-        Type variable lookup table mapping these type variables to hint_child_hints.
+    Pep484646TypeArgToHint
+        Type parameter lookup table mapping these type parameters to these child
+        hints.
 
     Raises
     ------
     BeartypeDecorHintPep484TypeVarException
         If either:
 
-        * This tuple of type variables is empty.
+        * This tuple of type parameters is empty.
         * This tuple of type hints is empty.
         * This tuple of type hints contains more items than this tuple of type
-          variables.
+          parameters.
     BeartypeDecorHintPep484TypeVarViolation
         If one of these type hints violates the bounds or constraints of one of
-        these type variables.
+        these type parameters.
     '''
     assert isinstance(hint_child_typevars, tuple), (
         f'{repr(hint_child_typevars)} not tuple.')
@@ -594,13 +613,13 @@ def _get_hint_pep484_typevars_to_hints(
         f'{repr(exception_prefix)} not string.')
 
     # ....................{ PREAMBLE                       }....................
-    # If *NO* type variables were passed, raise an exception.
+    # If *NO* type parameters were passed, raise an exception.
     if not hint_child_typevars:
         raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint)} '
-            f'parametrized by no PEP 484 type variables.'
+            f'parametrized by no PEP 484 type parameters.'
         )
-    # Else, one or more type variables were passed.
+    # Else, one or more type parameters were passed.
     #
     # If *NO* type hint_child_hints were passed, raise an exception.
     elif not hint_child_hints:
@@ -610,29 +629,29 @@ def _get_hint_pep484_typevars_to_hints(
         )
     # Else, one or more type hint_child_hints were passed.
     #
-    # If more type hints than type variables were passed, raise an exception.
+    # If more type hints than type parameters were passed, raise an exception.
     elif len(hint_child_hints) > len(hint_child_typevars):
         raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint)} '
             f'number of subscripted type hints {len(hint_child_hints)} exceeds '
-            f'number of parametrized type variables {len(hint_child_typevars)} '
+            f'number of parametrized type parameters {len(hint_child_typevars)} '
             f'(i.e., {len(hint_child_hints)} > {len(hint_child_typevars)}).'
         )
-    # Else, either the same number of type hints and type variables were passed
-    # *OR* more type variables than type hints were passed.
+    # Else, either the same number of type hints and type parameters were passed
+    # *OR* more type parameters than type hints were passed.
 
     # ....................{ MAP                            }....................
-    # Type variable lookup table to be returned.
-    typevar_to_hint: TypeVarToHint = {}
+    # Type parameter lookup table to be returned.
+    typearg_to_hint: Pep484646TypeArgToHint = {}
 
     #FIXME: Optimize into a "while" loop at some point. *sigh*
-    # For each passed type variable and corresponding type hint...
+    # For each passed type parameter and corresponding type hint...
     #
     # Note that:
     # * The C-based zip() builtin has been profiled to be the fastest means of
     #   iterating pairs in pure-Python, interestingly.
-    # * If more type variables than type hints were passed, zip() silently
-    #   ignores type variables with *NO* corresponding type hints -- exactly as
+    # * If more type parameters than type hints were passed, zip() silently
+    #   ignores type parameters with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
     # print(f'Mapping hint_child_typevars {hint_child_typevars} -> hint_child_hints {hint_child_hints}...')
     for hint_child_typevar, hint_child_hint in zip(
@@ -640,12 +659,12 @@ def _get_hint_pep484_typevars_to_hints(
         # print(f'Mapping typevar {typevar} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
-        # If this is *NOT* actually a type variable, raise an exception.
+        # If this is *NOT* actually a type parameter, raise an exception.
         #
         # Note that Python itself typically fails to validate this constraint,
         # thus requiring that we do so explicitly. For example:
         # * Ideally, *ALL* child hints parametrizing a PEP 695-compliant
-        #   subscripted type alias would actually be type variables. Sadly, the
+        #   subscripted type alias would actually be type parameters. Sadly, the
         #   "type" statement is excessively permissive under at least Python <=
         #   3.13 (and possibly newer Python releases as well): e.g.,
         #       >>> type muh_alias[int] = float | complex
@@ -655,17 +674,17 @@ def _get_hint_pep484_typevars_to_hints(
             raise BeartypeDecorHintPep484TypeVarException(
                 f'{exception_prefix}type hint {repr(hint)} '
                 f'parametrization {repr(hint_child_typevar)} not '
-                f'PEP 484 type variable (i.e., "typing.TypeVar" object).'
+                f'PEP 484 type parameter (i.e., "typing.TypeVar" object).'
             )
-        # Else, this is actually a type variable.
+        # Else, this is actually a type parameter.
 
         #FIXME: Insufficient. Ideally, we would also validate this hint to be a
-        #*SUBHINT* of this type variable. Specifically, if this type variable is
-        #bounded by one or more bounded constraints, then we should validate
+        #*SUBHINT* of this type parameter. Specifically, if this type parameter
+        #is bounded by one or more bounded constraints, then we should validate
         #this hint to be a *SUBHINT* of those constraints: e.g.,
         #    class MuhClass(object): pass
         #
-        #    # PEP 695 type alias parametrized by a type variable bound to a
+        #    # PEP 695 type alias parametrized by a type parameter bound to a
         #    # subclass of the "MuhClass" type.
         #    type muh_alias[T: MuhClass] = T | int
         #
@@ -700,7 +719,7 @@ def _get_hint_pep484_typevars_to_hints(
         #      currently unsupported by "beartype.door.TypeHint".
         #
         #Due to these (and probably more) issues, we currently *ONLY* validate
-        #this hint to be a subhint of these bounded constraints...
+        #this hint to be a subhint of these bounded constraints.
 
         # If this hint is a PEP-noncompliant isinstanceable type (and thus *NOT*
         # an unresolvable forward reference proxy, which by definition is *NOT*
@@ -708,7 +727,7 @@ def _get_hint_pep484_typevars_to_hints(
         elif is_hint_nonpep_type(
             hint=hint_child_hint, is_forwardref_valid=False):
             # PEP-compliant type hint synthesized from all bounded constraints
-            # parametrizing this type variable if any *OR* "None" otherwise.
+            # parametrizing this type parameter if any *OR* "None" otherwise.
             #
             # Note that this call is intentionally passed positional rather
             # positional keywords due to memoization.
@@ -719,7 +738,7 @@ def _get_hint_pep484_typevars_to_hints(
 
             # If...
             if (
-                # This type variable was bounded or constrained *AND*...
+                # This type parameter was bounded or constrained *AND*...
                 typevar_bound is not None and
                 # These bounded constraints are PEP-noncompliant *AND*...
                 #
@@ -735,10 +754,6 @@ def _get_hint_pep484_typevars_to_hints(
                 # thus erroneously reject (rather than silently accept) *ALL*
                 # objects as unconditionally violating these bounds.
                 not is_hint_pep(typevar_bound) and
-                #FIXME: As follows, please:
-                #* Unit test with "bound=Any". *sigh*
-                #* Integration test with "sqlalchemy". *sigh*
-
                 # These bounded constraints are issubclassable (i.e., an object
                 # safely passable as the second parameter to the issubclass()
                 # builtin) *AND*...
@@ -761,15 +776,15 @@ def _get_hint_pep484_typevars_to_hints(
                     message=(
                         f'{exception_prefix}type hint {repr(hint)} '
                         f'originally parametrized by '
-                        f'PEP 484 type variable {repr(hint_child_typevar)} '
+                        f'PEP 484 type parameter {repr(hint_child_typevar)} '
                         f'subsequently subscripted by '
                         f'child type hint {repr(hint_child_hint)} violating '
-                        f"this type variable's bounds or constraints "
+                        f"this type parameter's bounds or constraints "
                         f'{repr(typevar_bound)}.'
                     ),
                     culprits=(hint_child_hint,),
                 )
-            # Else, this type variable was either:
+            # Else, this type parameter was either:
             # * Unbounded and unconstrained.
             # * Bounded or constrained by a hint that is *NOT* issubclassable.
             # * Bounded or constrained by an issubclassable object that is the
@@ -777,11 +792,11 @@ def _get_hint_pep484_typevars_to_hints(
             #   these bounded constraints.
         # Else, this hint is *NOT* a PEP-noncompliant isinstanceable type.
 
-        # Map this type variable to this hint with an optimally efficient
+        # Map this type parameter to this hint with an optimally efficient
         # one-liner, silently overwriting any prior such mapping of this type
-        # variable by either this call or a prior call of this function.
-        typevar_to_hint[hint_child_typevar] = hint_child_hint
+        # parameter by either this call or a prior call of this function.
+        typearg_to_hint[hint_child_typevar] = hint_child_hint
 
     # ....................{ RETURN                         }....................
     # Return this table, coerced into an immutable frozen dictionary.
-    return FrozenDict(typevar_to_hint)
+    return FrozenDict(typearg_to_hint)

@@ -83,7 +83,7 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
             hint=hint, exception_prefix=hints_meta.exception_prefix)
     )
     # print(f'Sanifying container hint {repr(hint_curr)} child hint {repr(hint_child)}...')
-    # print(f'...with type variable lookup table {repr(hint_curr_meta.typevar_to_hint)}.')
+    # print(f'...with type variable lookup table {repr(hint_curr_meta.typearg_to_hint)}.')
 
     # Metadata encapsulating the sanification of this child hint.
     hint_child_sane = hints_meta.sanify_hint_child(hint_child)

@@ -16,8 +16,8 @@ from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahintpep import DictStrToHint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import DictStrToHint
+from beartype._data.typing.datatyping import (
     # DictStrToAny,
     TypeStack,
 )

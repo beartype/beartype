@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Type
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.

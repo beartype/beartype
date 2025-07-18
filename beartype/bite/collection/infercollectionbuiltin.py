@@ -27,7 +27,7 @@ from beartype._cave._cavefast import (
     DictKeysViewType,
     DictValuesViewType,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictTypeToAny,
 )
 from beartype._util.cache.utilcachecall import callable_cached

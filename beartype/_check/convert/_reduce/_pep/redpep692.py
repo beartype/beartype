@@ -27,7 +27,7 @@ from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintSane,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 
 # ....................{ REDUCERS                           }....................

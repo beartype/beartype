@@ -36,7 +36,7 @@ from beartype._check.metadata.metadecor import (
 )
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.typing.datatyping import TypeStack
 from beartype._util.hint.pep.proposal.pep649 import (
     get_pep649_hintable_annotations,
     set_pep649_hintable_annotations,

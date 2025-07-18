@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
 )

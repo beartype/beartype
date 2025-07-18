@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import NodeCallable
+from beartype._data.typing.datatyping import NodeCallable
 
 # ....................{ TESTERS                            }....................
 def is_node_callable_typed(node: NodeCallable) -> bool:

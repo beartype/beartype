@@ -115,7 +115,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         RegexMatchType,
         RegexCompiledType,
     )
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
     )
@@ -3636,7 +3636,7 @@ def hints_pep484_ignorable_deep() -> list:
         Optional,
         Union,
     )
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
     )

@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     TypeIs,
 )

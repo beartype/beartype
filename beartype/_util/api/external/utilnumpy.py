@@ -19,7 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeLibraryNumpyException
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictStrToType,
     FrozenSetTypes,
     TypeException,

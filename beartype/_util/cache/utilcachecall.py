@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 from beartype.typing import Dict
-from beartype._data.hint.datahinttyping import CallableT
+from beartype._data.typing.datatyping import CallableT
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
     is_func_arg_variadic,

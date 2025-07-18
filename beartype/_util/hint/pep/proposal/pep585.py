@@ -16,11 +16,11 @@ from beartype.typing import (
     TypeVar,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     TupleTypeVars,
     TypeException,
 )

@@ -26,7 +26,7 @@ from beartype.typing import (
     Annotated,
     Any,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.api.external.utilnumpy import (
     get_numpy_dtype_type_abcs,
     make_numpy_dtype,

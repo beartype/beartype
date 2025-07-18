@@ -34,7 +34,7 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         List,
         Sequence,
     )
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
         U,
@@ -153,7 +153,7 @@ def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
         NamedTuple,
         TypedDict,
     )
-    from beartype._data.hint.datahinttyping import T
+    from beartype._data.typing.datatyping import T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignNamedTuple,
         HintSignTypedDict,
@@ -289,7 +289,7 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype.typing import Generic
-    from beartype._data.hint.datahinttyping import T
+    from beartype._data.typing.datatyping import T
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_base_in_module_first)
     from pytest import raises

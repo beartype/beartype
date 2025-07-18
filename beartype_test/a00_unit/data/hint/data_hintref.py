@@ -38,7 +38,7 @@ from beartype.typing import (
     TypeVar,
     Union,
 )
-from beartype._data.hint.datahinttyping import T
+from beartype._data.typing.datatyping import T
 
 # ....................{ LOCALS                             }....................
 LikeATornCloud = TypeVar('LikeATornCloud', bound='BeforeTheHurricane')

@@ -17,7 +17,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
 )

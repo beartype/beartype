@@ -36,7 +36,7 @@ def test_reduce_hint() -> None:
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._conf.confmain import BeartypeConf
     from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         Pep484TowerComplex,
         Pep484TowerFloat,
     )

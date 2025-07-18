@@ -52,7 +52,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         Optional,
         Union,
     )
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
     )

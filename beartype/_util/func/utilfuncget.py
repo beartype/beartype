@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Pep649HintableAnnotations,
     TypeException,
 )

@@ -25,8 +25,8 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import TypeStack
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
@@ -374,7 +374,7 @@ def sanify_hint_child(
         * Else, this unignorable hint is irreducible. In this case, metadata
           encapsulating this hint unmodified.
     '''
-    # print(f'Sanifying child hint {repr(hint)} with type variable lookup table {repr(typevar_to_hint)}...')
+    # print(f'Sanifying child hint {repr(hint)} with type variable lookup table {repr(typearg_to_hint)}...')
 
     # This sanifier covers the proper subset of logic performed by the
     # sanify_hint_root_statement() sanifier applicable to child type hints.

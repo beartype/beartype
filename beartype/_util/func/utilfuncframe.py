@@ -20,7 +20,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import CallableFrameType
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.

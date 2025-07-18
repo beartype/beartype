@@ -17,7 +17,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from collections.abc import Callable
 
 # ....................{ UNWRAPPERS ~ once                  }....................

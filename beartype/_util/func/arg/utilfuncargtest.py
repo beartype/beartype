@@ -24,7 +24,7 @@ from beartype._util.func.arg.utilfuncarglen import (
     get_func_args_lens,
     get_func_args_nonvariadic_len,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
 )

@@ -35,7 +35,7 @@ from beartype._data.ast.dataast import (
     NODE_CONTEXT_LOAD,
     NODE_CONTEXT_STORE,
 )
-from beartype._data.hint.datahinttyping import NodesList
+from beartype._data.typing.datatyping import NodesList
 from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 

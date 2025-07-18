@@ -40,8 +40,8 @@ from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
 )
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import DictTypeToAny
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import DictTypeToAny
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,

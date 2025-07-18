@@ -38,7 +38,7 @@ def test_decor_pep612() -> None:
         ParamSpec,
         Tuple,
     )
-    from beartype._data.hint.datahinttyping import DictStrToAny
+    from beartype._data.typing.datatyping import DictStrToAny
     from pytest import raises
 
     # ....................{ LOCALs                         }....................

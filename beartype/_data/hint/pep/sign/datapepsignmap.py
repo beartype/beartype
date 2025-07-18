@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Dict
 from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictStrToHintSign,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign

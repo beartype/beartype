@@ -17,7 +17,10 @@ from beartype._cave._cavefast import (
     HintGenericSubscriptedType,
     HintPep646TypeVarTupleType,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import (
+    Hint,
+    TupleHints,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPep646UnpackedTypeVarTuple,
@@ -29,12 +32,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 def is_hint_pep646_unpacked_tuple(hint: Hint) -> bool:
     '''
     :data:`True` only if the passed hint is a :pep:`646`-compliant **unpacked
-    child tuple hint** (e.g., the child hint ``*tuple[str, ...]`` subscripting
-    the parent tuple hint ``tuple[int, *tuple[str, ...], float]``).
+    child tuple hint** (i.e., of the form "*tuple[{hint_child_child_1}, ...,
+    {hint_child_child_M}]" subscripting a parent tuple hint of the form
+    "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
+    {hint_child_child_M}], ..., {hint_child_N}]").
 
-    If this tester returns :data:`True`, then this unpacked child tuple hint is
-    guaranteed to define the standard ``__args__`` dunder attribute to be
-    either:
+    If this tester returns :data:`True`, this unpacked child tuple hint is
+    guaranteed to define the ``__args__`` dunder attribute to be either:
 
     * A 2-tuple ``({hint_child}, ...)``, in which case this child tuple hint
       unpacks to a variable-length tuple hint over ``{hint_child}`` types.
@@ -154,6 +158,65 @@ def is_hint_pep646_unpacked_tuple(hint: Hint) -> bool:
         # # unpacked child tuple hints.
         # getattr(hint, '__unpacked__', None) is True
     )
+
+# ....................{ FACTORIES                          }....................
+def make_hint_pep646_unpacked_tuple(hints_child: TupleHints) -> Hint:
+    '''
+    Dynamically create and return a new :pep:`646`-compliant **unpacked child
+    tuple hint** (i.e., of the form "*tuple[{hint_child_child_1}, ...,
+    {hint_child_child_M}]" subscripting a parent tuple hint of the form
+    "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
+    {hint_child_child_M}], ..., {hint_child_N}]") subscripted by all child hints
+    in the passed tuple.
+
+    This factory exists to streamline access to unpacked child tuple hints,
+    whose definition is otherwise non-trivial. Python requires unpacked child
+    tuple hints to be syntactically embedded inside larger containers -- even if
+    those hints are semantically invalid inside those containers: e.g.,
+
+    .. code-block:: pycon
+
+       >>> [*tuple[int, str]]
+       [*tuple[int, str]]  # <-- makes no sense, but ok.
+       >>> *tuple[int, str]
+       SyntaxError: can't use starred expression here  # <-- this is awful.
+
+    This factory circumvents these non-trivial usability concerns.
+
+    Parameters
+    ----------
+    hints : TupleHints
+        Tuple of all child hints with which to subscript the returned hint.
+
+    Returns
+    -------
+    Hint
+        Unpacked child tuple hint subscripted by these child hints.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585646 import (
+        make_hint_pep484585_tuple_fixed)
+
+    # PEP 585-compliant tuple hint subscripted by these child hints.
+    pep585_tuple = make_hint_pep484585_tuple_fixed(hints_child)
+
+    #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
+    #"SyntaxError" if we even try doing this. *SADNESS*
+    # return *hint
+
+    # PEP 646-compliant tuple hint subscripted by arbitrary children and this
+    # PEP 585-compliant tuple hint unpacked into a PEP 646-compliant unpacked
+    # tuple child hint. This is insane, because we're only going to rip this
+    # tuple child hint right back out of this parent tuple hint. Blame the
+    # Python <= 3.10 interpreter. *shrug*
+    list_pep585_tuple = [*pep585_tuple]  # type: ignore[valid-type]
+
+    # PEP 646-compliant unpacked child tuple hint subscripting this parent.
+    pep646_unpacked_tuple = list_pep585_tuple[0]
+
+    # Return this unpacked child tuple hint.
+    return pep646_unpacked_tuple
 
 # ....................{ DISAMBIGUATORS                     }....................
 #FIXME: Unit test us up, including:

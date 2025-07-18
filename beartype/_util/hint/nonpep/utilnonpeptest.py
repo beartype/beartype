@@ -25,7 +25,7 @@ from beartype._util.cls.pep.clspep3119 import (
     die_unless_type_isinstanceable,
     is_type_isinstanceable,
 )
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 
 # ....................{ VALIDATORS                         }....................
 #FIXME: Unit test us up, please.

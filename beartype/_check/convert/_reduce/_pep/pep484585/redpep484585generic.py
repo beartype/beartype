@@ -16,7 +16,7 @@ from beartype.typing import (
     Generic,
     Optional,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HintOrSane,

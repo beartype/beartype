@@ -22,7 +22,7 @@ point of this submodule is to explicitly call and thus exercise that resolver!
 from __future__ import annotations
 from beartype.door import die_if_unbearable
 from beartype.typing import Generic
-from beartype._data.hint.datahinttyping import T
+from beartype._data.typing.datatyping import T
 from beartype._util.hint.pep.proposal.pep649 import (
     get_pep649_hintable_annotations)
 

@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import BeartypeDecorHintPep649Exception
 from beartype.typing import Optional
 from beartype._cave._cavefast import Format  # pyright: ignore
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Pep649Hintable,
     Pep649HintableAnnotations,
     TypeException,

@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     T,
     FrozenSetStrs,
     LexicalScope,

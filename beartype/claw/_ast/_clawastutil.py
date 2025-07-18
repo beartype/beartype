@@ -29,7 +29,7 @@ from beartype.roar import BeartypeClawImportConfException
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeDecorationPosition
-from beartype._data.hint.datahinttyping import NodeDecoratable
+from beartype._data.typing.datatyping import NodeDecoratable
 from beartype._util.ast.utilastmake import (
     make_node_kwarg,
     make_node_object_attr_load,

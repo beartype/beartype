@@ -16,7 +16,7 @@ from beartype.typing import (
     Callable,
     Optional,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeException,
 )

@@ -16,7 +16,7 @@ from beartype.typing import (
     # Optional,
     TypeVar,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     # Hint,
     HintOrNone,
     TypeIs,

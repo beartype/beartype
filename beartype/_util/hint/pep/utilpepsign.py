@@ -106,8 +106,8 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import CallableOrClassTypes
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,

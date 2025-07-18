@@ -18,7 +18,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
     TupleHints,

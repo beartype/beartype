@@ -68,11 +68,11 @@ from beartype._check.metadata.hint.hintsane import (
     TupleHintSane,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
     TypeStack,
 )

@@ -116,11 +116,11 @@ from beartype._cave._cavefast import (
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
-from beartype._data.hint.datahintpep import Hint
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep695Parameterizable,
-    TupleTypeParams,
+    TuplePep484612646TypeArgs,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
@@ -329,8 +329,8 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484612646 import (
-        get_hint_pep484612646_typeparam_name,
-        is_hint_pep484612646_typeparam,
+        get_hint_pep484612646_typearg_name,
+        is_hint_pep484612646_typearg,
     )
 
     # ....................{ LOCALS                         }....................
@@ -343,7 +343,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     # For each type parameter parametrizing this parameterizable...
     for typeparam in typeparams:
         # Unqualified basename of this type parameter.
-        typeparam_name = get_hint_pep484612646_typeparam_name(
+        typeparam_name = get_hint_pep484612646_typearg_name(
             hint=typeparam, exception_prefix=exception_prefix)
 
         # Existing attribute sharing the same name already added to this forward
@@ -356,7 +356,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
             # This scope already contains an attribute with this name *AND*...
             func_scope_attr is not SENTINEL and
             # This attribute is also a type parameter...
-            is_hint_pep484612646_typeparam(func_scope_attr)
+            is_hint_pep484612646_typearg(func_scope_attr)
         ):
             assert isinstance(exception_prefix, str), (
                 f'{repr(exception_prefix)} not string.')
@@ -396,7 +396,7 @@ def _get_hint_pep695_parameterizable_typeparams(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> TupleTypeParams:
+) -> TuplePep484612646TypeArgs:
     '''
     Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
     type variables, pep:`612`-compliant parameter specifications, and
@@ -415,7 +415,7 @@ def _get_hint_pep695_parameterizable_typeparams(
 
     Returns
     -------
-    TupleTypeParams
+    TuplePep484612646TypeArgs
         Tuple of all type parameters parametrizing this parameterizable.
 
     Raises

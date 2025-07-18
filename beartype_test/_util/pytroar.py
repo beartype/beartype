@@ -19,7 +19,7 @@ and warnings emitted by unit and functional tests and fixtures.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 from beartype.roar import BeartypeException
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from contextlib import contextmanager
 from pytest import raises
 

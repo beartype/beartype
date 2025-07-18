@@ -18,7 +18,7 @@ from beartype.typing import (
     Collection,
     Tuple,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_args)

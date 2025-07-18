@@ -25,7 +25,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintOrSane,
     HintSane,
 )
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.hint.pep.proposal.pep695 import (
     get_hint_pep695_unsubbed_alias)

@@ -20,7 +20,7 @@ from beartype.typing import (
     # Union,
 )
 from beartype._cave._cavefast import NoneType
-from beartype._data.hint.datahintpep import Hint
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_cacheworthy
 from threading import RLock

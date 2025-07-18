@@ -19,14 +19,14 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import CallableOrClassTypes
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
     ListHints,
+    Pep484TypeVarToHint,
     TupleHints,
-    TypeVarToHint,
 )
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN)
@@ -299,8 +299,8 @@ def get_hint_pep484585_generic_args_full(
     #     (int, int)
     #
     # For the above call, this contents of this dictionary resemble:
-    #     typevar_to_hint = {T: int}
-    typevar_to_hint: TypeVarToHint = {}
+    #     typearg_to_hint = {T: int}
+    typearg_to_hint: Pep484TypeVarToHint = {}
 
     # ....................{ LOCALS ~ target                }....................
     # List of zero or more child hints transitively subscripting the passed
@@ -478,12 +478,12 @@ def get_hint_pep484585_generic_args_full(
                     # conditional resembling:
                     #     if not (
                     #         hint_base_super_args_stack or
-                    #         typevar_to_hint
+                    #         typearg_to_hint
                     #     ):
                     #
                     # However, doing so would be almost entirely pointless. Why?
                     # Because almost *ALL* generics are transitively subscripted
-                    # by one or more type variables. Ergo, "typevar_to_hint" is
+                    # by one or more type variables. Ergo, "typearg_to_hint" is
                     # almost *ALWAYS* non-empty. Ergo, the above "if"
                     # conditional reduces to "if True:" in most cases. We sigh.
                     for hint_base_arg_full_index, hint_base_arg_full in (
@@ -496,11 +496,11 @@ def get_hint_pep484585_generic_args_full(
                             # "bubbled up" into this type variable, preserve
                             # that bubbling by re-bubbling up the same child
                             # hint back into this type variable. <-- lol
-                            if hint_base_arg_full in typevar_to_hint:
-                                # print(f'Rebubbling hint {typevar_to_hint[hint_base_arg]} into...')
+                            if hint_base_arg_full in typearg_to_hint:
+                                # print(f'Rebubbling hint {typearg_to_hint[hint_base_arg]} into...')
                                 # print(f'base {hint_base} typevar {hint_base_arg}!')
                                 hint_base_args_full[hint_base_arg_full_index] = (
-                                    typevar_to_hint[hint_base_arg_full])  # type: ignore[index]
+                                    typearg_to_hint[hint_base_arg_full])  # type: ignore[index]
                             # Else, *NO* child hint directly subscripting a
                             # sibling pseudo-superclass of this child
                             # pseudo-superclass has already been "bubbled up"
@@ -548,13 +548,13 @@ def get_hint_pep484585_generic_args_full(
                                 # meaningfully replaceable with concrete hints.
                                 # Moreover, doing so here would erroneously map
                                 # this type variable to this other type variable
-                                # in the "typevar_to_hint" dictionary -- which
+                                # in the "typearg_to_hint" dictionary -- which
                                 # would then inhibit this "if" conditional from
                                 # subsequently bubbling up a concrete hint into
                                 # this type variable. <-- omg
                                 else:
                                     # print(f'Recording non-typevar {hint_base_arg_full} -> {hint_base_arg_full_new}...')
-                                    typevar_to_hint[hint_base_arg_full] = (  # type: ignore[index]
+                                    typearg_to_hint[hint_base_arg_full] = (  # type: ignore[index]
                                         hint_base_arg_full_new)  # type: ignore[assignment]
                             # Else, all child hints directly subscripting this
                             # parent pseudo-superclass have already been
@@ -694,7 +694,7 @@ def get_hint_pep484585_generic_args_full(
                 #   pseudo-superclass of this target pseudo-superclass has
                 #   already been "bubbled up" into this type variable, preserve
                 #   this type variable as is.
-                hint_args_full[hint_arg_full_index] = typevar_to_hint.get(  # type: ignore[call-overload]
+                hint_args_full[hint_arg_full_index] = typearg_to_hint.get(  # type: ignore[call-overload]
                     hint_arg_full, hint_arg_full)  # pyright: ignore
             # Else, this hint is *NOT* a type variable.
     # Else, the caller did *NOT* pass a target pseudo-superclass.

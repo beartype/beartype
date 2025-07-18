@@ -26,7 +26,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._data.hint.datahinttyping import ImportPathHook
+from beartype._data.typing.datatyping import ImportPathHook
 from threading import RLock
 
 # ....................{ CLASSES                            }....................

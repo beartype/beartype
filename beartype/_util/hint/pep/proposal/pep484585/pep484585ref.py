@@ -22,7 +22,7 @@ from beartype._data.cls.datacls import (
     TYPE_BUILTIN_NAME_TO_TYPE,
     TYPES_PEP484585_REF,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     Pep484585ForwardRef,
     TypeException,
     TypeStack,

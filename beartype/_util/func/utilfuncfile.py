@@ -36,7 +36,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
-from beartype._data.hint.datahinttyping import Codeobjable
+from beartype._data.typing.datatyping import Codeobjable
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from linecache import cache as linecache_cache
 

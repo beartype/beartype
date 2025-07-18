@@ -18,11 +18,11 @@ from beartype.typing import (
     Optional,
     Union,
 )
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -32,7 +32,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_generic_unsubbed,
 )
-from beartype._data.hint.datahinttyping import TupleTypeVars
+from beartype._data.typing.datatyping import TupleTypeVars
 
 # ....................{ GETTERS ~ args                     }....................
 def get_hint_pep_args(hint: object) -> tuple:

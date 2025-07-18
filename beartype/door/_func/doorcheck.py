@@ -46,12 +46,12 @@ from beartype._check.checkmake import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     HintBare,
     TypeIs,
 )
-from beartype._data.hint.datahinttyping import T
+from beartype._data.typing.datatyping import T
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(

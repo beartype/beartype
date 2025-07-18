@@ -36,7 +36,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._data.cls.datacls import TYPES_BUILTIN_CONTAINER_MUTABLE
-from beartype._data.hint.datahinttyping import T
+from beartype._data.typing.datatyping import T
 from beartype._util.cache.pool.utilcachepool import KeyPool
 
 # ....................{ (ACQUIRERS|RELEASERS)              }....................

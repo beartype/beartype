@@ -69,7 +69,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep484585ForwardRef,
     SetOrTupleTypes,

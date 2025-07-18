@@ -19,7 +19,7 @@ from beartype._cave._cavefast import (
     FunctionType,
     ModuleType,
 )
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.kind.datakindiota import SENTINEL
 from functools import wraps
 from threading import RLock

@@ -27,7 +27,7 @@ from beartype._conf.confenum import (
     BeartypeViolationVerbosity,
 )
 from beartype._conf._confoverrides import sanify_conf_kwargs_is_pep484_tower
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     DictStrToAny,
     TypeException,
 )

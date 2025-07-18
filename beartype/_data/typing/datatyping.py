@@ -13,6 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: This submodule *CANNOT* import from the companion "datatypingport"
+# submodule due to circular import dependencies between these two submodules.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
     AST,
@@ -703,6 +708,7 @@ Pep484TowerFloat = (
 (i.e., both floating-point numbers and integers).
 '''
 
+
 # ....................{ PEP ~ 484 : typevar                }....................
 S = TypeVar('S')
 '''
@@ -766,19 +772,43 @@ See Also
     Further details.
 '''
 
+# ....................{ PEP ~ (484|646)                    }....................
+# Type hints required to fully comply with PEP 484 and 646 -- the standards
+# collectively covering type parameters.
+
+#FIXME: Uncomment *AFTER* we properly define
+#"HintPep646UnpackedTypeVarTupleType" in "_cavefast", please. *sigh*
+# Pep484646TypeArg = Union[TypeVar, HintPep646UnpackedTypeVarTupleType]
+Pep484646TypeArg = TypeVar
+# Pep484646TypeArg = object
+'''
+PEP-compliant type hint matching a :pep:`484`- or :pep:`646`-compliant **type
+parameter** (i.e., :pep:`484`-compliant type variable or :pep:`646`-compliant
+unpacked type variable tuple).
+
+This hint intentionally matches :pep:`646`-compliant unpacked type variable
+tuples (e.g., ``*Ts``) rather than merely :pep:`646`-compliant type variable
+tuples (e.g., ``Ts`` where ``Ts = typing.TypeVarTuple('Ts')``). Since Python
+requires that *all* type variable tuples be unpacked, matching type variable
+tuples in non-unpacked form is (largely) useless.
+'''
+
+
 # ....................{ PEP ~ (484|612|646)                }....................
 # Type hints required to fully comply with PEP 484, 612, and 646 -- the
 # standards collectively covering type parameters.
 
-TypeParam = Union[TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
+Pep484612646TypeArg = Union[
+    TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
 '''
-PEP-compliant type hint matching a **type parameter** (i.e.,
-:pep:`484`-compliant type variable, pep:`612`-compliant parameter specification,
-or :pep:`646`-compliant type variable tuple).
+PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
+:pep:`646`-compliant **type parameter** (i.e., :pep:`484`-compliant type
+variable, pep:`612`-compliant parameter specification, or :pep:`646`-compliant
+type variable tuple).
 '''
 
 
-TupleTypeParams = Tuple[TypeParam, ...]
+TuplePep484612646TypeArgs = Tuple[Pep484612646TypeArg, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of zero or more **type
 parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant

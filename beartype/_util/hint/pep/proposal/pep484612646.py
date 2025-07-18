@@ -14,16 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
-from beartype._cave._cavefast import TypeParamTypes
-from beartype._data.hint.datahintpep import (
+from beartype._cave._cavefast import Pep484612646TypeArgTypes
+from beartype._data.typing.datatypingport import (
     # Hint,
     TypeIs,
 )
-from beartype._data.hint.datahinttyping import TypeParam
+from beartype._data.typing.datatyping import Pep484612646TypeArg
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_hint_pep484612646_typeparam(hint: object) -> TypeIs[TypeParam]:
+def is_hint_pep484612646_typearg(hint: object) -> TypeIs[Pep484612646TypeArg]:
     '''
     :data:`True` only if the passed type hint is a **type parameter** (i.e.,
     :pep:`484`-compliant type variable, pep:`612`-compliant parameter
@@ -41,12 +41,12 @@ def is_hint_pep484612646_typeparam(hint: object) -> TypeIs[TypeParam]:
     '''
 
     # Return true only if this hint is a type parameter.
-    return isinstance(hint, TypeParamTypes)
+    return isinstance(hint, Pep484612646TypeArgTypes)
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep484612646_typeparam_name(
+def get_hint_pep484612646_typearg_name(
     # Mandatory parameters.
-    hint: TypeParam,
+    hint: Pep484612646TypeArg,
 
     # Optional parameters.
     exception_prefix: str = '',
@@ -58,9 +58,9 @@ def get_hint_pep484612646_typeparam_name(
 
     Parameters
     ----------
-    hint : TypeParam
+    hint : Pep484612646TypeArg
         Type parameter to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -76,7 +76,7 @@ def get_hint_pep484612646_typeparam_name(
     '''
 
     # If this hint is *NOT* a type parameter, raise an exception.
-    if not is_hint_pep484612646_typeparam(hint):
+    if not is_hint_pep484612646_typearg(hint):
         assert isinstance(exception_prefix, str), (
             f'{exception_prefix} not string.')
         raise BeartypeDecorHintPep484612646Exception(

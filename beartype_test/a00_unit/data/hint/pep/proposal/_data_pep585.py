@@ -33,7 +33,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Union,
     )
     from beartype._cave._cavefast import IntType
-    from beartype._data.hint.datahinttyping import (
+    from beartype._data.typing.datatyping import (
         S,
         T,
         U,

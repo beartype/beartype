@@ -21,7 +21,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     BeartypeableT,
     TypeStack,
 )

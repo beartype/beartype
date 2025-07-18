@@ -26,7 +26,7 @@ from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     CallableStrFormat,
     EnumeratorItem,
     Enumerator,

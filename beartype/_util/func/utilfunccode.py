@@ -62,7 +62,7 @@ from beartype.typing import (
     List,
     Optional,
 )
-from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._data.typing.datatyping import TypeWarning
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from collections.abc import Callable

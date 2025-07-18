@@ -333,12 +333,12 @@ def unit_test_reduce_hint_pep484_subbed_typevars_to_hints() -> None:
     assert reduce_hint_pep484_subbed_typevars_to_hints(
         irresistible_career[int]) == HintSane(
             hint=irresistible_career,
-            typevar_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
+            typearg_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
         )
     assert reduce_hint_pep484_subbed_typevars_to_hints(
         in_thy[bool, complex]) == HintSane(
             hint=in_thy,
-            typevar_to_hint=FrozenDict({
+            typearg_to_hint=FrozenDict({
                 in_thy_typevars[0]: bool,
                 in_thy_typevars[1]: complex,
             }),

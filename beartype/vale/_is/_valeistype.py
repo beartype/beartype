@@ -20,7 +20,7 @@ from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISSUBCLASS_TEST_format,
 )
 from beartype.vale._core._valecore import BeartypeValidator
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
     TypeOrTupleTypes,
 )

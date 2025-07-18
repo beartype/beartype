@@ -57,7 +57,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._data.hint.datahinttyping import CommandWords
+from beartype._data.typing.datatyping import CommandWords
 from collections.abc import (
     Iterable as IterableABC,
     Mapping as MappingABC,

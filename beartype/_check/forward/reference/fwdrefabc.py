@@ -19,7 +19,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     LexicalScope,
 )
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta

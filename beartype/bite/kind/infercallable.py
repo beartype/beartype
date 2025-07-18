@@ -75,7 +75,7 @@ from beartype._cave._cavefast import (
     HintPep612ParamSpecType,
 )
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahintpep import (
+from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
 )

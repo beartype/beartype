@@ -62,7 +62,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.hint.datahinttyping import (
+from beartype._data.typing.datatyping import (
     NodeCallable,
     NodeT,
 )

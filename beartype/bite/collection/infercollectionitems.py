@@ -18,9 +18,9 @@ from beartype.typing import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.hint.datahinttyping import FrozenSetInts
+from beartype._data.typing.datatyping import FrozenSetInts
 from beartype._util.hint.pep.proposal.pep484585646 import (
-    make_hint_pep484585646_tuple_fixed)
+    make_hint_pep484585_tuple_fixed)
 from beartype._util.hint.pep.proposal.pep484604 import (
     make_hint_pep484604_union)
 from beartype._util.kind.integer.utilintget import (
@@ -394,7 +394,7 @@ def _infer_hint_reiterable_items(
         # or more values as items of this tuple). In this case, validate this
         # tuple with a fixed-length tuple type hint. See the
         # "_ROOT_TUPLE_FIXED_ITEMS_LEN_MAX" docstring for further details.
-        hint = make_hint_pep484585646_tuple_fixed(tuple(hints_item_list))
+        hint = make_hint_pep484585_tuple_fixed(tuple(hints_item_list))
     # Else, this collection is *NOT* a subjectively small root tuple. In this
     # case, defer to generic logic.
     else:

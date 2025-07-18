@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from beartype._cave._cavefast import ModuleType
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.typing.datatyping import TypeException
 from beartype._data.api.external.datamodthirdparty import (
     THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
 from beartype._util.error.utilerrwarn import warnings_ignored

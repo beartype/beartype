@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 # from beartype._cave._cavefast import MethodBoundInstanceDunderCType
 from beartype._data.func.datafunc import OBJECT_SLOT_WRAPPERS
-from beartype._data.hint.datahinttyping import DictStrToAny
+from beartype._data.typing.datatyping import DictStrToAny
 from inspect import getattr_static
 
 # ....................{ GETTERS                            }....................
