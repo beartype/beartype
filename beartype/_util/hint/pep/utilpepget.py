@@ -23,16 +23,16 @@ from beartype._data.typing.datatypingport import (
     HintOrNone,
 )
 from beartype._data.typing.datatyping import (
+    TuplePep484646TypeArgs,
     TypeException,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.hint.pep.proposal.pep585 import (
-    get_hint_pep585_generic_typevars,
+    get_hint_pep585_generic_typeargs,
     is_hint_pep585_generic_unsubbed,
 )
-from beartype._data.typing.datatyping import TupleTypeVars
 
 # ....................{ GETTERS ~ args                     }....................
 def get_hint_pep_args(hint: object) -> tuple:
@@ -71,8 +71,8 @@ def get_hint_pep_args(hint: object) -> tuple:
       preserve that subscripted empty tuple.
 
     **This getter lies less than the comparable**
-    :func:`.get_hint_pep_typevars` **getter.** Whereas
-    :func:`.get_hint_pep_typevars` synthetically propagates type variables from
+    :func:`.get_hint_pep_typeargs` **getter.** Whereas
+    :func:`.get_hint_pep_typeargs` synthetically propagates type variables from
     child to parent type hints (rather than preserving the literal type
     variables subscripting this type hint), this getter preserves the literal
     arguments subscripting this type hint if any. Notable cases where the two
@@ -172,14 +172,16 @@ def get_hint_pep_args(hint: object) -> tuple:
     return hint_args
 
 # ....................{ GETTERS ~ typevars                 }....................
-def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
+def get_hint_pep_typeargs(hint: Hint) -> TuplePep484646TypeArgs:
     '''
-    Tuple of all **unique type variables** (i.e., subscripted :class:`TypeVar`
-    instances of the passed PEP-compliant type hint listed by the caller at
-    hint declaration time ignoring duplicates) if any *or* the empty tuple
-    otherwise.
+    Tuple of all :pep:`484`- or :pep:`646`-compliant **unique type parameters**
+    (i.e., :pep:`484`-compliant type variables or :pep:`646`-compliant unpacked
+    type variable tuples uniquely subscripting the passed PEP-compliant hint
+    listed by the caller at hint declaration time, ignoring duplicates) if this
+    hint is parametrized *or* the empty tuple otherwise (i.e., if this hint is
+    unparametrized).
 
-    This getter correctly handles both:
+    This getter transitively returns a tuple that correctly composites both:
 
     * **Direct parametrizations** (i.e., cases in which this object itself is
       directly parametrized by type variables).
@@ -233,7 +235,7 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
 
     Returns
     -------
-    Tuple[TypeVar, ...]
+    TuplePep484646TypeArgs
         Either:
 
         * If this object defines a ``__parameters__`` dunder attribute, the
@@ -252,38 +254,38 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
 
        >>> import typing
        >>> from beartype._util.hint.pep.utilpepget import (
-       ...     get_hint_pep_typevars)
+       ...     get_hint_pep_typeargs)
 
        >>> S = typing.TypeVar('S')
        >>> T = typing.TypeVar('T')
        >>> class UserList(typing.List[T]): pass
 
-       >>> get_hint_pep_typevars(typing.Any)
+       >>> get_hint_pep_typeargs(typing.Any)
        ()
-       >>> get_hint_pep_typevars(typing.List[int])
+       >>> get_hint_pep_typeargs(typing.List[int])
        ()
-       >>> get_hint_pep_typevars(typing.List[T])
+       >>> get_hint_pep_typeargs(typing.List[T])
        (T)
-       >>> get_hint_pep_typevars(UserList)
+       >>> get_hint_pep_typeargs(UserList)
        (T)
-       >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
+       >>> get_hint_pep_typeargs(typing.List[T, int, S, str, T])
        (T, S)
     '''
 
     # Value of the "__parameters__" dunder attribute on this object if this
     # object defines this attribute (e.g., is *NOT* a PEP 585-compliant
     # unsubscripted generic) *OR* "None" otherwise (e.g., is such a generic).
-    hint_typevars = getattr(hint, '__parameters__', None)
+    hint_typeargs = getattr(hint, '__parameters__', None)
 
-    # If this object defines *NO* such attribute, synthetically reconstruct
-    # this attribute for PEP 585-compliant unsubscripted generics. Notably...
-    if hint_typevars is None:
+    # If this object defines *NO* such attribute, synthetically reconstruct this
+    # attribute for PEP 585-compliant unsubscripted generics. Notably...
+    if hint_typeargs is None:
         # Reconstruct this attribute as either...
-        hint_typevars = (
+        hint_typeargs = (
             # If this hint is a PEP 585-compliant unsubscripted generic, the
             # tuple of all type variables parametrizing all pseudo-superclasses
             # of this generic;
-            get_hint_pep585_generic_typevars(hint)
+            get_hint_pep585_generic_typeargs(hint)
             if is_hint_pep585_generic_unsubbed(hint) else
             # Else, this hint is *NOT* a PEP 585-compliant unsubscripted
             # generic. In this case, the empty tuple.
@@ -292,7 +294,7 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
     # Else, this object defines this attribute.
     #
     # If this attribute is *NOT* a tuple...
-    elif not isinstance(hint_typevars, tuple):
+    elif not isinstance(hint_typeargs, tuple):
         # If this hint is the unsubscripted "typing.Union" hint semantically
         # equivalent to the subscripted "typing.Union[typing.Any]" hint, this
         # hint is a C-based type whose "__parameters__" dunder attribute is
@@ -308,12 +310,12 @@ def get_hint_pep_typevars(hint: Hint) -> TupleTypeVars:
         else:
             raise BeartypeDecorHintPepException(
                 f'PEP-noncompliant hint {repr(hint)} '
-                f'"__parameters__" dunder attribute {repr(hint_typevars)} '
+                f'"__parameters__" dunder attribute {repr(hint_typeargs)} '
                 f'invalid (i.e., not tuple of child hints).'
             )
 
     # Return this attribute.
-    return hint_typevars
+    return hint_typeargs
 
 # ....................{ GETTERS ~ origin                   }....................
 def get_hint_pep_origin(

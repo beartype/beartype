@@ -1178,6 +1178,7 @@ objects annotating variadic parameters with syntax resembling
 # types.
 if TYPE_CHECKING:
     class HintPep646TypeVarTupleType(object): pass
+    class HintPep646692UnpackedType(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked by a
 # pure static type-checker.
 #
@@ -1193,10 +1194,36 @@ elif IS_PYTHON_AT_LEAST_3_11:
     This type is a version-agnostic generalization of the standard
     :class:`typing.TypeVarTuple` type available only under Python >= 3.11.
     '''
+
+
+    HintPep646692UnpackedType = type(
+        _typing.Unpack[HintPep646TypeVarTupleType('Ts')])
+    '''
+    Pure-Python type of all :pep:`646`- and :pep:`692`-compliant **unpacked
+    type hints** (i.e., parent hints expanding the single child hints
+    subscripting these parent hints into the zero or more child child hints
+    subscripting those single child hints), including:
+
+    * :pep:`646`-compliant unpacked type variable tuples.
+    * :pep:`692`-compliant unpacked typed dictionaries.
+
+    This type is equivalent to the currently private
+    :class:`_typing._UnpackGenericAlias` class. For safety, we intentionally
+    avoid violating privacy encapsulation by referring to this type directly.
+
+    Caveats
+    -------
+    There exist no finer-grained types unambiguously unique to either
+    :pep:`646`-compliant unpacked type variable tuples *or* :pep:`692`-compliant
+    unpacked typed dictionaries. This type is the finest-grained type available.
+    Differentiating between the various kinds of unpacked hints requires calling
+    various utility functions implementing additional runtime heuristics.
+    '''
 # Else, the active Python interpreter targets Python < 3.11 and thus fails to
 # support PEP 646. In this case, define these types as placeholders. *sigh*
 else:
     HintPep646TypeVarTupleType = UnavailableType
+    HintPep646692UnpackedType = UnavailableType
 
 
 Pep484612646TypeArgTypes = (

@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import NoReturn
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._util.error.utilerrtest import is_exception_message_str
 from beartype._util.text.utiltextmunge import uppercase_str_char_first
@@ -23,7 +24,7 @@ def reraise_exception_placeholder(
 
     # Optional parameters.
     source_str: str = EXCEPTION_PLACEHOLDER,
-) -> None:
+) -> NoReturn:
     '''
     Reraise the passed exception in a safe manner preserving both this exception
     object *and* the original traceback associated with this exception object,

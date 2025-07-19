@@ -40,6 +40,12 @@ from beartype._util.api.standard.utiltyping import (
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
+# Note that, although this higher-level submodule can safely import from the
+# lower-level "datatyping" submodule, the reverse is *NOT* the case.
+from beartype._data.typing.datatyping import (
+    Pep484646TypeArg,
+)
+
 # ....................{ FACTORIES                          }....................
 #FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
 #full-blown "beartype.typing" subpackage (or perhaps even separate "beartyping"
@@ -267,8 +273,8 @@ replacement of type variables by non-type variables in larger type hints).
 
 # ....................{ PEP ~ (484|646)                    }....................
 #FIXME: *CAN* we actually import from "datatyping" above? No idea. *sigh*
-Pep484646TypeArgToHint = Pep484TypeVarToHint
-# Pep484646TypeArgToHint = Dict[Pep484646TypeArg, Hint]
+# Pep484646TypeArgToHint = Pep484TypeVarToHint
+Pep484646TypeArgToHint = Dict[Pep484646TypeArg, Hint]
 '''
 :pep:`585`-compliant type hint matching a :pep:`484`- and :pep:`646`-compliant
 **type parameter lookup table** (i.e., dictionary mapping from **type

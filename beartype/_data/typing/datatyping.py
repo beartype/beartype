@@ -50,6 +50,7 @@ from beartype._cave._cavefast import (
     HintPep604Type,
     HintPep612ParamSpecType,
     HintPep646TypeVarTupleType,
+    HintPep646692UnpackedType,
     HintPep695TypeAlias,
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
@@ -776,13 +777,9 @@ See Also
 # Type hints required to fully comply with PEP 484 and 646 -- the standards
 # collectively covering type parameters.
 
-#FIXME: Uncomment *AFTER* we properly define
-#"HintPep646UnpackedTypeVarTupleType" in "_cavefast", please. *sigh*
-# Pep484646TypeArg = Union[TypeVar, HintPep646UnpackedTypeVarTupleType]
-Pep484646TypeArg = TypeVar
-# Pep484646TypeArg = object
+Pep484646TypeArg = Union[TypeVar, HintPep646692UnpackedType]
 '''
-PEP-compliant type hint matching a :pep:`484`- or :pep:`646`-compliant **type
+:pep:`484`-compliant union matching a :pep:`484`- or :pep:`646`-compliant **type
 parameter** (i.e., :pep:`484`-compliant type variable or :pep:`646`-compliant
 unpacked type variable tuple).
 
@@ -791,8 +788,22 @@ tuples (e.g., ``*Ts``) rather than merely :pep:`646`-compliant type variable
 tuples (e.g., ``Ts`` where ``Ts = typing.TypeVarTuple('Ts')``). Since Python
 requires that *all* type variable tuples be unpacked, matching type variable
 tuples in non-unpacked form is (largely) useless.
+
+This hint unintentionally matches :pep:`692`-compliant unpacked typed
+dictionaries (e.g., ``typing.Unpack[TypedDict[{}]]``) as well. Although this
+hint invites ambiguous false negatives and should thus be used with caution,
+this hint is still preferable to even more ambiguous alternatives like
+:obj:`typing.Any` or :class:`object`.
 '''
 
+
+TuplePep484646TypeArgs = Tuple[Pep484646TypeArg, ...]
+'''
+:pep:`585`-compliant type hint matching a tuple of zero or more 
+:pep:`484`- or :pep:`646`-compliant **type parameters** (i.e.,
+:pep:`484`-compliant type variables or :pep:`646`-compliant unpacked type
+variable tuples).
+'''
 
 # ....................{ PEP ~ (484|612|646)                }....................
 # Type hints required to fully comply with PEP 484, 612, and 646 -- the

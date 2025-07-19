@@ -35,7 +35,7 @@ from beartype._data.typing.datatypingport import (
     Pep484646TypeArgToHint,
     TupleHints,
 )
-from beartype._data.typing.datatyping import TupleTypeVars
+from beartype._data.typing.datatyping import TuplePep484646TypeArgs
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
@@ -46,7 +46,7 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin,
-    get_hint_pep_typevars,
+    get_hint_pep_typeargs,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -395,7 +395,7 @@ def reduce_hint_pep484_subbed_typevars_to_hints(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hint_unsubbed_typevars = get_hint_pep_typevars(hint_unsubbed)
+    hint_unsubbed_typevars = get_hint_pep_typeargs(hint_unsubbed)
 
     # Tuple of all child hints subscripting this subscripted hint.
     hint_childs = get_hint_pep_args(hint)
@@ -554,7 +554,7 @@ semantics of this recursive data structure.
 def _get_hint_pep484_typevars_to_hints(
     # Mandatory parameters.
     hint: Hint,
-    hint_child_typevars: TupleTypeVars,
+    hint_child_typevars: TuplePep484646TypeArgs,
     hint_child_hints: TupleHints,
 
     # Optional parameters.

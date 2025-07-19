@@ -778,14 +778,7 @@ def _make_func_checker(
                 func_name=func_checker_name,
                 func_code=func_checker_code,
                 func_locals=func_scope,
-
-                #FIXME: Almost right but *NOT* quite right. Why? Because
-                #make_func() will append a space to "func_label", but
-                #"EXCEPTION_PLACEHOLDER" is *ALREADY* suffixed by a space. Oh,
-                #well. It's not a super-big deal. In theory, this function
-                #should *NEVER* raise exceptions, anyway. *shrug*
                 func_label=EXCEPTION_PLACEHOLDER,
-
                 is_debug=conf.is_debug,
             )
         # If one or more warnings were issued, reissue these warnings with each

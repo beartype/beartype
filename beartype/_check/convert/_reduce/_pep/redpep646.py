@@ -504,15 +504,17 @@ def reduce_hint_pep646_unpacked_typevartuple(
     # problem decided by that phase.
 
     # ....................{ PHASE ~ 0 : recurse            }....................
-    # If this subscripted hint is recursive, ignore this subscripted hint to
+    # If this type parameter is recursive (i.e., previously transitively mapped
+    # to itself by a prior call to this reducer), ignore this type parameter to
     # avoid infinite recursion.
     if is_hint_recursive(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         hint_recursable_depth_max=_TYPEVARTUPLE_RECURSABLE_DEPTH_MAX,
     ):
-        # print(f'Ignoring recursive type variable {hint} with parent {hint_parent_sane}!')
+        # print(f'Ignoring recursive type parameter {hint} with parent {hint_parent_sane}!')
         return HINT_SANE_RECURSIVE
+    # Else, this type parameter is *NOT* recursive.
 
     # ....................{ PHASE ~ 1 : lookup             }....................
     # Reduced hint to be returned, defaulting to this type variable.

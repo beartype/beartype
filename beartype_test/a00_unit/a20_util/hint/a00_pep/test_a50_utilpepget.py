@@ -92,9 +92,9 @@ def test_get_hint_pep_args(hints_pep_meta) -> None:
         get_hint_pep_args(TheWholeMammothBrood)
 
 
-def test_get_hint_pep_typevars(hints_pep_meta) -> None:
+def test_get_hint_pep_typeargs(hints_pep_meta) -> None:
     '''
-    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typevars`
+    Test the :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs`
     getter.
 
     Parameters
@@ -108,7 +108,7 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
@@ -126,7 +126,7 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
     # For each PEP-compliant test hint...
     for hint_pep_meta in hints_pep_meta:
         # Tuple of all type variables discovered by this getter.
-        hint_typevars = get_hint_pep_typevars(hint_pep_meta.hint)
+        hint_typevars = get_hint_pep_typeargs(hint_pep_meta.hint)
         assert isinstance(hint_typevars, tuple)
 
         # Assert all items of this tuple are actually type variables.
@@ -153,14 +153,14 @@ def test_get_hint_pep_typevars(hints_pep_meta) -> None:
 
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        assert get_hint_pep_typevars(not_hint_pep) == ()
+        assert get_hint_pep_typeargs(not_hint_pep) == ()
 
     # ....................{ FAIL                           }....................
     # Assert this getter when passed a PEP-noncompliant hint defining the
     # "__parameters__" dunder attribute to *NOT* be a tuple raises the expected
     # exception.
     with raises(BeartypeDecorHintPepException):
-        get_hint_pep_typevars(HisSovereigntyAndRuleAndMajesty)
+        get_hint_pep_typeargs(HisSovereigntyAndRuleAndMajesty)
 
 # ....................{ TESTS ~ origin : type              }....................
 def test_get_hint_pep_type_isinstanceable(hints_pep_meta) -> None:

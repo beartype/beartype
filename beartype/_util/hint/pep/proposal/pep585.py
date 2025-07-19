@@ -388,7 +388,7 @@ def get_hint_pep585_generic_bases_unerased(
 
 
 @callable_cached
-def get_hint_pep585_generic_typevars(
+def get_hint_pep585_generic_typeargs(
     # Mandatory parameters.
     hint: Hint,
 
@@ -451,7 +451,7 @@ def get_hint_pep585_generic_typevars(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
     die_unless_hint_pep585_generic(
@@ -491,7 +491,7 @@ def get_hint_pep585_generic_typevars(
     #   preserve insertion order, the values of this dictionary are irrelevant
     #   and thus unconditionally set to the "None" singleton. I sigh so hard.
     # * The following inefficient iteration *CANNOT* be trivially reduced to a
-    #   dictionary comprehension, as each get_hint_pep_typevars() call returns a
+    #   dictionary comprehension, as each get_hint_pep_typeargs() call returns a
     #   tuple of type variables rather than a single type variable to be added
     #   to this dictionary.
     hint_typevars_to_none: Dict[TypeVar, None] = dict()
@@ -500,8 +500,8 @@ def get_hint_pep585_generic_typevars(
     for hint_base in hint_bases:
         # Tuple of the zero or more type variables parametrizing this
         # pseudo-superclass.
-        hint_base_typevars = get_hint_pep_typevars(hint_base)
-        # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typevars(hint_base)}]')
+        hint_base_typevars = get_hint_pep_typeargs(hint_base)
+        # print(f'hint_base_typevars: {hint_base} [{get_hint_pep_typeargs(hint_base)}]')
 
         # Efficiently add these type variables as new keys of this dictionary.
         update_mapping_keys(hint_typevars_to_none, hint_base_typevars)

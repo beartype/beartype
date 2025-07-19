@@ -26,7 +26,7 @@ from beartype._util.hint.pep.proposal.pep544 import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
-    get_hint_pep_typevars,
+    get_hint_pep_typeargs,
 )
 
 # ....................{ REDUCERS                           }....................
@@ -190,7 +190,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # If *NO* PEP 544-compliant IO protocol implements this generic...
     if pep544_protocol is None:
         # Tuple of zero or more type variables parametrizing this hint.
-        hint_typevars = get_hint_pep_typevars(hint)
+        hint_typevars = get_hint_pep_typeargs(hint)
 
         #FIXME: Unit test us up, please.
         # If this hint is unparametrized, raise an exception.
