@@ -329,8 +329,8 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484612646 import (
-        get_hint_pep484612646_typearg_name,
-        is_hint_pep484612646_typearg,
+        get_hint_pep484612646_typearg_packed_name,
+        is_hint_pep484612646_typearg_packed,
     )
 
     # ....................{ LOCALS                         }....................
@@ -343,7 +343,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
     # For each type parameter parametrizing this parameterizable...
     for typeparam in typeparams:
         # Unqualified basename of this type parameter.
-        typeparam_name = get_hint_pep484612646_typearg_name(
+        typeparam_name = get_hint_pep484612646_typearg_packed_name(
             hint=typeparam, exception_prefix=exception_prefix)
 
         # Existing attribute sharing the same name already added to this forward
@@ -356,7 +356,7 @@ def add_func_scope_hint_pep695_parameterizable_typeparams(
             # This scope already contains an attribute with this name *AND*...
             func_scope_attr is not SENTINEL and
             # This attribute is also a type parameter...
-            is_hint_pep484612646_typearg(func_scope_attr)
+            is_hint_pep484612646_typearg_packed(func_scope_attr)
         ):
             assert isinstance(exception_prefix, str), (
                 f'{repr(exception_prefix)} not string.')

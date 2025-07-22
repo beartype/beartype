@@ -1213,6 +1213,7 @@ elif IS_PYTHON_AT_LEAST_3_11:
 
     Caveats
     -------
+    **This type is ambiguous and thus invites false negatives and positives.**
     There exist no finer-grained types unambiguously unique to either
     :pep:`646`-compliant unpacked type variable tuples *or* :pep:`692`-compliant
     unpacked typed dictionaries. This type is the finest-grained type available.
@@ -1226,12 +1227,12 @@ else:
     HintPep646692UnpackedType = UnavailableType
 
 
-Pep484612646TypeArgTypes = (
+HintPep484612646TypeArgPackedTypes = (
     _typing.TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType)
 '''
-Tuple of all **type parameters types** (i.e., types of :pep:`484`-compliant type
-variables, pep:`612`-compliant parameter specifications, and
-:pep:`646`-compliant type variable tuples).
+Tuple of all **packed type parameters types** (i.e., types of
+:pep:`484`-compliant type variables, pep:`612`-compliant parameter
+specifications, and :pep:`646`-compliant type variable tuples).
 '''
 
 # ....................{ TYPES ~ hint : pep : 649           }....................

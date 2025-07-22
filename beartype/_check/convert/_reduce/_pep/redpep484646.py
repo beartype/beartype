@@ -182,11 +182,11 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hint_unsubbed_typeargs = get_hint_pep_typeargs(hint_unsubbed)
+    hints_typearg = get_hint_pep_typeargs(hint_unsubbed)
 
     # Tuple of all child hints subscripting this subscripted hint.
-    hint_childs = get_hint_pep_args(hint)
-    # print(f'hint_childs: {repr(hint_childs)}')
+    hints_child = get_hint_pep_args(hint)
+    # print(f'hints_child: {repr(hints_child)}')
 
     # ....................{ REDUCE                         }....................
     # Decide the type parameter lookup table for this hint. Specifically, reduce
@@ -208,14 +208,14 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         #   superclass (e.g., "typing.Generic[S, T]"). In this case, the
         #   original unsubscripted "typing.Generic" superclass remains
         #   unparametrized despite that superclass later being parametrized.
-        not hint_unsubbed_typeargs or
+        not hints_typearg or
         # This unsubscripted hint is parametrized by the exact same type
         # parameters as this subscripted hint is subscripted by, in which case
         # the resulting type parameter lookup table would uselessly be the
         # identity mapping from each of these type parameters to itself. While
         # an identity type parameter lookup table could trivially be produced,
         # doing so would convey *NO* meaningful semantics and thus be pointless.
-        hint_childs == hint_unsubbed_typeargs
+        hints_child == hints_typearg
     # Then reduce this subscripted hint to simply this unsubscripted hint, as
     # type parameter lookup tables are then irrelevant.
     ):
@@ -232,7 +232,7 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         #
         # Note that we pass parameters positionally due to memoization.
         typearg_to_hint = _get_hint_pep484646_typeargs_to_hints(
-            hint, hint_unsubbed_typeargs, hint_childs)
+            hint, hints_typearg, hints_child)
     # print(f'Mapped hint {hint} to type parameter lookup table {typearg_to_hint}!')
     # If doing so raises *ANY* exception, reraise this exception with each
     # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
@@ -338,8 +338,8 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
 @callable_cached
 def _get_hint_pep484646_typeargs_to_hints(
     hint: Hint,
-    hint_child_typeargs: TuplePep484646TypeArgs,
-    hint_child_hints: TupleHints,
+    hints_typeargs: TuplePep484646TypeArgs,
+    hints_child: TupleHints,
 ) -> Pep484646TypeArgToHint:
     '''
     Type parameter lookup table mapping from the passed :pep:`484`- or
@@ -358,10 +358,10 @@ def _get_hint_pep484646_typeargs_to_hints(
         Parent hint presumably both subscripted by these child hints. This
         parent hint is currently only used to generate human-readable exception
         messages in the event of fatal errors.
-    hint_child_typeargs : TuplePep484646TypeArgs
+    hints_typeargs : TuplePep484646TypeArgs
         Tuple of one or more child type parameters originally subscripting the
         origin underlying this parent hint.
-    hint_child_hints : TupleHints
+    hints_child : TupleHints
         Tuple of one or more child type hints subscripting this parent hint,
         which those type parameters map to.
 
@@ -384,35 +384,38 @@ def _get_hint_pep484646_typeargs_to_hints(
         If one of these type hints violates the bounds or constraints of one of
         these type parameters.
     '''
-    assert isinstance(hint_child_typeargs, tuple), (
-        f'{repr(hint_child_typeargs)} not tuple.')
-    assert isinstance(hint_child_hints, tuple), (
-        f'{repr(hint_child_hints)} not tuple.')
+    assert isinstance(hints_typeargs, tuple), (
+        f'{repr(hints_typeargs)} not tuple.')
+    assert isinstance(hints_child, tuple), (
+        f'{repr(hints_child)} not tuple.')
 
     # ....................{ PREAMBLE                       }....................
     # If *NO* type parameters were passed, raise an exception.
-    if not hint_child_typeargs:
+    if not hints_typeargs:
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
-            f'parametrized by no PEP 484 type parameters.'
+            f'parametrized by no type parameters (i.e., '
+            f'PEP 484 type variables, '
+            f'PEP 612 unpacked parameter specifications, or '
+            f'PEP 646 unpacked type variable tuples).'
         )
     # Else, one or more type parameters were passed.
     #
-    # If *NO* type hint_child_hints were passed, raise an exception.
-    elif not hint_child_hints:
+    # If *NO* type hints were passed, raise an exception.
+    elif not hints_child:
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
             f'subscripted by no type hints.'
         )
-    # Else, one or more type hint_child_hints were passed.
+    # Else, one or more type hints were passed.
     #
     # If more type hints than type parameters were passed, raise an exception.
-    elif len(hint_child_hints) > len(hint_child_typeargs):
+    elif len(hints_child) > len(hints_typeargs):
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
-            f'number of subscripted type hints {len(hint_child_hints)} exceeds '
-            f'number of parametrized type parameters {len(hint_child_typeargs)} '
-            f'(i.e., {len(hint_child_hints)} > {len(hint_child_typeargs)}).'
+            f'number of subscripted child hints {len(hints_child)} exceeds '
+            f'number of parametrized type parameters {len(hints_typeargs)} '
+            f'(i.e., {len(hints_child)} > {len(hints_typeargs)}).'
         )
     # Else, either the same number of type hints and type parameters were passed
     # *OR* more type parameters than type hints were passed.
@@ -430,9 +433,9 @@ def _get_hint_pep484646_typeargs_to_hints(
     # * If more type parameters than type hints were passed, zip() silently
     #   ignores type parameters with *NO* corresponding type hints -- exactly as
     #   required and documented by the above docstring.
-    # print(f'Mapping hint_child_typeargs {hint_child_typeargs} -> hint_child_hints {hint_child_hints}...')
+    # print(f'Mapping hints_typeargs {hints_typeargs} -> hints_child {hints_child}...')
     for hint_child_typearg, hint_child_hint in zip(
-        hint_child_typeargs, hint_child_hints):
+        hints_typeargs, hints_child):
         # print(f'Mapping typearg {typearg} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
@@ -450,8 +453,9 @@ def _get_hint_pep484646_typeargs_to_hints(
                 f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
                 f'parametrization {repr(hint_child_typearg)} not '
                 f'type parameter (i.e., '
-                f'PEP 484 type variable or '
-                f'PEP 646 type variable tuple).'
+                f'PEP 484 type variable, '
+                f'PEP 612 unpacked parameter specification, or '
+                f'PEP 646 unpacked type variable tuple).'
             )
         # Else, this type parameter is actually a type parameter.
 
