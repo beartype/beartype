@@ -29,7 +29,7 @@ def is_hint_pep589(hint: object) -> bool:
        :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign_or_none`
        getter, which internally calls this unmemoized tester.
     #. Compare the object returned by that getter against the
-       :attr:`beartype._util.data.hint.pep.sign.datapepsigns.HintSignTypedDict`
+       :attr:`beartype._util.data.hint.pep.sign.datahintsigns.HintSignTypedDict`
        sign.
 
     Motivation

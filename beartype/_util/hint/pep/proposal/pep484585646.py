@@ -18,13 +18,13 @@ from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585TupleFixed,
     HintSignPep484585TupleVariadic,
     HintSignPep646TupleFixedVariadic,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484.pep484 import (
     HINT_PEP484_TUPLE_EMPTY)

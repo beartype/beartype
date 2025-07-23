@@ -119,7 +119,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         S,
         T,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignAbstractSet,
         HintSignAny,
         HintSignByteString,

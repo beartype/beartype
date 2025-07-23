@@ -51,7 +51,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         Tuple,
     )
     from beartype.vale import Is
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignNumpyArray,
         HintSignPep484585TupleFixed,
     )

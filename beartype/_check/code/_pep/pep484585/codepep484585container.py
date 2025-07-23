@@ -17,7 +17,7 @@ from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.logic.logmap import (
     HINT_SIGN_PEP484585_CONTAINER_TO_LOGIC_get)
-from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
+from beartype._data.hint.sign.datahintsigns import HintSignTuple
 from beartype._util.hint.pep.proposal.pep484585.pep484585 import (
     get_hint_pep484585_arg)
 from beartype._util.hint.pep.utilpepget import (

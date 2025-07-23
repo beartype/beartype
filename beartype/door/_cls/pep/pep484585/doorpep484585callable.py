@@ -19,7 +19,7 @@ from beartype.typing import (
     Any,
     Tuple,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (

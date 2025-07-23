@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._util.hint.pep.utilpepget import (

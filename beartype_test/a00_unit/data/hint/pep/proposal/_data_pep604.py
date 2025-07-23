@@ -56,7 +56,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         S,
         T,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignMutableSequence,
         HintSignOptional,

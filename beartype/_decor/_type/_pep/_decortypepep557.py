@@ -18,7 +18,7 @@ from beartype._data.typing.datatypingport import (
     DictStrToHint,
     Hint,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_DATACLASS_NONFIELDS)
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._util.cls.pep.clspep557 import (

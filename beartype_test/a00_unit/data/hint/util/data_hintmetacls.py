@@ -354,7 +354,7 @@ class HintPepMetadata(HintNonpepMetadata):
         *,
 
         # Mandatory keyword-only parameters.
-        pep_sign: 'beartype._data.hint.pep.sign.datapepsigncls.HintSign',
+        pep_sign: 'beartype._data.hint.sign.datahintsigncls.HintSign',
 
         # Optional keyword-only parameters.
         is_args: Optional[bool] = None,
@@ -371,7 +371,7 @@ class HintPepMetadata(HintNonpepMetadata):
     ) -> None:
 
         # Defer test-specific imports.
-        from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+        from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
         from beartype.door import TypeHint
 

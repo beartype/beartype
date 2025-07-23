@@ -332,7 +332,7 @@ def test_bite_infer_hint_pygments() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.bite import infer_hint
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignList
+    from beartype._data.hint.sign.datahintsigns import HintSignList
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from pygments.lexers import PythonLexer
 

@@ -24,7 +24,7 @@ from beartype._data.typing.datatypingport import (
     TypeIs,
 )
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
 )

@@ -26,7 +26,7 @@ from beartype._data.typing.datatyping import (
     TuplePep484646TypeArgs,
     TypeException,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )
 from beartype._util.hint.pep.proposal.pep585 import (

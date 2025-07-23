@@ -27,8 +27,8 @@ from beartype._data.typing.datatypingport import (
     TupleHints,
 )
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignmap import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN)
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached

@@ -30,7 +30,7 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS                            }..................
     # Defer version-specific imports.
     from beartype.typing import Any
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignPep585BuiltinSubscriptedUnknown)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,

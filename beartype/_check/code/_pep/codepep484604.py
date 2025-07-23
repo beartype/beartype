@@ -42,7 +42,7 @@ from beartype._data.code.pep.datacodepep484604 import (
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import DictTypeToAny
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_UNION
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,

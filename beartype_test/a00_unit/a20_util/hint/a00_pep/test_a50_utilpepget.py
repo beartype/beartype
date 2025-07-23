@@ -107,7 +107,7 @@ def test_get_hint_pep_typeargs(hints_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
+    from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP

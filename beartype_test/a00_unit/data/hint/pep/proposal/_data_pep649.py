@@ -21,7 +21,7 @@ def hints_pep649_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype.typing import ForwardRef
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignForwardRef
+    from beartype._data.hint.sign.datahintsigns import HintSignForwardRef
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.data_type import Subclass
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (

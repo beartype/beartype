@@ -21,7 +21,7 @@ from beartype._check.logic.logcls import (
     HintLogicReiterable,
     HintLogicSequence,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign
 
 # ....................{ MAPPINGS                           }....................
 # Initialized by the _init() function defined below.
@@ -50,7 +50,7 @@ def _init() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer function-specific imports.
-    from beartype._data.hint.pep.sign.datapepsignset import (
+    from beartype._data.hint.sign.datahintsignset import (
         HINT_SIGNS_QUASIITERABLE,
         HINT_SIGNS_REITERABLE,
         HINT_SIGNS_SEQUENCE,

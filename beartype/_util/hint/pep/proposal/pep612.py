@@ -29,8 +29,8 @@ from beartype._data.typing.datatypingport import (
     Hint,
     ListHints,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
 )

@@ -108,17 +108,17 @@ from beartype.typing import (
 from beartype._cave._cavefast import CallableOrClassTypes
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.hint.pep.datapeprepr import (
+from beartype._data.hint.datahintrepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignmap import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN,
     HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignNewType,
     HintSignPep484585GenericSubscripted,
     HintSignPep484585GenericUnsubscripted,
@@ -361,7 +361,7 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
 # ....................{ PRIVATE ~ globals                  }....................
 # Note this dictionary requires callables defined by the submodules of the
 # "beartype._util.hint.pep.proposal" subpackage and thus *CANNOT* be moved into
-# the "beartype._data.hint.pep.sign.datapepsignmap" submodule.
+# the "beartype._data.hint.sign.datahintsignmap" submodule.
 _HINT_SIGN_AMBIGUOUS_TO_DISAMBIGUATOR: Dict[Optional[HintSign], CallableABC] = {
     # ....................{ PEP (484|585|646)              }....................
     # Disambiguate PEP 484- and 585-compliant tuple hints from PEP 646-compliant

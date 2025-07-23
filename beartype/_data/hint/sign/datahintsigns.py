@@ -5,7 +5,7 @@
 
 '''
 Project-wide **Python version-agnostic signs** (i.e., instances of the
-:class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign` class
+:class:`beartype._data.hint.sign.datahintsigncls.HintSign` class
 uniquely identifying PEP-compliant type hints in a safe, non-deprecated manner
 regardless of the Python version targeted by the active Python interpreter).
 
@@ -21,7 +21,7 @@ from beartype.typing import (
     FrozenSet,
     List,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign as _HintSign
 
 # ....................{ SIGNS ~ implicit : pep : (484|585) }....................
 # User-defined generics, defined here rather than below to enable explicit

@@ -87,11 +87,11 @@ from beartype._data.typing.datatypingport import (
     ListHints,
     TupleHints,
 )
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignPep646UnpackedTuple,
     HintSignPep646UnpackedTypeVarTuple,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_variadic,

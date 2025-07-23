@@ -99,7 +99,7 @@ class TypeHint(Generic[T_Hint], metaclass=_TypeHintMeta):
         (indexing) the low-level parent type hint wrapped by this wrapper.
     _hint : T_Hint
         Low-level type hint wrapped by this wrapper.
-    _hint_sign : beartype._data.hint.pep.sign.datapepsigncls.HintSign | None
+    _hint_sign : beartype._data.hint.sign.datahintsigncls.HintSign | None
         Either:
 
         * If this hint is PEP-compliant and thus uniquely identified by a

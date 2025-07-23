@@ -113,7 +113,7 @@ def hints_pep_ignorable_shallow() -> frozenset:
     Session-scoped fixture yielding a frozen set of **shallowly ignorable
     PEP-compliant type hints** (i.e., ignorable on the trivial basis of their
     machine-readable representations alone and thus in the low-level
-    :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW` set,
+    :obj:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_SHALLOW` set,
     but which are typically *not* safely instantiable from those representations
     and thus require explicit instantiation here).
     '''
@@ -139,7 +139,7 @@ def hints_pep_ignorable_deep() -> frozenset:
     Session-scoped fixture yielding a frozen set of **deeply ignorable
     PEP-compliant type hints** (i.e., *not* ignorable on the trivial basis of
     their machine-readable representations alone and thus *not* in the low-level
-    :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_DEEP` set,
+    :obj:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_DEEP` set,
     but which are nonetheless ignorable and thus require dynamic testing by the
     high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
     function to demonstrate this fact).

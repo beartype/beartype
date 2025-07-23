@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignPep484585GenericUnsubscripted)
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type

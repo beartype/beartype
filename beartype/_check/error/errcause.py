@@ -76,8 +76,8 @@ from beartype._data.typing.datatyping import (
     HintSignOrNoneOrSentinel,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
 )

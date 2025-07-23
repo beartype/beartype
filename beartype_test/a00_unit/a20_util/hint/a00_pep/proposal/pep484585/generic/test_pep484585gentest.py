@@ -32,7 +32,7 @@ def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_GENERIC
+    from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_GENERIC
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -63,7 +63,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericUnsubscripted)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic_unsubbed)
@@ -96,7 +96,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubscripted)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic_subbed)

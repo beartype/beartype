@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignPep557DataclassInitVar)
 
 # ....................{ GETTERS                            }....................

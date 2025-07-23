@@ -23,8 +23,8 @@ from beartype._data.typing.datatypingport import (
     TupleHints,
 )
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsigns import HintSignCallable
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10

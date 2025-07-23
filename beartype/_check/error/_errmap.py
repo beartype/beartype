@@ -16,7 +16,7 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._check.error.errcause import ViolationCause
 
 # ....................{ GLOBALS                            }....................
@@ -39,7 +39,7 @@ def _init() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer heavyweight imports.
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignAnnotated,
         HintSignForwardRef,
         HintSignLiteral,
@@ -48,7 +48,7 @@ def _init() -> None:
         HintSignPep484585TupleFixed,
         HintSignType,
     )
-    from beartype._data.hint.pep.sign.datapepsignset import (
+    from beartype._data.hint.sign.datahintsignset import (
         HINT_SIGNS_MAPPING,
         HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
         HINT_SIGNS_CONTAINER_ARGS_1,

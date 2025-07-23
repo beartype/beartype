@@ -20,7 +20,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.code.snip.codesnipcls import HINT_INDEX_TO_HINT_PLACEHOLDER
 from beartype._check.metadata.hint.hintsane import HintSane
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ DATACLASSES                        }....................

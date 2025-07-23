@@ -20,7 +20,7 @@ from beartype._check.metadata.hint.hintsane import (
     HintSane,
 )
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.hint.pep.datapeprepr import (
+from beartype._data.hint.datahintrepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._util.error.utilerrwarn import issue_warning
 

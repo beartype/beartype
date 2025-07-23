@@ -24,7 +24,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
         Type,
         Union,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignTypedDict,
     )

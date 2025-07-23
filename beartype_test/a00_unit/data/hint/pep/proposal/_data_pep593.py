@@ -32,7 +32,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         IsInstance,
         IsSubclass,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignAnnotated,
         HintSignList,
         HintSignUnion,

@@ -33,7 +33,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         runtime_checkable,
     )
     from beartype._data.typing.datatyping import T
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignBinaryIO,
         HintSignPep484585GenericSubscripted,
         HintSignPep484585GenericUnsubscripted,

@@ -59,7 +59,7 @@ from beartype._cave._cavefast import (
     ModuleType,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import Iota
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections.abc import Callable as CallableABC

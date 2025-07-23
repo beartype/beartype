@@ -20,7 +20,7 @@ def hints_pep586_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype.typing import List
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignLiteral,
     )

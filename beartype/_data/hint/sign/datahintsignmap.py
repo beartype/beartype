@@ -5,7 +5,7 @@
 
 '''
 Project-wide **type hint sign mappings** (i.e., dictionary globals mapping from
-instances of the :class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign`
+instances of the :class:`beartype._data.hint.sign.datahintsigncls.HintSign`
 class to various metadata associated with categories of type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -17,8 +17,8 @@ from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
 from beartype._data.typing.datatyping import (
     DictStrToHintSign,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsigns import (
     HintSignAbstractSet,
     HintSignAsyncContextManager,
     HintSignAsyncGenerator,
@@ -557,7 +557,7 @@ def _init() -> None:
         # fully-qualified name of that type in this module to this sign.
         for hint_basename, hint_sign in (
             _TYPING_ATTR_HINT_BASENAME_TO_SIGN.items()):
-            # print(f'[datapeprepr] Mapping hint "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
+            # print(f'[datahintrepr] Mapping hint "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
             HINT_MODULE_NAME_TO_HINT_BASENAME_TO_SIGN[
                 typing_module_name][hint_basename] = hint_sign
 
@@ -567,7 +567,7 @@ def _init() -> None:
         # sign.
         for hint_basename, hint_sign in (
             _TYPING_ATTR_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN.items()):
-            # print(f'[datapeprepr] Mapping hint "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
+            # print(f'[datahintrepr] Mapping hint "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
             HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN[
                 typing_module_name][hint_basename] = hint_sign
 
@@ -576,7 +576,7 @@ def _init() -> None:
         # of that type in this module to this sign.
         for type_basename, hint_sign in (
             _TYPING_ATTR_TYPE_BASENAME_TO_SIGN.items()):
-            # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
+            # print(f'[datahintrepr] Mapping type "{typing_module_name}.{typing_attr_basename}" -> {hint_sign}')
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN[
                 typing_module_name][type_basename] = hint_sign
 

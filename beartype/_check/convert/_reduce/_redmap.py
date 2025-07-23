@@ -60,8 +60,8 @@ from beartype._check.convert._reduce._pep.redpep695 import (
     reduce_hint_pep695_subbed,
     reduce_hint_pep695_unsubbed,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsigns import (
     HintSignAbstractSet,
     HintSignAnnotated,
     HintSignAny,

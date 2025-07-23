@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **generic type hint
-iterators** (i.e., low-level callables generically iterating over both
-:pep:`484`- and :pep:`585`-compliant generic class hierarchies).
+Project-wide :pep:`484`- and :pep:`585`-compliant **generic type iterators**
+(i.e., low-level callables generically iterating over both :pep:`484`- and
+:pep:`585`-compliant generic class hierarchies).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -28,7 +28,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,

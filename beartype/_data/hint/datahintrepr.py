@@ -21,7 +21,7 @@ from beartype._data.typing.datatyping import (
     FrozenSetStrs,
     HintSignTrie,
 )
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignAbstractSet,
     HintSignAsyncContextManager,
     HintSignAsyncIterable,
@@ -256,7 +256,7 @@ def _init() -> None:
     # ..................{ IMPORTS                            }..................
     # Defer initialization-specific imports.
     from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
-    from beartype._data.hint.pep.sign.datapepsigns import HINT_SIGNS_TYPING
+    from beartype._data.hint.sign.datahintsigns import HINT_SIGNS_TYPING
 
     # ..................{ GLOBALS                            }..................
     # Permit redefinition of these globals below.
@@ -341,7 +341,7 @@ def _init() -> None:
         # attribute relative to this module to this set.
         for typing_attr_basename in (
             _HINT_PEP484_TYPING_ATTR_BASENAMES_DEPRECATED):
-            # print(f'[datapeprepr] Registering deprecated "{typing_module_name}.{typing_attr_basename}"...')
+            # print(f'[datahintrepr] Registering deprecated "{typing_module_name}.{typing_attr_basename}"...')
             HINTS_PEP484_REPR_PREFIX_DEPRECATED.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_basename}')
 
@@ -383,10 +383,10 @@ def _init() -> None:
             #        hint_sign, hint_sign)
             #
             #    # Map from that attribute in this module to this sign.
-            #    # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
+            #    # print(f'[datahintrepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
             #    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
             #        f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign_replaced
-            # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
+            # print(f'[datahintrepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
 
             #FIXME: Not quite right, obviously. The "HINT_SIGNS_TYPING" set used
             #to define this mapping includes *TONS* of unsubscriptable typing

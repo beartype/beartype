@@ -7,7 +7,7 @@
 Project-wide **type hint sign mapping** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._data.hint.pep.sign.datapepsignmap` submodule.
+:mod:`beartype._data.hint.sign.datahintsignmap` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
     '''
     Test the
-    :obj:`beartype._data.hint.pep.sign.datapepsignmap.HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE`
+    :obj:`beartype._data.hint.sign.datahintsignmap.HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE`
     dictionary global.
 
     This test guarantees conformance between this global and the corresponding
@@ -30,8 +30,8 @@ def test_hint_sign_origin_isinstanceable_to_args_len_range() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     import typing
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
-    from beartype._data.hint.pep.sign.datapepsignmap import (
+    from beartype._data.hint.sign.datahintsigns import HintSignTuple
+    from beartype._data.hint.sign.datahintsignmap import (
         HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
 
     # ....................{ ASSERTS                        }....................

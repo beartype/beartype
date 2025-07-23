@@ -66,7 +66,7 @@ def reduce_hint_pep484604(hint: Hint, exception_prefix: str, **kwargs) -> (
     semantics. There exist a countably infinite number of possible unions
     subscripted by one or more ignorable child hints. Ergo, these subscriptions
     *cannot* be explicitly listed in the
-    :data:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
+    :data:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_SHALLOW`
     set. Instead, these subscriptions are dynamically detected by this tester at
     runtime and thus referred to as **deeply ignorable unions.**
 

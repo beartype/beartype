@@ -154,7 +154,7 @@ def test_get_hint_pep484585_generic_base_extrinsic_sign_or_none() -> None:
         TypedDict,
     )
     from beartype._data.typing.datatyping import T
-    from beartype._data.hint.pep.sign.datapepsigns import (
+    from beartype._data.hint.sign.datahintsigns import (
         HintSignNamedTuple,
         HintSignTypedDict,
     )
@@ -238,7 +238,7 @@ def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_GENERIC
+    from beartype._data.hint.sign.datahintsignset import HINT_SIGNS_GENERIC
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
@@ -358,7 +358,7 @@ def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585GenericUnsubscripted
+    from beartype._data.hint.sign.datahintsigns import HintSignPep484585GenericUnsubscripted
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_type_or_none)
 

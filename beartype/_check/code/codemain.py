@@ -103,8 +103,8 @@ from beartype._data.typing.datatyping import (
     CodeGenerated,
     TypeStack,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.hint.sign.datahintsigns import (
     HintSignAnnotated,
     HintSignCounter,
     HintSignForwardRef,
@@ -114,7 +114,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
     HintSignUnion,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1,
     HINT_SIGNS_MAPPING,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -406,7 +406,7 @@ def make_check_expr(
             # for that attribute *MUST* also be added to the parallel:
             # * "beartype._check.error" subpackage, which raises exceptions on
             #   the current pith failing this check.
-            # * "beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
+            # * "beartype._data.hint.sign.datahintsignset.HINT_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all signs for which this function generates deeply
             #   type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

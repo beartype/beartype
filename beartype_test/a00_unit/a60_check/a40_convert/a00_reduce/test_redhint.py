@@ -40,7 +40,7 @@ def test_reduce_hint() -> None:
         Pep484TowerComplex,
         Pep484TowerFloat,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
+    from beartype._data.hint.sign.datahintsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign

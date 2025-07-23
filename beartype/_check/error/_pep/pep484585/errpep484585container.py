@@ -20,10 +20,10 @@ from beartype._check.logic.logmap import (
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_type_instance_origin
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
-from beartype._data.hint.pep.sign.datapepsigns import HintSignPep484585TupleFixed
-from beartype._data.hint.pep.sign.datapepsignmap import (
+from beartype._data.hint.sign.datahintsigns import HintSignPep484585TupleFixed
+from beartype._data.hint.sign.datahintsignmap import (
     HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE)
-from beartype._data.hint.pep.sign.datapepsignset import (
+from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CONTAINER_ARGS_1)
 from beartype._util.hint.pep.proposal.pep484585646 import (
     is_hint_pep484585646_tuple_empty)

@@ -5,7 +5,7 @@
 
 '''
 Project-wide **type hint sign sets** (i.e., frozen set globals aggregating
-instances of the :class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign`
+instances of the :class:`beartype._data.hint.sign.datahintsigncls.HintSign`
 class, enabling efficient categorization of signs as belonging to various
 categories of type hints).
 
@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import FrozenSetHintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
+from beartype._data.hint.sign.datahintsigns import (
     HintSignAbstractSet,
     HintSignAnnotated,
     HintSignAny,
@@ -637,7 +637,7 @@ HINT_SIGNS_SUPPORTED_DEEP: FrozenSetHintSign = (
         # ..................{ PEP 484                        }..................
         # Note that the "NoReturn" type hint is invalid in almost all possible
         # syntactic contexts and thus intentionally omitted here. See the
-        # "datapepsigns" submodule for further commentary.
+        # "datahintsigns" submodule for further commentary.
 
         #FIXME: These should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW",
         #instead.
