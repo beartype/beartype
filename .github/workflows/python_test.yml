@@ -356,7 +356,8 @@ jobs:
           python3 -m tox --skip-missing-interpreters=false
 
       # ..................{ COVERAGE                         }..................
-      - name: 'Publishing test coverage to Codecov...'
-        uses: 'codecov/codecov-action@v4'
-        with:
-          name: "${{ matrix.platform }}-${{ matrix.python-version }}"
+      #FIXME: *CURRENTLY BROKEN.* See "tox.ini" for further details. *sigh*
+      # - name: 'Publishing test coverage to Codecov...'
+      #   uses: 'codecov/codecov-action@v4'
+      #   with:
+      #     name: "${{ matrix.platform }}-${{ matrix.python-version }}"
