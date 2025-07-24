@@ -186,6 +186,24 @@ jobs:
           # - tox-env: pypy310-coverage
           #   python-version: "pypy-3.10"
 
+        # Blacklist specific build combinations implicitly defined by the build
+        # matrix above that are currently known to be problematic.
+        exclude:
+          #FIXME: Uncomment in 2026 after this presumably works again. *sigh*
+          # For unknown reasons, Python 3.11 (and only Python 3.11) currently
+          # inexplicably fails under Ubuntu (and only Ubuntu) with
+          # "pytest"-specific unreadable CI failures resembling:
+          #    ======================= 387 passed, 15 skipped in 37.13s =======================
+          #    py311-coverage: exit -11 (45.91 seconds) /home/runner/work/beartype/beartype/.tox/py311-coverage/tmp> /home/runner/work/beartype/beartype/.tox/py311-coverage/bin/python -m coverage run -m pytest --maxfail=1 -p no:asyncio -p no:xvfb /home/runner/work/beartype/beartype pid=2483
+          #    .pkg: _exit> python /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/pyproject_api/_backend.py True hatchling.build
+          #      py311-coverage: FAIL code -11 (166.94=setup[119.88]+cmd[0.00,1.15,45.91] seconds)
+          #      evaluation failed :( (167.07 seconds)
+          #    Error: Process completed with exit code 245.
+          #
+          #Everything passes locally. So... no idea, sadly. This isn't on us.
+          - platform: ubuntu-latest
+            python-version: "3.11"
+
     # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.
     name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }} CI"
