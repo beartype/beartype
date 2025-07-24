@@ -190,8 +190,8 @@ jobs:
         # matrix above that are currently known to be problematic.
         exclude:
           #FIXME: Uncomment in 2026 after this presumably works again. *sigh*
-          # For unknown reasons, Python 3.11 (and only Python 3.11) currently
-          # inexplicably fails under Ubuntu (and only Ubuntu) with
+          # For unknown reasons, Python 3.11 and 3.12 (and only these versions)
+          # currently inexplicably fails under Ubuntu (and only Ubuntu) with
           # "pytest"-specific unreadable CI failures resembling:
           #    ======================= 387 passed, 15 skipped in 37.13s =======================
           #    py311-coverage: exit -11 (45.91 seconds) /home/runner/work/beartype/beartype/.tox/py311-coverage/tmp> /home/runner/work/beartype/beartype/.tox/py311-coverage/bin/python -m coverage run -m pytest --maxfail=1 -p no:asyncio -p no:xvfb /home/runner/work/beartype/beartype pid=2483
@@ -203,6 +203,8 @@ jobs:
           #Everything passes locally. So... no idea, sadly. This isn't on us.
           - platform: ubuntu-latest
             tox-env: py311-coverage
+          - platform: ubuntu-latest
+            tox-env: py312-coverage
 
     # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.
@@ -374,8 +376,7 @@ jobs:
           python3 -m tox --skip-missing-interpreters=false
 
       # ..................{ COVERAGE                         }..................
-      #FIXME: *CURRENTLY BROKEN.* See "tox.ini" for further details. *sigh*
-      # - name: 'Publishing test coverage to Codecov...'
-      #   uses: 'codecov/codecov-action@v4'
-      #   with:
-      #     name: "${{ matrix.platform }}-${{ matrix.python-version }}"
+      - name: 'Publishing test coverage to Codecov...'
+        uses: 'codecov/codecov-action@v4'
+        with:
+          name: "${{ matrix.platform }}-${{ matrix.python-version }}"
