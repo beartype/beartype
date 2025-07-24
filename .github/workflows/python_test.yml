@@ -306,9 +306,9 @@ jobs:
           # "typing-extensions" need *NOT* be explicitly specified here.
           python3 -m pip --quiet install mypy
           # Log this "mypy" version for debuggability.
-          mypy --version
+          python3 -m mypy --version
           # Run this "mypy" instance against our main package.
-          mypy ./beartype/
+          python3 -m mypy ./beartype/
 
       # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'
