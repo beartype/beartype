@@ -202,7 +202,7 @@ jobs:
           #
           #Everything passes locally. So... no idea, sadly. This isn't on us.
           - platform: ubuntu-latest
-            python-version: "3.11"
+            tox-env: py311-coverage
 
     # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.
