@@ -17,7 +17,7 @@ from beartype.typing import (
     TypeVar,
 )
 from beartype._data.typing.datatypingport import (
-    # Hint,
+    Hint,
     HintOrNone,
     TypeIs,
 )
@@ -25,7 +25,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_hint_pep484_typevar(hint: object) -> TypeIs[TypeVar]:
+def is_hint_pep484_typevar(hint: Hint) -> TypeIs[TypeVar]:  # pyright: ignore
     '''
     :data:`True` only if the passed object is a :pep:`484`-compliant **type
     variable** (i.e., :class:`typing.TypeVar` instance).
@@ -182,7 +182,7 @@ def get_hint_pep484_typevar_bound_or_none(
     '''
 
     # If this hint is *NOT* a type variable, raise an exception.
-    if not is_hint_pep484_typevar(hint):
+    if not is_hint_pep484_typevar(hint):  # pyright: ignore
         raise BeartypeDecorHintPep484TypeVarException(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 484 type variable.'

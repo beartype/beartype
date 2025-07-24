@@ -89,8 +89,8 @@ def reduce_hint_pep484585_generic_subbed(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-        reduce_hint_pep484_subbed_typevars_to_hints)
+    from beartype._check.convert._reduce._pep.redpep484646 import (
+        reduce_hint_pep484646_subbed_typeargs_to_hints)
 
     # If this subscripted generic is the "typing.Generic" superclass directly
     # parametrized by one or more type variables (e.g., "typing.Generic[T]"),
@@ -136,7 +136,7 @@ def reduce_hint_pep484585_generic_subbed(
     #   this unsubscripted generic to all non-type variable hints subscripting
     #   this subscripted generic.
     # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
-    hint_reduced = reduce_hint_pep484_subbed_typevars_to_hints(
+    hint_reduced = reduce_hint_pep484646_subbed_typeargs_to_hints(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,

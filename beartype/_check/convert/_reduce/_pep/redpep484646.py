@@ -23,13 +23,17 @@ from beartype._check.metadata.hint.hintsane import (
 from beartype._check.pep.checkpep484typevar import (
     die_if_hint_pep484_typevar_bound_unbearable)
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.hint.sign.datahintsigns import (
+    HintSignTypeVar,
+    HintSignPep646UnpackedTypeVarTuple,
+)
+from beartype._data.typing.datatyping import (
+    TuplePep484646TypeArgs,
+)
 from beartype._data.typing.datatypingport import (
     Hint,
     Pep484646TypeArgToHint,
     TupleHints,
-)
-from beartype._data.typing.datatyping import (
-    TuplePep484646TypeArgs,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
@@ -42,11 +46,12 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin,
     get_hint_pep_typeargs,
 )
+from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Obsolete reduce_hint_pep484_subbed_typevars_to_hints() in favour of this
-#more generic alternative, please. *sigh*
+#FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
+#variable tuples, please. *sigh*
 def reduce_hint_pep484646_subbed_typeargs_to_hints(
     # Mandatory parameters.
     hint: Hint,
@@ -225,7 +230,7 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         # to each of these corresponding child hints.
         #
         # Note that we pass parameters positionally due to memoization.
-        typearg_to_hint = _get_hint_pep484646_typeargs_to_hints(
+        typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
             hint, hints_typearg, hints_child)
     # print(f'Mapped hint {hint} to type parameter lookup table {typearg_to_hint}!')
     # If doing so raises *ANY* exception, reraise this exception with each
@@ -278,61 +283,13 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
     # Return this metadata.
     return hint_sane
 
-# ....................{ PRIVATE ~ constants                }....................
-#FIXME: Currently unneeded, but probably needed someday. Preserve the present
-#for the security of the future.
-# _TYPEARG_RECURSABLE_DEPTH_MAX = 0
-# '''
-# Value of the optional ``hint_recursable_depth_max`` parameter passed to the
-# :func:`.is_hint_recursive` tester by the :func:`.reduce_hint_pep484_typevar`
-# reducer.
-#
-# This depth ensures that :pep:`484`- or :pep:`646`-compliant type parameters are
-# considered to be recursive *only* after having been recursed into at most this
-# many times before (i.e., *only* after having been visited exactly once as a
-# child hint of an arbitrary parent hint). By definition, type parameters are
-# guaranteed to *never* be parent hints. Ergo, recursing into type parameters
-# exactly once suffices to expand exactly one nesting level of non-trivial
-# recursive data structures. This mirrors the restrained recursion allowed by
-# other reducers.
-#
-# Consider :pep:`695`-compliant type aliases, for example. Unlike type parameters,
-# type aliases are guaranteed to *always* be parent hints. The value of the
-# optional ``hint_recursable_depth_max`` parameter passed to the
-# :func:`.is_hint_recursive` tester by :pep:`695`-specific reducers is thus one
-# greater than the value of this global. Nonetheless, the real-world effect is
-# exactly the same: exactly one nesting level of type aliases is expanded.
-#
-# Consider the following :pep:`484`-compliant generic recursively subscripted by
-# itself via a :pep:`484`-compliant type variable ``T``:
-#
-# .. code-block:: python
-#
-#    class GenericList[T](): ...
-#    RecursiveGenericList = GenericList[GenericList]
-#
-# Instances of this generic satisfying the type hint ``RecursiveGenericList``
-# contain an arbitrary number of other instances of this generic, exhibiting this
-# internal structure:
-#
-# .. code-block:: python
-#
-#    recursive_generic_list = GenericList()
-#    recursive_generic_list.append(recursive_generic_list)
-#
-# Halting recursion at the first expansion of the type parameter ``T`` then
-# reduces the type hint ``RecursiveGenericList`` to
-# ``GenericList[GenericList[T]]``, , which reduces to
-# ``GenericList[GenericList[HINT_SANE_RECURSIVE]]``, , which reduces to
-# ``GenericList[GenericList]`` -- conveying exactly one layer of the internal
-# semantics of this recursive data structure.
-# '''
-
-# ....................{ PRIVATE ~ getters                  }....................
+# ....................{ PRIVATE ~ factories                }....................
+#FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
+#variable tuples, please. *sigh*
 @callable_cached
-def _get_hint_pep484646_typeargs_to_hints(
+def _make_hint_pep484646_typeargs_to_hints(
     hint: Hint,
-    hints_typeargs: TuplePep484646TypeArgs,
+    hints_typearg: TuplePep484646TypeArgs,
     hints_child: TupleHints,
 ) -> Pep484646TypeArgToHint:
     '''
@@ -352,7 +309,7 @@ def _get_hint_pep484646_typeargs_to_hints(
         Parent hint presumably both subscripted by these child hints. This
         parent hint is currently only used to generate human-readable exception
         messages in the event of fatal errors.
-    hints_typeargs : TuplePep484646TypeArgs
+    hints_typearg : TuplePep484646TypeArgs
         Tuple of one or more child type parameters originally subscripting the
         origin underlying this parent hint.
     hints_child : TupleHints
@@ -378,14 +335,18 @@ def _get_hint_pep484646_typeargs_to_hints(
         If one of these type hints violates the bounds or constraints of one of
         these type parameters.
     '''
-    assert isinstance(hints_typeargs, tuple), (
-        f'{repr(hints_typeargs)} not tuple.')
+    assert isinstance(hints_typearg, tuple), (
+        f'{repr(hints_typearg)} not tuple.')
     assert isinstance(hints_child, tuple), (
         f'{repr(hints_child)} not tuple.')
 
     # ....................{ PREAMBLE                       }....................
+    # Number of passed type parameters and child hints respectively.
+    hints_typearg_len = len(hints_typearg)
+    hints_child_len = len(hints_child)
+
     # If *NO* type parameters were passed, raise an exception.
-    if not hints_typeargs:
+    if not hints_typearg_len:
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
             f'parametrized by no type parameters (i.e., '
@@ -395,61 +356,92 @@ def _get_hint_pep484646_typeargs_to_hints(
         )
     # Else, one or more type parameters were passed.
     #
-    # If *NO* type hints were passed, raise an exception.
-    elif not hints_child:
+    # If *NO* child hints were passed, raise an exception.
+    elif not hints_child_len:
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
-            f'subscripted by no type hints.'
+            f'subscripted by no child type hints.'
         )
-    # Else, one or more type hints were passed.
+    # Else, one or more child hints were passed.
     #
     # If more type hints than type parameters were passed, raise an exception.
-    elif len(hints_child) > len(hints_typeargs):
+    elif hints_child_len > hints_typearg_len:
         raise BeartypeDecorHintPep484612646Exception(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
             f'number of subscripted child hints {len(hints_child)} exceeds '
-            f'number of parametrized type parameters {len(hints_typeargs)} '
-            f'(i.e., {len(hints_child)} > {len(hints_typeargs)}).'
+            f'number of parametrized type parameters {len(hints_typearg)} '
+            f'(i.e., {len(hints_child)} > {len(hints_typearg)}).'
         )
     # Else, either the same number of type hints and type parameters were passed
     # *OR* more type parameters than type hints were passed.
 
-    # ....................{ MAP                            }....................
+    # ....................{ LOCALS                         }....................
     # Type parameter lookup table to be returned.
     typearg_to_hint: Pep484646TypeArgToHint = {}
 
-    #FIXME: Optimize into a "while" loop at some point. *sigh*
-    # For each passed type parameter and corresponding type hint...
-    #
-    # Note that:
-    # * The C-based zip() builtin has been profiled to be the fastest means of
-    #   iterating pairs in pure-Python, interestingly.
-    # * If more type parameters than type hints were passed, zip() silently
-    #   ignores type parameters with *NO* corresponding type hints -- exactly as
-    #   required and documented by the above docstring.
-    # print(f'Mapping hints_typeargs {hints_typeargs} -> hints_child {hints_child}...')
-    for hint_child_typearg, hint_child_hint in zip(
-        hints_typeargs, hints_child):
+    # 0-based index of the current type parameter *AND* corresponding child hint
+    # of the passed tuples visited by the "while" loop below.
+    hints_child_index_curr = 0
+
+    # 0-based index of the last type parameter *AND* corresponding child hint of
+    # the passed tuples to be visited by the "while" loop below, defined as the
+    # minimum of the lengths of these tuples minus one. Two edge cases then
+    # arise:
+    # * If more type parameters than child hints were passed, this calculation
+    #   induces the "while" loop below to silently ignore those trailing type
+    #   parameters that lack corresponding trailing child hints -- exactly as
+    #   required and documented by the above docstring. This case is valid! \o/
+    # * If more child hints than type parameters were passed, validation above
+    #   already detected this invalid edge case and raised an exception.
+    hints_child_index_last = min(hints_typearg_len, hints_child_len) - 1
+
+    # True only if one or more of the passed type parameters visited by the
+    # "while" loop below are PEP 646-compliant unpacked type variable
+    # parameters.
+    is_hint_child_typearg_pep646 = False
+
+    # ....................{ PHASE 1 ~ pep 484 : typevar    }....................
+    # In this first phase, we map all leading PEP 484-compliant type variables
+    # parametrizing the beginning of this parent subscripted hint until
+    # discovering the first PEP 646-compliant type variable tuple (if any)
+    # parametrizing the middle of this parent subscripted hint. Notably:
+    # * Type variables only map to and thus "consume" a single child hint.
+    #   Mapping leading type variables is trivial.
+    # * Type variable tuples map to and thus "consume" zero or more child hints.
+    #   Mapping both type variable tuples *AND* the trailing type variables that
+    #   follow them is comparatively non-trivial. Special care is warranted.
+
+    # While the 0-based index of the current type parameter does *NOT* exceed
+    # that of the last type parameter to be visited by this loop, one or more
+    # type parameters remain unvisited. In this case...
+    while hints_child_index_curr <= hints_child_index_last:
+        # Current type parameter and corresponding child hint.
+        hint_child_typearg = hints_typearg[hints_child_index_curr]
+        hint_child_hint = hints_child[hints_child_index_curr]
         # print(f'Mapping typearg {typearg} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
-        # If this type parameter is *NOT* a type parameter, raise an exception.
+        # If this type parameter is *NOT* an unpacked type parameter, raise an
+        # exception.
         #
         # Note that this should *NEVER* occur. Python itself syntactically
         # guarantees *ALL* child hints parametrizing a PEP-compliant subscripted
-        # hint to actually be type parameters. Nonetheless, the caller is under
+        # hint to be unpacked type parameters. Nonetheless, the caller is under
         # no such constraints. To guard against dev bitrot, we validate this.
         die_unless_hint_pep484646_typearg_unpacked(
-            hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
-        # Else, this type parameter is actually a type parameter.
+            hint=hint_child_typearg, exception_prefix=EXCEPTION_PLACEHOLDER)  # pyright: ignore
+        # Else, this type parameter is an unpacked type parameter.
+
+        # Sign uniquely identifying this type parameter.
+        hint_child_typearg_sign = get_hint_pep_sign_or_none(hint_child_typearg)  # pyright: ignore
 
         # If this type parameter is a PEP 484-compliant type variable...
-        if is_hint_pep484_typevar(hint_child_typearg):
+        if hint_child_typearg_sign is HintSignTypeVar:
             # If this child hint violates this type variable's bounds and/or
             # constraints, raise an exception.
             die_if_hint_pep484_typevar_bound_unbearable(
                 hint=hint_child_hint,
-                typevar=hint_child_typearg,
+                typevar=hint_child_typearg,  # type: ignore[arg-type]
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
             # Else, this child hint satisfies this type variable's bounds and/or
@@ -458,11 +450,51 @@ def _get_hint_pep484646_typeargs_to_hints(
         # By elimination, this type parameter *MUST* be a PEP 646-compliant
         # unpacked type variable tuple. Unlike type variables, type variable
         # tuples lack associated bounds and/or constraints.
+        #
+        # If this type parameter is a PEP 646-compliant unpacked type variable
+        # tuple...
+        elif hint_child_typearg_sign is HintSignPep646UnpackedTypeVarTuple:
+            # Note that this kind of type parameter has now been discovered.
+            is_hint_child_typearg_pep646 = True
+
+            # Immediately halt all further visitation of type parameters and
+            # child hints by this iteration.
+            break
+        # Else, this type parameter is *NOT* a PEP 646-compliant unpacked type
+        # variable tuple. Ergo, this type parameter is *NOT* actually an
+        # unpacked type parameter. By the above validation, however, this type
+        # parameter is an unpacked type parameter. Raise us up the exception!
+        #
+        # Note that this should never happen. Mysteriously, this just happened.
+        else:  # pragma: no cover
+            raise BeartypeDecorHintPep484612646Exception(
+                f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} parametrized '
+                f'by non-type parameter {repr(hint_child_typearg)}.'
+            )
 
         # Map this type parameter to this hint with an optimally efficient
         # one-liner, silently overwriting any prior such mapping of this type
         # parameter by either this call or a prior call of this function.
         typearg_to_hint[hint_child_typearg] = hint_child_hint
+
+        # Iterate the 0-based index of the current type parameter *AND*
+        # corresponding child hint to be visited by the next loop iteration.
+        hints_child_index_curr += 1
+
+    # ....................{ PHASE 2 ~ pep 484 : typevar    }....................
+    # In this first phase, we map all trailing PEP 484-compliant type variables
+    # parametrizing the ending of this parent subscripted hint following the
+    # first PEP 646-compliant type variable tuple (if any) parametrizing the
+    # middle of this parent subscripted hint.
+    if is_hint_child_typearg_pep646:
+        #FIXME: Implement us up, please! Implement a similar "while" loop as
+        #below, except beginning at the end and iterating *BACKWARDS*. We'll
+        #thus want obscure initialization logic resembling...
+        #
+        #Oh - and note the intentional usage of new PEP 646-specific local loop
+        #variables. Why? Debugging, maintainability, and readability purposes.
+        hints_child_pep646_index_last = hints_child_index_curr + 1
+        hints_child_pep646_index_curr = hints_child_index_last
 
     # ....................{ RETURN                         }....................
     # Return this table, coerced into an immutable frozen dictionary.

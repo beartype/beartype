@@ -290,18 +290,18 @@ def unit_test_reduce_hint_pep695_unsubbed() -> None:
         )
 
 
-def unit_test_reduce_hint_pep484_subbed_typevars_to_hints() -> None:
+def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
+    None):
     '''
-    Test the public
-    :mod:`beartype._check.convert._reduce._pep.pep484.redpep484typevar.reduce_hint_pep484_subbed_typevars_to_hints`
-    getter with respect to :pep:`695`-compliant subscripted type aliases.
+    Test the public ``reduce_hint_pep484646_subbed_typeargs_to_hints()`` getter
+    with respect to :pep:`695`-compliant subscripted type aliases.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPep484TypeVarException
-    from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-        reduce_hint_pep484_subbed_typevars_to_hints)
+    from beartype.roar import BeartypeDecorHintPep484612646Exception
+    from beartype._check.convert._reduce._pep.redpep484646 import (
+        reduce_hint_pep484646_subbed_typeargs_to_hints)
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -330,33 +330,36 @@ def unit_test_reduce_hint_pep484_subbed_typevars_to_hints() -> None:
     # Note that these type variables are literally scoped (i.e., isolated) to
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
-    assert reduce_hint_pep484_subbed_typevars_to_hints(
-        irresistible_career[int]) == HintSane(
-            hint=irresistible_career,
-            typearg_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
-        )
-    assert reduce_hint_pep484_subbed_typevars_to_hints(
-        in_thy[bool, complex]) == HintSane(
-            hint=in_thy,
-            typearg_to_hint=FrozenDict({
-                in_thy_typevars[0]: bool,
-                in_thy_typevars[1]: complex,
-            }),
-        )
+    hint_sane = reduce_hint_pep484646_subbed_typeargs_to_hints(
+        irresistible_career[int])
+    assert hint_sane == HintSane(
+        hint=irresistible_career,
+        typearg_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
+    )
+
+    hint_sane = reduce_hint_pep484646_subbed_typeargs_to_hints(
+        in_thy[bool, complex])
+    assert hint_sane == HintSane(
+        hint=in_thy,
+        typearg_to_hint=FrozenDict({
+            in_thy_typevars[0]: bool,
+            in_thy_typevars[1]: complex,
+        }),
+    )
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed an object
     # that is *NOT* a PEP 695-compliant subscripted type alias.
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subbed_typevars_to_hints(
+    with raises(BeartypeDecorHintPep484612646Exception):
+        reduce_hint_pep484646_subbed_typeargs_to_hints(
             'In thy devastating omnipotence,')
 
     # Assert this getter raises the expected exception when passed a PEP
     # 695-compliant unsubscripted type alias.
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subbed_typevars_to_hints(guiding_its)
-    with raises(BeartypeDecorHintPep484TypeVarException):
-        reduce_hint_pep484_subbed_typevars_to_hints(irresistible_career)
+    with raises(BeartypeDecorHintPep484612646Exception):
+        reduce_hint_pep484646_subbed_typeargs_to_hints(guiding_its)
+    with raises(BeartypeDecorHintPep484612646Exception):
+        reduce_hint_pep484646_subbed_typeargs_to_hints(irresistible_career)
 
 # ....................{ TESTS ~ decorator                  }....................
 #FIXME: Actually call this unit test!

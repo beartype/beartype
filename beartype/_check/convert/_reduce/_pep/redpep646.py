@@ -575,13 +575,13 @@ def reduce_hint_pep646_unpacked_typevartuple(
     #         #rather than reperform this O(n) algorithm on every single instance
     #         #of this type variable, this algorithm should simply be performed
     #         #exactly *ONCE* in the
-    #         #reduce_hint_pep484_subbed_typevars_to_hints() reducer. Please
+    #         #reduce_hint_pep484646_subbed_typeargs_to_hints() reducer. Please
     #         #refactor this iteration over there *AFTER* the dust settles here.
     #         #FIXME: Actually, it's unclear how exactly this could be refactored
-    #         #into the reduce_hint_pep484_subbed_typevars_to_hints()
+    #         #into the reduce_hint_pep484646_subbed_typeargs_to_hints()
     #         #reducer. This reduction here only searches for a single typevar in
     #         #O(n) time. Refactoring this over to
-    #         #reduce_hint_pep484_subbed_typevars_to_hints() would require
+    #         #reduce_hint_pep484646_subbed_typeargs_to_hints() would require
     #         #generalizing this into an O(n**2) algorithm there, probably. Yow!
     #
     #         # While...
