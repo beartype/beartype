@@ -355,7 +355,58 @@ def _make_hint_pep484646_typeargs_to_hints(
             f'PEP 646 unpacked type variable tuples).'
         )
     # Else, one or more type parameters were passed.
+
+    #FIXME: This is actually a valid edge case now under the condition that
+    #exactly one PEP 646-compliant unpacked type variable tuple was passed. If
+    #these conditions hold, then this unpacked type variable tuple silently
+    #consumes zero child hints; else, an exception should be raised.
     #
+    #We can either handle this here or below. Since "hints_child_len == 0",
+    #"hints_child_index_last == -1" below and the first "while" loop below never
+    #even discovers the unpacked type variable tuple. That's bad. In fact, this
+    #edge case exposes a larger weakness in the design of the first "while" loop
+    #below: if an unpacked type variable tuple exists, this tuple should
+    #*ALWAYS* be assigned to a tuple of child hints -- even if that tuple is the
+    #empty tuple. This differs substantially from excess type variables, which
+    #this loop simply ignores and avoids assigning anything to.
+    #
+    #This could be trivially resolved with yet another preceding "while" loop,
+    #responsible for:
+    #1. Detecting whether an unpacked type variable tuple exists *AND*...
+    #2. If so, assigning "typearg_to_hint[typearg] = ()" as a sensible default
+    #   that is usually (but *NOT* always) overwritten below.
+    #
+    #That said, even more iteration is even more inefficient. Actually...
+    #perhaps we *DON'T* always want to default an unpacked type variable tuple
+    #to "()". Consider this call:
+    #    _make_hint_pep484646_typeargs_to_hints(
+    #        hint=...,  # <-- who cares
+    #        hints_typearg=(S, T, U, *Ts,),
+    #        hints_child=(int,),
+    #    ) -> Pep484646TypeArgToHint:
+    #
+    #More type parameters than child hints were passed, but that's a valid edge
+    #case. Callers expect this factory to return "{S: int}". All remaining type
+    #parameters should remain unassigned, including "*Ts". Why? Because the
+    #"*Ts" is preceded by one or more unassigned type variables. Since those
+    #type variables are themselves unassigned, by orthogonality all type
+    #parameters following those unassigned type variables (notably, the "*Ts")
+    #must themselves also be unassigned.
+    #
+    #Now consider another call that superficially appears similar yet is
+    #ultimately quite different:
+    #    _make_hint_pep484646_typeargs_to_hints(
+    #        hint=...,  # <-- who cares
+    #        hints_typearg=(S, *Ts,),
+    #        hints_child=(int,),
+    #    ) -> Pep484646TypeArgToHint:
+    #
+    #Callers expect this factory to return "{S: int, *Ts: ()}". All type
+    #parameters are assigned, including "*Ts". Why? Because unpacked type
+    #variables consume zero or more child hints. Since the type parameter "S"
+    #preceding this "*Ts" was assigned, this "*Ts" must necessarily also be
+    #assigned the fallback tuple "()". Fascinating, huh?
+
     # If *NO* child hints were passed, raise an exception.
     elif not hints_child_len:
         raise BeartypeDecorHintPep484612646Exception(
@@ -363,17 +414,6 @@ def _make_hint_pep484646_typeargs_to_hints(
             f'subscripted by no child type hints.'
         )
     # Else, one or more child hints were passed.
-    #
-    # If more type hints than type parameters were passed, raise an exception.
-    elif hints_child_len > hints_typearg_len:
-        raise BeartypeDecorHintPep484612646Exception(
-            f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
-            f'number of subscripted child hints {len(hints_child)} exceeds '
-            f'number of parametrized type parameters {len(hints_typearg)} '
-            f'(i.e., {len(hints_child)} > {len(hints_typearg)}).'
-        )
-    # Else, either the same number of type hints and type parameters were passed
-    # *OR* more type parameters than type hints were passed.
 
     # ....................{ LOCALS                         }....................
     # Type parameter lookup table to be returned.
@@ -381,8 +421,9 @@ def _make_hint_pep484646_typeargs_to_hints(
 
     # 0-based index of the current type parameter *AND* corresponding child hint
     # of the passed tuples visited by the "while" loop below.
-    hints_child_index_curr = 0
+    hints_index_curr = 0
 
+    #FIXME: Revise documentation, please. We no longer take the minimum here!
     # 0-based index of the last type parameter *AND* corresponding child hint of
     # the passed tuples to be visited by the "while" loop below, defined as the
     # minimum of the lengths of these tuples minus one. Two edge cases then
@@ -391,9 +432,18 @@ def _make_hint_pep484646_typeargs_to_hints(
     #   induces the "while" loop below to silently ignore those trailing type
     #   parameters that lack corresponding trailing child hints -- exactly as
     #   required and documented by the above docstring. This case is valid! \o/
-    # * If more child hints than type parameters were passed, validation above
-    #   already detected this invalid edge case and raised an exception.
-    hints_child_index_last = min(hints_typearg_len, hints_child_len) - 1
+    # * If more child hints than type parameters were passed, two sub-edge cases
+    #   now arise:
+    #   * If one of these type parameters is a PEP 646-compliant unpacked type
+    #     variable tuple, this parent edge case is valid. Although more child
+    #     hints than type parameters were passed, a single unpacked type
+    #     variable tuple consumes zero or more excess child hints (i.e., child
+    #     hints *NOT* already consumed by one or more trailing PEP 484-compliant
+    #     type variables).
+    #   * If none of these type parameters is a PEP 646-compliant unpacked type
+    #     variable tuple, this parent edge case is invalid. Validation below
+    #     will subsequently detect this invalid case and raise an exception.
+    hints_index_last = hints_child_len - 1
 
     # True only if one or more of the passed type parameters visited by the
     # "while" loop below are PEP 646-compliant unpacked type variable
@@ -401,7 +451,7 @@ def _make_hint_pep484646_typeargs_to_hints(
     is_hint_child_typearg_pep646 = False
 
     # ....................{ PHASE 1 ~ pep 484 : typevar    }....................
-    # In this first phase, we map all leading PEP 484-compliant type variables
+    # In this first phase, we map all *LEADING* PEP 484-compliant type variables
     # parametrizing the beginning of this parent subscripted hint until
     # discovering the first PEP 646-compliant type variable tuple (if any)
     # parametrizing the middle of this parent subscripted hint. Notably:
@@ -411,13 +461,36 @@ def _make_hint_pep484646_typeargs_to_hints(
     #   Mapping both type variable tuples *AND* the trailing type variables that
     #   follow them is comparatively non-trivial. Special care is warranted.
 
-    # While the 0-based index of the current type parameter does *NOT* exceed
+    # While the 0-based index of the current type variable does *NOT* exceed
     # that of the last type parameter to be visited by this loop, one or more
     # type parameters remain unvisited. In this case...
-    while hints_child_index_curr <= hints_child_index_last:
+    while hints_index_curr <= hints_index_last:
+        # If the 0-based index of the current type variable exceeds that of the
+        # last child hint, more child hints than type parameters were passed.
+        # In this case, raise an exception.
+        #
+        # Note that it is conditionally valid for the caller to pass more child
+        # hints than type parameters if one of the previously visited type
+        # parameters is a PEP 646-compliant unpacked type variable tuple, which
+        # would have then consumed all excess child hints. However, one of these
+        # type parameters is *NOT* an unpacked type variable tuple. Why? Because
+        # if one of these type parameters was such a tuple, then this "while"
+        # loop would have already been prematurely terminated by the "break"
+        # statement below. Clearly, though, this "while" loop is still
+        # iterating! The conclusion then follows.
+        if hints_index_curr >= hints_typearg_len:
+            raise BeartypeDecorHintPep484612646Exception(
+                f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
+                f'number of subscripted child hints {len(hints_child)} exceeds '
+                f'number of parametrized type parameters {len(hints_typearg)} '
+                f'(i.e., {len(hints_child)} > {len(hints_typearg)}).'
+            )
+        # Else, the 0-based index of the current type variable does *NOT* exceed
+        # that of the last child hint.
+
         # Current type parameter and corresponding child hint.
-        hint_child_typearg = hints_typearg[hints_child_index_curr]
-        hint_child_hint = hints_child[hints_child_index_curr]
+        hint_child_typearg = hints_typearg[hints_index_curr]
+        hint_child_hint = hints_child[hints_index_curr]
         # print(f'Mapping typearg {typearg} -> hint {hint}...')
         # print(f'is_hint_nonpep_type({hint})? {is_hint_nonpep_type(hint, False)}')
 
@@ -479,22 +552,55 @@ def _make_hint_pep484646_typeargs_to_hints(
 
         # Iterate the 0-based index of the current type parameter *AND*
         # corresponding child hint to be visited by the next loop iteration.
-        hints_child_index_curr += 1
+        hints_index_curr += 1
 
-    # ....................{ PHASE 2 ~ pep 484 : typevar    }....................
-    # In this first phase, we map all trailing PEP 484-compliant type variables
-    # parametrizing the ending of this parent subscripted hint following the
-    # first PEP 646-compliant type variable tuple (if any) parametrizing the
-    # middle of this parent subscripted hint.
+    # If a PEP 646-compliant unpacked type variable parameter was visited by the
+    # "while" loop above...
     if is_hint_child_typearg_pep646:
+        # ....................{ PHASE 2 ~ pep 484 : typevar}....................
+        # In this next phase, we map all *TRAILING* PEP 484-compliant type
+        # variables parametrizing the ending of this parent subscripted hint.
+        # These variables follow the first (and ideally only) PEP 646-compliant
+        # type variable tuple parametrizing the middle of this parent
+        # subscripted hint.
+        #
+        # The "while" loop above iterates forward over type variables starting
+        # at the first type variable, as is customary for most iteration. In
+        # contrast, the "while" loop below iterates backward over type variables
+        # starting at the last type variable. Why? Because type variable tuples
+        # greedily consume all remaining child hints that have yet to be
+        # consumed by a trailing type variable. To decide which child hints
+        # remain to be consumed by a type variable tuple requires that we first
+        # consume as many trailing child hints as possible by as many trailing
+        # type variables exist. Whatever child hints remain are then apportioned
+        # to the type variable tuple.
+
         #FIXME: Implement us up, please! Implement a similar "while" loop as
         #below, except beginning at the end and iterating *BACKWARDS*. We'll
         #thus want obscure initialization logic resembling...
         #
         #Oh - and note the intentional usage of new PEP 646-specific local loop
         #variables. Why? Debugging, maintainability, and readability purposes.
-        hints_child_pep646_index_last = hints_child_index_curr + 1
-        hints_child_pep646_index_curr = hints_child_index_last
+
+        # 0-based index of the current type parameter *AND* corresponding child
+        # hint of the passed tuples visited by the "while" loop below,
+        # initialized to the index of the last type parameter.
+        hints_pep646_child_index_curr = hints_child_len - 1
+        hints_pep646_typearg_index_curr = hints_index_last
+        hints_pep646_index_last = hints_index_curr + 1
+
+        # ....................{ PHASE 3 ~ pep 646 : tuple  }....................
+        # In this next phase, we map the sole PEP 646-compliant unpacked type
+        # variable tuple parametrizing the middle of this parent subscripted
+        # hint. This unpacked type variable tuple:
+        # * Follows the leading PEP 484-compliant type variables mapped by the
+        #   first phase above.
+        # * Precedes the trailing PEP 484-compliant type variables mapped by the
+        #   second phase above.
+    # Else, a PEP 646-compliant unpacked type variable parameter was *NOT*
+    # visited by the "while" loop above. In this case, that loop has already
+    # successfully visited all PEP 484-compliant type variables and thus all
+    # type parameters parametrizing this parent subscripted hint. We are done!
 
     # ....................{ RETURN                         }....................
     # Return this table, coerced into an immutable frozen dictionary.
