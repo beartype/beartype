@@ -11,11 +11,19 @@ hints more readily consumable by :mod:`beartype`).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: [PEP 696] Handle "PEP 696 – Type Defaults for Type Parameters" under
+#Python >= 3.13:
+#    https://peps.python.org/pep-0696
+#
+#This PEP induces edge cases in reduce_hint_pep484_typevar(). Notably, that
+#reducer should prioritize defaults by reducing defaulted type variables to
+#their defaults *BEFORE* reducing bounded type variables to those bounds.
+#
+#When doing so, note this also intersects with PEP 749: notably, defaults may be
+#subscripted by one or more unquoted forward references. *sigh*
+
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintPep484TypeVarException,
-    BeartypeDecorHintPep484TypeVarViolation,
-)
 from beartype.typing import (
     Optional,
     TypeVar,
@@ -27,29 +35,11 @@ from beartype._check.convert._reduce._redrecurse import (
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
     HINT_SANE_RECURSIVE,
-    HintOrSane,
     HintSane,
 )
-from beartype._data.typing.datatypingport import (
-    Hint,
-    Pep484646TypeArgToHint,
-    TupleHints,
-)
-from beartype._data.typing.datatyping import TuplePep484646TypeArgs
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
-from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    get_hint_pep484_typevar_bound_or_none,
-    is_hint_pep484_typevar,
-)
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_origin,
-    get_hint_pep_typeargs,
-)
-from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+    get_hint_pep484_typevar_bound_or_none)
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_typevar(
