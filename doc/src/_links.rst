@@ -431,6 +431,10 @@
    https://docs.pydantic.dev
 .. _LangChain:
    https://www.langchain.com
+.. _langchain_core:
+   https://python.langchain.com/api_reference/core/index.html
+.. _langchain_core.runnables.chain:
+   https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.chain.html
 
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:

@@ -300,7 +300,7 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
-    from beartype._check.convert._reduce._pep.redpep484646 import (
+    from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484646_subbed_typeargs_to_hints)
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs

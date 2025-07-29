@@ -8,7 +8,7 @@ Beartype :pep:`484`-, :pep:`612`-, or :pep:`646`-compliant **type parameter
 reduction** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.convert._reduce._pep.redpep484646` submodule.
+:mod:`beartype._check.convert._reduce._pep.redpep484612646` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -21,7 +21,7 @@ This submodule unit tests the public API of the private
 def test_make_hint_pep484646_typeargs_to_hints() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce._pep.redpep484646._make_hint_pep484646_typeargs_to_hints`
+    :func:`beartype._check.convert._reduce._pep.redpep484612646._make_hint_pep484646_typeargs_to_hints`
     factory function.
     '''
 
@@ -40,7 +40,7 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
         T_sequence,
         T_str_or_bytes,
     )
-    from beartype._check.convert._reduce._pep.redpep484646 import (
+    from beartype._check.convert._reduce._pep.redpep484612646 import (
         _make_hint_pep484646_typeargs_to_hints)
     from pytest import raises
 
@@ -128,7 +128,7 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
 def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     '''
     Test the private
-    :mod:`beartype._check.convert._reduce._pep.redpep484646.reduce_hint_pep484646_subbed_typeargs_to_hints`
+    :mod:`beartype._check.convert._reduce._pep.redpep484612646.reduce_hint_pep484646_subbed_typeargs_to_hints`
     reducer.
     '''
 
@@ -136,7 +136,7 @@ def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype.typing import Generic
-    from beartype._check.convert._reduce._pep.redpep484646 import (
+    from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484646_subbed_typeargs_to_hints)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype._data.typing.datatyping import (

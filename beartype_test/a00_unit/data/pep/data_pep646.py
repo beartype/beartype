@@ -155,37 +155,39 @@ def unit_test_is_hint_pep484585646_tuple_variadic() -> None:
     from beartype._util.hint.pep.proposal.pep484585646 import (
         is_hint_pep484585646_tuple_variadic)
     from beartype._util.hint.pep.proposal.pep646692 import (
-        make_hint_pep646_unpacked_tuple)
+        make_hint_pep646_tuple_unpacked_unary)
 
     # PEP 646-compliant variadic unpacked child tuple hint subscripted by
     # arbitrary child child hints.
-    hint_pep646_unpacked_tuple_variadic = make_hint_pep646_unpacked_tuple(
+    hint_pep646_tuple_unpacked_variadic = make_hint_pep646_tuple_unpacked_unary(
         (str, ...))
 
     # Assert this tester accepts this hint.
     assert is_hint_pep484585646_tuple_variadic(
-        hint_pep646_unpacked_tuple_variadic) is True
+        hint_pep646_tuple_unpacked_variadic) is True
 
 
-def unit_test_is_hint_pep646_unpacked_tuple() -> None:
+def unit_test_is_hint_pep646_tuple_unpacked_unary() -> None:
     '''
     Test the :pep:`646`-compliant implementation of the private
-    :mod:`beartype._util.hint.pep.proposal.pep646692.is_hint_pep646_unpacked_tuple`
+    :mod:`beartype._util.hint.pep.proposal.pep646692.is_hint_pep646_tuple_unpacked_unary`
     tester under Python >= 3.11.
     '''
 
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep646692 import (
-        is_hint_pep646_unpacked_tuple,
-        make_hint_pep646_unpacked_tuple,
+        is_hint_pep646_tuple_unpacked_unary,
+        make_hint_pep646_tuple_unpacked_unary,
     )
 
     # PEP 646-compliant unpacked child tuple hint subscripted by arbitrary child
     # child hints.
-    hint_pep646_unpacked_tuple = make_hint_pep646_unpacked_tuple((int, float))
+    hint_pep646_tuple_unpacked = make_hint_pep646_tuple_unpacked_unary(
+        (int, float))
 
     # Assert this tester accepts this hint.
-    assert is_hint_pep646_unpacked_tuple(hint_pep646_unpacked_tuple) is True
+    assert is_hint_pep646_tuple_unpacked_unary(
+        hint_pep646_tuple_unpacked) is True
 
 # ....................{ TESTS ~ decorator                  }....................
 def unit_test_decor_pep646() -> None:

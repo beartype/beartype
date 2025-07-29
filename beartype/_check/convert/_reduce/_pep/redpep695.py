@@ -86,7 +86,7 @@ def reduce_hint_pep695_subbed(
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.redpep484646 import (
+    from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484646_subbed_typeargs_to_hints)
 
     # ....................{ RECURSE                        }....................

@@ -80,9 +80,9 @@ mappings while also flattening directly nested unions into the top-level union.
 type AliasPep484604Depth1 = _AliasPep484604Depth2 | float
 '''
 Type alias aliasing a :pep:`604`-compliant new union of a PEP-noncompliant type
-and another type alias aliasing a :pep:`484`-compliant old union of
-another PEP-noncompliant type and another type alias aliasing (...waitforit)
-another PEP-noncompliant type.
+and another type alias that has yet to be defined aliasing a
+:pep:`484`-compliant old union of another PEP-noncompliant type and another type
+alias aliasing (...waitforit) another PEP-noncompliant type.
 
 This alias thus tests that dynamic code generation for both :pep:`484`- and
 :pep:`604`-compliant unions recursively unflattens deeply nested unions into the
@@ -93,7 +93,8 @@ top-level union.
 type _AliasPep484604Depth2 = Union[str, _AliasPep484604Depth3]
 '''
 Type alias aliasing a :pep:`484`-compliant old union of a PEP-noncompliant type
-and another type alias aliasing another PEP-noncompliant type.
+and another type alias aliasing another PEP-noncompliant type that has yet to be
+defined.
 '''
 
 

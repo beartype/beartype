@@ -89,7 +89,7 @@ def reduce_hint_pep484585_generic_subbed(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.redpep484646 import (
+    from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484646_subbed_typeargs_to_hints)
 
     # If this subscripted generic is the "typing.Generic" superclass directly

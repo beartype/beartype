@@ -27,8 +27,8 @@ from beartype._check.convert._reduce._pep.pep484.redpep484 import (
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,
 )
-from beartype._check.convert._reduce._pep.pep484.redpep484typevar import (
-    reduce_hint_pep484_typevar)
+from beartype._check.convert._reduce._pep.redpep484612646 import (
+    reduce_hint_pep484612646_typearg)
 from beartype._check.convert._reduce._pep.pep484585.redpep484585generic import (
     reduce_hint_pep484585_generic_subbed,
     reduce_hint_pep484585_generic_unsubbed,
@@ -48,9 +48,7 @@ from beartype._check.convert._reduce._pep.redpep589 import reduce_hint_pep589
 from beartype._check.convert._reduce._pep.redpep591 import reduce_hint_pep591
 from beartype._check.convert._reduce._pep.redpep593 import reduce_hint_pep593
 from beartype._check.convert._reduce._pep.redpep646 import (
-    reduce_hint_pep646_tuple,
-    reduce_hint_pep646_unpacked_typevartuple,
-)
+    reduce_hint_pep646_tuple)
 from beartype._check.convert._reduce._pep.redpep647742 import (
     reduce_hint_pep647742)
 from beartype._check.convert._reduce._pep.redpep673 import reduce_hint_pep673
@@ -415,7 +413,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # those type variables then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignTypeVar: reduce_hint_pep484_typevar,
+    HintSignTypeVar: reduce_hint_pep484612646_typearg,
 
     # Preserve deprecated PEP 484-compliant hints while emitting one non-fatal
     # deprecation warning for each.
@@ -532,8 +530,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # variable tuples then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignPep646UnpackedTypeVarTuple: (
-        reduce_hint_pep646_unpacked_typevartuple),
+    HintSignPep646UnpackedTypeVarTuple: reduce_hint_pep484612646_typearg,
 
     # ..................{ PEP 692                            }..................
     # Reduce PEP 692-compliant unpacked typed dictionaries (i.e., hints of the
