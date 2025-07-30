@@ -63,10 +63,10 @@ def test_is_hint_pep585_generic(hints_pep_meta) -> None:
             hint_pep_meta.is_pep585_generic)
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep585_generic_typeargs(hints_pep_meta) -> None:
+def test_get_hint_pep585_generic_typeargs_packed(hints_pep_meta) -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep585.get_hint_pep585_generic_typeargs`
+    :func:`beartype._util.hint.pep.proposal.pep585.get_hint_pep585_generic_typeargs_packed`
     function.
 
     Parameters
@@ -81,7 +81,7 @@ def test_get_hint_pep585_generic_typeargs(hints_pep_meta) -> None:
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
     from beartype._util.hint.pep.proposal.pep585 import (
-        get_hint_pep585_generic_typeargs)
+        get_hint_pep585_generic_typeargs_packed)
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from pytest import raises
 
@@ -91,7 +91,7 @@ def test_get_hint_pep585_generic_typeargs(hints_pep_meta) -> None:
         # If this hint is a PEP 585-compliant generic...
         if hint_pep_meta.is_pep585_generic:
             # Tuple of all type variables discovered by this getter.
-            hint_typevars = get_hint_pep585_generic_typeargs(hint_pep_meta.hint)
+            hint_typevars = get_hint_pep585_generic_typeargs_packed(hint_pep_meta.hint)
             assert isinstance(hint_typevars, tuple)
 
             # Assert that all items of this tuple are actually type variables.
@@ -120,4 +120,4 @@ def test_get_hint_pep585_generic_typeargs(hints_pep_meta) -> None:
         # getter raises an exception.
         else:
             with raises(BeartypeDecorHintPep585Exception):
-                get_hint_pep585_generic_typeargs(hint_pep_meta.hint)
+                get_hint_pep585_generic_typeargs_packed(hint_pep_meta.hint)

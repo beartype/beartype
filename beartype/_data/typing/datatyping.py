@@ -773,15 +773,26 @@ See Also
     Further details.
 '''
 
-# ....................{ PEP ~ (484|646)                    }....................
-# Type hints required to fully comply with PEP 484 and 646 -- the standards
-# collectively covering type parameters.
+# ....................{ PEP ~ (484|612|646)                }....................
+# Type hints required to fully comply with PEP 484, 612, and 646 -- the
+# standards collectively covering type parameters.
 
-Pep484646TypeArg = Union[TypeVar, HintPep646692UnpackedType]
+Pep484612646TypeArgPacked = Union[
+    TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
 '''
-:pep:`484`-compliant union matching a :pep:`484`- or :pep:`646`-compliant **type
-parameter** (i.e., :pep:`484`-compliant type variable or :pep:`646`-compliant
-unpacked type variable tuple).
+PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
+:pep:`646`-compliant **packed type parameter** (i.e., :pep:`484`-compliant type
+variable, pep:`612`-compliant parameter specification, or :pep:`646`-compliant
+type variable tuple).
+'''
+
+
+Pep484612646TypeArgUnpacked = Union[TypeVar, HintPep646692UnpackedType]
+'''
+:pep:`484`-compliant union matching a :pep:`484`-, pep:`612`-, or
+:pep:`646`-compliant **type parameter** (i.e., :pep:`484`-compliant type
+variable, :pep:`612`-compliant unpacked parameter specification, or
+:pep:`646`-compliant unpacked type variable tuple).
 
 This hint intentionally matches :pep:`646`-compliant unpacked type variable
 tuples (e.g., ``*Ts``) rather than merely :pep:`646`-compliant type variable
@@ -797,33 +808,20 @@ this hint is still preferable to even more ambiguous alternatives like
 '''
 
 
-TuplePep484646TypeArgs = Tuple[Pep484646TypeArg, ...]
+TuplePep484612646TypeArgsPacked = Tuple[Pep484612646TypeArgPacked, ...]
 '''
-:pep:`585`-compliant type hint matching a tuple of zero or more 
-:pep:`484`- or :pep:`646`-compliant **type parameters** (i.e.,
-:pep:`484`-compliant type variables or :pep:`646`-compliant unpacked type
-variable tuples).
-'''
-
-# ....................{ PEP ~ (484|612|646)                }....................
-# Type hints required to fully comply with PEP 484, 612, and 646 -- the
-# standards collectively covering type parameters.
-
-Pep484612646TypeArg = Union[
-    TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
-'''
-PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
-:pep:`646`-compliant **type parameter** (i.e., :pep:`484`-compliant type
-variable, pep:`612`-compliant parameter specification, or :pep:`646`-compliant
-type variable tuple).
-'''
-
-
-TuplePep484612646TypeArgs = Tuple[Pep484612646TypeArg, ...]
-'''
-:pep:`585`-compliant type hint matching a tuple of zero or more **type
+:pep:`585`-compliant type hint matching a tuple of zero or more **packed type
 parameters** (i.e., :pep:`484`-compliant type variables, pep:`612`-compliant
 parameter specifications, or :pep:`646`-compliant type variable tuples).
+'''
+
+
+TuplePep484612646TypeArgsUnpacked = Tuple[Pep484612646TypeArgUnpacked, ...]
+'''
+:pep:`585`-compliant type hint matching a tuple of zero or more :pep:`484`-,
+pep:`612`-, or :pep:`646`-compliant **unpacked type parameters** (i.e.,
+:pep:`484`-compliant type variables, :pep:`612`-compliant unpacked parameter
+specification, or :pep:`646`-compliant unpacked type variable tuples).
 '''
 
 # ....................{ PEP ~ 649                          }....................

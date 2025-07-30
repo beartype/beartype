@@ -303,7 +303,7 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484646_subbed_typeargs_to_hints)
     from beartype._check.metadata.hint.hintsane import HintSane
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
     from pytest import raises
 
@@ -319,8 +319,8 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     type in_thy[S, T] = list[S] | dict[S, T]
 
     # Tuples of all type variables parametrizing these type aliases.
-    irresistible_career_typevars = get_hint_pep_typeargs(irresistible_career)
-    in_thy_typevars = get_hint_pep_typeargs(in_thy)
+    irresistible_career_typevars = get_hint_pep_typeargs_packed(irresistible_career)
+    in_thy_typevars = get_hint_pep_typeargs_packed(in_thy)
 
     # ....................{ PASS                           }....................
     # Assert this getter passed PEP 695-compliant subscripted type aliases

@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Python >= 3.13:
 #    https://peps.python.org/pep-0696
 #
-#This PEP induces edge cases in _make_hint_pep484646_typeargs_to_hints().
+#This PEP induces edge cases in _make_hint_pep484612646_typeargs_to_hints().
 #Notably, when the caller passes more type parameters than child hints to that
 #factory, we currently silently ignore and thus preserve those "excess" type
 #parameters. Under Python >= 3.13, however, we *MUST* instead now:
@@ -78,12 +78,12 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignPep646UnpackedTypeVarTuple,
 )
 from beartype._data.typing.datatyping import (
-    Pep484646TypeArg,
-    TuplePep484646TypeArgs,
+    Pep484612646TypeArgUnpacked,
+    TuplePep484612646TypeArgsUnpacked,
 )
 from beartype._data.typing.datatypingport import (
     Hint,
-    Pep484646TypeArgToHint,
+    Pep484612646TypeArgUnpackedToHint,
     TupleHints,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -93,15 +93,15 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
     # is_hint_pep484_typevar,
 )
 from beartype._util.hint.pep.proposal.pep484612646 import (
-    die_unless_hint_pep484646_typearg_unpacked,
-    is_hint_pep484646_typearg_unpacked,
+    die_unless_hint_pep484612646_typearg_unpacked,
+    is_hint_pep484612646_typearg_unpacked,
 )
 from beartype._util.hint.pep.proposal.pep646692 import (
     make_hint_pep646_tuple_unpacked_unary)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin,
-    get_hint_pep_typeargs,
+    get_hint_pep_typeargs_unpacked,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -260,7 +260,7 @@ def reduce_hint_pep484612646_typearg(
                 # have yet to be reduced by this iteration *AND*...
                 typearg_to_hint_stack and
                 # This hint is still a type parameter...
-                is_hint_pep484646_typearg_unpacked(hint_reduced)
+                is_hint_pep484612646_typearg_unpacked(hint_reduced)
             ):
                 # Hint mapped to by this type parameter if one or more parent
                 # hints previously mapped this type parameter to a hint *OR* this
@@ -355,11 +355,11 @@ def reduce_hint_pep484612646_typearg(
 #variable tuples, please. *sigh*
 #
 #Begin by testing these new edge cases:
-#    _make_hint_pep484646_typeargs_to_hints(
+#    _make_hint_pep484612646_typeargs_to_hints(
 #        hint=...,  # <-- who cares
 #        hints_typearg=(S, T, U, *Ts,),
 #        hints_child=(int,),
-#    ) -> Pep484646TypeArgToHint:
+#    )
 #
 #More type parameters than child hints were passed, but that's a valid edge
 #case. Callers expect this factory to return "{S: int}". All remaining type
@@ -371,11 +371,11 @@ def reduce_hint_pep484612646_typearg(
 #
 #Now consider another call that superficially appears similar yet is
 #ultimately quite different:
-#    _make_hint_pep484646_typeargs_to_hints(
+#    _make_hint_pep484612646_typeargs_to_hints(
 #        hint=...,  # <-- who cares
 #        hints_typearg=(S, *Ts,),
 #        hints_child=(int,),
-#    ) -> Pep484646TypeArgToHint:
+#    )
 #
 #Callers expect this factory to return "{S: int, *Ts: ()}". All type
 #parameters are assigned, including "*Ts". Why? Because unpacked type
@@ -501,7 +501,7 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         exception_prefix=exception_prefix,
     )
 
-    # Tuple of all type parameters parametrizing this unsubscripted hint.
+    # Tuple of all unpacked type parameters parametrizing this hint.
     #
     # Note that PEP 695-compliant "type" alias syntax superficially appears to
     # erroneously permit type aliases to be parametrized by non-type parameters.
@@ -513,11 +513,12 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
     #     (int,)  # <-- doesn't look good so far
     #     >>> muh_alias.__parameters__[0] is int
     #     False  # <-- something good finally happened
-    hints_typearg = get_hint_pep_typeargs(hint_unsubbed)
+    hints_typearg = get_hint_pep_typeargs_unpacked(hint_unsubbed)
+    # print(f'hints_typearg: {hints_typearg}')
 
     # Tuple of all child hints subscripting this subscripted hint.
     hints_child = get_hint_pep_args(hint)
-    # print(f'hints_child: {repr(hints_child)}')
+    # print(f'hints_child: {hints_child}')
 
     # ....................{ REDUCE                         }....................
     # Decide the type parameter lookup table for this hint. Specifically, reduce
@@ -562,7 +563,7 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         # to each of these corresponding child hints.
         #
         # Note that we pass parameters positionally due to memoization.
-        typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
+        typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
             hint, hints_typearg, hints_child)
     # print(f'Mapped hint {hint} to type parameter lookup table {typearg_to_hint}!')
     # If doing so raises *ANY* exception, reraise this exception with each
@@ -664,9 +665,9 @@ semantics of this recursive data structure.
 '''
 
 # ....................{ PRIVATE ~ raisers                  }....................
-def _die_if_hint_pep484_typevar_bound_unbearable(
+def _die_unless_hint_pep484_typevar_bound_bearable(
     hint_child: Hint,
-    hint_typearg: Pep484646TypeArg,
+    hint_typearg: Pep484612646TypeArgUnpacked,
     hint_typearg_sign: Optional[HintSign],
 ) -> None:
     '''
@@ -681,7 +682,7 @@ def _die_if_hint_pep484_typevar_bound_unbearable(
     ----------
     hint_child : Hint
         Child hint to be inspected.
-    hint_typearg : Pep484646TypeArg
+    hint_typearg : Pep484612646TypeArgUnpacked
         Type parameter to be inspected.
     hint_typearg_sign : Optional[HintSign]
         Sign uniquely identifying this type parameter.
@@ -714,18 +715,18 @@ def _die_if_hint_pep484_typevar_bound_unbearable(
     # hint to be unpacked type parameters. Nonetheless, the caller is under
     # no such constraints. To guard against dev bitrot, we validate this.
     else:
-        die_unless_hint_pep484646_typearg_unpacked(
+        die_unless_hint_pep484612646_typearg_unpacked(
             hint=hint_typearg, exception_prefix=EXCEPTION_PLACEHOLDER)  # pyright: ignore
 
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
 #variable tuples, please. *sigh*
 @callable_cached
-def _make_hint_pep484646_typeargs_to_hints(
+def _make_hint_pep484612646_typeargs_to_hints(
     hint: Hint,
-    hints_typearg: TuplePep484646TypeArgs,
+    hints_typearg: TuplePep484612646TypeArgsUnpacked,
     hints_child: TupleHints,
-) -> Pep484646TypeArgToHint:
+) -> Pep484612646TypeArgUnpackedToHint:
     '''
     Type parameter lookup table mapping from the passed :pep:`484`- or
     :pep:`646`-compliant **type parameters** (i.e., :pep:`484`-compliant type
@@ -743,7 +744,7 @@ def _make_hint_pep484646_typeargs_to_hints(
         Parent hint presumably both subscripted by these child hints. This
         parent hint is currently only used to generate human-readable exception
         messages in the event of fatal errors.
-    hints_typearg : TuplePep484646TypeArgs
+    hints_typearg : TuplePep484612646TypeArgsUnpacked
         Tuple of one or more child type parameters originally subscripting the
         origin underlying this parent hint.
     hints_child : TupleHints
@@ -752,13 +753,13 @@ def _make_hint_pep484646_typeargs_to_hints(
 
     Returns
     -------
-    Pep484646TypeArgToHint
+    Pep484612646TypeArgUnpackedToHint
         Type parameter lookup table mapping these type parameters to these child
         hints.
 
     Raises
     ------
-    BeartypeDecorHintPep484646TypeArgException
+    BeartypeDecorHintPep484612646TypeArgException
         If either:
 
         * This tuple of type parameters is empty.
@@ -773,6 +774,8 @@ def _make_hint_pep484646_typeargs_to_hints(
         f'{repr(hints_typearg)} not tuple.')
     assert isinstance(hints_child, tuple), (
         f'{repr(hints_child)} not tuple.')
+    # print(f'hints_typearg: {hints_typearg}')
+    # print(f'hints_child: {hints_child}')
 
     # ....................{ PREAMBLE                       }....................
     # Number of passed type parameters and child hints respectively.
@@ -792,7 +795,7 @@ def _make_hint_pep484646_typeargs_to_hints(
 
     # ....................{ LOCALS                         }....................
     # Type parameter lookup table to be returned.
-    typearg_to_hint: Pep484646TypeArgToHint = {}
+    typearg_to_hint: Pep484612646TypeArgUnpackedToHint = {}
 
     # 0-based index of the current type parameter *AND* corresponding child hint
     # of the passed tuples visited by the "while" loop below.
@@ -933,7 +936,7 @@ def _make_hint_pep484646_typeargs_to_hints(
         # * This type parameter is a PEP 484-compliant type variable *AND*
         #   this child hint violates this type variable's bounded constraints.
         # * This type parameter is *NOT* a PEP 484-compliant type variable.
-        _die_if_hint_pep484_typevar_bound_unbearable(
+        _die_unless_hint_pep484_typevar_bound_bearable(
             hint_child=hint_child,
             hint_typearg=hint_typearg,
             hint_typearg_sign=hint_typearg_sign,
@@ -1055,7 +1058,7 @@ def _make_hint_pep484646_typeargs_to_hints(
             # * This type parameter is a PEP 484-compliant type variable *AND*
             #   this child hint violates this type variable's bounds.
             # * This type parameter is *NOT* a PEP 484-compliant type variable.
-            _die_if_hint_pep484_typevar_bound_unbearable(
+            _die_unless_hint_pep484_typevar_bound_bearable(
                 hint_child=hint_child,
                 hint_typearg=hint_typearg,
                 hint_typearg_sign=hint_typearg_sign,

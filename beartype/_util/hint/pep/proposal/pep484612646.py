@@ -22,7 +22,7 @@ from beartype._cave._cavefast import (
 from beartype._data.hint.sign.datahintsigns import (
     HintSignPep646UnpackedTypeVarTuple)
 from beartype._data.typing.datatyping import (
-    Pep484612646TypeArg,
+    Pep484612646TypeArgPacked,
     TypeException,
 )
 from beartype._data.typing.datatypingport import (
@@ -31,8 +31,9 @@ from beartype._data.typing.datatypingport import (
 )
 
 # ....................{ RAISERS                            }....................
+#FIXME: Is this still called anywhere? Excise if unneeded, please. *sigh*
 #FIXME: Unit test us up, please.
-def die_unless_hint_pep484646_typearg_unpacked(
+def die_unless_hint_pep484612646_typearg_unpacked(
     # Mandatory parameters.
     hint: Hint,
 
@@ -42,7 +43,8 @@ def die_unless_hint_pep484646_typearg_unpacked(
 ) -> None:
     '''
     Raise an exception unless the passed type hint is an **unpacked type
-    parameter** (i.e., :pep:`484`-compliant type variable or
+    parameter** (i.e., :pep:`484`-compliant type variable,
+    :pep:`612`-compliant unpacked parameter specification, or
     :pep:`646`-compliant unpacked type variable tuple).
 
     Parameters
@@ -63,7 +65,7 @@ def die_unless_hint_pep484646_typearg_unpacked(
     '''
 
     # If this hint is *NOT* an unpacked type parameter, raise an exception.
-    if not is_hint_pep484646_typearg_unpacked(hint):
+    if not is_hint_pep484612646_typearg_unpacked(hint):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
@@ -128,19 +130,15 @@ def die_unless_hint_pep484612646_typearg_packed(
     # Else, this hint is an unpacked type parameter.
 
 # ....................{ TESTERS                            }....................
+#FIXME: Is this still called anywhere? Excise if unneeded, please. *sigh*
 #FIXME: Unit test us up, please.
-def is_hint_pep484646_typearg_unpacked(
-    hint: Hint) -> TypeIs[Pep484612646TypeArg]:  # pyright: ignore
+def is_hint_pep484612646_typearg_unpacked(
+    hint: Hint) -> TypeIs[Pep484612646TypeArgPacked]:  # pyright: ignore
     '''
     :data:`True` only if the passed type hint is a **unpacked type parameter**
-    (i.e., :pep:`484`-compliant type variable or :pep:`646`-compliant unpacked
-    type variable tuple).
-
-    Caveats
-    -------
-    **The** :func:`.is_hint_pep484612646_typearg_packed_unpacked` **tester
-    should typically be called instead.** Most type parameters of real-world
-    interest to end users are unpacked rather than packed.
+    (i.e., :pep:`484`-compliant type variable, :pep:`612`-compliant unpacked
+    parameter specification, or :pep:`646`-compliant unpacked type variable
+    tuple).
 
     Parameters
     ----------
@@ -181,17 +179,11 @@ def is_hint_pep484646_typearg_unpacked(
 
 #FIXME: Unit test us up, please.
 def is_hint_pep484612646_typearg_packed(
-    hint: Hint) -> TypeIs[Pep484612646TypeArg]:  # pyright: ignore
+    hint: Hint) -> TypeIs[Pep484612646TypeArgPacked]:  # pyright: ignore
     '''
     :data:`True` only if the passed type hint is a **packed type parameter**
     (i.e., :pep:`484`-compliant type variable, pep:`612`-compliant parameter
     specification, or :pep:`646`-compliant type variable tuples).
-
-    Caveats
-    -------
-    **The** :func:`.is_hint_pep484612646_typearg_packed_unpacked` **tester
-    should typically be called instead.** Most type parameters of real-world
-    interest to end users are unpacked rather than packed.
 
     Parameters
     ----------
@@ -210,7 +202,7 @@ def is_hint_pep484612646_typearg_packed(
 # ....................{ GETTERS                            }....................
 def get_hint_pep484612646_typearg_packed_name(
     # Mandatory parameters.
-    hint: Pep484612646TypeArg,
+    hint: Pep484612646TypeArgPacked,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484612646Exception,
@@ -223,7 +215,7 @@ def get_hint_pep484612646_typearg_packed_name(
 
     Parameters
     ----------
-    hint : Pep484612646TypeArg
+    hint : Pep484612646TypeArgPacked
         Type parameter to be inspected.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults

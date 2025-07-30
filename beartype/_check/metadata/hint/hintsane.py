@@ -49,7 +49,7 @@ from beartype.typing import (
 )
 from beartype._data.typing.datatypingport import (
     Hint,
-    Pep484646TypeArgToHint,
+    Pep484612646TypeArgUnpackedToHint,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -110,7 +110,7 @@ class HintSane(object):
         are valid (rather than constituting an unexpected error), the caller is
         expected to detect this use case and silently short-circuit infinite
         recursion by avoiding revisiting previously visited recursive hints.
-    typearg_to_hint : Pep484646TypeArgToHint
+    typearg_to_hint : Pep484612646TypeArgUnpackedToHint
         **Type parameter lookup table** (i.e., immutable dictionary mapping from
         the **type parameter** (i.e., :pep:`484`-compliant type variable or
         :pep:`646`-compliant unpacked type variable tuple) originally
@@ -166,7 +166,7 @@ class HintSane(object):
     if TYPE_CHECKING:
         hint: Hint
         hint_recursable_to_depth: FrozenDictHintToInt
-        typearg_to_hint: Pep484646TypeArgToHint
+        typearg_to_hint: Pep484612646TypeArgUnpackedToHint
 
 
     _INIT_ARG_NAMES = frozenset((
@@ -192,7 +192,7 @@ class HintSane(object):
 
         # Optional parameters.
         hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
-        typearg_to_hint: Pep484646TypeArgToHint = FROZENDICT_EMPTY,
+        typearg_to_hint: Pep484612646TypeArgUnpackedToHint = FROZENDICT_EMPTY,
     ) -> None:
         '''
         Initialize this sanified type hint metadata with the passed parameters.
@@ -211,7 +211,7 @@ class HintSane(object):
             depth** (i.e., total number of times that parent hint has been
             visited during the current search from the root type hint down to
             this sanified type hint). Defaults to the empty frozen dictionary.
-        typearg_to_hint : Pep484646TypeArgToHint, default: FROZENDICT_EMPTY
+        typearg_to_hint : Pep484612646TypeArgUnpackedToHint, default: FROZENDICT_EMPTY
             **Type variable lookup table** (i.e., immutable dictionary mapping
             from the **type variables** (i.e., :pep:`484`-compliant
             :class:`typing.TypeVar` objects) originally parametrizing the
@@ -320,7 +320,7 @@ class HintSane(object):
         ----------
         Keyword parameters of the same name and type as instance variables of
         this object (e.g., ``hint: Hint``, ``typearg_to_hint:
-        Pep484646TypeArgToHint``).
+        Pep484612646TypeArgUnpackedToHint``).
 
         Returns
         -------

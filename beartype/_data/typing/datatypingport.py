@@ -43,8 +43,7 @@ from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 # Note that, although this higher-level submodule can safely import from the
 # lower-level "datatyping" submodule, the reverse is *NOT* the case.
 from beartype._data.typing.datatyping import (
-    Pep484646TypeArg,
-)
+    Pep484612646TypeArgUnpacked)
 
 # ....................{ FACTORIES                          }....................
 #FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
@@ -272,18 +271,30 @@ replacement of type variables by non-type variables in larger type hints).
 '''
 
 # ....................{ PEP ~ (484|646)                    }....................
-#FIXME: *CAN* we actually import from "datatyping" above? No idea. *sigh*
-# Pep484646TypeArgToHint = Pep484TypeVarToHint
-Pep484646TypeArgToHint = Dict[Pep484646TypeArg, Hint]
+Pep484612646TypeArgUnpackedToHint = Dict[Pep484612646TypeArgUnpacked, Hint]
 '''
-:pep:`585`-compliant type hint matching a :pep:`484`- and :pep:`646`-compliant
-**type parameter lookup table** (i.e., dictionary mapping from **type
-parameters** (i.e., :pep:`484`-compliant type variables and :pep:`646`-compliant
-unpacked type variable tuples) to the arbitrary type hints those type parameters
-map to).
+:pep:`585`-compliant type hint matching a :pep:`484`-, :pep:`612`-, and
+:pep:`646`-compliant **unpacked type parameter lookup table** (i.e., dictionary
+mapping from **unpacked type parameters** (i.e., :pep:`484`-compliant type
+variables, :pep:`612`-compliant unpacked parameter specifications, and
+:pep:`646`-compliant unpacked type variable tuples) to the arbitrary type hints
+those type parameters map to).
 
 Type parameter lookup tables are commonly employed throughout the
 :mod:`beartype` codebase to record **type parameter substitutions** (i.e., the
 dynamic replacement of type parameter by non-type parameter in larger type
-hints).
+hints). For this reason, this hint intentionally matches dictionaries whose
+keys are unpacked rather than packed type parameters. Why? Because type
+parameters are *always* specified in unpacked rather than packed form. Packed
+type parameters are thus useless for most intents and purposes.
+
+For example, in the generic class declaration:
+
+* ``class DisIsATensorYo[*Ts]()``, the ``*Ts`` denotes a :pep:`646`-compliant
+  unpacked type variable tuple.
+* ``class DisIsNotATensorYo[T]()``, the ``T`` denotes a :pep:`484`-compliant
+  type variable.
+
+It's literally infeasible to syntactically subscript or parametrize a type hint
+by a :pep:`646`-compliant packed type variable tuple.
 '''

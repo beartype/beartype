@@ -156,8 +156,8 @@
 #        * This new bound method should be decorated by the @beartype decorator
 #          subject to the new "typearg_to_hint" lookup table constructed above.
 #          The easiest way to accomplish this might be to just:
-#          * Define a new "BeartypeConf.typearg_to_hint: Pep484646TypeArgToHint
-#            = FrozenDict()" configuration option.
+#          * Define a new "BeartypeConf.typearg_to_hint:
+#            Pep484612646TypeArgUnpackedToHint = FrozenDict()" configuration option.
 #          * Configuration of this decoration of @beartype to pass that option.
 #          * Refactor the "beartype._check.convert" subpackage to respect this
 #            option when reducing. Probably easy... but who even knows anymore!?

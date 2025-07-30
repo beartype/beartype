@@ -120,7 +120,7 @@ from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep695Parameterizable,
-    TuplePep484612646TypeArgs,
+    TuplePep484612646TypeArgsPacked,
 )
 from beartype._util.error.utilerrget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
@@ -396,7 +396,7 @@ def _get_hint_pep695_parameterizable_typeparams(
 
     # Optional parameters.
     exception_prefix: str = '',
-) -> TuplePep484612646TypeArgs:
+) -> TuplePep484612646TypeArgsPacked:
     '''
     Tuple of the zero or more **type parameters** (i.e., :pep:`484`-compliant
     type variables, pep:`612`-compliant parameter specifications, and
@@ -415,7 +415,7 @@ def _get_hint_pep695_parameterizable_typeparams(
 
     Returns
     -------
-    TuplePep484612646TypeArgs
+    TuplePep484612646TypeArgsPacked
         Tuple of all type parameters parametrizing this parameterizable.
 
     Raises

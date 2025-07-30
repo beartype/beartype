@@ -18,10 +18,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ factory                    }....................
-def test_make_hint_pep484646_typeargs_to_hints() -> None:
+def test_make_hint_pep484612646_typeargs_to_hints() -> None:
     '''
     Test the private
-    :func:`beartype._check.convert._reduce._pep.redpep484612646._make_hint_pep484646_typeargs_to_hints`
+    :func:`beartype._check.convert._reduce._pep.redpep484612646._make_hint_pep484612646_typeargs_to_hints`
     factory function.
     '''
 
@@ -41,7 +41,7 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
         T_str_or_bytes,
     )
     from beartype._check.convert._reduce._pep.redpep484612646 import (
-        _make_hint_pep484646_typeargs_to_hints)
+        _make_hint_pep484612646_typeargs_to_hints)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -51,25 +51,25 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
     # ....................{ PASS                           }....................
     # Assert that this mapper correctly maps a single type variable to a single
     # type hint.
-    typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(None, (S,), (int,))
+    typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(None, (S,), (int,))
     assert typearg_to_hint == {S: int}
 
     # Assert that this mapper correctly maps a single unbounded type variable
     # to a single type hint.
-    typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
+    typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
         None, (T_any,), (bool,))
     assert typearg_to_hint == {T_any: bool}
 
     # Assert that this mapper correctly maps a single type variable bounded to a
     # type to a single type hint satisfying that type.
-    typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
+    typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
         None, (T_sequence,), (list,))
     assert typearg_to_hint == {T_sequence: list}
 
     # Assert that this mapper correctly maps a single type variable constrained
     # to two or more types to a single type hint satisfying at least one of
     # those types.
-    typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
+    typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
         None, (T_str_or_bytes,), (bytes,))
     assert typearg_to_hint == {T_str_or_bytes: bytes}
 
@@ -77,7 +77,7 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
     # type hints, including to a previously mapped type variable by silently
     # overwriting the type hint previously mapped to that type variable with the
     # corresponding passed hint.
-    typearg_to_hint = _make_hint_pep484646_typeargs_to_hints(
+    typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
         None, (T, S,), (float, complex,))
     assert typearg_to_hint == {S: complex, T: float}
 
@@ -85,12 +85,12 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
     # Assert that this mapper raises the expected exception when passed *NO*
     # type variables.
     with raises(BeartypeDecorHintPep484612646Exception):
-        _make_hint_pep484646_typeargs_to_hints(None, (), (bool,))
+        _make_hint_pep484612646_typeargs_to_hints(None, (), (bool,))
 
     # Assert that this mapper raises the expected exception when passed a type
     # variable that is *NOT* actually a type variables.
     with raises(BeartypeDecorHintPep484612646Exception):
-        _make_hint_pep484646_typeargs_to_hints(
+        _make_hint_pep484612646_typeargs_to_hints(
             None,
             (S, 'His brother Death. A rare and regal prey',),
             (int, str,),
@@ -99,18 +99,18 @@ def test_make_hint_pep484646_typeargs_to_hints() -> None:
     # Assert that this mapper raises the expected exception when passed *NO*
     # type hints.
     with raises(BeartypeDecorHintPep484612646Exception):
-        _make_hint_pep484646_typeargs_to_hints(None, (S,), ())
+        _make_hint_pep484612646_typeargs_to_hints(None, (S,), ())
 
     # Assert that this mapper raises the expected exception when passed more
     # type hints than type variables.
     with raises(BeartypeDecorHintPep484612646Exception):
-        _make_hint_pep484646_typeargs_to_hints(
+        _make_hint_pep484612646_typeargs_to_hints(
             None, (S, T,), (int, bool, complex,))
 
     # Assert that this mapper raises the expected violation when passed a type
     # hint violating the bounds of a passed type variable.
     with raises(BeartypeDecorHintPep484TypeVarViolation):
-        _make_hint_pep484646_typeargs_to_hints(
+        _make_hint_pep484612646_typeargs_to_hints(
             None, (S, T, T_sequence,), (float, complex, int,))
 
     #FIXME: Uncomment *AFTER* we generalize this mapper to type-check violations

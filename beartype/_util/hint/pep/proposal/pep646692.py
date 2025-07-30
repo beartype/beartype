@@ -343,3 +343,44 @@ def make_hint_pep646_tuple_unpacked_unary(hints_child: TupleHints) -> Hint:
 
     # Return this unpacked child tuple hint.
     return pep646_tuple_unpacked
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please. *sigh*
+def make_hint_pep646_typevartuple_unpacked(
+    hint: HintPep646TypeVarTupleType) -> Hint:
+    '''
+    Dynamically create and return a new :pep:`646`-compliant **unpacked type
+    variable tuple** (i.e., of the form "typing.Unpack[hint]") subscripted by
+    the passed type variable tuple.
+
+    Parameters
+    ----------
+    hint: HintPep646TypeVarTupleType
+        Type variable tuple with which to subscript the returned hint.
+
+    Returns
+    -------
+    Hint
+        Unpacked type variable tuple subscripted by this type variable tuple.
+    '''
+
+    # Avoid version-specific imports.
+    #
+    # Note that the PEP 646-compliant "typing.Unpack[...]" hint factory is
+    # defined *ONLY* under Python >= 3.11. Thankfully, the PEP 646-compliant
+    # "typing.TypeVarTuple" type is also defined *ONLY* under Python >= 3.11.
+    # Since the caller passed an instance of that type, the active Python
+    # interpreter *MUST* by definition target Python >= 3.11.
+    from beartype.typing import Unpack  # pyright: ignore
+
+    # If this hint is *NOT* a PEP 646-compliant type variable tuple, raise an
+    # exception.
+    if not isinstance(hint, HintPep646TypeVarTupleType):
+        raise BeartypeDecorHintPep646692Exception(
+            f'Type hint {repr(hint)} not PEP 646 type variable tuple '
+            f'(i.e., "typing.TypeVarTuple" object).'
+        )
+    # Else, this hint is a PEP 646-compliant type variable tuple.
+
+    # Return this unpacked child tuple hint.
+    return Unpack.__getitem__(hint)  # pyright: ignore

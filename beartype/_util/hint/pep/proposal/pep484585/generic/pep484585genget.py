@@ -23,7 +23,7 @@ from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
     ListHints,
-    Pep484646TypeArgToHint,
+    Pep484612646TypeArgUnpackedToHint,
     TupleHints,
 )
 from beartype._data.typing.datatyping import TypeException
@@ -35,7 +35,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     get_hint_pep484_generic_bases_unerased)
 from beartype._util.hint.pep.proposal.pep484612646 import (
-    is_hint_pep484646_typearg_unpacked)
+    is_hint_pep484612646_typearg_unpacked)
 from beartype._util.hint.pep.proposal.pep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
@@ -306,7 +306,7 @@ def get_hint_pep484585_generic_args_full(
     #
     # For the above call, this contents of this dictionary resemble:
     #     typearg_to_hint = {T: int}
-    typearg_to_hint: Pep484646TypeArgToHint = {}
+    typearg_to_hint: Pep484612646TypeArgUnpackedToHint = {}
 
     # ....................{ LOCALS ~ target                }....................
     # List of zero or more child hints transitively subscripting the passed
@@ -495,7 +495,7 @@ def get_hint_pep484585_generic_args_full(
                     for hint_base_arg_full_index, hint_base_arg_full in (
                         enumerate(hint_base_args_full)):
                         # If this hint is a type parameter...
-                        if is_hint_pep484646_typearg_unpacked(
+                        if is_hint_pep484612646_typearg_unpacked(
                             hint_base_arg_full):
                             # If a concrete (i.e., non-type parameter) child
                             # hint directly subscripting a sibling
@@ -539,7 +539,7 @@ def get_hint_pep484585_generic_args_full(
                                 # record that this child pseudo-superclass is
                                 # now known to be subscripted by at least one
                                 # type parameter.
-                                if is_hint_pep484646_typearg_unpacked(
+                                if is_hint_pep484612646_typearg_unpacked(
                                     hint_base_arg_full_new):  # pyright: ignore
                                     # print(f'Recording pseudo {hint_base} typevarred args {hint_base_arg_full}...')
                                     is_hint_base_arg_typearg = True
@@ -691,7 +691,7 @@ def get_hint_pep484585_generic_args_full(
         # this target pseudo-superclass and this hint...
         for hint_arg_full_index, hint_arg_full in enumerate(hint_args_full):
             # If this hint is a type parameter...
-            if is_hint_pep484646_typearg_unpacked(hint_arg_full):
+            if is_hint_pep484612646_typearg_unpacked(hint_arg_full):
                 # Either:
                 # * If a child hint directly subscripting a sibling
                 #   pseudo-superclass of this target pseudo-superclass has
