@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignPep484585GenericUnsubscripted)
+    HintSignPep484585GenericUnsubbed)
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type
 from beartype._check.pep.checkpep484585generic import (
@@ -45,7 +45,7 @@ def find_cause_pep484585_generic_unsubbed(
         Output cause type-checking this data.
     '''
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-    assert cause.hint_sign is HintSignPep484585GenericUnsubscripted, (
+    assert cause.hint_sign is HintSignPep484585GenericUnsubbed, (
         f'{repr(cause.hint_sign)} not generic.')
     # print(f'[find_cause_generic] cause.pith: {cause.pith}')
     # print(f'[find_cause_generic] cause.hint [pre-reduction]: {cause.hint}')

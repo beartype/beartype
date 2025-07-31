@@ -121,7 +121,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Dictionary mapping from arbitrary objects all of the same type
@@ -314,7 +314,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             # This unsubscripted alias transitively aliases an ignorable type
             # variable and is thus itself ignorable.
@@ -362,7 +362,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             # This unsubscripted type alias is ignorable as follows:
             # * The type variable "T" parametrizing this alias maps to *NO*
@@ -417,7 +417,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Instance of this generic containing one or more items.
@@ -463,7 +463,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Dictionary of key-value pairs of arbitrary types.
@@ -559,7 +559,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # 2-tuple of items of arbitrary types.
@@ -610,7 +610,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Arbitrary type.
@@ -709,7 +709,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Non-empty byte string.
@@ -777,7 +777,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             # This unsubscripted type alias is ignorable as follows:
             # * The type variable "T" parametrizing this alias maps to *NO*
@@ -815,7 +815,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             # This unsubscripted type alias is ignorable as follows:
             # * The type variable "T" parametrizing this alias maps to *NO*
@@ -854,7 +854,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             # This unsubscripted type alias is ignorable as follows:
             # * The type variable "T" parametrizing this alias maps to *NO*
@@ -901,7 +901,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
             # type variables implicitly instantiated only "on the fly" by Python
             # itself. These variables are *NOT* explicitly defined and thus
             # *NOT* safely accessible here outside of these aliases.
-            is_typevars=True,
+            is_typeargs=True,
             is_typing=False,
             piths_meta=(
                 # Byte string constant.

@@ -536,7 +536,7 @@ class HintsMeta(FixedList):
               another sign. Prominent examples include:
 
               * **Generic typed dictionaries** identifiable as both the
-                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
                 :data:`HintSignTypedDict` sign for :pep:`589`-compliant typed
                 dictionaries: e.g.,
 
@@ -547,7 +547,7 @@ class HintsMeta(FixedList):
                        generic_item: T
 
               * **Generic named tuples** identifiable as both the
-                :data:`.HintSignPep484585GenericUnsubscripted` sign *and* the
+                :data:`.HintSignPep484585GenericUnsubbed` sign *and* the
                 :data:`HintSignNamedTuple` sign for :pep:`484`-compliant named
                 tuples: e.g.,
 

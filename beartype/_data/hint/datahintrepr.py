@@ -56,7 +56,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignNumpyArray,
     HintSignOrderedDict,
     HintSignPanderaAny,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericUnsubbed,
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
@@ -82,10 +82,10 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: DictStrToHintSign = {
     # by the isinstance() builtin, these types break the mold in various ways.
 
     #FIXME: Uhm. Shouldn't this be "HintSignIO" rather than
-    #"HintSignPep484585GenericUnsubscripted"? What's this about, exactly? Please
+    #"HintSignPep484585GenericUnsubbed"? What's this about, exactly? Please
     #explain this away... somehow. Hmm. This is probably related to one of our
     #generics-specific reducers, isn't it? Makes sense, but let's document.
-    "<class 'typing.IO'>":       HintSignPep484585GenericUnsubscripted,
+    "<class 'typing.IO'>":       HintSignPep484585GenericUnsubbed,
     "<class 'typing.BinaryIO'>": HintSignBinaryIO,
     "<class 'typing.TextIO'>":   HintSignTextIO,
 
@@ -374,7 +374,7 @@ def _init() -> None:
             #something resembling:
             ## In global scope above:
             #_HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
-            #    HintSignProtocol: HintSignPep484585GenericUnsubscripted,
+            #    HintSignProtocol: HintSignPep484585GenericUnsubbed,
             #}
             #
             #    # In this iteration here:

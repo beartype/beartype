@@ -47,7 +47,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #* In this submodule:
 #  * Define a new private _get_hint_pep_sign_unique_or_none() getter, refactored
 #    from the existing get_hint_pep_sign_or_none() getter by dropping all
-#    reference to the "HintSignPep484585GenericUnsubscripted" sign. Otherwise,
+#    reference to the "HintSignPep484585GenericUnsubbed" sign. Otherwise,
 #    the implementation should be the exact same as get_hint_pep_sign_or_none().
 #  * Abandon the new optional "ignore_hint_signs" parameter passed to the
 #    get_hint_pep_signs_or_none() getter. Nice idea, but ultimately flawed. We
@@ -59,7 +59,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        hint_signs_list = acquire_instance(list)
 #
 #        if is_hint_pep484585_generic_unsubbed(hint):
-#            hint_signs_list.append(HintSignPep484585GenericUnsubscripted)
+#            hint_signs_list.append(HintSignPep484585GenericUnsubbed)
 #
 #        hint_sign_unique = _get_hint_pep_sign_unique_or_none(hint)
 #        hint_signs_list.append(hint_sign_unique)
@@ -120,10 +120,10 @@ from beartype._data.hint.sign.datahintsignmap import (
 )
 from beartype._data.hint.sign.datahintsigns import (
     HintSignNewType,
-    HintSignPep484585GenericSubscripted,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep646UnpackedTuple,
+    HintSignPep646TupleUnpacked,
     HintSignPep695TypeAliasSubscripted,
     HintSignTuple,
     HintSignTypedDict,
@@ -271,7 +271,7 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
       this function returns ::class:`beartype.cave.HintGenericSubscriptedType`.
     * A **generic** (i.e., subclass of the :class:`typing.Generic` abstract
       base class (ABC)), this function returns
-      :class:`HintSignPep484585GenericUnsubscripted`. Note this includes
+      :class:`HintSignPep484585GenericUnsubbed`. Note this includes
       :pep:`544`-compliant **protocols** (i.e., subclasses of the
       :class:`typing.Protocol` ABC), which implicitly subclass the
       :class:`typing.Generic` ABC as well.
@@ -332,11 +332,11 @@ def get_hint_pep_sign_or_none(hint: Hint) -> Optional[HintSign]:
 
        >>> class Genericity(typing.Generic[T]): pass
        >>> get_hint_pep_sign_or_none(Genericity)
-       HintSignPep484585GenericUnsubscripted
+       HintSignPep484585GenericUnsubbed
 
        >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
        >>> get_hint_pep_sign_or_none(Duplicity)
-       HintSignPep484585GenericUnsubscripted
+       HintSignPep484585GenericUnsubbed
     '''
 
     # Sign possibly ambiguously identifying this hint if this hint is
@@ -666,7 +666,7 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # generics. While non-ideal, the failure of PEP 585-compliant generics to
     # subclass a common superclass leaves us with little alternative.
     if is_hint_pep484585_generic_unsubbed(hint):
-        return HintSignPep484585GenericUnsubscripted
+        return HintSignPep484585GenericUnsubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant unsubscripted
     # generic.
     #
@@ -675,7 +675,7 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     # user-defined class superficially subclassing at least one PEP 484- or
     # 585-compliant type hint), return that sign. See above for commentary.
     elif is_hint_pep484585_generic_subbed(hint):
-        return HintSignPep484585GenericSubscripted
+        return HintSignPep484585GenericSubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
 
     #FIXME: Consider excising the is_hint_pep589() tester entirely. We meant
@@ -740,7 +740,7 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
         # {hint_child_child_M}], ..., {hint_child_N}]"), return the
         # corresponding sign.
         if is_hint_pep646_tuple_unpacked_unary(hint):
-            return HintSignPep646UnpackedTuple
+            return HintSignPep646TupleUnpacked
         # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
         # hint.
         #

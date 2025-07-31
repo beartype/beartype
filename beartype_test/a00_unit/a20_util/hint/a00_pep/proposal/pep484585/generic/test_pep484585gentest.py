@@ -64,7 +64,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype._data.hint.sign.datahintsigns import (
-        HintSignPep484585GenericUnsubscripted)
+        HintSignPep484585GenericUnsubbed)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic_unsubbed)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -75,7 +75,7 @@ def test_is_hint_pep484585_generic_unsubbed(hints_pep_meta) -> None:
     for hint_pep_meta in hints_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
         assert is_hint_pep484585_generic_unsubbed(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubscripted)
+            hint_pep_meta.pep_sign is HintSignPep484585GenericUnsubbed)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
@@ -97,7 +97,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
 
     # Defer test-specific imports.
     from beartype._data.hint.sign.datahintsigns import (
-        HintSignPep484585GenericSubscripted)
+        HintSignPep484585GenericSubbed)
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
         is_hint_pep484585_generic_subbed)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -108,7 +108,7 @@ def test_is_hint_pep484585_generic_subbed(hints_pep_meta) -> None:
     for hint_pep_meta in hints_pep_meta:
         # print(f'hint_pep_meta: {repr(hint_pep_meta)}')
         assert is_hint_pep484585_generic_subbed(hint_pep_meta.hint) is (
-            hint_pep_meta.pep_sign is HintSignPep484585GenericSubscripted)
+            hint_pep_meta.pep_sign is HintSignPep484585GenericSubbed)
 
     # Assert this tester rejects non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:

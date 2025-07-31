@@ -35,8 +35,8 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     from beartype._data.typing.datatyping import T
     from beartype._data.hint.sign.datahintsigns import (
         HintSignBinaryIO,
-        HintSignPep484585GenericSubscripted,
-        HintSignPep484585GenericUnsubscripted,
+        HintSignPep484585GenericSubbed,
+        HintSignPep484585GenericUnsubbed,
         HintSignTextIO,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
@@ -211,7 +211,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # User-defined protocol parametrized by *NO* type variables.
             HintPepMetadata(
                 hint=ProtocolCustomUntypevared,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=ProtocolCustomUntypevared,
                 is_type_typing=False,
                 piths_meta=(
@@ -225,10 +225,10 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # User-defined protocol parametrized by a type variable.
             HintPepMetadata(
                 hint=ProtocolCustomTypevared,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_type_typing=False,
-                typevars=(T,),
+                typeargs_packed=(T,),
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
                     HintPithSatisfiedMetadata(protocol_custom_structural),
@@ -241,9 +241,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # parametrized by the same type variables in the same order.
             HintPepMetadata(
                 hint=ProtocolCustomTypevared[T],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=ProtocolCustomTypevared,
-                typevars=(T,),
+                typeargs_packed=(T,),
                 is_typing=False,
                 piths_meta=(
                     # Unrelated object satisfying this protocol.
@@ -258,7 +258,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # parametrized by a concrete type satisfying this type variable.
             HintPepMetadata(
                 hint=ProtocolCustomTypevared[str],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=ProtocolCustomTypevared,
                 is_typing=False,
                 piths_meta=(
@@ -273,7 +273,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # User-defined abstract protocol subclassing the ABC superclass.
             HintPepMetadata(
                 hint=ProtocolCustomABC,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=ProtocolCustomABC,
                 is_type_typing=False,
                 piths_meta=(
@@ -335,9 +335,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=IO,
-                typevars=(AnyStr,),
+                typeargs_packed=(AnyStr,),
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
                     HintPithSatisfiedMetadata(
@@ -355,7 +355,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # All possible subscriptions of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[Any],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
@@ -371,13 +371,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             ),
             HintPepMetadata(
                 hint=IO[bytes],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
                 piths_meta=binaryio_piths_meta,
             ),
             HintPepMetadata(
                 hint=IO[str],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
@@ -397,9 +397,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Parametrization of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[AnyStr],
-                pep_sign=HintSignPep484585GenericSubscripted,
+                pep_sign=HintSignPep484585GenericSubbed,
                 generic_type=IO,
-                typevars=(AnyStr,),
+                typeargs_packed=(AnyStr,),
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
                     HintPithSatisfiedMetadata(
@@ -422,7 +422,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "SupportsAbs" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsAbs,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsAbs,
                 # Oddly, some but *NOT* all "typing.Supports*" ABCs are
                 # parametrized by type variables. However, these type variables
@@ -430,7 +430,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 # as public global variables by the "typing" module. To reduce
                 # the likelihood of unexpected breakage under future Python
                 # versions, we avoid asserting these exact type variables.
-                is_typevars=True,
+                is_typeargs=True,
                 piths_meta=(
                     # Integer constant.
                     HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
@@ -449,7 +449,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "SupportsBytes" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsBytes,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsBytes,
                 piths_meta=(
                     # Platform-agnostic filesystem path object constant.
@@ -496,7 +496,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "SupportsFloat" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsFloat,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsFloat,
                 piths_meta=(
                     # Integer constant.
@@ -517,7 +517,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # introduced by Python 3.8.0.
             HintPepMetadata(
                 hint=SupportsIndex,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsIndex,
                 piths_meta=(
                     # Integer constant.
@@ -537,7 +537,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "SupportsInt" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsInt,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsInt,
                 piths_meta=(
                     # Floating-point number constant.
@@ -560,11 +560,11 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # Unsubscripted "SupportsRound" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsRound,
-                pep_sign=HintSignPep484585GenericUnsubscripted,
+                pep_sign=HintSignPep484585GenericUnsubbed,
                 generic_type=SupportsRound,
                 # Oddly, some but *NOT* all "typing.Supports*" ABCs are
                 # parametrized by type variables. See "SupportsAbs" above.
-                is_typevars=True,
+                is_typeargs=True,
                 piths_meta=(
                     # Floating-point number constant.
                     HintPithSatisfiedMetadata(87.52),

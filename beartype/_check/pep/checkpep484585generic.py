@@ -455,7 +455,7 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
                     # conveying *NO* meaningful semantics and is thus
                     # effectively ignorable. Why? Because the caller already
                     # type-checks this pith against the generic subclassing this
-                    # superclass and thus this superclass as well in an
+                    # superclass and thus this superclass as well inside an
                     # isinstance() call (e.g., in the
                     # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
                     # "beartype._check.code.codemain" submodule).

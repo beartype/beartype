@@ -100,15 +100,15 @@ def test_get_hint_pep585_generic_typeargs_packed(hints_pep_meta) -> None:
                     HintSignTypeVar)
 
             # If this hint is parametrized by one or more type variables...
-            if hint_pep_meta.is_typevars:
+            if hint_pep_meta.is_typeargs:
                 # Assert that this getter returns one or more type variables.
                 assert hint_typevars
 
                 # If the exact type variables parametrizing this hint are known
                 # at test time...
-                if hint_pep_meta.typevars:
+                if hint_pep_meta.typeargs_packed:
                     # Assert that this getter returns only these type variables.
-                    assert hint_pep_meta.typevars == hint_typevars
+                    assert hint_pep_meta.typeargs_packed == hint_typevars
                 # Else, the exact type variables parametrizing this hint are
                 # unknown at test time. In this case, silently ignore the exact
                 # contents of this tuple.

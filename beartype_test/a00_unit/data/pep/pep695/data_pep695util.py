@@ -290,10 +290,10 @@ def unit_test_reduce_hint_pep695_unsubbed() -> None:
         )
 
 
-def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
+def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> (
     None):
     '''
-    Test the public ``reduce_hint_pep484646_subbed_typeargs_to_hints()`` getter
+    Test the public ``reduce_hint_pep484612646_subbed_typeargs_to_hints()`` getter
     with respect to :pep:`695`-compliant subscripted type aliases.
     '''
 
@@ -301,7 +301,7 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype._check.convert._reduce._pep.redpep484612646 import (
-        reduce_hint_pep484646_subbed_typeargs_to_hints)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints)
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
@@ -330,14 +330,14 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     # Note that these type variables are literally scoped (i.e., isolated) to
     # these aliases and thus accessible *ONLY* by directly accessing the
     # "__parameters__" dunder attribute on these aliases. It is what it is.
-    hint_sane = reduce_hint_pep484646_subbed_typeargs_to_hints(
+    hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
         irresistible_career[int])
     assert hint_sane == HintSane(
         hint=irresistible_career,
         typearg_to_hint=FrozenDict({irresistible_career_typevars[0]: int,}),
     )
 
-    hint_sane = reduce_hint_pep484646_subbed_typeargs_to_hints(
+    hint_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
         in_thy[bool, complex])
     assert hint_sane == HintSane(
         hint=in_thy,
@@ -351,15 +351,15 @@ def unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695() -> (
     # Assert this getter raises the expected exception when passed an object
     # that is *NOT* a PEP 695-compliant subscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484646_subbed_typeargs_to_hints(
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(
             'In thy devastating omnipotence,')
 
     # Assert this getter raises the expected exception when passed a PEP
     # 695-compliant unsubscripted type alias.
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484646_subbed_typeargs_to_hints(guiding_its)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(guiding_its)
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484646_subbed_typeargs_to_hints(irresistible_career)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(irresistible_career)
 
 # ....................{ TESTS ~ decorator                  }....................
 #FIXME: Actually call this unit test!

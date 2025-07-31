@@ -108,7 +108,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignAnnotated,
     HintSignCounter,
     HintSignForwardRef,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericUnsubbed,
     HintSignLiteral,
     HintSignPep484585TupleFixed,
     HintSignType,
@@ -1253,7 +1253,7 @@ def make_check_expr(
                 # If this hint is an unsubscripted generic, generate a Python
                 # code snippet type-checking the current pith against this
                 # unsubscripted generic.
-                elif hint_curr_sign is HintSignPep484585GenericUnsubscripted:
+                elif hint_curr_sign is HintSignPep484585GenericUnsubbed:
                     make_hint_pep484585_generic_unsubbed_check_expr(hints_meta)
                 # Else, this hint is *NOT* an unsubscripted generic.
                 #

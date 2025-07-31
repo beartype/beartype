@@ -20,7 +20,7 @@ from beartype._cave._cavefast import (
     HintPep484612646TypeArgPackedTypes,
 )
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignPep646UnpackedTypeVarTuple)
+    HintSignPep646TypeVarTupleUnpacked)
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgPacked,
     TypeException,
@@ -174,7 +174,7 @@ def is_hint_pep484612646_typearg_unpacked(
 
     # Return true only if this sign uniquely identifies this hint to be a PEP
     # 646-compliant unpacked type variable tuple.
-    return hint_sign is HintSignPep646UnpackedTypeVarTuple
+    return hint_sign is HintSignPep646TypeVarTupleUnpacked
 
 
 #FIXME: Unit test us up, please.

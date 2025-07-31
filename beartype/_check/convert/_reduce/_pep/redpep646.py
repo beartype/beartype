@@ -77,8 +77,8 @@ from beartype._data.typing.datatypingport import (
     TupleHints,
 )
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignPep646UnpackedTuple,
-    HintSignPep646UnpackedTypeVarTuple,
+    HintSignPep646TupleUnpacked,
+    HintSignPep646TypeVarTupleUnpacked,
 )
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED)
@@ -192,7 +192,7 @@ def reduce_hint_pep646_tuple(
         # hint "tuple[*tuple[typing.Any, ...]]", which unpacks to the PEP
         # 646-*AGNOSTIC* parent tuple hint "tuple[typing.Any, ...]", which then
         # simply reduces to the builtin "tuple" type.
-        if hint_child_sign is HintSignPep646UnpackedTypeVarTuple:
+        if hint_child_sign is HintSignPep646TypeVarTupleUnpacked:
             # Reduce this PEP 646-compliant tuple hint to the "tuple" type.
             return tuple
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked type
@@ -211,7 +211,7 @@ def reduce_hint_pep646_tuple(
         # conveying *NO* meaningful typing not already conveyed by the simpler
         # PEP 585-compliant tuple hint that this PEP 646-compliant tuple hint
         # reduces to. So it goes, Pythonistas. So it goes.
-        elif hint_child_sign is HintSignPep646UnpackedTuple:
+        elif hint_child_sign is HintSignPep646TupleUnpacked:
             # Reduce this PEP 646-compliant tuple hint to the semantically
             # equivalent PEP 585-compliant tuple hint subscripted by the zero or
             # more child child hints subscripting this unpacked child tuple
@@ -327,7 +327,7 @@ def reduce_hint_pep646_tuple(
                         hint_pep585_childs_list is not None and
                         # This child hint is a PEP 646-compliant unpacked child
                         # tuple hint *AND*...
-                        hint_child_sign is HintSignPep646UnpackedTuple and
+                        hint_child_sign is HintSignPep646TupleUnpacked and
                         # This child hint is *NOT* a PEP 646-compliant unpacked
                         # child variable-length tuple hint, this child hint
                         # *MUST* by elimination be a PEP 646-compliant unpacked

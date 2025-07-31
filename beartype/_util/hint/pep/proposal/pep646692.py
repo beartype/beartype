@@ -23,8 +23,8 @@ from beartype._data.typing.datatypingport import (
 )
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignPep646UnpackedTypeVarTuple,
-    HintSignPep692UnpackedTypedDict,
+    HintSignPep646TypeVarTupleUnpacked,
+    HintSignPep692TypedDictUnpacked,
 )
 
 # ....................{ TESTERS                            }....................
@@ -191,8 +191,8 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
     Disambiguate the passed **unpacked type hint** (i.e., :pep:`646`- or
     :pep:`692`-compliant ``typing.Unpack[...]`` hint) ambiguously identified by
     the :data:`.HintSignUnpack` sign into whichever of the unambiguous
-    :data:`.HintSignPep646UnpackedTypeVarTuple` or
-    :data:`.HintSignPep692UnpackedTypedDict` signs uniquely identify this kind
+    :data:`.HintSignPep646TypeVarTupleUnpacked` or
+    :data:`.HintSignPep692TypedDictUnpacked` signs uniquely identify this kind
     of unpacked type hint.
 
     This low-level getter assists the higher-level
@@ -217,11 +217,11 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         * :pep:`646`-compliant **unpacked type variable tuple** (i.e., child
           hint of the form "*{typevartuple}" where "{typevartuple}" is an
           instance of the :class:`typing.TypeVarTuple` type), this getter
-          returns :data:`.HintSignPep646UnpackedTypeVarTuple`.
+          returns :data:`.HintSignPep646TypeVarTupleUnpacked`.
         * :pep:`692`-compliant **unpacked typed dictionary** (i.e., hint of the
           form "*{typeddict}" where "{typeddict}" is an instance of the
           :class:`typing.TypedDict` type factory), this getter
-          returns :data:`.HintSignPep692UnpackedTypedDict`.
+          returns :data:`.HintSignPep692TypedDictUnpacked`.
 
     Raises
     ------
@@ -265,7 +265,7 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         # the sign disambiguating this parent unpack hint as a PEP 646-compliant
         # unpacked type variable tuple.
         if isinstance(hint_child, HintPep646TypeVarTupleType):
-            return HintSignPep646UnpackedTypeVarTuple
+            return HintSignPep646TypeVarTupleUnpacked
         # Else, this child hint is *NOT* a PEP 646-compliant unpacked type
         # variable tuple.
         #
@@ -273,7 +273,7 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
         # the sign disambiguating this parent unpack hint as a PEP 692-compliant
         # unpacked typed dictionary.
         elif is_hint_pep589(hint_child):
-            return HintSignPep692UnpackedTypedDict
+            return HintSignPep692TypedDictUnpacked
         # Else, this child hint is *NOT* a PEP 589-compliant typed dictionary.
     # Else, this parent unpack hint is subscripted by either no child hints *OR*
     # two or more child hints.

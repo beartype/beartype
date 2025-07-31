@@ -104,13 +104,13 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
     HintSignPattern,
-    HintSignPep484585GenericSubscripted,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
     HintSignPep646TupleFixedVariadic,
-    HintSignPep646UnpackedTypeVarTuple,
-    HintSignPep692UnpackedTypedDict,
+    HintSignPep646TypeVarTupleUnpacked,
+    HintSignPep692TypedDictUnpacked,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignPep695TypeAliasSubscripted,
     HintSignProtocol,
@@ -206,7 +206,7 @@ HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # If this hint is a PEP 484-compliant IO generic base class, reduce this
     # functionally useless hint to the corresponding functionally useful
     # beartype-specific PEP 544-compliant protocol implementing this hint.
-    HintSignPep484585GenericUnsubscripted: (
+    HintSignPep484585GenericUnsubbed: (
         reduce_hint_pep484585_generic_unsubbed),
 
     # ..................{ PEP 544                            }..................
@@ -474,7 +474,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     #   subscripted generic.
     # * Map the child hint subscripting this subscripted generic to the PEP
     #   484-compliant type variable parametrizing that unsubscripted generic.
-    HintSignPep484585GenericSubscripted: reduce_hint_pep484585_generic_subbed,
+    HintSignPep484585GenericSubbed: reduce_hint_pep484585_generic_subbed,
 
     # If this hint is a PEP 484- or 585-compliant subclass hint subscripted
     # by an ignorable child hint (e.g., "object", "typing.Any"), silently
@@ -530,7 +530,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # variable tuples then being subscripted by those concrete hints.
     #
     # tl;dr: the "typearg_to_hint" dictionary, which is uncached.
-    HintSignPep646UnpackedTypeVarTuple: reduce_hint_pep484612646_typearg,
+    HintSignPep646TypeVarTupleUnpacked: reduce_hint_pep484612646_typearg,
 
     # ..................{ PEP 692                            }..................
     # Reduce PEP 692-compliant unpacked typed dictionaries (i.e., hints of the
@@ -538,7 +538,7 @@ HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # 589-compliant "typing.TypedDict" subclass) annotating the variadic
     # positional argument of some callable to the ignorable
     # "HINT_SANE_IGNORABLE" singleton.
-    HintSignPep692UnpackedTypedDict: reduce_hint_pep692,
+    HintSignPep692TypedDictUnpacked: reduce_hint_pep692,
 
     # ..................{ PEP 647                            }..................
     # Reduce PEP 647-compliant "typing.TypeIs[...]" type hints to either:

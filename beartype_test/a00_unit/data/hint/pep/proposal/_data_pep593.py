@@ -504,7 +504,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 is_pep585_builtin_subbed=List is list,
-                typevars=(T_IsIntNonZero,),
+                typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
                     HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
@@ -530,7 +530,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 is_pep585_builtin_subbed=List is list,
-                typevars=(T_IsIntNonZero,),
+                typeargs_packed=(T_IsIntNonZero,),
                 piths_meta=(
                     # List of lists of non-zero integer constants.
                     HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
@@ -716,7 +716,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     pep_sign=HintSignList,
                     isinstanceable_type=list,
                     is_pep585_builtin_subbed=List is list,
-                    typevars=(T_IsNumberNonNegativeOrStrNonEmpty,),
+                    typeargs_packed=(T_IsNumberNonNegativeOrStrNonEmpty,),
                     piths_meta=(
                         # List of lists of positive number constants.
                         HintPithSatisfiedMetadata([

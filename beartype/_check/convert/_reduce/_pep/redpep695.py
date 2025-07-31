@@ -79,7 +79,7 @@ def reduce_hint_pep695_subbed(
 
     See Also
     --------
-    ``reduce_hint_pep484646_subbed_typeargs_to_hints``
+    ``reduce_hint_pep484612646_subbed_typeargs_to_hints``
         Further details.
     '''
     # print(f'Reducing PEP 695 subscripted type alias {hint} with parent {hint_parent_sane}...')
@@ -87,7 +87,7 @@ def reduce_hint_pep695_subbed(
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._check.convert._reduce._pep.redpep484612646 import (
-        reduce_hint_pep484646_subbed_typeargs_to_hints)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints)
 
     # ....................{ RECURSE                        }....................
     # If this PEP 695-compliant subscripted type alias is recursive, ignore this
@@ -123,7 +123,7 @@ def reduce_hint_pep695_subbed(
     #   this unsubscripted alias to all non-type variable hints subscripting
     #   this subscripted alias.
     # print(f'[reduce_hint_pep484585_generic_subbed] Reducing subscripted generic {repr(hint)}...')
-    hint_or_sane = reduce_hint_pep484646_subbed_typeargs_to_hints(
+    hint_or_sane = reduce_hint_pep484612646_subbed_typeargs_to_hints(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
         exception_prefix=exception_prefix,
@@ -147,7 +147,7 @@ def reduce_hint_pep695_subbed(
     else:
         # Non-recursable form of this type alias, defined as the *UNSUBSCRIPTED*
         # type alias directly returned by the prior call to the
-        # reduce_hint_pep484646_subbed_typeargs_to_hints() reducer.
+        # reduce_hint_pep484612646_subbed_typeargs_to_hints() reducer.
         hint_nonrecursable = hint_or_sane
 
     # Decide the recursion guard protecting this possibly recursive alias
@@ -167,7 +167,7 @@ def reduce_hint_pep695_subbed(
         hint_recursable=hint,
         # The non-recursable form of this type alias is the new *UNSUBSCRIPTED*
         # type alias encapsulated by the metadata returned by the prior call to
-        # the reduce_hint_pep484646_subbed_typeargs_to_hints() reducer.
+        # the reduce_hint_pep484612646_subbed_typeargs_to_hints() reducer.
         hint_nonrecursable=hint_nonrecursable,
         hint_parent_sane=hint_parent_sane,
     )

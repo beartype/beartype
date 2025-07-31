@@ -142,7 +142,7 @@ def hints_pep_meta_os() -> 'List[HintPepMetadata]':
             pep_sign=HintSignPep585BuiltinSubscriptedUnknown,
             isinstanceable_type=PathLike,
             is_pep585_builtin_subbed=True,
-            is_typevars=True,
+            is_typeargs=True,
             piths_meta=(
                 # Platform-agnostic path encapsulating a bytestring pathname.
                 HintPithSatisfiedMetadata(this_path_bytes),

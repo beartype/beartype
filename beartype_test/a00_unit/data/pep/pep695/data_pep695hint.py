@@ -38,7 +38,7 @@ from beartype.typing import (
     Union,
 )
 from beartype.vale import Is
-from beartype_test.a00_unit.data.hint.pep.proposal.pep484585.data_pep484585generic import (
+from beartype_test.a00_unit.data.hint.pep.generic.data_pep585generic import (
     Pep585IterableTContainerT,
     Pep585IterableTupleSTContainerTupleST,
 )

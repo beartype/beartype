@@ -305,10 +305,10 @@ class HintPepMetadata(HintNonpepMetadata):
         :data:`True` only if this hint is a :pep:`585`-compliant generic. If
         :data:`True`, then :attr:`is_type_typing` *must* be :data:`False`.
         Defaults to :data:`False`.
-    is_typevars : bool, optional
+    is_typeargs : bool, optional
         :data:`True` only if this hint is subscripted by one or more **type
         variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
-        ``bool(typevars)``.
+        ``bool(typeargs_packed)``.
     is_type_typing : bool, optional
         :data:`True` only if this hint's class is defined by the :mod:`typing`
         module. If ``True``, then :attr:`is_pep585_builtin_subbed` and
@@ -338,7 +338,7 @@ class HintPepMetadata(HintNonpepMetadata):
         Concrete :class:`beartype.door.TypeHint` subclass responsible for
         handling this hint if any *or* :data:`None` otherwise (e.g., if the
         :mod:`beartype.door` submodule has yet to support this hint).
-    typevars : Tuple[TypeVar, ...], optional
+    typeargs_packed : Tuple[TypeVar, ...], optional
         Tuple of the zero or more :pep:`484`-compliant **type variables** (i.e.,
         :class:`typing.TypeVar` objects) parametrizing this hint. Defaults to
         the empty tuple, implying this hint to be parametrized by *no* type
@@ -360,28 +360,33 @@ class HintPepMetadata(HintNonpepMetadata):
         is_args: Optional[bool] = None,
         is_pep585_builtin_subbed: Optional[bool] = None,
         is_pep585_generic: Optional[bool] = None,
-        is_typevars: bool = None,  # type: ignore[assignment]
+        is_typeargs: bool = None,  # type: ignore[assignment]
         is_type_typing: Optional[bool] = None,
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
         typehint_cls: Optional[Type['beartype.door.TypeHint']] = None,
-        typevars: Tuple[TypeVar, ...] = (),
+        typeargs_packed: 'TuplePep484612646TypeArgsPacked' = (),
         **kwargs
     ) -> None:
 
         # Defer test-specific imports.
         from beartype._data.hint.sign.datahintsigncls import HintSign
         from beartype._util.hint.utilhintget import get_hint_repr
+        from beartype._util.hint.pep.proposal.pep484612646 import (
+            is_hint_pep484612646_typearg_packed)
         from beartype.door import TypeHint
 
         # Validate passed non-variadic parameters.
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(isinstanceable_type, _NoneTypeOrType), (
             f'{repr(isinstanceable_type)} neither class nor "None".')
-        assert isinstance(typevars, tuple), f'{repr(typevars)} not tuple.'
-        assert all(isinstance(typevar, TypeVar) for typevar in typevars), (
-            f'{repr(typevars)} not tuple of type variables.')
+        assert isinstance(typeargs_packed, tuple), f'{repr(typeargs_packed)} not tuple.'
+        assert all(
+            is_hint_pep484612646_typearg_packed(typevar)
+            for typevar in typeargs_packed
+        ), (
+            f'{repr(typeargs_packed)} not tuple of type variables.')
 
         # Initialize our superclass with all remaining variadic parameters.
         super().__init__(**kwargs)
@@ -420,8 +425,8 @@ class HintPepMetadata(HintNonpepMetadata):
                 is_pep585_builtin_subbed or is_pep585_generic)
         # Default this parameter to true only if this hint is expected to be
         # parametrized by one or more type variables.
-        if is_typevars is None:
-            is_typevars = bool(typevars)
+        if is_typeargs is None:
+            is_typeargs = bool(typeargs_packed)
         # Default this parameter to true only if this hint's class is
         # defined by the "typing" module.
         if is_typing is None:
@@ -441,8 +446,8 @@ class HintPepMetadata(HintNonpepMetadata):
             f'{repr(is_pep585_generic)} not bool.')
         assert isinstance(is_type_typing, bool), (
             f'{repr(is_type_typing)} not bool.')
-        assert isinstance(is_typevars, bool), (
-            f'{repr(is_typevars)} not bool.')
+        assert isinstance(is_typeargs, bool), (
+            f'{repr(is_typeargs)} not bool.')
         assert isinstance(is_typing, bool), (
             f'{repr(is_typing)} not bool.')
         assert isinstance(generic_type, _NoneTypeOrType), (
@@ -475,13 +480,13 @@ class HintPepMetadata(HintNonpepMetadata):
         self.is_args = is_args
         self.is_pep585_builtin_subbed = is_pep585_builtin_subbed
         self.is_pep585_generic = is_pep585_generic
-        self.is_typevars = is_typevars
+        self.is_typeargs = is_typeargs
         self.is_type_typing = is_type_typing
         self.is_typing = is_typing
         self.isinstanceable_type = isinstanceable_type
         self.pep_sign = pep_sign
         self.typehint_cls = typehint_cls
-        self.typevars = typevars
+        self.typeargs_packed = typeargs_packed
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -499,11 +504,11 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    is_pep585_builtin_subbed={repr(self.is_pep585_builtin_subbed)},',
             f'    is_pep585_generic={repr(self.is_pep585_generic)},',
             f'    is_supported={repr(self.is_supported)},',
-            f'    is_typevars={repr(self.is_typevars)},',
+            f'    is_typeargs={repr(self.is_typeargs)},',
             f'    is_type_typing={repr(self.is_type_typing)},',
             f'    is_typing={repr(self.is_typing)},',
             f'    piths_meta={repr(self.piths_meta)},',
-            f'    typevars={repr(self.typevars)},',
+            f'    typeargs_packed={repr(self.typeargs_packed)},',
             f'    warning_type={repr(self.warning_type)},',
             f')',
         ))

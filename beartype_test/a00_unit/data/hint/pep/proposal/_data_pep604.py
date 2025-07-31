@@ -430,7 +430,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
             hint=Union[str, Iterable[Tuple[S, T]]],
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
-            typevars=(S, T,),
+            typeargs_packed=(S, T,),
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
             piths_meta=(
                 # String constant.

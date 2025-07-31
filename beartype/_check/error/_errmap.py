@@ -44,7 +44,7 @@ def _init() -> None:
         HintSignForwardRef,
         HintSignLiteral,
         HintSignNoReturn,
-        HintSignPep484585GenericUnsubscripted,
+        HintSignPep484585GenericUnsubbed,
         HintSignPep484585TupleFixed,
         HintSignType,
     )
@@ -111,7 +111,7 @@ def _init() -> None:
         HintSignNoReturn: find_cause_pep484_noreturn,
 
         # ....................{ PEP (484|585)              }....................
-        HintSignPep484585GenericUnsubscripted: (
+        HintSignPep484585GenericUnsubbed: (
             find_cause_pep484585_generic_unsubbed),
         HintSignPep484585TupleFixed: find_cause_pep484585_tuple_fixed,
         HintSignType: find_cause_pep484585_subclass,

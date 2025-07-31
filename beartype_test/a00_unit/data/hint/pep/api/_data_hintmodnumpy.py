@@ -100,7 +100,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             # where "+ScalarType" is a public type variable declared by the
             # "numpy" package bounded above by the "numpy.generic" abstract
             # base class for NumPy scalars. *sigh*
-            is_typevars=True,
+            is_typeargs=True,
             piths_meta=(
                 # NumPy array containing only 64-bit integers.
                 HintPithSatisfiedMetadata(asarray((

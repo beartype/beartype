@@ -63,13 +63,13 @@ from beartype._data.hint.sign.datahintsigns import (
     # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
-    HintSignPep484585GenericSubscripted,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
     HintSignPep484585TupleFixed,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignPep646UnpackedTuple,
-    HintSignPep646UnpackedTypeVarTuple,
+    HintSignPep646TupleUnpacked,
+    HintSignPep646TypeVarTupleUnpacked,
     HintSignPep695TypeAliasSubscripted,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignTypeAlias,
@@ -112,7 +112,7 @@ HINT_SIGNS_UNSUBSCRIPTABLE = frozenset((
     # *ALL* generics are (transitively) semantically subscripted either:
     # * Directly (e.g., "MuhGeneric[int]") *OR*...
     # * Indirectly by one or more of their unerased pseudo-superclasses.
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericUnsubbed,
 
     # ..................{ PEP 612                            }..................
     # PEP 612-compliant parameter specifications (i.e., "typing.ParamSpec"
@@ -332,8 +332,8 @@ type hint constraining *all* items contained in that container).
 
 # ....................{ SETS ~ kind                        }....................
 HINT_SIGNS_GENERIC: FrozenSetHintSign = frozenset((
-    HintSignPep484585GenericSubscripted,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
 ))
 '''
 Frozen set of all **generic signs** (i.e., arbitrary objects uniquely
@@ -573,11 +573,11 @@ HINT_SIGNS_PEP646_TUPLE_HINT_CHILD_UNPACKED: FrozenSetHintSign = frozenset((
     # Sign uniquely identifying unpacked child tuple hints (e.g., the child
     # hint "*tuple[float, ...]" subscripting the parent tuple hint
     # "tuple[complex, *tuple[float, ...], str]").
-    HintSignPep646UnpackedTuple,
+    HintSignPep646TupleUnpacked,
 
     # Sign uniquely identifying unpacked type variable tuples (e.g., the child
     # hint "*Ts" subscripting the parent tuple hint "tuple[int, *Ts]").
-    HintSignPep646UnpackedTypeVarTuple,
+    HintSignPep646TypeVarTupleUnpacked,
 ))
 '''
 Frozen set of all :pep:`646`-compliant **parent tuple hint unpacked child hint
@@ -604,8 +604,8 @@ _HINT_SIGNS_SUPPORTED_SHALLOW: FrozenSetHintSign = frozenset((
 
     # ..................{ PEP 646                            }..................
     HintSignUnpack,
-    # HintSignPep646UnpackedTuple,
-    # HintSignPep646UnpackedTypeVarTuple,
+    # HintSignPep646TupleUnpacked,
+    # HintSignPep646TypeVarTupleUnpacked,
 
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
@@ -657,8 +657,8 @@ HINT_SIGNS_SUPPORTED_DEEP: FrozenSetHintSign = (
         HintSignUnion,
 
         # ..................{ PEP (484|585)                  }..................
-        HintSignPep484585GenericSubscripted,
-        HintSignPep484585GenericUnsubscripted,
+        HintSignPep484585GenericSubbed,
+        HintSignPep484585GenericUnsubbed,
         HintSignPep484585TupleFixed,
         HintSignType,
 

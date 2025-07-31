@@ -46,8 +46,8 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignCallable,
     HintSignLiteral,
     HintSignNewType,
-    HintSignPep484585GenericSubscripted,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericSubbed,
+    HintSignPep484585GenericUnsubbed,
     HintSignTuple,
     HintSignPep484585TupleFixed,
     HintSignTypeVar,
@@ -168,8 +168,8 @@ _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignTuple:      TupleVariableTypeHint,
     HintSignPep484585TupleFixed: TupleFixedTypeHint,
     HintSignTypeVar:    TypeVarTypeHint,
-    HintSignPep484585GenericSubscripted:   GenericTypeHint,
-    HintSignPep484585GenericUnsubscripted: GenericTypeHint,
+    HintSignPep484585GenericSubbed:   GenericTypeHint,
+    HintSignPep484585GenericUnsubbed: GenericTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints

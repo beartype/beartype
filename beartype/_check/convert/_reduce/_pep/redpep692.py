@@ -33,9 +33,9 @@ from beartype._util.func.arg.utilfuncargiter import ArgKind
 # ....................{ REDUCERS                           }....................
 #FIXME: Split into disparate reducers:
 #* A new reduce_hint_pep646_unpacked_typevartuple() reducer targeting
-#  "HintSignPep646UnpackedTypeVarTuple".
+#  "HintSignPep646TypeVarTupleUnpacked".
 #* A new reduce_hint_pep692() reducer targeting
-#  "HintSignPep692UnpackedTypedDict".
+#  "HintSignPep692TypedDictUnpacked".
 #
 #For the moment, both should continue reducing to "object". Oh! Wait. Right. We
 #need to return "HINT_SANE_IGNORABLE" instead now, right? Make it so, please.

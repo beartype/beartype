@@ -27,8 +27,8 @@ from beartype._data.hint.sign.datahintsigncls import HintSign as _HintSign
 # User-defined generics, defined here rather than below to enable explicit
 # "typing" exports signed below to trivially alias these generic signs.
 
-HintSignPep484585GenericUnsubscripted = _HintSign(
-    name='HintSignPep484585GenericUnsubscripted')
+HintSignPep484585GenericUnsubbed = _HintSign(
+    name='Pep484585GenericUnsubscripted')
 '''
 Sign uniquely identifying all :pep:`484`- or :pep:`585`-compliant
 **unsubscripted generics** (i.e., types subclassing either the
@@ -38,8 +38,8 @@ Sign uniquely identifying all :pep:`484`- or :pep:`585`-compliant
 '''
 
 
-HintSignPep484585GenericSubscripted = _HintSign(
-    name='HintSignPep484585GenericSubscripted')
+HintSignPep484585GenericSubbed = _HintSign(
+    name='Pep484585GenericSubscripted')
 '''
 Sign uniquely identifying all :pep:`484`- or :pep:`585`-compliant **subscripted
 generics** (i.e., unsubscripted generic types originally parametrized by one or
@@ -53,11 +53,11 @@ of arbitrary child type hints): e.g.,
    # Unsubscripted PEP 585 generic parametrized by a PEP 484 type variable.
    >>> class MuhGeneric[T](list[T]): pass
    >>> get_hint_pep_sign_or_none(MuhGeneric)
-   HintSignPep484585GenericUnsubscripted
+   HintSignPep484585GenericUnsubbed
 
    # Subscripted PEP 585 generic replacing that type variable with a type.
    >>> get_hint_pep_sign_or_none(MuhGeneric[int])
-   HintSignPep484585GenericSubscripted
+   HintSignPep484585GenericSubbed
 '''
 
 # ....................{ SIGNS ~ explicit : setup           }....................
@@ -258,8 +258,8 @@ HintSignPattern = _make_typing_hint_sign('Pattern')
 
 # Other concrete type aliases.
 # IO  <-- ambiguous between subscripted and unsubscripted variants
-HintSignBinaryIO = HintSignPep484585GenericUnsubscripted
-HintSignTextIO = HintSignPep484585GenericUnsubscripted
+HintSignBinaryIO = HintSignPep484585GenericUnsubbed
+HintSignTextIO = HintSignPep484585GenericUnsubbed
 
 # One-off things.
 # AnyStr   <-- not a unique type hint (merely a constrained "TypeVar")
@@ -439,7 +439,8 @@ pure-Python origin classes (which are type-checkable as is).
 #FIXME: Excise after generalizing our dynamic code generator for tuple hints to
 #flexibly support PEP 646-compliant tuple hints. *sigh*
 
-HintSignPep646TupleFixedVariadic = _HintSign(name='Pep646TupleFixedVariadic')
+HintSignPep646TupleFixedVariadic = _HintSign(
+    name='Pep646TupleFixedVariadic')
 '''
 Sign uniquely identifying :pep:`646`-compliant **mixed fixed-variadic tuple type
 hints,** defined as hints of the form "tuple[{hint_child_1}, ...,
@@ -468,8 +469,7 @@ HintSignPep484585TupleFixed
 '''
 
 
-
-HintSignPep646UnpackedTuple = _HintSign(name='Pep646TupleUnpacked')
+HintSignPep646TupleUnpacked = _HintSign(name='Pep646TupleUnpacked')
 '''
 Sign uniquely identifying :pep:`646`-compliant **unpacked tuple type hints,**
 defined as child tuple hints of the form "*tuple[{hint_child_child_1}, ...,
@@ -482,8 +482,8 @@ denotes an arbitrary number of non-ellipses child type hints.
 '''
 
 
-HintSignPep646UnpackedTypeVarTuple = _HintSign(
-    name='HintSignPep646UnpackedTypeVarTuple')
+HintSignPep646TypeVarTupleUnpacked = _HintSign(
+    name='Pep646TypeVarTupleUnpacked')
 '''
 Sign uniquely identifying :pep:`646`-compliant **unpacked type variable
 tuples,** defined as child tuple hints of the form "*{typevartuple}" (where
@@ -496,8 +496,7 @@ denotes an arbitrary number of non-ellipses child type hints.
 '''
 
 # ....................{ SIGNS ~ implicit : pep : 692       }....................
-HintSignPep692UnpackedTypedDict = _HintSign(
-    name='HintSignPep692UnpackedTypedDict')
+HintSignPep692TypedDictUnpacked = _HintSign(name='Pep692TypedDictUnpacked')
 '''
 Sign uniquely identifying :pep:`692`-compliant **unpacked typed dictionaries,**
 defined as type hints of the form "typing.Unpack[{typeddict}]" where
@@ -508,7 +507,7 @@ defined as type hints of the form "typing.Unpack[{typeddict}]" where
 # "type {alias_name}[{typevar_name}] = {alias_value}" statements.
 
 HintSignPep695TypeAliasUnsubscripted = _HintSign(
-    name='HintSignPep695TypeAliasUnsubscripted')
+    name='Pep695TypeAliasUnsubscripted')
 '''
 :pep:`695`-compliant C-based :class:`types.TypeAliasType` class of all
 :pep:`695`-compliant **unsubscripted type aliases** (i.e., objects created as
@@ -520,7 +519,7 @@ Most real-world type aliases are unsubscripted and thus identified by this sign.
 
 
 HintSignPep695TypeAliasSubscripted = _HintSign(
-    name='HintSignPep695TypeAliasSubscripted')
+    name='Pep695TypeAliasSubscripted')
 '''
 Sign uniquely identifying all :pep:`695`-compliant **subscripted type aliases**
 (i.e., unsubscripted type aliases originally parametrized by one or more

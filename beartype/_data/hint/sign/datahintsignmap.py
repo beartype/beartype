@@ -56,7 +56,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignParamSpecArgs,
     HintSignParamSpecKwargs,
     HintSignPattern,
-    HintSignPep484585GenericUnsubscripted,
+    HintSignPep484585GenericUnsubbed,
     HintSignPep557DataclassInitVar,
     HintSignPep695TypeAliasUnsubscripted,
     HintSignProtocol,
@@ -437,7 +437,7 @@ def _init() -> None:
         # subscriptable PEP-compliant type hint factories semantically expand to
         # those factories subscripted by an implicit "Any" argument, "Generic"
         # semantically expands to the implicit "Generic[Any]" singleton.
-        'Generic': HintSignPep484585GenericUnsubscripted,
+        'Generic': HintSignPep484585GenericUnsubbed,
 
         # ..................{ PEP 544                        }..................
         # Unsubscripted "typing.Protocol" superclass. For unknown and presumably
@@ -488,7 +488,7 @@ def _init() -> None:
         # The unsubscripted PEP 484-compliant "Generic" superclass is
         # explicitly equivalent under PEP 484 to the "Generic[Any]"
         # subscription and thus slightly conveys meaningful semantics.
-        # 'Generic': HintSignPep484585GenericUnsubscripted,
+        # 'Generic': HintSignPep484585GenericUnsubbed,
 
         # ....................{ PEP 612                    }....................
         # PEP 612-compliant "typing.ParamSpec" type hints as merely instances of

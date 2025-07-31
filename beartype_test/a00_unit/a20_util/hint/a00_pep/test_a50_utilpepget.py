@@ -107,9 +107,9 @@ def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
+    from beartype._util.hint.pep.proposal.pep484612646 import (
+        is_hint_pep484612646_typearg_packed)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
-    from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
 
@@ -125,33 +125,33 @@ def test_get_hint_pep_typeargs_packed(hints_pep_meta) -> None:
     # ....................{ PASS                           }....................
     # For each PEP-compliant test hint...
     for hint_pep_meta in hints_pep_meta:
-        # Tuple of all type variables discovered by this getter.
-        hint_typevars = get_hint_pep_typeargs_packed(hint_pep_meta.hint)
-        assert isinstance(hint_typevars, tuple)
+        # Tuple of all packed type parameters discovered by this getter.
+        hint_typeargs_packed = get_hint_pep_typeargs_packed(hint_pep_meta.hint)
+        assert isinstance(hint_typeargs_packed, tuple)
 
-        # Assert all items of this tuple are actually type variables.
-        for hint_typevar in hint_typevars:
-            assert get_hint_pep_sign_or_none(hint_typevar) is HintSignTypeVar
+        # Assert all items of this tuple are actually packed type parameters.
+        for hint_typearg in hint_typeargs_packed:
+            assert is_hint_pep484612646_typearg_packed(hint_typearg) is True
 
-        # If this hint is parametrized by one or more type variables...
-        if hint_pep_meta.is_typevars:
-            # Assert this getter returns one or more type variables.
-            assert hint_typevars
+        # If this hint is parametrized by one or more type parameters...
+        if hint_pep_meta.is_typeargs:
+            # Assert this getter returns one or more type parameters.
+            assert hint_typeargs_packed
 
-            # If the exact type variables parametrizing this hint are known
+            # If the exact type parameters parametrizing this hint are known
             # at test time...
-            if hint_pep_meta.typevars:
-                # Assert this getter returns only these type variables.
-                assert hint_pep_meta.typevars == hint_typevars
-            # Else, the exact type variables parametrizing this hint are unknown
+            if hint_pep_meta.typeargs_packed:
+                # Assert this getter returns only these type parameters.
+                assert hint_pep_meta.typeargs_packed == hint_typeargs_packed
+            # Else, the exact type parameters parametrizing this hint are unknown
             # at test time. In this case, silently ignore the exact contents of
             # this tuple.
-        # Else, this hint is unparametrized by type variables. In this case,
+        # Else, this hint is unparametrized by type parameters. In this case,
         # assert this getter returns the empty tuple.
         else:
-            assert hint_typevars == ()
+            assert hint_typeargs_packed == ()
 
-    # Assert this getter returns *NO* type variables for non-"typing" hints.
+    # Assert this getter returns *NO* type parameters for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep_typeargs_packed(not_hint_pep) == ()
 

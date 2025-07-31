@@ -75,7 +75,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsigns import (
     HintSignTypeVar,
-    HintSignPep646UnpackedTypeVarTuple,
+    HintSignPep646TypeVarTupleUnpacked,
 )
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgUnpacked,
@@ -245,13 +245,13 @@ def reduce_hint_pep484612646_typearg(
             #rather than reperform this O(n) algorithm on every single instance
             #of this type parameter, this algorithm should simply be performed
             #exactly *ONCE* in the
-            #reduce_hint_pep484646_subbed_typeargs_to_hints() reducer. Please
+            #reduce_hint_pep484612646_subbed_typeargs_to_hints() reducer. Please
             #refactor this iteration over there *AFTER* the dust settles here.
             #FIXME: Actually, it's unclear how exactly this could be refactored
-            #into the reduce_hint_pep484646_subbed_typeargs_to_hints()
+            #into the reduce_hint_pep484612646_subbed_typeargs_to_hints()
             #reducer. This reduction here only searches for a single typevar in
             #O(n) time. Refactoring this over to
-            #reduce_hint_pep484646_subbed_typeargs_to_hints() would require
+            #reduce_hint_pep484612646_subbed_typeargs_to_hints() would require
             #generalizing this into an O(n**2) algorithm there, probably. Yow!
 
             # While...
@@ -323,7 +323,7 @@ def reduce_hint_pep484612646_typearg(
     # (e.g., due to either not being mapped by this lookup table *OR* being
     # mapped by this lookup table to yet another unpacked type variable tuple),
     # reduce this unconstrained type parameter to the ignorable singleton.
-    elif hint_reduced_sign is HintSignPep646UnpackedTypeVarTuple:
+    elif hint_reduced_sign is HintSignPep646TypeVarTupleUnpacked:
         return HINT_SANE_IGNORABLE
     # Else, this hint is *NOT* a PEP 646-compliant unpacked type variable tuple.
     # In this case, this hint is *NOT* an unconstrained type parameter and thus
@@ -384,7 +384,7 @@ def reduce_hint_pep484612646_typearg(
 #assigned the fallback tuple "()". Fascinating, huh?
 #FIXME: Document how PEP 646-compliant unpacked type variable tuples intersect
 #with the "Caveats" in the docstring below, please. *megasigh*
-def reduce_hint_pep484646_subbed_typeargs_to_hints(
+def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     # Mandatory parameters.
     hint: Hint,
 
@@ -500,6 +500,20 @@ def reduce_hint_pep484646_subbed_typeargs_to_hints(
         exception_cls=BeartypeDecorHintPep484612646Exception,
         exception_prefix=exception_prefix,
     )
+
+    #FIXME: [SPEED] Inefficient. This getter internally creates and then
+    #discards a full-blown list object just to create this unpacked tuple.
+    #Instead, we should:
+    #* Call get_hint_pep_typeargs_packed() instead here.
+    #* In the _make_hint_pep484612646_typeargs_to_hints() factory:
+    #  * Detect packed rather than unpacked type variable tuples everywhere.
+    #  * Manually pack the detected type variable tuple when mapping this type
+    #    variable tuple to another hint: e.g.,
+    #        hint_pep646_typevartuple_unpacked = (
+    #            make_hint_pep646_typevartuple_unpacked(
+    #                 hint_pep646_typevartuple))
+    #        typearg_to_hint[hint_pep646_typevartuple_unpacked] = (
+    #            hints_child_excess_tuple_unpacked)
 
     # Tuple of all unpacked type parameters parametrizing this hint.
     #
@@ -876,7 +890,7 @@ def _make_hint_pep484612646_typeargs_to_hints(
 
         # If this type parameter is a PEP 646-compliant unpacked type variable
         # tuple...
-        if hint_typearg_sign is HintSignPep646UnpackedTypeVarTuple:
+        if hint_typearg_sign is HintSignPep646TypeVarTupleUnpacked:
             # Note that this kind of type parameter has now been discovered.
             is_hint_typearg_pep646 = True
 
@@ -1017,7 +1031,7 @@ def _make_hint_pep484612646_typeargs_to_hints(
             # If this type parameter is a second PEP 646-compliant unpacked type
             # variable tuple, raise an exception. PEP 646 mandates that generics
             # be parametrized by at most one unpacked type variable tuple.
-            if hint_typearg_sign is HintSignPep646UnpackedTypeVarTuple:
+            if hint_typearg_sign is HintSignPep646TypeVarTupleUnpacked:
                 raise BeartypeDecorHintPep484612646Exception(
                     f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
                     f'parametrized by PEP 646-noncompliant type parameters '
@@ -1114,8 +1128,8 @@ def _make_hint_pep484612646_typeargs_to_hints(
             #
             # In either case, zero or more trailing child hints were *NOT*
             # consumed by the "while" loop above. Since an unpacked type
-            # variable permissively consumes zero or more child hints, this
-            # unpacked type variable tuple should now do so.
+            # variable tuple permissively consumes zero or more child hints,
+            # this unpacked type variable tuple should now do so.
             (
                 hints_pep646_child_index_curr >=
                 hints_pep646_child_index_first - 1
@@ -1131,24 +1145,71 @@ def _make_hint_pep484612646_typeargs_to_hints(
                 hints_pep646_child_index_curr
             ]
 
-            #FIXME: [SPEED] Inefficient. This factory internally creates and
-            #then discards a full-blown list object just to create this unpacked
-            #tuple. Instead, we should:
-            #* Define a new make_hint_pep646_tuple_unpacked_pure() factory,
-            #  dynamically creating and returning a new semantically equivalent
-            #  pure-Python "typing.Unpack[tuple[...]]" hint.
-            #* Call that factory here instead.
+            # If exactly one child hint has *NOT* already consumed, directly map
+            # this unpacked type variable to this child hint rather than mapping
+            # this unpacked type variable to the 1-tuple containing this child
+            # hint.
+            #
+            # Note that this is *NOT* merely a negligible optimization, although
+            # this is technically that. This edge case is required to correctly
+            # map unpacked type variable tuples to other unpacked type variable
+            # tuples *WITHOUT* triggering infinite recursion. Why? Because the
+            # reduce_hint_pep484612646_typearg() function reduces unpacked type
+            # variable tuples that have been previously mapped to unpacked type
+            # variable tuples with iteration over the returned "typearg_to_hint"
+            # dictionary. For efficiency and simplicity, that iteration only
+            # supports direct mappings. That iteration does *NOT* support an
+            # unpacked type variable tuple mapping to a 1-tuple containing an
+            # unpacked type variable tuple. Consider an example that would
+            # induce infinite recursion (unless explicitly handled):
+            #     from typing import Generic, TypeVarTuple
+            #
+            #     Ts = TypeVarTuple('Ts')
+            #     Tt = TypeVarTuple('Tt')
+            #
+            #     class RootGeneric(    Generic[*Ts]): pass
+            #     class StemGeneric(RootGeneric[*Tt]): pass
+            #     class LeafGeneric(StemGeneric[*Ts]): pass#
+            if len(hints_child_excess) == 1:
+                hints_child_excess = hints_child_excess[0]
+            # Else, either zero or two or more child hints have *NOT* already
+            # consumed. In either case, only a tuple of child hints correctly
+            # expresses this excessive mapping.
+            else:
+                #FIXME: [SPEED] Inefficient. This factory internally creates and
+                #then discards a full-blown list object just to create this
+                #unpacked tuple. Instead, we should:
+                #* Define a new make_hint_pep646_tuple_unpacked_pure() factory,
+                #  dynamically creating and returning a new semantically equivalent
+                #  pure-Python "typing.Unpack[tuple[...]]" hint.
+                #* Call that factory here instead.
 
-            # PEP 646-compliant unpacked tuple hint of the form
-            # "*tuple[hints_child_excess[0], ..., hints_child_excess[N]]".
-            hints_child_excess_tuple_unpacked = (
-                make_hint_pep646_tuple_unpacked_unary(hints_child_excess))
+                # PEP 646-compliant unpacked tuple hint of the form
+                # "*tuple[hints_child_excess[0], ..., hints_child_excess[N]]".
+                hints_child_excess_tuple_unpacked = (
+                    make_hint_pep646_tuple_unpacked_unary(hints_child_excess))
 
-            # Map this unpacked type variable tuple to this hint with a
-            # one-liner, overwriting any prior such mapping of this type
-            # variable by either this call or a prior call of this function.
-            typearg_to_hint[hint_pep646_typevartuple] = (
-                hints_child_excess_tuple_unpacked)
+                # Map this unpacked type variable tuple to this hint with a
+                # one-liner, overwriting any prior such mapping of this type
+                # variable by either this call or a prior call of this function.
+                #
+                # Note that PEP standards support mapping type variable tuples
+                # *ONLY* to other type variable tuples or unpacked tuple hints.
+                # Since the former fails to apply here, only the latter applies.
+                # Consider PEP 696, for example, which explicitly states:
+                #     TypeVarTuple defaults are defined using the same syntax as
+                #     TypeVars but use an unpacked tuple of types instead of a
+                #     single type or another in-scope TypeVarTuple (see Scoping
+                #     Rules).
+                #
+                #     DefaultTs = TypeVarTuple(
+                #         "DefaultTs", default=Unpack[tuple[str, int]])
+                #
+                # In the terminology of this factory function, the above example
+                # would effectively add this mapping to "typearg_to_hint":
+                #     {DefaultTs: *tuple[str, int]], ...}
+                typearg_to_hint[hint_pep646_typevartuple] = (
+                    hints_child_excess_tuple_unpacked)
     # Else, a PEP 646-compliant unpacked type variable tuple was *NOT* visited
     # by the "while" loop above. In this case, that loop has already
     # successfully visited all PEP 484-compliant type variables and thus all

@@ -1169,9 +1169,9 @@ objects annotating variadic parameters with syntax resembling
 '''
 
 # ....................{ TYPES ~ hint : pep : 646           }....................
-#FIXME: Define a new "HintPep646UnpackedTypeVarTupleType", please. It turns out
+#FIXME: Define a new "HintPep646TypeVarTupleUnpackedType", please. It turns out
 #that Python provides a private type that suffices here under Python >= 3.11:
-#    HintPep646UnpackedTypeVarTupleType = _typing._UnpackGenericAlias
+#    HintPep646TypeVarTupleUnpackedType = _typing._UnpackGenericAlias
 
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that these types are not

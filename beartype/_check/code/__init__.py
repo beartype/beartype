@@ -142,7 +142,7 @@
 #      instances subscripted by the same child hints, then:
 #      * Construct a new "typearg_to_hint" lookup table by passing
 #        "obj.__orig_class__" to the existing
-#        reduce_hint_pep484646_subbed_typeargs_to_hints() reducer and extracting
+#        reduce_hint_pep484612646_subbed_typeargs_to_hints() reducer and extracting
 #        the resulting "hint_sane.typearg_to_hint" lookup table from the
 #        returned "hint_sane" dataclass. A simpler API could facilitate this
 #        more readily. Whatevahs! *NEXT*.

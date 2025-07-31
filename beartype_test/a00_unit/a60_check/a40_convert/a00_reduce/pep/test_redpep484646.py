@@ -120,15 +120,15 @@ def test_make_hint_pep484612646_typeargs_to_hints() -> None:
     # with raises(BeartypeDecorHintPep484TypeVarViolation):
     #     map_pep484_typevars_to_hints(
     #         typearg_to_hint=typearg_to_hint,
-    #         typevars=(S, T, T_str_or_bytes,),
+    #         typeargs_packed=(S, T, T_str_or_bytes,),
     #         hints=(float, complex, ,),
     #     )
 
 # ....................{ TESTS ~ reduce                     }....................
-def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
+def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     '''
     Test the private
-    :mod:`beartype._check.convert._reduce._pep.redpep484612646.reduce_hint_pep484646_subbed_typeargs_to_hints`
+    :mod:`beartype._check.convert._reduce._pep.redpep484612646.reduce_hint_pep484612646_subbed_typeargs_to_hints`
     reducer.
     '''
 
@@ -137,7 +137,7 @@ def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     from beartype.roar import BeartypeDecorHintPep484612646Exception
     from beartype.typing import Generic
     from beartype._check.convert._reduce._pep.redpep484612646 import (
-        reduce_hint_pep484646_subbed_typeargs_to_hints)
+        reduce_hint_pep484612646_subbed_typeargs_to_hints)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
     from beartype._data.typing.datatyping import (
         S,
@@ -148,7 +148,7 @@ def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     # ....................{ PEP 484                        }....................
     # Assert that this reducer reduces the PEP 484-compliant "typing.Generic"
     # superclass subscripted by only type variables to simply that superclass.
-    assert reduce_hint_pep484646_subbed_typeargs_to_hints(
+    assert reduce_hint_pep484612646_subbed_typeargs_to_hints(
         Generic[S, T]) is Generic
 
     # ....................{ PEP 695                        }....................
@@ -163,10 +163,10 @@ def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     if IS_PYTHON_AT_LEAST_3_12:
         # Defer version-specific imports.
         from beartype_test.a00_unit.data.pep.pep695.data_pep695util import (
-            unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695)
+            unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695)
 
         # Perform this test.
-        unit_test_reduce_hint_pep484646_subbed_typeargs_to_hints_for_pep695()
+        unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695()
     # Else, this interpreter targets Python < 3.12 and thus fails to support PEP
     # 695.
 
@@ -174,5 +174,5 @@ def test_reduce_hint_pep484646_subbed_typeargs_to_hints() -> None:
     # Assert this reducer raises the expected exception when the passed object
     # is *NOT* a PEP 484- or 646-compliant type parameter.
     with raises(BeartypeDecorHintPep484612646Exception):
-        reduce_hint_pep484646_subbed_typeargs_to_hints(
+        reduce_hint_pep484612646_subbed_typeargs_to_hints(
             'In thy devastating omnipotence,')

@@ -49,6 +49,7 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep589.hints_pep589_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep646.hints_pep646_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep649.hints_pep649_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep695.hints_pep695_meta',
@@ -139,8 +140,8 @@ def hints_pep_ignorable_deep() -> frozenset:
     Session-scoped fixture yielding a frozen set of **deeply ignorable
     PEP-compliant type hints** (i.e., *not* ignorable on the trivial basis of
     their machine-readable representations alone and thus *not* in the low-level
-    :obj:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_DEEP` set,
-    but which are nonetheless ignorable and thus require dynamic testing by the
+    :obj:`beartype._data.hint.datahintrepr.HINTS_REPR_IGNORABLE_DEEP` set, but
+    which are nonetheless ignorable and thus require dynamic testing by the
     high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
     function to demonstrate this fact).
     '''
