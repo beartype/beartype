@@ -27,6 +27,33 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignPep692TypedDictUnpacked,
 )
 
+# ....................{ RAISERS                            }....................
+#FIXME: Unit test us up, please. *sigh*
+def die_unless_hint_pep646_typevartuple_packed(hint: Hint) -> None:
+    '''
+    Raise an exception unless the passed hint is a :pep:`646`-compliant **packed
+    type variable tuple** (i.e., :class:`TypeVarTuple` object).
+
+    Parameters
+    ----------
+    hint : Hint
+        Hint to be validated.
+
+    Raises
+    ------
+    BeartypeDecorHintPep646692Exception
+        If this hint is *not* a :pep:`646`-compliant packed type variable tuple.
+    '''
+
+    # If this hint is *NOT* a PEP 646-compliant type variable tuple, raise an
+    # exception.
+    if not isinstance(hint, HintPep646TypeVarTupleType):
+        raise BeartypeDecorHintPep646692Exception(
+            f'Type hint {repr(hint)} not PEP 646 type variable tuple '
+            f'(i.e., "typing.TypeVarTuple" object).'
+        )
+    # Else, this hint is a PEP 646-compliant type variable tuple.
+
 # ....................{ TESTERS                            }....................
 #FIXME: *INSUFFICIENT.* Technically, it's true that *MOST* real-world unpacked
 #tuples are low-level C objects created with the "*" unary prefix and thus
@@ -46,9 +73,9 @@ from beartype._data.hint.sign.datahintsigns import (
 #* Generalize the disambiguate_hint_pep646692_unpacked_sign() function defined
 #  below to additionally support unpacked tuple hints. *shrug*
 #FIXME: Unit test us up, please.
-def is_hint_pep646_tuple_unpacked_unary(hint: Hint) -> bool:
+def is_hint_pep646_tuple_unpacked_prefix(hint: Hint) -> bool:
     '''
-    :data:`True` only if the passed hint is a :pep:`646`-compliant **unary-based
+    :data:`True` only if the passed hint is a :pep:`646`-compliant **prefix-based
     unpacked child tuple hint** (i.e., of the form "*tuple[{hint_child_child_1},
     ..., {hint_child_child_M}]" subscripting a parent tuple hint of the form
     "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
@@ -285,10 +312,10 @@ def disambiguate_hint_pep646692_unpacked_sign(hint: Hint) -> HintSign:
     die_as_hint_unsupported(
         hint=hint, exception_cls=BeartypeDecorHintPep646692Exception)
 
-# ....................{ FACTORIES                          }....................
-def make_hint_pep646_tuple_unpacked_unary(hints_child: TupleHints) -> Hint:
+# ....................{ FACTORIES ~ tuple                  }....................
+def make_hint_pep646_tuple_unpacked_prefix(hints_child: TupleHints) -> Hint:
     '''
-    Dynamically create and return a new :pep:`646`-compliant **unary-based
+    Dynamically create and return a new :pep:`646`-compliant **prefix-based
     unpacked child tuple hint** (i.e., of the form "*tuple[{hint_child_child_1},
     ..., {hint_child_child_M}]" subscripting a parent tuple hint of the form
     "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
@@ -311,8 +338,8 @@ def make_hint_pep646_tuple_unpacked_unary(hints_child: TupleHints) -> Hint:
 
     Parameters
     ----------
-    hints : TupleHints
-        Tuple of all child hints with which to subscript the returned hint.
+    hints_child : TupleHints
+        Tuple of all child hints to be unpacked.
 
     Returns
     -------
@@ -331,32 +358,85 @@ def make_hint_pep646_tuple_unpacked_unary(hints_child: TupleHints) -> Hint:
     #"SyntaxError" if we even try doing this. *SADNESS*
     # return *hint
 
-    # PEP 646-compliant tuple hint subscripted by arbitrary children and this
-    # PEP 585-compliant tuple hint unpacked into a PEP 646-compliant unpacked
-    # tuple child hint. This is insane, because we're only going to rip this
-    # tuple child hint right back out of this parent tuple hint. Blame the
-    # Python <= 3.10 interpreter. *shrug*
-    list_pep585_tuple = [*pep585_tuple]  # type: ignore[valid-type]
+    # Tuple subscripted by this PEP 646-compliant type tuple hint unpacked into
+    # a PEP 646-compliant unpacked tuple child hint. This is insane, because
+    # we're only going to rip this tuple child hint right back out of this
+    # tuple. Blame the Python <= 3.10 interpreter.
+    #
+    # Note that a tuple was intentionally chosen for both space and time
+    # efficiency. Although *ANY* container would satisfy Python <= 3.10, a tuple
+    # has the advantage of being Python's most optimized container type.
+    tuple_unpacked_parent = (*pep585_tuple,)  # type: ignore[valid-type]
 
     # PEP 646-compliant unpacked child tuple hint subscripting this parent.
-    pep646_tuple_unpacked = list_pep585_tuple[0]
+    tuple_unpacked = tuple_unpacked_parent[0]
 
     # Return this unpacked child tuple hint.
-    return pep646_tuple_unpacked
+    return tuple_unpacked
 
-# ....................{ FACTORIES                          }....................
+# ....................{ FACTORIES ~ typevartuple           }....................
 #FIXME: Unit test us up, please. *sigh*
-def make_hint_pep646_typevartuple_unpacked(
+def make_hint_pep646_typevartuple_unpacked_prefix(
     hint: HintPep646TypeVarTupleType) -> Hint:
     '''
-    Dynamically create and return a new :pep:`646`-compliant **unpacked type
-    variable tuple** (i.e., of the form "typing.Unpack[hint]") subscripted by
-    the passed type variable tuple.
+    Dynamically create and return a new :pep:`646`-compliant **prefix-based
+    unpacked type variable tuple** (i.e., of the form ``*hint``) prefixing the
+    passed type variable tuple by the unary unpacking ``*`` operator.
 
     Parameters
     ----------
     hint: HintPep646TypeVarTupleType
-        Type variable tuple with which to subscript the returned hint.
+        Type variable tuple to be unpacked.
+
+    Returns
+    -------
+    Hint
+        Unpacked type variable tuple synthesized from this type variable tuple.
+
+    See Also
+    --------
+    :func:`.make_hint_pep646_tuple_unpacked_prefix`
+        Further discussion on prefix-based unpacking.
+    '''
+
+    # If this hint is *NOT* a type variable tuple, raise an exception.
+    die_unless_hint_pep646_typevartuple_packed(hint)  # pyright: ignore
+    # Else, this hint is a type variable tuple.
+
+    #FIXME: Uncomment after dropping Python <= 3.10 support, which raises a
+    #"SyntaxError" if we even try doing this. *SADNESS*
+    # return *hint
+
+    # Tuple subscripted by this PEP 646-compliant type variable tuple unpacked
+    # into a PEP 646-compliant unpacked type variable tuple. This is insane,
+    # because we're only going to rip this unpacked type variable tuple right
+    # back out of this tuple. Blame the Python <= 3.10 interpreter.
+    #
+    # Note that a tuple was intentionally chosen for both space and time
+    # efficiency. Although *ANY* container would satisfy Python <= 3.10, a tuple
+    # has the advantage of being Python's most optimized container type.
+    typevartuple_unpacked_parent = (*hint,)  # type: ignore[misc]
+
+    # PEP 646-compliant unpacked child tuple hint subscripting this parent.
+    typevartuple_unpacked = typevartuple_unpacked_parent[0]
+
+    # Return this unpacked type variable tuple.
+    return typevartuple_unpacked
+
+
+
+#FIXME: Unit test us up, please. *sigh*
+def make_hint_pep646_typevartuple_unpacked_subbed(
+    hint: HintPep646TypeVarTupleType) -> Hint:
+    '''
+    Dynamically create and return a new :pep:`646`-compliant
+    **subscription-based unpacked type variable tuple** (i.e., of the form
+    ``typing.Unpack[hint]``) subscripted by the passed type variable tuple.
+
+    Parameters
+    ----------
+    hint: HintPep646TypeVarTupleType
+        Type variable tuple to be unpacked.
 
     Returns
     -------
@@ -373,14 +453,9 @@ def make_hint_pep646_typevartuple_unpacked(
     # interpreter *MUST* by definition target Python >= 3.11.
     from beartype.typing import Unpack  # pyright: ignore
 
-    # If this hint is *NOT* a PEP 646-compliant type variable tuple, raise an
-    # exception.
-    if not isinstance(hint, HintPep646TypeVarTupleType):
-        raise BeartypeDecorHintPep646692Exception(
-            f'Type hint {repr(hint)} not PEP 646 type variable tuple '
-            f'(i.e., "typing.TypeVarTuple" object).'
-        )
-    # Else, this hint is a PEP 646-compliant type variable tuple.
+    # If this hint is *NOT* a type variable tuple, raise an exception.
+    die_unless_hint_pep646_typevartuple_packed(hint)  # pyright: ignore
+    # Else, this hint is a type variable tuple.
 
     # Return this unpacked child tuple hint.
     return Unpack.__getitem__(hint)  # pyright: ignore

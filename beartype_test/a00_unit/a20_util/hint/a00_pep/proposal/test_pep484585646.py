@@ -29,6 +29,8 @@ def test_is_hint_pep484585646_tuple_variadic() -> None:
     # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep484585646 import (
         is_hint_pep484585646_tuple_variadic)
+    from beartype._util.hint.pep.proposal.pep646692 import (
+        make_hint_pep646_tuple_unpacked_prefix)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from typing import Tuple  # <-- intentionally import the PEP 484 variant
 
@@ -44,12 +46,14 @@ def test_is_hint_pep484585646_tuple_variadic() -> None:
     # If the active Python interpreter targets Python >= 3.11 and thus supports
     # PEP 646...
     if IS_PYTHON_AT_LEAST_3_11:
-        # Defer version-specific imports.
-        from beartype_test.a00_unit.data.pep.data_pep646 import (
-            unit_test_is_hint_pep484585646_tuple_variadic)
+        # PEP 646-compliant variadic unpacked child tuple hint subscripted by
+        # arbitrary child child hints.
+        hint_pep646_tuple_unpacked_variadic = (
+            make_hint_pep646_tuple_unpacked_prefix((str, ...)))
 
-        # Perform this test.
-        unit_test_is_hint_pep484585646_tuple_variadic()
+        # Assert this tester accepts this hint.
+        assert is_hint_pep484585646_tuple_variadic(
+            hint_pep646_tuple_unpacked_variadic) is True
     # Else, the active Python interpreter targets Python <= 3.10 and thus fails
     # to support PEP 646.
 

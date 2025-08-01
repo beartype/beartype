@@ -242,7 +242,7 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
     if hint_typeargs:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep646692 import (
-            make_hint_pep646_typevartuple_unpacked)
+            make_hint_pep646_typevartuple_unpacked_subbed)
 
         # List of all unpacked type parameters to be returned.
         hint_typeargs_unpacked = []
@@ -263,7 +263,7 @@ def get_hint_pep_typeargs_unpacked(hint: Hint) -> (
             # tuple, coerce this into a desirable PEP 646-compliant unpacked
             # type variable tuple.
             if isinstance(hint_typearg, HintPep646TypeVarTupleType):
-                hint_typearg = make_hint_pep646_typevartuple_unpacked(
+                hint_typearg = make_hint_pep646_typevartuple_unpacked_subbed(
                     hint_typearg)
             # Else, this is *NOT* an undesirable PEP 646-compliant packed type
             # variable tuple. In this case, preserve this type parameter.

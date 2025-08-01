@@ -146,7 +146,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
 from beartype._util.hint.pep.proposal.pep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.pep646692 import (
     disambiguate_hint_pep646692_unpacked_sign,
-    is_hint_pep646_tuple_unpacked_unary,
+    is_hint_pep646_tuple_unpacked_prefix,
 )
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
@@ -739,7 +739,7 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
         # "tuple[{hint_child_1}, ..., *tuple[{hint_child_child_1}, ...,
         # {hint_child_child_M}], ..., {hint_child_N}]"), return the
         # corresponding sign.
-        if is_hint_pep646_tuple_unpacked_unary(hint):
+        if is_hint_pep646_tuple_unpacked_prefix(hint):
             return HintSignPep646TupleUnpacked
         # Else, this hint is *NOT* a PEP 646-compliant unpacked child tuple
         # hint.

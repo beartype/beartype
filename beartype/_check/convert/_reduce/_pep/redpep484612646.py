@@ -97,7 +97,7 @@ from beartype._util.hint.pep.proposal.pep484612646 import (
     is_hint_pep484612646_typearg_unpacked,
 )
 from beartype._util.hint.pep.proposal.pep646692 import (
-    make_hint_pep646_tuple_unpacked_unary)
+    make_hint_pep646_tuple_unpacked_prefix)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin,
@@ -510,23 +510,36 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     #  * Manually pack the detected type variable tuple when mapping this type
     #    variable tuple to another hint: e.g.,
     #        hint_pep646_typevartuple_unpacked = (
-    #            make_hint_pep646_typevartuple_unpacked(
+    #            make_hint_pep646_typevartuple_unpacked_subbed(
     #                 hint_pep646_typevartuple))
     #        typearg_to_hint[hint_pep646_typevartuple_unpacked] = (
     #            hints_child_excess_tuple_unpacked)
 
-    # Tuple of all unpacked type parameters parametrizing this hint.
+    # Tuple of all unpacked type parameters parametrizing this unsubscripted
+    # hint.
     #
-    # Note that PEP 695-compliant "type" alias syntax superficially appears to
-    # erroneously permit type aliases to be parametrized by non-type parameters.
-    # In truth, "type" syntax simply permits type aliases to be parametrized by
-    # type parameters that ambiguously share the same names as builtin types --
-    # which then silently shadow those types for the duration of those aliases:
-    #     >>> type muh_alias[int] = float | complex  # <-- *gulp*
-    #     >>> muh_alias.__parameters__
-    #     (int,)  # <-- doesn't look good so far
-    #     >>> muh_alias.__parameters__[0] is int
-    #     False  # <-- something good finally happened
+    # Note that:
+    # * PEP 484-compliant subscripted parametrized generics incorrectly report
+    #   being unparametrized, due to outstanding issues in the "typing" module.
+    #   Since these issues *ONLY* apply to subscripted rather than unsubscripted
+    #   parametrized generics, we strongly prefer the latter for the purposes of
+    #   introspecting type parameters:
+    #       >>> from beartype.typing import Generic, TypeVar
+    #       >>> T = TypeVar('T')
+    #       >>> class Ugh(Generic[T]): pass
+    #       >>> get_hint_pep_typeargs_packed(Ugh)
+    #       (~T,)  # <-- this is good
+    #       >>> get_hint_pep_typeargs_packed(Ugh[int])
+    #       ()  # <----- THIS IS BAD. wtf, "typing"?
+    # * PEP 695-compliant "type" alias syntax superficially appears to
+    #   erroneously permit type aliases to be parametrized by non-type
+    #   parameters. In truth, "type" syntax simply permits type aliases to be
+    #   parametrized by type parameters that ambiguously share the same names as
+    #   builtin types -- which then silently shadow those types for the duration
+    #   of those aliases:
+    #     >>> type muh_alias[int] = float | complex  # <-- *gulp* >>>
+    #     muh_alias.__parameters__ (int,)  # <-- doesn't look good so far >>>
+    #     muh_alias.__parameters__[0] is int False  # <-- something good finally happened
     hints_typearg = get_hint_pep_typeargs_unpacked(hint_unsubbed)
     # print(f'hints_typearg: {hints_typearg}')
 
@@ -1187,7 +1200,7 @@ def _make_hint_pep484612646_typeargs_to_hints(
                 # PEP 646-compliant unpacked tuple hint of the form
                 # "*tuple[hints_child_excess[0], ..., hints_child_excess[N]]".
                 hints_child_excess_tuple_unpacked = (
-                    make_hint_pep646_tuple_unpacked_unary(hints_child_excess))
+                    make_hint_pep646_tuple_unpacked_prefix(hints_child_excess))
 
                 # Map this unpacked type variable tuple to this hint with a
                 # one-liner, overwriting any prior such mapping of this type
