@@ -68,12 +68,13 @@ def test_reduce_hint() -> None:
 
         Attributes
         ----------
+        conf : BeartypeConf
+            Input beartype configuration configuring this reduction.
         hint_unreduced : Hint
             Input hint to be reduced.
         hint_reduced : Hint
-            Output hint produced by reducing this input hint.
-        conf : BeartypeConf
-            Beartype configuration configuring this reduction.
+            Output hint expected to be returned from the :func:`.reduce_hint`
+            reducer when passed these inputs.
         '''
 
         # ..................{ INITIALIZERS                   }..................
@@ -84,8 +85,8 @@ def test_reduce_hint() -> None:
             hint_unreduced: Hint,
 
             # Optional parameters.
-            hint_reduced: Hint = SENTINEL,
             conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+            hint_reduced: Hint = SENTINEL,
         ) -> None:
             '''
             Initialize this valid type hint reduction case.
@@ -94,15 +95,16 @@ def test_reduce_hint() -> None:
             ----------
             hint_unreduced : Hint
                 Input hint to be reduced.
+            conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
+                Input beartype configuration configuring this reduction.
+                Defaults to the default beartype configuration.
             hint_reduced : Hint, default: SENTINEL
-                Output hint produced by reducing this input hint. Defaults to
-                the sentinel placeholder, in which case this output hint
+                Output hint expected to be returned from the
+                :func:`.reduce_hint` reducer when passed these inputs. Defaults
+                to the sentinel placeholder, in which case this output hint
                 actually defaults to this input hint. This default trivializes
                 testing for **irreducible hints** (i.e., hints *not* reduced by
                 the :func:`.reduce_hint` reducer).
-            conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-                Beartype configuration configuring this reduction. Defaults to
-                the default beartype configuration.
             '''
 
             # If unpassed, default this output hint to this input hint.
@@ -123,13 +125,13 @@ def test_reduce_hint() -> None:
 
         Attributes
         ----------
+        conf : BeartypeConf
+            Input beartype configuration configuring this reduction.
         hint_unreduced : Hint
             Input hint to be reduced.
         exception_type : Type[Exception]
-            Output type of exception raised by attempting to reduce this invalid
-            input hint.
-        conf : BeartypeConf
-            Beartype configuration configuring this reduction.
+            Output type of exception expected to be raised by the
+            :func:`.reduce_hint` reducer when passed these inputs.
         '''
 
         # ..................{ INITIALIZERS                   }..................
@@ -151,11 +153,11 @@ def test_reduce_hint() -> None:
             hint_unreduced : Hint
                 Input hint to be reduced.
             exception_type : Type[Exception]
-                Output type of exception raised by attempting to reduce this
-                invalid input hint.
+                Output type of exception expected to be raised by the
+                :func:`.reduce_hint` reducer when passed these inputs.
             conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
-                Beartype configuration configuring this reduction. Defaults to
-                the default beartype configuration.
+                Input beartype configuration configuring this reduction.
+                Defaults to the default beartype configuration.
             '''
 
             # Classify all passed parameters.
@@ -164,11 +166,7 @@ def test_reduce_hint() -> None:
             self.conf = conf
 
     # ..................{ LOCALS                             }..................
-    # List of all valid reduction cases to be tested, each defined as a
-    # 2-tuple "(hint_unreduced, hint_reduced, hint_conf)" such that:
-    # * "hint_unreduced" is the input hint to be reduced.
-    # * "hint_reduced" is the output hint produced by reducing this input hint.
-    # * "hint_conf" is the beartype configuration configuring this reduction.
+    # List of all valid reduction cases to be tested.
     hint_reductions_valid = [
         # ..................{ PEP 484                        }..................
         # An isinstanceable type is preserved as is without reduction.
@@ -225,13 +223,8 @@ def test_reduce_hint() -> None:
         HintReductionValid(Annotated[str, IsEqual['In their noonday dreams.']]),
     ]
 
-    # List of all PEP 646-noncompliant reductions to be tested, each defined as
-    # a 2-tuple "(hint_unreduced, exception_type)" such that:
-    # * "hint_unreduced" is the invalid input hint to be reduced.
-    # * "exception_type" is the type of exception raised by attempting to reduce
-    #   this invalid input hint.
-    hint_reductions_invalid = [
-    ]
+    # List of all invalid reduction cases to be tested.
+    hint_reductions_invalid = []
 
     # ..................{ PEP 646                            }..................
     # If the active Python interpreter targets Python >= 3.11 and thus supports
@@ -240,10 +233,11 @@ def test_reduce_hint() -> None:
         # ....................{ IMPORTS                    }....................
         # Defer PEP-specific imports.
         from beartype.roar import BeartypeDecorHintPep646Exception
-        from beartype.typing import TypeVarTuple
         from beartype._util.hint.pep.proposal.pep646692 import (
-            make_hint_pep646_tuple_unpacked_prefix,
-            make_hint_pep646_typevartuple_unpacked_prefix,
+            make_hint_pep646_tuple_unpacked_prefix)
+        from beartype_test.a00_unit.data.pep.data_pep646 import (
+            Ts_unpacked,
+            Us_unpacked,
         )
 
         # ....................{ CLASSES                    }....................
@@ -255,14 +249,6 @@ def test_reduce_hint() -> None:
         #     pass
 
         # ....................{ LOCALS                     }....................
-        # Arbitrary PEP 646-compliant type variable tuples.
-        Ts = TypeVarTuple('Ts')
-        Us = TypeVarTuple('Us')
-
-        # PEP 646-compliant unpacked type variable tuples of the form "*Ts".
-        Ts_unpacked = make_hint_pep646_typevartuple_unpacked_prefix(Ts)
-        Us_unpacked = make_hint_pep646_typevartuple_unpacked_prefix(Us)
-
         # Extend this list with PEP 646-compliant valid reduction cases.
         hint_reductions_valid.extend((
             # A PEP 646-compliant tuple hint subscripted by *ONLY* a single PEP
@@ -361,7 +347,7 @@ def test_reduce_hint() -> None:
     # to support PEP 646.
 
     # ....................{ PASS                           }....................
-    # For each input hint to be reduced and the corresponding output hint...
+    # For each valid hint reduction case...
     for hint_reduction_valid in hint_reductions_valid:
         # Sanified metadata encapsulating the reduction of this input hint.
         hint_reduced_sane = reduce_hint(
@@ -373,9 +359,10 @@ def test_reduce_hint() -> None:
         assert hint_reduced_sane.hint == hint_reduction_valid.hint_reduced
 
     # ....................{ FAIL                           }....................
-    # For each invalid input hint to be reduced and the corresponding type of
-    # exception expected to be raised by attempting to do so...
+    # For each invalid hint reduction case...
     for hint_reduction_invalid in hint_reductions_invalid:
+        # Assert that this reducer raises the expected type of exception when
+        # passed this input hint.
         with raises(hint_reduction_invalid.exception_type):
             reduce_hint(
                 hint=hint_reduction_invalid.hint_unreduced,

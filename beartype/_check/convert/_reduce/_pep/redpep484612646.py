@@ -29,7 +29,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Python >= 3.13:
 #    https://peps.python.org/pep-0696
 #
-#This PEP induces edge cases in _make_hint_pep484612646_typeargs_to_hints().
+#This PEP induces edge cases in _make_hint_pep484612646_typearg_to_hint().
 #Notably, when the caller passes more type parameters than child hints to that
 #factory, we currently silently ignore and thus preserve those "excess" type
 #parameters. Under Python >= 3.13, however, we *MUST* instead now:
@@ -355,7 +355,7 @@ def reduce_hint_pep484612646_typearg(
 #variable tuples, please. *sigh*
 #
 #Begin by testing these new edge cases:
-#    _make_hint_pep484612646_typeargs_to_hints(
+#    _make_hint_pep484612646_typearg_to_hint(
 #        hint=...,  # <-- who cares
 #        hints_typearg=(S, T, U, *Ts,),
 #        hints_child=(int,),
@@ -371,7 +371,7 @@ def reduce_hint_pep484612646_typearg(
 #
 #Now consider another call that superficially appears similar yet is
 #ultimately quite different:
-#    _make_hint_pep484612646_typeargs_to_hints(
+#    _make_hint_pep484612646_typearg_to_hint(
 #        hint=...,  # <-- who cares
 #        hints_typearg=(S, *Ts,),
 #        hints_child=(int,),
@@ -505,7 +505,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
     #discards a full-blown list object just to create this unpacked tuple.
     #Instead, we should:
     #* Call get_hint_pep_typeargs_packed() instead here.
-    #* In the _make_hint_pep484612646_typeargs_to_hints() factory:
+    #* In the _make_hint_pep484612646_typearg_to_hint() factory:
     #  * Detect packed rather than unpacked type variable tuples everywhere.
     #  * Manually pack the detected type variable tuple when mapping this type
     #    variable tuple to another hint: e.g.,
@@ -590,7 +590,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
         # to each of these corresponding child hints.
         #
         # Note that we pass parameters positionally due to memoization.
-        typearg_to_hint = _make_hint_pep484612646_typeargs_to_hints(
+        typearg_to_hint = _make_hint_pep484612646_typearg_to_hint(
             hint, hints_typearg, hints_child)
     # print(f'Mapped hint {hint} to type parameter lookup table {typearg_to_hint}!')
     # If doing so raises *ANY* exception, reraise this exception with each
@@ -749,7 +749,7 @@ def _die_unless_hint_pep484_typevar_bound_bearable(
 #FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
 #variable tuples, please. *sigh*
 @callable_cached
-def _make_hint_pep484612646_typeargs_to_hints(
+def _make_hint_pep484612646_typearg_to_hint(
     hint: Hint,
     hints_typearg: TuplePep484612646TypeArgsUnpacked,
     hints_child: TupleHints,
@@ -772,10 +772,10 @@ def _make_hint_pep484612646_typeargs_to_hints(
         parent hint is currently only used to generate human-readable exception
         messages in the event of fatal errors.
     hints_typearg : TuplePep484612646TypeArgsUnpacked
-        Tuple of one or more child type parameters originally subscripting the
+        Tuple of one or more child type parameters originally parametrizing the
         origin underlying this parent hint.
     hints_child : TupleHints
-        Tuple of one or more child type hints subscripting this parent hint,
+        Tuple of zero or more child type hints subscripting this parent hint,
         which those type parameters map to.
 
     Returns
