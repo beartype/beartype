@@ -42,7 +42,7 @@ different types than the :data:`.S`, :data:`.T`, and :data:`.U` type variables.
 '''
 
 # ....................{ TYPEVARS ~ bounded                 }....................
-T_any = TypeVar('T_int', bound=Any)
+T_any = TypeVar('T_any', bound=Any)
 '''
 **Unbounded type variable** (i.e., type variable parametrized by the :obj:`.Any`
 singleton passed as the ``bound`` keyword argument, semantically equivalent to
