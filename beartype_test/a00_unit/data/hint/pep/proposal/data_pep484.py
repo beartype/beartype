@@ -43,52 +43,6 @@ Note that:
   single submodule reflects the centralization performed by CPython itself.
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    TypeVar,
-)
-from collections.abc import Sequence as SequenceABC
-
-# ....................{ TYPEVARS ~ bounded                 }....................
-T_any = TypeVar('T_int', bound=Any)
-'''
-**Unbounded type variable** (i.e., type variable parametrized by the :obj:`.Any`
-singleton passed as the ``bound`` keyword argument, semantically equivalent to
-an unparametrized type variable).
-'''
-
-
-T_int = TypeVar('T_int', bound=int)
-'''
-**Integer-bounded type variable** (i.e., type variable parametrized by the
-builtin :class:`int` type passed as the ``bound`` keyword argument).
-'''
-
-
-T_sequence = TypeVar('T_sequence', bound=SequenceABC)
-'''
-**Sequence-bounded type variable** (i.e., type variable parametrized by the
-standard :class:`collections.abc.Sequence` abstract base class (ABC) passed as
-the ``bound`` keyword argument).
-'''
-
-# ....................{ TYPEVARS ~ constrained             }....................
-T_int_or_str = TypeVar('T_int_or_str', int, str)
-'''
-**Integer- or string-constrained type variable** (i.e., type variable
-parametrized by both the builtin :class:`int` and :class:`str` types passed as
-positional arguments).
-'''
-
-
-T_str_or_bytes = TypeVar('T_str_or_bytes', str, bytes)
-'''
-**String- or bytes-constrained type variable** (i.e., type variable parametrized
-by both the builtin :class:`str` and :class:`bytes` types passed as positional
-arguments).
-'''
-
 # ....................{ FIXTURES                           }....................
 def hints_pep484_meta() -> 'List[HintPepMetadata]':
     '''
@@ -114,10 +68,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     from beartype._cave._cavefast import (
         RegexMatchType,
         RegexCompiledType,
-    )
-    from beartype._data.typing.datatyping import (
-        S,
-        T,
     )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignAbstractSet,
@@ -186,6 +136,13 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
+    )
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
+        S,
+        T,
+        T_any,
+        T_int,
+        T_str_or_bytes,
     )
     from collections import (
         ChainMap as ChainMapType,
@@ -3636,7 +3593,7 @@ def hints_pep484_ignorable_deep() -> list:
         Optional,
         Union,
     )
-    from beartype._data.typing.datatyping import (
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
         S,
         T,
     )

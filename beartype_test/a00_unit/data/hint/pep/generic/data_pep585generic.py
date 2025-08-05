@@ -12,12 +12,12 @@ parameters, exercising edge cases in unit tests requiring non-trivial generics).
 # ....................{ IMPORTS                            }....................
 # Defer fixture-specific imports.
 from beartype.typing import TypeVar
-from beartype._data.typing.datatyping import (
+from beartype_test.a00_unit.data.data_type import Class
+from beartype_test.a00_unit.data.pep.data_pep484 import (
     S,
     T,
     U,
 )
-from beartype_test.a00_unit.data.data_type import Class
 from collections.abc import (
     Container as Pep585Container,
     Iterable as Pep585Iterable,

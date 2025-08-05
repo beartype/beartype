@@ -12,11 +12,11 @@ in unit tests requiring non-trivial generics).
 # ....................{ IMPORTS                            }....................
 # Defer fixture-specific imports.
 from beartype.typing import Generic
-from beartype._data.typing.datatyping import (
+from beartype_test.a00_unit.data.data_type import Class
+from beartype_test.a00_unit.data.pep.data_pep484 import (
     S,
     T,
 )
-from beartype_test.a00_unit.data.data_type import Class
 from collections.abc import (
     Sized as SizedABC,
 )

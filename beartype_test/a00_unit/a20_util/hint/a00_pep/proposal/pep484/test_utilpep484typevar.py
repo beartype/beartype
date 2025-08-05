@@ -30,7 +30,7 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     from beartype._data.typing.datatyping import T
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_int,
         T_str_or_bytes,
     )

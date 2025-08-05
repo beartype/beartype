@@ -77,6 +77,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignTypeVar,
     HintSignPep646TypeVarTupleUnpacked,
 )
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import (
     Pep484612646TypeArgUnpacked,
     TuplePep484612646TypeArgsUnpacked,
@@ -849,10 +850,14 @@ def _make_hint_pep484612646_typearg_to_hint(
     #     will subsequently detect this invalid case and raise an exception.
     hints_index_last = max(hints_typearg_len, hints_child_len) - 1
 
-    # True only if one or more of the passed type parameters visited by the
-    # "while" loop below are PEP 646-compliant unpacked type variable
-    # parameters.
-    is_hint_typearg_pep646 = False
+    # Either:
+    # * If the passed tuple of type parameters contains one or more PEP
+    #   646-compliant unpacked type variable tuples, the 0-based index of
+    #   the first such type parameter.
+    # * Else, "None".
+    #
+    # This local variable is used to detect and track such type parameters.
+    hints_pep646_typevartuple_index: Optional[int] = None
 
     # ....................{ PHASE 1 ~ pep 484 : typevar    }....................
     # In this first phase, we map all *LEADING* PEP 484-compliant type variables
@@ -869,6 +874,8 @@ def _make_hint_pep484612646_typearg_to_hint(
     # exceed that of the last child hint to be visited by this loop, one or
     # more leading type variables remain unvisited. In this case...
     while hints_index_curr <= hints_index_last:
+        # print(f'Visiting leading type parameter index {hints_index_curr} <= {hints_index_last}...')
+
         # If the 0-based index of this leading type variable exceeds that of the
         # last type variable, more child hints than type parameters were passed.
         # Why? Because, if fewer or the same number of child hints as type
@@ -900,12 +907,13 @@ def _make_hint_pep484612646_typearg_to_hint(
 
         # Sign uniquely identifying this type parameter.
         hint_typearg_sign = get_hint_pep_sign_or_none(hint_typearg)  # pyright: ignore
+        # print(f'Visiting leading type parameter {hint_typearg} of {hint_typearg_sign}...')
 
         # If this type parameter is a PEP 646-compliant unpacked type variable
         # tuple...
         if hint_typearg_sign is HintSignPep646TypeVarTupleUnpacked:
-            # Note that this kind of type parameter has now been discovered.
-            is_hint_typearg_pep646 = True
+            # 0-based index of this unpacked type variable tuple.
+            hints_pep646_typevartuple_index = hints_index_curr
 
             # Immediately halt all further visitation of type parameters and
             # child hints by this iteration. Unpacked type variable tuples
@@ -975,6 +983,7 @@ def _make_hint_pep484612646_typearg_to_hint(
         # one-liner, silently overwriting any prior such mapping of this type
         # variable by either this call or a prior call of this function.
         typearg_to_hint[hint_typearg] = hint_child
+        # print(f'Mapping {hint_typearg} to {hint_child}...')
 
         # Iterate the 0-based index of the current type parameter *AND*
         # corresponding child hint to be visited by the next loop iteration.
@@ -982,7 +991,7 @@ def _make_hint_pep484612646_typearg_to_hint(
 
     # If a PEP 646-compliant unpacked type variable tuple was visited by the
     # "while" loop above...
-    if is_hint_typearg_pep646:
+    if hints_pep646_typevartuple_index is not None:
         # ....................{ PHASE 2 ~ pep 484 : typevar}....................
         # In this next phase, we map all *TRAILING* PEP 484-compliant type
         # variables parametrizing the ending of this parent subscripted hint.
@@ -1000,9 +1009,7 @@ def _make_hint_pep484612646_typearg_to_hint(
         # consume as many trailing child hints as possible by as many trailing
         # type variables exist. Whatever child hints remain are then apportioned
         # to the type variable tuple.
-
-        # 0-based index of this unpacked type variable tuple.
-        hints_pep646_typevartuple_index = hints_index_curr
+        # print(f'hints_pep646_typevartuple_index: {hints_pep646_typevartuple_index}')
 
         # This unpacked type variable tuple.
         hint_pep646_typevartuple = hints_typearg[
@@ -1011,21 +1018,32 @@ def _make_hint_pep484612646_typearg_to_hint(
         # 0-based index of the current trailing type parameter visited by the
         # "while" loop below, initialized to that of the last type parameter.
         hints_pep646_typearg_index_curr = hints_typearg_len - 1
+        # print(f'hints_pep646_typearg_index_curr: {hints_pep646_typearg_index_curr}')
 
         # 0-based index of the current trailing child hint visited by the
         # "while" loop below, initialized to that of the last child hint.
         hints_pep646_child_index_curr = hints_child_len - 1
+        # print(f'hints_pep646_child_index_curr: {hints_pep646_child_index_curr}')
 
-        # 0-based index of the first trailing type parameter to be visited by
-        # the "while" loop below, initialized to that of the first type
-        # parameter following this unpacked type variable tuple.
+        # 0-based index of the first trailing type parameter to be visited last
+        # by the "while" loop below, initialized to that of the first type
+        # parameter following this unpacked type variable tuple. This and all
+        # following type parameters have yet to consume any child hints and thus
+        # *MUST* thus consume those child hints before this unpacked type
+        # variable tuple if given a fallback chance to greedily do so below.
+        # Every type parameter necessarily consumes exactly one child hint and
+        # thus assumes precedence over any unpacked type variable tuple, which
+        # permissively consumes zero or more child hints.
         hints_pep646_typearg_index_first = hints_pep646_typevartuple_index + 1
+        # print(f'hints_pep646_typearg_index_first: {hints_pep646_typearg_index_first}')
 
-        # 0-based index of the first trailing child hint to be visited by the
-        # "while" loop below, initialized to that of the first child hint
+        # 0-based index of the first trailing child hint to be visited last by
+        # the "while" loop below, initialized to that of the first child hint
         # following the last *LEADING* child hint consumed by the "while" loop
-        # above.
+        # above. This and all following child hints have yet to be consumed and
+        # thus remain available for consumption by trailing type parameters.
         hints_pep646_child_index_first = hints_index_curr
+        # print(f'hints_pep646_child_index_first: {hints_pep646_child_index_first}')
 
         # While the 0-based index of the current trailing type parameter still
         # follows that of the unpacked type variable tuple to *NOT* be visited
@@ -1035,11 +1053,15 @@ def _make_hint_pep484612646_typearg_to_hint(
             hints_pep646_typearg_index_curr >=
             hints_pep646_typearg_index_first
         ):
+            # print(f'Visiting trailing type parameter index {hints_pep646_typearg_index_curr}...')
+            # print(f'>= {hints_pep646_typearg_index_first}...')
+
             # Current trailing type parameter.
             hint_typearg = hints_typearg[hints_pep646_typearg_index_curr]
 
             # Sign uniquely identifying this type parameter.
             hint_typearg_sign = get_hint_pep_sign_or_none(hint_typearg)  # pyright: ignore
+            # print(f'Visiting trailing type parameter {hint_typearg} of {hint_typearg_sign}...')
 
             # If this type parameter is a second PEP 646-compliant unpacked type
             # variable tuple, raise an exception. PEP 646 mandates that generics
@@ -1074,6 +1096,7 @@ def _make_hint_pep484612646_typearg_to_hint(
                 hints_pep646_child_index_curr <
                 hints_pep646_child_index_first
             ):
+                # print('Ignoring all trailing excess type parameters...')
                 break
             # Else, the 0-based index of this trailing child hint exceeds or is
             # equal to that of the first trailing child hint.
@@ -1097,6 +1120,7 @@ def _make_hint_pep484612646_typearg_to_hint(
             # one-liner, overwriting any prior such mapping of this type
             # variable by either this call or a prior call of this function.
             typearg_to_hint[hint_typearg] = hint_child
+            # print(f'Mapping {hint_typearg} to {hint_child}...')
 
             # Iterate the 0-based indices of the current type parameter *AND*
             # corresponding child hint to be visited by the next loop iteration.
@@ -1137,7 +1161,8 @@ def _make_hint_pep484612646_typearg_to_hint(
             # * Greater than that of the last *LEADING* child hint. Then one or
             #   more trailing child hints were *NOT* consumed by the "while"
             #   loop above. One or more trailing child hints remain to be
-            #   consumed by this unpacked type variable tuple.
+            #   consumed by this unpacked type variable tuple -- also a valid
+            #   use case.
             #
             # In either case, zero or more trailing child hints were *NOT*
             # consumed by the "while" loop above. Since an unpacked type
@@ -1148,15 +1173,33 @@ def _make_hint_pep484612646_typearg_to_hint(
                 hints_pep646_child_index_first - 1
             )
         ):
+            # print('Mapping unpacked type variable tuple to excess child hints...')
+
             # Tuple of the zero or more excess child hints *NOT* already
             # consumed above by a trailing type variable, defined here as the
             # slice of the tuple of the zero or more trailing child hints...
+            #
+            # Note that raw tuples are, by definition, PEP-noncompliant. Ergo,
+            # this tuple is PEP-noncompliant as well and thus unsuitable for
+            # being directly mapped to this unpacked type variable tuple.
             hints_child_excess = hints_child[
-                # Starting at the index of the first trailing child hint *AND*...
+                # Starting at the index of the first trailing child hint
+                # *AND*...
                 hints_pep646_child_index_first:
                 # Ending at the index of the last excess trailing child hint.
-                hints_pep646_child_index_curr
+                # Note that slice syntax requires incrementing the last index,
+                # which it treats as analogous to a length. Specifically, slice
+                # syntax ignores the item at the last index.
+                #
+                # Oh, Python... You sweet summer child.
+                hints_pep646_child_index_curr + 1
             ]
+            # print(f'hints_child_excess: {hints_child_excess}')
+
+            # Target hint to which this unpacked type variable will be mapped
+            # below, synthesized from this PEP-noncompliant tuple slice into a
+            # PEP-compliant type hint.
+            hint_pep646_typevartuple_target: Hint = SENTINEL  # type: ignore[assignment]
 
             # If exactly one child hint has *NOT* already consumed, directly map
             # this unpacked type variable to this child hint rather than mapping
@@ -1184,7 +1227,7 @@ def _make_hint_pep484612646_typearg_to_hint(
             #     class StemGeneric(RootGeneric[*Tt]): pass
             #     class LeafGeneric(StemGeneric[*Ts]): pass#
             if len(hints_child_excess) == 1:
-                hints_child_excess = hints_child_excess[0]
+                hint_pep646_typevartuple_target = hints_child_excess[0]
             # Else, either zero or two or more child hints have *NOT* already
             # consumed. In either case, only a tuple of child hints correctly
             # expresses this excessive mapping.
@@ -1199,30 +1242,31 @@ def _make_hint_pep484612646_typearg_to_hint(
 
                 # PEP 646-compliant unpacked tuple hint of the form
                 # "*tuple[hints_child_excess[0], ..., hints_child_excess[N]]".
-                hints_child_excess_tuple_unpacked = (
+                hint_pep646_typevartuple_target = (
                     make_hint_pep646_tuple_unpacked_prefix(hints_child_excess))
+            # print(f'hint_pep646_typevartuple_target: {hint_pep646_typevartuple_target}')
 
-                # Map this unpacked type variable tuple to this hint with a
-                # one-liner, overwriting any prior such mapping of this type
-                # variable by either this call or a prior call of this function.
-                #
-                # Note that PEP standards support mapping type variable tuples
-                # *ONLY* to other type variable tuples or unpacked tuple hints.
-                # Since the former fails to apply here, only the latter applies.
-                # Consider PEP 696, for example, which explicitly states:
-                #     TypeVarTuple defaults are defined using the same syntax as
-                #     TypeVars but use an unpacked tuple of types instead of a
-                #     single type or another in-scope TypeVarTuple (see Scoping
-                #     Rules).
-                #
-                #     DefaultTs = TypeVarTuple(
-                #         "DefaultTs", default=Unpack[tuple[str, int]])
-                #
-                # In the terminology of this factory function, the above example
-                # would effectively add this mapping to "typearg_to_hint":
-                #     {DefaultTs: *tuple[str, int]], ...}
-                typearg_to_hint[hint_pep646_typevartuple] = (
-                    hints_child_excess_tuple_unpacked)
+            # Map this unpacked type variable tuple to this hint with a
+            # one-liner, overwriting any prior such mapping of this type
+            # variable by either this call or a prior call of this function.
+            #
+            # Note that PEP standards support mapping type variable tuples
+            # *ONLY* to other type variable tuples or unpacked tuple hints.
+            # Since the former fails to apply here, only the latter applies.
+            # Consider PEP 696, for example, which explicitly states:
+            #     TypeVarTuple defaults are defined using the same syntax as
+            #     TypeVars but use an unpacked tuple of types instead of a
+            #     single type or another in-scope TypeVarTuple (see Scoping
+            #     Rules).
+            #
+            #     DefaultTs = TypeVarTuple(
+            #         "DefaultTs", default=Unpack[tuple[str, int]])
+            #
+            # In the terminology of this factory function, the above example
+            # would effectively add this mapping to "typearg_to_hint":
+            #     {DefaultTs: *tuple[str, int]], ...}
+            typearg_to_hint[hint_pep646_typevartuple] = (
+                hint_pep646_typevartuple_target)
     # Else, a PEP 646-compliant unpacked type variable tuple was *NOT* visited
     # by the "while" loop above. In this case, that loop has already
     # successfully visited all PEP 484-compliant type variables and thus all

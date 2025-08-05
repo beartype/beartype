@@ -34,11 +34,6 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         List,
         Sequence,
     )
-    from beartype._data.typing.datatyping import (
-        S,
-        T,
-        U,
-    )
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_args_full)
     from beartype_test.a00_unit.data.hint.pep.generic.data_pep484generic import (
@@ -53,6 +48,11 @@ def test_get_hint_pep484585_generic_args_full() -> None:
         Pep484585GenericIntTSequenceU,
         Pep484585GenericUUST,
         Pep484585GenericUIntT,
+    )
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
+        S,
+        T,
+        U,
     )
     from pytest import raises
 

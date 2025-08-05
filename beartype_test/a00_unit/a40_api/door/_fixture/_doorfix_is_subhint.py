@@ -50,15 +50,7 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     import collections.abc
     import typing
     from abc import ABCMeta
-    from beartype._data.typing.datatyping import (
-        S,
-        T,
-    )
     from beartype._util.cls.utilclstest import is_type_subclass_proper
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        T_sequence,
-        T_int_or_str,
-    )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_13
     from beartype_test.a00_unit.data.hint.pep.generic.data_pep484generic import (
         Pep484GenericT,
@@ -68,6 +60,12 @@ def door_cases_is_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     )
     from beartype_test.a00_unit.data.hint.pep.generic.data_pep585generic import (
         Pep585SequenceT,
+    )
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
+        S,
+        T,
+        T_sequence,
+        T_int_or_str,
     )
     from collections.abc import (
         Collection as CollectionABC,

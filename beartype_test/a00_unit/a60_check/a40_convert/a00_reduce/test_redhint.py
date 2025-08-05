@@ -10,6 +10,19 @@ This submodule unit tests the public API of the private
 :mod:`beartype._check.convert._reduce.redmain` submodule.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: We've currently split some PEP-specific hint_reduce() unit tests into
+#PEP-specific submodules of this subpackage (e.g., "pep.test_redpep695"). The
+#the test_reduce() unit test defined below is dramatically superior, however.
+#Why? Internal dataclass machinery uniquely implemented in this test automates
+#away associated unpleasantness. Thus, for maintainability, *ALL* of those
+#submodules should be:
+#* Integrated into the sole test_reduce_hint() unit test defined below. Yes,
+#  this test will begin to become uncomfortably long. Who cares? Well,
+#  technically, *WE* care -- but not that much. Long tests can later be
+#  subdivided. The critical point is that test_reduce() machinery is superior.
+#* Subsequently removed.
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
@@ -51,7 +64,7 @@ def test_reduce_hint() -> None:
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_str_or_bytes)
     from beartype_test._util.module.pytmodtest import is_package_numpy
     from dataclasses import InitVar

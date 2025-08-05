@@ -33,12 +33,12 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
     )
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         _make_hint_pep484612646_typearg_to_hint)
-    from beartype._data.typing.datatyping import (
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
         S,
         T,
-    )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        U,
+        V,
         T_any,
         T_sequence,
         T_str_or_bytes,
@@ -186,15 +186,40 @@ def test_make_hint_pep484612646_typearg_to_hint() -> None:
                 {T: int, Ts_unpacked: TUPLE_UNPACKED_EMPTY,},
             ),
 
-            #FIXME: *WOOPS.* Looks like this one is broken, folks. Let's follow
-            #up with this one on Monday. *sigh*
-            # # A PEP 484-compliant type variable followed by a PEP 646-compliant
-            # # unpacked type variable tuple maps to exactly two child hints.
-            # (
-            #     (T, Ts_unpacked,),
-            #     (str, bytes,),
-            #     {T: str, Ts_unpacked: bytes,},
-            # ),
+            # A PEP 484-compliant type variable followed by a PEP 646-compliant
+            # unpacked type variable tuple maps to exactly two child hints.
+            (
+                (T, Ts_unpacked,),
+                (str, bytes,),
+                {T: str, Ts_unpacked: bytes,},
+            ),
+
+            # A PEP 646-compliant unpacked type variable tuple followed by a
+            # PEP 484-compliant type variable maps to exactly two child hints.
+            #
+            # Note that this is simply the reverse order of the type parameters
+            # in the prior case, which actually changes something for once. \o/
+            (
+                (Ts_unpacked, T,),
+                (str, bytes,),
+                {Ts_unpacked: str, T: bytes,},
+            ),
+
+            # Two PEP 484-compliant type variables followed by a PEP
+            # 646-compliant unpacked type variable tuple followed by two PEP
+            # 484-compliant type variables maps to four or more child hints.
+            (
+                (S, T, Ts_unpacked, U, V,),
+                (bool, int, float, complex, str, bytes,),
+                {
+                    S: bool,
+                    T: int,
+                    Ts_unpacked: make_hint_pep646_tuple_unpacked_prefix((
+                        float, complex,)),
+                    U: str,
+                    V: bytes,
+                },
+            ),
         ))
 
         # Extend this list with PEP 646-compliant invalid type parameter
@@ -254,7 +279,7 @@ def test_reduce_hint_pep484612646_subbed_typeargs_to_hints() -> None:
     from beartype._check.convert._reduce._pep.redpep484612646 import (
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
-    from beartype._data.typing.datatyping import (
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
         S,
         T,
     )

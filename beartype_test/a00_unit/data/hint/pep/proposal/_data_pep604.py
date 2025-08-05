@@ -52,10 +52,6 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         Optional,
         Union,
     )
-    from beartype._data.typing.datatyping import (
-        S,
-        T,
-    )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignMutableSequence,
@@ -68,6 +64,10 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
+    )
+    from beartype_test.a00_unit.data.pep.data_pep484 import (
+        S,
+        T,
     )
     from collections.abc import (
         Callable as CallableABC,
