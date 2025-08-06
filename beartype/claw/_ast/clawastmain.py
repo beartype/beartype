@@ -139,7 +139,8 @@ class BeartypeNodeTransformer(
         Fully-qualified name of the current lexical scope (i.e., ``.``-delimited
         absolute name of the module containing this scope followed by the
         relative basenames of zero or more classes and/or callables). This name
-        is guaranteed to be prefixed by :attr:`._module_name_beartype`.
+        is guaranteed to be prefixed by the current value of the
+        :attr:`._module_name_beartype` instance variable.
     _scope_stack_beartype : list[type[AST]]
         **Current lexical scope stack** (i.e., list of the zero or more types of
         parent nodes of the node being recursively visited by this node
@@ -322,6 +323,9 @@ class BeartypeNodeTransformer(
         node_index_import_beartype_attrs = 0
 
         # 0-based index of the last child node of this parent module node.
+        #
+        # Note that the "node.body" instance variable for module nodes is a list
+        # of *ALL* child nodes of this parent module node.
         node_index_last = len(node.body)
 
         # Child node of this parent module node immediately preceding the output
@@ -330,6 +334,8 @@ class BeartypeNodeTransformer(
         # copies from a valid node (for simplicity).
         node_prev: AST = node
 
+        #FIXME: [SPEED] Refactor into a "while" loop, please. We even localize
+        #"node_index_last" above, which is the obvious stop condition. *sigh*
         # For the 0-based index and value of each direct child node of this
         # parent module node...
         #
@@ -337,12 +343,11 @@ class BeartypeNodeTransformer(
         # (i.e., the 0-based index of the first safe position in the list of all
         # child nodes of this parent module node to insert an import statement
         # importing our beartype decorator). Despite superficially appearing to
-        # perform a linear search of all n child nodes of this module parent
-        # node and thus exhibit worst-case O(n) time complexity, this iteration
-        # is guaranteed to exhibit worst-case O(1) time complexity. \o/
-        #
-        # Note that the "node.body" instance variable for module nodes is a list
-        # of *ALL* child nodes of this parent module node.
+        # perform a linear search of all "n" child nodes of this module parent
+        # node and thus exhibit worst-case O(n) linear time complexity, this
+        # iteration is guaranteed to exhibit worst-case O(k) quasi-constant time
+        # complexity for "k" the number of "from __future__" import statements
+        # prefixing the body of this module. \o/
         for node_prev in node.body:
             # print(f'node_index_import_beartype_attrs [IN]: {node_index_import_beartype_attrs}')
 
@@ -372,7 +377,7 @@ class BeartypeNodeTransformer(
                     isinstance(node_prev, ImportFrom) and
                     node_prev.module == '__future__'
                 )
-            # Then immediately halt iteration, guaranteeing O(1) runtime.
+            # Then immediately halt iteration, guaranteeing O(k) runtime.
             ):
                 break
             # Else, this child node signifies either a module docstring of
@@ -385,6 +390,10 @@ class BeartypeNodeTransformer(
         # position in this list to insert output child import nodes below.
         # print(f'node_index_import_beartype_attrs [AFTER]: {node_index_import_beartype_attrs}')
         # print(f'len(node.body): {len(node.body)}')
+
+        #FIXME: Pretty sure this "if" comparison can just be trivially reduced
+        #to a loop "else": e.g.,
+        #else:  # <-- seriously, that's it.
 
         # If the 0-based index of an early child node of this parent module node
         # immediately *BEFORE* which to insert one or more statements importing
@@ -426,6 +435,7 @@ class BeartypeNodeTransformer(
                 node_sibling=node_prev,
             )
 
+            #FIXME: Explain this slice operation. Super-bizarre, honestly.
             # Insert these output child import nodes at this safe position of
             # the list of all child nodes of this parent module node.
             #

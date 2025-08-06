@@ -14,6 +14,10 @@ callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Rename:
+#* "claw_decoration_position_funcs" to merely "claw_decor_position_func".
+#* "claw_decoration_position_types" to merely "claw_decor_position_type".
+
 #FIXME: Generalize "warning_cls_on_decorator_exception", please. Specifically:
 #* Deprecate "warning_cls_on_decorator_exception".
 #* Define a new "decoration_exception_type: Optional[TypeException] = None"

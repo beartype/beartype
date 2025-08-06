@@ -5,9 +5,9 @@
 
 '''
 Project-wide :pep:`649`-compliant **annotations** (i.e., ``__annotation__``
-dunder dictionaries dynamically created by ``__annotate__()`` dunder methods,
-mapping from the names of annotated child objects of parent hintables to the
-type hints annotating those child objects).
+dunder dictionaries under Python >= 3.14 dynamically created by
+``__annotate__()`` dunder methods, mapping from the names of annotated child
+objects of parent hintables to the type hints annotating those child objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #@method_cached_arg_by_id decorator. Quite a facepalm there, folks.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import BeartypeDecorHintPep649Exception
+from beartype.roar import BeartypeDecorHintPep649Exception
 from beartype.typing import Optional
 from beartype._cave._cavefast import Format  # pyright: ignore
 from beartype._data.typing.datatyping import (
@@ -37,7 +37,6 @@ def get_pep649_hintable_annotations(
 
     # Optional parameters.
     hint_format: Format = Format.FORWARDREF,
-    is_dirty: bool = False,
     exception_cls: TypeException = BeartypeDecorHintPep649Exception,
     exception_prefix: str = '',
 ) -> Pep649HintableAnnotations:
@@ -90,14 +89,6 @@ def get_pep649_hintable_annotations(
           proxies into these dictionaries that effectively prohibit dictionary
           comparisons, this format just preserves unquoted forward references
           in the strings it returns.
-    is_dirty : bool, default: False
-        :data:`True` only if the current cache entry for these annotations is
-        **dirty** (i.e., stale, desynchronized), in which case this getter
-        additionally **invalidates** (i.e., clears) this dirty cache entry as a
-        beneficial side-effect on behalf of the caller. This parameter is
-        principally intended to be passed *only* by the companion
-        :func:`.set_pep649_hintable_annotations` setter, which enables this
-        boolean to preserve cache integrity. Defaults to :data:`False`.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep649Exception`.
@@ -129,7 +120,6 @@ def get_pep649_hintable_annotations(
     hint_annotations = get_pep649_hintable_annotations_or_none(
         hintable=hintable,
         hint_format=hint_format,
-        is_dirty=is_dirty,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -176,10 +166,8 @@ if IS_PYTHON_AT_LEAST_3_14:
         # Mandatory parameters.
         hintable: Pep649Hintable,
 
-        # Optional keyword-only parameters.
-        *,
+        # Optional parameters.
         hint_format: Format = Format.FORWARDREF,
-        is_dirty: bool = False,
         exception_cls: TypeException = BeartypeDecorHintPep649Exception,
         exception_prefix: str = '',
     ) -> Optional[Pep649HintableAnnotations]:
@@ -1154,14 +1142,6 @@ get_pep649_hintable_annotations_or_none.__doc__ = (
         subscripting each hint annotating this hintable with a safe
         :class:`annotationlib.ForwardRef` object. See also the higher-level
         :func`.get_pep649_hintable_annotations` getter for further details.
-    is_dirty : bool, default: False
-        :data:`True` only if the current cache entry for these annotations is
-        **dirty** (i.e., stale, desynchronized), in which case this getter will
-        additionally **invalidate** (i.e., clear) this dirty cache entry as a
-        beneficial side-effect on behalf of the caller. This parameter is
-        principally intended to be passed *only* by the companion
-        :func:`.set_pep649_hintable_annotations` setter, which enables this
-        boolean to preserve cache integrity. Defaults to :data:`False`.
     exception_cls : TypeException, default: BeartypeDecorHintPep649Exception
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintPep649Exception`.

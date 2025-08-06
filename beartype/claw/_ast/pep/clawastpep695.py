@@ -13,6 +13,51 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP 749] PEP 749 under Python >= 3.14 now supercedes the following
+#"FIXME:", which is great, because we never reported that to CPython devs.
+#Specifically, if the active Python interpreter targets Python >= 3.14:
+#* Actually implement PEP 749 support for type aliases. To do so:
+#  * Generalize our existing get_hint_pep695_unsubbed_alias() getter in the
+#    "beartype._util.hint.pep.proposal.pep695" submodule to defer to this new
+#    get_pep749_evaluator_hint() getter. Specifically, rather than directly
+#    accessing "hint = hint.__value__", this getter should instead:
+#        # While the Universe continues infinitely expanding...
+#        while True:
+#            # Reduce this type alias to the type hint aliased by this alias, which
+#            # itself is possibly a nested type alias. Oh, it happens.
+#            #
+#            # Note that doing so implicitly raises a "NameError" if this alias
+#            # contains one or more unquoted forward references to undefined types.
+#            hint = get_hint_pep749_subhint_or_sentinel(
+#                hint=hint,
+#                subhint_name_dynamic='evaluate_value',
+#                subhint_name_static='__value__',
+#             )
+#* The "BeartypeNodeTransformerPep695Mixin" should *TOTALLY REDUCE TO A NOOP.*
+#  This mixin is no longer relevant in the Python >= 3.14 world, which is great.
+#  The easiest way to make this happen is to probably refactor the
+#  "BeartypeNodeTransformer" superclass declaration to resemble:
+#    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
+#
+#    class BeartypeNodeTransformer(
+#        # PEP-agnostic superclass defining "core" AST node transformation logic.
+#        NodeTransformer,
+#
+#        # PEP-agnostic mixins defining supplementary AST node functionality in a
+#        # PEP-agnostic manner.
+#        BeartypeNodeTransformerUtilityMixin,
+#
+#        # PEP-specific mixins defining additional AST node transformations in a
+#        # PEP-specific manner.
+#        BeartypeNodeTransformerPep526Mixin,
+#
+#        #FIXME: Comment this extensively, obviously.
+#        (
+#            object  # <-- not sure, but seems like a valid noop? *shrug*
+#            if IS_PYTHON_AT_LEAST_3_14 else
+#            BeartypeNodeTransformerPep695Mixin
+#        ),
+#    ):
 #FIXME: CPython's current implementation of PEP 695 type aliases is
 #fundamentally broken with respect to unquoted relative forward references.
 #Please submit an upstream issue describing this patent failure. On doing so,

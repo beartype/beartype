@@ -54,6 +54,9 @@ class BeartypeNodeTransformerUtilityMixin(object):
     '''
 
     # ....................{ PRIVATE ~ decorators           }....................
+    #FIXME: Revise docstring, please. This method now employs a highly
+    #non-trivial algorithm to decide the correct @beartype decorator position in
+    #a chain of one or more existing non-@beartype decorators.
     #FIXME: Unit test us up, please.
     def _decorate_node_beartype(
         self, node: NodeDecoratable, conf: BeartypeConf) -> None:
@@ -100,6 +103,8 @@ class BeartypeNodeTransformerUtilityMixin(object):
         # child decoration node.
         copy_node_metadata(node_src=node, node_trg=beartype_decorator)
 
+        #FIXME: Isn't this pretty much *ALWAYS* the case? "beartype.claw" import
+        #hooks apply a non-default beartype configuration by default, sadly.
         # If the current beartype configuration is *NOT* the default beartype
         # configuration, this configuration is a user-defined beartype
         # configuration which *MUST* be passed to a call to the @beartype
@@ -194,8 +199,6 @@ class BeartypeNodeTransformerUtilityMixin(object):
             attr_name='module_name_to_beartype_conf',
             node_sibling=node_sibling,
         )
-
-        node_module_name_index: expr = None  # type: ignore[assignment]
 
         # Expression node encapsulating the indexation of a dictionary by the
         # fully-qualified name of the current module. For simplicity, simply

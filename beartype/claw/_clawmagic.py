@@ -78,6 +78,7 @@ user-defined module being imported and thus transformed by the
 :class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
 '''
 
+
 BEARTYPE_RAISER_FUNC_NAME = '__die_if_unbearable_beartype__'
 '''
 Unqualified basename of the beartype exception-raiser as imported into the

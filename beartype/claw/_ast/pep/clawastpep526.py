@@ -138,6 +138,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
             phenomenal inspiration!
         '''
 
+        # ..................{ PREAMBLE                       }..................
         # Recursively transform *ALL* child nodes of this parent callable node.
         self.generic_visit(node)  # type: ignore[attr-defined]
 
@@ -171,13 +172,12 @@ class BeartypeNodeTransformerPep526Mixin(object):
             # Note, however, that this is *NOT* simply an efficiency concern.
             # This is a significant semantic concern. While a subset of PEP
             # 681-compliant annotated field declarations *ARE* amenable to
-            # type-checking by our die_if_unbearable(), still others are
+            # type-checking by our die_if_unbearable() raiser, still others are
             # absolutely *NOT* amenable to such type-checking. Indeed, in both
             # the average and the worst case, PEP 681-compliant annotated field
-            # declarations both supersede and violate PEP 484 typing semantics.
-            # Since PEP 681 assumes supremacy over PEP 484 here, @beartype has
-            # little to say and much to ignore: e.g.,
-            #
+            # declarations both supersede and violate PEP 484-compliant typing
+            # semantics. Since PEP 681 assumes supremacy over PEP 484 here,
+            # @beartype has little to say and much to ignore: e.g.,
             #     from dataclasses import dataclass, field
             #
             #     @dataclass
@@ -204,6 +204,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         #   526-compliant annotated variable assignments.
         # * This assignment is simple and assigning to an attribute name.
 
+        # ..................{ LOCALS                         }..................
         # Human-readable label prefixing the exception message raised by our
         # die_if_unbearable() type-checker called below when the value assigned
         # to this variable violates the type hint annotating this variable. For
@@ -221,6 +222,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # localized purely as a negligible optimization.
         node_target = node.target
 
+        # ..................{ PITH                           }..................
         # If this target variable is a simple local or global variable...
         if isinstance(node_target, Name):
             # Unqualified basename of this variable in this lexical scope.
@@ -276,6 +278,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         else:
             return node
 
+        # ..................{ CONF                           }..................
         # List of all nodes encapsulating keyword arguments passed to
         # die_if_unbearable(), defaulting to the empty list and thus *NO* such
         # keyword arguments.
@@ -297,6 +300,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # In this case, avoid passing that configuration to the beartype
         # decorator for both efficiency and simplicity.
 
+        # ..................{ CONF ~ exception : prefix      }..................
         # If the lexical scope of this parent node is module scope, this node
         # encapsulates a global variable assignment. In this case...
         if self._is_scope_module_beartype:  # type: ignore[attr-defined]
@@ -336,6 +340,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # die_if_unbearable().
         node_func_kwargs.append(node_func_kwarg_exception_prefix)
 
+        # ..................{ RETURN                         }..................
         # Child node type-checking this newly assigned attribute against the
         # type hint annotating this assignment via our die_if_unbearable()
         # type-checker.

@@ -227,7 +227,7 @@ def get_hint_pep695_unsubbed_alias(
     ----------
     hint : HintPep695TypeAlias
         Unsubscripted type alias to be inspected.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 

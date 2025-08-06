@@ -847,6 +847,19 @@ class BeartypeDecorHintPep742Exception(BeartypeDecorHintPepException):
 
     pass
 
+
+class BeartypeDecorHintPep749Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`749`-compliant **type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving an object violating
+    :pep:`749` (e.g., due to a type hint failing to define a
+    :pep:`749`-compliant evaluation function).
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ hint : pep : 484       }....................
 class BeartypeDecorHintPep484Exception(BeartypeDecorHintPepException):
     '''
