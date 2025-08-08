@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeConfException
+# from beartype.roar import BeartypeConfException
 from beartype.typing import (
     Dict,
     Optional,

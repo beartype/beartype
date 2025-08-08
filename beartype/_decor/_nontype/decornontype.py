@@ -27,12 +27,12 @@ from beartype._check.metadata.metadecor import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.decor.datadecornontype import (
+from beartype._decor._nontype._decornontypemap import (
     MODULE_TO_TYPE_NAME_TO_BEARTYPE_DECORATOR_get,
     MODULE_TO_SUPERTYPE_NAME_TO_BEARTYPE_DECORATOR_get,
 )
 from beartype._data.typing.datatyping import BeartypeableT
-from beartype._decor.wrap.wrapmain import generate_code
+from beartype._decor._nontype._wrap.wrapmain import generate_code
 from beartype._util.api.utilbeartype import (
     is_func_unbeartypeable,
     set_func_beartyped,

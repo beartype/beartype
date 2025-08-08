@@ -5,7 +5,7 @@
 
 '''
 **Beartype decorator code generator utilities** (i.e., low-level callables
-assisting the parent :func:`beartype._decor.wrap.wrapmain` submodule).
+assisting the parent :func:`beartype._decor._nontype._wrap.wrapmain` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

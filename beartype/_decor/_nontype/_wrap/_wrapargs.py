@@ -37,12 +37,12 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._decor.wrap.wrapsnip import (
+from beartype._decor._nontype._wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     # EXCEPTION_PREFIX_DEFAULT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
-from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
+from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import (
     # issue_warning,

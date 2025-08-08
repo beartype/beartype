@@ -28,13 +28,13 @@ from beartype._check.checkmagic import (
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._decor.wrap.wrapsnip import (
+from beartype._decor._nontype._wrap.wrapsnip import (
     CODE_RETURN_UNCHECKED_format,
     CODE_SIGNATURE,
 )
-from beartype._decor.wrap._wrapargs import (
+from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
-from beartype._decor.wrap._wrapreturn import (
+from beartype._decor._nontype._wrap._wrapreturn import (
     code_check_return as _code_check_return)
 
 # ....................{ GENERATORS                         }....................
@@ -71,7 +71,8 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
 
              >>> from beartype.cave import AnyType
              >>> from typing import Any
-             >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
+             >>> def muh_func(
+             ...     muh_param1: AnyType, muh_param2: object) -> Any: pass
              >>> muh_func is beartype(muh_func)
              True
 

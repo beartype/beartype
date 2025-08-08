@@ -73,7 +73,7 @@ class BeartypeDecorMeta(object):
     memoized callables** (e.g.,
     :func:`beartype._check.code.codemain.make_func_pith_code`) **and
     high-level unmemoized callables** (e.g.,
-    :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, low-level
+    :func:`beartype._decor._nontype._wrap.wrapmain.generate_code`). Instead, low-level
     memoized callables *must* return that state as additional return values up
     the call stack to those high-level unmemoized callables. By definition,
     memoized callables are *not* recalled on subsequent calls passed the same

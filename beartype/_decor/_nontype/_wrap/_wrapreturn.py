@@ -33,12 +33,12 @@ from beartype._data.func.datafuncarg import (
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._decor.wrap.wrapsnip import (
+from beartype._decor._nontype._wrap.wrapsnip import (
     CODE_RETURN_CHECK_PREFIX,
     CODE_RETURN_CHECK_SUFFIX,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
+from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack

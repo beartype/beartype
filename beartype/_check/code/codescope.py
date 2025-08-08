@@ -30,7 +30,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #        "(forwardref_expr, refs_type_basename, forwardref_parent_hints)",
 #        where "forwardref_parent_hints" is that stack.
 #* *PART II.* In the second part:
-#  * Refactor the beartype._decor.wrap.wrapmain._unmemoize_func_wrapper_code()
+#  * Refactor the beartype._decor._nontype._wrap.wrapmain._unmemoize_func_wrapper_code()
 #    function to additionally:
 #    * If the passed forward reference is relative *AND* the unqualified
 #      basename of an existing attribute in a local or global scope of the
