@@ -25,6 +25,7 @@ from beartype.typing import TypeVarTuple
 from beartype._util.hint.pep.proposal.pep646692 import (
     make_hint_pep646_tuple_unpacked_prefix,
     make_hint_pep646_typevartuple_unpacked_prefix,
+    make_hint_pep646_typevartuple_unpacked_subbed,
 )
 
 # ....................{ HINTS                              }....................
@@ -47,9 +48,17 @@ Arbitrary :pep:`646`-compliant type variable tuple.
 '''
 
 # ....................{ TYPEARGS ~ unpacked                }....................
-Ts_unpacked = make_hint_pep646_typevartuple_unpacked_prefix(Ts)
+Ts_unpacked = Ts_unpacked_prefix = (
+    make_hint_pep646_typevartuple_unpacked_prefix(Ts))
 '''
 Arbitrary :pep:`646`-compliant unpacked type variable tuple of the form ``*Ts``.
+'''
+
+
+Ts_unpacked_subbed = make_hint_pep646_typevartuple_unpacked_subbed(Ts)
+'''
+Arbitrary :pep:`646`-compliant unpacked type variable tuple of the form
+``typing.Unpack[Ts]``.
 '''
 
 

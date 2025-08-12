@@ -835,6 +835,19 @@ class BeartypeDecorHintPep695Exception(BeartypeDecorHintPepException):
     pass
 
 
+class BeartypeDecorHintPep696Exception(BeartypeDecorHintPepException):
+    '''
+    **Beartype decorator** :pep:`696`-compliant **type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated with
+    one or more PEP-compliant type hints either violating :pep:`696` *or* this
+    decorator's implementation of :pep:`696`.
+    '''
+
+    pass
+
+
 class BeartypeDecorHintPep742Exception(BeartypeDecorHintPepException):
     '''
     **Beartype decorator** :pep:`742`-compliant **type hint exception.**

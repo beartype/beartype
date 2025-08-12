@@ -40,18 +40,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * Else, halt this iteration immediately.
 #
 #Note that:
+#* Some (or even all) of the above logic may actually already be implicitly
+#  supported due to the reduce_hint_pep484612646_typearg() reducer, which now
+#  supports PEP 696-compliant defaults.
 #* This does apply to both PEP 484-compliant type variables *AND* PEP
 #  646-compliant unpacked type variable tuples. Both can be defaulted.
 #* This does *NOT* apply to *TRAILING* type parameters. PEP 696 mandates that
 #  @beartype should raise an exception if *ANY* trailing type parameter
 #  following an unpacked type variable tuple has a default. Just "Ugh!"
-#FIXME: PEP 646 also induces edge cases in reduce_hint_pep484612646_typearg().
-#Notably, that reducer should prioritize defaults by reducing defaulted type
-#variables to their defaults *BEFORE* reducing bounded type variables to those
-#bounds.
-#
-#When doing so, note this also intersects with PEP 749: notably, defaults may be
-#subscripted by one or more unquoted forward references. *sigh*
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484612646Exception
@@ -96,9 +92,12 @@ from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
 from beartype._util.hint.pep.proposal.pep484612646 import (
     die_unless_hint_pep484612646_typearg_unpacked,
     is_hint_pep484612646_typearg_unpacked,
+    pack_hint_pep484612646_typearg_unpacked,
 )
 from beartype._util.hint.pep.proposal.pep646692 import (
     make_hint_pep646_tuple_unpacked_prefix)
+from beartype._util.hint.pep.proposal.pep696 import (
+    get_hint_pep484612646_typearg_packed_default_or_sentinel)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin,
@@ -163,13 +162,13 @@ def reduce_hint_pep484612646_typearg(
     # print(f'Reducing PEP 484 type parameter {hint} with parent hint {hint_parent_sane}...')
 
     # ....................{ PHASE                          }....................
-    # This reducer is divided into four phases:
-    # 0. The zeroth phase decides whether this type parameter is recursive.
-    # 1. The first phase maps this type parameter to its associated target hint
-    #    via lookup table associated with this type parameter (if any).
-    # 2. The second phase reduces this type parameter to its bounded constraints
-    #    (if any).
-    # 3. The third phase decides the recursion guard for this type parameter.
+    # This reducer is divided into a series of sequential phases:
+    # * Decide whether this type parameter is recursive.
+    # * Map this type parameter to its associated target hint by the lookup
+    #    table previously associated with this type parameter (if any).
+    # * Reduce this type parameter to its default (if any).
+    # * Reduce this type parameter to its bounded constraints (if any).
+    # * Decide the recursion guard for this type parameter.
     #
     # All phases are non-trivial. The output of each phase is sanified hint
     # metadata (i.e., a "HintSane" object) containing the result of the decision
@@ -286,9 +285,30 @@ def reduce_hint_pep484612646_typearg(
         # print(f'...to hint {hint} via type parameter lookup table!')
     # Else, this type parameter is unmapped.
 
-    # ....................{ PHASE ~ 2 : bounds             }....................
+    # ....................{ PHASE ~ 2 : default            }....................
+    # If this hint is still an unpacked type parameter...
+    if is_hint_pep484612646_typearg_unpacked(hint_reduced):
+        # Packed type parameter underlying this unpacked type parameter.
+        hint_packed = pack_hint_pep484612646_typearg_unpacked(
+            hint=hint_reduced, exception_prefix=exception_prefix)
+
+        # PEP 696-compliant default parametrizing this type parameter if any
+        # *OR* the sentinel placeholder otherwise (i.e., if this type parameter
+        # has *NO* default).
+        hint_default = get_hint_pep484612646_typearg_packed_default_or_sentinel(
+            hint=hint_packed, exception_prefix=exception_prefix)
+
+        # If this type parameter has a default, reduce this type parameter to
+        # this default.
+        if hint_default is not SENTINEL:
+            hint_reduced = hint_default
+        # Else, this type parameter has *NO* default. In this case, preserve
+        # this type parameter as is (for the moment).
+    # Else, this hint is no longer a type parameter.
+
+    # ....................{ PHASE ~ 3 : bounds             }....................
     # Sign uniquely identifying this type parameter.
-    hint_reduced_sign = get_hint_pep_sign_or_none(hint_reduced)
+    hint_reduced_sign = get_hint_pep_sign_or_none(hint_reduced)  # pyright: ignore
 
     # If this hint is still a PEP 484-compliant type variable (e.g., due to
     # either not being mapped by this lookup table *OR* being mapped by this
@@ -307,8 +327,8 @@ def reduce_hint_pep484612646_typearg(
         # ignorable. Reduce this type parameter to the ignorable singleton.
         if hint_reduced is None:
             return HINT_SANE_IGNORABLE
-        # Else, this type parameter is either bounded *OR* constrained. In either
-        # case, preserve this newly synthesized hint.
+        # Else, this type parameter is either bounded *OR* constrained. In
+        # either case, preserve this newly synthesized hint.
         # print(f'Reducing PEP 484 type parameter {repr(hint)} to {repr(hint_bound)}...')
         # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
     # Else, this hint is *NOT* a PEP 484-compliant type variable. If this hint
@@ -325,12 +345,26 @@ def reduce_hint_pep484612646_typearg(
     # mapped by this lookup table to yet another unpacked type variable tuple),
     # reduce this unconstrained type parameter to the ignorable singleton.
     elif hint_reduced_sign is HintSignPep646TypeVarTupleUnpacked:
+        #FIXME: *HMMM*. This is *ABSOLUTELY* wrong. Type variable tuples aren't
+        #like type variables. They actually signify something: notably, that
+        #zero or more child hints should be matched. To do so, type variables
+        #tuples should be reduced to the PEP 646-compliant unpacked fixed tuple
+        #hint "*tuple[object, ...]". Ergo, this should instead resemble here:
+        #    return make_hint_pep646_tuple_unpacked_prefix((object, ...))
+        #
+        #Of course, repeatedly recreating the same hint for *EVERY* single
+        #type variable tuple is awful. Instead:
+        #* Append a new public global variable to "pep646692" resembling:
+        #      HINT_PEP646_TUPLE_UNPACKED_VARIADIC_ANY = make_hint_pep646_tuple_unpacked_prefix(
+        #          (object, ...))
+        #* Import and return that instead here: e.g.,
+        #      return HINT_PEP646_TUPLE_UNPACKED_VARIADIC_ANY
         return HINT_SANE_IGNORABLE
     # Else, this hint is *NOT* a PEP 646-compliant unpacked type variable tuple.
     # In this case, this hint is *NOT* an unconstrained type parameter and thus
     # *NOT* trivially ignorable. Preserve this reduced hint as is.
 
-    # ....................{ PHASE ~ 3 : guard              }....................
+    # ....................{ PHASE ~ 4 : guard              }....................
     # Decide the recursion guard protecting this possibly recursive type
     # parameter against infinite recursion.
     #
@@ -343,7 +377,7 @@ def reduce_hint_pep484612646_typearg(
         # form tested by the is_hint_recursive() recursion guard above.
         hint_recursable=hint,
         # The non-recursable form of this type parameter is its new reduced form.
-        hint_nonrecursable=hint_reduced,
+        hint_nonrecursable=hint_reduced,  # pyright: ignore
         hint_parent_sane=hint_parent_sane,
     )
 
@@ -352,37 +386,6 @@ def reduce_hint_pep484612646_typearg(
     return hint_sane
 
 
-#FIXME: Unit test that this reducer reduces PEP 646-compliant unpacked type
-#variable tuples, please. *sigh*
-#
-#Begin by testing these new edge cases:
-#    _make_hint_pep484612646_typearg_to_hint(
-#        hint=...,  # <-- who cares
-#        hints_typearg=(S, T, U, *Ts,),
-#        hints_child=(int,),
-#    )
-#
-#More type parameters than child hints were passed, but that's a valid edge
-#case. Callers expect this factory to return "{S: int}". All remaining type
-#parameters should remain unassigned, including "*Ts". Why? Because the
-#"*Ts" is preceded by one or more unassigned type variables. Since those
-#type variables are themselves unassigned, by orthogonality all type
-#parameters following those unassigned type variables (notably, the "*Ts")
-#must themselves also be unassigned.
-#
-#Now consider another call that superficially appears similar yet is
-#ultimately quite different:
-#    _make_hint_pep484612646_typearg_to_hint(
-#        hint=...,  # <-- who cares
-#        hints_typearg=(S, *Ts,),
-#        hints_child=(int,),
-#    )
-#
-#Callers expect this factory to return "{S: int, *Ts: ()}". All type
-#parameters are assigned, including "*Ts". Why? Because unpacked type
-#variables consume zero or more child hints. Since the type parameter "S"
-#preceding this "*Ts" was assigned, this "*Ts" must necessarily also be
-#assigned the fallback tuple "()". Fascinating, huh?
 #FIXME: Document how PEP 646-compliant unpacked type variable tuples intersect
 #with the "Caveats" in the docstring below, please. *megasigh*
 def reduce_hint_pep484612646_subbed_typeargs_to_hints(
@@ -487,7 +490,7 @@ def reduce_hint_pep484612646_subbed_typeargs_to_hints(
 
     Raises
     ------
-    exception_cls
+    BeartypeDecorHintPep484612646Exception
         If this type hint is unsubscripted.
     BeartypeDecorHintPep484TypeVarViolation
         If one of these type hints violates the bounds or constraints of one of

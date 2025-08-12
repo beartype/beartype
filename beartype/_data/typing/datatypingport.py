@@ -35,6 +35,7 @@ from beartype.typing import (
     TypeVar,
     Union,
 )
+from beartype._data.kind.datakindiota import Iota
 from beartype._util.api.standard.utiltyping import (
     import_typing_attr_or_fallback)
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
@@ -192,13 +193,6 @@ PEP-compliant type hint matching either any PEP-compliant type hint *or*
 '''
 
 
-T_Hint = TypeVar('T_Hint', bound=Hint)
-'''
-:pep:`484`-compliant **type hint type variable** (i.e.,
-:class:`typing.TypeVar` object bound to match *only* PEP-compliant type
-hints).
-'''
-
 # ....................{ HINTS ~ container                  }....................
 #FIXME: Ideally, all of the below should themselves be annotated as ": Hint".
 #Mypy likes that but pyright hates that. This is why we can't have good things.
@@ -268,6 +262,22 @@ type hints those type variables map to).
 Type variable lookup tables are commonly employed throughout the :mod:`beartype`
 codebase to record **type variable substitutions** (i.e., the dynamic
 replacement of type variables by non-type variables in larger type hints).
+'''
+
+
+T_Hint = TypeVar('T_Hint', bound=Hint)
+'''
+:pep:`484`-compliant **type hint type variable** (i.e.,
+:class:`typing.TypeVar` object bound to match *only* PEP-compliant type
+hints).
+'''
+
+# ....................{ PEP ~ (484|604)                    }....................
+HintOrSentinel = Union[Hint, Iota]
+'''
+:pep:`484` and :pep:`604`-compliant union matching both PEP-compliant type hints
+*and* the sentinel placeholder (i.e.,
+:obj:`beartype._data.kind.datakindiota.SENTINEL` singleton).
 '''
 
 # ....................{ PEP ~ (484|646)                    }....................

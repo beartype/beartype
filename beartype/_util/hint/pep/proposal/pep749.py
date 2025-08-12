@@ -13,22 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep749Exception
-from beartype.typing import Union
 from beartype._cave._cavefast import Format  # pyright: ignore
-from beartype._data.kind.datakindiota import (
-    SENTINEL,
-    Iota,
-)
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.typing.datatypingport import Hint
+from beartype._data.typing.datatypingport import (
+    Hint,
+    HintOrSentinel,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
-
-# ....................{ HINTS                              }....................
-_HintPep749SubhintOptional = Union[Hint, Iota]
-'''
-PEP-compliant type hint matching a :pep:`749`-compliant **optional subhint**
-(i.e., return value of the :func:`get_hint_pep749_subhint_optional` getter).
-'''
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -158,7 +150,7 @@ def _get_hint_pep749_subhint_optional_static(  # pyright: ignore
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep749Exception,
     exception_prefix: str = '',
-) -> _HintPep749SubhintOptional:
+) -> HintOrSentinel:
     '''
     :pep:`749`-compliant **optional static subhint** (i.e., nested type hint
     defined as an attribute on a parent type hint whose value may be either the
@@ -257,7 +249,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         hint_format: Format = Format.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep749Exception,
         exception_prefix: str = '',
-    ) -> _HintPep749SubhintOptional:
+    ) -> HintOrSentinel:
         assert isinstance(subhint_name_dynamic, str), (
             f'{repr(subhint_name_dynamic)} not string.')
         assert isinstance(hint_format, Format), (
@@ -331,7 +323,7 @@ if IS_PYTHON_AT_LEAST_3_14:
         hint_format: Format = Format.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep749Exception,
         exception_prefix: str = '',
-    ) -> _HintPep749SubhintOptional:
+    ) -> HintOrSentinel:
         '''
         :pep:`749`-compliant **optional dynamic subhint** (i.e., nested type hint
         defined as an attribute on a parent type hint whose value may be either the
@@ -465,7 +457,7 @@ else:
         hint_format: Format = Format.FORWARDREF,
         exception_cls: TypeException = BeartypeDecorHintPep749Exception,
         exception_prefix: str = '',
-    ) -> _HintPep749SubhintOptional:
+    ) -> HintOrSentinel:
 
         # Trivially defer to the private static-specific getter defined above.
         # Note that this call intentionally omits irrelevant parameters. Ergo,

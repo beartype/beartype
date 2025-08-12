@@ -195,7 +195,7 @@ def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
         # * "float" to "float | int".
         # * "complex" to "complex | float | int".
         #
-        # See also the "data_pep484" submodule, which defines additional
+        # See also the "_data_pep484" submodule, which defines additional
         # PEP 484-compliant type hints nesting type hints pertaining to the
         # implicit numeric tower (e.g., "Union[float, str]").
 

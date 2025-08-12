@@ -203,7 +203,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
             # "typing.Generic" and thus do *NOT* transparently reduce to
             # standard types.
             #
-            # Note that the "data_pep484" submodule already exercises
+            # Note that the "_data_pep484" submodule already exercises
             # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
             # were technically introduced with PEP 484 and thus available since
             # Python >= 3.4 or so.

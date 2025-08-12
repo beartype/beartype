@@ -7,7 +7,7 @@
 Project-wide :pep:`604`-compliant **union type hint test data.**
 
 **Unions** are intentionally tested in this submodule rather than in the
-:mod:`beartype_test.a00_unit.data.hint.pep.proposal.data_pep484` submodule
+:mod:`beartype_test.a00_unit.data.hint.pep.proposal._data_pep484` submodule
 despite being specified by :pep:`484` and available under Python < 3.10. Why?
 Because CPython now implicitly reduces *all* unions -- including older
 :pep:`484`-compliant ``typing.Union[...]`` and ``typing.Optional[...]`` hints --
