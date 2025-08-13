@@ -23,7 +23,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._util.cls.pep.clspep3119 import is_object_issubclassable
 from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep_type
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    get_hint_pep484_typevar_bound_or_none,
+    get_hint_pep484_typevar_bounded_constraints_or_none,
     # is_hint_pep484_typevar,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -128,7 +128,7 @@ def die_if_hint_pep484_typevar_bound_unbearable(
     #
     # Note that this call is intentionally passed positional rather positional
     # keywords due to memoization.
-    typevar_bound = get_hint_pep484_typevar_bound_or_none(
+    typevar_bound = get_hint_pep484_typevar_bounded_constraints_or_none(
         typevar, exception_prefix)
     # print(f'[{typearg}] is_object_issubclassable({typevar_bound})? ...')
     # print(f'{is_object_issubclassable(typevar_bound, False)}')

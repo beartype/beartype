@@ -86,7 +86,7 @@ from beartype._data.typing.datatypingport import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-    get_hint_pep484_typevar_bound_or_none,
+    get_hint_pep484_typevar_bounded_constraints_or_none,
     # is_hint_pep484_typevar,
 )
 from beartype._util.hint.pep.proposal.pep484612646 import (
@@ -319,7 +319,7 @@ def reduce_hint_pep484612646_typearg(
         # if this type parameter is both unbounded *AND* unconstrained).
         #
         # Note this call is passed positional parameters due to memoization.
-        hint_reduced = get_hint_pep484_typevar_bound_or_none(
+        hint_reduced = get_hint_pep484_typevar_bounded_constraints_or_none(
             hint_reduced, exception_prefix)  # pyright: ignore
 
         # If this type parameter is both unbounded *AND* unconstrained, this

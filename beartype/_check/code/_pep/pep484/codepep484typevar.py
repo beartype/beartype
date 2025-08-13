@@ -23,7 +23,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype._data.typing.datatypingport import Hint
 # from beartype._data.typing.datatyping import TypeStack
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-#     get_hint_pep484_typevar_bound_or_none)
+#     get_hint_pep484_typevar_bounded_constraints_or_none)
 #
 # # ....................{ FACTORIES                          }....................
 # def make_hint_pep484_typevar_check_expr(
@@ -102,7 +102,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #         #
 #         # Note this call is intentionally passed positional rather positional
 #         # keywords due to memoization.
-#         hint_curr_bound = get_hint_pep484_typevar_bound_or_none(
+#         hint_curr_bound = get_hint_pep484_typevar_bounded_constraints_or_none(
 #             hint, exception_prefix)  # pyright: ignore
 #
 #         # If this type variable was parametrized by one or more bounded

@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # from beartype._data.hint.sign.datahintsigns import HintSignTypeVar
 # from beartype._check.error.errcause import ViolationCause
 # from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-#     get_hint_pep484_typevar_bound_or_none)
+#     get_hint_pep484_typevar_bounded_constraints_or_none)
 #
 # # ....................{ GETTERS                            }....................
 # def find_cause_pep484_typevar(cause: ViolationCause) -> ViolationCause:
@@ -55,7 +55,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #         #
 #         # Note this call is intentionally passed positional rather positional
 #         # keywords due to memoization.
-#         hint_curr_bound = get_hint_pep484_typevar_bound_or_none(
+#         hint_curr_bound = get_hint_pep484_typevar_bounded_constraints_or_none(
 #             cause.hint, cause.exception_prefix)  # type: ignore[arg-type]
 #
 #         # If this type variable was parametrized by one or more bounded

@@ -17,10 +17,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep484_typevar_bound_or_none() -> None:
+def test_get_hint_pep484_typevar_bounded_constraints_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_typevar_bound_or_none`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484typevar.get_hint_pep484_typevar_bounded_constraints_or_none`
     tester.
     '''
 
@@ -29,7 +29,7 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     from beartype.roar import BeartypeDecorHintPep484Exception
     from beartype._data.typing.datatyping import T
     from beartype._util.hint.pep.proposal.pep484.pep484typevar import (
-        get_hint_pep484_typevar_bound_or_none)
+        get_hint_pep484_typevar_bounded_constraints_or_none)
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_int,
         T_str_or_bytes,
@@ -38,14 +38,14 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
 
     # ....................{ PASS                           }....................
     # Assert this getter returns "None" for unbounded type variables.
-    assert get_hint_pep484_typevar_bound_or_none(T) is None
+    assert get_hint_pep484_typevar_bounded_constraints_or_none(T) is None
 
     # Assert this getter reduces bounded type variables to their upper bound.
-    assert get_hint_pep484_typevar_bound_or_none(T_int) is int
+    assert get_hint_pep484_typevar_bounded_constraints_or_none(T_int) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
-    typevar_constraints_union = get_hint_pep484_typevar_bound_or_none(
+    typevar_constraints_union = get_hint_pep484_typevar_bounded_constraints_or_none(
         T_str_or_bytes)
 
     # Assert this union contains all constraints parametrizing this variable.
@@ -56,4 +56,4 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     # Assert this getter raises the expected exception when passed a non-type
     # variable.
     with raises(BeartypeDecorHintPep484Exception):
-        get_hint_pep484_typevar_bound_or_none(str)
+        get_hint_pep484_typevar_bounded_constraints_or_none(str)
