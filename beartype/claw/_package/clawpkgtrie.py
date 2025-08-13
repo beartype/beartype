@@ -29,7 +29,7 @@ from collections.abc import (
     Collection as CollectionABC,
 )
 
-# ....................{ SUBCLASSES                         }....................
+# ....................{ HINTS                              }....................
 PackageBasenameToTrieBlacklist = Dict[str, 'PackagesTrieBlacklist']
 '''
 PEP-compliant type hint matching a dictionary mapping from the unqualified
@@ -63,7 +63,6 @@ sub-subpackages of that subpackage).
 #* The passed value is either "None" or another "PackagesTrieWhitelist" object.
 #
 #See the __init__() dunder method for similar validation logic, please.
-
 class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
     '''
     **(Sub)package (sub)trie blacklist** (i.e., recursively nested dictionary

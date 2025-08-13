@@ -11,15 +11,13 @@ third-party module or package).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ SETS                               }....................
 #FIXME: Apply this blacklist to the following things:
 #* Arbitrary callables to be decorated by @beartype, possibly. Consider defining
 #  a new beartype._util.api.utilbeartype.is_func_thirdparty_blacklisted()
 #  tester returning True *ONLY* if the passed callable has a "__module__" dunder
 #  attribute whose value is a string residing in this frozenset.
-THIRDPARTY_PACKAGE_NAMES_BLACKLIST = frozenset((
+PACKAGE_NAMES_BLACKLIST = frozenset((
     # ....................{ ANTIPATTERN ~ forward ref      }....................
     # These third-party packages and modules widely employ the forward reference
     # antipattern throughout their codebases and are thus runtime-hostile.

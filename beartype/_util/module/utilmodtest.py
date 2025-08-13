@@ -15,8 +15,8 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from beartype._cave._cavefast import ModuleType
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.api.external.datamodthirdparty import (
-    THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
+from beartype._data.api.external.dataapiexternal import (
+    PACKAGE_NAMES_BLACKLIST)
 from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.text.utiltextversion import convert_str_version_to_tuple
@@ -224,7 +224,7 @@ def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
     **beartype-blacklisted** (i.e., resides in a third-party package or modules
     well-known to be hostile to runtime type-checking, due to defining the
     standard ``__module__`` dunder attribute with a value that is a string in
-    the :data:`.THIRDPARTY_PACKAGE_NAMES_BLACKLIST` frozen set).
+    the :data:`.PACKAGE_NAMES_BLACKLIST` frozen set).
 
     Parameters
     ----------
@@ -238,7 +238,7 @@ def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
 
     See Also
     --------
-    :data:`.THIRDPARTY_PACKAGE_NAMES_BLACKLIST`
+    :data:`.PACKAGE_NAMES_BLACKLIST`
         Detailed discussion of beartype-blacklisting. 
     '''
 
@@ -264,7 +264,7 @@ def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
 
     # Return true only if this top-level root package or module is
     # beartype-blacklisted.
-    return obj_package_name in THIRDPARTY_PACKAGE_NAMES_BLACKLIST
+    return obj_package_name in PACKAGE_NAMES_BLACKLIST
 
 # ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.

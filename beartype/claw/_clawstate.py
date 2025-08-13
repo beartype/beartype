@@ -20,8 +20,8 @@ from beartype.claw._package.clawpkgtrie import (
     PackagesTrieWhitelist,
     PackageBasenameToTrieBlacklist,
 )
-from beartype._data.api.external.datamodthirdparty import (
-    THIRDPARTY_PACKAGE_NAMES_BLACKLIST)
+from beartype._data.api.external.dataapiexternal import (
+    PACKAGE_NAMES_BLACKLIST)
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
@@ -46,12 +46,12 @@ class BeartypeClawState(object):
           :func:`beartype.claw._importlib.clawimppath.add_beartype_pathhook`
           function has been previously called at least once under the active
           Python interpreter and the
-          :func:`beartype.claw._importlib.clawimppath.add_beartype_pathhook`
-          function has not been called more recently, the **Beartype import path
+          :func:`beartype.claw._importlib.clawimppath.remove_beartype_pathhook`
+          function has not been called more recently, the **beartype import path
           hook singleton** (i.e., factory closure creating and returning a new
           :class:`importlib.machinery.FileFinder` instance itself creating and
           leveraging a new :class:`.BeartypeSourceFileLoader` instance).
-        * Else, :data:`None` otherwise.
+        * Else, :data:`None`.
 
         Initialized to :data:`None`.
     module_name_to_beartype_conf : ModuleNameToBeartypeConf
@@ -65,15 +65,15 @@ class BeartypeClawState(object):
         dictionary implementing a prefix tree such that each key-value pair maps
         from the unqualified basename of each subpackage to *not* be implicitly
         type-checked on the first importation of that subpackage to another
-        instance of the :class:`.PackagesTrieWhitelist` class similarly describing the
-        sub-subpackages of that subpackage).
+        instance of the :class:`.PackagesTrieWhitelist` class similarly
+        describing the sub-subpackages of that subpackage).
     packages_trie_whitelist : PackagesTrieWhitelist
         **Package trie whitelist** (i.e., non-thread-safe recursively nested
         dictionary implementing a prefix tree such that each key-value pair maps
         from the unqualified basename of each subpackage to be implicitly
         type-checked on the first importation of that subpackage to another
-        instance of the :class:`.PackagesTrieWhitelist` class similarly describing the
-        sub-subpackages of that subpackage).
+        instance of the :class:`.PackagesTrieWhitelist` class similarly
+        describing the sub-subpackages of that subpackage).
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -197,13 +197,13 @@ def _init() -> None:
     #   method docstring for further commentary.
     #
     # Note that "beartype" is intentionally *OMITTED* from the global
-    # "THIRDPARTY_PACKAGE_NAMES_BLACKLIST" frozen set iterated over below. Why?
+    # "PACKAGE_NAMES_BLACKLIST" frozen set iterated over below. Why?
     # Because "beartype" should *ONLY* be blacklisted with respect to
     # "beartype.claw" import hooks. "beartype" should *NOT* be unilaterally
     # blacklisted across the entirety of this codebase, as doing so would
     # erroneously destroy our ability to (in no particular order):
     # * Define deeply type-checkable PEP 484- and 585-compliant generics.
-    package_names_blacklist = THIRDPARTY_PACKAGE_NAMES_BLACKLIST | {
+    package_names_blacklist = PACKAGE_NAMES_BLACKLIST | {
         'beartype',
     }
 

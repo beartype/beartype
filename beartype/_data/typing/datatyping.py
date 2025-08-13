@@ -318,12 +318,13 @@ PEP-compliant type hint matching *any* collection of zero or more strings.
 '''
 
 # ....................{ DICT                               }....................
-DictStrToType = Dict[str, type]
+DictTypeToAny = Dict[type, Any]
 '''
-PEP-compliant type hint matching a dictionary mapping from strings to types.
+PEP-compliant type hint matching a dictionary mapping from types to arbitrary
+objects.
 '''
 
-# ....................{ DICT ~ any                         }....................
+# ....................{ DICT ~ str                         }....................
 DictStrToAny = Dict[str, Any]
 '''
 PEP-compliant type hint matching a dictionary mapping from strings to arbitrary
@@ -331,18 +332,31 @@ objects.
 '''
 
 
+DictStrToStr = Dict[str, str]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to strings.
+'''
+
+
+DictStrToStrToStr = Dict[str, DictStrToStr]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to nested
+dictionaries mapping from strings to strings. (*So. Many. Strings.*)
+'''
+
+
+DictStrToType = Dict[str, type]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to types.
+'''
+
+# ....................{ MAPPING                            }....................
 MappingStrToAny = Mapping[str, object]
 '''
 PEP-compliant type hint matching a mapping mapping from keys to arbitrary
 objects.
 '''
 
-
-DictTypeToAny = Dict[type, Any]
-'''
-PEP-compliant type hint matching a dictionary mapping from types to arbitrary
-objects.
-'''
 
 # ....................{ SIGN                               }....................
 HintSignOrNoneOrSentinel = Union[Optional[HintSign], Iota]
