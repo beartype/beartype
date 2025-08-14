@@ -11,8 +11,32 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Handle user-defined afterlists via the "self._conf_beartype" instance
+#FIXME: Handle user-defined afterlists via the "self._conf" instance
 #variable, please. *sigh*
+
+#FIXME: Track problematic imports across local (i.e., function) scopes as well.
+#Local scopes require unique handling, because they are *NEVER* globally
+#accessible by any means. Unlike class scopes, imports *ARE* often confined to
+#local scopes. Ergo, tracking imports across local scopes would be quite useful.
+#The best way to handle local scopes would be to:
+#* In the BeartypeNodeTransformer.generic_visit() method:
+#  * On entering a new local scope (i.e., function body), append:
+#        self._scopes_afterlist.append(self._scopes_afterlist[-1])
+#    What this does is efficiently propagate afterlist scopes down from the
+#    default afterlist global scope into unique afterlist nested scopes.
+#  * On exiting the current local scope (i.e., function body), pop
+#    the last item off that stack.
+#* On detecting any problematic import:
+#  * Decide whether new mutable "ChainMap" objects are needed based on whether
+#    the current "self._func_scopes_afterlist[-1]" stack head is an immutable
+#    "FrozenDict" object or not: e.g.,
+#        scope_afterlist = self._scopes_afterlist[-1]
+#        if isinstance(scope_afterlist, FrozenDict):
+#            self._scopes_afterlist[-1] = scope_afterlist = scope_afterlist.permute()
+#  * Append problematic local imports to "scope_afterlist"
+#    rather than global data structures.
+#
+#That's about it, really. Should work just fine. Fun? Let's hope so. \o/
 
 # ....................{ IMPORTS                            }....................
 from ast import (
@@ -76,7 +100,7 @@ class BeartypeNodeTransformerAfterlistMixin(object):
         # ..................{ TRACK                          }..................
         # If the lexical scope of this parent node is module scope, this node
         # encapsulates a global import statement. In this case...
-        if not self._is_scope_module_beartype:  # type: ignore[attr-defined]
+        if self._is_scope_module_beartype:  # type: ignore[attr-defined]
             #FIXME: *DO STUFF HERE!* For now, just start with the
             #"CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME" global. *shrug*
             pass
@@ -84,7 +108,22 @@ class BeartypeNodeTransformerAfterlistMixin(object):
         # this case...
         else:
             #FIXME: Consider tracking problematic imports in nested scopes as
-            #well. Since nobody has complained about this yet, this is fine.
+            #well. Since nobody has complained about this yet, this is fine for
+            #the moment. Note that two kinds of nested scopes exist:
+            #* Class scope. These could be considered a kind of global scope.
+            #  Like global scopes, class scopes can be globally accessed outside
+            #  of those classes through standard "." lookups. This differs from
+            #  local scopes, which cannot be. Ergo, class scopes could probably
+            #  be reasonably handled in the "if" block above. That said, class
+            #  scopes are also *INCREDIBLY* rare. It's highly unlikely that
+            #  *ANYONE* will ever import anything directly in a class scope.
+            #  Technically, it can be done. Pragmatically, no one does. Ergo,
+            #  class scopes are entirely ignorable... until somebody complains!
+            #* Local (i.e., function) scope. Local scopes require unique
+            #  handling, because they are *NEVER* globally accessible by any
+            #  means. Unlike class scopes, imports *ARE* often confined to local
+            #  scopes. Ergo, tracking imports across local scopes would be quite
+            #  useful. See the "FIXME:" above for detailed commentary.
             pass
 
         # ..................{ RETURN                         }..................

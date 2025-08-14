@@ -995,7 +995,7 @@ def _init() -> None:
 
     # Defer initialization-specific imports.
     import builtins, types
-    from beartype._data.api.standard.datamodpy import BUILTINS_MODULE_NAME
+    from beartype._data.api.standard.datapy import BUILTINS_MODULE_NAME
     from beartype._util.utilobject import get_object_type_unless_type
 
     # Global variables assigned to below.

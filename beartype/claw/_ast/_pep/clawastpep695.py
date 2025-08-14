@@ -148,9 +148,9 @@ from ast import (
     # JoinedStr,
     Subscript,
 )
-from beartype.claw._clawmagic import (
+from beartype._data.claw.dataclawmagic import (
     BEARTYPE_HINT_PEP695_FORWARDREF_ITER_FUNC_NAME)
-from beartype._data.ast.dataast import NODE_CONTEXT_STORE
+from beartype._data.api.standard.dataast import NODE_CONTEXT_STORE
 from beartype._data.typing.datatyping import NodeVisitResult
 from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata

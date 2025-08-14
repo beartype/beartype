@@ -62,6 +62,7 @@ from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import Iota
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+from collections import ChainMap
 from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
 from pathlib import Path
@@ -309,6 +310,19 @@ MethodDescriptorNondata = Union[
 PEP-compliant type hint matching any **builtin method non-data descriptor**
 (i.e., C-based descriptor builtin to Python defining only the ``__get__()``
 dunder method, encapsulating read-only access to some kind of method).
+'''
+
+# ....................{ CHAINMAP ~ str                     }....................
+ChainMapStrToStr = ChainMap[str, str]
+'''
+PEP-compliant type hint matching a chain map mapping from strings to strings.
+'''
+
+
+ChainMapStrToStrToStr = ChainMap[str, ChainMapStrToStr]
+'''
+PEP-compliant type hint matching a chain map mapping from strings to nested
+dictionaries mapping from strings to strings. (*So. Many. Strings.*)
 '''
 
 # ....................{ COLLECTION                         }....................

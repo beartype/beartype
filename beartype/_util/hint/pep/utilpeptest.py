@@ -28,7 +28,7 @@ from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
 )
-from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type

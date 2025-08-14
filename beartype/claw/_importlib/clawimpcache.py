@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
+from beartype._data.claw.dataclawmagic import BEARTYPE_OPTIMIZATION_MARKER
 from beartype.roar import BeartypeClawImportConfException
 from beartype.typing import Dict
 from beartype._conf.confmain import BeartypeConf
@@ -102,7 +102,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         # If doing so fails with a low-level non-human-readable exception...
         except KeyError as exception:  # pragma: no cover
             #FIXME: Also, consider dropping the parallel
-            #"BeartypeSourceFileLoader._main_module_name_beartype" attribute.
+            #"BeartypeSourceFileLoader._main_module_name" attribute.
             #Does this nonsense supercede that nonsense? Probably. Which leads
             #us directly to...
 

@@ -12,6 +12,60 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [PEP 484] Additionally define generator transformers. The idea here is
+#that @beartype *CAN* actually automatically type-check generator yields, sends,
+#and returns at runtime. How? By automatically injecting appropriate
+#die_if_unbearable() calls type-checking the values to be yielded, sent, and
+#returned against the appropriate type hints of the current generator factory
+#*BEFORE* yielding, sending, and returning those values. Shockingly, typeguard
+#already does this -- which is all manner of impressive. See the
+#TypeguardTransformer._use_memo() context manager for working code. Wow!
+#    https://github.com/agronholm/typeguard/blob/master/src/typeguard/_transformer.py
+#
+#Note, however, that doing so is extremely complicated in the modern Python era.
+#Why? PEP 649. Unquoted forward references in type hints are now resolved
+#dynamically at runtime via non-trivial machinery that, ultimately, calls
+#__annotate__() dunder methods declared on callables. This means that type hints
+#are no longer safely copyable at early AST transformation time, which in turn
+#means that AST transformers *CANNOT* safely copy type hints annotating
+#callables into parameters passed to die_if_unbearable() calls. Is there no hope
+#then? There is hope, actually -- and fairly trivial, too. How? Just reference
+#rather than copy nested generator type hints. Since the @beartype decorator
+#guarantees nested generator type hints to be resolved by the time these
+#die_if_unbearable() calls are actually performed, referencing these type hints
+#suffices to preserve sanity: e.g.,
+#    from collections.abc import Iterable
+#    def muh_generator_func(muh_arg: str) -> Iterable[str]:
+#        die_in_unbearable(
+#            muh_arg, muh_generator_func.__annotations__['muh_arg])
+#        yield muh_arg
+#
+#Of course, even the convoluted pseudocode above still fails to suffice. Why?
+#Because the "__annotations__" dunder dictionary is no longer safely accessible.
+#Doing so raises "NameError" exceptions for type hints subscripted by one or
+#more unquoted forward references. Instead, we'll need to call some sort of PEP
+#649-compliant private beartype utility function (which doesn't even exist,
+#currently) to efficiently retrieve specific type hints.
+#
+#Super-annoying, but also super-feasible. Still, nobody cares at the moment.
+#Let's let this one slip onto the back burner for the moment, eh?
+
+#FIXME: [SPEED] Consider generalizing the BeartypeNodeTransformer.__new__()
+#class method to internally cache and return "BeartypeNodeTransformer" instances
+#depending on the passed "conf" parameter. In general, most codebases
+#will only leverage a single @beartype configuration (if any @beartype
+#configuration at all); ergo, caching improves everything by enabling us to
+#reuse the same "BeartypeNodeTransformer" instance for every hooked module.
+#Score @beartype! See the BeartypeConf.__new__() method for relevant logic. \o/
+#FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
+#defining a comparable reinit() method as we do for "BeartypeDecorMeta". After
+#retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
+#immediately call BeartypeNodeTransformer.reinit() to reinitialize that
+#instance.
+#
+#This is all feasible, of course -- but let's just roll with the naive
+#implementation for now, please.
+
 #FIXME: [PEP 675] *OMG.* See also the third-party "executing" Python package:
 #    https://github.com/alexmojaki/executing
 #

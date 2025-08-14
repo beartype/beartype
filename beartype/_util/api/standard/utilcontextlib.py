@@ -119,7 +119,7 @@ def get_func_contextlib_contextmanager_or_none(func: Any) -> Optional[Callable]:
 
     # Defer heavyweight getter-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
-    from beartype._data.api.standard.datamodcontextlib import (
+    from beartype._data.api.standard.datacontextlib import (
         CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME_TO_DECORATOR)
 
     # Fully-qualified name of this code object.

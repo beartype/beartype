@@ -20,7 +20,7 @@ from ast import (
     Name,
     unparse,
 )
-from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
+from beartype._data.claw.dataclawmagic import BEARTYPE_RAISER_FUNC_NAME
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.typing.datatyping import NodeVisitResult
 from beartype._util.ast.utilastmake import (
@@ -148,7 +148,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
             not (
                 # This beartype configuration enables type-checking of PEP
                 # 526-compliant annotated variable assignments *AND*...
-                self._conf_beartype.claw_is_pep526 and  # type: ignore[attr-defined]
+                self._conf.claw_is_pep526 and  # type: ignore[attr-defined]
                 # This statement is an assignment (e.g., "muh_var: int = 2")
                 # rather than just an unassigned annotation of an attribute
                 # (e.g., "muh_var: int").
@@ -287,10 +287,10 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # If the current beartype configuration is *NOT* the default beartype
         # configuration, this configuration is a user-defined beartype
         # configuration which *MUST* be passed as well. In this case...
-        if self._conf_beartype != BEARTYPE_CONF_DEFAULT:  # type: ignore[attr-defined]
+        if self._conf != BEARTYPE_CONF_DEFAULT:  # type: ignore[attr-defined]
             # Child node encapsulating the passing of this configuration as the
             # "conf" keyword argument to die_if_unbearable().
-            node_func_kwarg_conf = self._make_node_keyword_conf_beartype(  # type: ignore[attr-defined]
+            node_func_kwarg_conf = self._make_node_keyword_conf(  # type: ignore[attr-defined]
                 node_sibling=node)
 
             # Append this node to the list of all keyword arguments passed to
@@ -305,7 +305,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # encapsulates a global variable assignment. In this case...
         if self._is_scope_module_beartype:  # type: ignore[attr-defined]
             # Fully-qualified name of this global variable.
-            var_name = f'{self._module_name_beartype}.{var_basename}'  # type: ignore[attr-defined]
+            var_name = f'{self._module_name}.{var_basename}'  # type: ignore[attr-defined]
 
             # Human-readable label prefixing this exception message.
             exception_prefix = f'Global variable "{color_attr_name(var_name)}" '
@@ -315,7 +315,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # case...
         else:
             # Fully-qualified name of the callable defining this local variable.
-            callable_name = f'{self._scope_name_beartype}()'  # type: ignore[attr-defined]
+            callable_name = f'{self._scope_name}()'  # type: ignore[attr-defined]
 
             # Human-readable label prefixing this exception message.
             exception_prefix = (

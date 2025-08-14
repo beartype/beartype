@@ -4,37 +4,17 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **magic** (i.e., global constants widely leveraged throughout
-submodules of the :mod:`beartype.claw` subpackage).
+Beartype **import hook magic** (i.e., global constants widely leveraged
+throughout submodules of the :mod:`beartype.claw` subpackage).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from ast import (
-    Load,
-    Store,
-)
 from beartype.meta import (
     NAME,
     VERSION,
 )
-
-# ....................{ AST                                }....................
-NODE_CONTEXT_LOAD = Load()
-'''
-**Node context load singleton** (i.e., object suitable for passing as the
-``ctx`` keyword parameter accepted by the ``__init__()`` method of various
-abstract syntax tree (AST) node classes).
-'''
-
-
-NODE_CONTEXT_STORE = Store()
-'''
-**Node context store singleton** (i.e., object suitable for passing as the
-``ctx`` keyword parameter accepted by the ``__init__()`` method of various
-abstract syntax tree (AST) node classes).
-'''
 
 # ....................{ STRINGS                            }....................
 BEARTYPE_OPTIMIZATION_MARKER = f'{NAME}{VERSION.replace(".", "v")}'

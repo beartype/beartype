@@ -19,7 +19,7 @@ from beartype.typing import (
     Optional,
     TextIO,
 )
-from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
 from beartype._data.cls.datacls import TYPES_PEP484_GENERIC_IO
 from beartype._data.typing.datatypingport import (
     Hint,

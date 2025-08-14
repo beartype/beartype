@@ -255,7 +255,7 @@ def _init() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer initialization-specific imports.
-    from beartype._data.api.standard.datamodtyping import TYPING_MODULE_NAMES
+    from beartype._data.api.standard.datatyping import TYPING_MODULE_NAMES
     from beartype._data.hint.sign.datahintsigns import HINT_SIGNS_TYPING
 
     # ..................{ GLOBALS                            }..................

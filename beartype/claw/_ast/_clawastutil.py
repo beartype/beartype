@@ -20,8 +20,8 @@ from ast import (
     expr,
     keyword,
 )
-from beartype.claw._clawmagic import (
-    NODE_CONTEXT_LOAD,
+from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
+from beartype._data.claw.dataclawmagic import (
     BEARTYPE_CLAW_STATE_OBJ_NAME,
     BEARTYPE_DECORATOR_FUNC_NAME,
 )
@@ -119,7 +119,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
                 # Node encapsulating the passing of this configuration as
                 # the "conf" keyword argument to this call.
                 keywords=[
-                    self._make_node_keyword_conf_beartype(node_sibling=node)],
+                    self._make_node_keyword_conf(node_sibling=node)],
             )
 
             # Copy all source code metadata from this parent callable node onto
@@ -168,7 +168,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
 
     # ....................{ PRIVATE ~ factories            }....................
     #FIXME: Unit test us up, please.
-    def _make_node_keyword_conf_beartype(self, node_sibling: AST) -> keyword:
+    def _make_node_keyword_conf(self, node_sibling: AST) -> keyword:
         '''
         Create and return a new **beartype configuration keyword argument node**
         (i.e., abstract syntax tree (AST) node passing the beartype
@@ -189,7 +189,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
 
         # Node encapsulating the fully-qualified name of the current module.
         node_module_name = make_node_str(
-            text=self._module_name_beartype, node_sibling=node_sibling)  # type: ignore[attr-defined]
+            text=self._module_name, node_sibling=node_sibling)  # type: ignore[attr-defined]
 
         # Node encapsulating a reference to the beartype configuration object
         # cache (i.e., dictionary mapping from fully-qualified module names to
@@ -246,7 +246,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
 
         # Return true only if the stack of all lexical nodes is currently empty,
         # implying the current node resides directly in the body of a module.
-        return not self._scope_stack_beartype  # type: ignore[attr-defined]
+        return not self._scopes_node_type  # type: ignore[attr-defined]
 
 
     @property
@@ -265,7 +265,7 @@ class BeartypeNodeTransformerUtilityMixin(object):
         # Return true only if...
         return (
             # The stack of all lexical scope is currently non-empty *AND*...
-            bool(self._scope_stack_beartype) and  # type: ignore[attr-defined]
+            bool(self._scopes_node_type) and  # type: ignore[attr-defined]
             # The current node resides directly in the body of a class.
-            self._scope_stack_beartype[-1] is ClassDef  # type: ignore[attr-defined]
+            self._scopes_node_type[-1] is ClassDef  # type: ignore[attr-defined]
         )

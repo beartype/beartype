@@ -31,11 +31,11 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.ast.dataast import (
+from beartype._data.api.standard.dataast import (
     NODE_CONTEXT_LOAD,
     NODE_CONTEXT_STORE,
 )
-from beartype._data.typing.datatyping import NodesList
+# from beartype._data.typing.datatyping import NodesList
 from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 
