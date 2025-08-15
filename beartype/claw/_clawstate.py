@@ -13,10 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._afterlist.clawaftscope import (
-    BeartypeAfterlistScope,
-    make_afterlist_scope_global,
-)
 from beartype.claw._importlib.clawimpcache import ModuleNameToBeartypeConf
 from beartype.claw._package.clawpkgtrie import (
     PackagesTrieBlacklist,
@@ -43,11 +39,6 @@ class BeartypeClawState(object):
 
     Attributes
     ----------
-    afterlist_scope_global : BeartypeAfterlistScope
-        **Beartype import hook afterlist global scope** (i.e., low-level
-        dataclass aggregating all metadata required to manage the afterlist
-        automating decorator positioning across all global scopes inspected by
-        :mod:`beartype.claw` import hooks).
     beartype_pathhook : Optional[ImportPathHook]
         Either:
 
@@ -94,7 +85,6 @@ class BeartypeClawState(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
-        'afterlist_scope_global',
         'beartype_pathhook',
         'module_name_to_beartype_conf',
         'packages_trie_blacklist',
@@ -104,7 +94,6 @@ class BeartypeClawState(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        afterlist_scope_global: BeartypeAfterlistScope
         beartype_pathhook: Optional[ImportPathHook]
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
         packages_trie_blacklist: PackagesTrieBlacklist
@@ -133,7 +122,6 @@ class BeartypeClawState(object):
         '''
 
         # One one-liner to reinitialize them all.
-        self.afterlist_scope_global = make_afterlist_scope_global()
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
         self.packages_trie_whitelist = PackagesTrieWhitelist()
         self.packages_trie_blacklist = PackagesTrieBlacklist(
@@ -172,7 +160,6 @@ class BeartypeClawState(object):
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    afterlist_scope_global={repr(self.afterlist_scope_global)},\n',
             f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
             f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',

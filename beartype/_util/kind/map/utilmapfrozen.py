@@ -20,6 +20,10 @@ from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
 
 # ....................{ CLASSES                            }....................
+#FIXME: Consider attempting to generalize with type variables: e.g.,
+#    class FrozenDict(dict[S, T]):
+#In theory, that should help static type-checkers. In practice, they'll probably
+#just complain about everything and be even more of a pain. We sigh. *sigh*
 class FrozenDict(dict):
     '''
     **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`
@@ -80,7 +84,8 @@ class FrozenDict(dict):
         return self._hash
 
 
-    def __reduce_ex__(self, protocol: SupportsIndex) -> Tuple[type, object]:
+    def __reduce_ex__(self, protocol: SupportsIndex) -> (
+        Tuple[type, Tuple[dict]]):
         '''
         Pickle this immutable dictionary.
 
@@ -91,7 +96,7 @@ class FrozenDict(dict):
 
         Returns
         -------
-        Tuple[type, object]
+        Tuple[type, Tuple[dict]]
             2-tuple suitable for pickling this immutable dictionary.
         '''
 

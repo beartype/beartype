@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **afterlist scope dataclasses** (i.e., low-level classes aggregating
-all metadata required to manage the afterlist automating decorator positioning
-for :mod:`beartype.claw` import hooks).
+Beartype **abstract syntax tree (AST) scope afterlist** (i.e., low-level
+dataclass aggregating all metadata required to manage the afterlist automating
+decorator positioning for for lexical scopes recursively visited by AST
+transformers).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -19,21 +20,20 @@ from beartype._data.typing.datatyping import (
     ChainMapStrToStr,
     ChainMapStrToStrToStr,
 )
-from beartype._data.claw.dataclawafterlist import (
+from beartype._data.claw.dataclawafter import (
     CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME,
     CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAME,
 )
 from collections import ChainMap
 
 # ....................{ CLASSES                            }....................
-#FIXME: Actually use this dataclass in the parent "BeartypeClawStateAfterlist"
-#dataclass, please. *sigh*
-class BeartypeAfterlistScope(object):
+#FIXME: Unit test us up, please. *sigh*
+class BeartypeNodeScopeAfterlist(object):
     '''
-    **Beartype import hook afterlist scope** (i.e., low-level dataclass
-    aggregating all metadata required to manage the afterlist automating
-    decorator positioning for a specific global or local scope inspected by
-    :mod:`beartype.claw` import hooks).
+    Beartype **abstract syntax tree (AST) scope afterlist** (i.e., low-level
+    dataclass aggregating all metadata required to manage the afterlist
+    automating decorator positioning for lexical scopes recursively visited by
+    AST transformers).
 
     Attributes
     ----------
@@ -98,13 +98,38 @@ class BeartypeAfterlistScope(object):
         module_to_type_to_method_decorator_name : ChainMapStrToStrToStr
             **Afterlist decorator method chain map.** See the class docstring.
         '''
+
+        # Shallowly type-check these data structures to be chain maps.
         assert isinstance(module_to_func_decorator_name, ChainMap), (
             f'{repr(module_to_func_decorator_name)} not chain map.')
         assert isinstance(module_to_type_to_method_decorator_name, ChainMap), (
             f'{repr(module_to_type_to_method_decorator_name)} not chain map.')
-        #FIXME: Additionally assert all key-value pairs of these data structures
-        #to be strings. *sigh*
 
+        # Deeply type-check the contents of these data structures.
+        assert all(
+            (
+                isinstance(module_name, str) and
+                isinstance(func_decorator_name, str)
+            )
+            for module_name, func_decorator_name in (
+                module_to_func_decorator_name.items())
+        ), f'{repr(module_to_func_decorator_name)} not "ChainMap[str, str]".'
+        assert all(
+            (
+                isinstance(module_name, str) and
+                isinstance(type_name, str) and
+                isinstance(method_decorator_name, str)
+            )
+            for module_name, type_to_method_decorator_name in (
+                module_to_type_to_method_decorator_name.items())
+            for type_name, method_decorator_name in (
+                type_to_method_decorator_name.items())
+        ), (
+            f'{repr(module_to_type_to_method_decorator_name)} not '
+            f'"ChainMap[str, ChainMap[str, str]]".'
+        )
+
+        # Classify all passed parameters.
         self.module_to_func_decorator_name = module_to_func_decorator_name
         self.module_to_type_to_method_decorator_name = (
             module_to_type_to_method_decorator_name)
@@ -120,7 +145,7 @@ class BeartypeAfterlistScope(object):
         ))
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self) -> 'BeartypeAfterlistScope':
+    def permute(self) -> 'BeartypeNodeScopeAfterlist':
         '''
         Shallow copy of this afterlist scope, typically called to produce a
         mutable copy of this afterlist scope isolated to a new local (e.g.,
@@ -138,7 +163,7 @@ class BeartypeAfterlistScope(object):
 
         Returns
         -------
-        BeartypeAfterlistScope
+        BeartypeNodeScopeAfterlist
             Shallow copy of this afterlist scope.
         '''
 
@@ -150,25 +175,49 @@ class BeartypeAfterlistScope(object):
             self.module_to_type_to_method_decorator_name.new_child())
 
         # Create and return a shallow copy of this dataclass.
-        return BeartypeAfterlistScope(
+        return BeartypeNodeScopeAfterlist(
             module_to_func_decorator_name=module_to_func_decorator_name_new,
             module_to_type_to_method_decorator_name=(
                 module_to_type_to_method_decorator_name_new),
         )
 
 # ....................{ FACTORIES                          }....................
-def make_afterlist_scope_global() -> BeartypeAfterlistScope:
+#FIXME: Unit test us up, please.
+def make_node_scope_afterlist_global() -> BeartypeNodeScopeAfterlist:
     '''
-    **Beartype import hook afterlist global scope** (i.e., low-level dataclass
-    aggregating all metadata required to manage the afterlist automating
-    decorator positioning across all global scopes inspected by
-    :mod:`beartype.claw` import hooks).
+    Beartype **abstract syntax tree (AST) global scope afterlist** (i.e.,
+    low-level dataclass aggregating all metadata required to manage the
+    afterlist automating decorator positioning for the global scope of the
+    module being recursively visited by the current AST transformer).
+
+    Returns
+    -------
+    BeartypeNodeScopeAfterlist
+        AST global scope afterlist of the currently visited module.
     '''
 
+    # Afterlist decorator function mapping, defined as a mutable chain map
+    # coerced from this immutable frozen dictionary singleton.
+    module_to_func_decorator_name = ChainMap(dict(
+        CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME))
+
+    # Afterlist decorator method mapping, defined as a mutable chain map
+    # coerced from this immutable frozen dictionary singleton.
+    #
+    # Note that doing so is complicated by the fact that this parent frozen
+    # dictionary maps from strings to nested frozen dictionaries, which *MUST*
+    # also be coerced into nested chain maps.
+    module_to_type_to_method_decorator_name_dict = {
+        afterlist_module_name: ChainMap(dict(type_to_method_decorator_name))
+        for afterlist_module_name, type_to_method_decorator_name in (
+            CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAME.items())
+    }
+    module_to_type_to_method_decorator_name = ChainMap(
+        module_to_type_to_method_decorator_name_dict)
+
     # Create and return this afterlist global scope.
-    return BeartypeAfterlistScope(
-        module_to_func_decorator_name=(
-            CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME),
+    return BeartypeNodeScopeAfterlist(
+        module_to_func_decorator_name=module_to_func_decorator_name,
         module_to_type_to_method_decorator_name=(
-            CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAME),
+            module_to_type_to_method_decorator_name),
     )

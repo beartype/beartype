@@ -195,7 +195,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
             #         # to quietly turn a blind eye to what otherwise might be
             #         # considered a type violation.
             #         muh_unsafe_field: int = field(default=0xCAFEBABE)
-            self._is_scope_class_beartype  # type: ignore[attr-defined]
+            self._scopes.is_scope_class  # type: ignore[attr-defined]
         ):
             # Then simply preserve and return this node as is.
             return node
@@ -303,7 +303,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # ..................{ CONF ~ exception : prefix      }..................
         # If the lexical scope of this parent node is module scope, this node
         # encapsulates a global variable assignment. In this case...
-        if self._is_scope_module_beartype:  # type: ignore[attr-defined]
+        if self._scopes.is_scope_module:  # type: ignore[attr-defined]
             # Fully-qualified name of this global variable.
             var_name = f'{self._module_name}.{var_basename}'  # type: ignore[attr-defined]
 

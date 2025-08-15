@@ -1207,6 +1207,18 @@ class BeartypeClawException(BeartypeException):
 
     pass
 
+# ....................{ API ~ claw : ast                   }....................
+class BeartypeClawAstException(BeartypeClawException):
+    '''
+    Abstract base class of all **beartype import hook abstract syntax tree (ast)
+    exceptions.**
+
+    instances of subclasses of this exception from various submodules of the
+    private :func:`beartype.claw._ast` subpackage.
+    '''
+
+    pass
+
 # ....................{ API ~ claw : hook                  }....................
 class BeartypeClawHookException(BeartypeClawException):
     '''
@@ -1540,6 +1552,21 @@ class BeartypeValeValidationException(BeartypeValeException):
 
     pass
 
+# ....................{ PRIVATE ~ claw                       }..................
+class _BeartypeClawAstNodeScopesException(BeartypeClawAstException):
+    '''
+    **Beartype import hook abstract syntax tree (ast) node scopes exception.**
+
+    This exception is raised at :mod:`beartype.claw` import hook time from the
+    :class:`beartype.claw._ast._scope.clawastscope.BeartypeNodeScopes` class on
+    detecting an invalid AST node scope.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ door                       }..................
 class _BeartypeDoorTextException(BeartypeDoorException):
     '''
@@ -1548,6 +1575,9 @@ class _BeartypeDoorTextException(BeartypeDoorException):
     This exception is raised at call time from :func:`beartype.door` callables
     and classes on detecting invalid strings (e.g., on raising an exception
     whose message is *not* prefixed by the expected substring).
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
     '''
 
     pass

@@ -13,11 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
-    AST,
     ClassDef,
     NodeTransformer,
 )
-from beartype.claw._afterlist.clawaftscope import BeartypeAfterlistScope
+from beartype.claw._ast._scope.clawastscopes import BeartypeNodeScopes
 from beartype.claw._ast._kind.clawastmodule import (
     BeartypeNodeTransformerModuleMixin)
 from beartype.claw._ast._pep.clawastpep526 import (
@@ -26,16 +25,14 @@ from beartype.claw._ast._pep.clawastpep695 import (
     BeartypeNodeTransformerPep695Mixin)
 from beartype.claw._ast._clawastutil import BeartypeNodeTransformerUtilityMixin
 from beartype.typing import (
-    List,
     Optional,
-    Type,
 )
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.api.standard.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._data.typing.datatyping import (
     NodeCallable,
     NodeT,
 )
-from beartype._data.api.standard.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._util.ast.utilasttest import is_node_callable_typed
 
 # ....................{ SUBCLASSES                         }....................
@@ -110,27 +107,10 @@ class BeartypeNodeTransformer(
         relative basenames of zero or more classes and/or callables). This name
         is guaranteed to be prefixed by the current value of the
         :attr:`._module_name` instance variable.
-    _scopes_afterlist : list[BeartypeAfterlistScope]
-        **Current afterlist scope stack** (i.e., list of the zero or more
-        afterlist scopes, each of which aggregates all metadata required to
-        manage the afterlist automating decorator positioning for a lexical
-        scope being recursively visited by this node transformer).
-    _scopes_node_type : list[type[AST]]
-        **Current lexical scope node type stack** (i.e., list of the zero or
-        more types of parent nodes of the node being recursively visited by this
-        node transformer such that each of those parent nodes declares a new
-        lexical scope). Specifically:
-
-        * If this stack is empty, the current node directly resides in the body
-          of a module (i.e., is a global attribute).
-        * If this stack is non-empty, the current node does *not* directly
-          reside in the body of a module. Instead, if the last item of this
-          stack is:
-
-          * The :class:`ClassDef` node type, the current node directly resides
-            in the body of a class (i.e., is a class attribute or method).
-          * The :class:`FunctionDef` node type, the current node directly
-            resides in the body of a callable (i.e., is a local attribute).
+    _scopes : BeartypeNodeScopes
+        **Lexical scope stack** (i.e., list of the one or more dataclasses
+        aggregating all metadata required to detect and manage lexical scopes
+        being recursively visited by this AST transformer).
 
     See Also
     --------
@@ -161,8 +141,7 @@ class BeartypeNodeTransformer(
         '_conf',
         '_module_name',
         '_scope_name',
-        '_scopes_afterlist',
-        '_scopes_node_type',
+        '_scopes',
     )
 
     # ..................{ INITIALIZERS                       }..................
@@ -192,9 +171,6 @@ class BeartypeNodeTransformer(
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not beartype configuration.')
 
-        # Avoid circular import dependencies.
-        from beartype.claw._clawstate import claw_state
-
         # Initialize our superclass.
         super().__init__()
 
@@ -202,15 +178,16 @@ class BeartypeNodeTransformer(
         self._conf = conf
         self._module_name = self._scope_name = module_name
 
-        # Current afterlist scope stack, initially containing *ONLY* the default
-        # afterlist global scope tracking problematic imports across the entire
-        # user-defined app currently being run.
-        self._scopes_afterlist: List[BeartypeAfterlistScope] = [
-            claw_state.afterlist_scope_global,
-        ]
+        #FIXME: [SPEED] Attempt to reuse this "BeartypeNodeScope" across AST
+        #transformers rather than redeclaring the same "BeartypeNodeScope".
+        #That said, attempt this *ONLY* after allowing users to configuring
+        #afterlist. That will complicate efficiency attempts, as afterlists will
+        #then be specific to module-specific "beartype.claw" configurations. So,
+        #maybe we don't want to try reusing this after all. *heh*
 
-        # Nullify all remaining instance variables for safety.
-        self._scopes_node_type: List[Type[AST]] = []
+        # Lexical scope stack, initially containing *ONLY* the default global
+        # scope for statements in the body of the current module.
+        self._scopes = BeartypeNodeScopes()
 
     # ..................{ SUPERCLASS                         }..................
     # Overridden methods first defined by the "NodeTransformer" superclass.
@@ -250,7 +227,7 @@ class BeartypeNodeTransformer(
             # Add the type of this parent node to the top of the stack of all
             # current lexical scopes *BEFORE* visiting any child nodes of this
             # parent node.
-            self._scopes_node_type.append(node_type)
+            self._scopes.append_scope_nested(node_type=node_type)
 
             # Recursively visit *ALL* child nodes of this parent node.
             super().generic_visit(node)
@@ -261,7 +238,7 @@ class BeartypeNodeTransformer(
             # Remove the type of this parent node from the top of the stack of
             # all current lexical scopes *AFTER* visiting all child nodes of
             # this parent node.
-            self._scopes_node_type.pop()
+            self._scopes.pop()
         # Else, this parent node does *NOT* declare a new lexical scope. In this
         # case...
         else:
@@ -343,7 +320,7 @@ class BeartypeNodeTransformer(
             # This logic corresponds to the above "That is *NOT* the case" case
             # (i.e., this callable node necessarily encapsulates a function).
             # Look. Just accept that we have a tenuous grasp on reality at best.
-            not self._is_scope_class_beartype and
+            not self._scopes.is_scope_class and
             # ...and the currently visited callable is annotated by one or more
             # type hints and thus *NOT* ignorable with respect to beartype
             # decoration...

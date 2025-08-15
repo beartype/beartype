@@ -19,14 +19,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import (
-    ChainMapStrToStr,
-    ChainMapStrToStrToStr,
+    DictStrToStr,
+    DictStrToStrToStr,
 )
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
-from collections import ChainMap
 
 # ....................{ TODO                               }....................
-#FIXME: Document why "ChainMap" globals of "FrozenDict" objects rather than
+#FIXME: Document why "Dict" globals of "FrozenDict" objects rather than
 #simply "FrozenDict" globals are defined below. The answer, of course, is to
 #simplify lower-level logic utilizing these globals. That logic tracks imports
 #across lexical scopes and thus requires chain maps. Raw dictionaries are
@@ -34,18 +33,16 @@ from collections import ChainMap
 
 # ....................{ DICTS                              }....................
 # The @beartype decorator *MUST* appear below these decorator functions:
-CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME: ChainMapStrToStr = ChainMap(
-    FrozenDict({
-        # The third-party @mcp.tool decorator method of the FastMCP package.
-        # See also: https://github.com/beartype/beartype/issues/540
-        'mcp': 'tool',
+CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME: DictStrToStr = FrozenDict({
+    # The third-party @mcp.tool decorator method of the FastMCP package.
+    # See also: https://github.com/beartype/beartype/issues/540
+    'mcp': 'tool',
 
-        # The third-party @chain decorator method of the
-        # "langchain_core.runnables" package.
-        # See also: https://github.com/beartype/beartype/issues/541
-        'langchain_core.runnables': 'chain',
-    })
-)
+    # The third-party @chain decorator method of the
+    # "langchain_core.runnables" package.
+    # See also: https://github.com/beartype/beartype/issues/541
+    'langchain_core.runnables': 'chain',
+})
 '''
 **Afterlist decorator function schema** (i.e., frozen dictionary mapping from
 the fully-qualified name of each third-party module to the unqualified basename
@@ -56,8 +53,7 @@ decorated by that decorator).
 
 
 # The @beartype decorator *MUST* appear below these decorator methods:
-CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAME: (
-    ChainMapStrToStrToStr) = ChainMap(
+CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAME: DictStrToStrToStr = (
     FrozenDict({
         # The third-party @task decorator method of the "celery.Celery" type.
         # See also: https://github.com/beartype/beartype/issues/500

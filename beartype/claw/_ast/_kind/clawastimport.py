@@ -100,7 +100,7 @@ class BeartypeNodeTransformerAfterlistMixin(object):
         # ..................{ TRACK                          }..................
         # If the lexical scope of this parent node is module scope, this node
         # encapsulates a global import statement. In this case...
-        if self._is_scope_module_beartype:  # type: ignore[attr-defined]
+        if self._scopes.is_scope_module:  # type: ignore[attr-defined]
             #FIXME: *DO STUFF HERE!* For now, just start with the
             #"CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAME" global. *shrug*
             pass
