@@ -13,6 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.claw._ast._scope.clawastscopeafter import (
+    BeartypeNodeScopeAfterlist,
+    make_node_scope_afterlist_global,
+)
 from beartype.claw._importlib.clawimpcache import ModuleNameToBeartypeConf
 from beartype.claw._package.clawpkgtrie import (
     PackagesTrieBlacklist,
@@ -60,6 +64,11 @@ class BeartypeClawState(object):
         imported submodule of each package previously registered in our global
         package trie to the beartype configuration configuring type-checking by
         the :func:`beartype.beartype` decorator of that submodule).
+    node_scope_afterlist_global : BeartypeNodeScopeAfterlist
+        **Abstract syntax tree (AST) global scope afterlist** (i.e., low-level
+        dataclass aggregating all metadata required to manage the afterlist
+        automating decorator positioning across all global scopes of all modules
+        recursively visited by :mod:`beartype.claw` AST transformers).
     packages_trie_blacklist : PackagesTrieWhitelist
         **Package trie blacklist** (i.e., non-thread-safe recursively nested
         dictionary implementing a prefix tree such that each key-value pair maps
@@ -87,6 +96,7 @@ class BeartypeClawState(object):
     __slots__ = (
         'beartype_pathhook',
         'module_name_to_beartype_conf',
+        'node_scope_afterlist_global',
         'packages_trie_blacklist',
         'packages_trie_whitelist',
     )
@@ -96,6 +106,7 @@ class BeartypeClawState(object):
     if TYPE_CHECKING:
         beartype_pathhook: Optional[ImportPathHook]
         module_name_to_beartype_conf: ModuleNameToBeartypeConf
+        node_scope_afterlist_global: BeartypeNodeScopeAfterlist
         packages_trie_blacklist: PackagesTrieBlacklist
         packages_trie_whitelist: PackagesTrieWhitelist
 
@@ -123,6 +134,7 @@ class BeartypeClawState(object):
 
         # One one-liner to reinitialize them all.
         self.module_name_to_beartype_conf = ModuleNameToBeartypeConf()
+        self.node_scope_afterlist_global = make_node_scope_afterlist_global()
         self.packages_trie_whitelist = PackagesTrieWhitelist()
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie=_PACKAGE_NAME_TO_TRIE_BLACKLISTED)
@@ -162,6 +174,7 @@ class BeartypeClawState(object):
             f'{self.__class__.__name__}(\n',
             f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
             f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
+            f'    node_scope_afterlist_global={repr(self.node_scope_afterlist_global)},\n',
             f'    packages_trie_blacklist={repr(self.packages_trie_blacklist)},\n',
             f'    packages_trie_whitelist={repr(self.packages_trie_whitelist)},\n',
             f')',

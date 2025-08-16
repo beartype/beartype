@@ -315,7 +315,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # case...
         else:
             # Fully-qualified name of the callable defining this local variable.
-            callable_name = f'{self._scope_name}()'  # type: ignore[attr-defined]
+            callable_name = f'{self._scopes[-1].name}()'  # type: ignore[attr-defined]
 
             # Human-readable label prefixing this exception message.
             exception_prefix = (

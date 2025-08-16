@@ -101,12 +101,6 @@ class BeartypeNodeTransformer(
         recursively decorated by this node transformer).
     _module_name : str
         Fully-qualified name of the current module being transformed.
-    _scope_name : str
-        Fully-qualified name of the current lexical scope (i.e., ``.``-delimited
-        absolute name of the module containing this scope followed by the
-        relative basenames of zero or more classes and/or callables). This name
-        is guaranteed to be prefixed by the current value of the
-        :attr:`._module_name` instance variable.
     _scopes : BeartypeNodeScopes
         **Lexical scope stack** (i.e., list of the one or more dataclasses
         aggregating all metadata required to detect and manage lexical scopes
@@ -140,7 +134,6 @@ class BeartypeNodeTransformer(
     __slots__ = (
         '_conf',
         '_module_name',
-        '_scope_name',
         '_scopes',
     )
 
@@ -176,18 +169,11 @@ class BeartypeNodeTransformer(
 
         # Classify all passed parameters.
         self._conf = conf
-        self._module_name = self._scope_name = module_name
-
-        #FIXME: [SPEED] Attempt to reuse this "BeartypeNodeScope" across AST
-        #transformers rather than redeclaring the same "BeartypeNodeScope".
-        #That said, attempt this *ONLY* after allowing users to configuring
-        #afterlist. That will complicate efficiency attempts, as afterlists will
-        #then be specific to module-specific "beartype.claw" configurations. So,
-        #maybe we don't want to try reusing this after all. *heh*
+        self._module_name = module_name
 
         # Lexical scope stack, initially containing *ONLY* the default global
         # scope for statements in the body of the current module.
-        self._scopes = BeartypeNodeScopes()
+        self._scopes = BeartypeNodeScopes(module_name=module_name)
 
     # ..................{ SUPERCLASS                         }..................
     # Overridden methods first defined by the "NodeTransformer" superclass.
@@ -213,27 +199,23 @@ class BeartypeNodeTransformer(
         # If this parent node declares a new lexical scope (i.e., by defining a
         # new class or callable)...
         if node_type in TYPES_NODE_LEXICAL_SCOPE:
-            # Fully-qualified name of the current lexical scope *BEFORE*
-            # visiting this new lexical scope.
-            scope_name_old = self._scope_name
-
-            # Append to this fully-qualified name the unqualified basename of
-            # this new class or callable declaring this new lexical scope.
-            #
-            # Note that both the "ast.ClassDef" *AND* "ast.FunctionDef" node
-            # types define the "name" instance variable accessed here.
-            self._scope_name += f'.{node.name}'  # type: ignore[attr-defined]
-
             # Add the type of this parent node to the top of the stack of all
             # current lexical scopes *BEFORE* visiting any child nodes of this
             # parent node.
-            self._scopes.append_scope_nested(node_type=node_type)
+            self._scopes.append_scope_nested(
+                # Fully-qualified name of the parent scope (i.e.,
+                # "{self._scopes[-1].name}") followed by the unqualified
+                # basename of this new class or callable declaring this new
+                # lexical scope (i.e., "{node.name}").
+                #
+                # Note that both the "ast.ClassDef" *AND* "ast.FunctionDef" node
+                # types define the "name" instance variable accessed here.
+                name=f'{self._scopes[-1].name}.{node.name}',  # type: ignore[attr-defined]
+                node_type=node_type,
+            )
 
             # Recursively visit *ALL* child nodes of this parent node.
             super().generic_visit(node)
-
-            # Restore the fully-qualified name of the prior lexical scope.
-            self._scope_name = scope_name_old
 
             # Remove the type of this parent node from the top of the stack of
             # all current lexical scopes *AFTER* visiting all child nodes of

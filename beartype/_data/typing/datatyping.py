@@ -312,19 +312,6 @@ PEP-compliant type hint matching any **builtin method non-data descriptor**
 dunder method, encapsulating read-only access to some kind of method).
 '''
 
-# ....................{ CHAINMAP ~ str                     }....................
-ChainMapStrToStr = ChainMap[str, str]
-'''
-PEP-compliant type hint matching a chain map mapping from strings to strings.
-'''
-
-
-ChainMapStrToStrToStr = ChainMap[str, ChainMapStrToStr]
-'''
-PEP-compliant type hint matching a chain map mapping from strings to nested
-dictionaries mapping from strings to strings. (*So. Many. Strings.*)
-'''
-
 # ....................{ COLLECTION                         }....................
 CollectionStrs = Collection[str]
 '''
@@ -346,22 +333,45 @@ objects.
 '''
 
 
-DictStrToStr = Dict[str, str]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to strings.
-'''
-
-
-DictStrToStrToStr = Dict[str, DictStrToStr]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to nested
-dictionaries mapping from strings to strings. (*So. Many. Strings.*)
-'''
-
-
 DictStrToType = Dict[str, type]
 '''
 PEP-compliant type hint matching a dictionary mapping from strings to types.
+'''
+
+# ....................{ DICT ~ str : frozenset             }....................
+DictStrToFrozenSetStrs = Dict[str, FrozenSet[str]]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to frozen
+sets of strings.
+'''
+
+
+DictStrToStrToFrozenSetStrs = Dict[str, DictStrToFrozenSetStrs]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to nested
+dictionaries mapping from strings to frozen sets of strings. So. Many. Strings.
+'''
+
+# ....................{ CHAINMAP ~ str                     }....................
+ChainMapStrToAny = ChainMap[str, Any]
+'''
+PEP-compliant type hint matching a chain map mapping from strings to arbitrary
+objects.
+'''
+
+# ....................{ CHAINMAP ~ str : chainmap          }....................
+ChainMapStrToChainMapStrs = ChainMap[str, ChainMapStrToAny]
+'''
+PEP-compliant type hint matching a chain map mapping from strings to nested
+chain maps of strings.
+'''
+
+
+ChainMapStrToStrToChainMapStrs = ChainMap[str, Dict[str, ChainMapStrToAny]]
+'''
+PEP-compliant type hint matching a chain map mapping from strings to nested
+dictionaries mapping from strings to nested chain maps of strings. So. Many.
+Strings.
 '''
 
 # ....................{ MAPPING                            }....................
@@ -370,7 +380,6 @@ MappingStrToAny = Mapping[str, object]
 PEP-compliant type hint matching a mapping mapping from keys to arbitrary
 objects.
 '''
-
 
 # ....................{ SIGN                               }....................
 HintSignOrNoneOrSentinel = Union[Optional[HintSign], Iota]
