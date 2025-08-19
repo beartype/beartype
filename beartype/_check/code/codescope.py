@@ -12,8 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Hah-hah! Finally figured out how to do recursive type hints... mostly.
-#It's a two-parter consisting of:
+#FIXME: Hah-hah! Finally figured out how to do PEP-noncompliant recursive type
+#hints... mostly. That said, since @beartype already supports PEP 695-compliant
+#recursive type aliases, it's unclear whether any of this is desirable.
+#Still, we specced it out. So, here it is. It's a two-parter consisting of:
 #* *PART I.* In the first part:
 #  * Refactor our code generation algorithm to additionally maintain a stack of
 #    all parent type hints of the currently visited type hint. Note that we need
@@ -74,7 +76,6 @@ from beartype._data.typing.datatyping import (
     Pep484585ForwardRef,
     SetOrTupleTypes,
     TypeOrSetOrTupleTypes,
-    # TypeOrTupleTypes,
     TupleTypes,
 )
 from beartype._util.cls.pep.clspep3119 import (

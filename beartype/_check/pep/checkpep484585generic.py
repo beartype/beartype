@@ -372,6 +372,33 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         #   pseudo-superclass, residing in this unsubscripted generic.
         # * This sign.
         if hint_base_extrinsic_sign is not None:
+            #FIXME: This isn't quite right, actually. We don't want to return
+            #"hint_base_subclass_sane". That just defaults to "hint_sane" for
+            #the direct pseudo-superclasses of this generic! Instead, we
+            #actually do want to re-sanify the "hint_base_subclass_sane.hint"
+            #subclass against this "hint_base_extrinsic_sign". The issue there,
+            #of course, is that the sanify_hint_child() API called below
+            #currently accepts *NO* optional "hint_sign" parameter. If it did,
+            #we could call sanify_hint_child() here like so:
+            #    hint_base_sane = sanify_hint_child(
+            #        hint=hint_base,
+            #        hint_parent_sane=hint_base_subclass_sane,
+            #        hint_sign=hint_base_extrinsic_sign,
+            #        cls_stack=cls_stack,
+            #        conf=conf,
+            #        exception_prefix=exception_prefix,
+            #    )
+            #
+            #Note that that call is *ALMOST* the exact same as that performed
+            #below. The question then becomes: how would sanify_hint_child()
+            #reasonably implement the optional "hint_sign" parameter? Simple: it
+            #would pass that parameter onto reduce_hint(), which then also needs
+            #to accept that optional parameter. reduce_hint(), in turn, should
+            #implement that lower-level reducers like _reduce_hint_cached() and
+            #_reduce_hint_uncached(), which should (*FINALLY*) then just use
+            #the passed sign rather than calling get_hint_pep_sign_or_none().
+            #
+            #None of this is hard. It's just a bit annoying af. We sigh, thus!
             yield hint_base_subclass_sane, hint_base_extrinsic_sign
         # Else, this pseudo-superclass is intrinsic. Continue to the next phase
         # deciding the sign identifying this intrinsic.

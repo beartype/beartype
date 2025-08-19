@@ -232,6 +232,7 @@ def reduce_hint(
     # reductions are intentionally ordered from most to least efficient.
     while True:
         # ....................{ REDUCE                     }....................
+        #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
         # For each lower-level reducer...
         for hint_reducer in _HINT_REDUCERS:
             # print(f'[reduce_hint] Reducing {hint_curr} with parent {hint_parent_sane} via {hint_reducer}...')

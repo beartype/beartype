@@ -112,6 +112,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignLiteral,
     HintSignPep484585TupleFixed,
     HintSignType,
+    HintSignTypedDict,
     HintSignUnion,
 )
 from beartype._data.hint.sign.datahintsignset import (
@@ -992,7 +993,7 @@ def make_check_expr(
                     # origin type.
                 # Else, this hint is *NOT* a mapping.
                 #
-                # ............{ ANNOTATED                          }............
+                # ............{ PEP 593 ~ typing.Annotated[...]    }............
                 # If this hint is a PEP 593-compliant type metahint, this
                 # metahint is guaranteed by the reduction performed above to be
                 # beartype-specific (i.e., metahint whose second argument is a
@@ -1257,7 +1258,7 @@ def make_check_expr(
                     make_hint_pep484585_generic_unsubbed_check_expr(hints_meta)
                 # Else, this hint is *NOT* an unsubscripted generic.
                 #
-                # ............{ PEP 484 ~ type variable            }............
+                # ............{ PEP 484 ~ typing.TypeVar(...)      }............
                 # If this hint is a PEP 484-compliant type variable (i.e.,
                 # "typing.TypeVar" object), this hint is both dependent on and
                 # less common than .PEP 484- and 585-compliant generics and thus
@@ -1300,15 +1301,15 @@ def make_check_expr(
                 #         #FIXME: Insufficient. The parent type hint thought this
                 #         #type variable was unignorable and thus... ugh.
                 #         hints_meta_index_curr += 1
-                # ............{ PEP 586 ~ typing.Literal           }............
+                # ............{ PEP 586 ~ typing.Literal[...]      }............
                 # If this hint is a PEP 586-compliant type hint (i.e., the
-                # "typing.Literal" singleton subscripted by one or more literal
-                # objects), this hint is largely useless and thus intentionally
-                # detected late. Why? Because "typing.Literal" is subscriptable
-                # by objects that are instances of only *SIX* possible types,
-                # which is sufficiently limiting as to render this singleton
-                # patently absurd and a farce that we weep to even implement.
-                # In this case...
+                # "typing.Literal" type hint factory subscripted by one or more
+                # literal objects), this hint is largely useless and thus
+                # intentionally detected late. Why? Because "typing.Literal" is
+                # subscriptable by objects that are instances of only *SIX*
+                # possible types, which is sufficiently limiting as to render
+                # this singleton patently absurd and a farce that we weep to
+                # even implement. In this case...
                 elif hint_curr_sign is HintSignLiteral:
                     # Tuple of zero or more literal objects subscripting this
                     # hint, intentionally replacing the current such tuple due
@@ -1367,6 +1368,27 @@ def make_check_expr(
                     ).format(indent_curr=hints_meta.indent_curr)
                 # Else, this hint is *NOT* a PEP 586-compliant type hint.
                 #
+                # ............{ PEP 589 ~ typing.TypeDict(...)     }............
+                # If this hint is a PEP 589-compliant type hint (i.e., a
+                # subclass of the "typing.TypeDict" superclass), this hint is...
+                #FIXME: *CURRENTLY UNSUPPORTED.* We should eventually generate
+                #proper type-checking code for typed dictionaries. At the
+                #moment, this condition is true only for the single obscure edge
+                #case of typed dictionary generics, resembling:
+                #    class UserTypedDict(TypedDict, Generic[T]): ...
+                #
+                #When such a subclass is used as a type hint, the
+                #iter_hint_pep484585_generic_unsubbed_bases_unerased() detects
+                #"TypeDict" to be an extrinsic pseudo-superclass and then yields
+                #both the typed dictionary generic itself (e.g., "UserTypedDict"
+                #above) *AND* "HintSignTypedDict", which then causes this
+                #condition here to be triggered.
+                #
+                #This condition will suddenly become relevant when we remove the
+                #reduce_hint_pep589() reducer.
+                #FIXME: Actually, let's hold off on this until we need it! \o/
+                # elif hint_curr_sign is HintSignTypedDict:
+                #     pass
                 # ............{ UNSUPPORTED                        }............
                 # Else, this hint is neither shallowly nor deeply supported and
                 # is thus unsupported. Since an exception should have already
