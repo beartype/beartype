@@ -21,6 +21,8 @@ from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_SUFFIX,
 )
 from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_AND
+from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
+    get_hint_pep484585_generic_type_isinstanceable)
 
 # ....................{ FACTORIES                          }....................
 def make_hint_pep484585_generic_unsubbed_check_expr(
@@ -67,34 +69,8 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # defaulting to this generic. Although most generics are isinstanceable,
     # some are not. This type enables this code generator to transparently
     # support the subset of generics that are *NOT* isinstanceable.
-    hint_isinstanceable: type = hint  # pyright: ignore
-
-    # If the metaclass of this generic bound the __call__() dunder method to a
-    # type, *ALL* user-defined instances of this generic are necessarily
-    # instances of that type rather than instances of this generic. In this
-    # case, assume that type to be isinstanceable. Certainly, this generic
-    # itself is unlikely to be isinstanceable. Why? Because of the following
-    # PEP-compliant edge cases triggering this condition:
-    #
-    # * User-defined subclasses inheriting both the PEP 484-compliant
-    #   "typing.Generic" superclass *AND* the PEP 589-compliant
-    #   "typing.TypedDict" superclass, whose metaclass is the private
-    #   "typing._TypedDictMeta" metaclass, which:
-    #   * Explicitly prevents these user-defined subclasses from being passed as
-    #     the second parameters to the isinstance() and issubclass() builtins.
-    #   * Implements the typing._TypedDictMeta.__new__() constructor responsible
-    #     for dynamically creating and returning these user-defined subclasses
-    #     to forcefully monkey-patch the __call__() dunder method of these
-    #     subclasses to refer to the builtin "dict" type. By default, the
-    #     __call__() dunder method is bound to the type.__call__() method.
-    #     Replacing that method with "dict" ensures that *ALL*
-    #     "typing.TypedDict" instances are actually "dict" rather than
-    #     "typing.TypedDict" instances.
-    if isinstance(hint.__call__, type):  # pyright: ignore
-        hint_isinstanceable = hint.__call__  # pyright: ignore
-        # print(f'generic {hint} hint.__call__ type detected: {hint_isinstanceable}')
-    # Else, the metaclass of this generic did *NOT* bind the __call__() dunder
-    # method to a type.
+    hint_isinstanceable = get_hint_pep484585_generic_type_isinstanceable(
+        hint=hint, exception_prefix=hints_meta.exception_prefix)
 
     # ....................{ FORMAT                         }....................
     # Initialize the code type-checking this pith against this generic to the
@@ -137,7 +113,8 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
         # Indentation deferred above for efficiency.
         indent_curr=hints_meta.indent_curr,
         pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
-        # Python expression evaluating to this unsubscripted generic type.
+        # Python expression evaluating to this unsubscripted isinstanceable
+        # generic type.
         hint_curr_expr=hints_meta.add_func_scope_type_or_types(
             hint_isinstanceable),
     )

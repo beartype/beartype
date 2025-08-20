@@ -37,15 +37,17 @@ from beartype._check.metadata.hint.hintsane import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     DictStrToAny,
+    HintSignOrNoneOrSentinel,
     TypeStack,
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.kind.map.utilmapset import remove_mapping_keys
-from beartype._data.kind.datakindiota import SENTINEL
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
@@ -59,6 +61,7 @@ def reduce_hint(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     decor_meta: Optional[BeartypeDecorMeta] = None,
     hint_parent_sane: Optional[HintSane] = None,
+    hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     is_hint_ignorable_preserved: bool = False,
     pith_name: Optional[str] = None,
     reductions_count: int = 0,
@@ -126,6 +129,24 @@ def reduce_hint(
           hint into a fully PEP-compliant parent hint).
 
         Defaults to :data:`None`.
+    hint_sign_seed :  HintSignOrNoneOrSentinel, default: SENTINEL
+        **Type hint seed sign** (i.e., sign identifying this hint with respect
+        to the first reduction performed by this sanification) if this hint is
+        ambiguously identifiable by two or more signs *or* the sentinel
+        otherwise (i.e., if this hint is uniquely identifiable by one sign).
+
+        This sign is used to seed (i.e., initialize) the first reduction
+        internally performed by this sanification, which otherwise defaults to
+        the sign returned by the :func:`.get_hint_pep_sign_or_none` getter. This
+        parameter should only be passed to handle edge cases in which a hint is
+        ambiguously identifiable by two or more signs, including:
+
+        * **Typed dictionary generics** (i.e., user-defined types subclassing
+          both the :pep:`484`-compliant :class:`typing.Generic` superclass and
+          :pep:`589`-compliant :class:`typing.TypedDict` superclass), which are
+          identifiable as both generics *and* typed dictionaries.
+
+        Defaults to the sentinel.
     is_hint_ignorable_preserved : bool, default: False
         Either:
 
@@ -250,6 +271,7 @@ def reduce_hint(
                 cls_stack=cls_stack,
                 conf=conf,
                 decor_meta=decor_meta,
+                hint_sign_seed=hint_sign_seed,
                 pith_name=pith_name,
                 reductions_count=reductions_count,
                 exception_prefix=exception_prefix,
@@ -462,6 +484,154 @@ def reduce_hint_child(hint: Hint, kwargs: DictStrToAny) -> HintSane:
     return reduce_hint(hint=hint, **kwargs)
 
 # ....................{ PRIVATE ~ reducers                 }....................
+def _reduce_hint_cached(
+    hint: Hint,
+    hint_sign_seed: HintSignOrNoneOrSentinel,
+    exception_prefix: str,
+    **kwargs
+) -> HintOrSane:
+    '''
+    Lower-level type hint reduced (i.e., converted) from the passed higher-level
+    type hint if this hint is reducible by a **memoized reducer** (i.e.,
+    lower-level reducer accepting *only* a passed hint and thus readily amenable
+    to memoization) *or* this hint as is otherwise (i.e., if this hint is *not*
+    reducible by a memoized reducer).
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be possibly reduced.
+    hint_sign_seed : HintSignOrNoneOrSentinel
+        Sign with which to seed (i.e., initialize) this reduction. See also the
+        :func:`.reduce_hint` docstring for further details.
+    exception_prefix : str
+        Human-readable substring prefixing raised exception messages.
+
+    All remaining keyword parameters are silently ignored.
+
+    Returns
+    -------
+    HintOrSane
+        Either:
+
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
+        * Else if this unignorable hint is reducible to another hint by a
+          memoized reducer, metadata encapsulating this reduction.
+        * Else, this hint unmodified as is.
+    '''
+    assert (
+        hint_sign_seed is SENTINEL or
+        isinstance(hint_sign_seed, NoneTypeOr[HintSign])
+    ), (f'{repr(hint_sign_seed)} neither hint sign, "None", nor sentinel.')
+
+    # Reduced hint to be returned, defaulting to the passed unreduced hint.
+    hint_or_sane: HintOrSane = hint
+
+    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
+    # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
+    # either...
+    hint_sign = (
+        # If the caller did *NOT* explicitly pass a sign with which to seed this
+        # reduction, the standard sign uniquely identifying this hint;
+        get_hint_pep_sign_or_none(hint)
+        if hint_sign_seed is SENTINEL else
+        # Else, the caller explicitly passed a sign with which to seed this
+        # reduction. In this case, that sign.
+        hint_sign_seed
+    )
+
+    # Memoized reducer reducing this hint if any *OR* "None" otherwise.
+    hint_reducer_cached = HINT_SIGN_TO_REDUCE_HINT_CACHED_get(hint_sign)  # type: ignore[arg-type]
+
+    # If a memoized reducer reduces this hint...
+    if hint_reducer_cached is not None:
+        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
+
+        #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
+        #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
+        #Does it actually vary with context? Can't recall. Investigate up!
+
+        # Reduce this hint by calling this reducer.
+        #
+        # Note that parameters are intentionally passed positionally to this
+        # possibly memoized callable prohibiting keyword parameters.
+        hint_or_sane = hint_reducer_cached(hint, exception_prefix)
+    # Else, *NO* memoized reducer reduces this hint. In this case, preserve this
+    # hint as is.
+
+    # Return this possibly reduced hint.
+    return hint_or_sane
+
+
+def _reduce_hint_uncached(
+    hint: Hint,
+    hint_sign_seed: HintSignOrNoneOrSentinel,
+    **kwargs
+) -> HintOrSane:
+    '''
+    Lower-level type hint reduced (i.e., converted) from the passed higher-level
+    type hint if this hint is reducible by a **unmemoized reducer** (i.e.,
+    lower-level reducer accepting *only* a passed hint and thus readily amenable
+    to memoization) *or* this hint as is otherwise (i.e., if this hint is *not*
+    reducible by a unmemoized reducer).
+
+    Parameters
+    ----------
+    hint : Hint
+        Type hint to be possibly reduced.
+    hint_sign_seed : HintSignOrNoneOrSentinel
+        Sign with which to seed (i.e., initialize) this reduction. See also the
+        :func:`.reduce_hint` docstring for further details.
+
+    All remaining keyword parameters are silently ignored.
+
+    Returns
+    -------
+    HintOrSane
+        Either:
+
+        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
+        * Else if this unignorable hint is reducible to another hint by a
+          unmemoized reducer, metadata encapsulating this reduction.
+        * Else, this hint unmodified as is.
+    '''
+    assert (
+        hint_sign_seed is SENTINEL or
+        isinstance(hint_sign_seed, NoneTypeOr[HintSign])
+    ), (f'{repr(hint_sign_seed)} neither hint sign, "None", nor sentinel.')
+
+    # Reduced hint to be returned, defaulting to the passed unreduced hint.
+    hint_or_sane: HintOrSane = hint
+
+    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
+    # "None" otherwise (e.g., if this hint is PEP-noncompliant), defined as
+    # either...
+    hint_sign = (
+        # If the caller did *NOT* explicitly pass a sign with which to seed this
+        # reduction, the standard sign uniquely identifying this hint;
+        get_hint_pep_sign_or_none(hint)
+        if hint_sign_seed is SENTINEL else
+        # Else, the caller explicitly passed a sign with which to seed this
+        # reduction. In this case, that sign.
+        hint_sign_seed
+    )
+
+    # Unmemoized reducer reducing this hint if any *OR* "None" otherwise.
+    hint_reducer_uncached = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(hint_sign)  # type: ignore[arg-type]
+
+    # If a unmemoized reducer reduces this hint...
+    if hint_reducer_uncached is not None:
+        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
+
+        # Reduce this hint by calling this reducer.
+        hint_or_sane = hint_reducer_uncached(hint=hint, **kwargs)
+    # Else, *NO* unmemoized reducer reduces this hint. In this case, preserve
+    # this hint as is.
+
+    # Return this possibly reduced hint.
+    return hint_or_sane
+
+
 def _reduce_hint_overrides(
     hint: Hint,
     conf: BeartypeConf,
@@ -608,114 +778,6 @@ def _reduce_hint_overrides(
         pass
 
     # Return this possibly overridden hint.
-    return hint_or_sane
-
-
-def _reduce_hint_cached(
-    hint: Hint, exception_prefix: str, **kwargs) -> HintOrSane:
-    '''
-    Lower-level type hint reduced (i.e., converted) from the passed higher-level
-    type hint if this hint is reducible by a **memoized reducer** (i.e.,
-    lower-level reducer accepting *only* a passed hint and thus readily amenable
-    to memoization) *or* this hint as is otherwise (i.e., if this hint is *not*
-    reducible by a memoized reducer).
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be possibly reduced.
-    exception_prefix : str
-        Human-readable substring prefixing raised exception messages.
-
-    All remaining keyword parameters are silently ignored.
-
-    Returns
-    -------
-    HintOrSane
-        Either:
-
-        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint by a
-          memoized reducer, metadata encapsulating this reduction.
-        * Else, this hint unmodified as is.
-    '''
-
-    # Reduced hint to be returned, defaulting to the passed unreduced hint.
-    hint_or_sane: HintOrSane = hint
-
-    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    # "None" otherwise (e.g., if this hint is PEP-noncompliant).
-    hint_sign = get_hint_pep_sign_or_none(hint)
-
-    # Memoized reducer reducing this hint if any *OR* "None" otherwise.
-    hint_reducer_cached = HINT_SIGN_TO_REDUCE_HINT_CACHED_get(hint_sign)
-
-    # If a memoized reducer reduces this hint...
-    if hint_reducer_cached is not None:
-        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
-
-        #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
-        #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
-        #Does it actually vary with context? Can't recall. Investigate up!
-
-        # Reduce this hint by calling this reducer.
-        #
-        # Note that parameters are intentionally passed positionally to this
-        # possibly memoized callable prohibiting keyword parameters.
-        hint_or_sane = hint_reducer_cached(hint, exception_prefix)
-    # Else, *NO* memoized reducer reduces this hint. In this case, preserve this
-    # hint as is.
-
-    # Return this possibly reduced hint.
-    return hint_or_sane
-
-
-def _reduce_hint_uncached(hint: Hint, **kwargs) -> HintOrSane:
-    '''
-    Lower-level type hint reduced (i.e., converted) from the passed higher-level
-    type hint if this hint is reducible by a **unmemoized reducer** (i.e.,
-    lower-level reducer accepting *only* a passed hint and thus readily amenable
-    to memoization) *or* this hint as is otherwise (i.e., if this hint is *not*
-    reducible by a unmemoized reducer).
-
-    Parameters
-    ----------
-    hint : Hint
-        Type hint to be possibly reduced.
-
-    All remaining keyword parameters are silently ignored.
-
-    Returns
-    -------
-    HintOrSane
-        Either:
-
-        * If this hint is ignorable, :data:`.HINT_SANE_IGNORABLE`.
-        * Else if this unignorable hint is reducible to another hint by a
-          unmemoized reducer, metadata encapsulating this reduction.
-        * Else, this hint unmodified as is.
-    '''
-
-    # Reduced hint to be returned, defaulting to the passed unreduced hint.
-    hint_or_sane: HintOrSane = hint
-
-    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
-    # "None" otherwise (e.g., if this hint is PEP-noncompliant).
-    hint_sign = get_hint_pep_sign_or_none(hint)
-
-    # Unmemoized reducer reducing this hint if any *OR* "None" otherwise.
-    hint_reducer_uncached = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(hint_sign)
-
-    # If a unmemoized reducer reduces this hint...
-    if hint_reducer_uncached is not None:
-        # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
-
-        # Reduce this hint by calling this reducer.
-        hint_or_sane = hint_reducer_uncached(hint=hint, **kwargs)
-    # Else, *NO* unmemoized reducer reduces this hint. In this case, preserve
-    # this hint as is.
-
-    # Return this possibly reduced hint.
     return hint_or_sane
 
 # ....................{ PRIVATE ~ globals                  }....................

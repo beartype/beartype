@@ -36,14 +36,14 @@ def test_get_hint_pep484585_generic_args_full() -> None:
     )
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_args_full)
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep484generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Nongeneric,
         Pep484GenericST,
     )
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep585generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585SequenceU,
     )
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep484585generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep484585generic import (
         Pep484585GenericSTSequenceU,
         Pep484585GenericIntTSequenceU,
         Pep484585GenericUUST,

@@ -112,7 +112,7 @@ from beartype._data.hint.sign.datahintsigns import (
     HintSignLiteral,
     HintSignPep484585TupleFixed,
     HintSignType,
-    HintSignTypedDict,
+    # HintSignTypedDict,
     HintSignUnion,
 )
 from beartype._data.hint.sign.datahintsignset import (
@@ -1470,9 +1470,13 @@ def make_check_expr(
             new=hints_meta.func_curr_code,
         )
 
+        # Nullify the previously visited hint in this list, avoiding spurious
+        # memory leaks by encouraging garbage collection.
+        hints_meta[hints_meta_index_curr] = None
+
         # Increment the 0-based index of metadata describing the next visited
-        # hint in the "hints_meta" list *BEFORE* visiting that hint but *AFTER*
-        # performing all other logic for the currently visited hint.
+        # hint in this list *BEFORE* visiting that hint (but *AFTER* performing
+        # all other logic for the currently visited hint).
         hints_meta_index_curr += 1
 
     # ..................{ CLEANUP                            }..................

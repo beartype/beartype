@@ -122,7 +122,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         default_dict_str_to_str,
         sync_generator,
     )
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep484generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
         Pep484ContextManagerTSequenceT,
         Pep484GenericST,
         Pep484GenericSubTToS,

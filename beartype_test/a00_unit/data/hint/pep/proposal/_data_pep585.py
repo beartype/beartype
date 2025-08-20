@@ -64,7 +64,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         HintSignType,
         HintSignValuesView,
     )
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep585generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
         Pep585ContextManagerTSequenceT,
         Pep585IterableTContainerT,
         Pep585IterableTupleSTContainerTupleST,

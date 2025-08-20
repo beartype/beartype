@@ -36,7 +36,7 @@ def hints_pep646_meta() -> 'List[HintPepMetadata]':
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep484585GenericSubbed,
     )
-    from beartype_test.a00_unit.data.hint.pep.generic.data_pep646generic import (
+    from beartype_test.a00_unit.data.pep.generic.data_pep646generic import (
         Array,
         DType,
         Shape,

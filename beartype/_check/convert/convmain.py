@@ -25,8 +25,13 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+from beartype._data.hint.sign.datahintsigncls import HintSign
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.typing.datatyping import TypeStack
+from beartype._data.typing.datatyping import (
+    HintSignOrNoneOrSentinel,
+    TypeStack,
+)
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.proposal.pep484585.pep484585func import (
     reduce_hint_pep484585_func_return)
@@ -305,6 +310,7 @@ def sanify_hint_child(
     # Optional parameters.
     cls_stack: TypeStack = None,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    hint_sign_seed: HintSignOrNoneOrSentinel = SENTINEL,
     pith_name: Optional[str] = None,
     exception_prefix: str = '',
 ) -> HintSane:
@@ -321,7 +327,7 @@ def sanify_hint_child(
     ----------
     hint : Hint
         Child type hint to be sanified.
-    hint_parent_sane : Optional[HintSane], default: None
+    hint_parent_sane : Optional[HintSane]
         Either:
 
         * If this hint is actually a **root type hint,** :data:`None`.
@@ -330,18 +336,34 @@ def sanify_hint_child(
           :mod:`beartype._check.convert.convmain` sanifiers after sanitizing
           the possibly PEP-noncompliant parent hint of this child hint into a
           fully PEP-compliant parent hint).
-
-        Defaults to :data:`None`.
-    cls_stack : TypeStack, optional
+    cls_stack : TypeStack, default: None
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to :obj:`.BEARTYPE_CONF_DEFAULT`, the default beartype configuration.
-    pith_name : Optional[str]
+    hint_sign_seed :  HintSignOrNoneOrSentinel, default: SENTINEL
+        **Type hint seed sign** (i.e., sign identifying this hint with respect
+        to the first reduction performed by this sanification) if this hint is
+        ambiguously identifiable by two or more signs *or* the sentinel
+        otherwise (i.e., if this hint is uniquely identifiable by one sign).
+
+        This sign is used to seed (i.e., initialize) the first reduction
+        internally performed by this sanification, which otherwise defaults to
+        the sign returned by the :func:`.get_hint_pep_sign_or_none` getter. This
+        parameter should only be passed to handle edge cases in which a hint is
+        ambiguously identifiable by two or more signs, including:
+
+        * **Typed dictionary generics** (i.e., user-defined types subclassing
+          both the :pep:`484`-compliant :class:`typing.Generic` superclass and
+          :pep:`589`-compliant :class:`typing.TypedDict` superclass), which are
+          identifiable as both generics *and* typed dictionaries.
+
+        Defaults to the sentinel.
+    pith_name : Optional[str], default: None
         Either:
 
         * If this hint directly annotates a callable parameter (as the root type
@@ -359,7 +381,7 @@ def sanify_hint_child(
           factory).
 
         Defaults to :data:`None`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
@@ -400,6 +422,7 @@ def sanify_hint_child(
     hint_sane = reduce_hint(
         hint=hint,
         hint_parent_sane=hint_parent_sane,
+        hint_sign_seed=hint_sign_seed,
         conf=conf,
         cls_stack=cls_stack,
         pith_name=pith_name,

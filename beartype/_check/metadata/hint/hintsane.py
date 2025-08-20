@@ -34,6 +34,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #  "hint_recursable_to_depth", "typearg_to_hint"). They are *NOT* context-free.
 #  Ergo, contextual "HintSane" instances are *NOT* readily memoizable. Don't
 #  even bother wasting space or time attempting to do so.
+#FIXME: Indeed, the above suggests the following:
+#* Trivially conditionally memoize the HintSane.__new__() or __init__()
+#  constructors *ONLY* when passed no optional keyword-only parameters (i.e.,
+#  *ONLY* when passed the single "hint" parameter positionally).
+#
+#That's it. Shouldn't be that arduous and should speed things along. *shrug*
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeDecorHintSanifyException
@@ -190,7 +196,8 @@ class HintSane(object):
         # Mandatory parameters.
         hint: Hint,
 
-        # Optional parameters.
+        # Optional keyword-only parameters.
+        *,
         hint_recursable_to_depth: FrozenDictHintToInt = FROZENDICT_EMPTY,
         typearg_to_hint: Pep484612646TypeArgUnpackedToHint = FROZENDICT_EMPTY,
     ) -> None:

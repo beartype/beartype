@@ -26,14 +26,19 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
     )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
+        HintSignPep484585GenericSubbed,
+        HintSignPep484585GenericUnsubbed,
         HintSignTypedDict,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
+
+    from beartype_test.a00_unit.data.pep.data_pep484 import T
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
@@ -46,7 +51,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
         # ..................{ SUBCLASSES                     }..................
         class ISeemAsInATranceSublimeAndStrange(TypedDict):
             '''
-            Arbitrary empty typed dictionary annotated to require *NO* key-value
+            Arbitrary empty typed dictionary annotated to require *no* key-value
             pairs.
 
             While patently absurd, this dictionary exercises an uncommon edge
@@ -82,6 +87,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
         #    instead use totality of the TypedDict type where they were defined.
         #    This makes it possible to have a combination of required and
         #    non-required keys in a single TypedDict type.
+        #
         #Ergo, we need to additionally declare yet another new class subclassing
         #"ToMuse" but *NOT* explicitly subclassed with a "total" keyword
         #parameter. This clearly gets *EXTREMELY* ugly *EXTREMELY* fast, as
@@ -243,7 +249,7 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
-            # ................{ LITERALS ~ nested              }................
+            # ................{ LISTS ~ nested                 }................
             # List of non-empty totalizing typed dictionaries.
             HintPepMetadata(
                 hint=List[DizzyRavine],
@@ -315,6 +321,113 @@ def hints_pep589_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ))
+
+        # ..................{ VERSION                        }..................
+        # If the active Python interpreter targets Python >= 3.11 and thus
+        # supports PEP 484- and 589-compliant typed dictionary generics...
+        if IS_PYTHON_AT_LEAST_3_11:
+            # Defer version-specific imports.
+            from beartype_test.a00_unit.data.pep.generic.data_pep589generic import (
+                Pep589484TypedDictT)
+
+            # Add version-specific type hint metadata to this list.
+            hints_pep_meta.extend((
+                # ................{ GENERICS                   }................
+                # Non-empty totalizing unsubscripted typed dictionary generic
+                # parametrized by one type variable.
+                HintPepMetadata(
+                    hint=Pep589484TypedDictT,
+                    pep_sign=HintSignPep484585GenericUnsubbed,
+                    generic_type=Pep589484TypedDictT,
+                    is_type_typing=False,
+                    typeargs_packed=(T,),
+                    piths_meta=(
+                        # Non-empty generic instance containing the expected keys
+                        # and values.
+                        HintPithSatisfiedMetadata(Pep589484TypedDictT(
+                            key='Arches, and domes, and fiery galleries;')),
+                        # String constant.
+                        HintPithUnsatisfiedMetadata(
+                            pith='And all its curtains of Aurorian clouds',
+                            # Match that the exception message raised for this
+                            # object embeds the representation of the expected type.
+                            exception_str_match_regexes=(
+                                r'\bPep589484TypedDictT\b',),
+                        ),
+                        # #FIXME: Uncomment *AFTER* deeply type-checking "TypedDict".
+                        # # Empty generic instance.
+                        # HintPithSatisfiedMetadata(Pep589484TypedDictT()),
+                        # # Non-empty generic instance *NOT* containing the expected
+                        # # keys.
+                        # HintPithUnsatisfiedMetadata(
+                        #     pith=Pep589484TypedDictT({
+                        #         'and_when': 'Matricidally',
+                        #         'I_gaze_on_thee': (
+                        #             'Hatchet‐cachepotting, '
+                        #             'Scossetting mock misrule by'
+                        #         ),
+                        #     }),
+                        #     # Match that the exception message raised for this object
+                        #     # embeds:
+                        #     # * The name of the unsatisfied key.
+                        #     # * The expected types of this key's value.
+                        #     exception_str_match_regexes=(
+                        #         r'\bI_gaze_on_thee\b',
+                        #         r'\bbytes\b',
+                        #     ),
+                        # ),
+                    ),
+                ),
+
+                # Non-empty totalizing subscripted typed dictionary generic
+                # parametrized by one type variable.
+                HintPepMetadata(
+                    hint=Pep589484TypedDictT[str],
+                    pep_sign=HintSignPep484585GenericSubbed,
+                    generic_type=Pep589484TypedDictT,
+                    is_type_typing=True,
+                    is_typing=False,
+                    piths_meta=(
+                        # Non-empty generic instance containing the expected keys
+                        # and values.
+                        HintPithSatisfiedMetadata(Pep589484TypedDictT(
+                            key="Flush'd angerly: while sometimes eagle's wings,")),
+                        # String constant.
+                        HintPithUnsatisfiedMetadata(
+                            pith='Unseen before by Gods or wondering men,',
+                            # Match that the exception message raised for this
+                            # object embeds the representation of the expected type.
+                            exception_str_match_regexes=(
+                                r'\bPep589484TypedDictT\b',),
+                        ),
+                        # #FIXME: Uncomment *AFTER* deeply type-checking "TypedDict".
+                        # # Empty generic instance.
+                        # HintPithSatisfiedMetadata(Pep589484TypedDictT()),
+                        # # Non-empty generic instance *NOT* containing the expected
+                        # # keys.
+                        # HintPithUnsatisfiedMetadata(
+                        #     pith=Pep589484TypedDictT({
+                        #         'and_when': 'Matricidally',
+                        #         'I_gaze_on_thee': (
+                        #             'Hatchet‐cachepotting, '
+                        #             'Scossetting mock misrule by'
+                        #         ),
+                        #     }),
+                        #     # Match that the exception message raised for this object
+                        #     # embeds:
+                        #     # * The name of the unsatisfied key.
+                        #     # * The expected types of this key's value.
+                        #     exception_str_match_regexes=(
+                        #         r'\bI_gaze_on_thee\b',
+                        #         r'\bbytes\b',
+                        #     ),
+                        # ),
+                    ),
+                ),
+            ))
+
+        # Else, the active Python interpreter targets Python <= 3.10 and thus
+        # fails to support PEP 484- and 589-compliant typed dictionary generics.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

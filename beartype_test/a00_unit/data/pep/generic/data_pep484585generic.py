@@ -12,11 +12,11 @@ parameters, exercising edge cases in unit tests requiring non-trivial generics).
 
 # ....................{ IMPORTS                            }....................
 # Defer fixture-specific imports.
-from beartype_test.a00_unit.data.hint.pep.generic.data_pep484generic import (
+from beartype_test.a00_unit.data.pep.generic.data_pep484generic import (
     Nongeneric,
     Pep484GenericST,
 )
-from beartype_test.a00_unit.data.hint.pep.generic.data_pep585generic import (
+from beartype_test.a00_unit.data.pep.generic.data_pep585generic import (
     Pep585SequenceU,
 )
 from beartype_test.a00_unit.data.pep.data_pep484 import (
