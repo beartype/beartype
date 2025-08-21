@@ -17,6 +17,8 @@ from ast import (
     NodeTransformer,
 )
 from beartype.claw._ast._scope.clawastscopes import BeartypeNodeScopes
+from beartype.claw._ast._kind.clawastimport import (
+    BeartypeNodeTransformerImportMixin)
 from beartype.claw._ast._kind.clawastmodule import (
     BeartypeNodeTransformerModuleMixin)
 from beartype.claw._ast._pep.clawastpep526 import (
@@ -49,6 +51,7 @@ class BeartypeNodeTransformer(
 
     # PEP-agnostic mixins defining supplementary AST node functionality in a
     # PEP-agnostic manner.
+    BeartypeNodeTransformerImportMixin,
     BeartypeNodeTransformerModuleMixin,
     BeartypeNodeTransformerUtilityMixin,
 

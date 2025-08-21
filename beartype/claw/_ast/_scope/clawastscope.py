@@ -56,17 +56,17 @@ class BeartypeNodeScope(object):
           **class scope** of the current class.
         * :class:`ast.FunctionDef`, the current node directly resides in the
           **callable scope** of the current callable.
-    _is_afterlist_modifiable : bool
+    _is_afterlist_mutable : bool
         :data:`True` only if this scope afterlist is **modifiable** (i.e., if
         this scope afterlist is unique to this scope). This scope afterlist
         defaults to:
 
         * If this scope is global, :data:`True`. Global scope afterlists are
           safely shared between *all* global scopes for *all* modules and thus
-          modifiable as is.
+          safely modifiable as is.
         * If this scope is nested (i.e., either class or callable),
           :data:`False`. Nested scope afterlists are *not* safely shared
-          between *all* global scopes for *all* modules and thus *not*
+          between *all* global scopes for *all* modules and thus *not* safely
           modifiable as is. Instead, nested scope afterlists must be copied from
           their parent global scope afterlists into new afterlists unique to
           those nested scopes before being modified.
@@ -84,7 +84,7 @@ class BeartypeNodeScope(object):
         'afterlist',
         'name',
         'node_type',
-        '_is_afterlist_modifiable',
+        '_is_afterlist_mutable',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -93,7 +93,7 @@ class BeartypeNodeScope(object):
         afterlist: BeartypeNodeScopeAfterlist
         name: str
         node_type: Type[AST]
-        _is_afterlist_modifiable: bool
+        _is_afterlist_mutable: bool
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
@@ -128,9 +128,9 @@ class BeartypeNodeScope(object):
         self.name = name
         self.node_type = node_type
 
-        # Record this afterlist to be safely modifiable *ONLY* if this is a
-        # global scope. See also the class docstring.
-        self._is_afterlist_modifiable = node_type is Module
+        # Record this afterlist to already be safely modifiable *ONLY* if this
+        # is a global scope. See also the class docstring.
+        self._is_afterlist_mutable = node_type is Module
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -140,7 +140,7 @@ class BeartypeNodeScope(object):
             f'    afterlist={repr(self.afterlist)},\n',
             f'    name={repr(self.name)},\n',
             f'    node_type={repr(self.node_type)},\n',
-            f'    _is_afterlist_modifiable={repr(self._is_afterlist_modifiable)},\n',
+            f'    _is_afterlist_mutable={repr(self._is_afterlist_mutable)},\n',
             f')',
         ))
 
@@ -162,7 +162,10 @@ class BeartypeNodeScope(object):
         # If this afterlist is *NOT* yet safely modifiable, this afterlist is
         # still a reference to a parent scope's afterlist and is thus *NOT*
         # unique to this scope. In this case...
-        if not self._is_afterlist_modifiable:
+        if not self._is_afterlist_mutable:
             # Replace this shared afterlist with a new afterlist unique to this
             # scope, which may then be safely modified by callers.
             self.afterlist = self.afterlist.permute()
+
+            # Record that this afterlist is now safely modifiable.
+            self._is_afterlist_mutable = True

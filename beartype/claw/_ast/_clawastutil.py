@@ -21,15 +21,7 @@ from ast import (
     keyword,
 )
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
-from beartype._data.claw.dataclawmagic import (
-    BEARTYPE_CLAW_STATE_OBJ_NAME,
-    BEARTYPE_DECORATOR_FUNC_NAME,
-)
-from beartype.roar import BeartypeClawImportConfException
-from beartype._conf.confmain import BeartypeConf
-from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._conf.confenum import BeartypeDecorationPosition
-from beartype._data.typing.datatyping import NodeDecoratable
+from beartype._data.claw.dataclawmagic import BEARTYPE_CLAW_STATE_OBJ_NAME
 from beartype._util.ast.utilastmake import (
     make_node_kwarg,
     make_node_object_attr_load,
@@ -52,119 +44,6 @@ class BeartypeNodeTransformerUtilityMixin(object):
     supplementing that subclass with various low-level methods creating,
     modifying, and introspecting common node types and subclass properties).
     '''
-
-    # ....................{ PRIVATE ~ decorators           }....................
-    #FIXME: Revise docstring, please. This method now employs a highly
-    #non-trivial algorithm to decide the correct @beartype decorator position in
-    #a chain of one or more existing non-@beartype decorators.
-    #FIXME: Unit test us up, please.
-    def _decorate_node_beartype(
-        self, node: NodeDecoratable, conf: BeartypeConf) -> None:
-        '''
-        Add a new **child beartype decoration node** (i.e., abstract syntax tree
-        (AST) node applying the :func:`beartype.beartype` decorator configured
-        by the passed beartype configuration) to the passed **parent decoratable
-        node** (i.e., AST node encapsulating the definition of a pure-Python
-        object supporting decoration by one or more ``"@"``-prefixed
-        decorations, including both pure-Python classes *and* callables).
-
-        Note that this function **prepends** rather than appends this child
-        decoration node to the beginning of the list of all child decoration
-        nodes for this parent decoratable node. Since that list is "stored
-        outermost first (i.e. the first in the list will be applied last)",
-        prepending guarantees that the beartype decorator will be applied last
-        (i.e., *after* all other decorators). This ensures that explicitly
-        configured beartype decorations applied to this decoratable by the end
-        user (e.g., ``@beartype(conf=BeartypeConf(...))``) assume precedence
-        over implicitly configured beartype decorations applied by this
-        function.
-
-        Parameters
-        ----------
-        node : AST
-            **Decoratable node** (i.e., parent class or callable node) to add a
-            new child beartype decoration node to.
-        conf : BeartypeConf
-            **Beartype configuration** (i.e., dataclass configuring the
-            :mod:`beartype.beartype` decorator for some decoratable object(s)
-            decorated by a parent node passing this dataclass to that
-            decorator).
-        '''
-        assert isinstance(node, AST), f'{repr(node)} not AST node.'
-        assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not configuration.')
-
-        # Child decoration node decorating that callable by the @beartype
-        # decorator.
-        beartype_decorator: expr = Name(
-            id=BEARTYPE_DECORATOR_FUNC_NAME, ctx=NODE_CONTEXT_LOAD)
-
-        # Copy all source code metadata from this parent callable node onto this
-        # child decoration node.
-        copy_node_metadata(node_src=node, node_trg=beartype_decorator)
-
-        #FIXME: Isn't this pretty much *ALWAYS* the case? "beartype.claw" import
-        #hooks apply a non-default beartype configuration by default, sadly.
-        # If the current beartype configuration is *NOT* the default beartype
-        # configuration, this configuration is a user-defined beartype
-        # configuration which *MUST* be passed to a call to the @beartype
-        # decorator. Merely referencing this decorator does *NOT* suffice. In
-        # this case...
-        if conf != BEARTYPE_CONF_DEFAULT:
-            # Replace the reference to this decorator defined above with a
-            # call to this decorator passed this configuration.
-            beartype_decorator = Call(
-                func=beartype_decorator,
-                args=[],
-                # Node encapsulating the passing of this configuration as
-                # the "conf" keyword argument to this call.
-                keywords=[
-                    self._make_node_keyword_conf(node_sibling=node)],
-            )
-
-            # Copy all source code metadata from this parent callable node onto
-            # this child call node.
-            copy_node_metadata(node_src=node, node_trg=beartype_decorator)
-        # Else, this configuration is simply the default beartype configuration.
-        # In this case, avoid passing that configuration to the @beartype
-        # decorator for both efficiency and simplicity.
-
-        # Decorator position (i.e., location to which the @beartype decorator
-        # will be implicitly injected into the existing chain of zero or more
-        # decorators already decorating this parent decoratable node), defined
-        # as either...
-        decoration_position = (
-            # If this parent decoratable node is a parent class node, the
-            # class-specific decorator position.
-            conf.claw_decoration_position_types
-            if isinstance(node, ClassDef) else
-            # Else, this parent decoratable node is *NOT* a parent class node.
-            # By process of elimination, this parent decoratable node *MUST* be
-            # a parent callable node. In this case, fallback to the
-            # callable-specific decorator position.
-            conf.claw_decoration_position_funcs
-        )
-
-        # If injecting the @beartype decorator last, prepend this child
-        # decoration node to the beginning of the list of all child decoration
-        # nodes for this parent decoratable node. Since this list is "stored
-        # outermost first (i.e. the first in the list will be applied last)",
-        # prepending guarantees that our decorator will be applied last (i.e.,
-        # *AFTER* all subsequent decorators).
-        if decoration_position is BeartypeDecorationPosition.LAST:
-            node.decorator_list.insert(0, beartype_decorator)
-        # If injecting the @beartype decorator first, append this child
-        # decoration node to the end of the list of all child decoration nodes
-        # for this parent decoratable node.
-        elif decoration_position is BeartypeDecorationPosition.FIRST:
-            node.decorator_list.append(beartype_decorator)
-        # Else, an unrecognized decorator position was configured. In this case,
-        # raise an exception. Note that this should *NEVER* occur.
-        else:  # pragma: no cover
-            raise BeartypeClawImportConfException(
-                f'Beartype configuration {repr(conf)} '
-                f'decorator position {repr(decoration_position)} unsupported.'
-            )
 
     # ....................{ PRIVATE ~ factories            }....................
     #FIXME: Unit test us up, please.

@@ -513,6 +513,12 @@ more shell words comprising a shell command, suitable for passing as the
 test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
 '''
 
+# ....................{ SET                                }....................
+SetStrs = Set[str]
+'''
+PEP-compliant type hint matching *any* mutable set of zero or more strings.
+'''
+
 # ....................{ SET ~ frozenset                    }....................
 FrozenSetInts = FrozenSet[int]
 '''
@@ -546,7 +552,7 @@ PEP-compliant type hint matching an iterable of zero or more types.
 
 SetTypes = Set[type]
 '''
-PEP-compliant type hint matching a set of zero or more types.
+PEP-compliant type hint matching a mutable set of zero or more types.
 '''
 
 

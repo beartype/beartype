@@ -15,10 +15,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     TYPE_CHECKING,
+    Optional,
 )
 from beartype._data.typing.datatyping import (
+    #FIXME: These overly specific hints should be shifted out into this
+    #submodule and defined below, please. *sigh*
     ChainMapStrToChainMapStrs,
     ChainMapStrToStrToChainMapStrs,
+    SetStrs,
 )
 from beartype._data.claw.dataclawafter import (
     CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAMES,
@@ -37,14 +41,18 @@ class BeartypeNodeScopeAfterlist(object):
 
     Attributes
     ----------
+    module_names : set[str]
+        Set of the fully-qualified names all **decorator-hostile modules**
+        (i.e., modules importing one or more decorator-hostile decorator
+        function and/or types declaring one or more decorator-hostile methods).
     module_to_func_decorator_names : ChainMapStrToChainMapStrs
         **Afterlist decorator function chain map** (i.e., sequence of
         dictionaries mapping from the fully-qualified name of each third-party
         module to a set-like object implemented for simplicity as a nested chain
-        map of the unqualified basename of each problematic decorator function
-        of that module which the :func:`beartype.beartype` decorator *must*
-        appear after within the chain of decorators for objects decorated by
-        that problematic decorator).
+        map of the unqualified basename of each decorator-hostile decorator
+        function of that module which the :func:`beartype.beartype` decorator
+        *must* appear after within the chain of decorators for objects decorated
+        by that decorator-hostile decorator).
 
         This instance variable is intentionally defined as a chain map rather
         than simple dictionary to transparently support both:
@@ -58,9 +66,10 @@ class BeartypeNodeScopeAfterlist(object):
         mapping from the fully-qualified name of each third-party module to the
         unqualified basename of each type in that module to a set-like object
         implemented for simplicity as a nested chain map of the unqualified
-        basename of each problematic decorator method of that type which the
-        :func:`beartype.beartype` decorator *must* appear after within the chain
-        of decorators for objects decorated by that problematic decorator).
+        basename of each decorator-hostile decorator method of that type which
+        the :func:`beartype.beartype` decorator *must* appear after within the
+        chain of decorators for objects decorated by that decorator-hostile
+        decorator).
 
         This instance variable is intentionally defined as a chain map rather
         than simple dictionary for the same reason as the
@@ -76,6 +85,7 @@ class BeartypeNodeScopeAfterlist(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
+        'module_names',
         'module_to_func_decorator_names',
         'module_to_type_to_method_decorator_names',
     )
@@ -83,14 +93,20 @@ class BeartypeNodeScopeAfterlist(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        module_names: SetStrs
         module_to_func_decorator_names: ChainMapStrToChainMapStrs
         module_to_type_to_method_decorator_names: ChainMapStrToStrToChainMapStrs
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
         self,
+
+        # Mandatory parameters.
         module_to_func_decorator_names: ChainMapStrToChainMapStrs,
         module_to_type_to_method_decorator_names: ChainMapStrToStrToChainMapStrs,
+
+        # Optional parameters.
+        module_names: Optional[SetStrs] = None,
     ) -> None:
         '''
         Initialize this scope afterlist.
@@ -101,8 +117,15 @@ class BeartypeNodeScopeAfterlist(object):
             **Afterlist decorator function chain map.** See the class docstring.
         module_to_type_to_method_decorator_names : ChainMapStrToStrToChainMapStrs
             **Afterlist decorator method chain map.** See the class docstring.
+        module_names : Optional[set[str]], default: None
+            Set of the fully-qualified names all decorator-hostile modules.
+            See the class docstring.
+
+            Defaults to :data:`None`, in which case this set is automatically
+            constructed by inspection from the passed chain maps.
         '''
 
+        # ....................{ CHAIN MAPS                 }....................
         # Shallowly type-check these data structures to be chain maps.
         assert isinstance(module_to_func_decorator_names, ChainMap), (
             f'{repr(module_to_func_decorator_names)} not chain map.')
@@ -138,7 +161,29 @@ class BeartypeNodeScopeAfterlist(object):
             f'"ChainMap[str, ChainMap[str, ChainMap[str, object]]]".'
         )
 
+        # ....................{ SETS                       }....................
+        # If the caller passed *NO* set of the fully-qualified names all
+        # decorator-hostile modules, initialize this set by inspecting these
+        # module names from these chain maps.
+        if module_names is None:
+            module_names = set(
+                module_to_func_decorator_names.keys() |
+                module_to_type_to_method_decorator_names.keys()
+            )
+        # Else, the caller passed a set of the fully-qualified names all
+        # decorator-hostile modules. In either case, this set is now defined.
+
+        # Shallowly type-check these data structures to be sets.
+        assert isinstance(module_names, set), f'{repr(module_names)} not set.'
+
+        # Deeply type-check the contents of these data structures.
+        assert all(
+            isinstance(module_name, str) for module_name in module_names), (
+            f'{repr(module_names)} not set of strings.')
+
+        # ....................{ VARIABLES                  }....................
         # Classify all passed parameters.
+        self.module_names = module_names
         self.module_to_func_decorator_names = module_to_func_decorator_names
         self.module_to_type_to_method_decorator_names = (
             module_to_type_to_method_decorator_names)
@@ -148,6 +193,7 @@ class BeartypeNodeScopeAfterlist(object):
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
+            f'    module_names={repr(self.module_names)},\n',
             f'    module_to_func_decorator_names={repr(self.module_to_func_decorator_names)},\n',
             f'    module_to_type_to_method_decorator_names='
             f'{repr(self.module_to_type_to_method_decorator_names)},\n',
