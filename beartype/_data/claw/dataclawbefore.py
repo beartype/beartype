@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype import hook afterlist globals** (i.e., global constants defining the
-initial contents of the afterlist automating decorator positioning for
+**Beartype import hook beforelist globals** (i.e., global constants defining the
+initial contents of the beforelist automating decorator positioning for
 :mod:`beartype.claw` import hooks).
 
-:mod:`beartype.claw` import hooks initialize user-configurable afterlists via
+:mod:`beartype.claw` import hooks initialize user-configurable beforelists via
 these globals of third-party decorators well-known to be **decorator-hostile**
 (i.e., decorators hostile to other decorators by prematurely terminating
 decorator chaining, such that *no* decorators may appear above these decorators
@@ -26,7 +26,7 @@ from beartype._util.kind.map.utilmapfrozen import FrozenDict
 
 # ....................{ DICTS                              }....................
 # The @beartype decorator *MUST* appear below these decorator functions:
-CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
+CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
     DictStrToFrozenSetStrs) = FrozenDict({
         # The third-party @mcp.tool decorator method of the FastMCP package.
         # See also: https://github.com/beartype/beartype/issues/540
@@ -38,16 +38,16 @@ CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
         'langchain_core.runnables': frozenset(('chain',)),
     })
 '''
-**Afterlist decorator function schema** (i.e., frozen dictionary mapping from
+**Beforelist decorator function schema** (i.e., frozen dictionary mapping from
 the fully-qualified name of each third-party module to a tuple of the
 unqualified basenames of each decorator function of that module which the
-:func:`beartype.beartype` decorator *must* appear after within the chain of
+:func:`beartype.beartype` decorator *must* appear before within the chain of
 decorators for objects decorated by that decorator).
 '''
 
 
 # The @beartype decorator *MUST* appear below these decorator methods:
-CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
+CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
     DictStrToStrToFrozenSetStrs) = FrozenDict({
         # The third-party @task decorator method of the "celery.Celery" type.
         # See also: https://github.com/beartype/beartype/issues/500
@@ -58,10 +58,10 @@ CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
         'typer': FrozenDict({'Typer': frozenset(('command',))}),
     })
 '''
-**Afterlist decorator method schema** (i.e., frozen dictionary mapping from the
+**Beforelist decorator method schema** (i.e., frozen dictionary mapping from the
 fully-qualified name of each third-party module to the unqualified basename of
 each type in that module to a tuple of the unqualified basenames of each
 decorator method of that type which the :func:`beartype.beartype` decorator
-*must* appear after within the chain of decorators for objects decorated by that
-decorator).
+*must* appear before within the chain of decorators for objects decorated by
+that decorator).
 '''

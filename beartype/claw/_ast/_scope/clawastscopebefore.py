@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **abstract syntax tree (AST) scope afterlist** (i.e., low-level
-dataclass aggregating all metadata required to manage the afterlist automating
+Beartype **abstract syntax tree (AST) scope beforelist** (i.e., low-level
+dataclass aggregating all metadata required to manage the beforelist automating
 decorator positioning for for lexical scopes recursively visited by AST
 transformers).
 
@@ -24,18 +24,18 @@ from beartype._data.typing.datatyping import (
     ChainMapStrToStrToChainMapStrs,
     SetStrs,
 )
-from beartype._data.claw.dataclawafter import (
-    CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAMES,
-    CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES,
+from beartype._data.claw.dataclawbefore import (
+    CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES,
+    CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES,
 )
 from collections import ChainMap
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
-class BeartypeNodeScopeAfterlist(object):
+class BeartypeNodeScopeBeforelist(object):
     '''
-    Beartype **abstract syntax tree (AST) scope afterlist** (i.e., low-level
-    dataclass aggregating all metadata required to manage the afterlist
+    Beartype **abstract syntax tree (AST) scope beforelist** (i.e., low-level
+    dataclass aggregating all metadata required to manage the beforelist
     automating decorator positioning for lexical scopes recursively visited by
     AST transformers).
 
@@ -46,7 +46,7 @@ class BeartypeNodeScopeAfterlist(object):
         (i.e., modules importing one or more decorator-hostile decorator
         function and/or types declaring one or more decorator-hostile methods).
     module_to_func_decorator_names : ChainMapStrToChainMapStrs
-        **Afterlist decorator function chain map** (i.e., sequence of
+        **Beforelist decorator function chain map** (i.e., sequence of
         dictionaries mapping from the fully-qualified name of each third-party
         module to a set-like object implemented for simplicity as a nested chain
         map of the unqualified basename of each decorator-hostile decorator
@@ -62,7 +62,7 @@ class BeartypeNodeScopeAfterlist(object):
           across all nested local and global scopes (in that order from most to
           least nested).
     module_to_type_to_method_decorator_names : ChainMapStrToStrToChainMapStrs
-        **Afterlist decorator method chain map** (i.e., sequence of dictionaries
+        **Beforelist decorator method chain map** (i.e., sequence of dictionaries
         mapping from the fully-qualified name of each third-party module to the
         unqualified basename of each type in that module to a set-like object
         implemented for simplicity as a nested chain map of the unqualified
@@ -109,14 +109,14 @@ class BeartypeNodeScopeAfterlist(object):
         module_names: Optional[SetStrs] = None,
     ) -> None:
         '''
-        Initialize this scope afterlist.
+        Initialize this scope beforelist.
 
         Parameters
         ----------
         module_to_func_decorator_names : ChainMapStrToChainMapStrs
-            **Afterlist decorator function chain map.** See the class docstring.
+            **Beforelist decorator function chain map.** See the class docstring.
         module_to_type_to_method_decorator_names : ChainMapStrToStrToChainMapStrs
-            **Afterlist decorator method chain map.** See the class docstring.
+            **Beforelist decorator method chain map.** See the class docstring.
         module_names : Optional[set[str]], default: None
             Set of the fully-qualified names all decorator-hostile modules.
             See the class docstring.
@@ -201,10 +201,10 @@ class BeartypeNodeScopeAfterlist(object):
         ))
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self) -> 'BeartypeNodeScopeAfterlist':
+    def permute(self) -> 'BeartypeNodeScopeBeforelist':
         '''
-        Shallow copy of this scope afterlist, typically called to produce a
-        mutable copy of this scope afterlist isolated to a new local (e.g.,
+        Shallow copy of this scope beforelist, typically called to produce a
+        mutable copy of this scope beforelist isolated to a new local (e.g.,
         function) scope being visited by the abstract syntax tree (AST)
         transformer tracking problematic third-party imports.
 
@@ -219,8 +219,8 @@ class BeartypeNodeScopeAfterlist(object):
 
         Returns
         -------
-        BeartypeNodeScopeAfterlist
-            Shallow copy of this scope afterlist.
+        BeartypeNodeScopeBeforelist
+            Shallow copy of this scope beforelist.
         '''
 
         # Shallow copies of these chain maps of this parent scope, enabling the
@@ -231,7 +231,7 @@ class BeartypeNodeScopeAfterlist(object):
             self.module_to_type_to_method_decorator_names.new_child())
 
         # Create and return a shallow copy of this dataclass.
-        return BeartypeNodeScopeAfterlist(
+        return BeartypeNodeScopeBeforelist(
             module_to_func_decorator_names=module_to_func_decorator_names_new,
             module_to_type_to_method_decorator_names=(
                 module_to_type_to_method_decorator_names_new),
@@ -239,20 +239,20 @@ class BeartypeNodeScopeAfterlist(object):
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_node_scope_afterlist_global() -> BeartypeNodeScopeAfterlist:
+def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
     '''
-    Beartype **abstract syntax tree (AST) global scope afterlist** (i.e.,
+    Beartype **abstract syntax tree (AST) global scope beforelist** (i.e.,
     low-level dataclass aggregating all metadata required to manage the
-    afterlist automating decorator positioning for the global scope of the
+    beforelist automating decorator positioning for the global scope of the
     module being recursively visited by the current AST transformer).
 
     Returns
     -------
-    BeartypeNodeScopeAfterlist
-        AST global scope afterlist of the currently visited module.
+    BeartypeNodeScopeBeforelist
+        AST global scope beforelist of the currently visited module.
     '''
 
-    # Afterlist decorator function mapping, defined as a mutable chain map
+    # Beforelist decorator function mapping, defined as a mutable chain map
     # coerced from this immutable frozen dictionary singleton.
     module_to_func_decorator_names = ChainMap({
         # Coerce this immutable frozen set of decorator function names into a
@@ -263,29 +263,29 @@ def make_node_scope_afterlist_global() -> BeartypeNodeScopeAfterlist:
         # Note that the "None" value is both arbitrary and ignorable.
         module_name: ChainMap(dict.fromkeys(func_decorator_names, None))
         for module_name, func_decorator_names in (
-            CLAW_AFTERLIST_MODULE_TO_FUNC_DECORATOR_NAMES.items())
+            CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES.items())
     })
 
-    # Afterlist decorator method mapping, defined as a mutable chain map
+    # Beforelist decorator method mapping, defined as a mutable chain map
     # coerced from this immutable frozen dictionary singleton.
     #
     # Note that doing so is complicated by the fact that this parent frozen
     # dictionary maps from strings to nested frozen dictionaries, which *MUST*
     # also be coerced into nested chain maps.
     module_to_type_to_method_decorator_names = ChainMap({
-        afterlist_module_name: {
+        beforelist_module_name: {
             # Coerce this immutable frozen set of decorator method names into a
             # mutable chain map of these names via the above trick.
             type_name: ChainMap(dict.fromkeys(method_decorator_names, None))
             for type_name, method_decorator_names in (
                 type_to_method_decorator_names.items())
         }
-        for afterlist_module_name, type_to_method_decorator_names in (
-            CLAW_AFTERLIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES.items())
+        for beforelist_module_name, type_to_method_decorator_names in (
+            CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES.items())
     })
 
-    # Create and return this afterlist global scope.
-    return BeartypeNodeScopeAfterlist(
+    # Create and return this beforelist global scope.
+    return BeartypeNodeScopeBeforelist(
         module_to_func_decorator_names=module_to_func_decorator_names,
         module_to_type_to_method_decorator_names=(
             module_to_type_to_method_decorator_names),

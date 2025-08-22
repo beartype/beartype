@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **afterlist trackers** (i.e., low-level mixins managing the afterlist
+Beartype **beforelist trackers** (i.e., low-level mixins managing the beforelist
 automating decorator positioning for :mod:`beartype.claw` import hooks).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Unit test the newly defined
-#"BeartypeDecorationPosition.LAST_UNDER_AFTERLIST" position, please.
+#"BeartypeDecorationPosition.LAST_BEFORELIST" position, please.
 #FIXME: Once unit-tested, enable that position by default *FOR FUNCTIONS ONLY.*
 #It's currently pointless for types. *shrug*
 
@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  visite_Import() method altogether. *sigh*
 #* Import aliases (e.g., "from problem_package import problem_decor as ohboy").
 
-#FIXME: Handle user-defined afterlists via the "self._conf" instance
+#FIXME: Handle user-defined beforelists via the "self._conf" instance
 #variable, please. *sigh*
 
 # ....................{ IMPORTS                            }....................
@@ -36,11 +36,13 @@ from ast import (
 )
 from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
 from beartype.roar import BeartypeClawImportConfException
+# from beartype.typing import Union
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeDecorationPosition
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
 from beartype._data.claw.dataclawmagic import BEARTYPE_DECORATOR_FUNC_NAME
+from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
     NodeDecoratable,
     NodeVisitResult,
@@ -56,14 +58,14 @@ from beartype._util.ast.utilastmunge import copy_node_metadata
 
 class BeartypeNodeTransformerImportMixin(object):
     '''
-    Beartype **afterlist tracker** (i.e., visitor pattern recursively
+    Beartype **beforelist tracker** (i.e., visitor pattern recursively
     tracking imports of problematic third-party decorators as well as the
     modules and types providing such decorators across *all* import statements
     in the AST tree passed to the :meth:`visit` method of the
     :class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass
     also subclassing this mixin).
 
-    This tracker manages the **beartype decorator afterlist** (i.e., collection
+    This tracker manages the **beartype decorator beforelist** (i.e., collection
     of data structures deciding where the :func:`beartype.beartype` decorator
     should be applied in chains of one or more third-party decorators decorating
     callables and types). This tracker detects third-party decorators well-known
@@ -99,8 +101,6 @@ class BeartypeNodeTransformerImportMixin(object):
         self.generic_visit(node)  # type: ignore[attr-defined]
 
         # ..................{ LOCALS                         }..................
-        #FIXME: Mypy claims this name can actually be "None". How, mypy? What
-        #are talking about? *sigh*
         # Fully-qualified name of the external module being imported from if any
         # *OR* "None".
         #
@@ -118,7 +118,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # known to define decorator-hostile decorators, this import statement is
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
-        if import_module_name not in scope.afterlist.module_names:
+        if import_module_name not in scope.beforelist.module_names:
             return node
         # Else, this import statement imports from a third-party module known to
         # define decorator-hostile decorators.
@@ -127,7 +127,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # decorator-hostile decorator function defined by this third-party
         # module if any *OR* "None" otherwise.
         func_decorator_names = (
-            scope.afterlist.module_to_func_decorator_names.get(
+            scope.beforelist.module_to_func_decorator_names.get(
                 import_module_name))
 
         # Nested dictionary mapping from the unqualified basename of each type
@@ -135,7 +135,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # unqualified basename of each decorator-hostile decorator method
         # defined by that type if any *OR* "None" otherwise.
         type_to_method_decorator_names = (
-            scope.afterlist.module_to_type_to_method_decorator_names.get(
+            scope.beforelist.module_to_type_to_method_decorator_names.get(
                 import_module_name))
 
         # ..................{ SEARCH                         }..................
@@ -170,9 +170,9 @@ class BeartypeNodeTransformerImportMixin(object):
                 #"is_permute_module_to_func_decorator_names", which defaults
                 #to false. It's fine for now. Fine, we say! *shrug*
 
-                # Render this scope's afterlist safe for modification if this
-                # afterlist is *NOT* yet safely modifiable.
-                scope.permute_afterlist_if_needed()
+                # Render this scope's beforelist safe for modification if this
+                # beforelist is *NOT* yet safely modifiable.
+                scope.permute_beforelist_if_needed()
 
                 # New nested set-like chain map of the unqualified basename of
                 # each decorator-hostile decorator function defined by that
@@ -201,13 +201,13 @@ class BeartypeNodeTransformerImportMixin(object):
                 # Map the fully-qualified name of this scope to this nested
                 # set-like chain map of the unqualified basenames of all
                 # decorator-hostile decorator functions in this scope.
-                scope.afterlist.module_to_func_decorator_names[
+                scope.beforelist.module_to_func_decorator_names[
                     scope.name] = func_decorator_names_new
 
                 # Add the fully-qualified name of this scope to the set of the
                 # fully-qualified names of all scopes known to define
                 # decorator-hostile decorators.
-                scope.afterlist.module_names.add(scope.name)
+                scope.beforelist.module_names.add(scope.name)
             # Else, either that module defines no decorator-hostile decorator
             # functions *OR* the unqualified basename of this attribute is *NOT*
             # that of a decorator-hostile decorator function in that module. In
@@ -276,14 +276,14 @@ class BeartypeNodeTransformerImportMixin(object):
             f'{repr(conf)} not configuration.')
 
         # ....................{ NODES                      }....................
-        # Child decoration node decorating that callable by the @beartype
-        # decorator.
-        beartype_decorator: expr = Name(
+        # Child decoration node decorating this parent type or callable node by
+        # the @beartype decorator.
+        node_beartype_decorator: expr = Name(
             id=BEARTYPE_DECORATOR_FUNC_NAME, ctx=NODE_CONTEXT_LOAD)
 
-        # Copy all source code metadata from this parent callable node onto this
-        # child decorator node.
-        copy_node_metadata(node_src=node, node_trg=beartype_decorator)
+        # Copy all source code metadata from this parent type or callable node
+        # onto this child decorator node.
+        copy_node_metadata(node_src=node, node_trg=node_beartype_decorator)
 
         # ....................{ NODES ~ conf               }....................
         #FIXME: Isn't this pretty much *ALWAYS* the case? "beartype.claw" import
@@ -296,8 +296,8 @@ class BeartypeNodeTransformerImportMixin(object):
         if conf != BEARTYPE_CONF_DEFAULT:
             # Replace the reference to this decorator defined above with a call
             # to this decorator passed this configuration.
-            beartype_decorator = Call(
-                func=beartype_decorator,
+            node_beartype_decorator = Call(
+                func=node_beartype_decorator,
                 args=[],
                 # Node encapsulating the passing of this configuration as the
                 # "conf" keyword argument to this call.
@@ -306,7 +306,7 @@ class BeartypeNodeTransformerImportMixin(object):
 
             # Copy all source code metadata from this parent callable node onto
             # this child call node.
-            copy_node_metadata(node_src=node, node_trg=beartype_decorator)
+            copy_node_metadata(node_src=node, node_trg=node_beartype_decorator)
         # Else, this configuration is simply the default beartype configuration.
         # In this case, avoid passing that configuration to the @beartype
         # decorator for both efficiency and simplicity.
@@ -328,10 +328,10 @@ class BeartypeNodeTransformerImportMixin(object):
             conf.claw_decoration_position_funcs
         )
 
-        # If injecting the @beartype decorator last, insert this child
-        # decoration node immediately *AFTER* the first existing child
+        # If injecting the @beartype decorator contextually last, insert this
+        # child decoration node immediately *BEFORE* the first existing child
         # decoration node encapsulating a decorator-hostile decorator externally
-        # configured by the afterlist and previously detected by the
+        # configured by the beforelist and previously detected by the
         # visit_Import*() family of methods defined above.
         #
         # Note that:
@@ -340,92 +340,21 @@ class BeartypeNodeTransformerImportMixin(object):
         #   existing decorators decorating this type or callable is "stored
         #   outermost first (i.e. the first in the list will be applied last)."
         if decoration_position is (
-            BeartypeDecorationPosition.LAST_UNDER_AFTERLIST):
-            #FIXME: Pretty intense. Shift into a separate private method,
-            #please. *sigh*
-
-            # Broadly speaking, there exist four sorts of decorations (in order
-            # of increasing complexity):
-            # * An unqualified attribute decoration of the form
-            #   "@{decorator_name}", encapsulated by a simple "ast.Name" node.
-            # * A qualified attribute decoration of the form
-            #   "@{module_or_type_name}.{decorator_name}", encapsulated by a
-            #   less simple "ast.Attribute" node.
-            # * A callable call decoration encapsulating either:
-            #   * An unqualified attribute decoration of the form
-            #     "@{decorator_name}(...)", encapsulated by a complex
-            #     "ast.Call(func=Name(...), ...)" node.
-            #   * A qualified attribute decoration of the form
-            #     "@{decorator_name}(...)", encapsulated by an even more complex
-            #     "ast.Call(func=Attribute(...), ...)" node.
-            #
-            # Consider this minimal-length example:
-            #
-            #     @beartype
-            #     @beartype.beartype
-            #     @beartype(conf=BeartypeConf(is_debug=True))
-            #     @beartype.beartype(conf=BeartypeConf(is_debug=True))
-            #     def muh_fun(): pass
-            #
-            # ...which is encapsulated by this AST:
-            #     FunctionDef(
-            #       name='muh_fun',
-            #       args=arguments(),
-            #       body=[
-            #           Pass()],
-            #       decorator_list=[
-            #           Name(id='beartype', ctx=Load()),
-            #           Attribute(
-            #               value=Name(id='beartype', ctx=Load()),
-            #               attr='beartype',
-            #               ctx=Load()),
-            #           Call(
-            #               func=Name(id='beartype', ctx=Load()),
-            #               keywords=[
-            #                   keyword(
-            #                       arg='conf',
-            #                       value=Call(
-            #                           func=Name(id='BeartypeConf', ctx=Load()),
-            #                           keywords=[
-            #                               keyword(
-            #                                   arg='is_debug',
-            #                                   value=Constant(value=True))]))]),
-            #           Call(
-            #               func=Attribute(
-            #                   value=Name(id='beartype', ctx=Load()),
-            #                   attr='beartype',
-            #                   ctx=Load()),
-            #               keywords=[
-            #                   keyword(
-            #                       arg='conf',
-            #                       value=Call(
-            #                           func=Name(id='BeartypeConf', ctx=Load()),
-            #                           keywords=[
-            #                               keyword(
-            #                                   arg='is_debug',
-            #                                   value=Constant(value=True))]))])])])
-
-            # Metadata describing the current lexical scope being recursively
-            # visited by this AST transformer.
-            scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
-
-            # # For each node encapsulating an existing decorator in the chain of
-            # # all decorators decorating this type or callable...
-            # for decorator in node.decorator_list:
-            #     scope.name.
-                # .insert(0, beartype_decorator)
+            BeartypeDecorationPosition.LAST_BEFORELIST):
+            self._decorate_node_beartype_last_beforelist(
+                node=node, conf=conf, node_beartype_decorator=node_beartype_decorator)
         # If injecting the @beartype decorator unconditionally last, prepend
         # this child decoration node to the beginning of the list of all child
         # decoration nodes for this parent decoratable node. Prepending
         # guarantees that our decorator will be applied last (i.e., *AFTER* all
         # subsequent decorators).
         elif decoration_position is BeartypeDecorationPosition.LAST:
-            node.decorator_list.insert(0, beartype_decorator)
+            node.decorator_list.insert(0, node_beartype_decorator)
         # If injecting the @beartype decorator unconditionally first, append
         # this child decoration node to the end of the list of all child
         # decoration nodes for this parent decoratable node.
         elif decoration_position is BeartypeDecorationPosition.FIRST:
-            node.decorator_list.append(beartype_decorator)
+            node.decorator_list.append(node_beartype_decorator)
         # Else, an unrecognized decorator position was configured. In this case,
         # raise an exception. Note that this should *NEVER* occur.
         else:  # pragma: no cover
@@ -434,3 +363,193 @@ class BeartypeNodeTransformerImportMixin(object):
                 f'decorator position {repr(decoration_position)} unsupported.'
             )
 
+
+    #FIXME: Docstring us up, please.
+    def _decorate_node_beartype_last_beforelist(
+        self,
+        node: NodeDecoratable,
+        conf: BeartypeConf,
+        node_beartype_decorator: expr,
+    ) -> None:
+        '''
+        Add a new child :func:`beartype.beartype` decoration node to the passed
+        parent decoratable node subject to
+        :attr:`BeartypeDecorationPosition.LAST_BEFORELIST` positioning.
+
+        This method contextually injects the :func:`beartype.beartype` decorator
+        as high (i.e., late) in the chain of decorators decorating the type
+        or callable encapsulated by this parent decoratable node as feasible
+        while still preserving compatibility with decorator-hostile decorators.
+        To do so, this method injects this decorator immediately *before* the
+        lowest (i.e., earliest) decorator-hostile decorator decorating this type
+        or callable as externally configured by the beforelist and previously
+        detected by the ``visit_Import*()`` family of methods defined above.
+
+        Parameters
+        ----------
+        node : AST
+            **Decoratable node** (i.e., parent type or callable node) to add a
+            new child beartype decoration node to.
+        conf : BeartypeConf
+            **Beartype configuration** (i.e., dataclass configuring the
+            :mod:`beartype.beartype` decorator for some decoratable object(s)
+            decorated by a parent node passing this dataclass to that
+            decorator).
+        node_beartype_decorator : expr
+            Child decoration node decorating this parent type or callable node
+            by the :func:`beartype.beartype` decorator.
+        '''
+        assert isinstance(node_beartype_decorator, expr), (
+            f'{repr(node_beartype_decorator)} not AST expression node.')
+
+        # ..................{ LOCALS                         }..................
+        # Metadata describing the current lexical scope being recursively
+        # visited by this AST transformer.
+        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
+
+        # Fully-qualified name of this scope, localized for both readability and
+        # as a negligible microoptimization. *sigh*
+        module_name = scope.name
+
+        # If either...
+        #
+        # Note that this is the common case. Since undecorated types and
+        # callables *AND* decorator-hostile decorators are all the exception
+        # rather than the rule, optimizing for this common case is both
+        # desirable and useful.
+        if (
+            # The currently visited type or callable being decorated by the
+            # @beartype decorator is currently undecorated *OR*...
+            not node.decorator_list or
+            # This type or callable is decorated.
+            #
+            # The currently visited module imports from *NO* other module known
+            # to define one or more decorator-hostile decorators...
+            module_name not in scope.beforelist.module_names
+        ):
+            # Then this type or callable is decorated by *NO* decorator-hostile
+            # decorators. In this case, the @beartype decorator may be safely
+            # injected as the last decorator in the chain of decorators
+            # decorating this type or callable.
+
+            # Reduce to the implementation of the
+            # "BeartypeDecorationPosition.LAST" position in the parent
+            # _decorate_node_beartype() method.
+            node.decorator_list.insert(0, node_beartype_decorator)
+
+            # Halt further processing.
+            return
+        # Else, this type or callable is decorated *AND* the currently visited
+        # module imports from one or more other modules known to define one or
+        # more decorator-hostile decorators.
+
+        # Set-like chain map of the unqualified basename of each
+        # decorator-hostile decorator function defined by this third-party
+        # module if any *OR* the empty frozen dictionary otherwise.
+        func_decorator_names = (
+            scope.beforelist.module_to_func_decorator_names.get(
+                module_name, FROZENDICT_EMPTY))
+
+        #FIXME: Actually consider this mapping below, please. *sigh*
+        # # Nested dictionary mapping from the unqualified basename of each type
+        # # defined by this third-party module to a set-like chain map of the
+        # # unqualified basename of each decorator-hostile decorator method
+        # # defined by that type if any *OR* the empty frozen dictionary otherwise.
+        # type_to_method_decorator_names = (
+        #     scope.beforelist.module_to_type_to_method_decorator_names.get(
+        #         module_name, FROZENDICT_EMPTY))
+
+        # ..................{ SEARCH                         }..................
+        # For the 0-based index of each child node encapsulating an existing
+        # decorator in the chain of all decorators decorating this type or
+        # callable *AND* that child node (in descending order of the last to
+        # first such decorator)...
+        #
+        # With respect to AST transformations, there exist four kinds of
+        # decorations (in order of increasing complexity). This method *MUST*
+        # transparently support each of these kinds:
+        # * An unqualified attribute decoration of the form
+        #   "@{decorator_name}", encapsulated by a simple "ast.Name" node.
+        # * A qualified attribute decoration of the form
+        #   "@{module_or_type_name}.{decorator_name}", encapsulated by a less
+        #   simple "ast.Attribute" node.
+        # * A callable call decoration encapsulating either:
+        #   * An unqualified attribute decoration of the form
+        #     "@{decorator_name}(...)", encapsulated by a complex
+        #     "ast.Call(func=Name(...), ...)" node.
+        #   * A qualified attribute decoration of the form
+        #     "@{decorator_name}(...)", encapsulated by an even more complex
+        #     "ast.Call(func=Attribute(...), ...)" node.
+        #
+        # Consider this minimal-length example:
+        #
+        #     @beartype
+        #     @beartype.beartype
+        #     @beartype(conf=BeartypeConf(is_debug=True))
+        #     @beartype.beartype(conf=BeartypeConf(is_debug=True))
+        #     def muh_fun(): pass
+        #
+        # ...which is encapsulated by this AST:
+        #     FunctionDef(
+        #       name='muh_fun',
+        #       args=arguments(),
+        #       body=[
+        #           Pass()],
+        #       decorator_list=[
+        #           Name(id='beartype', ctx=Load()),
+        #           Attribute(
+        #               value=Name(id='beartype', ctx=Load()),
+        #               attr='beartype',
+        #               ctx=Load()),
+        #           Call(
+        #               func=Name(id='beartype', ctx=Load()),
+        #               keywords=[
+        #                   keyword(
+        #                       arg='conf',
+        #                       value=Call(
+        #                           func=Name(id='BeartypeConf', ctx=Load()),
+        #                           keywords=[
+        #                               keyword(
+        #                                   arg='is_debug',
+        #                                   value=Constant(value=True))]))]),
+        #           Call(
+        #               func=Attribute(
+        #                   value=Name(id='beartype', ctx=Load()),
+        #                   attr='beartype',
+        #                   ctx=Load()),
+        #               keywords=[
+        #                   keyword(
+        #                       arg='conf',
+        #                       value=Call(
+        #                           func=Name(id='BeartypeConf', ctx=Load()),
+        #                           keywords=[
+        #                               keyword(
+        #                                   arg='is_debug',
+        #                                   value=Constant(value=True))]))])])])
+        node_decorator_index = 0  # <-- for safety, but probably unneeded
+        for node_decorator_index, node_decorator in enumerate(
+            node.decorator_list):
+            # If this decoration is encapsulated by a simple "ast.Name" node,
+            # this is an unqualified attribute decoration of the form
+            # "@{decorator_name}". In this case...
+            if isinstance(node_decorator, Name):
+                # If the unqualified basename of this decorator is *NOT* that of
+                # a decorator-hostile decorator previously imported into the
+                # currently visited module, this decorator is presumably
+                # compatible with the @beartype decorator. In this case, halt!
+                if node_decorator.id not in func_decorator_names:
+                    break
+                # Else, the unqualified basename of this decorator is that of a
+                # decorator-hostile decorator previously imported into the
+                # currently visited module. In this case, continue searching.
+            # Else, this decoration is *NOT* encapsulated by an "ast.Name" node.
+            #
+            # If...
+
+            #FIXME: Finish us up, please. *sigh*
+
+        # Inject the @beartype decorator the last decorator *BEFORE* (i.e.,
+        # below) the last decorator-hostile decorator in the chain of existing
+        # decorators decorating this type or callable.
+        node.decorator_list.insert(
+            node_decorator_index, node_beartype_decorator)

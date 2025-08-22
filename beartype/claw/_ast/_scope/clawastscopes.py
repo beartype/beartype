@@ -63,7 +63,7 @@ class BeartypeNodeScopes(list[BeartypeNodeScope]):
         # Global scope of the module currently being recursively visited by the
         # parent AST transformer.
         node_scope_global = BeartypeNodeScope(
-            afterlist=claw_state.node_scope_afterlist_global,
+            beforelist=claw_state.node_scope_beforelist_global,
             name=module_name,
             node_type=Module,
         )
@@ -120,16 +120,16 @@ class BeartypeNodeScopes(list[BeartypeNodeScope]):
         # New AST scope describing the deepest nested lexical scope currently
         # being visited by the parent AST transformer.
         scope_nested = BeartypeNodeScope(
-            # For both efficiency and simplicity, reuse the same afterlist as
+            # For both efficiency and simplicity, reuse the same beforelist as
             # that of the parent scope of this nested scope. If this nested
             # scope contains one or more problematic imports and thus requires a
-            # distinct afterlist unique to this nested scope, the appropriate
-            # external AST transformer mixin will permute this parent afterlist
-            # into a new nested afterlist as needed.
+            # distinct beforelist unique to this nested scope, the appropriate
+            # external AST transformer mixin will permute this parent beforelist
+            # into a new nested beforelist as needed.
             #
             # Note that this stack is guaranteed to *ALWAYS* be non-empty. Ergo,
             # this parent scope is guaranteed to *ALWAYS* exist.
-            afterlist=self[-1].afterlist,
+            beforelist=self[-1].beforelist,
             name=name,
             node_type=node_type,
         )

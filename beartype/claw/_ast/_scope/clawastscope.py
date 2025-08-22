@@ -20,8 +20,8 @@ from beartype.typing import (
     TYPE_CHECKING,
     Type,
 )
-from beartype.claw._ast._scope.clawastscopeafter import (
-    BeartypeNodeScopeAfterlist)
+from beartype.claw._ast._scope.clawastscopebefore import (
+    BeartypeNodeScopeBeforelist)
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -33,9 +33,9 @@ class BeartypeNodeScope(object):
 
     Attributes
     ----------
-    afterlist : BeartypeNodeScopeAfterlist
-        **Abstract syntax tree (AST) scope afterlist** (i.e., dataclass
-        aggregating all metadata required to manage the afterlist automating
+    beforelist : BeartypeNodeScopeBeforelist
+        **Abstract syntax tree (AST) scope beforelist** (i.e., dataclass
+        aggregating all metadata required to manage the beforelist automating
         decorator positioning for this scope being recursively visited by the
         parent AST transformer).
     name : str
@@ -56,19 +56,19 @@ class BeartypeNodeScope(object):
           **class scope** of the current class.
         * :class:`ast.FunctionDef`, the current node directly resides in the
           **callable scope** of the current callable.
-    _is_afterlist_mutable : bool
-        :data:`True` only if this scope afterlist is **modifiable** (i.e., if
-        this scope afterlist is unique to this scope). This scope afterlist
+    _is_beforelist_mutable : bool
+        :data:`True` only if this scope beforelist is **modifiable** (i.e., if
+        this scope beforelist is unique to this scope). This scope beforelist
         defaults to:
 
-        * If this scope is global, :data:`True`. Global scope afterlists are
+        * If this scope is global, :data:`True`. Global scope beforelists are
           safely shared between *all* global scopes for *all* modules and thus
           safely modifiable as is.
         * If this scope is nested (i.e., either class or callable),
-          :data:`False`. Nested scope afterlists are *not* safely shared
+          :data:`False`. Nested scope beforelists are *not* safely shared
           between *all* global scopes for *all* modules and thus *not* safely
-          modifiable as is. Instead, nested scope afterlists must be copied from
-          their parent global scope afterlists into new afterlists unique to
+          modifiable as is. Instead, nested scope beforelists must be copied from
+          their parent global scope beforelists into new beforelists unique to
           those nested scopes before being modified.
     '''
 
@@ -81,34 +81,34 @@ class BeartypeNodeScope(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
-        'afterlist',
+        'beforelist',
         'name',
         'node_type',
-        '_is_afterlist_mutable',
+        '_is_beforelist_mutable',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        afterlist: BeartypeNodeScopeAfterlist
+        beforelist: BeartypeNodeScopeBeforelist
         name: str
         node_type: Type[AST]
-        _is_afterlist_mutable: bool
+        _is_beforelist_mutable: bool
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
         self,
-        afterlist: BeartypeNodeScopeAfterlist,
+        beforelist: BeartypeNodeScopeBeforelist,
         name: str,
         node_type: Type[AST],
     ) -> None:
         '''
-        Initialize this afterlist scope.
+        Initialize this beforelist scope.
 
         Parameters
         ----------
-        afterlist : BeartypeNodeScopeAfterlist
-            **Lexical scope afterlist.** See the class docstring.
+        beforelist : BeartypeNodeScopeBeforelist
+            **Lexical scope beforelist.** See the class docstring.
         name : str
             Fully-qualified name of the current lexical scope (i.e.,
             ``.``-delimited absolute name of the module containing this scope
@@ -117,55 +117,55 @@ class BeartypeNodeScope(object):
         node_type : type[AST]
             **Lexical scope node type.** See the class docstring.
         '''
-        assert isinstance(afterlist, BeartypeNodeScopeAfterlist), (
-            f'{repr(afterlist)} not afterlist scope.')
+        assert isinstance(beforelist, BeartypeNodeScopeBeforelist), (
+            f'{repr(beforelist)} not beforelist scope.')
         assert isinstance(name, str), f'{repr(name)} not string.'
         assert isinstance(node_type, type), f'{repr(node_type)} not type.'
         assert issubclass(node_type, AST), f'{repr(node_type)} not node type.'
 
         # Classify all passed parameters.
-        self.afterlist = afterlist
+        self.beforelist = beforelist
         self.name = name
         self.node_type = node_type
 
-        # Record this afterlist to already be safely modifiable *ONLY* if this
+        # Record this beforelist to already be safely modifiable *ONLY* if this
         # is a global scope. See also the class docstring.
-        self._is_afterlist_mutable = node_type is Module
+        self._is_beforelist_mutable = node_type is Module
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    afterlist={repr(self.afterlist)},\n',
+            f'    beforelist={repr(self.beforelist)},\n',
             f'    name={repr(self.name)},\n',
             f'    node_type={repr(self.node_type)},\n',
-            f'    _is_afterlist_mutable={repr(self._is_afterlist_mutable)},\n',
+            f'    _is_beforelist_mutable={repr(self._is_beforelist_mutable)},\n',
             f')',
         ))
 
     # ..................{ DUNDERS                            }..................
-    def permute_afterlist_if_needed(self) -> None:
+    def permute_beforelist_if_needed(self) -> None:
         '''
-        Render this scope's afterlist safe for modification by external callers
-        (e.g., to track problematic third-party imports) if this afterlist is
-        *not* yet safely **modifiable** (i.e., if this afterlist is still a
-        reference to a parent scope's afterlist and is thus *not* unique to this
+        Render this scope's beforelist safe for modification by external callers
+        (e.g., to track problematic third-party imports) if this beforelist is
+        *not* yet safely **modifiable** (i.e., if this beforelist is still a
+        reference to a parent scope's beforelist and is thus *not* unique to this
         scope).
 
-        For both space and time efficiency, afterlists obey the copy-on-write
+        For both space and time efficiency, beforelists obey the copy-on-write
         design pattern inspired by modern filesystems (e.g., Btrfs). Before
-        attempting to modify the contents of this afterlist, callers should call
-        this method to render this afterlist safe for modification.
+        attempting to modify the contents of this beforelist, callers should call
+        this method to render this beforelist safe for modification.
         '''
 
-        # If this afterlist is *NOT* yet safely modifiable, this afterlist is
-        # still a reference to a parent scope's afterlist and is thus *NOT*
+        # If this beforelist is *NOT* yet safely modifiable, this beforelist is
+        # still a reference to a parent scope's beforelist and is thus *NOT*
         # unique to this scope. In this case...
-        if not self._is_afterlist_mutable:
-            # Replace this shared afterlist with a new afterlist unique to this
+        if not self._is_beforelist_mutable:
+            # Replace this shared beforelist with a new beforelist unique to this
             # scope, which may then be safely modified by callers.
-            self.afterlist = self.afterlist.permute()
+            self.beforelist = self.beforelist.permute()
 
-            # Record that this afterlist is now safely modifiable.
-            self._is_afterlist_mutable = True
+            # Record that this beforelist is now safely modifiable.
+            self._is_beforelist_mutable = True

@@ -185,13 +185,13 @@ class BeartypeDecorationPosition(Enum):
         is silently ignored in favour of the non-default
         ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator manually
         configured by the author of that third-party package.
-    LAST_UNDER_AFTERLIST : EnumMemberType
-        **Afterlist-moderated last (i.e., top-most) decorator position**,
+    LAST_BEFORELIST : EnumMemberType
+        **Beforelist-moderated last (i.e., top-most) decorator position**,
         configuring :mod:`beartype.claw` import hooks to intelligently inject
         the :func:`beartype.beartype` decorator ideally as the last (i.e.,
         top-most) decorator in relevant decorator chains.
 
-        This position is algorithmically subject to the **afterlist** (i.e.,
+        This position is algorithmically subject to the **beforelist** (i.e.,
         user-configurable data structures deciding where the
         :func:`beartype.beartype` decorator should be applied in chains of one
         or more third-party decorators decorating callables and types). Notably,
@@ -200,7 +200,7 @@ class BeartypeDecorationPosition(Enum):
         * *Below* all **decorator-hostile decorators** (i.e., third-party
           decorators hostile to other decorators by prematurely terminating
           decorator chaining such that *no* decorators may appear above those
-          decorators in any chain of one or more decorators). The afterlist
+          decorators in any chain of one or more decorators). The beforelist
           configures which decorators are considered to be "decorator-hostile."
           Since decorator-hostile decorators are hostile to
           :func:`beartype.beartype` as well, :func:`beartype.beartype` *cannot*
@@ -222,7 +222,7 @@ class BeartypeDecorationPosition(Enum):
 
     FIRST = next_enum_member_value()
     LAST = next_enum_member_value()
-    LAST_UNDER_AFTERLIST = next_enum_member_value()
+    LAST_BEFORELIST = next_enum_member_value()
 
 
 @die_unless_enum_member_values_unique
