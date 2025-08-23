@@ -11,15 +11,33 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Additionally handle:
+#* Import aliases (e.g., "from problem_package import problem_decor as ohboy").
+#  This should be *SUPER*-trivial.
+#* Absolute imports (e.g., "import problem_package"). This will require a new
+#  visit_Import() method altogether. That said, the implementation should be
+#  trivial. Why? Because this commentary in "beartype.claw.__init__":
+#      Module imports effectively dynamically define a new submodule of the
+#      current source submodule whose name is that submodule. Thus, for example,
+#      an import of a problematic module "import celery" inside another
+#      previously non-problematic submodule "muh_package.muh_submodule"
+#      effectively dynamically defines a new problematic
+#      "muh_package.muh_submodule.celery" submodule. This can be trivially
+#      handled by just adding new entries resembling:
+#          _BEFORELIST_SCHEMA_MODULE_TO_TYPE_TO_DECORATOR_NAME = FrozenDict({
+#              'celery': {'Celery': 'task'},
+#              'typer': {'Typer': 'command'},
+#
+#              # This new submodule is also known to be problematic!
+#              'muh_package.muh_submodule.celery': {'Celery': 'task'},  # <-- so bad, bro
+#          })
+#
+#  Aliasing, in other words. Just alias existing entries. \o/
+
 #FIXME: Unit test the newly defined
 #"BeartypeDecorationPosition.LAST_BEFORELIST" position, please.
 #FIXME: Once unit-tested, enable that position by default *FOR FUNCTIONS ONLY.*
 #It's currently pointless for types. *shrug*
-
-#FIXME: Additionally handle:
-#* Absolute imports (e.g., "import problem_package"). This will require a new
-#  visite_Import() method altogether. *sigh*
-#* Import aliases (e.g., "from problem_package import problem_decor as ohboy").
 
 #FIXME: Handle user-defined beforelists via the "self._conf" instance
 #variable, please. *sigh*
@@ -27,11 +45,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
+    Attribute,
     Call,
     ClassDef,
     ImportFrom,
     Name,
-    # alias,
     expr,
 )
 from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
@@ -443,12 +461,10 @@ class BeartypeNodeTransformerImportMixin(object):
         # module imports from one or more other modules known to define one or
         # more decorator-hostile decorators.
 
-        # Set-like chain map of the unqualified basename of each
-        # decorator-hostile decorator function defined by this third-party
-        # module if any *OR* the empty frozen dictionary otherwise.
-        func_decorator_names = (
-            scope.beforelist.module_to_func_decorator_names.get(
-                module_name, FROZENDICT_EMPTY))
+        # Afterlist data structures, localized for both readability and as a
+        # negligible microoptimization. *sigh*
+        module_to_func_decorator_names = (
+            scope.beforelist.module_to_func_decorator_names)
 
         #FIXME: Actually consider this mapping below, please. *sigh*
         # # Nested dictionary mapping from the unqualified basename of each type
@@ -458,6 +474,22 @@ class BeartypeNodeTransformerImportMixin(object):
         # type_to_method_decorator_names = (
         #     scope.beforelist.module_to_type_to_method_decorator_names.get(
         #         module_name, FROZENDICT_EMPTY))
+
+        # 0-based index of the current decorator visited by iteration below in
+        # the chain of all decorators decorating this type or callable.
+        #
+        # Note that this index also efficiently doubles as the position in this
+        # decorator chain that the @beartype decorator should be injected into.
+        # This index is thus one larger than that of the last decorator-hostile
+        # decorator in this decorator chain.
+        node_decorator_index_curr = 0
+
+        # 0-based index of the last decorator visited by iteration below.
+        #
+        # Note that this index is guaranteed to be non-negative (i.e., >= 0), as
+        # the chain of all decorators decorating this type or callable is
+        # guaranteed to be non-empty (by the above validation).
+        node_decorator_index_last = len(node.decorator_list) - 1
 
         # ..................{ SEARCH                         }..................
         # For the 0-based index of each child node encapsulating an existing
@@ -478,8 +510,8 @@ class BeartypeNodeTransformerImportMixin(object):
         #     "@{decorator_name}(...)", encapsulated by a complex
         #     "ast.Call(func=Name(...), ...)" node.
         #   * A qualified attribute decoration of the form
-        #     "@{decorator_name}(...)", encapsulated by an even more complex
-        #     "ast.Call(func=Attribute(...), ...)" node.
+        #     "@{module_or_type_name}.{decorator_name}(...)", encapsulated by an
+        #     even more complex "ast.Call(func=Attribute(...), ...)" node.
         #
         # Consider this minimal-length example:
         #
@@ -526,30 +558,173 @@ class BeartypeNodeTransformerImportMixin(object):
         #                               keyword(
         #                                   arg='is_debug',
         #                                   value=Constant(value=True))]))])])])
-        node_decorator_index = 0  # <-- for safety, but probably unneeded
-        for node_decorator_index, node_decorator in enumerate(
-            node.decorator_list):
-            # If this decoration is encapsulated by a simple "ast.Name" node,
-            # this is an unqualified attribute decoration of the form
-            # "@{decorator_name}". In this case...
+        #
+        # Lastly, note that attribute names qualified by N number of
+        # "."-delimited substrings (where N >= 3) are encapsulated by a
+        # hierarchical nesting of N-1 "Attribute" nodes and 1 "Name" node: e.g.,
+        #     @package.module.submodule.decorator
+        #     def muh_fun(): pass
+        #
+        # ...which is encapsulated by this AST:
+        #     FunctionDef(
+        #         name='muh_fun',
+        #         args=arguments(),
+        #         body=[
+        #             Pass()],
+        #         decorator_list=[
+        #             Attribute(
+        #                 value=Attribute(
+        #                     value=Attribute(
+        #                         value=Name(id='package', ctx=Load()),
+        #                         attr='module',
+        #                         ctx=Load()),
+        #                     attr='submodule',
+        #                     ctx=Load()),
+        #                 attr='decorator',
+        #                 ctx=Load()),
+        #         ])
+
+        # While the 0-based index of the current decorator is less than or equal
+        # to that of the last decorator in this decorator chain...
+        while node_decorator_index_curr <= node_decorator_index_last:
+            # Current decorator.
+            node_decorator = node.decorator_list[node_decorator_index_curr]
+
+            # If this decoration is encapsulated by a complex "Call" node,
+            # this is a callable call decoration encapsulating either:
+            # * An unqualified attribute decoration of the form
+            #   "@{decorator_name}(...)".
+            # * A qualified attribute decoration of the form
+            #   "@{decorator_name}(...)".
+            #
+            # In either case, reduce this callable call node to the child "Name"
+            # or "Attribute" node it encapsulates.
+            if isinstance(node_decorator, Call):
+                node_decorator = node_decorator.func
+            # Else, this decoration is *NOT* encapsulated by a "Call" node.
+
+            # Fully-qualified "."-delimited name of the module defining this
+            # decorator, constructed below by iteratively unwrapping each of the
+            # "Attribute" nodes hierarchically yielding this name and, for each
+            # such node, appending the corresponding substring to this string.
+            # See also the example above for the AST structure.
+            node_decorator_module_name = ''
+
+            # While this decoration is still encapsulated by an "Attribute"
+            # node, this is a qualified attribute decoration of the form
+            # "@{module_or_type_name}.{decorator_name}". In this case...
+            #
+            # Note that the AST grammar hierarchically nests "Attribute" nodes
+            # in the *REVERSE* of the expected nesting. That is, the "attr"
+            # instance variable of the *OUTERMOST* "Attribute" node yields the
+            # *LAST* "."-delimited substring of the fully-qualified name of this
+            # decorator. This reconstruction algorithm thus resembles Reverse
+            # Polish Notation, for those familiar with ancient calculators that
+            # no longer exist. So, nobody.
+            while isinstance(node_decorator, Attribute):
+                # If the currently reconstructed fully-qualified name of the
+                # module defining this decorator is non-empty, this name has
+                # already been prepended by the unqualified name of at least one
+                # submodule encapsulated by a parent "Attribute" node of this
+                # child "Attribute" node. In this case, prepend the
+                # fully-qualified name of the module defining this decorator by
+                # the unqualified name of the submodule encapsulated by this
+                # child "Attribute" node. Look. It's... complicated.
+                if node_decorator_module_name:
+                    node_decorator_module_name = (
+                        f'{node_decorator.attr}.{node_decorator_module_name}')
+                # Else, the currently reconstructed fully-qualified name of the
+                # module defining this decorator is empty. In this case,
+                # initialize this name to the unqualified name of the submodule
+                # encapsulated by this child "Attribute" node.
+                else:
+                    node_decorator_module_name = node_decorator.attr
+
+                # Unwrap this parent "Attribute" node to its child "Attribute"
+                # or "Name" node, thus unwrapping one hierarchical nesting level
+                # of "Attribute" nodes.
+                node_decorator = node_decorator.value
+            # Else, this decoration is *NOT* encapsulated by an "Attribute"
+            # node.
+
+            # If this decorator is accessed relative to an external module
+            # imported into the namespace of the currently visited module...
+            if node_decorator_module_name:
+                # The fully-qualified "."-delimited name of the module defining
+                # this decorator is relative to and only accessible via the
+                # currently visited module. Prepend the former by the
+                # fully-qualified name of the latter to mimic scoping via
+                # "import" statements.
+                node_decorator_module_name = (
+                    f'{module_name}.{node_decorator_module_name}')
+            # Else, this decorator was imported directly into (and thus accessed
+            # relative to) the currently visited module. In this case, the
+            # fully-qualified name of the module defining this decorator is
+            # simply that of the currently visited module itself.
+            else:
+                node_decorator_module_name = module_name
+
+            # If this decoration is encapsulated by a "Name" node, this is an
+            # unqualified attribute decoration of the form "@{decorator_name}".
+            # In this case...
             if isinstance(node_decorator, Name):
+                # Set-like chain map of the unqualified basename of each
+                # decorator-hostile decorator function defined by the
+                # third-party module defining the current decorator if any *OR*
+                # the empty frozen dictionary otherwise.
+                node_decorator_func_decorator_names = (
+                    module_to_func_decorator_names.get(
+                        node_decorator_module_name, FROZENDICT_EMPTY))
+
                 # If the unqualified basename of this decorator is *NOT* that of
-                # a decorator-hostile decorator previously imported into the
-                # currently visited module, this decorator is presumably
-                # compatible with the @beartype decorator. In this case, halt!
-                if node_decorator.id not in func_decorator_names:
+                # a decorator-hostile decorator function defined by this
+                # third-party module, this decorator is presumably compatible
+                # with the @beartype decorator. In this case, halt!
+                if node_decorator.id not in node_decorator_func_decorator_names:
                     break
                 # Else, the unqualified basename of this decorator is that of a
-                # decorator-hostile decorator previously imported into the
-                # currently visited module. In this case, continue searching.
-            # Else, this decoration is *NOT* encapsulated by an "ast.Name" node.
+                # decorator-hostile decorator function defined by this
+                # third-party module. In this case, continue searching.
+            # Else, this decoration is *NOT* encapsulated by a "Name" node.
             #
-            # If...
+            # Note that this should *NEVER* happen. All decorations should be
+            # encapsulated by either "Call", "Name", or "Attribute" nodes.
+            # However, the Python language and hence AST grammar describing that
+            # language is constantly evolving. Since this just happened, it is
+            # likely that a future iteration of the Python language has now
+            # evolved in an unanticipated (yet, ultimately valid) way. To
+            # preserve forward compatibility in @beartype with future Python
+            # versions, intentionally ignore this decorator.
+            #
+            # Sometimes, doing nothing at all is the best thing you can do.
 
-            #FIXME: Finish us up, please. *sigh*
+            # Increment the 0-based index of the next decorator to be visited.
+            node_decorator_index_curr += 1
 
-        # Inject the @beartype decorator the last decorator *BEFORE* (i.e.,
+        # If the 0-based index in this decorator chain that the @beartype
+        # decorator should be injected into is a valid index into this list,
+        # inject the @beartype decorator as the last decorator *BEFORE* (i.e.,
         # below) the last decorator-hostile decorator in the chain of existing
         # decorators decorating this type or callable.
-        node.decorator_list.insert(
-            node_decorator_index, node_beartype_decorator)
+        if node_decorator_index_curr <= node_decorator_index_last:
+            node.decorator_list.insert(
+                node_decorator_index_curr, node_beartype_decorator)
+        # Else, this is *NOT* a valid index into this list. Presumably, this
+        # index is one larger than the last valid index into this list. In this
+        # case, this type or callable is decorated *ONLY* by decorator-hostile
+        # decorators. Since type or callable is decorated by *NO* safe
+        # decorators that the @beartype decorator can be injected before,
+        # @beartype *MUST* instead be appended after the last decorator (which
+        # is also a decorator-hostile decorator) decorating this type or
+        # callable. Look. It's complicated.
+        else:
+            # Sanity-check the expected constraint.
+            assert node_decorator_index_curr == node_decorator_index_last + 1, (
+                f'Type or callable "{module_name}.{node.name}" decorated by '
+                f'decorator-hostile decorators, but '
+                f'@beartype decoration chain insertion index '
+                f'{node_decorator_index_curr} != '
+                f'{node_decorator_index_last + 1}.')
+
+            # Append @beartype *AFTER* this last decorator.
+            node.decorator_list.append(node_beartype_decorator)
