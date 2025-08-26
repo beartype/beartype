@@ -352,9 +352,9 @@ def beartype_func(
     # Else, the caller passed a callable to be unwrapped. Preserve it up!
 
     # Validate all explicitly passed parameters.
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert callable(func), f'{repr(func)} uncallable.'
     assert callable(wrapper), f'{repr(wrapper)} uncallable.'
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
@@ -374,7 +374,8 @@ def beartype_func(
     # should preserve that callable as is rather than wrap that callable with
     # type-checking), silently reduce to the identity decorator.
     #
-    # Note that this conditional implicitly handles the prior conditional! :O
+    # Note that this conditional implicitly handles the prior conditional! Ergo,
+    # this conditional intentionally appears *AFTER* the prior conditional. :O
     if is_func_unbeartypeable(wrapper):  # type: ignore[arg-type]
         # print(f'Ignoring unbeartypeable callable {repr(func)}...')
         return func  # type: ignore[return-value]

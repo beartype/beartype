@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
-    MethodDecoratorBuiltinTypes,
+    # MethodDecoratorBuiltinTypes,
     MethodDecoratorClassOrStaticTypes,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -27,7 +27,7 @@ from beartype._cave._cavefast import (
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.typing.datatyping import (
     Codeobjable,
-    MethodDescriptorBuiltin,
+    # MethodDescriptorBuiltin,
     TypeException,
 )
 # from beartype._util.cache.utilcachecall import callable_cached

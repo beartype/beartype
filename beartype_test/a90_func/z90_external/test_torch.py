@@ -21,7 +21,7 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 @skip_unless_package('torch')
 def test_torch() -> None:
     '''
-    Functional test validating that the :mod:`beartype` package raises *no*
+    Integration test validating that the :mod:`beartype` package raises *no*
     unexpected exceptions when imported by the third-party PyTorch package.
 
     To do so, this test externally imports the :mod:`torch` package against a

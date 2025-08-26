@@ -319,8 +319,6 @@
    https://www.djangoproject.com
 .. _Hypothesis:
    https://hypothesis.readthedocs.io
-.. _JAX:
-   https://jax.readthedocs.io
 .. _NetworkX:
    https://networkx.org
 .. _PyTorch:
@@ -381,6 +379,10 @@
    https://jax.readthedocs.io/en/latest/_autosummary/jax.jit.html#jax.jit
 .. _jax.numpy:
    https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
+.. _jaxtyping:
+   https://github.com/google/jaxtyping
+.. _jaxtyping.jaxtyped:
+   https://docs.kidger.site/jaxtyping/api/runtime-type-checking/#jaxtyping.jaxtyped
 
 .. # ------------------( LINKS ~ py : package : numba        )------------------
 .. _numba:
@@ -907,8 +909,6 @@
    https://mypy.readthedocs.io/en/stable/type_narrowing.html
 
 .. # ------------------( LINKS ~ py : type : tensor          )------------------
-.. _jaxtyping:
-   https://github.com/google/jaxtyping
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
 

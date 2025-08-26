@@ -31,6 +31,16 @@ This private submodule is *not* intended for importation by downstream callers.
 #              # This new submodule is also known to be problematic!
 #              'muh_package.muh_submodule.celery': {'Celery': 'task'},  # <-- so bad, bro
 #          })
+#  Note that one silly edge case exists:
+#  * Absolute imports of attributes (e.g., "import
+#    problem_package.bad_decorator"). These are silly, because they trivially
+#    reduce to absolute imports of the top-level package (e.g., "import
+#    problem_package"). In other words, simply ignore all trailing "."-delimited
+#    components following the top-level package name.
+#* Relative imports (e.g., "from .sibling import bad_decorator"). This should
+#  also be mostly trivial. Each "." prefixing a module name being imported from
+#  simply deletes a trailing "."-delimited component from the fully-qualified
+#  name of the currently visited *MODULE* (not scope).
 #
 #  Aliasing, in other words. Just alias existing entries. \o/
 
