@@ -42,7 +42,7 @@ from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
-from beartype._util.kind.map.utilmapset import update_mapping
+from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from beartype._data.kind.datakindiota import SENTINEL
 from warnings import catch_warnings

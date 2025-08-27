@@ -169,7 +169,7 @@ from beartype._conf.confenum import (
     BeartypeStrategy as BeartypeStrategy,
     BeartypeViolationVerbosity as BeartypeViolationVerbosity,
 )
-from beartype._util.kind.map.utilmapfrozen import (
+from beartype._util.kind.maplike.utilmapfrozen import (
     FrozenDict as FrozenDict,
 )
 

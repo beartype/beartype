@@ -25,7 +25,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.kind.map.utilmapset import update_mapping_keys
+from beartype._util.kind.maplike.utilmapset import update_mapping_keys
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 
 # ....................{ HINTS                              }....................

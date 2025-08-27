@@ -17,17 +17,15 @@ from beartype.typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._data.typing.datatyping import (
-    #FIXME: These overly specific hints should be shifted out into this
-    #submodule and defined below, please. *sigh*
-    ChainMapStrToChainMapStrs,
-    ChainMapStrToStrToChainMapStrs,
-    SetStrs,
-)
+from beartype._data.typing.datatyping import SetStrs
 from beartype._data.claw.dataclawbefore import (
     CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES,
     CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES,
+    ClawBeforelistChainMap,
+    ClawBeforelistFrozenDict,
 )
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from beartype._util.kind.setlike.utilsetchain import ChainSet
 from collections import ChainMap
 
 # ....................{ CLASSES                            }....................
@@ -94,16 +92,16 @@ class BeartypeNodeScopeBeforelist(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         module_names: SetStrs
-        module_to_func_decorator_names: ChainMapStrToChainMapStrs
-        module_to_type_to_method_decorator_names: ChainMapStrToStrToChainMapStrs
+        module_to_func_decorator_names: ClawBeforelistChainMap
+        module_to_type_to_method_decorator_names: ClawBeforelistChainMap
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
         self,
 
         # Mandatory parameters.
-        module_to_func_decorator_names: ChainMapStrToChainMapStrs,
-        module_to_type_to_method_decorator_names: ChainMapStrToStrToChainMapStrs,
+        module_to_func_decorator_names: ClawBeforelistChainMap,
+        module_to_type_to_method_decorator_names: ClawBeforelistChainMap,
 
         # Optional parameters.
         module_names: Optional[SetStrs] = None,
@@ -132,34 +130,37 @@ class BeartypeNodeScopeBeforelist(object):
         assert isinstance(module_to_type_to_method_decorator_names, ChainMap), (
             f'{repr(module_to_type_to_method_decorator_names)} not chain map.')
 
+        #FIXME: *NOPE*. These data structures are now recursive. Guess what kind
+        #of type-checking function we need to validate these data structures
+        #now? That's right: a recursive one. *UGH*!
         # Deeply type-check the contents of these data structures.
-        assert all(
-            (
-                isinstance(module_name, str) and
-                isinstance(func_decorator_name, str)
-            )
-            for module_name, func_decorator_names in (
-                module_to_func_decorator_names.items())
-            for func_decorator_name in func_decorator_names
-        ), (
-            f'{repr(module_to_func_decorator_names)} not '
-            f'"ChainMap[str, ChainMap[str, object]]".'
-        )
-        assert all(
-            (
-                isinstance(module_name, str) and
-                isinstance(type_name, str) and
-                isinstance(method_decorator_name, str)
-            )
-            for module_name, type_to_method_decorator_name in (
-                module_to_type_to_method_decorator_names.items())
-            for type_name, method_decorator_names in (
-                type_to_method_decorator_name.items())
-            for method_decorator_name in method_decorator_names
-        ), (
-            f'{repr(module_to_type_to_method_decorator_names)} not '
-            f'"ChainMap[str, ChainMap[str, ChainMap[str, object]]]".'
-        )
+        # assert all(
+        #     (
+        #         isinstance(module_name, str) and
+        #         isinstance(func_decorator_name, str)
+        #     )
+        #     for module_name, func_decorator_names in (
+        #         module_to_func_decorator_names.items())
+        #     for func_decorator_name in func_decorator_names
+        # ), (
+        #     f'{repr(module_to_func_decorator_names)} not '
+        #     f'"ChainMap[str, ChainMap[str, object]]".'
+        # )
+        # assert all(
+        #     (
+        #         isinstance(module_name, str) and
+        #         isinstance(type_name, str) and
+        #         isinstance(method_decorator_name, str)
+        #     )
+        #     for module_name, type_to_method_decorator_name in (
+        #         module_to_type_to_method_decorator_names.items())
+        #     for type_name, method_decorator_names in (
+        #         type_to_method_decorator_name.items())
+        #     for method_decorator_name in method_decorator_names
+        # ), (
+        #     f'{repr(module_to_type_to_method_decorator_names)} not '
+        #     f'"ChainMap[str, ChainMap[str, ChainMap[str, object]]]".'
+        # )
 
         # ....................{ SETS                       }....................
         # If the caller passed *NO* set of the fully-qualified names all
@@ -254,35 +255,14 @@ def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
 
     # Beforelist decorator function mapping, defined as a mutable chain map
     # coerced from this immutable frozen dictionary singleton.
-    module_to_func_decorator_names = ChainMap({
-        # Coerce this immutable frozen set of decorator function names into a
-        # mutable chain map of these names via the usual dict.fromkeys() trick,
-        # well-known to be both the simplest *AND* most efficient means of
-        # stuffing a set into a dictionary.
-        #
-        # Note that the "None" value is both arbitrary and ignorable.
-        module_name: ChainMap(dict.fromkeys(func_decorator_names, None))
-        for module_name, func_decorator_names in (
-            CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES.items())
-    })
+    module_to_func_decorator_names = _make_beforelist_chainmap_from_frozendict(
+        CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES)
 
     # Beforelist decorator method mapping, defined as a mutable chain map
     # coerced from this immutable frozen dictionary singleton.
-    #
-    # Note that doing so is complicated by the fact that this parent frozen
-    # dictionary maps from strings to nested frozen dictionaries, which *MUST*
-    # also be coerced into nested chain maps.
-    module_to_type_to_method_decorator_names = ChainMap({
-        beforelist_module_name: {
-            # Coerce this immutable frozen set of decorator method names into a
-            # mutable chain map of these names via the above trick.
-            type_name: ChainMap(dict.fromkeys(method_decorator_names, None))
-            for type_name, method_decorator_names in (
-                type_to_method_decorator_names.items())
-        }
-        for beforelist_module_name, type_to_method_decorator_names in (
-            CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES.items())
-    })
+    module_to_type_to_method_decorator_names = (
+        _make_beforelist_chainmap_from_frozendict(
+            CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES))
 
     # Create and return this beforelist global scope.
     return BeartypeNodeScopeBeforelist(
@@ -290,3 +270,59 @@ def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
         module_to_type_to_method_decorator_names=(
             module_to_type_to_method_decorator_names),
     )
+
+# ....................{ PRIVATE ~ factories                }....................
+#FIXME: Unit test us up, please.
+def _make_beforelist_chainmap_from_frozendict(
+    beforelist_frozendict: ClawBeforelistFrozenDict) -> ClawBeforelistChainMap:
+    '''
+    Mutable **beforelist chain map** (i.e., mutable :class:`.ChainMap` mapping)
+    coerced from the passed **beforelist frozen dictionary** (i.e., immutable
+    :class:`.FrozenDict` mapping).
+
+    Parameters
+    ----------
+    beforelist_frozendict : ClawBeforelistFrozenDict
+        Beforelist frozen dictionary to be coerced.
+
+    Returns
+    ----------
+    ClawBeforelistChainMap
+        Beforelist chain map coerced from this frozen dictionary.
+    '''
+
+    assert isinstance(beforelist_frozendict, FrozenDict), (
+        f'{repr(beforelist_frozendict)} not frozen dictionary.')
+
+    # Mutable chain map coerced from the passed immutable frozen dictionary,
+    # initialized with a single new mutable dictionary recursively defined as a
+    # dictionary comprehension over...
+    beforelist_chainmap: ClawBeforelistChainMap = ChainMap({
+        # For key-value pair of this frozen dictionary such that:
+        # * Each key is the unqualified basename of some module.
+        # * Each value is either:
+        #   * A non-recursively nested frozen set of the unqualified basename of
+        #     all relevant attributes declared by that module *OR*...
+        #   * A recursively nested frozen dictionary of the same structure.
+        #
+        # ...map this module basename to...
+        module_basename: (
+            # If this value is a frozen set (as structured above), coerce this
+            # immutable frozen set of attribute basenames into a mutable
+            # set-like chain map of these basenames via the usual
+            # dict.fromkeys() trick. This is well-known to be both the simplest
+            # *AND* most efficient means of stuffing a set into a dictionary.
+            #
+            # Note that the "None" value is both arbitrary and ignorable.
+            ChainSet(dict.fromkeys(attr_basenames, None))
+            if isinstance(attr_basenames, frozenset) else
+            # Else, this value is assumed to be a frozen dictionary (as
+            # structured above). In this case, recursively coerce this immutable
+            # frozen dictionary into a mutable chain map.
+            _make_beforelist_chainmap_from_frozendict(attr_basenames)
+        )
+        for module_basename, attr_basenames in beforelist_frozendict.items()
+    })
+
+    # Return this chain map.
+    return beforelist_chainmap

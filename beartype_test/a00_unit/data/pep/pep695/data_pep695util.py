@@ -304,7 +304,7 @@ def unit_test_reduce_hint_pep484612646_subbed_typeargs_to_hints_for_pep695() -> 
         reduce_hint_pep484612646_subbed_typeargs_to_hints)
     from beartype._check.metadata.hint.hintsane import HintSane
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typeargs_packed
-    from beartype._util.kind.map.utilmapfrozen import FrozenDict
+    from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
     from pytest import raises
 
     # ....................{ LOCALS                         }....................

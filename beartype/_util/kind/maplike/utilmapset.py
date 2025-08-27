@@ -110,7 +110,7 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
 
     See Also
     --------
-    :func:`beartype._util.kind.map.utilmaptest.die_if_mappings_two_items_collide`
+    :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
 
@@ -125,7 +125,7 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
     # Else, both mappings are non-empty.
 
     # Avoid circular import dependencies.
-    from beartype._util.kind.map.utilmaptest import (
+    from beartype._util.kind.maplike.utilmaptest import (
         die_if_mappings_two_items_collide)
 
     # If these mappings contain a key-value collision, raise an exception.
@@ -164,7 +164,7 @@ def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
 
     See Also
     --------
-    :func:`beartype._util.kind.map.utilmaptest.die_if_mappings_two_items_collide`
+    :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
     assert isinstance(mappings, SequenceABC), f'{repr(mappings)} not sequence.'
@@ -292,7 +292,7 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
 
     See Also
     --------
-    :func:`beartype._util.kind.map.utilmaptest.die_if_mappings_two_items_collide`
+    :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
         Further details.
     '''
     assert isinstance(mapping_trg, MutableMapping), (
@@ -306,7 +306,7 @@ def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     # Else, the second mapping is non-empty.
 
     # Avoid circular import dependencies.
-    from beartype._util.kind.map.utilmaptest import (
+    from beartype._util.kind.maplike.utilmaptest import (
         die_if_mappings_two_items_collide)
 
     # If these mappings contain a key-value collision, raise an exception.

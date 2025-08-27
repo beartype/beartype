@@ -1441,7 +1441,7 @@ class BeartypeKindFrozenDictException(BeartypeException):
     **Beartype frozen dictionary exception.**
 
     This exception is raised from various methods of the public
-    :class:`beartype._util.kind.map.utilmapfrozen.FrozenDict` class publicly
+    :class:`beartype._util.kind.maplike.utilmapfrozen.FrozenDict` class publicly
     exposed as the :class:`beartype.FrozenDict` subclass, typically due to
     external attempts to erroneously modify the contents of a frozen dictionary.
     '''
@@ -1822,7 +1822,7 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     **Beartype mapping utility exception.**
 
     This exception is raised by various functions of the private
-    :mod:`beartype._util.kind.map` subpackage. This exception denotes a
+    :mod:`beartype._util.kind.maplike` subpackage. This exception denotes a
     critical internal issue and should thus *never* be raised -- let alone
     allowed to percolate up the call stack to end users.
     '''

@@ -25,7 +25,7 @@ from beartype._data.typing.datatyping import (
     Pep649HintableAnnotations,
     TypeException,
 )
-# from beartype._util.kind.map.utilmapfrozen import FrozenDict
+# from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
 from beartype._util.text.utiltextlabel import label_beartypeable_kind
 

@@ -67,7 +67,7 @@ from beartype._data.typing.datatyping import (
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 

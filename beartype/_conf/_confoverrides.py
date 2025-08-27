@@ -18,7 +18,7 @@ from beartype._data.typing.datatyping import (
     Pep484TowerFloat,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ GETTERS                            }....................
 def sanify_conf_kwargs_is_pep484_tower(conf_kwargs: DictStrToAny) -> None:

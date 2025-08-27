@@ -7,7 +7,7 @@
 Project-wide **dictionary tester** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.kind.map.utilmaptest` submodule.
+:mod:`beartype._util.kind.maplike.utilmaptest` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_die_if_mappings_two_items_collide() -> None:
     '''
     Test the
-    :func:`beartype._util.kind.map.utilmaptest.die_if_mappings_two_items_collide`
+    :func:`beartype._util.kind.maplike.utilmaptest.die_if_mappings_two_items_collide`
     validator.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
-    from beartype._util.kind.map.utilmaptest import (
+    from beartype._util.kind.maplike.utilmaptest import (
         die_if_mappings_two_items_collide)
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA,
@@ -56,12 +56,12 @@ def test_die_if_mappings_two_items_collide() -> None:
 def test_is_mapping_keys_all() -> None:
     '''
     Test the
-    :func:`beartype._util.kind.map.utilmaptest.is_mapping_keys_all` tester.
+    :func:`beartype._util.kind.maplike.utilmaptest.is_mapping_keys_all` tester.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
-    from beartype._util.kind.map.utilmaptest import is_mapping_keys_all
+    from beartype._util.kind.maplike.utilmaptest import is_mapping_keys_all
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         THE_SONG_OF_HIAWATHA,
         THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE,
@@ -85,12 +85,12 @@ def test_is_mapping_keys_all() -> None:
 def test_is_mapping_keys_any() -> None:
     '''
     Test the
-    :func:`beartype._util.kind.map.utilmaptest.is_mapping_keys_any` tester.
+    :func:`beartype._util.kind.maplike.utilmaptest.is_mapping_keys_any` tester.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
-    from beartype._util.kind.map.utilmaptest import is_mapping_keys_any
+    from beartype._util.kind.maplike.utilmaptest import is_mapping_keys_any
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA)
 

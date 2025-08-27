@@ -11,39 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Additionally handle:
-#* Import aliases (e.g., "from problem_package import problem_decor as ohboy").
-#  This should be *SUPER*-trivial.
-#* Absolute imports (e.g., "import problem_package"). This will require a new
-#  visit_Import() method altogether. That said, the implementation should be
-#  trivial. Why? Because this commentary in "beartype.claw.__init__":
-#      Module imports effectively dynamically define a new submodule of the
-#      current source submodule whose name is that submodule. Thus, for example,
-#      an import of a problematic module "import celery" inside another
-#      previously non-problematic submodule "muh_package.muh_submodule"
-#      effectively dynamically defines a new problematic
-#      "muh_package.muh_submodule.celery" submodule. This can be trivially
-#      handled by just adding new entries resembling:
-#          _BEFORELIST_SCHEMA_MODULE_TO_TYPE_TO_DECORATOR_NAME = FrozenDict({
-#              'celery': {'Celery': 'task'},
-#              'typer': {'Typer': 'command'},
-#
-#              # This new submodule is also known to be problematic!
-#              'muh_package.muh_submodule.celery': {'Celery': 'task'},  # <-- so bad, bro
-#          })
-#  Note that one silly edge case exists:
-#  * Absolute imports of attributes (e.g., "import
-#    problem_package.bad_decorator"). These are silly, because they trivially
-#    reduce to absolute imports of the top-level package (e.g., "import
-#    problem_package"). In other words, simply ignore all trailing "."-delimited
-#    components following the top-level package name.
-#* Relative imports (e.g., "from .sibling import bad_decorator"). This should
-#  also be mostly trivial. Each "." prefixing a module name being imported from
-#  simply deletes a trailing "."-delimited component from the fully-qualified
-#  name of the currently visited *MODULE* (not scope).
-#
-#  Aliasing, in other words. Just alias existing entries. \o/
-
 #FIXME: Unit test the newly defined
 #"BeartypeDecorationPosition.LAST_BEFORELIST" position, please.
 #FIXME: Once unit-tested, enable that position by default *FOR FUNCTIONS ONLY.*
@@ -58,8 +25,10 @@ from ast import (
     Attribute,
     Call,
     ClassDef,
+    Import,
     ImportFrom,
     Name,
+    alias,
     expr,
 )
 from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
@@ -72,10 +41,12 @@ from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
 from beartype._data.claw.dataclawmagic import BEARTYPE_DECORATOR_FUNC_NAME
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._data.typing.datatyping import (
+    MappingStrToAny,
     NodeDecoratable,
     NodeVisitResult,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype._util.kind.setlike.utilsetchain import ChainSet
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -103,6 +74,197 @@ class BeartypeNodeTransformerImportMixin(object):
     '''
 
     # ..................{ VISITORS                           }..................
+    #FIXME: Uncomment us up when ready, please. *sigh*
+    # def visit_Import(self, node: Import) -> NodeVisitResult:
+    #     '''
+    #     Track the passed **import node** (i.e., node signifying the importation
+    #     of a module or package) if this node signifies an import of a module or
+    #     package defining one or more decorator-hostile decorators.
+    #
+    #     Parameters
+    #     ----------
+    #     node : Import
+    #         Possibly problematic import node to be tracked.
+    #
+    #     Returns
+    #     -------
+    #     NodeVisitResult
+    #         The passed import node unmodified.
+    #     '''
+    #
+    #     # ..................{ PREAMBLE                       }..................
+    #     # Recursively transform *ALL* child nodes of this parent node.
+    #     self.generic_visit(node)  # type: ignore[attr-defined]
+    #
+    #     # ..................{ LOCALS                         }..................
+    #     # Metadata describing the current lexical scope being recursively
+    #     # visited by this AST transformer.
+    #     scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
+    #
+    #     # ..................{ SEARCH                         }..................
+    #     # For each child "alias" node of this parent "Import" node encapsulating
+    #     # the fully-qualified names of the one or more modules being imported by
+    #     # this import statement...
+    #     for import_module_alias in node.names:
+    #         # If this child node is *NOT* an "alias", silently skip this
+    #         # unrecognized node type and continue to the next child node.
+    #         #
+    #         # Note that this should *NEVER* happen. All child nodes of parent
+    #         # "Import" nodes should be aliases. For forward compatibility with
+    #         # future Python versions, ignore this unrecognized node type. See
+    #         # similar commentary below for further discussion.
+    #         if not isinstance(import_module_alias, alias):
+    #             continue
+    #         # Else, this child node is an "alias".
+    #
+    #         # Fully-qualified name of the external module or package being
+    #         # imported if any *OR* "None".
+    #         #
+    #         # Note that this name should *NEVER* be "None". Nonetheless, mypy
+    #         # claims this name can actually be "None". How, mypy? Even mypy has
+    #         # no idea. To squelch complaints from mypy, we pretend mypy is sane.
+    #         import_module_name = import_module_alias.name
+    #         if not import_module_name: continue  # <-- *SILENCE, MYPY!*
+    #
+    #         # Fully-qualified name of the top-level root package or module
+    #         # transitively containing that package or module (e.g.,
+    #         # "some_package" when "import_module_name" is
+    #         # "some_package.some_module.some_submodule").
+    #         #
+    #         # This root package name is *MUCH* more relevant than the exact
+    #         # submodule name (i.e., "import_module_name") imported by this
+    #         # import statement. Why? Because trivial imports of the form "import
+    #         # {package_name}" are similar to complex imports of the form "import
+    #         # {package_name}.{submodule_name}.{attr_name}". In both cases,
+    #         # Python only imports the top-level root package whose name is
+    #         # "{package_name}" into the current lexical scope. For static
+    #         # analysis purposes, trailing "."-prefixed substrings like
+    #         # ".{submodule_name}.{attr_name}" are almost entirely irrelevant.
+    #         # Consequently, all subsequent logic ignores "import_module_name" in
+    #         # favour of this "import_package_name".
+    #         #
+    #         # Note this has been profiled to be the fastest one-liner parsing
+    #         # the first "."-suffixed substring from a "."-delimited string.
+    #         import_package_name = import_module_name.partition('.')[0]
+    #
+    #         # If this import statement does *NOT* import a third-party module
+    #         # known to define decorator-hostile decorators, this import
+    #         # statement is ignorable with respect to @beartype. In this case,
+    #         # silently skip this ignorable module to a noop by returning this node unmodified.
+    #         if import_package_name not in scope.beforelist.module_names:
+    #             continue node
+    #         # Else, this import statement imports a third-party module known to
+    #         # define decorator-hostile decorators.
+    #
+    #         # Set-like chain map of the unqualified basename of each
+    #         # decorator-hostile decorator function defined by this third-party
+    #         # module if any *OR* "None" otherwise.
+    #         func_decorator_names = (
+    #             scope.beforelist.module_to_func_decorator_names.get(
+    #                 import_module_name))
+    #
+    #         # Nested dictionary mapping from the unqualified basename of each type
+    #         # defined by this third-party module to a set-like chain map of the
+    #         # unqualified basename of each decorator-hostile decorator method
+    #         # defined by that type if any *OR* "None" otherwise.
+    #         type_to_method_decorator_names = (
+    #             scope.beforelist.module_to_type_to_method_decorator_names.get(
+    #                 import_module_name))
+    #
+    #
+    #         # Unqualified basename of this attribute if any *OR* "None".
+    #         #
+    #         # Note that this name should *NEVER* be "None". Yet, mypy claims
+    #         # this name can actually be "None". How, mypy? Even mypy has no
+    #         # idea. To squelch mypy complaints, we pretend mypy is still sane.
+    #         import_attr_name = import_attr_alias.name
+    #         if not import_attr_name: continue  # <-- *SILENCE, MYPY!*
+    #
+    #         #FIXME: Handle "import_attr_alias.asname" too, please. Note that
+    #         #"asname" is "None" if undefined, according to the official
+    #         #"ast" documentation. *sigh*
+    #
+    #         # If...
+    #         if (
+    #             # That module defines one or more decorator-hostile decorator
+    #             # functions *AND*...
+    #             func_decorator_names and
+    #             # The unqualified basename of this attribute is that of a
+    #             # decorator-hostile decorator function in that module...
+    #             import_attr_name in func_decorator_names
+    #         ):
+    #             #FIXME: [SPEED] Inefficient. This permutes both chain maps,
+    #             #when we actually only need to permute the
+    #             #"module_to_func_decorator_names" chain map. This could
+    #             #presumably be optimized by passing a new optional
+    #             #"is_permute_module_to_func_decorator_names", which defaults
+    #             #to false. It's fine for now. Fine, we say! *shrug*
+    #
+    #             # Render this scope's beforelist safe for modification if this
+    #             # beforelist is *NOT* yet safely modifiable.
+    #             scope.permute_beforelist_if_needed()
+    #
+    #             # New nested set-like chain map of the unqualified basename of
+    #             # each decorator-hostile decorator function defined by that
+    #             # module accessible in this scope.
+    #             #
+    #             # Ideally, this set-like data structure would be a "ChainSet"
+    #             # rather than a "ChainMap". Since Python currently lacks a
+    #             # "ChainSet", we abuse the "ChainMap" to construct a
+    #             # "ChainSet"-like data structure such that:
+    #             # * The keys of this chain map are the desired basenames.
+    #             # * The values of this chain map are ignorable.
+    #             #
+    #             # Mapping to a nested chain map allows us to now efficiently
+    #             # permute this nested chain map rather than laboriously
+    #             # searching up the hierarchy of existing scopes for a relevant
+    #             # "module_to_func_decorator_names" entry. To do so safely, we
+    #             # "new child" this nested chain map first to avoid modifying
+    #             # this parent nested chain map.
+    #             func_decorator_names_new = func_decorator_names.new_child()
+    #
+    #             # Add the unqualified basename of this decorator-hostile
+    #             # decorator function to this set-like chain map, mapped to an
+    #             # ignorable value.
+    #             func_decorator_names_new[import_attr_name] = None  # <-- arbitrary value
+    #
+    #             # Map the fully-qualified name of this scope to this nested
+    #             # set-like chain map of the unqualified basenames of all
+    #             # decorator-hostile decorator functions in this scope.
+    #             scope.beforelist.module_to_func_decorator_names[
+    #                 scope.name] = func_decorator_names_new
+    #
+    #             # Add the fully-qualified name of this scope to the set of the
+    #             # fully-qualified names of all scopes known to define
+    #             # decorator-hostile decorators.
+    #             scope.beforelist.module_names.add(scope.name)
+    #         # Else, either that module defines no decorator-hostile decorator
+    #         # functions *OR* the unqualified basename of this attribute is *NOT*
+    #         # that of a decorator-hostile decorator function in that module. In
+    #         # either case, this import is ignorable with respect to decorator
+    #         # functions.
+    #         #
+    #         # If...
+    #         elif (
+    #             # That module defines one or more types defining one or more
+    #             # decorator-hostile decorator methods *AND*...
+    #             type_to_method_decorator_names and
+    #             # The unqualified basename of this attribute is that of such a
+    #             # type...
+    #             import_attr_name in type_to_method_decorator_names
+    #         ):
+    #             #FIXME: Implement us up, please. Urgh!
+    #             pass
+    #         # Else, either that module defines no types defining
+    #         # decorator-hostile decorator methods *OR* the unqualified basename
+    #         # of this attribute is that of such a type. In either case, this
+    #         # import is ignorable with respect to @beartype.
+    #
+    #     # ..................{ RETURN                         }..................
+    #     # Return this node unmodified.
+    #     return node
+
+
     def visit_ImportFrom(self, node: ImportFrom) -> NodeVisitResult:
         '''
         Track the passed **import-from node** (i.e., node signifying the
@@ -128,7 +290,11 @@ class BeartypeNodeTransformerImportMixin(object):
         # Recursively transform *ALL* child nodes of this parent node.
         self.generic_visit(node)  # type: ignore[attr-defined]
 
-        # ..................{ LOCALS                         }..................
+        # ..................{ LOCALS ~ module                }..................
+        # Metadata describing the current lexical scope being recursively
+        # visited by this AST transformer.
+        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
+
         # Fully-qualified name of the external module being imported from if any
         # *OR* "None".
         #
@@ -138,38 +304,113 @@ class BeartypeNodeTransformerImportMixin(object):
         import_module_name = node.module
         if not import_module_name: return node  # <-- *SILENCE, MYPY!*
 
-        # Metadata describing the current lexical scope being recursively
-        # visited by this AST transformer.
-        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
+        # List of each unqualified basename comprising this name, split from
+        # this fully-qualified name on "." delimiters.
+        #
+        # Note that:
+        # * This list is guaranteed to be non-empty. Why? Because Python syntax
+        #   prohibits empty import statements (e.g., "from import ugh\n").
+        # * The "str.split('.')" and "str.rsplit('.')" calls produce the same
+        #   lists under all edge cases. We arbitrarily call the former rather
+        #   than the latter for simplicity.
+        import_module_basenames = import_module_name.split('.')
 
-        # If this import statement does *NOT* import from a third-party module
+        # Fully-qualified name of the top-level root package transitively
+        # containing that module (e.g., "some_package" when "import_module_name"
+        # is "some_package.some_module.some_submodule").
+        import_package_name = import_module_basenames[0]
+
+        # If this import statement does *NOT* import from a third-party package
         # known to define decorator-hostile decorators, this import statement is
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
-        if import_module_name not in scope.beforelist.module_names:
+        if import_package_name not in scope.beforelist.module_names:
             return node
-        # Else, this import statement imports from a third-party module known to
-        # define decorator-hostile decorators.
+        # Else, this import statement imports from a third-party package known
+        # to define decorator-hostile decorators.
 
-        # Set-like chain map of the unqualified basename of each
-        # decorator-hostile decorator function defined by this third-party
-        # module if any *OR* "None" otherwise.
-        func_decorator_names = (
-            scope.beforelist.module_to_func_decorator_names.get(
-                import_module_name))
+        # ..................{ SEARCH ~ module                }..................
+        # Either:
+        # * If that package directly defines one or more decorator-hostile
+        #   decorator functions, a chain set of the unqualified basename of each
+        #   decorator-hostile decorator function defined by that package.
+        # * Else if only a submodule of that package directly defines one or
+        #   more decorator-hostile decorator functions, yet another such
+        #   recursively nested chain map of the same structure.
+        # * Else, "None".
+        module_to_func_decorator_names = (
+            scope.beforelist.module_to_func_decorator_names)
 
-        # Nested dictionary mapping from the unqualified basename of each type
-        # defined by this third-party module to a set-like chain map of the
-        # unqualified basename of each decorator-hostile decorator method
-        # defined by that type if any *OR* "None" otherwise.
-        type_to_method_decorator_names = (
-            scope.beforelist.module_to_type_to_method_decorator_names.get(
-                import_module_name))
+        #FIXME: Unsure whether this is actually useful or not. *shrug*
+        # Chain set of the unqualified basename of each decorator-hostile
+        # decorator function defined by this third-party module if any *OR* the
+        # empty frozen dictionary otherwise.
+        func_decorator_names: MappingStrToAny = FROZENDICT_EMPTY
 
-        # ..................{ SEARCH                         }..................
-        # For each "ast.alias" node encapsulating the one or more attributes
+        #FIXME: Actually use and revise commentary, please. *sigh*
+        # # Nested dictionary mapping from the unqualified basename of each type
+        # # defined by this third-party module to a set-like chain map of the
+        # # unqualified basename of each decorator-hostile decorator method
+        # # defined by that type if any *OR* "None" otherwise.
+        # type_to_method_decorator_names = (
+        #     scope.beforelist.module_to_type_to_method_decorator_names.get(
+        #         import_package_name))
+
+        # For each unqualified basename comprising the fully-qualified name
+        # of the external module being imported from...
+        for import_module_basename in import_module_basenames:
+            # Either a chain set, chain map, or "None" (as detailed above),
+            # produced by unwrapping the parent chain map against this
+            # unqualified basename.
+            module_to_func_decorator_names = (
+                module_to_func_decorator_names.get(import_module_basename))  # type: ignore[assignment]
+
+            # If this basename is *NOT* that of a third-party (sub)module known
+            # to define decorator-hostile decorator functions, this import
+            # statement does *NOT* import from such a (sub)module and is thus
+            # ignorable with respect to @beartype. In this case, silently reduce
+            # to a noop by returning this node unmodified.
+            if not module_to_func_decorator_names:
+                return node
+            # Else, this basename is that of a third-party (sub)module known to
+            # define decorator-hostile decorator functions.
+            #
+            # If this data structure is *NOT* a chain set, then (by process of
+            # elimination) this data structure *MUST* be yet another such
+            # recursively nested chain map of the same structure. In this
+            # case...
+            elif isinstance(module_to_func_decorator_names, ChainSet):
+                # Localize this chain set for subsequent lookup.
+                func_decorator_names = module_to_func_decorator_names
+
+                # Immediately halt iteration.
+                break
+            # Else, this data structure is *NOT* a chain set. By process of
+            # elimination, this data structure *MUST* be yet another such
+            # recursively nested chain map of the same structure. In this
+            # case, attempt to unwrap this chain map against the next
+            # unqualified basename in this list.
+
+        #FIXME: If both "func_decorator_names" and
+        #"type_to_method_decorator_names" are empty, we're done here! We think,
+        #anyway? No idea, actually. This is brain-bending stuff, honestly.
+
+        # ..................{ SEARCH ~ decorator             }..................
+        # For each child "alias" node of this parent "ImportFrom" node
+        # encapsulating the unqualified basenames of the one or more attributes
         # being imported from that module by this import statement...
         for import_attr_alias in node.names:
+            # If this child node is *NOT* an "alias", silently skip this
+            # unrecognized node type and continue to the next child node.
+            #
+            # Note that this should *NEVER* happen. All child nodes of parent
+            # "ImportFrom" nodes should be aliases. For forward compatibility
+            # with future Python versions, ignore this unrecognized node type.
+            # See similar commentary below for further discussion.
+            if not isinstance(import_attr_alias, alias):
+                continue
+            # Else, this child node is an "alias".
+
             # Unqualified basename of this attribute if any *OR* "None".
             #
             # Note that this name should *NEVER* be "None". Yet, mypy claims
@@ -181,6 +422,24 @@ class BeartypeNodeTransformerImportMixin(object):
             #FIXME: Handle "import_attr_alias.asname" too, please. Note that
             #"asname" is "None" if undefined, according to the official
             #"ast" documentation. *sigh*
+            #FIXME: Handle "module_to_func_decorator_names" if non-empty too,
+            #please. Basically, another edge case arises with submodule imports
+            #resembling:
+            #    from langchain_core import runnable
+            #    @runnable.chain
+            #    def problem_func(...): ...
+            #
+            #This is fairly rare. So, start off with an "elif" below like:
+            #    # If...
+            #    elif (
+            #        # That module defines one or more submodules transitively
+            #        # defining one or more decorator-hostile decorator functions
+            #        # *AND*...
+            #        module_to_func_decorator_names and
+            #        # The unqualified basename of this attribute is that of such a
+            #        # submodule...
+            #        import_attr_name in module_to_func_decorator_names
+            #    ):
 
             # If...
             if (
@@ -202,9 +461,9 @@ class BeartypeNodeTransformerImportMixin(object):
                 # beforelist is *NOT* yet safely modifiable.
                 scope.permute_beforelist_if_needed()
 
-                # New nested set-like chain map of the unqualified basename of
-                # each decorator-hostile decorator function defined by that
-                # module accessible in this scope.
+                # New nested chain set of the unqualified basename of each
+                # decorator-hostile decorator function defined by that module
+                # accessible in this scope.
                 #
                 # Ideally, this set-like data structure would be a "ChainSet"
                 # rather than a "ChainMap". Since Python currently lacks a
@@ -219,19 +478,66 @@ class BeartypeNodeTransformerImportMixin(object):
                 # "module_to_func_decorator_names" entry. To do so safely, we
                 # "new child" this nested chain map first to avoid modifying
                 # this parent nested chain map.
-                func_decorator_names_new = func_decorator_names.new_child()
+                func_decorator_names_new = func_decorator_names.new_child()  # type: ignore[attr-defined]
+                assert isinstance(func_decorator_names_new, ChainSet)
 
                 # Add the unqualified basename of this decorator-hostile
                 # decorator function to this set-like chain map, mapped to an
                 # ignorable value.
                 func_decorator_names_new[import_attr_name] = None  # <-- arbitrary value
 
+                #FIXME: No longer quite right. We possibly want to new_child()
+                #this, too -- but only if the above
+                #scope.permute_beforelist_if_needed() call hasn't already done.
+                #so. This is kinda giving us a brain burn, honestly.
+                #
+                #For sanity, we should probably just refactor the
+                #permute_beforelist_if_needed() method to *RECURSIVELY* permute
+                #all child chain maps. Maybe? Alternately:
+                #* Define a new "class ChainMapMutable(ChainMap):" subclass
+                #  trivially adding a new "is_mutable" property.
+                #
+                #Uhh... does that *REALLY* help us? No idea. Again, brain burn.
+                #At least we could then track mutability across individual
+                #nested chain maps and respond accordingly by permuting. Of
+                #course, we then also need to:
+                #* Record the *PARENT* chain map
+                #  "parent_module_to_func_decorator_names" of this
+                #  "module_to_func_decorator_names". Where? In the first "for"
+                #  loop far above, probably.
+                #* Define a new ChainMapMutable.permute_if_needed() method
+                #  resembling:
+                #      def permute_if_needed(self) -> ChainMapMutable:
+                #          if not self.is_mutable:
+                #              self = self.new_child()
+                #              self.is_mutable = True
+                #              return self
+                #* Add logic here resembling:
+                #     module_to_func_decorator_names.permute_if_needed()
+                #
+                #     #FIXME: *lol*. We also need to store the unqualified
+                #     #basename of that submodule to substitute for "???".
+                #     #FIXME: Also, there are two cases here:
+                #     #* If "parent_module_to_func_decorator_names" is
+                #     #  non-"None", then do this.
+                #     #* If "parent_module_to_func_decorator_names" is "None",
+                #     #  then instead directly set:
+                #     #      scope.beforelist.module_to_func_decorator_names = (
+                #     #          module_to_func_decorator_names)
+                #     #FIXME: Also, all of that should happen *ONLY* if
+                #     #"module_to_func_decorator_names.is_mutable".
+                #     parent_module_to_func_decorator_names[???] = (
+                #         module_to_func_decorator_names)
+
                 # Map the fully-qualified name of this scope to this nested
                 # set-like chain map of the unqualified basenames of all
                 # decorator-hostile decorator functions in this scope.
-                scope.beforelist.module_to_func_decorator_names[
-                    scope.name] = func_decorator_names_new
+                module_to_func_decorator_names[scope.name] = (  # pyright: ignore
+                    func_decorator_names_new)
 
+                #FIXME: No longer quite right. Let's just stop doing this for
+                #the moment. Ignore "module_names" here and above for now until
+                #we sort out just what this madness signifies. *sigh*
                 # Add the fully-qualified name of this scope to the set of the
                 # fully-qualified names of all scopes known to define
                 # decorator-hostile decorators.
@@ -242,21 +548,22 @@ class BeartypeNodeTransformerImportMixin(object):
             # either case, this import is ignorable with respect to decorator
             # functions.
             #
-            # If...
-            elif (
-                # That module defines one or more types defining one or more
-                # decorator-hostile decorator methods *AND*...
-                type_to_method_decorator_names and
-                # The unqualified basename of this attribute is that of such a
-                # type...
-                import_attr_name in type_to_method_decorator_names
-            ):
-                #FIXME: Implement us up, please. Urgh!
-                pass
-            # Else, either that module defines no types defining
-            # decorator-hostile decorator methods *OR* the unqualified basename
-            # of this attribute is that of such a type. In either case, this
-            # import is ignorable with respect to @beartype.
+            #FIXME: Implement us up, please. *sigh*
+            # # If...
+            # elif (
+            #     # That module defines one or more types defining one or more
+            #     # decorator-hostile decorator methods *AND*...
+            #     type_to_method_decorator_names and
+            #     # The unqualified basename of this attribute is that of such a
+            #     # type...
+            #     import_attr_name in type_to_method_decorator_names
+            # ):
+            #     #FIXME: Implement us up, please. Urgh!
+            #     pass
+            # # Else, either that module defines no types defining
+            # # decorator-hostile decorator methods *OR* the unqualified basename
+            # # of this attribute is that of such a type. In either case, this
+            # # import is ignorable with respect to @beartype.
 
         # ..................{ RETURN                         }..................
         # Return this node unmodified.

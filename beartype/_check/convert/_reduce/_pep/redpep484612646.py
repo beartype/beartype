@@ -104,7 +104,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_typeargs_unpacked,
 )
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484612646_typearg(

@@ -153,7 +153,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
 )
 from beartype._util.hint.utilhinttest import die_as_hint_unsupported
-from beartype._util.kind.map.utilmapset import update_mapping
+from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from random import getrandbits

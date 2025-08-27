@@ -7,7 +7,7 @@
 Project-wide **dictionary mutator** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.kind.map.utilmapset` submodule.
+:mod:`beartype._util.kind.maplike.utilmapset` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,12 +19,12 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ mergers                    }....................
 def test_merge_mappings_two() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapset.merge_mappings` function
+    Test the :func:`beartype._util.kind.maplike.utilmapset.merge_mappings` function
     passed exactly two mappings.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import merge_mappings
+    from beartype._util.kind.maplike.utilmapset import merge_mappings
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA,
         IN_THE_LODGE_OF_HIAWATHA,
@@ -58,12 +58,12 @@ def test_merge_mappings_two() -> None:
 
 def test_merge_mappings_three() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapset.merge_mappings` function
+    Test the :func:`beartype._util.kind.maplike.utilmapset.merge_mappings` function
     passed exactly three mappings.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import merge_mappings
+    from beartype._util.kind.maplike.utilmapset import merge_mappings
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA,
         FROM_THE_BROW_OF_HIAWATHA,
@@ -96,13 +96,13 @@ def test_merge_mappings_three() -> None:
 # ....................{ TESTS ~ removers                   }....................
 def test_remove_mapping_keys() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapset.remove_mapping_keys`
+    Test the :func:`beartype._util.kind.maplike.utilmapset.remove_mapping_keys`
     function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import remove_mapping_keys
+    from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA,
         FAREWELL_O_HIAWATHA_MINUS_THE_SONG_OF_HIAWATHA,
@@ -133,12 +133,12 @@ def test_remove_mapping_keys() -> None:
 # ....................{ TESTS ~ updaters                   }....................
 def test_update_mapping() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapset.update_mapping` function.
+    Test the :func:`beartype._util.kind.maplike.utilmapset.update_mapping` function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import update_mapping
+    from beartype._util.kind.maplike.utilmapset import update_mapping
     from beartype_test.a00_unit.data.kind.data_kindmap import (
         FAREWELL_O_HIAWATHA,
         IN_THE_LODGE_OF_HIAWATHA,
@@ -172,13 +172,13 @@ def test_update_mapping() -> None:
 
 def test_update_mapping_keys() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapset.update_mapping_keys`
+    Test the :func:`beartype._util.kind.maplike.utilmapset.update_mapping_keys`
     function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.kind.map.utilmapset import update_mapping_keys
+    from beartype._util.kind.maplike.utilmapset import update_mapping_keys
 
     # ....................{ LOCALS                         }....................
     # Arbitrary dictionary, initialized to the empty dictionary.

@@ -338,40 +338,11 @@ DictStrToType = Dict[str, type]
 PEP-compliant type hint matching a dictionary mapping from strings to types.
 '''
 
-# ....................{ DICT ~ str : frozenset             }....................
-DictStrToFrozenSetStrs = Dict[str, FrozenSet[str]]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to frozen
-sets of strings.
-'''
-
-
-DictStrToStrToFrozenSetStrs = Dict[str, DictStrToFrozenSetStrs]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to nested
-dictionaries mapping from strings to frozen sets of strings. So. Many. Strings.
-'''
-
 # ....................{ CHAINMAP ~ str                     }....................
 ChainMapStrToAny = ChainMap[str, Any]
 '''
 PEP-compliant type hint matching a chain map mapping from strings to arbitrary
 objects.
-'''
-
-# ....................{ CHAINMAP ~ str : chainmap          }....................
-ChainMapStrToChainMapStrs = ChainMap[str, ChainMapStrToAny]
-'''
-PEP-compliant type hint matching a chain map mapping from strings to nested
-chain maps of strings.
-'''
-
-
-ChainMapStrToStrToChainMapStrs = ChainMap[str, Dict[str, ChainMapStrToAny]]
-'''
-PEP-compliant type hint matching a chain map mapping from strings to nested
-dictionaries mapping from strings to nested chain maps of strings. So. Many.
-Strings.
 '''
 
 # ....................{ MAPPING                            }....................

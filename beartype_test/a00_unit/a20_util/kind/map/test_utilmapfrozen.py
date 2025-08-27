@@ -7,7 +7,7 @@
 Project-wide **dictionary mutator** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.kind.map.utilmapset` submodule.
+:mod:`beartype._util.kind.maplike.utilmapset` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,14 +19,14 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS                              }....................
 def test_frozendict() -> None:
     '''
-    Test the :func:`beartype._util.kind.map.utilmapfrozen.FrozenDict`
+    Test the :func:`beartype._util.kind.maplike.utilmapfrozen.FrozenDict`
     subclass.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeKindFrozenDictException
-    from beartype._util.kind.map.utilmapfrozen import FrozenDict
+    from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
     from pickle import (
         HIGHEST_PROTOCOL,
         dumps,

@@ -18,16 +18,49 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.typing.datatyping import (
-    DictStrToFrozenSetStrs,
-    DictStrToStrToFrozenSetStrs,
+from beartype.typing import (
+    ChainMap,
+    Dict,
+    FrozenSet,
+    Union,
 )
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+
+# ....................{ HINTS                              }....................
+#FIXME: Actually define these hints as proper type aliases *AFTER* we drop
+#support for Python 3.11, please: e.g.,
+#   type _ClawBeforelist = Dict[str, Union[FrozenSet[str], _ClawBeforelist]]
+
+ClawBeforelistChainMap = ChainMap[
+    str, Union[ChainMap[str, None], 'ClawBeforelistChainMap']]
+'''
+PEP-compliant recursive alias matching a **beforelist chain map** (i.e.,
+mutable chain map mapping from strings to either set-like chain maps of strings
+mapping to the :data:`None` singleton placeholder *or* yet another such
+recursively nested chain map).
+'''
+
+
+ClawBeforelistFrozenDict = Dict[
+    str, Union[FrozenSet[str], 'ClawBeforelistFrozenDict']]
+'''
+PEP-compliant recursive alias matching a **beforelist frozen dictionary** (i.e.,
+immutable frozen dictionary mapping from strings to either frozen sets of
+strings *or* yet another such recursively nested frozen dictionary).
+'''
 
 # ....................{ DICTS                              }....................
-# The @beartype decorator *MUST* appear below these decorator functions:
+#FIXME: *INSUFFICIENT.* Close, but no cigar. Non-trivial end user logic could
+#perform imports resembling:
+#    import langchain
+#
+#    @langchain.runnables.chain
+#    def problem_func(...): ...
+#
+#This currently simplistic data structure fails to account for edge cases like
+#that. Accounting for that would probably require generalizing this to resemble:
 CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
-    DictStrToFrozenSetStrs) = FrozenDict({
+    ClawBeforelistFrozenDict) = FrozenDict({
         # The third-party @mcp.tool decorator method of the FastMCP package.
         # See also: https://github.com/beartype/beartype/issues/540
         'mcp': frozenset(('tool',)),
@@ -35,20 +68,19 @@ CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
         # The third-party @chain decorator method of the
         # "langchain_core.runnables" package.
         # See also: https://github.com/beartype/beartype/issues/541
-        'langchain_core.runnables': frozenset(('chain',)),
+        'langchain_core': FrozenDict({'runnables': frozenset(('chain',))}),
     })
 '''
 **Beforelist decorator function schema** (i.e., frozen dictionary mapping from
-the fully-qualified name of each third-party module to a tuple of the
-unqualified basenames of each decorator function of that module which the
-:func:`beartype.beartype` decorator *must* appear before within the chain of
-decorators for objects decorated by that decorator).
+the fully-qualified name of each third-party package to either a frozen set of
+the unqualified basename of each decorator-hostile function directly defined by
+that package *or* yet another such recursively nested frozen dictionary).
 '''
 
 
 # The @beartype decorator *MUST* appear below these decorator methods:
 CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
-    DictStrToStrToFrozenSetStrs) = FrozenDict({
+    ClawBeforelistFrozenDict) = FrozenDict({
         # The third-party @task decorator method of the "celery.Celery" type.
         # See also: https://github.com/beartype/beartype/issues/500
         'celery': FrozenDict({'Celery': frozenset(('task',))}),

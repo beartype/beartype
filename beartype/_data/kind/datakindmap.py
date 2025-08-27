@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ DICTS                              }....................
 FROZENDICT_EMPTY = FrozenDict()

@@ -58,7 +58,7 @@ from beartype._data.typing.datatypingport import (
     Pep484612646TypeArgUnpackedToHint,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobjmake import permute_object
 
 # ....................{ HINTS                              }....................

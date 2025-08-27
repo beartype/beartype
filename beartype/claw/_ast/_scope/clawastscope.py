@@ -163,8 +163,8 @@ class BeartypeNodeScope(object):
         # still a reference to a parent scope's beforelist and is thus *NOT*
         # unique to this scope. In this case...
         if not self._is_beforelist_mutable:
-            # Replace this shared beforelist with a new beforelist unique to this
-            # scope, which may then be safely modified by callers.
+            # Replace this shared beforelist with a new beforelist unique to
+            # this scope, which may then be safely modified by callers.
             self.beforelist = self.beforelist.permute()
 
             # Record that this beforelist is now safely modifiable.

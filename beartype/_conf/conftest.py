@@ -32,7 +32,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.kind.map.utilmapfrozen import FrozenDict
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.text.utiltextidentifier import is_identifier
 from collections.abc import (
     Collection as CollectionABC,

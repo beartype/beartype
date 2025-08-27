@@ -55,7 +55,7 @@ from beartype._util.func.arg.utilfuncargiter import (
 )
 from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic_keyword
 from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
-from beartype._util.kind.map.utilmapset import update_mapping
+from beartype._util.kind.maplike.utilmapset import update_mapping
 # from beartype._util.text.utiltextmunge import lowercase_str_char_first
 from beartype._util.text.utiltextprefix import (
     prefix_callable_arg_name,

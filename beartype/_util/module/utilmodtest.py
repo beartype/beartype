@@ -259,7 +259,10 @@ def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
     # Fully-qualified name of the top-level root package or module transitively
     # containing that package or module (e.g., "some_package" when
     # "obj_module_name" is "some_package.some_module.some_submodule").
-    obj_package_name, _, _ = obj_module_name.partition('.')
+    #
+    # Note this has been profiled to be the fastest one-liner for parsing the
+    # first "."-suffixed substring from a "."-delimited string.
+    obj_package_name = obj_module_name.partition('.')[0]
     # print(f'Testing package {repr(obj_package_name)} for blacklisting...')
 
     # Return true only if this top-level root package or module is

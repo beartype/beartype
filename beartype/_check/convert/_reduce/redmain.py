@@ -47,7 +47,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
-from beartype._util.kind.map.utilmapset import remove_mapping_keys
+from beartype._util.kind.maplike.utilmapset import remove_mapping_keys
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint(
