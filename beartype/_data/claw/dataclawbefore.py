@@ -22,6 +22,7 @@ from beartype.typing import (
     ChainMap,
     Dict,
     FrozenSet,
+    Optional,
     Union,
 )
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
@@ -31,22 +32,33 @@ from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 #support for Python 3.11, please: e.g.,
 #   type _ClawBeforelist = Dict[str, Union[FrozenSet[str], _ClawBeforelist]]
 
-ClawBeforelistChainMap = ChainMap[
-    str, Union[ChainMap[str, None], 'ClawBeforelistChainMap']]
-'''
-PEP-compliant recursive alias matching a **beforelist chain map** (i.e.,
-mutable chain map mapping from strings to either set-like chain maps of strings
-mapping to the :data:`None` singleton placeholder *or* yet another such
-recursively nested chain map).
-'''
-
-
 ClawBeforelistFrozenDict = Dict[
     str, Union[FrozenSet[str], 'ClawBeforelistFrozenDict']]
 '''
 PEP-compliant recursive alias matching a **beforelist frozen dictionary** (i.e.,
 immutable frozen dictionary mapping from strings to either frozen sets of
 strings *or* yet another such recursively nested frozen dictionary).
+'''
+
+# ....................{ HINTS ~ trie                       }....................
+ClawBeforelistImportedAttrNameTrie = ChainMap[
+    str, Optional['_ClawBeforelistImportedAttrNameTrieDict']]
+'''
+PEP-compliant recursive alias matching a **beforelist imported attribute name
+trie** (i.e., recursive tree structure whose nodes are the unqualified basenames
+of problematic third-party attributes imported into a scope of the currently
+visited module, defined as a chain map mapping from strings to either the
+:data:`None` singleton placeholder signifying a terminal leaf node *or* yet
+another such recursively nested dictionary).
+'''
+
+
+_ClawBeforelistImportedAttrNameTrieDict = Dict[
+    str, Optional['_ClawBeforelistImportedAttrNameTrieDict']]
+'''
+PEP-compliant recursive alias matching a dictionary mapping from strings to
+either the :data:`None` singleton placeholder signifying a terminal leaf node
+*or* yet another such recursively nested dictionary.
 '''
 
 # ....................{ DICTS                              }....................
@@ -59,7 +71,7 @@ strings *or* yet another such recursively nested frozen dictionary).
 #
 #This currently simplistic data structure fails to account for edge cases like
 #that. Accounting for that would probably require generalizing this to resemble:
-CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
+CLAW_BEFORELIST_MODULE_TO_FUNC_DECOR_NAMES: (
     ClawBeforelistFrozenDict) = FrozenDict({
         # The third-party @mcp.tool decorator method of the FastMCP package.
         # See also: https://github.com/beartype/beartype/issues/540
@@ -71,15 +83,17 @@ CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES: (
         'langchain_core': FrozenDict({'runnables': frozenset(('chain',))}),
     })
 '''
-**Beforelist decorator function schema** (i.e., frozen dictionary mapping from
-the fully-qualified name of each third-party package to either a frozen set of
-the unqualified basename of each decorator-hostile function directly defined by
-that package *or* yet another such recursively nested frozen dictionary).
+**Decorator function beforelist** (i.e., frozen dictionary mapping from the
+unqualified basename of each third-party (sub)package and (sub)module
+transitively defining one or more decorator-hostile decorator functions to
+either a frozen set of the unqualified basenames of those functions *or* yet
+another such recursively nested frozen dictionary).
 '''
 
 
+#FIXME: Revise docstring, please. *shrug*
 # The @beartype decorator *MUST* appear below these decorator methods:
-CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
+CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECOR_NAMES: (
     ClawBeforelistFrozenDict) = FrozenDict({
         # The third-party @task decorator method of the "celery.Celery" type.
         # See also: https://github.com/beartype/beartype/issues/500
@@ -90,7 +104,7 @@ CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES: (
         'typer': FrozenDict({'Typer': frozenset(('command',))}),
     })
 '''
-**Beforelist decorator method schema** (i.e., frozen dictionary mapping from the
+**Decorator method beforelist** (i.e., frozen dictionary mapping from the
 fully-qualified name of each third-party module to the unqualified basename of
 each type in that module to a tuple of the unqualified basenames of each
 decorator method of that type which the :func:`beartype.beartype` decorator

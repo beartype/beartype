@@ -13,26 +13,32 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeConfParamException
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
 )
-from beartype._data.typing.datatyping import SetStrs
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.claw.dataclawbefore import (
-    CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES,
-    CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES,
-    ClawBeforelistChainMap,
+    CLAW_BEFORELIST_MODULE_TO_FUNC_DECOR_NAMES,
+    CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECOR_NAMES,
+    ClawBeforelistImportedAttrNameTrie,
     ClawBeforelistFrozenDict,
 )
+from beartype._data.typing.datatyping import (
+    FrozenSetStrs,
+    TypeException,
+)
+from beartype._data.typing.datatypingport import TypeIs
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
-from beartype._util.kind.setlike.utilsetchain import ChainSet
 from collections import ChainMap
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
+#FIXME: Docstring up "module_to_type_to_method_decor_names", please. *sigh*
 class BeartypeNodeScopeBeforelist(object):
     '''
-    Beartype **abstract syntax tree (AST) scope beforelist** (i.e., low-level
+    Beartype **abstract syntax tree (AST) scoped beforelist** (i.e., low-level
     dataclass aggregating all metadata required to manage the beforelist
     automating decorator positioning for lexical scopes recursively visited by
     AST transformers).
@@ -43,35 +49,61 @@ class BeartypeNodeScopeBeforelist(object):
         Set of the fully-qualified names all **decorator-hostile modules**
         (i.e., modules importing one or more decorator-hostile decorator
         function and/or types declaring one or more decorator-hostile methods).
-    module_to_func_decorator_names : ChainMapStrToChainMapStrs
-        **Beforelist decorator function chain map** (i.e., sequence of
-        dictionaries mapping from the fully-qualified name of each third-party
-        module to a set-like object implemented for simplicity as a nested chain
-        map of the unqualified basename of each decorator-hostile decorator
-        function of that module which the :func:`beartype.beartype` decorator
-        *must* appear after within the chain of decorators for objects decorated
-        by that decorator-hostile decorator).
-
         This instance variable is intentionally defined as a chain map rather
-        than simple dictionary to transparently support both:
+    imported_attr_name_trie : Optional[ClawBeforelistImportedAttrNameTrie]
+        **Imported attribute name trie** (i.e., recursive tree structure whose
+        nodes are the unqualified basenames of third-party attributes imported
+        into a scope of the currently visited module such that these attributes
+        are either themselves decorator-hostile decorators *or* submodules
+        transitively defining decorator-hostile decorators).
+
+        This tree structure is initially :data:`None`, in which case external
+        callers are expected to explicitly initialize this attribute to the
+        empty dictionary in a just-in-time (JIT) manner as needed.
+
+        This tree structure is internally produced as output by the higher-level
+        :class:`beartype.claw._ast._kind.clawastimport.BeartypeNodeTransformerImportMixin`
+        transformer, serving as the glue between:
+
+        * That transformer's visitor methods, which initially parse import
+          statements importing decorator-hostile decorators into a scope of the
+          currently visited module.
+        * That transformer's decorator methods, which subsequently produce AST
+          nodes injecting the :func:`beartype.beartype` decorator into chains of
+          possibly decorator-hostile decorators decorating types and callables.
+
+        This tree structure is implemented as a chain map mapping from strings
+        to either the :data:`None` singleton placeholder signifying a leaf node
+        terminating this recursion *or* yet another such recursively nested
+        dictionary. This tree structure is intentionally implemented as a chain
+        map of one or more dictionaries rather than as merely one dictionary to
+        transparently support both:
 
         * Global lexical scopes, which do *not* require a chain map.
         * Local lexical scopes, which require a chain map chaining imports
           across all nested local and global scopes (in that order from most to
           least nested).
-    module_to_type_to_method_decorator_names : ChainMapStrToStrToChainMapStrs
-        **Beforelist decorator method chain map** (i.e., sequence of dictionaries
-        mapping from the fully-qualified name of each third-party module to the
-        unqualified basename of each type in that module to a set-like object
-        implemented for simplicity as a nested chain map of the unqualified
-        basename of each decorator-hostile decorator method of that type which
-        the :func:`beartype.beartype` decorator *must* appear after within the
-        chain of decorators for objects decorated by that decorator-hostile
-        decorator).
+    module_to_func_decor_names : ClawBeforelistFrozenDict
+        **Decorator function beforelist** (i.e., recursive tree structure whose
+        nodes are the unqualified basenames of decorator-hostile decorator
+        functions and the third-party (sub)packages and (sub)modules
+        transitively defining those functions).
 
-        This instance variable is intentionally defined as a chain map rather
-        than simple dictionary for the same reason as the
-        :attr:`.module_to_func_decorator_names` instance variable.
+        This tree structure is internally consumed as input by the higher-level
+        :class:`beartype.claw._ast._kind.clawastimport.BeartypeNodeTransformerImportMixin`
+        transformer. This immutable tree structure is produced by dynamically
+        merging the contents of the immutable
+        :data:`.CLAW_BEFORELIST_MODULE_TO_FUNC_DECOR_NAMES` singleton with those
+        of the immutable
+        :attr:`beartype.BeartypeConf.claw_beforelist_module_to_func_decor_names`
+        configuration option.
+
+        This tree structure is implemented as a frozen dictionary mapping from
+        the unqualified basename of each third-party (sub)package and
+        (sub)module transitively defining one or more decorator-hostile
+        decorator functions to either a frozen set of the unqualified basenames
+        of those functions *or* yet another such recursively nested frozen
+        dictionary.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -83,121 +115,125 @@ class BeartypeNodeScopeBeforelist(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
+        'imported_attr_name_trie',
         'module_names',
-        'module_to_func_decorator_names',
-        'module_to_type_to_method_decorator_names',
+        'module_to_func_decor_names',
+        'module_to_type_to_method_decor_names',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        module_names: SetStrs
-        module_to_func_decorator_names: ClawBeforelistChainMap
-        module_to_type_to_method_decorator_names: ClawBeforelistChainMap
+        imported_attr_name_trie: Optional[ClawBeforelistImportedAttrNameTrie]
+        module_names: FrozenSetStrs
+        module_to_func_decor_names: ClawBeforelistFrozenDict
+        module_to_type_to_method_decor_names: ClawBeforelistFrozenDict
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
         self,
 
         # Mandatory parameters.
-        module_to_func_decorator_names: ClawBeforelistChainMap,
-        module_to_type_to_method_decorator_names: ClawBeforelistChainMap,
+        module_to_func_decor_names: ClawBeforelistFrozenDict,
+        module_to_type_to_method_decor_names: ClawBeforelistFrozenDict,
 
         # Optional parameters.
-        module_names: Optional[SetStrs] = None,
+        imported_attr_name_trie: (
+            Optional[ClawBeforelistImportedAttrNameTrie]) = None,
+        is_validate: bool = True,
+        module_names: Optional[FrozenSetStrs] = None,
     ) -> None:
         '''
-        Initialize this scope beforelist.
+        Initialize this scoped beforelist.
 
         Parameters
         ----------
-        module_to_func_decorator_names : ChainMapStrToChainMapStrs
-            **Beforelist decorator function chain map.** See the class docstring.
-        module_to_type_to_method_decorator_names : ChainMapStrToStrToChainMapStrs
-            **Beforelist decorator method chain map.** See the class docstring.
-        module_names : Optional[set[str]], default: None
-            Set of the fully-qualified names all decorator-hostile modules.
-            See the class docstring.
+        module_to_func_decor_names : ClawBeforelistFrozenDict
+            **Decorator function beforelist.** See the class docstring.
+        module_to_type_to_method_decor_names : ClawBeforelistFrozenDict
+            **Decorator method beforelist.** See the class docstring.
+        imported_attr_name_trie : Optional[ClawBeforelistImportedAttrNameTrie], default: None
+            **Imported attribute name trie.** See the class docstring. Defaults
+            to :data:`None`, in which case this trie is explicitly initialized
+            to the empty dictionary in a just-in-time (JIT) manner as needed.
+        is_validate : bool, default: False
+            Either:
 
-            Defaults to :data:`None`, in which case this set is automatically
-            constructed by inspection from the passed chain maps.
+            * :data:`False`, in which case this method avoids recursively
+              re-validating the contents of all passed data structures for
+              efficiency. This should only be passed when this scoped beforelist
+              is being constructed by a call to the :meth:`.permute` method.
+            * :data:`True`, in which case this method recursively validates the
+              contents of these data structures for safety.
+
+            Defaults to :data:`True`.
+        module_names : Optional[FrozenSetStrs], default: None
+            **Decorator-hostile module names.** See the class docstring.
+            Defaults to :data:`None`, in which case this frozen set is
+            implicitly constructed as the union of all keys of the passed
+            decorator function and method beforelists.
         '''
 
-        # ....................{ CHAIN MAPS                 }....................
-        # Shallowly type-check these data structures to be chain maps.
-        assert isinstance(module_to_func_decorator_names, ChainMap), (
-            f'{repr(module_to_func_decorator_names)} not chain map.')
-        assert isinstance(module_to_type_to_method_decorator_names, ChainMap), (
-            f'{repr(module_to_type_to_method_decorator_names)} not chain map.')
-
-        #FIXME: *NOPE*. These data structures are now recursive. Guess what kind
-        #of type-checking function we need to validate these data structures
-        #now? That's right: a recursive one. *UGH*!
-        # Deeply type-check the contents of these data structures.
-        # assert all(
-        #     (
-        #         isinstance(module_name, str) and
-        #         isinstance(func_decorator_name, str)
-        #     )
-        #     for module_name, func_decorator_names in (
-        #         module_to_func_decorator_names.items())
-        #     for func_decorator_name in func_decorator_names
-        # ), (
-        #     f'{repr(module_to_func_decorator_names)} not '
-        #     f'"ChainMap[str, ChainMap[str, object]]".'
-        # )
-        # assert all(
-        #     (
-        #         isinstance(module_name, str) and
-        #         isinstance(type_name, str) and
-        #         isinstance(method_decorator_name, str)
-        #     )
-        #     for module_name, type_to_method_decorator_name in (
-        #         module_to_type_to_method_decorator_names.items())
-        #     for type_name, method_decorator_names in (
-        #         type_to_method_decorator_name.items())
-        #     for method_decorator_name in method_decorator_names
-        # ), (
-        #     f'{repr(module_to_type_to_method_decorator_names)} not '
-        #     f'"ChainMap[str, ChainMap[str, ChainMap[str, object]]]".'
-        # )
-
-        # ....................{ SETS                       }....................
-        # If the caller passed *NO* set of the fully-qualified names all
-        # decorator-hostile modules, initialize this set by inspecting these
-        # module names from these chain maps.
+        # ....................{ DEFAULTS                   }....................
+        # If the caller passed *NO* decorator-hostile module names, initialize
+        # this frozen set as the union of all keys of these decorator function
+        # and method beforelists.
         if module_names is None:
-            module_names = set(
-                module_to_func_decorator_names.keys() |
-                module_to_type_to_method_decorator_names.keys()
+            module_names = frozenset(
+                module_to_func_decor_names.keys() |
+                module_to_type_to_method_decor_names.keys()
             )
-        # Else, the caller passed a set of the fully-qualified names all
-        # decorator-hostile modules. In either case, this set is now defined.
+        # Else, the caller passed decorator-hostile module names. In either
+        # case, these names are now defined.
 
-        # Shallowly type-check these data structures to be sets.
-        assert isinstance(module_names, set), f'{repr(module_names)} not set.'
+        # ....................{ VALIDATE                   }....................
+        # Shallowly type-check these data structures.
+        assert isinstance(is_validate, bool), (
+            f'{repr(is_validate)} not boolean.')
+        assert isinstance(imported_attr_name_trie, NoneTypeOr[ChainMap]), (
+            f'{repr(imported_attr_name_trie)} neither chain map nor "None".')
+        assert isinstance(module_names, frozenset), (
+            f'{repr(module_names)} not frozen set.')
+        assert isinstance(module_to_func_decor_names, FrozenDict), (
+            f'{repr(module_names)} not frozen dictionary.')
 
-        # Deeply type-check the contents of these data structures.
-        assert all(
-            isinstance(module_name, str) for module_name in module_names), (
-            f'{repr(module_names)} not set of strings.')
+        #FIXME: Additionally recursively validate the contents of:
+        #* "imported_attr_name_trie".
+        #* "module_to_type_to_method_decor_names".
+        #
+        #We can't be bothered at the moment. One catastrophe at a time! *shrug*
 
-        # ....................{ VARIABLES                  }....................
+        # If recursively validating the contents of these data structures...
+        if is_validate:
+            # If this parameter is *NOT* a valid decorator function beforelist,
+            # raise an exception.
+            die_unless_module_to_func_decor_names(module_to_func_decor_names)
+            # Else, this parameter is a valid decorator function beforelist.
+
+            # Deeply type-check the contents of these data structures.
+            assert all(
+                isinstance(module_name, str) for module_name in module_names), (
+                f'{repr(module_names)} not frozen set of strings.')
+        # Else, the contents of these data structures are assumed to be valid.
+
+        # ....................{ CLASSIFY                   }....................
         # Classify all passed parameters.
+        self.imported_attr_name_trie = imported_attr_name_trie
         self.module_names = module_names
-        self.module_to_func_decorator_names = module_to_func_decorator_names
-        self.module_to_type_to_method_decorator_names = (
-            module_to_type_to_method_decorator_names)
+        self.module_to_func_decor_names = module_to_func_decor_names
+        self.module_to_type_to_method_decor_names = (
+            module_to_type_to_method_decor_names)
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
+            f'    imported_attr_name_trie={repr(self.imported_attr_name_trie)},\n',
             f'    module_names={repr(self.module_names)},\n',
-            f'    module_to_func_decorator_names={repr(self.module_to_func_decorator_names)},\n',
-            f'    module_to_type_to_method_decorator_names='
-            f'{repr(self.module_to_type_to_method_decorator_names)},\n',
+            f'    module_to_func_decor_names={repr(self.module_to_func_decor_names)},\n',
+            f'    module_to_type_to_method_decor_names='
+            f'{repr(self.module_to_type_to_method_decor_names)},\n',
             f')',
         ))
 
@@ -211,11 +247,11 @@ class BeartypeNodeScopeBeforelist(object):
 
         Specifically, this shallow copy permutes this scope as follows:
 
-        * The :attr:`.module_to_func_decorator_names` instance variable is
+        * The :attr:`.module_to_func_decor_names` instance variable is
           shallowly copied by calling its :meth:`.ChainMap.new_child` method,
           whose :attr:`.ChainMap.maps` list is then prefixed by a new empty
           dictionary enabling callers to track local imports safely.
-        * The :attr:`.module_to_type_to_method_decorator_names` instance variable
+        * The :attr:`.module_to_type_to_method_decor_names` instance variable
           is shallowly copied in the same manner.
 
         Returns
@@ -224,19 +260,144 @@ class BeartypeNodeScopeBeforelist(object):
             Shallow copy of this scope beforelist.
         '''
 
-        # Shallow copies of these chain maps of this parent scope, enabling the
-        # caller to track imports safely across a new local scope.
-        module_to_func_decorator_names_new = (
-            self.module_to_func_decorator_names.new_child())
-        module_to_type_to_method_decorator_names_new = (
-            self.module_to_type_to_method_decorator_names.new_child())
-
-        # Create and return a shallow copy of this dataclass.
-        return BeartypeNodeScopeBeforelist(
-            module_to_func_decorator_names=module_to_func_decorator_names_new,
-            module_to_type_to_method_decorator_names=(
-                module_to_type_to_method_decorator_names_new),
+        # Imported attribute name trie unique to this new local scope,
+        # initialized to either...
+        imported_attr_name_trie = (
+            # If *NO* transitive parent scope of this scope imported a
+            # decorator-hostile decorator, this scope is the first scope in this
+            # hierarchy of scopes to require an imported attribute name trie. In
+            # this case, instantiate this trie as an empty chain map.
+            ChainMap()
+            if self.imported_attr_name_trie is None else
+            # Else, some transitive parent scope of this scope already imported
+            # a decorator-hostile decorator and thus required this trie. In this
+            # case, enable callers to track imports safely across this new scope
+            # by shallowly copying this trie unique to this scope.
+            self.imported_attr_name_trie.new_child()
         )
+
+        # Create and return a shallow copy of this parent beforelist.
+        return BeartypeNodeScopeBeforelist(
+            imported_attr_name_trie=imported_attr_name_trie,
+
+            # Share all remaining data structures of this parent beforelist
+            # with this child beforelist.
+            module_names=self.module_names,
+            module_to_func_decor_names=self.module_to_func_decor_names,
+            module_to_type_to_method_decor_names=(
+                self.module_to_type_to_method_decor_names),
+
+            # Avoid uselessly recursively re-validating the contents of these
+            # data structures for efficiency.
+            is_validate=False,
+        )
+
+# ....................{ RAISERS                            }....................
+def die_unless_module_to_func_decor_names(
+    # Mandatory parameters.
+    module_to_func_decor_names: ClawBeforelistFrozenDict,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeConfParamException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed data structure is a valid **decorator
+    function beforelist** (i.e., recursive tree structure whose nodes are the
+    unqualified basenames of decorator-hostile decorator functions and the
+    third-party (sub)packages and (sub)modules transitively defining those
+    functions).
+
+    Parameters
+    ----------
+    module_to_func_decor_names : ClawBeforelistFrozenDict
+        Decorator function beforelist to be validated.
+    exception_cls : type[Exception], default: BeartypeConfParamException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`.BeartypeConfParamException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If this data structure is *not* a valid decorator function beforelist.
+    '''
+    assert isinstance(exception_cls, type), (
+        f'{repr(exception_cls)} not exception type.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
+
+    # If this data structure is *not* a frozen dictionary, raise an exception.
+    if not isinstance(module_to_func_decor_names, FrozenDict):
+        raise exception_cls(
+            f'{exception_prefix}{repr(module_to_func_decor_names)} not '
+            f'frozen dictionary.'
+        )
+    # Else, this data structure is a frozen dictionary.
+
+    # If this data structure is *not* a valid decorator function beforelist,
+    # raise an exception.
+    if not is_module_to_func_decor_names(module_to_func_decor_names):
+        raise exception_cls(
+            f'{exception_prefix}{repr(module_to_func_decor_names)} not '
+            f'decorator function beforelist (i.e., '
+            f'recursive tree structure satisfying the recursive type hint '
+            f'ClawBeforelistFrozenDict = FrozenDict[str, Union[FrozenSet[str], '
+            f'"ClawBeforelistFrozenDict"]]).'
+        )
+    # Else, this data structure is a valid decorator function beforelist.
+
+# ....................{ TESTERS                            }....................
+def is_module_to_func_decor_names(
+    module_to_func_decor_names: object) -> TypeIs[ClawBeforelistFrozenDict]:
+    '''
+    :data:`True` only if the passed data structure is a valid **decorator
+    function beforelist** (i.e., recursive tree structure whose nodes are the
+    unqualified basenames of decorator-hostile decorator functions and the
+    third-party (sub)packages and (sub)modules transitively defining those
+    functions).
+
+    Parameters
+    ----------
+    module_to_func_decor_names : ClawBeforelistFrozenDict
+        Decorator function beforelist to be inspected.
+
+    Raises
+    ------
+    bool
+        :data:`True` only if this is a valid decorator function beforelist.
+    '''
+
+    # Return true only if...
+    return (
+        # The passed object is a frozen dictionary *AND*...
+        isinstance(module_to_func_decor_names, FrozenDict) and
+        # For each key-value pair of this frozen dictionary...
+        all(
+            (
+                # This key is a string *AND*...
+                isinstance(module_name, str) and
+                # This value is either...
+                (
+                    # A recursively nested frozen dictionary satisfying the same
+                    # data structure *OR*...
+                    is_module_to_func_decor_names(func_decor_names) or
+                    # A non-recursively nested frozen set of strings.
+                    (
+                        isinstance(func_decor_names, frozenset) and
+                        all(
+                            isinstance(func_decor_name, str)
+                            for func_decor_name in func_decor_names
+                        )
+                    )
+                )
+            )
+            for module_name, func_decor_names in (
+                module_to_func_decor_names.items())
+        )
+    )
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
@@ -250,79 +411,13 @@ def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
     Returns
     -------
     BeartypeNodeScopeBeforelist
-        AST global scope beforelist of the currently visited module.
+        Global scope beforelist of the currently visited module.
     '''
 
-    # Beforelist decorator function mapping, defined as a mutable chain map
-    # coerced from this immutable frozen dictionary singleton.
-    module_to_func_decorator_names = _make_beforelist_chainmap_from_frozendict(
-        CLAW_BEFORELIST_MODULE_TO_FUNC_DECORATOR_NAMES)
-
-    # Beforelist decorator method mapping, defined as a mutable chain map
-    # coerced from this immutable frozen dictionary singleton.
-    module_to_type_to_method_decorator_names = (
-        _make_beforelist_chainmap_from_frozendict(
-            CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECORATOR_NAMES))
-
-    # Create and return this beforelist global scope.
+    # Create and return this global scope beforelist.
     return BeartypeNodeScopeBeforelist(
-        module_to_func_decorator_names=module_to_func_decorator_names,
-        module_to_type_to_method_decorator_names=(
-            module_to_type_to_method_decorator_names),
+        module_to_func_decor_names=(
+            CLAW_BEFORELIST_MODULE_TO_FUNC_DECOR_NAMES),
+        module_to_type_to_method_decor_names=(
+            CLAW_BEFORELIST_MODULE_TO_TYPE_TO_METHOD_DECOR_NAMES),
     )
-
-# ....................{ PRIVATE ~ factories                }....................
-#FIXME: Unit test us up, please.
-def _make_beforelist_chainmap_from_frozendict(
-    beforelist_frozendict: ClawBeforelistFrozenDict) -> ClawBeforelistChainMap:
-    '''
-    Mutable **beforelist chain map** (i.e., mutable :class:`.ChainMap` mapping)
-    coerced from the passed **beforelist frozen dictionary** (i.e., immutable
-    :class:`.FrozenDict` mapping).
-
-    Parameters
-    ----------
-    beforelist_frozendict : ClawBeforelistFrozenDict
-        Beforelist frozen dictionary to be coerced.
-
-    Returns
-    ----------
-    ClawBeforelistChainMap
-        Beforelist chain map coerced from this frozen dictionary.
-    '''
-
-    assert isinstance(beforelist_frozendict, FrozenDict), (
-        f'{repr(beforelist_frozendict)} not frozen dictionary.')
-
-    # Mutable chain map coerced from the passed immutable frozen dictionary,
-    # initialized with a single new mutable dictionary recursively defined as a
-    # dictionary comprehension over...
-    beforelist_chainmap: ClawBeforelistChainMap = ChainMap({
-        # For key-value pair of this frozen dictionary such that:
-        # * Each key is the unqualified basename of some module.
-        # * Each value is either:
-        #   * A non-recursively nested frozen set of the unqualified basename of
-        #     all relevant attributes declared by that module *OR*...
-        #   * A recursively nested frozen dictionary of the same structure.
-        #
-        # ...map this module basename to...
-        module_basename: (
-            # If this value is a frozen set (as structured above), coerce this
-            # immutable frozen set of attribute basenames into a mutable
-            # set-like chain map of these basenames via the usual
-            # dict.fromkeys() trick. This is well-known to be both the simplest
-            # *AND* most efficient means of stuffing a set into a dictionary.
-            #
-            # Note that the "None" value is both arbitrary and ignorable.
-            ChainSet(dict.fromkeys(attr_basenames, None))
-            if isinstance(attr_basenames, frozenset) else
-            # Else, this value is assumed to be a frozen dictionary (as
-            # structured above). In this case, recursively coerce this immutable
-            # frozen dictionary into a mutable chain map.
-            _make_beforelist_chainmap_from_frozendict(attr_basenames)
-        )
-        for module_basename, attr_basenames in beforelist_frozendict.items()
-    })
-
-    # Return this chain map.
-    return beforelist_chainmap

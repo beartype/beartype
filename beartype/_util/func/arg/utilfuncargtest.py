@@ -29,7 +29,7 @@ from beartype._data.typing.datatyping import (
     TypeException,
 )
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_func_args_len_flexible_equal(
     # Mandatory parameters.
     func: Codeobjable,
@@ -51,7 +51,7 @@ def die_unless_func_args_len_flexible_equal(
         Pure-Python callable, frame, or code object to be inspected.
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
-    is_unwrap: bool, optional
+    is_unwrap: bool, default: True
         :data:`True` only if this validator implicitly calls the
         :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function to
         unwrap this possibly higher-level wrapper into its possibly lowest-level
@@ -67,12 +67,12 @@ def die_unless_func_args_len_flexible_equal(
         flexible parameter, this validator raises an exception when passed such
         a wrapper with this boolean set to :data:`False`. Only set this boolean
         to :data:`False` if you pretend to know what you're doing.
-    exception_cls : type, optional
-        Type of exception to be raised. Defaults to
-        :class:`._BeartypeUtilCallableException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing this exception message. Defaults to the
-        empty string.
+    exception_cls : type[Exception], default: _BeartypeUtilCallableException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixing raised exception messages. Defaults
+        to the empty string.
 
     Raises
     ------
@@ -98,7 +98,7 @@ def die_unless_func_args_len_flexible_equal(
     # parameters, raise an exception.
     if func_args_len_flexible_actual != func_args_len_flexible:
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not class.')
+            f'{repr(exception_cls)} not exception type.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 

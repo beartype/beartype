@@ -1210,11 +1210,25 @@ class BeartypeClawException(BeartypeException):
 # ....................{ API ~ claw : ast                   }....................
 class BeartypeClawAstException(BeartypeClawException):
     '''
-    Abstract base class of all **beartype import hook abstract syntax tree (ast)
+    Abstract base class of all **beartype import hook abstract syntax tree (AST)
     exceptions.**
 
-    instances of subclasses of this exception from various submodules of the
+    Instances of subclasses of this exception from various submodules of the
     private :func:`beartype.claw._ast` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeClawAstImportException(BeartypeClawAstException):
+    '''
+    **Beartype import hook abstract syntax tree (AST) import exceptions.**
+
+    This exception is raised at **AST transformation time** (i.e., the early
+    time encompassing the automatic injection of runtime type-checking into an
+    imported third-party module registered by a beartype import hook published
+    by the :mod:`beartype.claw` subpackage in a downstream third-party codebase)
+    on failing to parse an ``import`` statement in user-defined code.
     '''
 
     pass
