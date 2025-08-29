@@ -345,6 +345,12 @@ PEP-compliant type hint matching a chain map mapping from strings to arbitrary
 objects.
 '''
 
+# ....................{ LIST                               }....................
+ListStrs = List[str]
+'''
+PEP-compliant type hint matching a list of strings.
+'''
+
 # ....................{ MAPPING                            }....................
 MappingStrToAny = Mapping[str, object]
 '''

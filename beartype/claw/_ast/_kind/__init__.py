@@ -5,8 +5,6 @@
 
 # ....................{ TODO                               }....................
 #FIXME: Additionally handle:
-#* Import aliases (e.g., "from problem_package import problem_decor as ohboy").
-#  This should be *SUPER*-trivial.
 #* Absolute imports (e.g., "import problem_package"). This will require a new
 #  visit_Import() method altogether. That said, the implementation should be
 #  trivial. Why? Because this commentary in "beartype.claw.__init__":

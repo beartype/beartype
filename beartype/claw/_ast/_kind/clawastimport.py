@@ -44,12 +44,19 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confenum import BeartypeDecorationPosition
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
-from beartype._data.claw.dataclawbefore import ClawBeforelistFrozenDict
+from beartype._data.claw.dataclawbefore import (
+    ClawBeforelistFrozenDict,
+    # ClawBeforelistImportedAttrNameTrie,
+)
 from beartype._data.claw.dataclawmagic import BEARTYPE_DECORATOR_FUNC_NAME
-from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
+from beartype._data.kind.datakindiota import (
+    SENTINEL,
+    # Iota,
+)
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._data.typing.datatyping import (
     FrozenSetStrs,
+    ListStrs,
     NodeDecoratable,
     NodeVisitResult,
 )
@@ -80,7 +87,73 @@ class BeartypeNodeTransformerImportMixin(object):
     to be **decorator-hostile** (i.e., decorators hostile to other decorators by
     prematurely terminating decorator chaining such that *no* decorators may
     appear above those decorators in any chain of one or more decorators).
-    '''
+
+    Attributes
+    ----------
+    _node_decorator_basenames_reversed : list[str]
+        List of the one or more unqualified basenames comprising the possibly
+        partially-qualified name of the current decorator visited by iteration
+        internally performed in the :def:`_decorate_node_beartype` method,
+        enabling that iteration to reconstruct that name.
+
+        A list is required, as the AST grammar hierarchically nests zero or more
+        :class:`.Attribute` nodes encapsulating this name in the *reverse* order
+        of the expected nesting. Specifically, an attribute name qualified by N
+        number of ``"."``-delimited substrings (where N >= 3) is encapsulated by
+        a hierarchical nesting of N-1 :class:`.Attribute` nodes and 1
+        :class:`.Name` node: e.g.,
+
+        .. code-block:: python
+
+           @package.module.submodule.decorator
+           def muh_fun(): pass
+
+        ...which is encapsulated by this AST:
+
+        .. code-block:: python
+
+           FunctionDef(
+               name='muh_fun',
+               args=arguments(),
+               body=[
+                   Pass()],
+               decorator_list=[
+                   Attribute(
+                       value=Attribute(
+                           value=Attribute(
+                               value=Name(id='package', ctx=Load()),
+                               attr='module',
+                               ctx=Load()),
+                           attr='submodule',
+                           ctx=Load()),
+                       attr='decorator',
+                       ctx=Load()),
+               ])
+
+        That is, the :class:`.attr` instance variable of the *outermost*
+        :class:`Attribute` node yields the *last* ``"."``-delimited substring of
+        the fully-qualified name of this decorator. That reconstruction
+        algorithm thus resembles Reverse Polish Notation, for those familiar
+        with ancient calculators that no longer exist. So, nobody.
+
+        That iteration reconstructs each decorator's possibly-qualified name
+        into this list and then efficiently matches the unqualified basenames
+        comprising the items of this list against the unqualified basenames
+        comprising the items of the imported decorator-hostile decorator
+        attribute name trie.
+        '''
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(self) -> None:
+        '''
+        Initialize this node transformer mixin.
+        '''
+
+        # Initialize our superclass.
+        super().__init__()
+
+        # Nullify all instance variables for safety.
+        self._node_decorator_basenames_reversed: ListStrs = []
 
     # ..................{ VISITORS                           }..................
     #FIXME: Uncomment us up when ready, please. *sigh*
@@ -482,17 +555,33 @@ class BeartypeNodeTransformerImportMixin(object):
                 continue
             # Else, this child node is an "alias".
 
-            # Unqualified basename of this attribute if any *OR* "None".
+            # Imported source attribute name (i.e., unqualified basename of this
+            # imported attribute as originally defined inside that external
+            # module) if any *OR* "None".
             #
             # Note that this name should *NEVER* be "None". Yet, mypy claims
             # this name can actually be "None". How, mypy? Even mypy has no
             # idea. To squelch mypy complaints, we pretend mypy is still sane.
-            import_attr_name = import_attr_alias.name
-            if not import_attr_name: continue  # <-- *SILENCE, MYPY!*
+            import_attr_name_src = import_attr_alias.name
+            if not import_attr_name_src: continue  # <-- *SILENCE, MYPY!*
+            # This name is now guaranteed to be non-"None".
 
-            #FIXME: Handle "import_attr_alias.asname" too, please. Note that
-            #"asname" is "None" if undefined, according to the official
-            #"ast" documentation. *sigh*
+            # Imported target attribute name (i.e., unqualified basename of this
+            # imported attribute as newly localized or globalized inside the
+            # currently visited module), defined as either...
+            import_attr_name_trg = (
+                # If this import statement imports this attribute under an alias
+                # via the 'as' predicate (e.g., "from mcp import tool as
+                # mcp_tool"), that alias.
+                #
+                # Note that the "alias.asname" instance variable is "None" if
+                # undefined, according to the official "ast" documentation.
+                import_attr_alias.asname or
+                # Else, this import statement imports this attribute under its
+                # original name (e.g.,  "from mcp import tool"). In this case,
+                # that name.
+                import_attr_name_src,
+            )
 
             # If...
             if (
@@ -501,7 +590,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 func_decor_names_curr and
                 # The unqualified basename of this attribute is that of a
                 # decorator-hostile decorator function in that module...
-                import_attr_name in func_decor_names_curr
+                import_attr_name_src in func_decor_names_curr
             ):
                 # Render this scope's beforelist safe for modification if this
                 # beforelist is *NOT* yet safely modifiable.
@@ -510,8 +599,12 @@ class BeartypeNodeTransformerImportMixin(object):
                 # Add the unqualified basename of this decorator-hostile
                 # decorator function to this trie as a new terminal leaf node
                 # (i.e., key-value pair whose value is "None").
-                scope.beforelist.imported_attr_name_trie[  # type: ignore[index]
-                    import_attr_name] = None
+                #
+                # Note that this trie is intentionally accessed through this
+                # scope rather than through a local variable, as the prior call
+                # may have instanitated a new "scope.beforelist" object.
+                scope.beforelist.imported_attr_name_trie[  # pyright: ignore
+                    import_attr_name_trg] = None  # type: ignore[index]
             # Else, either that module defines no decorator-hostile decorator
             # functions *OR* the unqualified basename of this attribute is *NOT*
             # that of a decorator-hostile decorator function in that module. In
@@ -526,7 +619,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 isinstance(module_to_func_decor_names_curr, FrozenDict) and
                 # The unqualified basename of this attribute is that of such a
                 # submodule...
-                import_attr_name in module_to_func_decor_names_past
+                import_attr_name_src in module_to_func_decor_names_past
             ):
                 # Note that this edge case arises with submodule imports
                 # resembling:
@@ -543,8 +636,12 @@ class BeartypeNodeTransformerImportMixin(object):
                 # defining one or more decorator-hostile decorator functions
                 # to this trie as a new non-terminal stem node (i.e., key-value
                 # pair whose value is a nested frozen dictionary).
-                scope.beforelist.imported_attr_name_trie[  # type: ignore[index]
-                    import_attr_name] = module_to_func_decor_names_curr
+                #
+                # Note that this trie is intentionally accessed through this
+                # scope rather than through a local variable, as the prior call
+                # may have instanitated a new "scope.beforelist" object.
+                scope.beforelist.imported_attr_name_trie[  # pyright: ignore
+                    import_attr_name_trg] = module_to_func_decor_names_curr  # type: ignore[index]
 
             #FIXME: Implement us up, please. *sigh*
             # # If...
@@ -740,9 +837,12 @@ class BeartypeNodeTransformerImportMixin(object):
         # visited by this AST transformer.
         scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
 
-        # Fully-qualified name of this scope, localized for both readability and
+        # Imported attribute name trie of the hierarchically nested unqualified
+        # basenames of all third-party decorator-hostile decorators and
+        # third-party modules transitively defining such decorators imported
+        # into the currently visited module, localized for both readability and
         # as a negligible microoptimization. *sigh*
-        module_name = scope.name
+        imported_attr_name_trie = scope.beforelist.imported_attr_name_trie
 
         # If either...
         #
@@ -756,16 +856,15 @@ class BeartypeNodeTransformerImportMixin(object):
             not node.decorator_list or
             # This type or callable is decorated.
             #
-            # The currently visited module imports from *NO* other module known
-            # to define one or more decorator-hostile decorators...
-            module_name not in scope.beforelist.module_names
+            # The currently visited module imports neither decorator-hostile
+            # decorators *NOR* modules transitively defining such decorators...
+            not imported_attr_name_trie
         ):
-            # Then this type or callable is decorated by *NO* decorator-hostile
-            # decorators. In this case, the @beartype decorator may be safely
-            # injected as the last decorator in the chain of decorators
-            # decorating this type or callable.
-
-            # Reduce to the implementation of the
+        # Then this type or callable is decorated by *NO* decorator-hostile
+        # decorators. In this case, the @beartype decorator may be safely
+        # injected as the last decorator in the chain of decorators
+        # decorating this type or callable.
+            # Reduce to the trivial implementation of the
             # "BeartypeDecorationPosition.LAST" position in the parent
             # _decorate_node_beartype() method.
             node.decorator_list.insert(0, node_beartype_decorator)
@@ -773,22 +872,13 @@ class BeartypeNodeTransformerImportMixin(object):
             # Halt further processing.
             return
         # Else, this type or callable is decorated *AND* the currently visited
-        # module imports from one or more other modules known to define one or
-        # more decorator-hostile decorators.
+        # module imports either decorator-hostile decorators *OR* modules
+        # transitively defining such decorators...
 
-        # Afterlist data structures, localized for both readability and as a
-        # negligible microoptimization. *sigh*
-        module_to_func_decor_names = (
-            scope.beforelist.module_to_func_decor_names)
-
-        #FIXME: Actually consider this mapping below, please. *sigh*
-        # # Nested dictionary mapping from the unqualified basename of each type
-        # # defined by this third-party module to a set-like chain map of the
-        # # unqualified basename of each decorator-hostile decorator method
-        # # defined by that type if any *OR* the empty frozen dictionary otherwise.
-        # type_to_method_decor_names = (
-        #     scope.beforelist.module_to_type_to_method_decor_names.get(
-        #         module_name, FROZENDICT_EMPTY))
+        # True only if the current decorator visited by iteration below is known
+        # to *NOT* be a decorator-hostile decorator (i.e., known to be friendly
+        # to the @beartype decorator).
+        is_decorator_friendly = False
 
         # 0-based index of the current decorator visited by iteration below in
         # the chain of all decorators decorating this type or callable.
@@ -873,31 +963,6 @@ class BeartypeNodeTransformerImportMixin(object):
         #                               keyword(
         #                                   arg='is_debug',
         #                                   value=Constant(value=True))]))])])])
-        #
-        # Lastly, note that attribute names qualified by N number of
-        # "."-delimited substrings (where N >= 3) are encapsulated by a
-        # hierarchical nesting of N-1 "Attribute" nodes and 1 "Name" node: e.g.,
-        #     @package.module.submodule.decorator
-        #     def muh_fun(): pass
-        #
-        # ...which is encapsulated by this AST:
-        #     FunctionDef(
-        #         name='muh_fun',
-        #         args=arguments(),
-        #         body=[
-        #             Pass()],
-        #         decorator_list=[
-        #             Attribute(
-        #                 value=Attribute(
-        #                     value=Attribute(
-        #                         value=Name(id='package', ctx=Load()),
-        #                         attr='module',
-        #                         ctx=Load()),
-        #                     attr='submodule',
-        #                     ctx=Load()),
-        #                 attr='decorator',
-        #                 ctx=Load()),
-        #         ])
 
         # While the 0-based index of the current decorator is less than or equal
         # to that of the last decorator in this decorator chain...
@@ -918,12 +983,9 @@ class BeartypeNodeTransformerImportMixin(object):
                 node_decorator = node_decorator.func
             # Else, this decoration is *NOT* encapsulated by a "Call" node.
 
-            # Fully-qualified "."-delimited name of the module defining this
-            # decorator, constructed below by iteratively unwrapping each of the
-            # "Attribute" nodes hierarchically yielding this name and, for each
-            # such node, appending the corresponding substring to this string.
-            # See also the example above for the AST structure.
-            node_decorator_module_name = ''
+            # Clear the list of the one or more unqualified basenames comprising
+            # this decorator's possibly partially-qualified name.
+            self._node_decorator_basenames_reversed.clear()
 
             # While this decoration is still encapsulated by an "Attribute"
             # node, this is a qualified attribute decoration of the form
@@ -937,69 +999,127 @@ class BeartypeNodeTransformerImportMixin(object):
             # Polish Notation, for those familiar with ancient calculators that
             # no longer exist. So, nobody.
             while isinstance(node_decorator, Attribute):
-                # If the currently reconstructed fully-qualified name of the
-                # module defining this decorator is non-empty, this name has
-                # already been prepended by the unqualified name of at least one
-                # submodule encapsulated by a parent "Attribute" node of this
-                # child "Attribute" node. In this case, prepend the
-                # fully-qualified name of the module defining this decorator by
-                # the unqualified name of the submodule encapsulated by this
-                # child "Attribute" node. Look. It's... complicated.
-                if node_decorator_module_name:
-                    node_decorator_module_name = (
-                        f'{node_decorator.attr}.{node_decorator_module_name}')
-                # Else, the currently reconstructed fully-qualified name of the
-                # module defining this decorator is empty. In this case,
-                # initialize this name to the unqualified name of the submodule
-                # encapsulated by this child "Attribute" node.
-                else:
-                    node_decorator_module_name = node_decorator.attr
+                # Append the unqualified basename of this parent submodule of
+                # this decorator encapsulated by this "Attribute" child node to
+                # this list.
+                #
+                # Note that, as described above, "Attribute" child nodes are
+                # hierarchically nested in the reverse of the expected order. In
+                # theory, this basename should be *PREPENDED* rather than
+                # *APPENDED* to produce the partially-qualified name of this
+                # decorator. In practice, doing so is inefficient. Why? Because:
+                # * List appending exhibits average-time O(1) constant-time
+                #   complexity.
+                # * List prepending exhibits average-time O(n) linear-time
+                #   complexity.
+                #
+                # This algorithm thus prefers appending, which then necessitates
+                # this list be reversed after algorithm termination. It's a
+                # small price to pay for a substantial optimization.
+                self._node_decorator_basenames_reversed.append(
+                    node_decorator.attr)
 
-                # Unwrap this parent "Attribute" node to its child "Attribute"
+                # Unwrap this "Attribute" parent node to its "Attribute" child
                 # or "Name" node, thus unwrapping one hierarchical nesting level
                 # of "Attribute" nodes.
                 node_decorator = node_decorator.value
             # Else, this decoration is *NOT* encapsulated by an "Attribute"
             # node.
 
-            # If this decorator is accessed relative to an external module
-            # imported into the namespace of the currently visited module...
-            if node_decorator_module_name:
-                # The fully-qualified "."-delimited name of the module defining
-                # this decorator is relative to and only accessible via the
-                # currently visited module. Prepend the former by the
-                # fully-qualified name of the latter to mimic scoping via
-                # "import" statements.
-                node_decorator_module_name = (
-                    f'{module_name}.{node_decorator_module_name}')
-            # Else, this decorator was imported directly into (and thus accessed
-            # relative to) the currently visited module. In this case, the
-            # fully-qualified name of the module defining this decorator is
-            # simply that of the currently visited module itself.
-            else:
-                node_decorator_module_name = module_name
-
             # If this decoration is encapsulated by a "Name" node, this is an
             # unqualified attribute decoration of the form "@{decorator_name}".
             # In this case...
             if isinstance(node_decorator, Name):
-                # Set-like chain map of the unqualified basename of each
-                # decorator-hostile decorator function defined by the
-                # third-party module defining the current decorator if any *OR*
-                # the empty frozen dictionary otherwise.
-                node_decorator_func_decor_names = (
-                    module_to_func_decor_names.get(
-                        node_decorator_module_name, FROZENDICT_EMPTY))
+                # Append the unqualified basename of this decorator encapsulated
+                # by this "Name" child node to this list.
+                self._node_decorator_basenames_reversed.append(
+                    node_decorator.id)
 
-                # If the unqualified basename of this decorator is *NOT* that of
-                # a decorator-hostile decorator function defined by this
-                # third-party module, this decorator is presumably compatible
-                # with the @beartype decorator. In this case, halt!
-                if node_decorator.id not in node_decorator_func_decor_names:
+                # List of the one or more unqualified basenames comprising the
+                # possibly partially-qualified name of this decorator in the
+                # expected non-reversed order.
+                #
+                # Note that this one-liner has been profiled to be slightly
+                # faster than the comparable reversed() builtin. See also:
+                #     https://www.geeksforgeeks.org/python/python-reversed-vs-1-which-one-is-faster
+                node_decorator_basenames = (
+                    self._node_decorator_basenames_reversed[::-1])
+
+                # Current (sub)trie of the imported attribute name trie being
+                # recursively iterated into by the "for" loop below, enabling
+                # this decorator to be efficiently matched against the one or
+                # more decorator-hostile decorators previously imported into the
+                # currently visited module.
+                imported_attr_name_subtrie = imported_attr_name_trie
+
+                # For the unqualified basename of either each submodule
+                # transitively defining this decorator itself or this decorator
+                # itself...
+                for node_decorator_basename in node_decorator_basenames:
+                    # Child subtrie of this parent (sub)trie matching this
+                    # basename if the currently visited module previously
+                    # imported either a third-party submodule transitively
+                    # defining one or more decorator-hostile decorators or such
+                    # a decorator with the same basename *OR* the sentinel.
+                    imported_attr_name_subtrie = imported_attr_name_subtrie.get(  # type: ignore[assignment]
+                        node_decorator_basename, SENTINEL)  # type: ignore[arg-type]
+
+                    # If the parent (sub)trie contained *NO* basename matching
+                    # that of the basename of either each submodule transitively
+                    # defining this decorator itself or this decorator itself,
+                    # this decorator is *NOT* a decorator-hostile decorator.
+                    # This decorator is thus presumably friendly to the
+                    # @beartype decorator. In this case, immediately halt *ALL*
+                    # iteration -- including these inner and outer loops.
+                    #
+                    # Note that:
+                    # * *ALL* decorators syntactically following (i.e., applied
+                    #   semantically earlier to the currently decorated type or
+                    #   callable) the top-most decorator-friendly decorator
+                    #   *MUST* themselves be decorator-friendly. Why? Because,
+                    #   if any following decorator was decorator-hostile, then
+                    #   by definition that decorator could *NOT* have been
+                    #   preceded by any other decorators. That's what
+                    #   decorator-hostile means. But that decorator *WAS*
+                    #   preceded by this decorator. Proof by contradiction then
+                    #   yields this conclusion.
+                    # * Unlike most languages, Python currently lacks a
+                    #   syntactic device for concurrently breaking out of
+                    #   multiple nested loops. We thus fallback to a crude
+                    #   boolean. *shrug*
+                    if imported_attr_name_subtrie is SENTINEL:
+                        # Notify the outer iteration to halt as well.
+                        is_decorator_friendly = True
+
+                        # Immediately halt this inner iteration.
+                        break
+                    # Else, the parent (sub)trie contained a basename matching
+                    # that of the basename of either each submodule transitively
+                    # defining this decorator itself or this decorator itself,
+                    # implying this decorator *COULD* still be hostile.
+                    #
+                    # If this child subtrie is "None", the key-value pair of
+                    # that parent (sub)trie associated with this "None" value is
+                    # a terminal leaf node, implying this decorator to be
+                    # decorator-hostile. In this case, continue searching this
+                    # decorator chain for a friendlier decorator.
+                    elif imported_attr_name_subtrie is None:
+                        # Immediately halt this inner iteration.
+                        break
+                    # Else, this child subtrie is *NOT* "None". By elimination,
+                    # this child subtrie *MUST* actually be yet another
+                    # recursively nested trie. In this case, continue matching
+                    # basenames between this decorator and decorator-hostile
+                    # decorators imported into the currently visited module.
+
+                # If this decorator is now known to *NOT* be decorator-hostile,
+                # this decorator is presumably compatible with the @beartype
+                # decorator. In this case, immediately halt this outer loop.
+                if is_decorator_friendly:
                     break
-                # Else, the unqualified basename of this decorator is that of a
-                # decorator-hostile decorator function defined by this
-                # third-party module. In this case, continue searching.
+            # Else, this decorator is now known to be decorator-hostile. In this
+            # case, continue searching for the first non-hostile decorator.
+
             # Else, this decoration is *NOT* encapsulated by a "Name" node.
             #
             # Note that this should *NEVER* happen. All decorations should be
@@ -1012,6 +1132,10 @@ class BeartypeNodeTransformerImportMixin(object):
             # versions, intentionally ignore this decorator.
             #
             # Sometimes, doing nothing at all is the best thing you can do.
+
+            # True only if it is unknown whether the next decorator to be
+            # visited is a decorator-hostile decorator or not.
+            is_decorator_friendly = False
 
             # Increment the 0-based index of the next decorator to be visited.
             node_decorator_index_curr += 1
@@ -1035,11 +1159,12 @@ class BeartypeNodeTransformerImportMixin(object):
         else:
             # Sanity-check the expected constraint.
             assert node_decorator_index_curr == node_decorator_index_last + 1, (
-                f'Type or callable "{module_name}.{node.name}" decorated by '
-                f'decorator-hostile decorators, but '
+                f'Type or callable "{self._module_name}.{node.name}" '  # type: ignore[attr-defined]
+                f'decorated by decorator-hostile decorators, but '
                 f'@beartype decoration chain insertion index '
                 f'{node_decorator_index_curr} != '
-                f'{node_decorator_index_last + 1}.')
+                f'{node_decorator_index_last + 1}.'
+            )
 
             # Append @beartype *AFTER* this last decorator.
             node.decorator_list.append(node_beartype_decorator)
