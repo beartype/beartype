@@ -22,6 +22,9 @@ from beartype.typing import (
 )
 from beartype.claw._ast._scope.clawastscopebefore import (
     BeartypeNodeScopeBeforelist)
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.claw.dataclawbefore import ClawBeforelistSubtrie
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -144,19 +147,52 @@ class BeartypeNodeScope(object):
             f')',
         ))
 
-    # ..................{ DUNDERS                            }..................
-    def permute_beforelist_if_needed(self) -> None:
+    # ..................{ BEFORELIST                         }..................
+    def map_imported_attr_name_subtrie(
+        self, attr_basename: str, attr_subtrie: ClawBeforelistSubtrie) -> None:
+        '''
+        Map the passed unqualified basename of a problematic third-party
+        attribute accessible to this scope (e.g., by an import or assignment
+        statement) to the passed **imported attribute name subtrie** (i.e.,
+        recursive tree structure whose nodes are the unqualified basenames of
+        third-party attributes imported into a scope of the currently visited
+        module such that these attributes are either themselves
+        decorator-hostile decorators *or* submodules transitively defining
+        decorator-hostile decorators).
+
+        Parameters
+        ----------
+        attr_basename : str
+            First unqualified basename of an attribute to be mapped.
+        attr_subtrie : ClawBeforelistSubtrie
+            Imported attribute name subtrie to map this basename to.
+        '''
+        assert isinstance(attr_basename, str), (
+            f'{repr(attr_basename)} not string.')
+        assert isinstance(attr_subtrie, NoneTypeOr[FrozenDict]), (
+            f'{repr(attr_subtrie)} neither "None" nor frozen dictionary.')
+
+        # Render this scope's beforelist safe for modification if this
+        # beforelist is *NOT* yet safely modifiable.
+        self._permute_beforelist_if_needed()
+
+        # Map this unqualified basename of this attribute to this imported
+        # attribute name subtrie.
+        self.beforelist.imported_attr_name_trie[attr_basename] = attr_subtrie  # type: ignore[index]
+
+
+    def _permute_beforelist_if_needed(self) -> None:
         '''
         Render this scope's beforelist safe for modification by external callers
         (e.g., to track problematic third-party imports) if this beforelist is
         *not* yet safely **modifiable** (i.e., if this beforelist is still a
-        reference to a parent scope's beforelist and is thus *not* unique to this
-        scope).
+        reference to a parent scope's beforelist and is thus *not* unique to
+        this scope).
 
         For both space and time efficiency, beforelists obey the copy-on-write
         design pattern inspired by modern filesystems (e.g., Btrfs). Before
-        attempting to modify the contents of this beforelist, callers should call
-        this method to render this beforelist safe for modification.
+        attempting to modify the contents of this beforelist, callers should
+        call this method to render this beforelist safe for modification.
         '''
 
         # If this beforelist is *NOT* yet safely modifiable, this beforelist is
