@@ -26,7 +26,7 @@ def test_conf_dataclass() -> None:
     # Defer test-specific imports.
     from beartype import (
         BeartypeConf,
-        BeartypeDecorationPosition,
+        BeartypeDecorPlace,
         BeartypeStrategy,
         BeartypeViolationVerbosity,
         FrozenDict,
@@ -89,8 +89,8 @@ def test_conf_dataclass() -> None:
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
     BEAR_CONF_NONDEFAULT_KWARGS = dict(
-        claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
-        claw_decoration_position_types=BeartypeDecorationPosition.FIRST,
+        claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
+        claw_decoration_position_types=BeartypeDecorPlace.FIRST,
         claw_is_pep526=False,
         claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -131,8 +131,8 @@ def test_conf_dataclass() -> None:
     assert BeartypeConf() is BeartypeConf()
     assert (
         BeartypeConf(
-            claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
-            claw_decoration_position_types=BeartypeDecorationPosition.LAST,
+            claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
+            claw_decoration_position_types=BeartypeDecorPlace.FIRST,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -163,17 +163,17 @@ def test_conf_dataclass() -> None:
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
-            claw_decoration_position_types=BeartypeDecorationPosition.LAST,
-            claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
+            claw_decoration_position_types=BeartypeDecorPlace.FIRST,
+            claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
         )
     )
 
     # ....................{ PASS ~ properties              }....................
     # Assert that the default configuration contains the expected fields.
     assert BEAR_CONF_DEFAULT.claw_decoration_position_funcs is (
-        BeartypeDecorationPosition.LAST)
+        BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE)
     assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
-        BeartypeDecorationPosition.LAST)
+        BeartypeDecorPlace.LAST)
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
     assert BEAR_CONF_DEFAULT.hint_overrides is FROZENDICT_EMPTY
@@ -195,10 +195,10 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT._is_warning_cls_on_decorator_exception_set is False
 
     # Assert that the non-default configuration contains the expected fields.
-    assert BEAR_CONF_DEFAULT.claw_decoration_position_funcs is (
-        BeartypeDecorationPosition.LAST)
-    assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
-        BeartypeDecorationPosition.LAST)
+    assert BEAR_CONF_NONDEFAULT.claw_decoration_position_funcs is (
+        BeartypeDecorPlace.LAST)
+    assert BEAR_CONF_NONDEFAULT.claw_decoration_position_types is (
+        BeartypeDecorPlace.FIRST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
     assert BEAR_CONF_NONDEFAULT.claw_skip_package_names == (
         'Made_contrast_with', 'the_universe',)
@@ -382,10 +382,10 @@ def test_conf_dataclass() -> None:
     # dataclass raises the expected exception.
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_decoration_position_funcs = (
-            BeartypeDecorationPosition.FIRST)
+            BeartypeDecorPlace.FIRST)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_decoration_position_types = (
-            BeartypeDecorationPosition.FIRST)
+            BeartypeDecorPlace.FIRST)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
     with raises(AttributeError):

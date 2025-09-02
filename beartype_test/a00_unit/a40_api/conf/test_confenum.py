@@ -19,17 +19,17 @@ package defined by the private :mod:`beartype._conf.confenum` submodule.
 # ....................{ TESTS                              }....................
 def test_conf_enum_decoration_position() -> None:
     '''
-    Test the public :func:`beartype.BeartypeDecorationPosition` enumeration.
+    Test the public :func:`beartype.BeartypeDecorPlace` enumeration.
     '''
 
     # Defer test-specific imports.
-    from beartype import BeartypeDecorationPosition
+    from beartype import BeartypeDecorPlace
 
     # Assert this enumeration declares the expected members.
     assert isinstance(
-        BeartypeDecorationPosition.FIRST, BeartypeDecorationPosition)
+        BeartypeDecorPlace.FIRST, BeartypeDecorPlace)
     assert isinstance(
-        BeartypeDecorationPosition.LAST, BeartypeDecorationPosition)
+        BeartypeDecorPlace.LAST, BeartypeDecorPlace)
 
 
 def test_conf_enum_strategy() -> None:

@@ -22,6 +22,10 @@ from beartype._cave._cavefast import FunctionType
 from collections.abc import Callable
 
 # ....................{ TESTERS                            }....................
+#FIXME: *OVERKILL.* This functionality should be folded into the existing
+#is_object_module_thirdparty_blacklisted() tester. Doing so will probably
+#necessitate generalizing that tester to accommodate the specific ad-hoc
+#heuristic required by this tester here. *shrug*
 def is_func_jaxtyped(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **jaxtyped** (i.e., has already

@@ -22,10 +22,10 @@ from beartype.roar import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
-    BeartypeDecorationPosition,
     BeartypeStrategy,
     BeartypeViolationVerbosity,
 )
+from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
 from beartype._conf._confoverrides import sanify_conf_kwargs_is_pep484_tower
 from beartype._data.typing.datatyping import (
     DictStrToAny,
@@ -157,12 +157,12 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # an exception.
     if not isinstance(
         conf_kwargs['claw_decoration_position_funcs'],
-        BeartypeDecorationPosition
+        BeartypeDecorPlace
     ):
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "claw_decoration_position_funcs" '
             f'value {repr(conf_kwargs["claw_decoration_position_funcs"])} not '
-            f'"beartype.BeartypeDecorationPosition" enumeration member.'
+            f'"beartype.BeartypeDecorPlace" enumeration member.'
         )
     # Else, "claw_decoration_position_funcs" is an enumeration member.
     #
@@ -170,12 +170,12 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     # an exception.
     elif not isinstance(
         conf_kwargs['claw_decoration_position_types'],
-        BeartypeDecorationPosition
+        BeartypeDecorPlace
     ):
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "claw_decoration_position_types" '
             f'value {repr(conf_kwargs["claw_decoration_position_types"])} not '
-            f'"beartype.BeartypeDecorationPosition" enumeration member.'
+            f'"beartype.BeartypeDecorPlace" enumeration member.'
         )
     # Else, "claw_decoration_position_types" is an enumeration member.
     #

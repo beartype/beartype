@@ -23,7 +23,7 @@ from beartype.typing import (
 from beartype.claw._ast._scope.clawastscopebefore import (
     BeartypeNodeScopeBeforelist)
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.claw.dataclawbefore import ClawBeforelistSubtrie
+from beartype._data.conf.dataconfplace import BeartypeDecorPlaceSubtrie
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ CLASSES                            }....................
@@ -149,7 +149,7 @@ class BeartypeNodeScope(object):
 
     # ..................{ BEFORELIST                         }..................
     def map_imported_attr_name_subtrie(
-        self, attr_basename: str, attr_subtrie: ClawBeforelistSubtrie) -> None:
+        self, attr_basename: str, attr_subtrie: BeartypeDecorPlaceSubtrie) -> None:
         '''
         Map the passed unqualified basename of a problematic third-party
         attribute accessible to this scope (e.g., by an import or assignment
@@ -164,7 +164,7 @@ class BeartypeNodeScope(object):
         ----------
         attr_basename : str
             First unqualified basename of an attribute to be mapped.
-        attr_subtrie : ClawBeforelistSubtrie
+        attr_subtrie : BeartypeDecorPlaceSubtrie
             Imported attribute name subtrie to map this basename to.
         '''
         assert isinstance(attr_basename, str), (

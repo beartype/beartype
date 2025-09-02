@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Unit test the newly defined
-#"BeartypeDecorationPosition.LAST_BEFORELIST" position, please.
+#"BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE" position, please.
 #FIXME: Once unit-tested, enable that position by default *FOR FUNCTIONS ONLY.*
 #It's currently pointless for types. *shrug*
 
@@ -42,11 +42,11 @@ from beartype.typing import (
 )
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
-from beartype._conf.confenum import BeartypeDecorationPosition
+from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
-from beartype._data.claw.dataclawbefore import (
-    ClawBeforelistTrie,
-    ClawBeforelistSubtrie,
+from beartype._data.conf.dataconfplace import (
+    BeartypeDecorPlaceTrie,
+    BeartypeDecorPlaceSubtrie,
 )
 from beartype._data.claw.dataclawmagic import BEARTYPE_DECORATOR_FUNC_NAME
 from beartype._data.kind.datakindiota import (
@@ -233,7 +233,8 @@ class BeartypeNodeTransformerImportMixin(object):
             # known to define decorator-hostile decorators, this import
             # statement is ignorable with respect to @beartype. In this case,
             # silently skip this ignorable package by returning this node as is.
-            if import_package_name not in scope.beforelist.module_names:
+            if import_package_name not in (
+                scope.beforelist.decor_hostile_module_names):
                 return node
             # Else, this import statement imports a third-party module known to
             # define decorator-hostile decorators.
@@ -243,7 +244,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # "None" signifying a terminal leaf node *OR* yet another such
             # recursively nested frozen dictionary.
             decor_hostile_func_subtrie = (
-                scope.beforelist.decor_hostile_func_trie.get(
+                scope.beforelist.decor_hostile_attr_name_trie.get(
                     import_package_name))
 
             # Map the unqualified basename of that package to this subtrie.
@@ -316,7 +317,8 @@ class BeartypeNodeTransformerImportMixin(object):
         # known to define decorator-hostile decorators, this import statement is
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
-        if import_package_name not in scope.beforelist.module_names:
+        if import_package_name not in (
+            scope.beforelist.decor_hostile_module_names):
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
@@ -333,14 +335,14 @@ class BeartypeNodeTransformerImportMixin(object):
         #   recursively nested frozen dictionary of the same structure.
         # * Else, "None".
         decor_hostile_func_subtrie_parent = (
-            scope.beforelist.decor_hostile_func_trie)
-        decor_hostile_func_subtrie: Union[ClawBeforelistSubtrie, Iota] = None
+            scope.beforelist.decor_hostile_attr_name_trie)
+        decor_hostile_func_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
 
         #FIXME: Revise commentary, please. *sigh*
         # Frozen set of the unqualified basename of each decorator-hostile
         # decorator function defined by that third-party module if any *OR* the
         # empty frozen dictionary otherwise.
-        decor_hostile_funcs_subtrie: ClawBeforelistTrie = FROZENDICT_EMPTY
+        decor_hostile_funcs_subtrie: BeartypeDecorPlaceTrie = FROZENDICT_EMPTY
 
         #FIXME: Actually use and revise commentary, please. *sigh*
         # # Nested dictionary mapping from the unqualified basename of each type
@@ -406,7 +408,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 # * A caller configures the beartype_this_package() hook with a
                 #   beartype configuration resembling:
                 #     beartype_this_package(BeartypeConf(
-                #         decor_hostile_func_trie=FrozenDict({
+                #         decor_hostile_attr_name_trie=FrozenDict({
                 #             'bad_package': frozenset(('bad_submodule',)),})))
                 # * One or more submodules of the caller's package import
                 #   attributes from that submodule resembling:
@@ -419,7 +421,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 raise BeartypeClawAstImportException(
                     f'Beartype configuration {repr(self._conf)} '  # type: ignore[attr-defined]
                     f'decorator function beforelist '
-                    f'{repr(scope.beforelist.decor_hostile_func_trie)} '
+                    f'{repr(scope.beforelist.decor_hostile_attr_name_trie)} '
                     f'nested frozen set of '
                     f'decorator-hostile decorator function basenames '
                     f'{repr(decor_hostile_funcs_subtrie)} '
@@ -673,7 +675,7 @@ class BeartypeNodeTransformerImportMixin(object):
         #   existing decorators decorating this type or callable is "stored
         #   outermost first (i.e. the first in the list will be applied last)."
         if decoration_position is (
-            BeartypeDecorationPosition.LAST_BEFORELIST):
+            BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE):
             self._decorate_node_beartype_last_beforelist(
                 node=node, conf=conf, node_beartype_decorator=node_beartype_decorator)
         # If injecting the @beartype decorator unconditionally last, prepend
@@ -681,12 +683,12 @@ class BeartypeNodeTransformerImportMixin(object):
         # decoration nodes for this parent decoratable node. Prepending
         # guarantees that our decorator will be applied last (i.e., *AFTER* all
         # subsequent decorators).
-        elif decoration_position is BeartypeDecorationPosition.LAST:
+        elif decoration_position is BeartypeDecorPlace.LAST:
             node.decorator_list.insert(0, node_beartype_decorator)
         # If injecting the @beartype decorator unconditionally first, append
         # this child decoration node to the end of the list of all child
         # decoration nodes for this parent decoratable node.
-        elif decoration_position is BeartypeDecorationPosition.FIRST:
+        elif decoration_position is BeartypeDecorPlace.FIRST:
             node.decorator_list.append(node_beartype_decorator)
         # Else, an unrecognized decorator position was configured. In this case,
         # raise an exception. Note that this should *NEVER* occur.
@@ -707,7 +709,7 @@ class BeartypeNodeTransformerImportMixin(object):
         '''
         Add a new child :func:`beartype.beartype` decoration node to the passed
         parent decoratable node subject to
-        :attr:`BeartypeDecorationPosition.LAST_BEFORELIST` positioning.
+        :attr:`BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE` positioning.
 
         This method contextually injects the :func:`beartype.beartype` decorator
         as high (i.e., late) in the chain of decorators decorating the type
@@ -768,7 +770,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # injected as the last decorator in the chain of decorators
         # decorating this type or callable.
             # Reduce to the trivial implementation of the
-            # "BeartypeDecorationPosition.LAST" position in the parent
+            # "BeartypeDecorPlace.LAST" position in the parent
             # _decorate_node_beartype() method.
             node.decorator_list.insert(0, node_beartype_decorator)
 

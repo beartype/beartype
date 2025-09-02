@@ -12,7 +12,7 @@ import hooks configured by different beartype configurations).
 # ....................{ IMPORTS                            }....................
 from beartype import (
     BeartypeConf,
-    BeartypeDecorationPosition,
+    BeartypeDecorPlace,
 )
 from beartype.claw import beartype_package
 
@@ -24,7 +24,7 @@ beartype_package(
         'data_claw_conf_decoration_position_funcs_first'
     ),
     conf=BeartypeConf(
-        claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST),
+        claw_decoration_position_funcs=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
     data_claw_conf_decoration_position_funcs_first)
@@ -37,7 +37,7 @@ beartype_package(
         'data_claw_conf_decoration_position_types_first'
     ),
     conf=BeartypeConf(
-        claw_decoration_position_types=BeartypeDecorationPosition.FIRST),
+        claw_decoration_position_types=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
     data_claw_conf_decoration_position_types_first)
