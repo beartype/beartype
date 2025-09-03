@@ -16,15 +16,15 @@ from ast import (
     AST,
     Module,
 )
+from beartype.claw._ast._scope.clawastscopebefore import (
+    BeartypeNodeScopeBeforelist)
 from beartype.typing import (
     TYPE_CHECKING,
     Type,
 )
-from beartype.claw._ast._scope.clawastscopebefore import (
-    BeartypeNodeScopeBeforelist)
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._conf.decorplace.confplacetrie import BeartypeDecorPlaceTrieABC
 from beartype._data.conf.dataconfplace import BeartypeDecorPlaceSubtrie
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
@@ -148,8 +148,11 @@ class BeartypeNodeScope(object):
         ))
 
     # ..................{ BEFORELIST                         }..................
-    def map_imported_attr_name_subtrie(
-        self, attr_basename: str, attr_subtrie: BeartypeDecorPlaceSubtrie) -> None:
+    def map_beforelist_imported_attr_basename_to_subtrie(
+        self,
+        attr_basename: str,
+        attr_subtrie: BeartypeDecorPlaceSubtrie,
+    ) -> None:
         '''
         Map the passed unqualified basename of a problematic third-party
         attribute accessible to this scope (e.g., by an import or assignment
@@ -169,7 +172,8 @@ class BeartypeNodeScope(object):
         '''
         assert isinstance(attr_basename, str), (
             f'{repr(attr_basename)} not string.')
-        assert isinstance(attr_subtrie, NoneTypeOr[FrozenDict]), (
+        assert isinstance(
+            attr_subtrie, NoneTypeOr[BeartypeDecorPlaceTrieABC]), (
             f'{repr(attr_subtrie)} neither "None" nor frozen dictionary.')
 
         # Render this scope's beforelist safe for modification if this
@@ -178,7 +182,8 @@ class BeartypeNodeScope(object):
 
         # Map this unqualified basename of this attribute to this imported
         # attribute name subtrie.
-        self.beforelist.imported_attr_name_trie[attr_basename] = attr_subtrie  # type: ignore[index]
+        self.beforelist.imported_attr_basename_trie[attr_basename] = (  # type: ignore[index]
+            attr_subtrie)
 
 
     def _permute_beforelist_if_needed(self) -> None:

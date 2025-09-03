@@ -22,8 +22,10 @@ import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
     AST,
     AsyncFunctionDef,
+    Attribute,
     ClassDef,
     FunctionDef,
+    Name,
 )
 from beartype.typing import (
     AbstractSet,
@@ -73,6 +75,14 @@ from types import (
 )
 
 # ....................{ AST                                }....................
+NodeAttrName = Union[Attribute, Name]
+'''
+PEP-compliant type hint matching an **attribute name node** (i.e., abstract
+syntax tree (AST) node encapsulating the either possibly fully-qualified
+``"."``-delimited name *or* unqualified basename of some attribute).
+'''
+
+
 NodeCallable = Union[FunctionDef, AsyncFunctionDef]
 '''
 PEP-compliant type hint matching a **callable node** (i.e., abstract syntax tree

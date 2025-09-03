@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **abstract syntax tree (AST) test utility unit tests.**
+Project-wide **abstract syntax tree (AST) tester utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.ast.utilasttest` submodule.
@@ -25,7 +25,7 @@ def test_is_node_callable_typed() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.ast.utilastget import get_code_child_node
+    from beartype._util.ast.utilastmake import make_node_from_code_snippet
     from beartype._util.ast.utilasttest import is_node_callable_typed
 
     # ....................{ LOCALS                         }....................
@@ -69,7 +69,7 @@ def test_is_node_callable_typed() -> None:
     # For each example callable to be tested...
     for is_node_callable_typed_bool, func_code in CALLABLE_DATAS:
         # "ast.Callable" AST tree parsed from the string defining this callable.
-        func_node = get_code_child_node(func_code)
+        func_node = make_node_from_code_snippet(func_code)
 
         # Assert that this tester reports the expected boolean when passed this
         # "ast.Callable" AST tree.

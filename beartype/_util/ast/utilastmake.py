@@ -20,12 +20,15 @@ from ast import (
     Expr,
     FormattedValue,
     ImportFrom,
+    Module,
     Name,
     alias,
     expr,
     keyword,
+    parse as ast_parse,
 )
 from beartype.roar import BeartypeClawImportAstException
+from beartype.roar._roarexc import _BeartypeUtilAstException
 from beartype.typing import (
     List,
     Optional,
@@ -40,80 +43,62 @@ from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
-def make_node_importfrom(
-    # Mandatory parameters.
-    module_name: str,
-    source_attr_name: str,
-    node_sibling: AST,
-
-    # Optional parameters.
-    target_attr_name: Optional[str] = None,
-) -> ImportFrom:
+#FIXME: Unit test us up, please. When we do, remove the "pragma: no cover" from
+#the body of this getter below.
+def make_node_from_code_snippet(code_snippet: str) -> AST:
     '''
-    Create and return a new **import-from abstract syntax tree (AST) node**
-    (i.e., node encapsulating an import statement of the alias-style format
-    ``from {module_name} import {attr_name}``) importing the attribute with the
-    passed source name from the module with the passed name into the currently
-    visited module as a new attribute with the passed target name.
+    Abstract syntax tree (AST) node parsed from the passed (presumably)
+    triple-quoted string defining a single child object.
+
+    This function is principally intended to be called from our test suite as a
+    convenient means of "parsing" triple-quoted strings into AST nodes.
+
+    Caveats
+    -------
+    **This function assumes that this string defines only a single child
+    object.** If this string defines either no *or* two or more child objects,
+    an exception is raised.
 
     Parameters
     ----------
-    module_name : str
-        Fully-qualified name of the module to import this attribute from.
-    source_attr_name : str
-        Unqualified basename of the attribute to import from this module.
-    target_attr_name : Optional[str]
-        Either:
-
-        * If this attribute is to be imported into the currently visited module
-          under a different unqualified basename, that basename.
-        * If this attribute is to be imported into the currently visited module
-          under the same unqualified basename as ``source_attr_name``,
-          :data:`None`.
-
-        Defaults to :data:`None`.
-    node_sibling : AST
-        Sibling node to copy source code metadata from.
+    code_snippet : str
+        Triple-quoted string defining a single child object.
 
     Returns
     -------
-    ImportFrom
-        Import-from node importing this attribute from this module.
+    AST
+        AST node encapsulating the object defined by this string.
+
+    Raises
+    -------
+    _BeartypeUtilAstException
+        If this string defines either no *or* two or more child objects.
     '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
-    assert isinstance(source_attr_name, str), (
-        f'{repr(source_attr_name)} not string.')
-    assert isinstance(target_attr_name, NoneTypeOr[str]), (
-        f'{repr(target_attr_name)} neither string nor "None".')
+    assert isinstance(code_snippet, str), f'{repr(code_snippet)} not string.'
 
-    # Node encapsulating the name of the attribute to import from this module,
-    # defined as either...
-    node_importfrom_name = (
-        # If this attribute is to be imported into the currently visited module
-        # under a different basename, do so;
-        alias(name=source_attr_name, asname=target_attr_name)
-        if target_attr_name else
-        # Else, this attribute is to be imported into the currently visited
-        # module under the same basename. In this case, do so.
-        alias(name=source_attr_name)
-    )
+    # "ast.Module" AST tree parsed from this string.
+    node_module = ast_parse(code_snippet)
 
-    # Node encapsulating the name of the module to import this attribute from.
-    node_importfrom = ImportFrom(
-        module=module_name,
-        names=[node_importfrom_name],
-        # Force an absolute import for safety (i.e., prohibit relative imports).
-        level=0,
-    )
+    # If this node is *NOT* actually a module node, raise an exception.
+    if not isinstance(node_module, Module):  # pragma: no cover
+        raise _BeartypeUtilAstException(
+            f'{repr(node_module)} not AST module node.')
+    # Else, this node is a module node.
 
-    # Copy all source code metadata (e.g., line numbers) from this sibling node
-    # onto these new nodes.
-    copy_node_metadata(
-        node_src=node_sibling, node_trg=(node_importfrom, node_importfrom_name))
+    # List of all direct child nodes of this parent module name.
+    nodes_child = node_module.body
 
-    # Return this import-from node.
-    return node_importfrom
+    # If this module node contains either no *OR* two or more child nodes, raise
+    # an exception.
+    if len(nodes_child) != 1:  # pragma: no cover
+        raise _BeartypeUtilAstException(
+            f'Python code {repr(code_snippet)} defines '
+            f'{len(nodes_child)} != 1 child objects.'
+        )
+    # Else, this module node contains exactly one child node.
+
+    # Return this child node.
+    return nodes_child[0]
 
 # ....................{ FACTORIES ~ attribute              }....................
 #FIXME: Unit test us up, please.
@@ -214,6 +199,68 @@ def make_node_object_attr_load(
 
     # Return this node.
     return node_attribute_load
+
+# ....................{ FACTORIES ~ attribute : name       }....................
+#FIXME: Unit test us up.
+def make_node_name_load(name: str, node_sibling: AST) -> Name:
+    '''
+    Create and return a new **attribute access abstract syntax tree (AST) node**
+    (i.e., node encapsulating an access of an attribute) in the current lexical
+    scope with the passed name.
+
+    Parameters
+    ----------
+    name : str
+        Fully-qualified name of the attribute to be accessed.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    Name
+        Name node accessing this attribute in the current lexical scope.
+    '''
+    assert isinstance(name, str), f'{repr(name)} not string.'
+
+    # Child node accessing this attribute in the current lexical scope.
+    node_name = Name(name, ctx=NODE_CONTEXT_LOAD)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_name)
+
+    # Return this child node.
+    return node_name
+
+
+#FIXME: Unit test us up.
+def make_node_name_store(name: str, node_sibling: AST) -> Name:
+    '''
+    Create and return a new **attribute assignment abstract syntax tree (AST)
+    node** (i.e., node encapsulating an assignment of an attribute) in the
+    current lexical scope with the passed name.
+
+    Parameters
+    ----------
+    name : str
+        Fully-qualified name of the attribute to be assigned.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    Name
+        Name node assigning this attribute in the current lexical scope.
+    '''
+    assert isinstance(name, str), f'{repr(name)} not string.'
+
+    # Child node assigning this attribute in the current lexical scope.
+    node_name = Name(name, ctx=NODE_CONTEXT_STORE)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_name)
+
+    # Return this child node.
+    return node_name
 
 # ....................{ FACTORIES ~ call                   }....................
 #FIXME: Unit test us up, please.
@@ -350,6 +397,82 @@ def make_node_kwarg(
     # Return this expression node.
     return node_kwarg
 
+# ....................{ FACTORIES ~ import                 }....................
+#FIXME: Unit test us up, please.
+def make_node_importfrom(
+    # Mandatory parameters.
+    module_name: str,
+    source_attr_name: str,
+    node_sibling: AST,
+
+    # Optional parameters.
+    target_attr_name: Optional[str] = None,
+) -> ImportFrom:
+    '''
+    Create and return a new **import-from abstract syntax tree (AST) node**
+    (i.e., node encapsulating an import statement of the alias-style format
+    ``from {module_name} import {attr_name}``) importing the attribute with the
+    passed source name from the module with the passed name into the currently
+    visited module as a new attribute with the passed target name.
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the module to import this attribute from.
+    source_attr_name : str
+        Unqualified basename of the attribute to import from this module.
+    target_attr_name : Optional[str]
+        Either:
+
+        * If this attribute is to be imported into the currently visited module
+          under a different unqualified basename, that basename.
+        * If this attribute is to be imported into the currently visited module
+          under the same unqualified basename as ``source_attr_name``,
+          :data:`None`.
+
+        Defaults to :data:`None`.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    ImportFrom
+        Import-from node importing this attribute from this module.
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(source_attr_name, str), (
+        f'{repr(source_attr_name)} not string.')
+    assert isinstance(target_attr_name, NoneTypeOr[str]), (
+        f'{repr(target_attr_name)} neither string nor "None".')
+
+    # Node encapsulating the name of the attribute to import from this module,
+    # defined as either...
+    node_importfrom_name = (
+        # If this attribute is to be imported into the currently visited module
+        # under a different basename, do so;
+        alias(name=source_attr_name, asname=target_attr_name)
+        if target_attr_name else
+        # Else, this attribute is to be imported into the currently visited
+        # module under the same basename. In this case, do so.
+        alias(name=source_attr_name)
+    )
+
+    # Node encapsulating the name of the module to import this attribute from.
+    node_importfrom = ImportFrom(
+        module=module_name,
+        names=[node_importfrom_name],
+        # Force an absolute import for safety (i.e., prohibit relative imports).
+        level=0,
+    )
+
+    # Copy all source code metadata (e.g., line numbers) from this sibling node
+    # onto these new nodes.
+    copy_node_metadata(
+        node_src=node_sibling, node_trg=(node_importfrom, node_importfrom_name))
+
+    # Return this import-from node.
+    return node_importfrom
+
 # ....................{ FACTORIES ~ literal : string       }....................
 #FIXME: Unit test us up, please.
 def make_node_str(text: str, node_sibling: AST) -> Constant:
@@ -425,65 +548,3 @@ def make_node_fstr_field(node_expr: expr, node_sibling: AST) -> FormattedValue:
 
     # Return this f-string field node.
     return node_fstr_field
-
-# ....................{ FACTORIES ~ name                   }....................
-#FIXME: Unit test us up.
-def make_node_name_load(name: str, node_sibling: AST) -> Name:
-    '''
-    Create and return a new **attribute access abstract syntax tree (AST) node**
-    (i.e., node encapsulating an access of an attribute) in the current lexical
-    scope with the passed name.
-
-    Parameters
-    ----------
-    name : str
-        Fully-qualified name of the attribute to be accessed.
-    node_sibling : AST
-        Sibling node to copy source code metadata from.
-
-    Returns
-    -------
-    Name
-        Name node accessing this attribute in the current lexical scope.
-    '''
-    assert isinstance(name, str), f'{repr(name)} not string.'
-
-    # Child node accessing this attribute in the current lexical scope.
-    node_name = Name(name, ctx=NODE_CONTEXT_LOAD)
-
-    # Copy source code metadata from this sibling node onto this new node.
-    copy_node_metadata(node_src=node_sibling, node_trg=node_name)
-
-    # Return this child node.
-    return node_name
-
-
-#FIXME: Unit test us up.
-def make_node_name_store(name: str, node_sibling: AST) -> Name:
-    '''
-    Create and return a new **attribute assignment abstract syntax tree (AST)
-    node** (i.e., node encapsulating an assignment of an attribute) in the
-    current lexical scope with the passed name.
-
-    Parameters
-    ----------
-    name : str
-        Fully-qualified name of the attribute to be assigned.
-    node_sibling : AST
-        Sibling node to copy source code metadata from.
-
-    Returns
-    -------
-    Name
-        Name node assigning this attribute in the current lexical scope.
-    '''
-    assert isinstance(name, str), f'{repr(name)} not string.'
-
-    # Child node assigning this attribute in the current lexical scope.
-    node_name = Name(name, ctx=NODE_CONTEXT_STORE)
-
-    # Copy source code metadata from this sibling node onto this new node.
-    copy_node_metadata(node_src=node_sibling, node_trg=node_name)
-
-    # Return this child node.
-    return node_name
