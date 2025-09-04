@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **abstract syntax tree (AST) factory utility unit tests.**
+Project-wide **abstract syntax tree (AST) factory utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.ast.utilastmake` submodule.
@@ -34,7 +34,7 @@ def node_sibling() -> 'ast.AST':
     # literal node whose string is an arbitrary Python identifier.
     yield Constant('In_folds_of_the_green_serpent')
 
-# ....................{ TESTS ~ factory                    }....................
+# ....................{ TESTS                              }....................
 def test_make_node_object_attr_load(node_sibling: 'ast.AST') -> None:
     '''
     Test the :func:`beartype._util.ast.utilastmake.make_node_object_attr_load`

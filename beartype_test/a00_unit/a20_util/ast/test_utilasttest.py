@@ -68,9 +68,9 @@ def test_is_node_callable_typed() -> None:
     # ....................{ ASSERTS                        }....................
     # For each example callable to be tested...
     for is_node_callable_typed_bool, func_code in CALLABLE_DATAS:
-        # "ast.Callable" AST tree parsed from the string defining this callable.
+        # "ast.Callable" node parsed from the string defining this callable.
         func_node = make_node_from_code_snippet(func_code)
 
         # Assert that this tester reports the expected boolean when passed this
-        # "ast.Callable" AST tree.
+        # "ast.Callable" node.
         assert is_node_callable_typed(func_node) is is_node_callable_typed_bool

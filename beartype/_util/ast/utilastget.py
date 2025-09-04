@@ -14,16 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from ast import (
     AST,
     Attribute,
+    Expr,
     Name,
     dump as ast_dump,
 )
 from beartype.typing import Optional
-from beartype._data.typing.datatyping import (
-    ListStrs,
-    NodeAttrName,
-)
+from beartype._data.typing.datatyping import ListStrs
 
-# ....................{ GETTERS ~ str                      }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_node_repr_indented(node: AST) -> str:
     '''
@@ -45,11 +43,11 @@ def get_node_repr_indented(node: AST) -> str:
     # Return the pretty-printed contents of this AST.
     return ast_dump(node, indent=4)  # type: ignore[call-arg]
 
-
+# ....................{ GETTERS ~ attr                     }....................
 #FIXME: Unit test us up, please.
 def get_node_attr_basenames(
     # Mandatory parameters.
-    node: NodeAttrName,
+    node: AST,
 
     # Optional parameters.
     attr_basenames: Optional[ListStrs] = None,
@@ -110,7 +108,7 @@ def get_node_attr_basenames(
 
     Parameters
     ----------
-    node : NodeAttrName
+    node : AST
         Attribute name node to be unparsed.
     attr_basenames : Optional[ListStrs], default: None
         Existing caller-defined list to be efficiently cleared, reused, and
@@ -124,9 +122,27 @@ def get_node_attr_basenames(
     '''
     assert isinstance(node, AST), f'{repr(node)} not AST.'
 
+    # In theory, this algorithm could also be implemented with an equivalent
+    # trivial one-liner resembling:
+    #     return ast.unparse(node).split('.')
+    #
+    # In practice, doing so would:
+    # * Be *PROHIBITIVELY* expensive. Recursively unparsing a node into a string
+    #   merely to parse that string back into a list of strings constitutes
+    #   recursive string-munging -- the ultimate in inefficient one-liners. In
+    #   Python, if you want speed, you pay for speed.
+    # * Probably fall down in pernicious edge cases in which the returned string
+    #   is *NOT* reasonably splittable on all "." delimiters (e.g.,
+    #   "obj_name.attr_name['this.is.gonna.fail.hard,yo!']").
+
+    # ....................{ DEFAULTS                       }....................
+    # True only if this getter internally instantiates a new list rather than
+    # reusing an existing list passed by the caller.
+    is_attr_basenames_new = attr_basenames is None
+
     # If the caller explicitly passed *NO* pre-initialized list, initialize this
     # to the empty list.
-    if attr_basenames is None:
+    if is_attr_basenames_new:
         attr_basenames = []
     # Else, the caller explicitly passed a pre-initialized list. In this case...
     else:
@@ -137,6 +153,16 @@ def get_node_attr_basenames(
         attr_basenames.clear()
     # In either case, this local variable is now the empty list.
 
+    # ....................{ NODE ~ expr                    }....................
+    # If this is a high-level "Expr" node wrapping one or more lower-level
+    # "Attribute" nodes and/or a lower-level "Name" node, unwrap this "Expr" to
+    # the root node at the top of this hierarchical nesting of child nodes.
+    if isinstance(node, Expr):
+        node = node.value
+    # Else, this is *NOT* a high-level "Expr" node. In this case, this is
+    # assumed to be a lower-level "Attribute" or "Name" node.
+
+    # ....................{ NODE ~ attribute               }....................
     # While the next unqualified basename name comprising this name is still
     # encapsulated by an "Attribute" node...
     #
@@ -168,35 +194,48 @@ def get_node_attr_basenames(
         node = node.value  # type: ignore[assignment]
     # Else, this name is *NOT* encapsulated by an "Attribute" node.
 
-    #FIXME: Also handle "ast.Subscript" nodes produce by statements resembling:
+    # ....................{ NODE ~ name                    }....................
+    #FIXME: Also handle "ast.Subscript" nodes produced by statements resembling:
     #    muh_object.muh_var[muh_index]
 
     # If the trailing unqualified basename of this attribute is encapsulated by
-    # a "Name" node...
+    # a "Name" node, append this trailing unqualified basename to this list.
     if isinstance(node, Name):
-        # Append this trailing unqualified basename to this list.
         attr_basenames.append(node.id)
     # Else, the trailing unqualified basename of this attribute is *NOT*
-    # encapsulated by a "Name" node.
+    # encapsulated by a "Name" node. In this case...
     #
     # Note that this should *NEVER* happen. All attribute names should be
-    # encapsulated by either "Attribute" or "Name" nodes. However, the Python
-    # language and hence AST grammar describing that language is constantly
-    # evolving. Since this just happened, it is likely that a future iteration
-    # of the Python language has now evolved in an unanticipated (yet,
-    # ultimately valid) way. To preserve forward compatibility in @beartype with
-    # future Python versions, intentionally ignore this unknown AST node type.
+    # encapsulated by nodes handled above. However, the Python language and
+    # hence AST grammar describing that language is constantly evolving. Since
+    # this just happened, it is likely that a future iteration of the Python
+    # language has now evolved in an unanticipated (yet, ultimately valid) way.
+    # To preserve forward compatibility in @beartype with future Python
+    # versions, intentionally ignore this unknown AST node type.
     #
     # Sometimes, doing nothing at all is the best thing you can do.
+    else:
+        # Clear this list. Returning this list in its currently incomplete state
+        # would erroneously expose callers to unforeseen issues. Yet again,
+        # doing nothing is preferable to doing a bad thing.
+        attr_basenames.clear()
 
-    # List of the one or more unqualified basenames comprising the possibly
-    # partially-qualified name encapsulated by this node, albeit in the expected
-    # non-reversed order.
+    # ....................{ RETURN                         }....................
+    # Reverse this list to produce a list in the expected non-reversed order.
     #
-    # Note that this one-liner has been profiled to be slightly faster than the
+    # If the caller explicitly passed *NO* pre-initialized list, reverse this
+    # list by efficiently slicing this list in the reverse order into a new
+    # list. Note this one-liner has been profiled to be slightly faster than the
     # comparable reversed() builtin. See also:
     #     https://www.geeksforgeeks.org/python/python-reversed-vs-1-which-one-is-faster
-    attr_basenames = attr_basenames[::-1]
+    if is_attr_basenames_new:
+        attr_basenames = attr_basenames[::-1]
+    # Else, the caller explicitly passed a pre-initialized list, implying the
+    # caller would prefer to preserve this list rather than instantiating any
+    # new list. Reverse this existing list in-place. Note this one-liner has
+    # been profiled to be slightly slower than the approach pursued above.
+    else:
+        attr_basenames.reverse()
 
     # Return this non-reversed list.
     return attr_basenames

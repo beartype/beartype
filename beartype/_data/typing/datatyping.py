@@ -75,14 +75,6 @@ from types import (
 )
 
 # ....................{ AST                                }....................
-NodeAttrName = Union[Attribute, Name]
-'''
-PEP-compliant type hint matching an **attribute name node** (i.e., abstract
-syntax tree (AST) node encapsulating the either possibly fully-qualified
-``"."``-delimited name *or* unqualified basename of some attribute).
-'''
-
-
 NodeCallable = Union[FunctionDef, AsyncFunctionDef]
 '''
 PEP-compliant type hint matching a **callable node** (i.e., abstract syntax tree

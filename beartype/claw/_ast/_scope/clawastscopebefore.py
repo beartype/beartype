@@ -34,7 +34,7 @@ from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections import ChainMap
 
 # ....................{ HINTS                              }....................
-_ImportedAttrNameTrie = ChainMapHint[str, BeartypeDecorPlaceSubtrie]
+ImportedAttrNameTrie = ChainMapHint[str, BeartypeDecorPlaceSubtrie]
 '''
 PEP-compliant recursive alias matching a **beforelist imported attribute name
 trie** (i.e., recursive tree structure whose nodes are the unqualified basenames
@@ -84,13 +84,13 @@ class BeartypeNodeScopeBeforelist(object):
         modules** (i.e., modules importing one or more decorator-hostile
         decorator function and/or types declaring one or more decorator-hostile
         methods).
-    imported_attr_basename_trie : Optional[_ImportedAttrNameTrie]
+    imported_attr_basename_trie : Optional[ImportedAttrNameTrie]
         **Target imported decorator-hostile attribute name trie** (i.e.,
         recursive tree structure whose nodes are the unqualified basenames of
         third-party attributes imported into a scope of the currently visited
         module such that these attributes are either themselves
-        decorator-hostile decorators *or* submodules transitively defining
-        decorator-hostile decorators).
+        decorator-hostile decorators *or* submodules, types, or instances
+        transitively defining decorator-hostile decorators).
 
         This tree structure is initially :data:`None`, in which case external
         callers are expected to explicitly initialize this attribute to the
@@ -139,7 +139,7 @@ class BeartypeNodeScopeBeforelist(object):
     if TYPE_CHECKING:
         attested_attr_basename_trie: BeartypeDecorPlaceTrie
         attested_module_names: FrozenSetStrs
-        imported_attr_basename_trie: Optional[_ImportedAttrNameTrie]
+        imported_attr_basename_trie: Optional[ImportedAttrNameTrie]
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
@@ -150,7 +150,7 @@ class BeartypeNodeScopeBeforelist(object):
 
         # Optional parameters.
         attested_module_names: Optional[FrozenSetStrs] = None,
-        imported_attr_basename_trie: Optional[_ImportedAttrNameTrie] = None,
+        imported_attr_basename_trie: Optional[ImportedAttrNameTrie] = None,
         is_validate: bool = True,
     ) -> None:
         '''
@@ -165,7 +165,7 @@ class BeartypeNodeScopeBeforelist(object):
             Defaults to :data:`None`, in which case this frozen set is
             implicitly constructed as the union of all keys of the passed
             decorator function and method beforelists.
-        imported_attr_basename_trie : Optional[_ImportedAttrNameTrie], default: None
+        imported_attr_basename_trie : Optional[ImportedAttrNameTrie], default: None
             **Imported attribute name trie.** See the class docstring. Defaults
             to :data:`None`, in which case this trie is explicitly initialized
             to the empty dictionary in a just-in-time (JIT) manner as needed.

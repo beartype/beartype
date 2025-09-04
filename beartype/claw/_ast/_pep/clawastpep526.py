@@ -234,13 +234,14 @@ class BeartypeNodeTransformerPep526Mixin(object):
             # Unqualified basename of this variable in this lexical scope.
             var_scoped_name = node_target.id
 
-            #FIXME: *WOAH.* What? Why are we even calling make_node_name_load()
-            #here? There has *GOT* to be an easier way to shallowly copy this
-            #existing "Name" node with context "NODE_CONTEXT_STORE" into a new
-            #"Name" node with context "NODE_CONTEXT_LOAD". The only attribute of
-            #this node we need to change is "ctx"; everything else should remain
-            #the exact same. Looks like we overkilled this, huh?
             # Child node accessing this local or global variable.
+            #
+            # Note that this call effectively shallowly copies this existing
+            # "Name" node with context "NODE_CONTEXT_STORE" into a new "Name
+            # node with context "NODE_CONTEXT_LOAD". Sadly, the "ast" module
+            # provides *NO* means of shallowly copying nodes subject to a
+            # trivial modification like this. Ergo, we have *NO* recourse but to
+            # do so manually.
             node_func_arg_pith = make_node_name_load(
                 name=var_scoped_name, node_sibling=node)
         # Else, this target variable is *NOT* a simple local or global variable.
@@ -259,29 +260,20 @@ class BeartypeNodeTransformerPep526Mixin(object):
             #     node_target.value.id, ctx=NODE_CONTEXT_LOAD)
             # copy_node_metadata(node_src=node, node_trg=node_func_arg_pith_obj)
 
-            #FIXME: *WOAH.* What? Why are we even calling
-            #make_node_object_attr_load() here? There has *GOT* to be an easier
-            #way to shallowly copy this existing
-            #"Attribute" node with context "NODE_CONTEXT_STORE" into a new
-            #"Attribute" node with context "NODE_CONTEXT_LOAD". The only
-            #attribute of this node we need to change is "ctx"; everything else
-            #should remain the exact same. Looks like we overkilled this, huh?
             # Child node referencing this instance or class variable.
             #
             # Note that this call effectively shallowly copies this existing
             # "Attribute" node with context "NODE_CONTEXT_STORE" into a new
-            # "Attribute" node with context "NODE_CONTEXT_LOAD".
+            # "Attribute" node with context "NODE_CONTEXT_LOAD". Sadly, the
+            # "ast" module provides *NO* means of shallowly copying nodes
+            # subject to a trivial modification like this. Ergo, we have *NO*
+            # recourse but to do so manually.
             node_func_arg_pith = make_node_object_attr_load(
                 node_obj=node_target.value,
                 attr_name=node_target.attr,
                 node_sibling=node,
             )
 
-            #FIXME: There's *NO* reason to call unparse(). Sure. We can, I
-            #guess. But we also having existing logic elsewhere that
-            #reverse-engineers fully-qualified attribute names from "Attribute"
-            #nodes. It's almost certainly *A LOT* faster than unparse(). Grep
-            #the codebase for: _node_decorator_basenames_reversed
             # Partially-qualified name of this variable in this lexical scope,
             # defined by "unparsing" this child node. The standard ast.unparse()
             # function "unparses" (i.e., obtains the machine-readable
