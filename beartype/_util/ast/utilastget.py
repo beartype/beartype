@@ -44,6 +44,60 @@ def get_node_repr_indented(node: AST) -> str:
     return ast_dump(node, indent=4)  # type: ignore[call-arg]
 
 # ....................{ GETTERS ~ attr                     }....................
+#FIXME: This getter could be significantly optimized. Rather than deferring to
+#get_node_attr_basenames(), this getter could instead re-implement the subset of
+#get_node_attr_basenames() relevant to retrieving *ONLY* the first basename.
+#Doing so avoids the need for a passed "attr_basenames" list entirely. Although
+#largely trivial, this optimization is currently largely unnecessary. Why?
+#Because this getter is only called sporadically for outlier edge cases. *shrug*
+def get_node_attr_basename_first(
+    # Mandatory parameters.
+    node: AST,
+
+    # Optional parameters.
+    attr_basenames: Optional[ListStrs] = None,
+) -> Optional[str]:
+    '''
+    First unqualified basename prefixing the possibly fully-qualified
+    ``"."``-delimited name of the passed **attribute name node** (i.e.,
+    :class:`ast.Name` node *or* hierarchical nesting of one or more
+    :class:`ast.Attribute` nodes terminating in a :class:`ast.Name` node) if
+    this node is parsable by this getter *or* :data:`None` otherwise (i.e., if
+    this node is unparsable by this getter).
+
+    Parameters
+    ----------
+    node : AST
+        Attribute name node to be unparsed.
+    attr_basenames : Optional[ListStrs], default: None
+        Existing caller-defined list to be efficiently cleared, reused, and
+        returned by this getter if any *or* :data:`None` otherwise, in which
+        case this getter instantiates and returns a new list.
+
+    Returns
+    -------
+    str
+        First unqualified basename prefixing the possibly fully-qualified
+        ``"."``-delimited name of this attribute name node.
+
+    See Also
+    --------
+    :func:`.get_node_attr_basenames`
+        Further details.
+    '''
+
+    # List of the one or more unqualified basenames comprising the possibly
+    # fully-qualified "."-delimited name of this attribute name node if this
+    # node is parsable by this getter *OR* the empty list otherwise.
+    node_attr_basenames = get_node_attr_basenames(
+        node=node, attr_basenames=attr_basenames)
+
+    # Return either the first item of this list if this list is non-empty *OR*
+    # "None" otherwise (i.e., if this list is empty).
+    return (
+        node_attr_basenames[0] if node_attr_basenames else None)
+
+
 #FIXME: Unit test us up, please.
 def get_node_attr_basenames(
     # Mandatory parameters.

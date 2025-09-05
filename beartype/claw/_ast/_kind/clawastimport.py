@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **beforelist trackers** (i.e., low-level mixins managing the beforelist
-automating decorator positioning for :mod:`beartype.claw` import hooks).
+Beartype **import statement abstract syntax tree (AST) transformer mixin**
+(i.e., low-level superclass instrumenting import statements relevant to runtime
+type-checking in modules hooked by :mod:`beartype.claw` import hooks).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -30,20 +31,22 @@ from ast import (
     unparse,
 )
 from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
-# from beartype.claw._ast._scope.clawastscopebefore import ImportedAttrNameTrie
 from beartype.roar import (
     BeartypeClawAstImportException,
     BeartypeClawImportConfException,
 )
 from beartype.typing import (
+    TYPE_CHECKING,
     Optional,
     Union,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
 from beartype._conf.decorplace.confplacetrie import (
     BeartypeDecorPlaceTrieABC,
+    BeartypeDecorPlaceInstanceTrie,
     BeartypeDecorPlaceTypeTrie,
 )
 from beartype._data.api.standard.dataast import NODE_CONTEXT_LOAD
@@ -57,7 +60,6 @@ from beartype._data.kind.datakindiota import (
     Iota,
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-# from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._data.typing.datatyping import (
     ListStrs,
     NodeDecoratable,
@@ -65,18 +67,13 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.ast.utilastget import (
     get_node_attr_basenames,
+    get_node_attr_basename_first,
     get_node_repr_indented,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: To improve forward compatibility with the superclass API over which
-# we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
-# and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 class BeartypeNodeTransformerImportMixin(object):
     '''
     Beartype **decorator-hostile tracker** (i.e., visitor pattern recursively
@@ -108,6 +105,11 @@ class BeartypeNodeTransformerImportMixin(object):
         * Else, this list.
         '''
 
+    # ..................{ CLASS VARIABLES                    }..................
+    # Squelch false negatives from mypy. This is absurd. This is mypy.
+    if TYPE_CHECKING:
+        _scope: BeartypeNodeScope
+
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
         '''
@@ -123,18 +125,17 @@ class BeartypeNodeTransformerImportMixin(object):
     # ..................{ MAPPERS                            }..................
     #FIXME: Call from these other mixin methods, please:
     #* The BeartypeNodeTransformerPep526Mixin.visit_AnnAssign() method.
-    def map_type_imported_to_instance_if_decor_hostile(
-        self, node_name_type: AST, node_name_instance: AST) -> None:
+    def map_node_attr_imported_to_assigned(
+        self, node_name_imported: AST, node_name_assigned: AST) -> None:
         '''
-        Map the type (whose fully-qualified ``"."``-delimited name *or*
-        unqualified basename is encapsulated by the first passed AST node)
-        previously imported into the currently visited lexical scope of the
-        currently visited module (whole name or basename is similarly
-        encapsulated by the second passed AST node) to a new instance of that
-        type in that scope of that module if that type is well-known to define
-        one or more decorator-hostile decorator methods *or* silently reduce to
-        a noop otherwise (i.e., if that type is unknown or unparseable as a
-        simple reference to a type).
+        Map the source attribute (whose possibly fully-qualified name is
+        encapsulated by the passed node) previously imported into the current
+        lexical scope of the currently visited module to the target attribute
+        (whose possibly fully-qualified name is encapsulated by the passed node)
+        assigned in this same scope if this source attribute is a third-party
+        type transitively defining decorator-hostile decorators *or* silently
+        reduce to a noop otherwise (i.e., if this source attribute is *not* such
+        a type).
 
         This public method is intended to be called by external ``visit_*``
         methods of sibling mixins of the
@@ -145,27 +146,127 @@ class BeartypeNodeTransformerImportMixin(object):
 
         Parameters
         ----------
-        node_name_type : AST
+        node_name_imported : AST
             Node possibly encapsulating the fully-qualified name or unqualified
-            basename of a previously imported type in an assignment statement.
-        node_name_instance : AST
+            basename of a source type in an assignment statement.
+        node_name_assigned : AST
             Node possibly encapsulating the fully-qualified name or unqualified
             basename of a target instance of that type in an assignment
             statement.
         '''
-        assert isinstance(node_name_type, AST), (
-            f'{repr(node_name_type)} neither attribute nor name AST node.')
-        assert isinstance(node_name_instance, AST), (
-            f'{repr(node_name_instance)} neither attribute nor name AST node.')
+        assert isinstance(node_name_imported, AST), (
+            f'{repr(node_name_imported)} not AST node.')
+        assert isinstance(node_name_assigned, AST), (
+            f'{repr(node_name_assigned)} not AST node.')
 
-        # Replace the contents of the existing "_attr_basenames" list with the
-        # one or more unqualified basenames comprising the possibly
-        # fully-qualified name of this type.
-        get_node_attr_basenames(
-            node=node_name_type, attr_basenames=self._attr_basenames)
+        # If this target attribute name is *NOT* encapsulated by a simple "Name"
+        # node, this target attribute name is *NOT* an unqualified basename.
+        # In this case, silently reduce to a noop.
+        #
+        # Target attribute names that contain one or more "." delimiters are at
+        # least partially (and possibly fully) qualified. Handling qualified
+        # target attribute names is *EXTREMELY* non-trivial. Doing so
+        # necessitates new data structures that have yet to be implemented. See
+        # the "FIXME:" comment below for further commentary.
+        if not isinstance(node_name_assigned, Name):
+            return
+        # Else, this target attribute name is encapsulated by a simple "Name"
+        # node and is thus an unqualified basename.
 
-        #FIXME: Implement us up, please.
-        pass
+        # Either:
+        # * If this source attribute name refers to a previously imported
+        #   decorator-hostile decorator, "True".
+        # * If this source attribute name refers to a previously imported
+        #   submodule, type, or instance transitively defining one or more
+        #   decorator-hostile decorators, the imported decorator-hostile
+        #   attribute name subtrie describing the contents of that
+        #   submodule, type, or instance.
+        # * Else (i.e., if this source attribute name refers to neither a
+        #   previously imported decorator-hostile decorator *nor* a
+        #   submodule, type, or instance transitively defining these
+        #   decorators), "False".
+        imported_attr_basename_subtrie = self._is_node_scoped_attr_name(
+            node_name_imported)
+
+        # If this source attribute name does *NOT* refer to a previously
+        # imported type defining one or more decorator-hostile decorator
+        # methods, this assignment statement is *NOT* instantiating an instance
+        # of such a type. Ergo, this target attribute *CANNOT* be an instance
+        # of such a type. In this case, silently reduce to a noop.
+        if not isinstance(
+            imported_attr_basename_subtrie, BeartypeDecorPlaceTypeTrie):
+            return
+        # Else, this source attribute name refers to a previously imported type
+        # defining one or more decorator-hostile decorator methods.
+
+        #FIXME: *NICE TRY*... but "Nope." This only works if
+        #"node_name_assigned" is a trivial "Name" node. If
+        #"node_name_assigned" is instead a non-trivial "Attribute" node
+        #hierarchy, we instead need to iterate over this hierarchy and, for each
+        #basename comprising a "node_name_assigned_basenames" list of basenames
+        #*EXCEPT* the last such basename, instantiate a new
+        #"BeartypeDecorPlaceInstanceTrie" wrapping a nested frozen dictionary.
+        #
+        #But... that's *EXACTLY* the problem, isn't it? Nested frozen dictionary
+        #simply don't work. We'd instead need to instantiate mutable nested
+        #chain maps so that repeated calls to this method across the same
+        #lexical scope behave as expected (i.e., mutate the same nested chain
+        #map) rather than raising exceptions (i.e., due to trying to erroneously
+        #mutate a nested frozen dictionary).
+        #
+        #However, that then ignites an even less trivial issue with nested
+        #scopes, which then need to somehow be able to efficiently inherit and
+        #safely mutate those nested chain maps across nested scopes as needed.
+        #In short, the whole thing *REALLY* warrants a whole new
+        #"BeartypeScopeChainMap" implementation that pretty much rewrites the
+        #standard "ChainMap" type from the ground up to impose recursive chain
+        #mapping at *ALL* nesting levels of the chain map hierarchy. By compare,
+        #the standard "ChainMap" type only chain maps the outermost nesting
+        #level; inner nesting levels are left to their own devices, which is
+        #useless for our purposes. We'll probably end up doing that *EVENTUALLY*
+        #-- but we really want to delay that eventuality as long as feasible.
+        #
+        #Consider the common use case of:
+        #    from celery import Celery
+        #
+        #    class SomeClass(object):
+        #        def __init__(self) -> None:
+        #            # This assignment statement triggers a call to this
+        #            # map_node_attr_imported_to_assigned() method!
+        #            self._celery = Celery()
+        #
+        #Interesting. That *IS* the common case, isn't it? "self" attributes. I
+        #suppose we could try to support those by manually handling *EXACTLY*
+        #the common case of an outer "Attribute" node nesting an inner "Name"
+        #node, but... Nah. We'd still need nested chain maps and thus our own
+        #"BeartypeScopeChainMap" implementation. Moreover, is there even any
+        #point? After all, assigning to "self" semantically assigns to
+        #externally instantiated instances of that type. There's *NO* way we're
+        #tracking that madness just to detect decorator-hostile decorators,
+        #right? Supreme overkill.
+        #
+        #Ergo, we currently ignore everything *EXCEPT* trivial "Name" nodes.
+        assigned_attr_basename_first: str = get_node_attr_basename_first(  # type: ignore[assignment]
+            node=node_name_assigned, attr_basenames=self._attr_basenames)
+
+        # Target scoped attribute name subtrie describing all decorator-hostile
+        # methods bound to this instance, coerced from this source imported
+        # attribute name subtrie for disambiguity. While preserving the type of
+        # this subtrie as a "BeartypeDecorPlaceTypeTrie" would (of course) be
+        # trivially feasible, doing so could also invite false positives and
+        # negatives with subsequent calls to this or other methods incorrectly
+        # detecting this instance-specific subtrie as a type-specific subtrie.
+        assigned_attr_basename_subtrie = BeartypeDecorPlaceInstanceTrie(
+            imported_attr_basename_subtrie)
+
+        # Map the unqualified basename of this target instance of that type in
+        # an assignment statement encapsulated by the passed node to the scoped
+        # attribute name subtrie describing all decorator-hostile methods bound
+        # to this instance.
+        self._map_scoped_attr_name_to_subtrie(
+            attr_name=assigned_attr_basename_first,
+            attr_name_subtrie=assigned_attr_basename_subtrie,
+        )
 
     # ..................{ VISITORS                           }..................
     def visit_Import(self, node: Import) -> NodeVisitResult:
@@ -188,11 +289,6 @@ class BeartypeNodeTransformerImportMixin(object):
         # ..................{ PREAMBLE                       }..................
         # Recursively transform *ALL* child nodes of this parent node.
         self.generic_visit(node)  # type: ignore[attr-defined]
-
-        # ..................{ LOCALS                         }..................
-        # Metadata describing the current lexical scope being recursively
-        # visited by this AST transformer.
-        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
 
         # ..................{ SEARCH                         }..................
         # For each child "alias" node of this parent "Import" node encapsulating
@@ -245,23 +341,21 @@ class BeartypeNodeTransformerImportMixin(object):
             # statement is ignorable with respect to @beartype. In this case,
             # silently skip this ignorable package by returning this node as is.
             if import_package_name not in (
-                scope.beforelist.attested_module_names):
+                self._scope.beforelist.schema_module_names):
                 return node
             # Else, this import statement imports a third-party module known to
             # define decorator-hostile decorators.
 
-            # Decorator function beforelist unique to that package, defined as
-            # a nested frozen dictionary mapping from strings to either the
-            # "None" signifying a terminal leaf node *OR* yet another such
-            # recursively nested frozen dictionary.
-            attested_func_subtrie = (
-                scope.beforelist.attested_attr_basename_trie.get(
+            # Child (sub)trie of the scoped attribute name trie unique to that
+            # package in the current scope of the currently visited module.
+            import_package_name_subtrie = (
+                self._scope.beforelist.schema_attr_basename_trie.get(
                     import_package_name))
 
             # Map the unqualified basename of that package to this subtrie.
-            scope.map_beforelist_imported_attr_basename_to_subtrie(
-                attr_basename=import_package_name,
-                attr_subtrie=attested_func_subtrie,
+            self._map_scoped_attr_name_to_subtrie(
+                attr_name=import_package_name,
+                attr_name_subtrie=import_package_name_subtrie,
             )
 
         # ..................{ RETURN                         }..................
@@ -295,10 +389,6 @@ class BeartypeNodeTransformerImportMixin(object):
         self.generic_visit(node)  # type: ignore[attr-defined]
 
         # ..................{ LOCALS ~ module                }..................
-        # Metadata describing the current lexical scope being recursively
-        # visited by this AST transformer.
-        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
-
         # Fully-qualified name of the external module being imported from if any
         # *OR* "None".
         #
@@ -329,7 +419,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
         if import_package_name not in (
-            scope.beforelist.attested_module_names):
+            self._scope.beforelist.schema_module_names):
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
@@ -345,15 +435,15 @@ class BeartypeNodeTransformerImportMixin(object):
         #   more decorator-hostile decorator functions, yet another such
         #   recursively nested frozen dictionary of the same structure.
         # * Else, "None".
-        attested_func_subtrie_parent = (
-            scope.beforelist.attested_attr_basename_trie)
-        attested_func_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
+        schema_func_subtrie_parent = (
+            self._scope.beforelist.schema_attr_basename_trie)
+        schema_func_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
 
         #FIXME: Revise commentary, please. *sigh*
         # Frozen set of the unqualified basename of each decorator-hostile
         # decorator function defined by that third-party module if any *OR* the
         # empty frozen dictionary otherwise.
-        attested_funcs_subtrie: BeartypeDecorPlaceTrie = FROZENDICT_EMPTY
+        schema_funcs_subtrie: BeartypeDecorPlaceTrie = FROZENDICT_EMPTY
 
         # 0-based indices of the current and last unqualified basenames of the
         # fully-qualified name of the external module being imported from.
@@ -373,16 +463,16 @@ class BeartypeNodeTransformerImportMixin(object):
             # Unwrap the parent frozen dictionary against this unqualified
             # basename into either a nested frozen dictionary, nested frozen
             # set, or "None" (as detailed above).
-            attested_func_subtrie = attested_func_subtrie_parent.get(
+            schema_func_subtrie = schema_func_subtrie_parent.get(
                 import_module_basename, SENTINEL)
 
             #FIXME: Revise commentary, please. *sigh*
             # If this is a non-recursively nested frozen set, this set is
             # non-recursive and thus terminates this iteration. In this case...
-            if attested_func_subtrie is None:
+            if schema_func_subtrie is None:
                 #FIXME: Revise commentary, please. *sigh*
                 # Localize this frozenset for subsequent lookup.
-                attested_funcs_subtrie = attested_func_subtrie_parent
+                schema_funcs_subtrie = schema_func_subtrie_parent
 
                 # If this is the last unqualified basename of the
                 # fully-qualified name of the external module being imported
@@ -409,7 +499,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 # * A caller configures the beartype_this_package() hook with a
                 #   beartype configuration resembling:
                 #     beartype_this_package(BeartypeConf(
-                #         attested_attr_basename_trie=FrozenDict({
+                #         schema_attr_basename_trie=FrozenDict({
                 #             'bad_package': frozenset(('bad_submodule',)),})))
                 # * One or more submodules of the caller's package import
                 #   attributes from that submodule resembling:
@@ -424,10 +514,10 @@ class BeartypeNodeTransformerImportMixin(object):
                 raise BeartypeClawAstImportException(
                     f'Beartype configuration {repr(self._conf)} '  # type: ignore[attr-defined]
                     f'decorator function beforelist '
-                    f'{repr(scope.beforelist.attested_attr_basename_trie)} '
+                    f'{repr(self._scope.beforelist.schema_attr_basename_trie)} '
                     f'nested frozen set of '
                     f'decorator-hostile decorator function basenames '
-                    f'{repr(attested_funcs_subtrie)} '
+                    f'{repr(schema_funcs_subtrie)} '
                     f'implies these basenames to represent '
                     f'functions rather than modules, but '
                     f'module "{self._module_name}" import statement '  # type: ignore[attr-defined]
@@ -445,7 +535,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # statement to *NOT* import from such a (sub)module and thus be
             # ignorable with respect to @beartype. In this case, silently reduce
             # to a noop by returning this node unmodified.
-            elif attested_func_subtrie is SENTINEL:
+            elif schema_func_subtrie is SENTINEL:
                 return node
             # Else, this is a non-empty frozen dictionary (by elimination),
             # implying this basename to be that of a third-party (sub)module
@@ -454,11 +544,11 @@ class BeartypeNodeTransformerImportMixin(object):
             # unqualified basename in this list.
             else:
                 #FIXME: Add a validation message, please. *sigh*
-                assert isinstance(attested_func_subtrie, FrozenDict)
+                assert isinstance(schema_func_subtrie, FrozenDict)
 
             # Record the parent frozen dictionary of the next iteration to be
             # the current frozen dictionary.
-            attested_func_subtrie_parent = attested_func_subtrie
+            schema_func_subtrie_parent = schema_func_subtrie
 
             # Increment the index of the next unqualified basename to visit.
             import_module_basename_index_curr += 1
@@ -511,16 +601,16 @@ class BeartypeNodeTransformerImportMixin(object):
             if (
                 # That module defines one or more decorator-hostile decorators
                 # *AND*...
-                attested_funcs_subtrie and
+                schema_funcs_subtrie and
                 # The unqualified basename of this attribute is that of a
                 # decorator-hostile decorator function in that module...
-                import_attr_name_src in attested_funcs_subtrie
+                import_attr_name_src in schema_funcs_subtrie
             ):
                 # Map the unqualified basename of this decorator-hostile
                 # decorator function as a new terminal trie leaf node (i.e.,
                 # key-value pair whose value is "None").
-                scope.map_beforelist_imported_attr_basename_to_subtrie(
-                    attr_basename=import_attr_name_trg, attr_subtrie=None)
+                self._map_scoped_attr_name_to_subtrie(
+                    attr_name=import_attr_name_trg, attr_name_subtrie=None)
             # Else, either that module defines no decorator-hostile decorator
             # functions *OR* the unqualified basename of this attribute is *NOT*
             # that of a decorator-hostile decorator function in that module. In
@@ -536,18 +626,18 @@ class BeartypeNodeTransformerImportMixin(object):
             elif (
                 # That module defines one or more submodules transitively
                 # defining one or more decorator-hostile decorators *AND*...
-                isinstance(attested_func_subtrie, BeartypeDecorPlaceTrieABC) and
+                isinstance(schema_func_subtrie, BeartypeDecorPlaceTrieABC) and
                 # The unqualified basename of this attribute is that of such a
                 # submodule...
-                import_attr_name_src in attested_func_subtrie
+                import_attr_name_src in schema_func_subtrie
             ):
                 # Map the unqualified basename of that submodule transitively
                 # defining one or more decorator-hostile decorator functions
                 # to a new non-terminal trie stem node (i.e., key-value pair
                 # whose value is a nested frozen dictionary).
-                scope.map_beforelist_imported_attr_basename_to_subtrie(
-                    attr_basename=import_attr_name_trg,
-                    attr_subtrie=attested_func_subtrie,
+                self._map_scoped_attr_name_to_subtrie(
+                    attr_name=import_attr_name_trg,
+                    attr_name_subtrie=schema_func_subtrie,
                 )
 
             #FIXME: Implement us up, please. *sigh*
@@ -570,6 +660,65 @@ class BeartypeNodeTransformerImportMixin(object):
         # ..................{ RETURN                         }..................
         # Return this node unmodified.
         return node
+
+    # ....................{ PRIVATE ~ mappers              }....................
+    def _map_scoped_attr_name_to_subtrie(
+        self,
+        attr_name: str,
+        attr_name_subtrie: BeartypeDecorPlaceSubtrie
+    ) -> None:
+        '''
+        Map the passed possibly fully-qualified name of a third-party
+        decorator-hostile attribute accessible to this scope (e.g., by an import
+        or assignment statement) to the passed **scoped attribute name subtrie**
+        (i.e., recursive tree structure whose nodes are the unqualified
+        basenames of third-party attributes imported into a scope of the
+        currently visited module such that these attributes are either
+        themselves decorator-hostile decorators *or* submodules, types, or
+        instances transitively defining decorator-hostile decorators).
+
+        Parameters
+        ----------
+        attr_name : str
+            Possibly fully-qualified name of the attribute to be mapped.
+        attr_name_subtrie : BeartypeDecorPlaceSubtrie,
+            Scoped attribute name subtrie to map this attribute name to.
+        '''
+        assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+        assert isinstance(
+            attr_name_subtrie, NoneTypeOr[BeartypeDecorPlaceTrieABC]), (
+            f'{repr(attr_name_subtrie)} neither '
+            f'"None" nor frozen dictionary.'
+        )
+
+        # Render this scope's beforelist safe for modification if this
+        # beforelist is *NOT* yet safely modifiable.
+        self._scope.permute_beforelist_if_needed()
+
+        # Fully-qualified name of the top-level root package or module
+        # transitively containing the attribute with the passed name (e.g.,
+        # "some_package" when "attr_name" is
+        # "some_package.some_module.some_submodule").
+        #
+        # This root package name is *MUCH* more relevant than this attribute
+        # name, which typically signifies the name of an external attribute
+        # imported into the currently visited module. Trivial imports of the
+        # form "import {package_name}" are similar to complex imports of the
+        # form "import {package_name}.{submodule_name}.{attr_name}". In both
+        # cases, Python only imports the top-level root package whose name is
+        # "{package_name}" into the current lexical scope. For static analysis
+        # purposes, trailing "."-prefixed substrings like
+        # ".{submodule_name}.{attr_name}" are almost entirely irrelevant.
+        #
+        # Note this has been profiled to be the fastest one-liner parsing the
+        # first "."-suffixed substring from a "."-delimited string.
+        attr_basename = (
+            attr_name.partition('.')[0] if '.' in attr_name else attr_name)
+
+        # Map the fully-qualified name of the top-level root package or module
+        # transitively containing the attribute with this name to this subtrie.
+        self._scope.beforelist.scoped_attr_basename_trie[attr_basename] = (  # type: ignore[index]
+            attr_name_subtrie)
 
     # ....................{ PRIVATE ~ decorators           }....................
     #FIXME: Revise docstring, please. This method now employs a highly
@@ -739,10 +888,6 @@ class BeartypeNodeTransformerImportMixin(object):
             f'{repr(node_beartype_decorator)} not AST expression node.')
 
         # ..................{ LOCALS                         }..................
-        # Metadata describing the current lexical scope being recursively
-        # visited by this AST transformer.
-        scope: BeartypeNodeScope = self._scopes[-1]  # type: ignore[attr-defined]
-
         # If either...
         #
         # Note that this is the common case. Since undecorated types and
@@ -757,7 +902,7 @@ class BeartypeNodeTransformerImportMixin(object):
             #
             # The currently visited module imports neither decorator-hostile
             # decorators *NOR* modules transitively defining such decorators...
-            not scope.beforelist.imported_attr_basename_trie
+            not self._scope.beforelist.scoped_attr_basename_trie
         ):
         # Then this type or callable is decorated by *NO* decorator-hostile
         # decorators. In this case, the @beartype decorator may be safely
@@ -879,7 +1024,7 @@ class BeartypeNodeTransformerImportMixin(object):
 
             # Either:
             # * If this decorator name refers to a previously imported
-            #   decorator-hostile decorator, "False".
+            #   decorator-hostile decorator, "True".
             # * If this decorator name refers to a previously imported
             #   submodule, type, or instance transitively defining one or more
             #   decorator-hostile decorators, the imported decorator-hostile
@@ -888,19 +1033,18 @@ class BeartypeNodeTransformerImportMixin(object):
             # * Else (i.e., if this decorator name refers to neither a
             #   previously imported decorator-hostile decorator *nor* a
             #   submodule, type, or instance transitively defining these
-            #   decorators), "True".
-            is_decor_hostile = self._is_node_imported_attr_name(node_decor)
+            #   decorators), "False".
+            is_decor_hostile = self._is_node_scoped_attr_name(node_decor)
 
             # If this decorator name refers to a previously imported submodule,
             # type, or instance transitively defining one or more
             # decorator-hostile decorators, this decorator is *NOT* actually a
             # decorator according to the beforelist. But this decorator is a
-            # decorator, clearly! This implies the user to have improperly
-            # configured a "beartype.claw" import hook with an erroneous
-            # beforelist specifying this imported decorator-hostile decorator to
-            # actually be a non-decorator submodule, type, or instance. An
-            # object can be a decorator *OR* non-decorator -- but not both. In
-            # this case...
+            # decorator, clearly! Ergo, the user improperly configured a
+            # "beartype.claw" import hook with an erroneous beforelist
+            # specifying this imported decorator-hostile decorator to actually
+            # be a non-decorator submodule, type, or instance. An object can be
+            # a decorator *OR* non-decorator -- but not both. In this case...
             if isinstance(is_decor_hostile, BeartypeDecorPlaceTrieABC):
                 # Possibly fully-qualified name of this decorator in this
                 # lexical scope, defined by "unparsing" this child node. The
@@ -917,7 +1061,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 raise BeartypeClawAstImportException(
                     f'Beartype configuration {repr(self._conf)} '  # type: ignore[attr-defined]
                     f'decorator position beforelist '
-                    f'{repr(scope.beforelist.attested_attr_basename_trie)} '
+                    f'{repr(self._scope.beforelist.schema_attr_basename_trie)} '
                     f'nested frozen dictionary of decorator-hostile decorators '
                     f'{repr(is_decor_hostile)} erroneously implies '
                     f'object "{node.name}" decorator @{decor_name} '
@@ -970,27 +1114,25 @@ class BeartypeNodeTransformerImportMixin(object):
             node.decorator_list.append(node_beartype_decorator)
 
     # ....................{ PRIVATE ~ finders              }....................
-    #FIXME: Call above, please. *sigh*
     #FIXME: Generalize comments below to refer to "attribute" rather than
     #"decorator", please. *sigh*
-    def _is_node_imported_attr_name(
-        self, node: AST) -> Union[BeartypeDecorPlaceSubtrie, bool]:
+    def _is_node_scoped_attr_name(self, node: AST) -> Union[
+        BeartypeDecorPlaceSubtrie, bool]:
         '''
         :data:`True` if the attribute name (presumably referenced from the
         current scope of the currently visited module) encapsulated by the
         passed node is that of a previously imported decorator-hostile
-        decorator, the relevant **imported decorator-hostile attribute name
-        subtrie** (i.e., recursive tree structure whose nodes are the
-        unqualified basenames of third-party attributes imported into a scope of
-        the currently visited module such that these attributes are either
+        decorator, an **imported decorator-hostile attribute name subtrie**
+        (i.e., recursive tree structure whose nodes are the unqualified
+        basenames of third-party attributes imported into a scope of the
+        currently visited module such that these attributes are either
         themselves decorator-hostile decorators *or* submodules, types, or
         instances transitively defining decorator-hostile decorators) if that
-        attribute name is instead that of a previously imported submodule, type,
-        or instance transitively defining one or more decorator-hostile
-        decorators, or :data:`False` otherwise (i.e., if this attribute name is
-        *not* that of either a previously imported decorator-hostile decorator
-        or a submodule, type, or instance transitively defining such
-        decorators).
+        attribute name is that of a previously imported submodule, type, or
+        instance transitively defining one or more decorator-hostile decorators,
+        or :data:`False` otherwise (i.e., if this attribute name is *not* that
+        of either a previously imported decorator-hostile decorator *or* a
+        submodule, type, or instance transitively defining such decorators).
 
         This finder identifies whether the passed attribute name refers to a
         previously imported decorator-hostile decorator or not. Specifically,
@@ -1041,6 +1183,20 @@ class BeartypeNodeTransformerImportMixin(object):
               :data:`False`.
         '''
 
+        # Current child (sub)trie of the parent scoped attribute name (sub)trie
+        # being recursed into by iteration below, initialized to the scoped
+        # attribute name trie unique to the current scope of the currently
+        # visited module.
+        scoped_attr_name_subtrie = (
+            self._scope.beforelist.scoped_attr_basename_trie)
+
+        # If *NO* decorator-hostile attributes have been imported into the
+        # current scope, silently reduce to a noop by returning false.
+        if not scoped_attr_name_subtrie:
+            return False
+        # Else, one or more decorator-hostile attributes have been imported into
+        # the current scope.
+
         # Replace the contents of the existing "_attr_basenames" list with the
         # one or more unqualified basenames comprising the possibly
         # fully-qualified name of this attribute.
@@ -1066,13 +1222,6 @@ class BeartypeNodeTransformerImportMixin(object):
         # Else, this list is non-empty, implying the prior getter succeeded in
         # reconstructing this list from this node.
 
-        # Current child (sub)trie of the parent imported attribute name
-        # (sub)trie being recursed into by iteration below, initialized to the
-        # root imported attribute name trie unique to the current scope of the
-        # currently imported module.
-        imported_attr_name_subtrie = (
-            self._scopes[-1].beforelist.imported_attr_basename_trie)  # type: ignore[attr-defined]
-
         # For the unqualified basename of either each parent submodule
         # transitively defining this attribute itself or this attribute...
         for node_decorator_basename in self._attr_basenames:
@@ -1081,7 +1230,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # third-party submodule, type, or instance transitively defining one
             # or more decorator-hostile decorators or such a decorator with the
             # same basename *OR* the sentinel.
-            imported_attr_name_subtrie = imported_attr_name_subtrie.get(  # type: ignore[assignment]
+            scoped_attr_name_subtrie = scoped_attr_name_subtrie.get(  # type: ignore[assignment]
                 node_decorator_basename, SENTINEL)  # type: ignore[arg-type]
 
             # If the parent (sub)trie contained *NO* basename matching that of a
@@ -1100,7 +1249,7 @@ class BeartypeNodeTransformerImportMixin(object):
             #   been preceded by any other decorators. That's what
             #   decorator-hostile means. But that decorator *WAS* preceded by
             #   this decorator. Proof by contradiction yields this conclusion.
-            if imported_attr_name_subtrie is SENTINEL:
+            if scoped_attr_name_subtrie is SENTINEL:
                 return False
             # Else, the parent (sub)trie contained a basename matching that of a
             # problematic third-party object imported into the currently visited
@@ -1110,7 +1259,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # (sub)trie associated with this "None" value is a terminal leaf
             # node, implying this attribute to be a decorator-hostile decorator.
             # In this case, immediately return true.
-            elif imported_attr_name_subtrie is None:
+            elif scoped_attr_name_subtrie is None:
                 return True
             # Else, this child subtrie is *NOT* "None". By elimination, this
             # child subtrie *MUST* actually be yet another recursively nested
@@ -1130,7 +1279,7 @@ class BeartypeNodeTransformerImportMixin(object):
         #   returned true. But this method has yet to return anything! QED.
 
         # Assert sanity. You never know, bear friends. And neither do we.
-        assert isinstance(imported_attr_name_subtrie, BeartypeDecorPlaceTrieABC)
+        assert isinstance(scoped_attr_name_subtrie, BeartypeDecorPlaceTrieABC)
 
         # Return the most recently visited imported attribute name (sub)trie.
-        return imported_attr_name_subtrie
+        return scoped_attr_name_subtrie

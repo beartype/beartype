@@ -71,7 +71,7 @@ class BeartypeNodeScopes(list[BeartypeNodeScope]):
         #FIXME: Cease nullifying this trie, please. Ideally, this trie should be
         #shared across modules. Doing so will almost certainly prove *EXTREMELY*
         #non-trivial, though. We'll need to (once again) attempt to:
-        #* Unify this mutable trie with the immutable "attested_attr_basename_trie".
+        #* Unify this mutable trie with the immutable "schema_attr_basename_trie".
         #* Uniquify each top-level "ChainMap" mapping of this mutable trie by
         #  defining a single globally rooted "ChainMap" mapping hierarchically
         #  subdivided into the unqualified basenames comprising all previously
@@ -85,7 +85,7 @@ class BeartypeNodeScopes(list[BeartypeNodeScope]):
         # associated with this global scope. For both safety and simplicity,
         # this trie is currently isolated to the currently visited module rather
         # than shared across modules.
-        node_scope_global.beforelist.imported_attr_basename_trie = None
+        node_scope_global.beforelist.scoped_attr_basename_trie = None
 
         # Initialize this stack with this global scope.
         self.append(node_scope_global)

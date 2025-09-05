@@ -71,7 +71,7 @@ matching the root and non-root nesting levels of this trie.
 #"class BeartypeDecorPlacePackagesTrie(FrozenDict):" subclass. We don't require
 #that at the moment and thus can't be bothered. That said, going public with
 #this will necessitate doing this for future extensibility.
-ATTESTED_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = FrozenDict({
+DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = FrozenDict({
         # The third-party @task decorator method of the "celery.Celery" type.
         # See also: https://github.com/beartype/beartype/issues/500
         'celery': BeartypeDecorPlacePackageTrie({

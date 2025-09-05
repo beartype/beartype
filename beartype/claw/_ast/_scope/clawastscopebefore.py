@@ -21,7 +21,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.conf.dataconfplace import (
-    ATTESTED_ATTR_NAME_TRIE,
+    DECOR_HOSTILE_ATTR_NAME_TRIE,
     BeartypeDecorPlaceTrie,
     BeartypeDecorPlaceSubtrie,
 )
@@ -34,7 +34,7 @@ from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from collections import ChainMap
 
 # ....................{ HINTS                              }....................
-ImportedAttrNameTrie = ChainMapHint[str, BeartypeDecorPlaceSubtrie]
+ScopedAttrNameTrie = ChainMapHint[str, BeartypeDecorPlaceSubtrie]
 '''
 PEP-compliant recursive alias matching a **beforelist imported attribute name
 trie** (i.e., recursive tree structure whose nodes are the unqualified basenames
@@ -56,20 +56,20 @@ class BeartypeNodeScopeBeforelist(object):
 
     Attributes
     ----------
-    attested_attr_basename_trie : BeartypeDecorPlaceTrie
-        **Source importable decorator-hostile attribute name trie** (i.e.,
-        recursive tree structure whose nodes are the unqualified basenames of
-        third-party attributes that *could* possibly be imported into a scope of
-        the currently visited module such that these attributes are either
-        themselves decorator-hostile decorators *or* submodules transitively
-        defining decorator-hostile decorators).
+    schema_attr_basename_trie : BeartypeDecorPlaceTrie
+        **Source attribute name trie schema** (i.e., recursive tree structure
+        whose nodes are the unqualified basenames of third-party attributes that
+        *could* possibly be imported into a scope of the currently visited
+        module such that these attributes are either themselves
+        decorator-hostile decorators *or* submodules transitively defining
+        decorator-hostile decorators).
 
         This tree structure is internally consumed as input by the higher-level
         :class:`beartype.claw._ast._kind.clawastimport.BeartypeNodeTransformerImportMixin`
         transformer. This immutable tree structure is produced by dynamically
         merging the contents of the immutable
-        :data:`.ATTESTED_ATTR_NAME_TRIE` singleton with those
-        of the immutable
+        :data:`.DECOR_HOSTILE_ATTR_NAME_TRIE` singleton with those of the
+        immutable
         :attr:`beartype.BeartypeConf.claw_beforelist_decor_hostile_func_trie`
         configuration option.
 
@@ -79,18 +79,17 @@ class BeartypeNodeScopeBeforelist(object):
         decorator functions to either a frozen set of the unqualified basenames
         of those functions *or* yet another such recursively nested frozen
         dictionary.
-    attested_module_names : frozenset[str]
-        Frozen set of the fully-qualified names all **decorator-hostile
-        modules** (i.e., modules importing one or more decorator-hostile
-        decorator function and/or types declaring one or more decorator-hostile
-        methods).
-    imported_attr_basename_trie : Optional[ImportedAttrNameTrie]
-        **Target imported decorator-hostile attribute name trie** (i.e.,
-        recursive tree structure whose nodes are the unqualified basenames of
-        third-party attributes imported into a scope of the currently visited
-        module such that these attributes are either themselves
-        decorator-hostile decorators *or* submodules, types, or instances
-        transitively defining decorator-hostile decorators).
+    schema_module_names : frozenset[str]
+        **Source module name schema** (i.e., frozen set of the fully-qualified
+        names of all root packages and modules transitively defining one or more
+        decorator-hostile decorators).
+    scoped_attr_basename_trie : Optional[ScopedAttrNameTrie]
+        **Target scoped attribute name trie** (i.e., recursive tree structure
+        whose nodes are the unqualified basenames of third-party attributes
+        imported into a scope of the currently visited module such that these
+        attributes are either themselves decorator-hostile decorators *or*
+        submodules, types, or instances transitively defining decorator-hostile
+        decorators).
 
         This tree structure is initially :data:`None`, in which case external
         callers are expected to explicitly initialize this attribute to the
@@ -129,28 +128,28 @@ class BeartypeNodeScopeBeforelist(object):
     # Slot all instance variables defined on this object to reduce the costs of
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
-        'attested_attr_basename_trie',
-        'attested_module_names',
-        'imported_attr_basename_trie',
+        'schema_attr_basename_trie',
+        'schema_module_names',
+        'scoped_attr_basename_trie',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        attested_attr_basename_trie: BeartypeDecorPlaceTrie
-        attested_module_names: FrozenSetStrs
-        imported_attr_basename_trie: Optional[ImportedAttrNameTrie]
+        schema_attr_basename_trie: BeartypeDecorPlaceTrie
+        schema_module_names: FrozenSetStrs
+        scoped_attr_basename_trie: Optional[ScopedAttrNameTrie]
 
     # ....................{ INITIALIZERS                   }....................
     def __init__(
         self,
 
         # Mandatory parameters.
-        attested_attr_basename_trie: BeartypeDecorPlaceTrie,
+        schema_attr_basename_trie: BeartypeDecorPlaceTrie,
 
         # Optional parameters.
-        attested_module_names: Optional[FrozenSetStrs] = None,
-        imported_attr_basename_trie: Optional[ImportedAttrNameTrie] = None,
+        schema_module_names: Optional[FrozenSetStrs] = None,
+        scoped_attr_basename_trie: Optional[ScopedAttrNameTrie] = None,
         is_validate: bool = True,
     ) -> None:
         '''
@@ -158,17 +157,17 @@ class BeartypeNodeScopeBeforelist(object):
 
         Parameters
         ----------
-        attested_attr_basename_trie : BeartypeDecorPlaceTrie
-            **Decorator function beforelist.** See the class docstring.
-        attested_module_names : Optional[FrozenSetStrs], default: None
-            **Decorator-hostile module names.** See the class docstring.
+        schema_attr_basename_trie : BeartypeDecorPlaceTrie
+            **Source attribute name trie schema.** See the class docstring.
+        schema_module_names : Optional[FrozenSetStrs], default: None
+            **Source module name schema.** See the class docstring.
             Defaults to :data:`None`, in which case this frozen set is
             implicitly constructed as the union of all keys of the passed
             decorator function and method beforelists.
-        imported_attr_basename_trie : Optional[ImportedAttrNameTrie], default: None
-            **Imported attribute name trie.** See the class docstring. Defaults
-            to :data:`None`, in which case this trie is explicitly initialized
-            to the empty dictionary in a just-in-time (JIT) manner as needed.
+        scoped_attr_basename_trie : Optional[ScopedAttrNameTrie], default: None
+            **Target scoped attribute name trie.** See the class docstring.
+            Defaults to :data:`None`, in which case callers explicitly
+            initialize this trie in a just-in-time (JIT) manner as needed.
         is_validate : bool, default: False
             Either:
 
@@ -186,25 +185,25 @@ class BeartypeNodeScopeBeforelist(object):
         # If the caller passed *NO* decorator-hostile module names, initialize
         # this frozen set as the union of all keys of these decorator function
         # and method beforelists.
-        if attested_module_names is None:
-            attested_module_names = frozenset(
-                attested_attr_basename_trie.keys())
+        if schema_module_names is None:
+            schema_module_names = frozenset(
+                schema_attr_basename_trie.keys())
         # Else, the caller passed decorator-hostile module names. In either
         # case, these names are now defined.
 
         # ....................{ VALIDATE                   }....................
         # Shallowly type-check these data structures.
-        assert isinstance(attested_attr_basename_trie, FrozenDict), (
-            f'{repr(attested_module_names)} not frozen dictionary.')
-        assert isinstance(attested_module_names, frozenset), (
-            f'{repr(attested_module_names)} not frozen set.')
-        assert isinstance(imported_attr_basename_trie, NoneTypeOr[ChainMap]), (
-            f'{repr(imported_attr_basename_trie)} neither chain map nor "None".')
+        assert isinstance(schema_attr_basename_trie, FrozenDict), (
+            f'{repr(schema_module_names)} not frozen dictionary.')
+        assert isinstance(schema_module_names, frozenset), (
+            f'{repr(schema_module_names)} not frozen set.')
+        assert isinstance(scoped_attr_basename_trie, NoneTypeOr[ChainMap]), (
+            f'{repr(scoped_attr_basename_trie)} neither chain map nor "None".')
         assert isinstance(is_validate, bool), (
             f'{repr(is_validate)} not boolean.')
 
         #FIXME: Additionally recursively validate the contents of:
-        #* "imported_attr_basename_trie".
+        #* "scoped_attr_basename_trie".
         #
         #We can't be bothered at the moment. One catastrophe at a time! *shrug*
 
@@ -212,29 +211,29 @@ class BeartypeNodeScopeBeforelist(object):
         if is_validate:
             # If this parameter is *NOT* a valid decorator function beforelist,
             # raise an exception.
-            die_unless_decor_hostile_func_trie(attested_attr_basename_trie)
+            die_unless_decor_hostile_func_trie(schema_attr_basename_trie)
             # Else, this parameter is a valid decorator function beforelist.
 
             # Deeply type-check the contents of these data structures.
             assert all(
-                isinstance(module_name, str) for module_name in attested_module_names), (
-                f'{repr(attested_module_names)} not frozen set of strings.')
+                isinstance(module_name, str) for module_name in schema_module_names), (
+                f'{repr(schema_module_names)} not frozen set of strings.')
         # Else, the contents of these data structures are assumed to be valid.
 
         # ....................{ CLASSIFY                   }....................
         # Classify all passed parameters.
-        self.attested_attr_basename_trie = attested_attr_basename_trie
-        self.attested_module_names = attested_module_names
-        self.imported_attr_basename_trie = imported_attr_basename_trie
+        self.schema_attr_basename_trie = schema_attr_basename_trie
+        self.schema_module_names = schema_module_names
+        self.scoped_attr_basename_trie = scoped_attr_basename_trie
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
 
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
-            f'    attested_attr_basename_trie={repr(self.attested_attr_basename_trie)},\n',
-            f'    attested_module_names={repr(self.attested_module_names)},\n',
-            f'    imported_attr_basename_trie={repr(self.imported_attr_basename_trie)},\n',
+            f'    schema_attr_basename_trie={repr(self.schema_attr_basename_trie)},\n',
+            f'    schema_module_names={repr(self.schema_module_names)},\n',
+            f'    scoped_attr_basename_trie={repr(self.scoped_attr_basename_trie)},\n',
             f')',
         ))
 
@@ -248,7 +247,7 @@ class BeartypeNodeScopeBeforelist(object):
 
         Specifically, this shallow copy permutes this scope as follows:
 
-        * The :attr:`.attested_attr_basename_trie` instance variable is
+        * The :attr:`.schema_attr_basename_trie` instance variable is
           shallowly copied by calling its :meth:`.ChainMap.new_child` method,
           whose :attr:`.ChainMap.maps` list is then prefixed by a new empty
           dictionary enabling callers to track local imports safely.
@@ -263,28 +262,28 @@ class BeartypeNodeScopeBeforelist(object):
 
         # Imported attribute name trie unique to this new local scope,
         # initialized to either...
-        imported_attr_basename_trie = (
+        scoped_attr_basename_trie = (
             # If *NO* transitive parent scope of this scope imported a
             # decorator-hostile decorator, this scope is the first scope in this
             # hierarchy of scopes to require an imported attribute name trie. In
             # this case, instantiate this trie as an empty chain map.
             ChainMap()
-            if self.imported_attr_basename_trie is None else
+            if self.scoped_attr_basename_trie is None else
             # Else, some transitive parent scope of this scope already imported
             # a decorator-hostile decorator and thus required this trie. In this
             # case, enable callers to track imports safely across this new scope
             # by shallowly copying this trie unique to this scope.
-            self.imported_attr_basename_trie.new_child()
+            self.scoped_attr_basename_trie.new_child()
         )
 
         # Create and return a shallow copy of this parent beforelist.
         return BeartypeNodeScopeBeforelist(
-            imported_attr_basename_trie=imported_attr_basename_trie,
+            scoped_attr_basename_trie=scoped_attr_basename_trie,
 
             # Share all remaining data structures of this parent beforelist
             # with this child beforelist.
-            attested_attr_basename_trie=self.attested_attr_basename_trie,
-            attested_module_names=self.attested_module_names,
+            schema_attr_basename_trie=self.schema_attr_basename_trie,
+            schema_module_names=self.schema_module_names,
 
             # Avoid uselessly recursively re-validating the contents of these
             # data structures for efficiency.
@@ -294,7 +293,7 @@ class BeartypeNodeScopeBeforelist(object):
 # ....................{ RAISERS                            }....................
 def die_unless_decor_hostile_func_trie(
     # Mandatory parameters.
-    attested_attr_basename_trie: BeartypeDecorPlaceTrie,
+    schema_attr_basename_trie: BeartypeDecorPlaceTrie,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeConfParamException,
@@ -309,7 +308,7 @@ def die_unless_decor_hostile_func_trie(
 
     Parameters
     ----------
-    attested_attr_basename_trie : BeartypeDecorPlaceTrie
+    schema_attr_basename_trie : BeartypeDecorPlaceTrie
         Decorator function beforelist to be validated.
     exception_cls : type[Exception], default: BeartypeConfParamException
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -329,18 +328,18 @@ def die_unless_decor_hostile_func_trie(
         f'{repr(exception_prefix)} not string.')
 
     # If this data structure is *not* a frozen dictionary, raise an exception.
-    if not isinstance(attested_attr_basename_trie, FrozenDict):
+    if not isinstance(schema_attr_basename_trie, FrozenDict):
         raise exception_cls(
-            f'{exception_prefix}{repr(attested_attr_basename_trie)} not '
+            f'{exception_prefix}{repr(schema_attr_basename_trie)} not '
             f'frozen dictionary.'
         )
     # Else, this data structure is a frozen dictionary.
 
     # If this data structure is *not* a valid decorator function beforelist,
     # raise an exception.
-    if not is_decor_hostile_func_trie(attested_attr_basename_trie):
+    if not is_decor_hostile_func_trie(schema_attr_basename_trie):
         raise exception_cls(
-            f'{exception_prefix}{repr(attested_attr_basename_trie)} not '
+            f'{exception_prefix}{repr(schema_attr_basename_trie)} not '
             f'decorator function beforelist (i.e., '
             f'recursive tree structure satisfying the recursive type hint '
             f'BeartypeDecorPlaceTrie = FrozenDict[str, Union[FrozenSet[str], '
@@ -350,7 +349,7 @@ def die_unless_decor_hostile_func_trie(
 
 # ....................{ TESTERS                            }....................
 def is_decor_hostile_func_trie(
-    attested_attr_basename_trie: object) -> TypeIs[BeartypeDecorPlaceTrie]:
+    schema_attr_basename_trie: object) -> TypeIs[BeartypeDecorPlaceTrie]:
     '''
     :data:`True` only if the passed data structure is a valid **decorator
     function beforelist** (i.e., recursive tree structure whose nodes are the
@@ -360,7 +359,7 @@ def is_decor_hostile_func_trie(
 
     Parameters
     ----------
-    attested_attr_basename_trie : BeartypeDecorPlaceTrie
+    schema_attr_basename_trie : BeartypeDecorPlaceTrie
         Decorator function beforelist to be inspected.
 
     Raises
@@ -385,7 +384,7 @@ def is_decor_hostile_func_trie(
     # Return true only if...
     return (
         # The passed object is a frozen dictionary *AND*...
-        isinstance(attested_attr_basename_trie, FrozenDict) and
+        isinstance(schema_attr_basename_trie, FrozenDict) and
         # For each key-value pair of this frozen dictionary...
         all(
             (
@@ -401,7 +400,7 @@ def is_decor_hostile_func_trie(
                 )
             )
             for module_name, submodule_or_func_name in (
-                attested_attr_basename_trie.items())
+                schema_attr_basename_trie.items())
         )
     )
 
@@ -422,4 +421,4 @@ def make_node_scope_beforelist_global() -> BeartypeNodeScopeBeforelist:
 
     # Create and return this global scope beforelist.
     return BeartypeNodeScopeBeforelist(
-        attested_attr_basename_trie=ATTESTED_ATTR_NAME_TRIE)
+        schema_attr_basename_trie=DECOR_HOSTILE_ATTR_NAME_TRIE)

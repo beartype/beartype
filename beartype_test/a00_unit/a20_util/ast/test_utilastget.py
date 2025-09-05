@@ -16,16 +16,47 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ attr                       }....................
+def test_get_node_attr_basename_first() -> None:
+    '''
+    Test the :func:`beartype._util.ast.utilastget.get_node_attr_basename_first`
+    factory.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.ast.utilastget import get_node_attr_basename_first
+    from beartype._util.ast.utilastmake import make_node_from_code_snippet
+
+    # ....................{ LOCALS                         }....................
+    # "ast.Name" node encapsulating the unqualified basename of an arbitrary
+    # global attribute, parsed from a code snippet.
+    node_name = make_node_from_code_snippet('''instead_of_sweets''')
+
+    # "ast.Attribute" node encapsulating the fully-qualified basename of an
+    # arbitrary global attribute, parsed from a code snippet.
+    node_attr = make_node_from_code_snippet('''his_ample.palate_took''')
+
+    # Arbitrary non-empty list to be passed to this getter below.
+    attr_basenames = ['Savour of', 'poisonous brass', 'and metal sick:']
+
+    # ....................{ ASSERT                         }....................
+    # Assert this getter passed a "Name" node returns the expected string.
+    assert get_node_attr_basename_first(node_name) == 'instead_of_sweets'
+
+    # Assert this getter passed an "Attribute" node returns the expected string.
+    assert get_node_attr_basename_first(node_attr) == 'his_ample'
+
+    # Assert this getter passed both an "Attribute" node *AND* list returns the
+    # expected string.
+    assert get_node_attr_basename_first(
+        node=node_attr, attr_basenames=attr_basenames) == 'his_ample'
+
+
 def test_get_node_attr_basenames() -> None:
     '''
     Test the :func:`beartype._util.ast.utilastget.get_node_attr_basenames`
     factory.
-
-    Parameters
-    ----------
-    node_sibling : 'ast.AST'
-        Arbitrary sibling node to be passed as the ``node_sibling`` parameter.
     '''
 
     # ....................{ IMPORTS                        }....................

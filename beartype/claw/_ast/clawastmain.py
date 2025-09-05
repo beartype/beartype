@@ -16,16 +16,18 @@ from ast import (
     ClassDef,
     NodeTransformer,
 )
+from beartype.claw._ast._scope.clawastscope import BeartypeNodeScope
 from beartype.claw._ast._scope.clawastscopes import BeartypeNodeScopes
+from beartype.claw._ast._kind.clawastassign import (
+    BeartypeNodeTransformerAssignMixin)
 from beartype.claw._ast._kind.clawastimport import (
     BeartypeNodeTransformerImportMixin)
 from beartype.claw._ast._kind.clawastmodule import (
     BeartypeNodeTransformerModuleMixin)
-from beartype.claw._ast._pep.clawastpep526 import (
-    BeartypeNodeTransformerPep526Mixin)
 from beartype.claw._ast._pep.clawastpep695 import (
     BeartypeNodeTransformerPep695Mixin)
 from beartype.claw._ast._clawastutil import BeartypeNodeTransformerUtilityMixin
+from beartype.roar._roarexc import _BeartypeClawAstNodeScopesException
 from beartype.typing import (
     Optional,
 )
@@ -38,12 +40,6 @@ from beartype._data.typing.datatyping import (
 from beartype._util.ast.utilasttest import is_node_callable_typed
 
 # ....................{ SUBCLASSES                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: To improve forward compatibility with the superclass API over which
-# we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
-# and public attributes of this subclass by "_beartype".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 #FIXME: Unit test us up, please.
 class BeartypeNodeTransformer(
     # PEP-agnostic superclass defining "core" AST node transformation logic.
@@ -51,13 +47,13 @@ class BeartypeNodeTransformer(
 
     # PEP-agnostic mixins defining supplementary AST node functionality in a
     # PEP-agnostic manner.
+    BeartypeNodeTransformerAssignMixin,
     BeartypeNodeTransformerImportMixin,
     BeartypeNodeTransformerModuleMixin,
     BeartypeNodeTransformerUtilityMixin,
 
     # PEP-specific mixins defining additional AST node transformations in a
     # PEP-specific manner.
-    BeartypeNodeTransformerPep526Mixin,
     BeartypeNodeTransformerPep695Mixin,
 ):
     '''
@@ -177,6 +173,45 @@ class BeartypeNodeTransformer(
         # Lexical scope stack, initially containing *ONLY* the default global
         # scope for statements in the body of the current module.
         self._scopes = BeartypeNodeScopes(module_name=module_name)
+
+    # ..................{ PROPERTIES                         }..................
+    #FIXME: Unit test us up, please. *sigh*
+    @property
+    def _scope(self) -> BeartypeNodeScope:  # type: ignore[override]
+        '''
+        **Currently visited lexical scope** (i.e., dataclass aggregating all
+        metadata required to detect and manage the lexical scope of the
+        currently visited node of the currently visited module) if this
+        abstract syntax tree (AST) transformer has already visited at least that
+        module's root :class:`ast.Module` node via the :meth:`.visitModule`
+        method *or* raise an exception otherwise (i.e., if this property is
+        unsafely accessed at an early time).
+
+        Returns
+        -------
+        BeartypeNodeScope
+            :data:`True` only if the current lexical scope is a module scope.
+
+        Raises
+        ------
+        _BeartypeClawAstNodeScopesException
+            If this property is unsafely accessed at an early time.
+        '''
+
+        # If the lexical scope stack is empty, this AST transformer has yet to
+        # visit the root "Module" node of the currently visited module. In this
+        # case, raise an exception.
+        if not self._scopes:
+            raise _BeartypeClawAstNodeScopesException(
+                f'Module "{self._module_name}" '
+                f'global lexical scope has yet to be visited '
+                f'(i.e., visitModule() method not previously called).'
+            )
+        # Else, the lexical scope stack is non-empty.
+
+        # Return the last lexical scope on this stack -- the top-most item
+        # signifying the currently visited lexical scope.
+        return self._scopes[-1]
 
     # ..................{ SUPERCLASS                         }..................
     # Overridden methods first defined by the "NodeTransformer" superclass.
