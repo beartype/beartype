@@ -79,7 +79,7 @@ class BeartypeNodeScopeBeforelist(object):
         decorator functions to either a frozen set of the unqualified basenames
         of those functions *or* yet another such recursively nested frozen
         dictionary.
-    schema_module_names : frozenset[str]
+    schema_package_names : frozenset[str]
         **Source module name schema** (i.e., frozen set of the fully-qualified
         names of all root packages and modules transitively defining one or more
         decorator-hostile decorators).
@@ -129,7 +129,7 @@ class BeartypeNodeScopeBeforelist(object):
     # both reading and writing these variables by approximately ~10%.
     __slots__ = (
         'schema_attr_basename_trie',
-        'schema_module_names',
+        'schema_package_names',
         'scoped_attr_basename_trie',
     )
 
@@ -137,7 +137,7 @@ class BeartypeNodeScopeBeforelist(object):
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
         schema_attr_basename_trie: BeartypeDecorPlaceTrie
-        schema_module_names: FrozenSetStrs
+        schema_package_names: FrozenSetStrs
         scoped_attr_basename_trie: Optional[ScopedAttrNameTrie]
 
     # ....................{ INITIALIZERS                   }....................
@@ -148,7 +148,7 @@ class BeartypeNodeScopeBeforelist(object):
         schema_attr_basename_trie: BeartypeDecorPlaceTrie,
 
         # Optional parameters.
-        schema_module_names: Optional[FrozenSetStrs] = None,
+        schema_package_names: Optional[FrozenSetStrs] = None,
         scoped_attr_basename_trie: Optional[ScopedAttrNameTrie] = None,
         is_validate: bool = True,
     ) -> None:
@@ -159,7 +159,7 @@ class BeartypeNodeScopeBeforelist(object):
         ----------
         schema_attr_basename_trie : BeartypeDecorPlaceTrie
             **Source attribute name trie schema.** See the class docstring.
-        schema_module_names : Optional[FrozenSetStrs], default: None
+        schema_package_names : Optional[FrozenSetStrs], default: None
             **Source module name schema.** See the class docstring.
             Defaults to :data:`None`, in which case this frozen set is
             implicitly constructed as the union of all keys of the passed
@@ -185,8 +185,8 @@ class BeartypeNodeScopeBeforelist(object):
         # If the caller passed *NO* decorator-hostile module names, initialize
         # this frozen set as the union of all keys of these decorator function
         # and method beforelists.
-        if schema_module_names is None:
-            schema_module_names = frozenset(
+        if schema_package_names is None:
+            schema_package_names = frozenset(
                 schema_attr_basename_trie.keys())
         # Else, the caller passed decorator-hostile module names. In either
         # case, these names are now defined.
@@ -194,9 +194,9 @@ class BeartypeNodeScopeBeforelist(object):
         # ....................{ VALIDATE                   }....................
         # Shallowly type-check these data structures.
         assert isinstance(schema_attr_basename_trie, FrozenDict), (
-            f'{repr(schema_module_names)} not frozen dictionary.')
-        assert isinstance(schema_module_names, frozenset), (
-            f'{repr(schema_module_names)} not frozen set.')
+            f'{repr(schema_package_names)} not frozen dictionary.')
+        assert isinstance(schema_package_names, frozenset), (
+            f'{repr(schema_package_names)} not frozen set.')
         assert isinstance(scoped_attr_basename_trie, NoneTypeOr[ChainMap]), (
             f'{repr(scoped_attr_basename_trie)} neither chain map nor "None".')
         assert isinstance(is_validate, bool), (
@@ -216,14 +216,14 @@ class BeartypeNodeScopeBeforelist(object):
 
             # Deeply type-check the contents of these data structures.
             assert all(
-                isinstance(module_name, str) for module_name in schema_module_names), (
-                f'{repr(schema_module_names)} not frozen set of strings.')
+                isinstance(module_name, str) for module_name in schema_package_names), (
+                f'{repr(schema_package_names)} not frozen set of strings.')
         # Else, the contents of these data structures are assumed to be valid.
 
         # ....................{ CLASSIFY                   }....................
         # Classify all passed parameters.
         self.schema_attr_basename_trie = schema_attr_basename_trie
-        self.schema_module_names = schema_module_names
+        self.schema_package_names = schema_package_names
         self.scoped_attr_basename_trie = scoped_attr_basename_trie
 
     # ..................{ DUNDERS                            }..................
@@ -232,7 +232,7 @@ class BeartypeNodeScopeBeforelist(object):
         return '\n'.join((
             f'{self.__class__.__name__}(\n',
             f'    schema_attr_basename_trie={repr(self.schema_attr_basename_trie)},\n',
-            f'    schema_module_names={repr(self.schema_module_names)},\n',
+            f'    schema_package_names={repr(self.schema_package_names)},\n',
             f'    scoped_attr_basename_trie={repr(self.scoped_attr_basename_trie)},\n',
             f')',
         ))
@@ -283,7 +283,7 @@ class BeartypeNodeScopeBeforelist(object):
             # Share all remaining data structures of this parent beforelist
             # with this child beforelist.
             schema_attr_basename_trie=self.schema_attr_basename_trie,
-            schema_module_names=self.schema_module_names,
+            schema_package_names=self.schema_package_names,
 
             # Avoid uselessly recursively re-validating the contents of these
             # data structures for efficiency.
@@ -377,6 +377,8 @@ def is_decor_hostile_func_trie(
     #
     #Ergo, we need to expand this validation to:
     #* Non-recursively match the outermost layer to *NOT* map to "None".
+    #* Recursively match all non-inner layers to map to
+    #  "BeartypeDecorPlaceTrieABC" instances.
     #* Recursively match all inner layers to optionally map to "None".
     #FIXME: Also, fixup the type hints embedded in exception messages above.
     #They've changed significantly, sadly.

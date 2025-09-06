@@ -34,10 +34,12 @@ from beartype.typing import (
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.api.standard.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._data.typing.datatyping import (
+    ListStrs,
     NodeCallable,
     NodeT,
 )
 from beartype._util.ast.utilasttest import is_node_callable_typed
+from beartype._util.cache.utilcachecall import property_cached
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -175,6 +177,35 @@ class BeartypeNodeTransformer(
         self._scopes = BeartypeNodeScopes(module_name=module_name)
 
     # ..................{ PROPERTIES                         }..................
+    #FIXME: Unit test us up, please. *sigh*
+    @property_cached
+    def _module_basenames(self) -> ListStrs:
+        '''
+        List of the one or more unqualified basenames comprising the
+        fully-qualified ``"."``-delimited name of the currently visited module.
+
+        This property is memoized for efficiency.
+
+        Returns
+        -------
+        list[str]
+            List of the one or more unqualified basenames comprising the
+            fully-qualified name of the currently visited module.
+        '''
+
+        # List of each unqualified basename comprising the name of the currently
+        # visited module, split from the fully-qualified name of that module on
+        # "." delimiters.
+        #
+        # Note that the "str.split('.')" and "str.rsplit('.')" calls produce the
+        # same lists under all edge cases. We arbitrarily call the former rather
+        # than the latter for simplicity.
+        module_basenames = self._module_name.split('.')
+
+        # Return this list.
+        return module_basenames
+
+
     #FIXME: Unit test us up, please. *sigh*
     @property
     def _scope(self) -> BeartypeNodeScope:  # type: ignore[override]

@@ -72,6 +72,8 @@ from beartype._util.ast.utilastget import (
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+from beartype._util.module.pep.modpep328 import (
+    canonicalize_pep328_module_name_relative)
 
 # ....................{ SUBCLASSES                         }....................
 class BeartypeNodeTransformerImportMixin(object):
@@ -341,13 +343,15 @@ class BeartypeNodeTransformerImportMixin(object):
             # statement is ignorable with respect to @beartype. In this case,
             # silently skip this ignorable package by returning this node as is.
             if import_package_name not in (
-                self._scope.beforelist.schema_module_names):
+                self._scope.beforelist.schema_package_names):
                 return node
             # Else, this import statement imports a third-party module known to
             # define decorator-hostile decorators.
 
             # Child (sub)trie of the scoped attribute name trie unique to that
             # package in the current scope of the currently visited module.
+            # Note this (sub)trie is guaranteed to exist rather than be "None".
+            # Why? Because of the prior validation.
             import_package_name_subtrie = (
                 self._scope.beforelist.schema_attr_basename_trie.get(
                     import_package_name))
@@ -388,9 +392,9 @@ class BeartypeNodeTransformerImportMixin(object):
         # Recursively transform *ALL* child nodes of this parent node.
         self.generic_visit(node)  # type: ignore[attr-defined]
 
-        # ..................{ LOCALS ~ module                }..................
-        # Fully-qualified name of the external module being imported from if any
-        # *OR* "None".
+        # ..................{ CANONICALIZE                   }..................
+        # Possibly fully-qualified name of the external module being imported
+        # from if any *OR* "None".
         #
         # Note that this name should *NEVER* be "None". Nonetheless, mypy claims
         # this name can actually be "None". How, mypy? Even mypy has no idea. To
@@ -398,8 +402,22 @@ class BeartypeNodeTransformerImportMixin(object):
         import_module_name = node.module
         if not import_module_name: return node  # <-- *SILENCE, MYPY!*
 
-        # List of each unqualified basename comprising this name, split from
-        # this fully-qualified name on "." delimiters.
+        # If this name is prefixed by one or more "." delimiters, this name is a
+        # PEP 328-compliant partially-qualified module name relative to the
+        # currently visited module (rather than a fully-qualified module name).
+        # In this case, canonicalize this relative imported module name into an
+        # absolute imported module name.
+        if import_module_name[0] == '.':
+            import_module_name = canonicalize_pep328_module_name_relative(
+                module_name_relative=import_module_name,
+                module_basenames_absolute=self._module_basenames,  # type: ignore[attr-defined]
+            )
+        # Else, this name is *NOT* prefixed by one or more "." delimiters,
+        # implying this name to be fully-qualified and thus already canonical.
+
+        # ..................{ LOCALS ~ package               }..................
+        # List of each unqualified basename comprising the fully-qualified name
+        # of the external module being imported from.
         #
         # Note that:
         # * This list is guaranteed to be non-empty. Why? Because Python syntax
@@ -419,31 +437,37 @@ class BeartypeNodeTransformerImportMixin(object):
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
         if import_package_name not in (
-            self._scope.beforelist.schema_module_names):
+            self._scope.beforelist.schema_package_names):
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
 
         # ..................{ SEARCH ~ module                }..................
-        #FIXME: Revise commentary, please. *sigh*
-        # Current and prior possibly nested decorator function beforelists being
-        # iterated by the subsequent "while" loop. Specifically, each is either:
-        # * If that package directly defines one or more decorator-hostile
-        #   decorator functions, a frozen set of the unqualified basename of
-        #   each decorator-hostile decorator function defined by that package.
-        # * Else if only a submodule of that package directly defines one or
-        #   more decorator-hostile decorator functions, yet another such
-        #   recursively nested frozen dictionary of the same structure.
-        # * Else, "None".
-        schema_func_subtrie_parent = (
+        # Current and prior child (sub)tries of the scoped decorator-hostile
+        # attribute name trie of the current scope of the currently visited
+        # module iterated over below, efficiently mapping the fully-qualified
+        # name of the module being imported from to the corresponding (sub)trie.
+        # Specifically, each of these (sub)tries is either:
+        # * If the currently iterated basename of that module erroneously refers
+        #   to a third-party decorator-hostile decorator callable (which clearly
+        #   is *NOT* a method, since callables are *NOT* modules), "None".
+        # * Else if that basename refers to a third-party (sub)package or module
+        #   transitively defining one or more decorator-hostile decorators, yet
+        #   another nested "BeartypeDecorPlaceTrieABC" instance describing the
+        #   relevant (sub)package or module structure.
+        # * Else, that basename refers to a package or module transitively
+        #   defining *NO* decorator-hostile decorators. In this case, the
+        #   sentinel placeholder.
+        import_module_basename_subtrie_parent = (
             self._scope.beforelist.schema_attr_basename_trie)
-        schema_func_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
+        import_module_basename_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
 
         #FIXME: Revise commentary, please. *sigh*
         # Frozen set of the unqualified basename of each decorator-hostile
         # decorator function defined by that third-party module if any *OR* the
         # empty frozen dictionary otherwise.
-        schema_funcs_subtrie: BeartypeDecorPlaceTrie = FROZENDICT_EMPTY
+        import_attr_basename_subtrie_parent: BeartypeDecorPlaceTrie = (
+            FROZENDICT_EMPTY)
 
         # 0-based indices of the current and last unqualified basenames of the
         # fully-qualified name of the external module being imported from.
@@ -463,16 +487,23 @@ class BeartypeNodeTransformerImportMixin(object):
             # Unwrap the parent frozen dictionary against this unqualified
             # basename into either a nested frozen dictionary, nested frozen
             # set, or "None" (as detailed above).
-            schema_func_subtrie = schema_func_subtrie_parent.get(
-                import_module_basename, SENTINEL)
+            import_module_basename_subtrie = (
+                import_module_basename_subtrie_parent.get(
+                    import_module_basename, SENTINEL))
 
+            #FIXME: *TOTALLY WRONG.* This subtrie is supposed to be a *MODULE.*
+            #But this subtrie is "None", implying this subtrie to be a
+            #decorator-hostile decorator! We should be unconditionally raising
+            #an exception here. Pretty sure we can just remove the nested "if"
+            #conditional below to properly repair this. *shrug*
             #FIXME: Revise commentary, please. *sigh*
             # If this is a non-recursively nested frozen set, this set is
             # non-recursive and thus terminates this iteration. In this case...
-            if schema_func_subtrie is None:
+            if import_module_basename_subtrie is None:
                 #FIXME: Revise commentary, please. *sigh*
                 # Localize this frozenset for subsequent lookup.
-                schema_funcs_subtrie = schema_func_subtrie_parent
+                import_attr_basename_subtrie_parent = (
+                    import_module_basename_subtrie_parent)
 
                 # If this is the last unqualified basename of the
                 # fully-qualified name of the external module being imported
@@ -517,7 +548,7 @@ class BeartypeNodeTransformerImportMixin(object):
                     f'{repr(self._scope.beforelist.schema_attr_basename_trie)} '
                     f'nested frozen set of '
                     f'decorator-hostile decorator function basenames '
-                    f'{repr(schema_funcs_subtrie)} '
+                    f'{repr(import_attr_basename_subtrie_parent)} '
                     f'implies these basenames to represent '
                     f'functions rather than modules, but '
                     f'module "{self._module_name}" import statement '  # type: ignore[attr-defined]
@@ -535,7 +566,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # statement to *NOT* import from such a (sub)module and thus be
             # ignorable with respect to @beartype. In this case, silently reduce
             # to a noop by returning this node unmodified.
-            elif schema_func_subtrie is SENTINEL:
+            elif import_module_basename_subtrie is SENTINEL:
                 return node
             # Else, this is a non-empty frozen dictionary (by elimination),
             # implying this basename to be that of a third-party (sub)module
@@ -544,11 +575,13 @@ class BeartypeNodeTransformerImportMixin(object):
             # unqualified basename in this list.
             else:
                 #FIXME: Add a validation message, please. *sigh*
-                assert isinstance(schema_func_subtrie, FrozenDict)
+                assert isinstance(
+                    import_module_basename_subtrie, BeartypeDecorPlaceTrieABC)
 
             # Record the parent frozen dictionary of the next iteration to be
             # the current frozen dictionary.
-            schema_func_subtrie_parent = schema_func_subtrie
+            import_module_basename_subtrie_parent = (
+                import_module_basename_subtrie)
 
             # Increment the index of the next unqualified basename to visit.
             import_module_basename_index_curr += 1
@@ -599,12 +632,13 @@ class BeartypeNodeTransformerImportMixin(object):
 
             # If...
             if (
-                # That module defines one or more decorator-hostile decorators
-                # *AND*...
-                schema_funcs_subtrie and
+                # That module, type, or instance defines one or more
+                # decorator-hostile decorators *AND*...
+                import_attr_basename_subtrie_parent and
                 # The unqualified basename of this attribute is that of a
-                # decorator-hostile decorator function in that module...
-                import_attr_name_src in schema_funcs_subtrie
+                # decorator-hostile decorator directly defined by that module,
+                # type, or instance...
+                import_attr_name_src in import_attr_basename_subtrie_parent
             ):
                 # Map the unqualified basename of this decorator-hostile
                 # decorator function as a new terminal trie leaf node (i.e.,
@@ -626,10 +660,13 @@ class BeartypeNodeTransformerImportMixin(object):
             elif (
                 # That module defines one or more submodules transitively
                 # defining one or more decorator-hostile decorators *AND*...
-                isinstance(schema_func_subtrie, BeartypeDecorPlaceTrieABC) and
+                isinstance(
+                    import_module_basename_subtrie,
+                    BeartypeDecorPlaceTrieABC
+                ) and
                 # The unqualified basename of this attribute is that of such a
                 # submodule...
-                import_attr_name_src in schema_func_subtrie
+                import_attr_name_src in import_module_basename_subtrie
             ):
                 # Map the unqualified basename of that submodule transitively
                 # defining one or more decorator-hostile decorator functions
@@ -637,7 +674,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 # whose value is a nested frozen dictionary).
                 self._map_scoped_attr_name_to_subtrie(
                     attr_name=import_attr_name_trg,
-                    attr_name_subtrie=schema_func_subtrie,
+                    attr_name_subtrie=import_module_basename_subtrie,
                 )
 
             #FIXME: Implement us up, please. *sigh*

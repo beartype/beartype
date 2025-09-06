@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python module getter** (i.e., callables dynamically retrieving
-modules and/or attributes in modules) utilities.
+Project-wide **Python module getters** (i.e., low-level callables dynamically
+introspecting metadata pertaining to modules).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
