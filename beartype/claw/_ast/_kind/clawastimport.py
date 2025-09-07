@@ -71,7 +71,7 @@ from beartype._util.ast.utilastget import (
     get_node_repr_indented,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+# from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.module.pep.modpep328 import (
     canonicalize_pep328_module_name_relative)
 
@@ -402,12 +402,32 @@ class BeartypeNodeTransformerImportMixin(object):
         import_module_name = node.module
         if not import_module_name: return node  # <-- *SILENCE, MYPY!*
 
+        # Beforelist unique to the currently visited lexical scope of the
+        # currently visited module, localized for readability and efficiency.
+        beforelist = self._scope.beforelist
+
         # If this name is prefixed by one or more "." delimiters, this name is a
         # PEP 328-compliant partially-qualified module name relative to the
         # currently visited module (rather than a fully-qualified module name).
-        # In this case, canonicalize this relative imported module name into an
-        # absolute imported module name.
+        # In this case...
         if import_module_name[0] == '.':
+            # If the top-level root package transitively containing the
+            # currently visited module is *NOT* a third-party package known to
+            # define decorator-hostile decorators, this import statement
+            # relative to that root package is ignorable with respect to
+            # @beartype. In this case, silently reduce to a noop by returning
+            # this node unmodified.
+            #
+            # Note that the "_module_basenames" list is guaranteed to be
+            # non-empty and thus contain at least a first item, yielding the
+            # fully-qualified name of that root package.
+            if self._module_basenames[0] not in beforelist.schema_package_names:  # type: ignore[attr-defined]
+                return node
+            # Else, that root package is known to define decorator-hostile
+            # decorators.
+
+            # Canonicalize this imported module name relative to that root
+            # package into an absolute imported module name.
             import_module_name = canonicalize_pep328_module_name_relative(
                 module_name_relative=import_module_name,
                 module_basenames_absolute=self._module_basenames,  # type: ignore[attr-defined]
@@ -436,8 +456,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # known to define decorator-hostile decorators, this import statement is
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
-        if import_package_name not in (
-            self._scope.beforelist.schema_package_names):
+        if import_package_name not in beforelist.schema_package_names:
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
@@ -459,8 +478,9 @@ class BeartypeNodeTransformerImportMixin(object):
         #   defining *NO* decorator-hostile decorators. In this case, the
         #   sentinel placeholder.
         import_module_basename_subtrie_parent = (
-            self._scope.beforelist.schema_attr_basename_trie)
-        import_module_basename_subtrie: Union[BeartypeDecorPlaceSubtrie, Iota] = None
+            beforelist.schema_attr_basename_trie)
+        import_module_basename_subtrie: (
+            Union[BeartypeDecorPlaceSubtrie, Iota]) = None
 
         #FIXME: Revise commentary, please. *sigh*
         # Frozen set of the unqualified basename of each decorator-hostile
@@ -545,7 +565,7 @@ class BeartypeNodeTransformerImportMixin(object):
                 raise BeartypeClawAstImportException(
                     f'Beartype configuration {repr(self._conf)} '  # type: ignore[attr-defined]
                     f'decorator function beforelist '
-                    f'{repr(self._scope.beforelist.schema_attr_basename_trie)} '
+                    f'{repr(beforelist.schema_attr_basename_trie)} '
                     f'nested frozen set of '
                     f'decorator-hostile decorator function basenames '
                     f'{repr(import_attr_basename_subtrie_parent)} '
