@@ -21,23 +21,23 @@ from beartype.claw import beartype_package
 beartype_package(
     package_name=(
         'beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf.'
-        'data_claw_conf_decoration_position_funcs_first'
+        'data_claw_conf_decorplace_funcs_first'
     ),
     conf=BeartypeConf(
         claw_decoration_position_funcs=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
-    data_claw_conf_decoration_position_funcs_first)
+    data_claw_conf_decorplace_funcs_first)
 
 # Subject this single module to a beartype import hook configured to inject the
 # @beartype decorator first before (i.e., below) all other class decorators.
 beartype_package(
     package_name=(
         'beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf.'
-        'data_claw_conf_decoration_position_types_first'
+        'data_claw_conf_decorplace_types_first'
     ),
     conf=BeartypeConf(
         claw_decoration_position_types=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
-    data_claw_conf_decoration_position_types_first)
+    data_claw_conf_decorplace_types_first)

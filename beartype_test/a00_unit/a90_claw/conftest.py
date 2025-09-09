@@ -13,6 +13,4 @@ child submodules of the test subpackage containing this :mod:`pytest` plugin).
 # ....................{ IMPORTS                            }....................
 # Import all subpackage-specific fixtures implicitly required by tests defined
 # by submodules of this subpackage.
-from beartype_test.a00_unit.a90_claw._clawfixture import (
-    clean_claws,
-)
+from beartype_test.a00_unit.a90_claw._clawfixture import clean_claws

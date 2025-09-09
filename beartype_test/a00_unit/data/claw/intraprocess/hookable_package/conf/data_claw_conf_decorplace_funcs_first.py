@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype import hookable configuration first callable decorator position
+Beartype **import hookable configuration first callable decorator position
 submodule** (i.e., data module defining callables decorated by chains of one or
 more decorators into which the :mod:`beartype.beartype` decorator will be
 injected as the first decorator, mimicking real-world usage of the

@@ -63,7 +63,20 @@ def get_test_func_data_dir() -> Path:
     # Questionable destination!
     return DirRelative(get_test_func_subpackage_dir(), 'data')
 
-# ....................{ GETTERS ~ dir : func : lib         }....................
+# ....................{ GETTERS ~ dir : func : api         }....................
+@callable_cached
+def get_test_func_data_api_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level API
+    functional test data directory** (i.e., directory providing sample data used
+    throughout this project's functional tests exercising first- and third-party
+    APIs) if found *or* raise an exception otherwise.
+    '''
+
+    # Ejective bijection!
+    return DirRelative(get_test_func_data_dir(), 'api')
+
+
 @callable_cached
 def get_test_func_data_lib_dir() -> Path:
     '''
@@ -75,7 +88,7 @@ def get_test_func_data_lib_dir() -> Path:
     '''
 
     # Ejective bijection!
-    return DirRelative(get_test_func_data_dir(), 'lib')
+    return DirRelative(get_test_func_data_api_dir(), 'external')
 
 
 @callable_cached

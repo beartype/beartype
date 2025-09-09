@@ -15,7 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from ast import (
     AST,
     AnnAssign,
+    Assign,
     Attribute,
+    Call,
     Name,
     unparse,
 )
@@ -43,9 +45,54 @@ class BeartypeNodeTransformerAssignMixin(object):
     '''
 
     # ..................{ VISITORS ~ pep : 526               }..................
-    #FIXME: Implement visit_Assign() as well to mostly just defer to
-    #self.map_node_attr_imported_to_assigned(). *shrug*
-    #FIXME: Call self.map_node_attr_imported_to_assigned() below, please. *sigh*
+    def visit_Assign(self, node: Assign) -> NodeVisitResult:
+        '''
+        Track the passed **assignment node** (i.e., node signifying the
+        assignment of an attribute) if this node signifies an instantiation of a
+        third-party type defining one or more decorator-hostile decorators
+        previously imported into a scope of the currently visited module.
+
+        Parameters
+        ----------
+        node : Assign
+            Assignment node to be tracked.
+
+        Returns
+        -------
+        NodeVisitResult
+            This assignment node unmodified.
+        '''
+
+        # ..................{ PREAMBLE                       }..................
+        # Recursively transform *ALL* child nodes of this parent node.
+        self.generic_visit(node)  # type: ignore[attr-defined]
+
+        # ..................{ DECORATOR-HOSTILE              }..................
+        # Child node encapsulating the right-hand side (RHS) of this assignment
+        # statement, localized purely as a negligible optimization.
+        node_source = node.value
+
+        # If this attribute is assigned the result of a call...
+        if isinstance(node_source, Call):
+            # For each child node encapsulating a left-hand side (LHS) of this
+            # assignment statement...
+            for node_name_assigned in node.targets:
+                # Map the hint annotating the target attribute being assigned to
+                # if this call instantiates a third-party type transitively
+                # defining decorator-hostile decorators *OR* silently reduce to
+                # a noop otherwise (i.e., if this call is *NOT* such an
+                # instantiation).
+                self.map_node_attr_imported_to_assigned(  # type: ignore[attr-defined]
+                    node_name_imported=node_source.func,
+                    node_name_assigned=node_name_assigned,
+                )
+        # Else, this attribute is *NOT* assigned the result of a call.
+
+        # ..................{ RETURN                         }..................
+        # Return this node unmodified.
+        return node
+
+    # ..................{ VISITORS ~ pep : 526               }..................
     def visit_AnnAssign(self, node: AnnAssign) -> NodeVisitResult:
         '''
         Add a new child node to the passed **annotated assignment node** (i.e.,
@@ -55,6 +102,13 @@ class BeartypeNodeTransformerAssignMixin(object):
         that type hint by passing both to our :func:`beartype.door.is_bearable`
         tester.
 
+        This visitor also additionally track this node if this node signifies an
+        instantiation of a third-party type defining one or more
+        decorator-hostile decorators previously imported into a scope of the
+        currently visited module.
+
+        Design
+        ------
         Note that the :class:`.AnnAssign` subclass defines these instance
         variables:
 
@@ -91,17 +145,19 @@ class BeartypeNodeTransformerAssignMixin(object):
             the new value assigned to this target attribute.
           * Else, :data:`None`.
 
-          You may now be thinking to yourself as you wear a bear hat while
-          rummaging through this filthy code: "What do you mean, 'if this
-          attribute is actually assigned to'? Isn't this attribute necessarily
-          assigned to? Isn't that what the 'AnnAssign' subclass means? I mean,
-          it's right there in the bloody subclass name: 'AnnAssign', right?
-          Clearly, *SOMETHING* is bloody well being assigned to. Right?"
-          Wrong. The name of the :class:`.AnnAssign` subclass was poorly chosen.
-          That subclass ambiguously encapsulates both:
+        Caveats
+        -------
+        You may now be thinking to yourself as you wear a bear hat while
+        rummaging through this filthy code: "What do you mean, 'if this
+        attribute is actually assigned to'? Isn't this attribute necessarily
+        assigned to? Isn't that what the 'AnnAssign' subclass means? I mean,
+        it's right there in the bloody subclass name: 'AnnAssign', right?
+        Clearly, *something* is bloody well being assigned to. Right?"
+        Wrong. The name of the :class:`.AnnAssign` subclass was poorly chosen.
+        That subclass ambiguously encapsulates both:
 
-          * Annotated variable assignments (e.g., ``muh_attr: int = 42``).
-          * Annotated variables *without* assignments (e.g., ``muh_attr: int``).
+        * Annotated variable assignments (e.g., ``muh_attr: int = 42``).
+        * Annotated variables *without* assignments (e.g., ``muh_attr: int``).
 
         Parameters
         ----------
@@ -135,16 +191,30 @@ class BeartypeNodeTransformerAssignMixin(object):
         '''
 
         # ..................{ PREAMBLE                       }..................
-        # Recursively transform *ALL* child nodes of this parent callable node.
+        # Recursively transform *ALL* child nodes of this parent node.
         self.generic_visit(node)  # type: ignore[attr-defined]
 
+        # ..................{ DECORATOR-HOSTILE              }..................
+        # Child node encapsulating the hint annotating the target attribute
+        # being assigned to, localized purely as a negligible optimization.
+        node_hint = node.annotation
+
+        # Child node encapsulating the target attribute being assigned to,
+        # localized purely as a negligible optimization.
+        node_target = node.target
+
+        # Map the hint annotating the target attribute being assigned to if
+        # this hint is the simple name of an isinstanceable third-party type
+        # transitively defining decorator-hostile decorators *OR* silently
+        # reduce to a noop otherwise (i.e., if this hint is *NOT* such a name).
+        self.map_node_attr_imported_to_assigned(  # type: ignore[attr-defined]
+            node_name_imported=node_hint,
+            node_name_assigned=node_target,
+        )
+
+        # ..................{ NOOP                           }..................
         # If either...
         if (
-            #FIXME: *NON-IDEAL.* These noops are still useful but now need to be
-            #deferred for a bit. Why? Because the external
-            #map_type_imported_to_instance_if_decor_hostile() method now needs
-            #to be called regardless. *shrug*
-
             # It is *NOT* the case that...
             not (
                 # This beartype configuration enables type-checking of PEP
@@ -219,10 +289,6 @@ class BeartypeNodeTransformerAssignMixin(object):
         # Child node passing the value newly assigned to this variable by this
         # assignment as the first parameter to die_if_unbearable().
         node_func_arg_pith: AST = None  # type: ignore[assignment]
-
-        # Child node referencing the target variable being assigned to,
-        # localized purely as a negligible optimization.
-        node_target = node.target
 
         # ..................{ PITH                           }..................
         # If this target variable is a simple local or global variable...
@@ -373,7 +439,7 @@ class BeartypeNodeTransformerAssignMixin(object):
                 node_func_arg_pith,
                 # Child node passing the type hint annotating this assignment as
                 # the second parameter.
-                node.annotation,
+                node_hint,
             ],
             nodes_kwargs=node_func_kwargs,
             node_sibling=node,

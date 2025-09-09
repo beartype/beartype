@@ -39,32 +39,11 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
         Further details.
     '''
 
-    # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.claw._package.clawpkgcontext import packages_trie_cleared
-    from beartype._util.module.utilmodget import get_module_dir
-    from beartype._util.path.utilpathremove import (
-        remove_package_bytecode_files)
     from beartype_test.a00_unit.data import claw
-
-    # ....................{ PATHS                          }....................
-    # Path encapsulating the absolute dirname of the "beartype.claw" subpackage.
-    #
-    # Note that we intentionally avoid importing any subsubpackages (e.g.,
-    # "beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package")
-    # above. Why? Because doing so would implicitly install the exact beartype
-    # import hook which calling unit tests are attempting to subsequently
-    # exercise and which *MUST* be confined to a context manager for test
-    # idempotency.
-    claw_dir = get_module_dir(claw)
+    from beartype_test._util.fixture.pytfixclaw import (
+        clean_data_claw_subpackage)
 
     # Recursively remove *ALL* previously compiled bytecode files from both this
-    # subdirectory *and* *ALL* subsubdirectories of this subdirectory.
-    remove_package_bytecode_files(claw_dir)
-
-    # ....................{ HOOKS                          }....................
-    # With a context manager guaranteeably reverting *ALL* beartype import hooks
-    # transitively installed in the body of this context manager, defer to the
-    # parent unit test implicitly invoking this fixture.
-    with packages_trie_cleared():
-        yield
+    # subpackage *and* *ALL* subsubpackages of this subpackage.
+    clean_data_claw_subpackage(claw)
