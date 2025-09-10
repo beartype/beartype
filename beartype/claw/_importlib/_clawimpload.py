@@ -378,6 +378,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Attempt to defer to the superclass method.
         try:
+            # print(f'Importing module "{fullname}" with beartyping...')
             return super().get_code(fullname)
         # After doing so (and regardless of whether doing so raises an
         # exception), restore the original cache_from_source() function.
@@ -440,6 +441,12 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             the original valid abstract syntax tree (AST) governing that Python
             package or module into a new invalid AST.
         '''
+        #NOTETOSELF: If you uncomment this and don't see any output, then
+        #bytecode caching is the culprit. Unit or integration tests are probably
+        #failing to properly clear the appropriate bytecode cache. *sigh*
+        # from sys import stderr
+        # print('!!!TRANSFORMING!!!', file=stderr)
+        # print('!!!TRANSFORMING!!!')
 
         # If that module has *NOT* been registered for type-checking, preserve
         # that module as is by simply deferring to the superclass method.
@@ -465,9 +472,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # AST transformer decorating typed callables and classes by @beartype.
         ast_beartyper = BeartypeNodeTransformer(
-            module_name=self._module_name,
-            conf=self._module_conf,
-        )
+            module_name=self._module_name, conf=self._module_conf)
 
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)

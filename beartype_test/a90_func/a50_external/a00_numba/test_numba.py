@@ -32,8 +32,29 @@ def test_numba_njit() -> None:
     from numba import njit
 
     # ....................{ CALLABLES                      }....................
+    #FIXME: Note that enabling "cache=True" causes Numba to
+    #non-deterministically raise unreadable exceptions resembling:
+    #    RuntimeError: cannot cache function
+    #    'test_numba_njit.<locals>.had_shone_gleam_stony_orbs_so_from_his_steps':
+    #    no locator available for file
+    #    '/home/leycec/py/beartype/beartype_test/a90_func/z90_external/a00_numba/test_numba.py'
+    #
+    #It's possible this issue could be resolved by explicitly removing *ALL*
+    #previously compiled bytecode associated with @njit-decorated callables,
+    #perhaps by:
+    #* Isolating this callable definition to a new
+    #  "beartype_test.a90_func.data.external.numba.data_numba" submodule.
+    #* Importing and calling below:
+    #      from beartype_test.a90_func.data.external import numba
+    #      from beartype_test._util.data.pytdataclean import clean_data_subpackage
+    #      clean_data_subpackage(numba)
+    #
+    #      from beartype_test.a90_func.data.external.numba import data_numba
+    #
+    #Kinda awkward, but should work. There's no need to bother at the moment,
+    #though. Simply disabling caching altogether trivially suffices for now.
     @beartype
-    @njit(cache=True)
+    @njit(cache=False)
     def had_shone_gleam_stony_orbs_so_from_his_steps() -> bool:
         '''
         Arbitrary callable decorated by both the :func:`beartype.beartype` *and*

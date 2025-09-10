@@ -166,6 +166,7 @@ class BeartypeNodeTransformer(
             f'{repr(conf)} not beartype configuration.')
 
         # Initialize our superclass.
+        # print(f'Initializing module "{module_name}" AST transformation...')
         super().__init__()
 
         # Classify all passed parameters.

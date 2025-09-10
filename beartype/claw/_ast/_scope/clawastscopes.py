@@ -80,12 +80,11 @@ class BeartypeNodeScopes(list[BeartypeNodeScope]):
         #Note that this approach becomes wickedly complicated wickedly fast. We
         #pretty much have to throw out "FrozenDict" mappings in favour of
         #"ChainMap" mappings everywhere, for example. Just: "Ugh!"
-
-        # Nullify the target imported decorator-hostile attribute name trie
-        # associated with this global scope. For both safety and simplicity,
-        # this trie is currently isolated to the currently visited module rather
-        # than shared across modules.
-        node_scope_global.beforelist.scoped_attr_basename_trie = None
+        # # Nullify the target imported decorator-hostile attribute name trie
+        # # associated with this global scope. For both safety and simplicity,
+        # # this trie is currently isolated to the currently visited module rather
+        # # than shared across modules.
+        # node_scope_global.beforelist.scoped_attr_basename_trie = None
 
         # Initialize this stack with this global scope.
         self.append(node_scope_global)

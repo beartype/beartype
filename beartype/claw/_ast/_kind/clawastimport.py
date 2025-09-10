@@ -810,6 +810,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # callable-specific decorator position.
             conf.claw_decoration_position_funcs
         )
+        # print(f'Injecting @beartype decorator onto decoratable {unparse(node)} decorator chain...')
 
         # If injecting the @beartype decorator contextually last, insert this
         # child decoration node immediately *BEFORE* the first existing child
@@ -905,6 +906,8 @@ class BeartypeNodeTransformerImportMixin(object):
         # decorators. In this case, the @beartype decorator may be safely
         # injected as the last decorator in the chain of decorators
         # decorating this type or callable.
+            # print(f'Trivially detected decoratable {unparse(node)} to be decorated by no hostile decorators!')
+
             # Reduce to the trivial implementation of the
             # "BeartypeDecorPlace.LAST" position in the parent
             # _decorate_node_beartype() method.
@@ -1018,6 +1021,7 @@ class BeartypeNodeTransformerImportMixin(object):
             if isinstance(node_decor, Call):
                 node_decor = node_decor.func
             # Else, this decoration is *NOT* encapsulated by a "Call" node.
+            print(f'Detecting decorator @{unparse(node_decor)} hostility...')
 
             # Either:
             # * If this decorator name refers to a previously imported
@@ -1076,9 +1080,11 @@ class BeartypeNodeTransformerImportMixin(object):
             # presumably compatible with the @beartype decorator. In this case,
             # immediately halt this iteration.
             elif is_decor_hostile is False:
+                print(f'Decorator @{unparse(node_decor)} is friendly!')
                 break
             # Else, this decorator is decorator-hostile. In this case, continue
             # searching for the first non-hostile decorator.
+            print(f'Decorator @{unparse(node_decor)} is hostile!')
 
             # Validate sanity.
             assert is_decor_hostile is True

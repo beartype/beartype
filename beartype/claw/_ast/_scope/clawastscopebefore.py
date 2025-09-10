@@ -46,7 +46,6 @@ another such recursively nested dictionary).
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please. *sigh*
-#FIXME: Docstring up "module_to_type_to_method_decor_names", please. *sigh*
 class BeartypeNodeScopeBeforelist(object):
     '''
     Beartype **abstract syntax tree (AST) scoped beforelist** (i.e., low-level
@@ -216,7 +215,9 @@ class BeartypeNodeScopeBeforelist(object):
 
             # Deeply type-check the contents of these data structures.
             assert all(
-                isinstance(module_name, str) for module_name in schema_package_names), (
+                isinstance(schema_package_name, str)
+                for schema_package_name in schema_package_names
+            ), (
                 f'{repr(schema_package_names)} not frozen set of strings.')
         # Else, the contents of these data structures are assumed to be valid.
 
@@ -259,6 +260,7 @@ class BeartypeNodeScopeBeforelist(object):
         BeartypeNodeScopeBeforelist
             Shallow copy of this scope beforelist.
         '''
+        # print('Permuting scope beforelist...')
 
         # Imported attribute name trie unique to this new local scope,
         # initialized to either...
@@ -340,9 +342,9 @@ def die_unless_decor_hostile_func_trie(
     if not is_decor_hostile_func_trie(schema_attr_basename_trie):
         raise exception_cls(
             f'{exception_prefix}{repr(schema_attr_basename_trie)} not '
-            f'decorator function beforelist (i.e., '
+            f'decorator-hostile decorator name trie (i.e., '
             f'recursive tree structure satisfying the recursive type hint '
-            f'BeartypeDecorPlaceTrie = FrozenDict[str, Union[FrozenSet[str], '
+            f'BeartypeDecorPlaceTrie = FrozenDict[str, FrozenDict[str, '
             f'"BeartypeDecorPlaceTrie"]]).'
         )
     # Else, this data structure is a valid decorator function beforelist.
@@ -380,8 +382,6 @@ def is_decor_hostile_func_trie(
     #* Recursively match all non-inner layers to map to
     #  "BeartypeDecorPlaceTrieABC" instances.
     #* Recursively match all inner layers to optionally map to "None".
-    #FIXME: Also, fixup the type hints embedded in exception messages above.
-    #They've changed significantly, sadly.
 
     # Return true only if...
     return (

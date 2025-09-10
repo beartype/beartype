@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **import hook unit test fixtures** (i.e., :mod:`pytest`-specific
-context managers passed as parameters to unit tests exercising the
+Beartype **import hook integration test fixtures** (i.e., :mod:`pytest`-specific
+context managers passed as parameters to integration tests exercising the
 :mod:`beartype.claw` subpackage).
 '''
 
@@ -18,12 +18,12 @@ from pytest import fixture
 
 # ....................{ FIXTURES ~ equality                }....................
 @fixture(autouse=True, scope='function')
-def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
+def clean_claws_func() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
     pure-Python bytecode compiled to platform-dependent temporary files residing
     in temporary ``__pycache__/`` subdirectories) of the test-specific
-    :mod:`beartype_test.a00_unit.data` subpackage and all subsubpackages of that
+    :mod:`beartype_test.a90_func.data` subpackage and all subsubpackages of that
     subpackage regardless of depth.
 
     Note that this unit test-scoped fixture is implicitly performed *before*
@@ -47,7 +47,7 @@ def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     # import hook which calling unit tests are attempting to subsequently
     # exercise and which *MUST* be confined to a context manager for test
     # idempotency.
-    from beartype_test.a00_unit.data import claw
+    from beartype_test.a90_func.data import claw
     from beartype_test._util.data.pytdataclean import clean_data_claw_subpackage
 
     # Recursively remove *ALL* previously compiled bytecode files from both this

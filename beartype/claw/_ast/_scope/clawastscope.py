@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
-    Module,
+    # Module,
 )
 from beartype.claw._ast._scope.clawastscopebefore import (
     BeartypeNodeScopeBeforelist)
@@ -57,19 +57,11 @@ class BeartypeNodeScope(object):
         * :class:`ast.FunctionDef`, the current node directly resides in the
           **callable scope** of the current callable.
     _is_beforelist_mutable : bool
-        :data:`True` only if this scope beforelist is **modifiable** (i.e., if
-        this scope beforelist is unique to this scope). This scope beforelist
-        defaults to:
-
-        * If this scope is global, :data:`True`. Global scope beforelists are
-          safely shared between *all* global scopes for *all* modules and thus
-          safely modifiable as is.
-        * If this scope is nested (i.e., either class or callable),
-          :data:`False`. Nested scope beforelists are *not* safely shared
-          between *all* global scopes for *all* modules and thus *not* safely
-          modifiable as is. Instead, nested scope beforelists must be copied from
-          their parent global scope beforelists into new beforelists unique to
-          those nested scopes before being modified.
+        :data:`True` only if this scope's beforelist is **modifiable** (i.e., if
+        this scope's beforelist is unique to this scope). Defaults to
+        :data:`False` until the caller explicitly calls the
+        :meth:`permute_beforelist_if_needed` method, at which point this boolean
+        permanently flips to :data:`True` for the lifetime of this scope.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -128,9 +120,8 @@ class BeartypeNodeScope(object):
         self.name = name
         self.node_type = node_type
 
-        # Record this beforelist to already be safely modifiable *ONLY* if this
-        # is a global scope. See also the class docstring.
-        self._is_beforelist_mutable = node_type is Module
+        # Nullify all remaining instance variables.
+        self._is_beforelist_mutable = False
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -158,11 +149,14 @@ class BeartypeNodeScope(object):
         attempting to modify the contents of this beforelist, callers should
         call this method to render this beforelist safe for modification.
         '''
+        # print(f'Permuting scope "{self.name}" if needed...')
 
         # If this beforelist is *NOT* yet safely modifiable, this beforelist is
         # still a reference to a parent scope's beforelist and is thus *NOT*
         # unique to this scope. In this case...
         if not self._is_beforelist_mutable:
+            # print(f'Permuting scope "{self.name}"...')
+
             # Replace this shared beforelist with a new beforelist unique to
             # this scope, which may then be safely modified by callers.
             self.beforelist = self.beforelist.permute()

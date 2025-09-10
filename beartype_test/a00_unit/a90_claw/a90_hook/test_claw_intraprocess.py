@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **intraprocess import hook unit tests** (i.e., unit tests exercising
+Beartype **intraprocess import hook unit tests** (i.e., exercising
 :mod:`beartype.claw` import hooks within the active Python process).
 '''
 
@@ -29,6 +29,7 @@ def test_claw_intraprocess_beartype_this_package() -> None:
     data subpackage in this test suite exercising *all* edge cases associated
     with this import hook.
     '''
+    # print('Here!')
 
     # ....................{ IMPORTS                        }....................
     # Implicitly subject this single package to a beartype import hook
