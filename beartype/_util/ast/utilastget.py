@@ -94,8 +94,7 @@ def get_node_attr_basename_first(
 
     # Return either the first item of this list if this list is non-empty *OR*
     # "None" otherwise (i.e., if this list is empty).
-    return (
-        node_attr_basenames[0] if node_attr_basenames else None)
+    return node_attr_basenames[0] if node_attr_basenames else None
 
 
 #FIXME: Unit test us up, please.

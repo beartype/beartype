@@ -33,9 +33,14 @@ third-party :mod:`equinox` package.
 #         with multithreaded code, and JAX is multithreaded, so this will
 #         likely lead to a deadlock.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import pytest
 from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS                              }....................
+# Note that any importation whatsoever from JAX is dangerous and *MUST* be
+# isolated to a JAX-specific subprocess. Failure to do so raises the above
+# warning. Honestly, what a pain. Come on, JAX. Work with us here. *sigh*
+@pytest.mark.run_in_subprocess
 def test_equinox_filter_jit() -> None:
     '''
     Functional test validating that the :mod:`beartype` package successfully
@@ -58,9 +63,6 @@ def test_equinox_filter_jit() -> None:
     from beartype._util.module.utilmodtest import is_package
     from pytest import raises
 
-    #FIXME: *EVEN THIS ISN"T SAFE.* Any importation whatsoever from JAX is
-    #dangerous and *MUST* be isolated to a subprocess. Honestly, what a pain.
-    #See similar logic in "test_jax" also requiring a similar resolution.
     # If any requisite JAX package is unimportable, silently reduce to a noop.
     #
     # Note that merely testing the importability of a JAX package emits warnings

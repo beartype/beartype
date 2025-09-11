@@ -435,6 +435,8 @@
    https://www.langchain.com
 .. _langchain_core:
    https://python.langchain.com/api_reference/core/index.html
+.. _langchain_core.runnables:
+   https://python.langchain.com/api_reference/core/runnables.html
 .. _langchain_core.runnables.chain:
    https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.chain.html
 

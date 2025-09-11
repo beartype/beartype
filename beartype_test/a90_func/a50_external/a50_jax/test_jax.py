@@ -33,9 +33,14 @@ third-party :mod:`jax` and :mod:`jaxtyping` packages.
 #         with multithreaded code, and JAX is multithreaded, so this will
 #         likely lead to a deadlock.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import pytest
 from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS ~ tester                     }....................
+# Note that any importation whatsoever from JAX is dangerous and *MUST* be
+# isolated to a JAX-specific subprocess. Failure to do so raises the above
+# warning. Honestly, what a pain. Come on, JAX. Work with us here. *sigh*
+@pytest.mark.run_in_subprocess
 def test_is_func_jaxtyped() -> None:
     '''
     Integration test exercising the
@@ -82,6 +87,8 @@ def test_is_func_jaxtyped() -> None:
     assert is_func_jaxtyped(function) is False
 
 # ....................{ TESTS ~ decorator                  }....................
+# Note that JAX is only safely importable from subprocesses. See above! *sigh*
+@pytest.mark.run_in_subprocess
 def test_jax_jit() -> None:
     '''
     Integration test validating that the :func:`beartype.beartype` decorator
@@ -104,9 +111,6 @@ def test_jax_jit() -> None:
     from beartype._util.module.utilmodtest import is_package
     from pytest import raises
 
-    #FIXME: *EVEN THIS ISN"T SAFE.* Any importation whatsoever from JAX is
-    #dangerous and *MUST* be isolated to a subprocess. Honestly, what a pain.
-    #See similar logic in "test_equinox" also requiring a similar resolution.
     # If any requisite JAX package is unimportable, silently reduce to a noop.
     #
     # Note that merely testing the importability of a JAX package emits warnings
@@ -170,18 +174,8 @@ def test_jax_jit() -> None:
         holding_the_steady_helm('The beams of sunset hung their rainbow hues')
 
 
-
-#FIXME: *WOAH.* "jaxtyping" appears to suffer *SEVERE* integration issues with
-#Numba. If our Numba integration test is run *AFTER* this "jaxtyping"
-#integration test, the former fails with an unreadable exception resembling:
-#    RuntimeError: cannot cache function
-#    'test_numba_njit.<locals>.had_shone_gleam_stony_orbs_so_from_his_steps': no
-#    locator available for file
-#    '/home/leycec/py/beartype/beartype_test/a90_func/z90_external/a00_numba/test_numba.py'
-#
-#Pretty ugly stuff, honestly. This test should clearly be isolated to a
-#subprocess. We can't be bothered at the moment, so... let's just run this
-#dangerous integration test as late as possible, please. *shrug*
+# Note that JAX is only safely importable from subprocesses. See above! *sigh*
+@pytest.mark.run_in_subprocess
 @skip_unless_package('torch')
 def test_jaxtyping_jaxtyped() -> None:
     '''

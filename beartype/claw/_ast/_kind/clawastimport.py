@@ -417,6 +417,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # non-empty and thus contain at least a first item, yielding the
             # fully-qualified name of that root package.
             if self._module_basenames[0] not in beforelist.schema_package_names:  # type: ignore[attr-defined]
+                # print(f'Ignoring friendly relative import "{unparse(node)}"!')
                 return node
             # Else, that root package is known to define decorator-hostile
             # decorators.
@@ -452,6 +453,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # ignorable with respect to @beartype. In this case, silently reduce to
         # a noop by returning this node unmodified.
         if import_package_name not in beforelist.schema_package_names:
+            # print(f'Ignoring friendly import "{unparse(node)}"!')
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
@@ -499,6 +501,8 @@ class BeartypeNodeTransformerImportMixin(object):
             import_module_name_subtrie = (
                 import_module_name_subtrie_parent.get(
                     import_module_basename, SENTINEL))
+            # print(f'Visiting imported-from module basename "{import_module_basename}"...')
+            # print(f'...associated with subtrie {import_module_name_subtrie}.')
 
             # If this basename maps to a decorator-hostile decorator, this
             # subtrie erroneously claims that external module being imported
@@ -546,6 +550,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # ignorable with respect to @beartype. In this case, silently reduce
             # to a noop by returning this node unmodified.
             elif import_module_name_subtrie is SENTINEL:
+                # print(f'Ignoring friendly import "{unparse(node)}"!')
                 return node
             # Else, this basename maps to a child subtrie of this parent
             # (sub)trie (by elimination), implying this basename to be that of a
@@ -576,6 +581,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # with future Python versions, ignore this unrecognized node type.
             # See similar commentary below for further discussion.
             if not isinstance(import_attr_alias, alias):
+                # print(f'Ignoring imported-from target non-alias AST node "{unparse(import_attr_alias)}"!')
                 continue
             # Else, this child node is an "alias".
 
@@ -606,6 +612,8 @@ class BeartypeNodeTransformerImportMixin(object):
                 # that name.
                 import_attr_basename_src
             )
+            # print(f'Handling imported-from target attribute "{import_attr_basename_src}"...')
+            # print(f'...aliased to "{import_attr_basename_trg}".')
 
             # If...
             if (
@@ -617,6 +625,8 @@ class BeartypeNodeTransformerImportMixin(object):
                 # type, or instance...
                 import_attr_basename_src in import_module_name_subtrie_parent
             ):
+                # print(f'Mapping imported decorator-hostile decorator "{import_attr_basename_src}"...')
+
                 # Map the unqualified basename of this decorator-hostile
                 # decorator function as a new terminal trie leaf node (i.e.,
                 # key-value pair whose value is "None").
@@ -645,6 +655,8 @@ class BeartypeNodeTransformerImportMixin(object):
                 # submodule...
                 import_attr_basename_src in import_module_name_subtrie
             ):
+                # print(f'Mapping imported decorator-hostile decorator module "{import_attr_basename_src}"...')
+
                 # Map the unqualified basename of that submodule transitively
                 # defining one or more decorator-hostile decorator functions
                 # to a new non-terminal trie stem node (i.e., key-value pair
@@ -662,7 +674,7 @@ class BeartypeNodeTransformerImportMixin(object):
     def _map_scoped_attr_name_to_subtrie(
         self,
         attr_name: str,
-        attr_name_subtrie: BeartypeDecorPlaceSubtrie
+        attr_name_subtrie: BeartypeDecorPlaceSubtrie,
     ) -> None:
         '''
         Map the passed possibly fully-qualified name of a third-party
@@ -711,6 +723,8 @@ class BeartypeNodeTransformerImportMixin(object):
         # first "."-suffixed substring from a "."-delimited string.
         attr_basename = (
             attr_name.partition('.')[0] if '.' in attr_name else attr_name)
+        # print(f'Mapping imported decorator-hostile decorator basename "{attr_basename}"...')
+        # print(f'...to subtrie "{attr_name_subtrie}".')
 
         # Map the fully-qualified name of the top-level root package or module
         # transitively containing the attribute with this name to this subtrie.
@@ -1021,7 +1035,7 @@ class BeartypeNodeTransformerImportMixin(object):
             if isinstance(node_decor, Call):
                 node_decor = node_decor.func
             # Else, this decoration is *NOT* encapsulated by a "Call" node.
-            print(f'Detecting decorator @{unparse(node_decor)} hostility...')
+            # print(f'Detecting decorator @{unparse(node_decor)} hostility...')
 
             # Either:
             # * If this decorator name refers to a previously imported
@@ -1036,6 +1050,7 @@ class BeartypeNodeTransformerImportMixin(object):
             #   submodule, type, or instance transitively defining these
             #   decorators), "False".
             is_decor_hostile = self._is_node_scoped_attr_name(node_decor)
+            # print(f'Decorator @{unparse(node_decor)} hostility: {is_decor_hostile}')
 
             # If this decorator name refers to a previously imported submodule,
             # type, or instance transitively defining one or more
@@ -1080,11 +1095,11 @@ class BeartypeNodeTransformerImportMixin(object):
             # presumably compatible with the @beartype decorator. In this case,
             # immediately halt this iteration.
             elif is_decor_hostile is False:
-                print(f'Decorator @{unparse(node_decor)} is friendly!')
+                # print(f'Decorator @{unparse(node_decor)} is friendly!')
                 break
             # Else, this decorator is decorator-hostile. In this case, continue
             # searching for the first non-hostile decorator.
-            print(f'Decorator @{unparse(node_decor)} is hostile!')
+            # print(f'Decorator @{unparse(node_decor)} is hostile!')
 
             # Validate sanity.
             assert is_decor_hostile is True
@@ -1200,6 +1215,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # If *NO* decorator-hostile attributes have been imported into the
         # current scope, silently reduce to a noop by returning false.
         if not scoped_attr_name_subtrie:
+            # print(f'Trivially ignoring friendly attribute "{unparse(node)}" (due to empty trie)!')
             return False
         # Else, one or more decorator-hostile attributes have been imported into
         # the current scope.
@@ -1207,7 +1223,8 @@ class BeartypeNodeTransformerImportMixin(object):
         # Replace the contents of the existing "_attr_basenames" list with the
         # one or more unqualified basenames comprising the possibly
         # fully-qualified name of this attribute.
-        get_node_attr_basenames(node=node, attr_basenames=self._attr_basenames)
+        self._attr_basenames = get_node_attr_basenames(
+            node=node, attr_basenames=self._attr_basenames)
 
         # If this list is empty, the prior getter failed to reconstruct this
         # list from this node (e.g., due to this node being of an unknown type
@@ -1225,6 +1242,8 @@ class BeartypeNodeTransformerImportMixin(object):
         #
         # Sometimes, doing nothing at all is the best thing you can do.
         if not self._attr_basenames:
+            # print(f'Trivially ignoring friendly attribute "{unparse(node)}" (due to unparseable basenames)!')
+            # print(f'AST node structure:\n{get_node_repr_indented(node)}')
             return False
         # Else, this list is non-empty, implying the prior getter succeeded in
         # reconstructing this list from this node.

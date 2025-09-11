@@ -21,14 +21,10 @@ LangChain API within the active Python process).
 # own subprocesses to ensure these tests may be run in any arbitrary order.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
-from beartype_test._util.mark.pytskip import (
-    skip,
-    skip_unless_package,
-)
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
 @pytest.mark.run_in_subprocess
-@skip('Currently broken. Ugh!')
 @skip_unless_package('langchain_core')
 def test_claw_langchain() -> None:
     '''

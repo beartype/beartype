@@ -59,6 +59,7 @@ def test_api_deprecations() -> None:
     # Dictionary mapping from the fully-qualified name of each deprecated
     # attribute to the corresponding non-deprecated attribute if any.
     ATTR_DEPRECATED_TO_NONDEPRECATED_NAME = {
+        'beartype.BeartypeDecorationPosition': 'beartype.BeartypeDecorPlace',
         'beartype.BeartypeHintOverrides': 'beartype.FrozenDict',
         'beartype.abby': 'beartype.door',
         'beartype.door.infer_hint': 'beartype.bite.infer_hint',
