@@ -174,7 +174,7 @@ jobs:
 
           - { python-version: "3.14",  tox-env: "py314-coverage" }
 
-         # - { python-version: "3.14.0t", tox-env: "py314t-coverage" }
+         # - { python-version: "3.14t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage
