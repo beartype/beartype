@@ -95,7 +95,7 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
 
             # If the active Python interpreter targets Python >= 3.14, avoid
             # calling the deprecated get_event_loop_policy() getter preferred
-            # under Python <= 3.13. Specifically...
+            # under Python <= 3.13. Instead...
             if IS_PYTHON_AT_LEAST_3_14:
                 # Attempt to...
                 try:
@@ -107,7 +107,7 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
                     event_loop_old.close()
                 # If attempting to retrieve the current event loop raised a
                 # "RuntimeError", there is *NO* current event loop to be closed.
-                # Silently reduce to a noop.
+                # In this case, silently reduce to a noop.
                 except RuntimeError:
                     pass
             # Else, the active Python interpreter targets Python <= 3.13. In

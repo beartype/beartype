@@ -8,8 +8,13 @@ Beartype **import hookable LangChain integration submodule** (i.e., data module
 defining LangChain-specific Runnables decorated by the third-party
 decorator-hostile :func:`langchain_core.runnables.chain` decorator which the
 :mod:`beartype.beartype` decorator will then be injected *after* rather than
-*before* as the earliest decorator, mimicking real-world usage of the
-:func:`beartype.claw.beartype_package` import hook from external callers).
+*before* as the earliest decorator, mimicking real-world usage of
+:func:`beartype.claw` import hooks from external callers).
+
+See Also
+--------
+https://github.com/beartype/beartype/issues/541
+    StackOverflow issue exercised by this submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -23,16 +28,12 @@ def when_harboured_in(the_sleepy_west: dict[str, str]) -> str:
     '''
     Arbitrary function trivially satisfying LangChain's Runnable protocol by
     accepting an arbitrary dictionary of mock input data and returning a string
-    mocking the text response of a large language model (LLM) passed that data.
+    mocking the output text response of a large language model (LLM) passed that
+    input.
 
     The :obj:`.chain` decorator wraps this function in a LangChain-specific
     ``Runnable`` object defining an ``invoke()`` method, which we then call
     below to validate this wrapping.
-
-    See Also
-    --------
-    https://github.com/beartype/beartype/issues/541
-        StackOverflow issue exercised by this function.
     '''
 
     # Value associated with this key of this caller-defined mock input.
@@ -54,7 +55,7 @@ def when_harboured_in(the_sleepy_west: dict[str, str]) -> str:
 the_arms_of_melody = when_harboured_in.invoke(
     {'After the full completion': 'of fair day'})
 
-# Explicitly assert that call returned the expected string.
+# Explicitly assert that call returned the expected output.
 assert the_arms_of_melody == 'For rest divine of fair day.'
 
 # ....................{ FAIL                               }....................

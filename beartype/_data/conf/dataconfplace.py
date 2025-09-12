@@ -72,26 +72,38 @@ matching the root and non-root nesting levels of this trie.
 #that at the moment and thus can't be bothered. That said, going public with
 #this will necessitate doing this for future extensibility.
 DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = FrozenDict({
-        # The third-party @task decorator method of the "celery.Celery" type.
-        # See also: https://github.com/beartype/beartype/issues/500
-        'celery': BeartypeDecorPlacePackageTrie({
-            'Celery': BeartypeDecorPlaceTypeTrie({'task': None})}),
+    # ....................{ FUNCTIONS                      }....................
+    # Third-party decorator-hostile decorator *FUNCTIONS* directly defined by
+    # functional (i.e., *NOT* object-oriented) APIs.
 
-        # The third-party @mcp.tool decorator function of the FastMCP package.
-        # See also: https://github.com/beartype/beartype/issues/540
-        'mcp': BeartypeDecorPlacePackageTrie({'tool': None}),
+    # The third-party @chain decorator function of the
+    # "langchain_core.runnables" package of the LangChain API. See also:
+    #     https://github.com/beartype/beartype/issues/541
+    'langchain_core': BeartypeDecorPlacePackageTrie(
+        {'runnables': BeartypeDecorPlacePackageTrie({'chain': None})}),
 
-        # The third-party @chain decorator function of the
-        # "langchain_core.runnables" package.
-        # See also: https://github.com/beartype/beartype/issues/541
-        'langchain_core': BeartypeDecorPlacePackageTrie(
-            {'runnables': BeartypeDecorPlacePackageTrie({'chain': None})}),
+    # ....................{ METHODS                        }....................
+    # Third-party decorator-hostile decorator *METHODS* directly defined by
+    # types directly defined by object-oriented (OO) APIs.
 
-        # The third-party @command decorator method of the "typer.Typer" type.
-        # See also: https://github.com/beartype/beartype/issues/436
-        'typer': BeartypeDecorPlacePackageTrie({
-            'Typer': BeartypeDecorPlaceTypeTrie({'command': None})}),
-    })
+    # The third-party @task decorator method of the "celery.Celery" type of the
+    # Celery API. See also:
+    #     https://github.com/beartype/beartype/issues/500
+    'celery': BeartypeDecorPlacePackageTrie({
+        'Celery': BeartypeDecorPlaceTypeTrie({'task': None})}),
+
+    # The third-party @.tool decorator function of the "fastmcp.FastMCP" type of
+    # the FastMCP API. See also:
+    #     https://github.com/beartype/beartype/issues/540
+    'fastmcp': BeartypeDecorPlacePackageTrie({
+        'FastMCP': BeartypeDecorPlaceTypeTrie({'tool': None})}),
+
+    # The third-party @command decorator method of the "typer.Typer" type of the
+    # Typer API. See also:
+    #     https://github.com/beartype/beartype/issues/436
+    'typer': BeartypeDecorPlacePackageTrie({
+        'Typer': BeartypeDecorPlaceTypeTrie({'command': None})}),
+})
 '''
 **Decorator beforelist** (i.e., frozen dictionary mapping from the unqualified
 basename of each third-party (sub)package and (sub)module transitively defining

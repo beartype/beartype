@@ -445,6 +445,10 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
+    # Required by optional FastMCP-specific integration tests. Note that FastMCP
+    # requires Pydantic.
+    """fastmcp; python_version > '3.9.0' and python_version < '3.14.0'""",
+
     #FIXME: Reenable Python >= 3.14 support *AFTER* Pydantic supports Python
     #3.14. Pydantic currently fails to ship Python 3.14 wheels and is
     #non-trivial to build, due to requiring Rust.

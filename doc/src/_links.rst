@@ -431,6 +431,8 @@
 .. # ------------------( LINKS ~ py : package : pydantic     )------------------
 .. _Pydantic:
    https://docs.pydantic.dev
+.. _fastmcp.FastMCP.tool:
+   https://gofastmcp.com/servers/tools
 .. _LangChain:
    https://www.langchain.com
 .. _langchain_core:
