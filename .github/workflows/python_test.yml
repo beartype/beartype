@@ -172,7 +172,7 @@ jobs:
           #*EXTREME* number of C extensions (e.g., NumPy, SciPy, PyTorch).
           # - { python-version: "3.13t", tox-env: "py313t-coverage" }
 
-          - { python-version: "3.14.0-alpha - 3.14.0",  tox-env: "py314-coverage" }
+          - { python-version: "3.14",  tox-env: "py314-coverage" }
 
           #FIXME: Uncomment *AFTER* Python 3.14 officially lands. Pretty sure
           #"action/setup-python" does *NOT* currently support pre-release
