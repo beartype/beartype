@@ -15,8 +15,6 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from beartype._cave._cavefast import ModuleType
 from beartype._data.typing.datatyping import TypeException
-from beartype._data.api.external.dataapiexternal import (
-    PACKAGE_NAMES_BLACKLIST)
 from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.text.utiltextversion import convert_str_version_to_tuple
@@ -216,58 +214,6 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 
     # Return true only if this module's version satisfies this minimum.
     return version_actual_parts >= version_minimum_parts
-
-# ....................{ TESTERS ~ object                   }....................
-def is_object_module_thirdparty_blacklisted(obj: object) -> bool:
-    '''
-    :data:`True` only if the passed object (e.g., callable, class) is
-    **beartype-blacklisted** (i.e., resides in a third-party package or modules
-    well-known to be hostile to runtime type-checking, due to defining the
-    standard ``__module__`` dunder attribute with a value that is a string in
-    the :data:`.PACKAGE_NAMES_BLACKLIST` frozen set).
-
-    Parameters
-    ----------
-    obj : object
-        Arbitrary object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is beartype-blacklisted.
-
-    See Also
-    --------
-    :data:`.PACKAGE_NAMES_BLACKLIST`
-        Detailed discussion of beartype-blacklisting. 
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.module.utilmodget import get_object_module_name_or_none
-
-    # Fully-qualified name of the package or module defining this object if any
-    # *OR* "None" otherwise (e.g., if this object is defined in-memory).
-    obj_module_name = get_object_module_name_or_none(obj)
-
-    # If this object fails to provide this name, silently reduce to a noop.
-    if obj_module_name is None:
-        # print(f'Ignoring unmoduled object {repr(obj)}!')
-        return False
-    # Else, this object provides this name and is thus *PROBABLY* either a
-    # pure-Python class or callable.
-
-    # Fully-qualified name of the top-level root package or module transitively
-    # containing that package or module (e.g., "some_package" when
-    # "obj_module_name" is "some_package.some_module.some_submodule").
-    #
-    # Note this has been profiled to be the fastest one-liner for parsing the
-    # first "."-suffixed substring from a "."-delimited string.
-    obj_package_name = obj_module_name.partition('.')[0]
-    # print(f'Testing package {repr(obj_package_name)} for blacklisting...')
-
-    # Return true only if this top-level root package or module is
-    # beartype-blacklisted.
-    return obj_package_name in PACKAGE_NAMES_BLACKLIST
 
 # ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.

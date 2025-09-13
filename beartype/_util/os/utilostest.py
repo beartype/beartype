@@ -19,7 +19,7 @@ from sys import platform as sys_platform
 @callable_cached
 def is_os_linux() -> bool:
     '''
-    ``True`` only if the current platform is a **Linux distribution.**
+    :data:`True` only if the current platform is a **Linux distribution.**
 
     This tester is memoized for efficiency.
     '''
@@ -31,7 +31,7 @@ def is_os_linux() -> bool:
 @callable_cached
 def is_os_macos() -> bool:
     '''
-    ``True`` only if the current platform is **Apple macOS**, the operating
+    :data:`True` only if the current platform is **Apple macOS**, the operating
     system previously known as "OS X."
 
     This tester is memoized for efficiency.
@@ -43,7 +43,7 @@ def is_os_macos() -> bool:
 @callable_cached
 def is_os_windows_vanilla() -> bool:
     '''
-    ``True`` only if the current platform is **vanilla Microsoft Windows**
+    :data:`True` only if the current platform is **vanilla Microsoft Windows**
     (i.e., *not* running the Cygwin POSIX compatibility layer).
 
     This tester is memoized for efficiency.

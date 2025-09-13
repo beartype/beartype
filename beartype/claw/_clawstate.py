@@ -24,8 +24,8 @@ from beartype.claw._package.clawpkgtrie import (
     PackagesTrieWhitelist,
     PackageBasenameToTrieBlacklist,
 )
-from beartype._data.api.external.dataapiexternal import (
-    PACKAGE_NAMES_BLACKLIST)
+from beartype._data.conf.dataconfblack import (
+    BLACKLIST_PACKAGE_NAMES)
 from beartype.typing import (
     TYPE_CHECKING,
     Optional,
@@ -207,13 +207,13 @@ def _init() -> None:
     #   method docstring for further commentary.
     #
     # Note that "beartype" is intentionally *OMITTED* from the global
-    # "PACKAGE_NAMES_BLACKLIST" frozen set iterated over below. Why?
+    # "BLACKLIST_PACKAGE_NAMES" frozen set iterated over below. Why?
     # Because "beartype" should *ONLY* be blacklisted with respect to
     # "beartype.claw" import hooks. "beartype" should *NOT* be unilaterally
     # blacklisted across the entirety of this codebase, as doing so would
     # erroneously destroy our ability to (in no particular order):
     # * Define deeply type-checkable PEP 484- and 585-compliant generics.
-    package_names_blacklist = PACKAGE_NAMES_BLACKLIST | {
+    package_names_blacklist = BLACKLIST_PACKAGE_NAMES | {
         'beartype',
     }
 

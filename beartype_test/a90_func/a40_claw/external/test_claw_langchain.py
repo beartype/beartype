@@ -35,6 +35,7 @@ def test_claw_langchain() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from beartype import beartype
     from beartype.claw import beartype_package
 
     # ....................{ LOCALS                         }....................
@@ -49,5 +50,13 @@ def test_claw_langchain() -> None:
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook *AND* satisfy all integration
     # tests implemented as assertion statements in these submodules.
-    from beartype_test.a90_func.data.claw.langchain import (
-        data_claw_langchain)
+    from beartype_test.a90_func.data.claw.langchain.data_claw_langchain import (
+        when_harboured_in)
+    # print('[data_claw_langchain] when_harboured_in:')
+    # print(when_harboured_in.__module__)
+    # print(when_harboured_in.__class__.__name__)
+
+    # Implicitly assert that the @beartype decorator avoids raising exceptions
+    # (typically by internally reducing to a noop) when decorating uncallable
+    # objects produced by LangChain-specific decorator-hostile decorators.
+    beartype(when_harboured_in)

@@ -166,6 +166,27 @@ def skip_if_ci():
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
 
 # ....................{ SKIP ~ os                          }....................
+def skip_if_os_windows():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is
+    running under **vanilla Microsoft Windows** (i.e., *not* running the Cygwin
+    POSIX compatibility layer).
+
+    Returns
+    -------
+    pytest.skipif
+        Decorator skipping this text or fixture unless this interpreter is
+        running under vanilla Microsoft Windows *or* the identity decorator
+        reducing to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.os.utilostest import is_os_windows_vanilla
+
+    # Skip this test if the current platform is Linux.
+    return skip_if(is_os_windows_vanilla(), reason='OS is vanilla Windows 32.')
+
+
 def skip_unless_os_linux():
     '''
     Skip the decorated test or fixture unless the active Python interpreter is
@@ -185,7 +206,7 @@ def skip_unless_os_linux():
     # Defer heavyweight imports.
     from beartype._util.os.utilostest import is_os_linux
 
-    # Skip this test unless the current platform is Linux
+    # Skip this test unless the current platform is Linux.
     return skip_if(not is_os_linux(), reason='OS not Linux.')
 
 # ....................{ SKIP ~ pep                         }....................

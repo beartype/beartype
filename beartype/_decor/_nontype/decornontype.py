@@ -33,7 +33,8 @@ from beartype._decor._nontype._decornontypemap import (
 )
 from beartype._data.typing.datatyping import BeartypeableT
 from beartype._decor._nontype._wrap.wrapmain import generate_code
-from beartype._util.api.utilbeartype import (
+from beartype._util.bear.utilbearblack import is_object_blacklisted
+from beartype._util.bear.utilbearfunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
@@ -223,8 +224,19 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # the type of this callable and thus *CANNOT* be integrated into the
     # efficient mapping-based O(1) dispatch employed above.
 
-    # If this object is uncallable, raise an exception.
+    # If this object is uncallable...
     if not callable(obj):
+        # If this uncallable object is beartype-blacklisted (i.e., defined in a
+        # third-party package or module that is hostile to runtime
+        # type-checking), silently reduce to a noop and preserve this uncallable
+        # object as is. Of course, this is hardly ideal. But...
+        #
+        # Beartype didn't break it. Beartype can't fix it. Beartype ignores it!
+        if is_object_blacklisted(obj):
+            return obj
+        # Else, this uncallable object is *NOT* beartype-blacklisted.
+
+        # Raise an exception.
         raise BeartypeDecorWrappeeException(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.

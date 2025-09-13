@@ -16,6 +16,7 @@ from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._data.cls.datacls import TYPES_PEP484544_GENERIC
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import TypeException
+from beartype._util.bear.utilbearblack import is_object_blacklisted
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.pep484generic import (
     is_hint_pep484_generic_subbed,
@@ -26,8 +27,6 @@ from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_generic_unsubbed,
     is_hint_pep585_builtin_subbed,
 )
-from beartype._util.module.utilmodtest import (
-    is_object_module_thirdparty_blacklisted)
 
 # ....................{ RAISERS                            }....................
 def die_unless_hint_pep484585_generic_unsubbed(
@@ -349,7 +348,7 @@ def _is_hint_pep484585_generic_blacklisted(hint: Hint) -> bool:
 
     See Also
     --------
-    :func:`.is_object_module_thirdparty_blacklisted`
+    :func:`.is_object_blacklisted`
         Further details on beartype-blacklisting.
     '''
 
@@ -369,7 +368,7 @@ def _is_hint_pep484585_generic_blacklisted(hint: Hint) -> bool:
         # If this superclass is beartype-blacklisted (i.e., defined in a
         # third-party package or module known to be hostile to runtime
         # type-checking), return true immediately.
-        if is_object_module_thirdparty_blacklisted(hint_base):
+        if is_object_blacklisted(hint_base):
             return True
         # Else, this superclass is *NOT* beartype-blacklisted. In this case,
         # continue to the next such superclass of this generic.

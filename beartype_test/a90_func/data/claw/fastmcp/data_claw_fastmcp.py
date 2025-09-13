@@ -20,12 +20,10 @@ https://gofastmcp.com/clients/client
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeCallHintParamViolation
 from fastmcp import (
     Client,
     FastMCP,
 )
-from pytest import raises
 
 # ....................{ GLOBALS                            }....................
 fastmcp_server = FastMCP('With stride colossal, on from hall to hall;')
@@ -73,6 +71,9 @@ async def data_claw_fastmcp_main() -> None:
     * The caller *must* manually run this coroutine within an ``asyncio`` loop
       explicitly managed by the caller.
     '''
+    # print('[data_claw_fastmcp] with_stride_colossal:')
+    # print(with_stride_colossal.__module__)
+    # print(with_stride_colossal.__class__.__name__)
 
     # ....................{ FASTMCP                        }....................
     # Inside a FastMCP-specific asynchronous context manager encapsulating this

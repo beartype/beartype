@@ -19,11 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    ChainMap,
     Dict,
-    FrozenSet,
     Optional,
-    # Union,
 )
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._conf.decorplace.confplacetrie import (

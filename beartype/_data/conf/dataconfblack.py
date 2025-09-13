@@ -11,13 +11,57 @@ third-party module or package).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ IMPORTS                            }....................
+from beartype.typing import (
+    Dict,
+    FrozenSet,
+)
+from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
+
+# ....................{ DICTS                              }....................
+BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: Dict[str, FrozenSet[str]] = FrozenDict({
+    # ....................{ ANTIPATTERN ~ decor-hostile    }....................
+    # These third-party packages and modules widely employ the decorator-hostile
+    # decorator antipattern throughout their codebases and are thus
+    # runtime-hostile.
+
+    # The object-oriented @fastmcp.FastMCP.tool decorator method destructively
+    # transforms callable user-defined functions and methods into *UNCALLABLE*
+    # FastMCP-specific instances of this type. Why, FastMCP!? WHY!?!!?? *sigh*
+    'fastmcp.tools.tool': frozenset(('FunctionTool',)),
+
+    # The object-oriented @langchain_core.runnables.chain decorator method
+    # destructively transforms callable user-defined functions and methods into
+    # *UNCALLABLE* LangChain-specific instances of this type. Why, LangChain!?!
+    'langchain_core.runnables.base': frozenset(('RunnableLambda',)),
+})
+'''
+Frozen dictionary mapping from the fully-qualified name of each problematic
+third-party package and module to a frozen set of the unqualified basenames of
+all **beartype-blacklisted types** defined by that package or module. These
+types are well-known to be hostile to runtime type-checking in general and
+:mod:`beartype` specifically, usually due to employing one or more of the
+following antipatterns:
+
+* The **decorator-hostile decorator antipattern,** a harmful design pattern
+  unofficially promoted throughout the large language model (LLM) community.
+  This antipattern abuses the standard PEP-compliant decorator paradigm (which
+  supports decorator chaining by permitting arbitrary decorators to be applied
+  to other decorators) by prohibiting decorator chaining. Many open-source LLM
+  APIs, for example, define decorator-hostile decorators destructively transform
+  callable user-defined functions and methods into uncallable instances of
+  non-standard types usable *only* by those APIs. Due to being uncallable *and*
+  non-standard, those instances then obstruct trivial wrapping by the
+  :func:`beartype.beartype` decorator.
+'''
+
 # ....................{ SETS                               }....................
 #FIXME: Apply this blacklist to the following things:
 #* Arbitrary callables to be decorated by @beartype, possibly. Consider defining
-#  a new beartype._util.api.utilbeartype.is_func_thirdparty_blacklisted()
+#  a new beartype._util.bear.utilbearfunc.is_func_thirdparty_blacklisted()
 #  tester returning True *ONLY* if the passed callable has a "__module__" dunder
 #  attribute whose value is a string residing in this frozenset.
-PACKAGE_NAMES_BLACKLIST = frozenset((
+BLACKLIST_PACKAGE_NAMES = frozenset((
     # ....................{ ANTIPATTERN ~ forward ref      }....................
     # These third-party packages and modules widely employ the forward reference
     # antipattern throughout their codebases and are thus runtime-hostile.
@@ -78,7 +122,7 @@ PACKAGE_NAMES_BLACKLIST = frozenset((
 ))
 '''
 Frozen set of the fully-qualified names of all **beartype-blacklisted
-third-party modules** well-known to be hostile to runtime type-checking in
+third-party packages** well-known to be hostile to runtime type-checking in
 general and :mod:`beartype` specifically, usually due to employing one or more
 of the following antipatterns:
 
