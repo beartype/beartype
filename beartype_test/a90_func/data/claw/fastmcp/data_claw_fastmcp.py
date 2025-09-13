@@ -42,7 +42,7 @@ Arbitrary in-memory FastMCP client connecting to this server of that protocol.
 
 # ....................{ FUNCTIONS                          }....................
 @fastmcp_server.tool
-def with_stride_colossal(on_from_hall_to_hall: str) -> bytes:
+def with_stride_colossal(on_from_hall_to_hall: str) -> int:
     '''
     Arbitrary function trivially satisfying FastMCP's runnable protocol by
     accepting an arbitrary string of mock input data and returning a byte string
@@ -54,8 +54,10 @@ def with_stride_colossal(on_from_hall_to_hall: str) -> bytes:
     validate this wrapping.
     '''
 
-    # Return this string trivially coerced into a byte string.
-    return bytes(on_from_hall_to_hall)
+    # Return the trivial length of this string. We initially attempted to coerce
+    # this string into a byte string, but Pydantic promptly complained about
+    # that. Lol. "Y U H8 byte string, M8?"
+    return len(on_from_hall_to_hall)
 
 # ....................{ MAIN                               }....................
 async def data_claw_fastmcp_main() -> None:
@@ -73,14 +75,17 @@ async def data_claw_fastmcp_main() -> None:
     '''
 
     # ....................{ FASTMCP                        }....................
-    # Inside a FastMCP-specific context manager asynchronously encapsulating
-    # this client-server connection...
-    with fastmcp_client:
+    # Inside a FastMCP-specific asynchronous context manager encapsulating this
+    # client-server connection...
+    async with fastmcp_client:
         # Implicitly assert the server connected to this client to be awake by
         # trivially pinging the server from this client.
         await fastmcp_client.ping()
 
         # ....................{ PASS                       }....................
+        # Valid input to be passed to the FastMCP tool defined above.
+        TOOL_INPUT = 'While far within each aisle and deep recess,'
+
         # Synchronously call the asynchronous FastMCP server tool defined above
         # with valid input. Doing so implicitly asserts that the import hook
         # registered by the caller respected the decorator-hostile
@@ -95,24 +100,19 @@ async def data_claw_fastmcp_main() -> None:
         # decorator-hostile and thus hostile to @beartype as well,
         # @fastmcp_server.tool prohibits *ANY* decorator from being applied
         # after itself.
-        while_far_within = await fastmcp_client.call_tool(
-            'with_stride_colossal', {
-                'on_from_hall_to_hall': (
-                    'While far within each aisle and deep recess,'),
-            },
-        )
+        #
+        # Note that:
+        # * The object returned by this asynchronous client invocation of a
+        #   FastMCP tool is a FastMCP-specific "CallToolResult" object. Look. We
+        #   don't know either. This API is hell to test. Sanity now! See also:
+        #     https://gofastmcp.com/clients/tools#handling-results
+        # * There's little point in attempting to validate that this tool raises
+        #   @beartype-specific type-checking violations. Why? Because it
+        #   doesn't. FastMCP validates input through Pydantic *BEFORE*
+        #   @beartype-specific type-checking can get there. It is what it is.
+        tool_output = await fastmcp_client.call_tool(
+            'with_stride_colossal', {'on_from_hall_to_hall': TOOL_INPUT})
 
         # Explicitly assert that call returned the expected output.
-        assert while_far_within == (
-            b'While far within each aisle and deep recess,')
-
-        # ....................{ FAIL                       }....................
-        # Assert that the asynchronous FastMCP server tool when passed an
-        # invalid parameter raises the expected @beartype-specific violation.
-        with raises(BeartypeCallHintParamViolation):
-            await fastmcp_client.call_tool(
-                'with_stride_colossal', {
-                    'on_from_hall_to_hall': (
-                        ['His winged minions', 'in close clusters', 'stood,',]),
-                },
-            )
+        # print(f'tool_output: {tool_output}')
+        assert tool_output.data == len(TOOL_INPUT)

@@ -166,6 +166,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # necessitates new data structures that have yet to be implemented. See
         # the "FIXME:" comment below for further commentary.
         if not isinstance(node_name_assigned, Name):
+            # print(f'Trivially ignoring complex assigned attribute "{unparse(node_name_assigned)}"!')
             return
         # Else, this target attribute name is encapsulated by a simple "Name"
         # node and is thus an unqualified basename.
@@ -192,6 +193,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # of such a type. In this case, silently reduce to a noop.
         if not isinstance(
             imported_attr_basename_subtrie, BeartypeDecorPlaceTypeTrie):
+            # print(f'Trivially ignoring friendly source attribute "{unparse(node_name_imported)}"!')
             return
         # Else, this source attribute name refers to a previously imported type
         # defining one or more decorator-hostile decorator methods.
@@ -493,17 +495,31 @@ class BeartypeNodeTransformerImportMixin(object):
             import_module_basename = import_module_basenames[
                 import_module_basename_index_curr]
 
-            # Child subtrie of this parent (sub)trie if this unqualified
-            # basename of that module being imported from maps to yet another
-            # nested submodule, "None" if this basename erroneously maps to a
-            # decorator-hostile decorator, *OR* the sentinel placeholder if this
-            # basename maps to *NO* problematic module or decorator. See above!
+            # Either:
+            # * If this unqualified basename of the module being imported from
+            #   maps to a problematic submodule, type, or instance transitively
+            #   defining decorator-hostile decorators, the corresponding subtrie
+            #   of this module subtrie.
+            # * If this basename maps to a decorator-hostile decorator, "None".
+            # * If this basename maps to a friendly attribute (i.e., attribute
+            #   that is neither a decorator-hostile decorator *NOR* submodule,
+            #   type, or instance transitively defining decorator-hostile
+            #   decorators), the sentinel placeholder.
             import_module_name_subtrie = (
                 import_module_name_subtrie_parent.get(
                     import_module_basename, SENTINEL))
             # print(f'Visiting imported-from module basename "{import_module_basename}"...')
             # print(f'...associated with subtrie {import_module_name_subtrie}.')
 
+            # If this basename maps to *NO* decorator-hostile module, this
+            # import statement imports from *NO* such module and is thus
+            # ignorable with respect to @beartype. In this case, silently reduce
+            # to a noop by returning this node unmodified.
+            if import_module_name_subtrie is SENTINEL:
+                # print(f'Ignoring friendly import "{unparse(node)}"!')
+                return node
+            # Else, this basename maps to a problematic module.
+            #
             # If this basename maps to a decorator-hostile decorator, this
             # subtrie erroneously claims that external module being imported
             # from to be a decorator rather than a module! However, Only modules
@@ -520,9 +536,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # * One or more submodules of the caller's package import attributes
             #   from that submodule resembling:
             #       from bad_package.bad_submodule import bad_attribute
-            #
-            # In this case...
-            if import_module_name_subtrie is None:
+            elif import_module_name_subtrie is None:
                 # Pretty-printed representation of this import statement.
                 node_repr = get_node_repr_indented(node)
 
@@ -545,14 +559,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # Else, this basename does *NOT* map to a decorator-hostile
             # decorator.
             #
-            # If this basename maps to *NO* problematic module or decorator,
-            # this import statement imports from *NO* such module and is thus
-            # ignorable with respect to @beartype. In this case, silently reduce
-            # to a noop by returning this node unmodified.
-            elif import_module_name_subtrie is SENTINEL:
-                # print(f'Ignoring friendly import "{unparse(node)}"!')
-                return node
-            # Else, this basename maps to a child subtrie of this parent
+            # Thus, this basename maps to a child subtrie of this parent
             # (sub)trie (by elimination), implying this basename to be that of a
             # third-party module defining decorator-hostile decorators. In this
             # case, attempt to unwrap this subtrie against the next unqualified
@@ -567,6 +574,11 @@ class BeartypeNodeTransformerImportMixin(object):
 
             # Increment the index of the next unqualified basename to visit.
             import_module_basename_index_curr += 1
+        # Note that, by the above logic, the "import_module_name_subtrie" local
+        # variable accessed below is now guaranteed to be a non-empty child
+        # subtrie (i.e., concrete instance of the "BeartypeDecorPlaceTrieABC"
+        # superclass containing one or more key-value pairs) describing a
+        # third-party module defining decorator-hostile decorators.
 
         # ..................{ SEARCH ~ decorator             }..................
         # For each child "alias" node of this parent "ImportFrom" node
@@ -596,6 +608,26 @@ class BeartypeNodeTransformerImportMixin(object):
             if not import_attr_basename_src: continue  # <-- *SILENCE, MYPY!*
             # This name is now guaranteed to be non-"None".
 
+            # Either:
+            # * If this unqualified basename of the attribute being imported
+            #   from that module maps to a problematic submodule, type, or
+            #   instance transitively defining decorator-hostile decorators,
+            #   the corresponding subtrie of this module subtrie.
+            # * If this basename maps to a decorator-hostile decorator, "None".
+            # * If this basename maps to a friendly attribute (i.e., attribute
+            #   that is neither a decorator-hostile decorator *NOR* submodule,
+            #   type, or instance transitively defining decorator-hostile
+            #   decorators), the sentinel placeholder.
+            import_attr_name_subtrie = import_module_name_subtrie.get(  # type: ignore[union-attr]
+                import_attr_basename_src, SENTINEL)
+
+            # This basename maps to *NO* decorator-hostile attribute, this
+            # imported attribute is ignorable with respect to @beartype. In this
+            # case, silently continuing to the next imported attribute.
+            if import_attr_name_subtrie is SENTINEL:
+                continue
+            # Else, this basename maps to a decorator-hostile attribute.
+
             # Imported target attribute name (i.e., unqualified basename of this
             # imported attribute as newly localized or globalized inside the
             # currently visited module), defined as either...
@@ -612,59 +644,16 @@ class BeartypeNodeTransformerImportMixin(object):
                 # that name.
                 import_attr_basename_src
             )
-            # print(f'Handling imported-from target attribute "{import_attr_basename_src}"...')
-            # print(f'...aliased to "{import_attr_basename_trg}".')
+            # print(f'Mapping imported decorator-hostile decorator "{import_attr_basename_src}"...')
+            # print(f'...aliased to "{import_attr_basename_trg}"...')
+            # print(f'...to subtrie "{import_attr_name_subtrie}".')
 
-            # If...
-            if (
-                # That module, type, or instance defines one or more
-                # decorator-hostile decorators *AND*...
-                import_module_name_subtrie_parent and
-                # The unqualified basename of this attribute is that of a
-                # decorator-hostile decorator directly defined by that module,
-                # type, or instance...
-                import_attr_basename_src in import_module_name_subtrie_parent
-            ):
-                # print(f'Mapping imported decorator-hostile decorator "{import_attr_basename_src}"...')
-
-                # Map the unqualified basename of this decorator-hostile
-                # decorator function as a new terminal trie leaf node (i.e.,
-                # key-value pair whose value is "None").
-                self._map_scoped_attr_name_to_subtrie(
-                    attr_name=import_attr_basename_trg, attr_name_subtrie=None)
-            # Else, either that module defines no decorator-hostile decorator
-            # functions *OR* the unqualified basename of this attribute is *NOT*
-            # that of a decorator-hostile decorator function in that module. In
-            # either case, this import is ignorable with respect to decorator
-            # functions.
-            #
-            # If...
-            #
-            # Note that this edge case arises with submodule imports resembling:
-            #     from langchain_core import runnable
-            #     @runnable.chain
-            #     def problem_func(...): ...
-            elif (
-                # That module defines one or more submodules transitively
-                # defining one or more decorator-hostile decorators *AND*...
-                isinstance(
-                    import_module_name_subtrie,
-                    BeartypeDecorPlaceTrieABC
-                ) and
-                # The unqualified basename of this attribute is that of such a
-                # submodule...
-                import_attr_basename_src in import_module_name_subtrie
-            ):
-                # print(f'Mapping imported decorator-hostile decorator module "{import_attr_basename_src}"...')
-
-                # Map the unqualified basename of that submodule transitively
-                # defining one or more decorator-hostile decorator functions
-                # to a new non-terminal trie stem node (i.e., key-value pair
-                # whose value is a nested frozen dictionary).
-                self._map_scoped_attr_name_to_subtrie(
-                    attr_name=import_attr_basename_trg,
-                    attr_name_subtrie=import_module_name_subtrie,
-                )
+            # Map the unqualified basename of this decorator-hostile attribute
+            # to this attribute's subtrie.
+            self._map_scoped_attr_name_to_subtrie(
+                attr_name=import_attr_basename_trg,
+                attr_name_subtrie=import_attr_name_subtrie,  # type: ignore[arg-type]
+            )
 
         # ..................{ RETURN                         }..................
         # Return this node unmodified.
@@ -674,7 +663,7 @@ class BeartypeNodeTransformerImportMixin(object):
     def _map_scoped_attr_name_to_subtrie(
         self,
         attr_name: str,
-        attr_name_subtrie: BeartypeDecorPlaceSubtrie,
+        attr_name_subtrie: Optional[BeartypeDecorPlaceSubtrie],
     ) -> None:
         '''
         Map the passed possibly fully-qualified name of a third-party
@@ -690,15 +679,18 @@ class BeartypeNodeTransformerImportMixin(object):
         ----------
         attr_name : str
             Possibly fully-qualified name of the attribute to be mapped.
-        attr_name_subtrie : BeartypeDecorPlaceSubtrie,
-            Scoped attribute name subtrie to map this attribute name to.
+        attr_name_subtrie : Optional[BeartypeDecorPlaceSubtrie]
+            Either:
+
+            * If this attribute is a decorator-hostile decorator, :data:`None`.
+            * If this attribute is a submodule, type, or instance transitively
+              defining one or more decorator-hostile decorators, the attribute
+              name subtrie to map this attribute name to.
         '''
         assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
         assert isinstance(
             attr_name_subtrie, NoneTypeOr[BeartypeDecorPlaceTrieABC]), (
-            f'{repr(attr_name_subtrie)} neither '
-            f'"None" nor frozen dictionary.'
-        )
+            f'{repr(attr_name_subtrie)} neither "None" nor frozen dictionary.')
 
         # Render this scope's beforelist safe for modification if this
         # beforelist is *NOT* yet safely modifiable.
@@ -1136,8 +1128,6 @@ class BeartypeNodeTransformerImportMixin(object):
             node.decorator_list.append(node_beartype_decorator)
 
     # ....................{ PRIVATE ~ finders              }....................
-    #FIXME: Generalize comments below to refer to "attribute" rather than
-    #"decorator", please. *sigh*
     def _is_node_scoped_attr_name(self, node: AST) -> Union[
         BeartypeDecorPlaceSubtrie, bool]:
         '''
@@ -1209,12 +1199,12 @@ class BeartypeNodeTransformerImportMixin(object):
         # being recursed into by iteration below, initialized to the scoped
         # attribute name trie unique to the current scope of the currently
         # visited module.
-        scoped_attr_name_subtrie = (
-            self._scope.beforelist.scoped_attr_basename_trie)
+        attr_name_subtrie = self._scope.beforelist.scoped_attr_basename_trie
+        # print(f'[_is_node_scoped_attr_name] Root trie: {attr_name_subtrie}')
 
         # If *NO* decorator-hostile attributes have been imported into the
         # current scope, silently reduce to a noop by returning false.
-        if not scoped_attr_name_subtrie:
+        if not attr_name_subtrie:
             # print(f'Trivially ignoring friendly attribute "{unparse(node)}" (due to empty trie)!')
             return False
         # Else, one or more decorator-hostile attributes have been imported into
@@ -1225,6 +1215,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # fully-qualified name of this attribute.
         self._attr_basenames = get_node_attr_basenames(
             node=node, attr_basenames=self._attr_basenames)
+        # print(f'Split attribute name "{unparse(node)}" into basenames {repr(self._attr_basenames)}.')
 
         # If this list is empty, the prior getter failed to reconstruct this
         # list from this node (e.g., due to this node being of an unknown type
@@ -1250,14 +1241,16 @@ class BeartypeNodeTransformerImportMixin(object):
 
         # For the unqualified basename of either each parent submodule
         # transitively defining this attribute itself or this attribute...
-        for node_decorator_basename in self._attr_basenames:
+        for attr_basename in self._attr_basenames:
+            # print(f'Mapping attribute basename "{attr_basename}"...')
+
             # Child subtrie of this parent (sub)trie matching this basename if
             # the currently visited module previously imported either a
             # third-party submodule, type, or instance transitively defining one
             # or more decorator-hostile decorators or such a decorator with the
             # same basename *OR* the sentinel.
-            scoped_attr_name_subtrie = scoped_attr_name_subtrie.get(  # type: ignore[assignment]
-                node_decorator_basename, SENTINEL)  # type: ignore[arg-type]
+            attr_name_subtrie = attr_name_subtrie.get(attr_basename, SENTINEL)  # type: ignore[arg-type, assignment]
+            # print(f'...to subtrie "{attr_name_subtrie}".')
 
             # If the parent (sub)trie contained *NO* basename matching that of a
             # problematic third-party object imported into the currently visited
@@ -1275,7 +1268,8 @@ class BeartypeNodeTransformerImportMixin(object):
             #   been preceded by any other decorators. That's what
             #   decorator-hostile means. But that decorator *WAS* preceded by
             #   this decorator. Proof by contradiction yields this conclusion.
-            if scoped_attr_name_subtrie is SENTINEL:
+            if attr_name_subtrie is SENTINEL:
+                # print(f'Detected attribute name "{unparse(node)}" as unmatched decorator-friendly!')
                 return False
             # Else, the parent (sub)trie contained a basename matching that of a
             # problematic third-party object imported into the currently visited
@@ -1285,7 +1279,8 @@ class BeartypeNodeTransformerImportMixin(object):
             # (sub)trie associated with this "None" value is a terminal leaf
             # node, implying this attribute to be a decorator-hostile decorator.
             # In this case, immediately return true.
-            elif scoped_attr_name_subtrie is None:
+            elif attr_name_subtrie is None:
+                # print(f'Detected attribute name "{unparse(node)}" as decorator-hostile decorator!')
                 return True
             # Else, this child subtrie is *NOT* "None". By elimination, this
             # child subtrie *MUST* actually be yet another recursively nested
@@ -1303,9 +1298,10 @@ class BeartypeNodeTransformerImportMixin(object):
         #   with associated basenames. Why? Because if all such (sub)tries had
         #   already been visited above, this method would have immediately
         #   returned true. But this method has yet to return anything! QED.
+        # print(f'Detected attribute name "{unparse(node)}" as decorator-hostile subtrie {attr_name_subtrie}!')
 
         # Assert sanity. You never know, bear friends. And neither do we.
-        assert isinstance(scoped_attr_name_subtrie, BeartypeDecorPlaceTrieABC)
+        assert isinstance(attr_name_subtrie, BeartypeDecorPlaceTrieABC)
 
         # Return the most recently visited imported attribute name (sub)trie.
-        return scoped_attr_name_subtrie
+        return attr_name_subtrie

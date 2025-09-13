@@ -25,7 +25,7 @@ from beartype_test._util.mark.pytskip import skip_unless_package, skip
 
 # ....................{ TESTS                              }....................
 @pytest.mark.run_in_subprocess
-@skip('Currently broken, sadly.')
+# @skip('Currently broken, sadly.')
 @skip_unless_package('fastmcp')
 async def test_claw_fastmcp() -> None:
     '''

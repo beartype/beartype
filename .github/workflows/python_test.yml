@@ -164,6 +164,7 @@ jobs:
           - { python-version: "3.11",  tox-env: "py311-coverage" }
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
+          - { python-version: "3.14",  tox-env: "py314-coverage" }
 
           #FIXME: Actually, let's just avoid free-threading builds for now. It'd
           #be great to test them, but only 20% of all C extensions support them
@@ -171,10 +172,7 @@ jobs:
           #@beartype against them, because the @beartype test suite requires an
           #*EXTREME* number of C extensions (e.g., NumPy, SciPy, PyTorch).
           # - { python-version: "3.13t", tox-env: "py313t-coverage" }
-
-          - { python-version: "3.14",  tox-env: "py314-coverage" }
-
-         # - { python-version: "3.14t", tox-env: "py314t-coverage" }
+          # - { python-version: "3.14t", tox-env: "py314t-coverage" }
 
           #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
           # - tox-env: pypy310-coverage
