@@ -224,19 +224,18 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # the type of this callable and thus *CANNOT* be integrated into the
     # efficient mapping-based O(1) dispatch employed above.
 
-    # If this object is uncallable...
-    if not callable(obj):
-        # If this uncallable object is beartype-blacklisted (i.e., defined in a
-        # third-party package or module that is hostile to runtime
-        # type-checking), silently reduce to a noop and preserve this uncallable
-        # object as is. Of course, this is hardly ideal. But...
-        #
-        # Beartype didn't break it. Beartype can't fix it. Beartype ignores it!
-        if is_object_blacklisted(obj):
-            return obj
-        # Else, this uncallable object is *NOT* beartype-blacklisted.
-
-        # Raise an exception.
+    # If this object is beartype-blacklisted (i.e., defined in a third-party
+    # package or module that is hostile to runtime type-checking), silently
+    # reduce to a noop and preserve this object as is -- even if this object is
+    # uncallable. Of course, this is hardly ideal. But...
+    #
+    # Beartype didn't break it. Beartype can't fix it. Beartype ignores it!
+    if is_object_blacklisted(obj):
+        return obj
+    # Else, this object is *NOT* beartype-blacklisted.
+    #
+    # If this object is uncallable, raise an exception.
+    elif not callable(obj):
         raise BeartypeDecorWrappeeException(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
@@ -305,9 +304,9 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     if func_contextmanager is not None:
         return _beartype_func_contextlib_contextmanager(  # type: ignore[return-value]
             func=obj, func_contextmanager=func_contextmanager, **kwargs)
-    # Else, that function is *NOT* a "contextlib"-based isomorphic
-    # decorator closure. By elimination, that function *MUST* be a standard
-    # pure-Python function.
+    # Else, that function is *NOT* a "contextlib"-based isomorphic decorator
+    # closure. By elimination, that function *MUST* be a standard pure-Python
+    # function.
 
     # Decorate that pure-Python function with runtime type-checking.
     return beartype_func(obj, **kwargs)  # type: ignore[return-value]

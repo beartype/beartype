@@ -12,14 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    FrozenSet,
-)
+from beartype._data.typing.datatyping import DictStrToFrozenSetStrs
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 
 # ....................{ DICTS                              }....................
-BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: Dict[str, FrozenSet[str]] = FrozenDict({
+BLACKLIST_MODULE_NAME_TO_TYPE_NAMES: DictStrToFrozenSetStrs = FrozenDict({
     # ....................{ ANTIPATTERN ~ decor-hostile    }....................
     # These third-party packages and modules widely employ the decorator-hostile
     # decorator antipattern throughout their codebases and are thus
@@ -53,6 +50,59 @@ following antipatterns:
   non-standard types usable *only* by those APIs. Due to being uncallable *and*
   non-standard, those instances then obstruct trivial wrapping by the
   :func:`beartype.beartype` decorator.
+'''
+
+
+BLACKLIST_TYPE_MRO_ROOT_MODULE_NAME_TO_TYPE_NAMES: DictStrToFrozenSetStrs = (
+    FrozenDict({
+        # ....................{ ANTIPATTERN ~ decor-hostile    }....................
+        # These third-party packages and modules widely employ the decorator-hostile
+        # decorator antipattern throughout their codebases and are thus
+        # runtime-hostile.
+
+        # The object-oriented @celery.Celery.task decorator method transforms
+        # callable user-defined functions and methods into callable
+        # Celery-specific instances of this type, known as Celery tasks. For
+        # better or worse, Celery tasks masquerade as the user-defined callables
+        # they wrap and thus are *ONLY* accessible as the root MRO item:
+        #     # Define a trivial Celery task.
+        #     >>> from celery import Celery
+        #     >>> celery_server = Celery(broker='memory://')
+        #     >>> @celery_server.task()
+        #     >>> def muh_celery_task() -> None: pass
+        #
+        #     # Prove that Celery tasks lie about everything.
+        #     >>> muh_celery_task.__module__
+        #     celery.local  # <-- weird, but okay
+        #     >>> muh_celery_task.__name__
+        #     muh_celery_task  # <-- *LIAR*! you're actually a "Task" instance!!
+        #     >>> muh_celery_task.__class__.__module__
+        #     __main__  # <-- *LIAR*! you're actually a "Task" instance!!
+        #     >>> muh_celery_task.__class__.__name__
+        #     muh_celery_task  # <-- *LIAR*! you're actually a "Task" instance!!
+        #     >>> muh_celery_task.__class__.__mro__
+        #     (<class '__main__.muh_celery_task'>, <class
+        #     'celery.app.task.Task'>, <class 'celery.app.task.Task'>, <class
+        #     'object'>)  # <-- *FINALLY*. at last. the truth is revealed.
+        'celery.app.task': frozenset(('Task',)),
+    }))
+'''
+Frozen dictionary mapping from the fully-qualified name of each problematic
+third-party package and module to a frozen set of the unqualified basenames of
+all **beartype-blacklisted types** defined by that package or module such that
+these high-level types masquerade as the low-level user-defined callables that
+they wrap, typically by an even higher-level decorator wrapping callables with
+those types.
+
+These types hide themselves from public view and thus are *only* accessible as
+the **root method-resolution order (MRO) item** (i.e., second-to-last item of
+the ``__mro__`` dunder dictionary of these types, thus ignoring the ignorable
+:class:`object` guaranteed to be the last item of all such dictionaries).
+
+See Also
+--------
+:data:`.BLACKLIST_MODULE_NAME_TO_TYPE_NAMES`
+    Further details.
 '''
 
 # ....................{ SETS                               }....................

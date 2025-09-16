@@ -351,6 +351,10 @@
    https://click.palletsprojects.com
 .. _rich_click:
    https://ewels.github.io/rich-click
+.. _celery.Celery:
+   https://docs.celeryq.dev/en/stable/reference/celery.html#celery.Celery
+.. _celery.Celery.task:
+   https://docs.celeryq.dev/en/stable/userguide/tasks.html
 
 .. # ------------------( LINKS ~ py : package : equinox      )------------------
 .. _equinox:
@@ -431,6 +435,8 @@
 .. # ------------------( LINKS ~ py : package : pydantic     )------------------
 .. _Pydantic:
    https://docs.pydantic.dev
+.. _fastmcp.FastMCP:
+   https://gofastmcp.com/servers
 .. _fastmcp.FastMCP.tool:
    https://gofastmcp.com/servers/tools
 .. _LangChain:

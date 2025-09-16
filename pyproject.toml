@@ -316,10 +316,6 @@ test-tox = [
     # ....................{ ETC                            }....................
     # Miscellaneous optional test-time dependencies.
 
-    # Required by optional Click-specific integration tests.
-    "click",
-    "rich-click",
-
     #FIXME: Reenable Python >= 3.14 support *AFTER* nuitka and all reverse
     #dependencies thereof officially ship Python 3.14 wheels.
     #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
@@ -331,6 +327,19 @@ test-tox = [
 
     # Required by optional SQLAlchemy-specific integration tests.
     "sqlalchemy",
+
+    # ....................{ CLI                            }....................
+    # Required by optional Typer-specific integration tests.
+    "typer",
+
+    # ....................{ CLI ~ click                    }....................
+    # Required by optional Click-specific integration tests.
+    "click",
+    "rich-click",
+
+    # Required by optional Celery-specific integration tests. Note that Celery
+    # requires Click.
+    "celery",
 
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.

@@ -340,6 +340,13 @@ DictStrToType = Dict[str, type]
 PEP-compliant type hint matching a dictionary mapping from strings to types.
 '''
 
+
+DictStrToFrozenSetStrs = Dict[str, FrozenSet[str]]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to frozen
+sets of strings.
+'''
+
 # ....................{ CHAINMAP ~ str                     }....................
 ChainMapStrToAny = ChainMap[str, Any]
 '''

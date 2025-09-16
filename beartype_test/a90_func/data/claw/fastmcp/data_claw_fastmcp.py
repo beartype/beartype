@@ -47,9 +47,9 @@ def with_stride_colossal(on_from_hall_to_hall: str) -> int:
     mocking the output text response of a model context protocol (MCP) passed
     that input.
 
-    The :meth:`mcp.tool` decorator wraps this function in a FastMCP-specific
-    runnable object defining a ``run()`` method, which we then call below to
-    validate this wrapping.
+    The :meth:`FastMCP.tool` decorator method wraps this function in a
+    FastMCP-specific runnable object defining a ``run()`` method, which we then
+    call below to validate this wrapping.
     '''
 
     # Return the trivial length of this string. We initially attempted to coerce

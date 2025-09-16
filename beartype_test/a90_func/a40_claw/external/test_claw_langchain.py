@@ -59,4 +59,7 @@ def test_claw_langchain() -> None:
     # Implicitly assert that the @beartype decorator avoids raising exceptions
     # (typically by internally reducing to a noop) when decorating uncallable
     # objects produced by LangChain-specific decorator-hostile decorators.
-    beartype(when_harboured_in)
+    when_harboured_in_beartyped = beartype(when_harboured_in)
+
+    # Assert that the @beartype decorator actually did reduce to a noop.
+    assert when_harboured_in is when_harboured_in_beartyped
