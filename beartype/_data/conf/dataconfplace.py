@@ -94,12 +94,6 @@ DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = FrozenDict({
     #     https://github.com/beartype/beartype/issues/540
     'fastmcp': BeartypeDecorPlacePackageTrie({
         'FastMCP': BeartypeDecorPlaceTypeTrie({'tool': None})}),
-
-    # The third-party @command decorator method of the "typer.Typer" type of the
-    # Typer API. See also:
-    #     https://github.com/beartype/beartype/issues/436
-    'typer': BeartypeDecorPlacePackageTrie({
-        'Typer': BeartypeDecorPlaceTypeTrie({'command': None})}),
 })
 '''
 **Decorator beforelist** (i.e., frozen dictionary mapping from the unqualified

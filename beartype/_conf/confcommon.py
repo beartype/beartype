@@ -30,7 +30,7 @@ This global is intentionally *not* publicized to end users, who can simply
 instantiate ``BeartypeConf()`` to efficiently obtain the same singleton.
 '''
 
-
+# ....................{ GETTERS                            }....................
 @callable_cached
 def get_beartype_conf_strategy_on() -> BeartypeConf:
     '''

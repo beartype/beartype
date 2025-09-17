@@ -14,19 +14,15 @@ callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Rename:
-#* "claw_decoration_position_funcs" to merely "claw_decor_place_func".
-#* "claw_decoration_position_types" to merely "claw_decor_place_type".
-
 #FIXME: Generalize "warning_cls_on_decorator_exception", please. Specifically:
 #* Deprecate "warning_cls_on_decorator_exception".
-#* Define a new "decoration_exception_type: Optional[TypeException] = None"
+#* Define a new "decor_exception_type: Optional[TypeException] = None"
 #  parameter accepting *ANY* arbitrary exception rather than merely a warning.
 
 #FIXME: [DOCOS] Document all newly defined configuration parameters in our
 #reST-formatted docos, please -- including:
-#* "claw_decoration_position_funcs".
-#* "claw_decoration_position_types".
+#* "claw_decor_place_func".
+#* "claw_decor_place_type".
 #* "claw_is_pep526".
 #* "claw_skip_package_names".
 #* "hint_overrides".
@@ -53,6 +49,7 @@ from beartype._conf.confenum import (
 from beartype._conf.conftest import (
     default_conf_kwargs,
     die_if_conf_kwargs_invalid,
+    issue_warning_deprecated_option,
     sanify_conf_kwargs,
 )
 from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
@@ -66,7 +63,6 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
-from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
@@ -81,17 +77,16 @@ class BeartypeConf(object):
 
     Attributes
     ----------
-    _claw_decoration_position_funcs : BeartypeDecorPlace
-        **Import hook callable decorator position** (i.e., location to which the
-        :func:`beartype.beartype` decorator will be implicitly injected into
-        existing chains of one or more decorators decorating functions and
-        methods defined by modules imported under :mod:`beartype.claw` import
-        hooks).
-    _claw_decoration_position_types : BeartypeDecorPlace
-        **Import hook class decorator position** (i.e., location to which the
-        :func:`beartype.beartype` decorator will be implicitly injected into
-        existing chains of one or more decorators decorating classes defined by
-        modules imported under :mod:`beartype.claw` import hooks).
+    _claw_decor_place_func : BeartypeDecorPlace
+        **Import hook callable decorator place** (i.e., relative position in
+        existing chains of one or more decorators decorating user-defined
+        functions and methods to which :mod:`beartype.claw` import hooks will
+        automatically inject the :func:`beartype.beartype` decorator).
+    _claw_decor_place_type : BeartypeDecorPlace
+        **Import hook class decorator place** (i.e., relative position in
+        existing chains of one or more decorators decorating user-defined
+        classes to which :mod:`beartype.claw` import hooks will automatically
+        inject the :func:`beartype.beartype` decorator).
     _claw_is_pep526 : bool
         :data:`True` only if type-checking **annotated variable assignments**
         (i.e., :pep:`526`-compliant assignments to local, global, class, and
@@ -223,8 +218,8 @@ class BeartypeConf(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        '_claw_decoration_position_funcs',
-        '_claw_decoration_position_types',
+        '_claw_decor_place_func',
+        '_claw_decor_place_type',
         '_claw_is_pep526',
         '_claw_skip_package_names',
         '_conf_args',
@@ -252,8 +247,8 @@ class BeartypeConf(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        _claw_decoration_position_funcs: BeartypeDecorPlace
-        _claw_decoration_position_types: BeartypeDecorPlace
+        _claw_decor_place_func: BeartypeDecorPlace
+        _claw_decor_place_type: BeartypeDecorPlace
         _claw_is_pep526: bool
         _claw_skip_package_names: CollectionStrs
         _conf_args: tuple
@@ -295,9 +290,9 @@ class BeartypeConf(object):
 
         # Uncomment us when implementing O(n) type-checking, please.
         # check_time_max_multiplier: Union[int, None] = 1000,
-        claw_decoration_position_funcs: BeartypeDecorPlace = (
+        claw_decor_place_func: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE),
-        claw_decoration_position_types: BeartypeDecorPlace = (
+        claw_decor_place_type: BeartypeDecorPlace = (
             BeartypeDecorPlace.LAST),
         claw_is_pep526: bool = True,
         claw_skip_package_names: CollectionStrs = (),
@@ -318,7 +313,9 @@ class BeartypeConf(object):
 
         #FIXME: Consider removing these at some point, please.
         # Optional keyword-only *DEPRECATED* parameters.
-        is_check_pep557: bool = False,
+        claw_decoration_position_funcs: Optional[BeartypeDecorPlace] = None,
+        claw_decoration_position_types: Optional[BeartypeDecorPlace] = None,
+        is_check_pep557: Optional[bool] = None,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -389,12 +386,12 @@ class BeartypeConf(object):
             .. code-block:: python
 
                b * check_time_max_multiplier >= T
-        claw_decoration_position_funcs : BeartypeDecorPlace, optional
-            **Import hook callable decorator position** (i.e., location to which
-            the :func:`beartype.beartype` decorator will be implicitly injected
-            into existing chains of one or more decorators decorating functions
-            and methods defined by modules imported under :mod:`beartype.claw`
-            import hooks). Defaults to :attr:`BeartypeDecorPlace.LAST`.
+        claw_decor_place_func : BeartypeDecorPlace, optional
+            **Import hook callable decorator place** (i.e., relative position in
+            existing chains of one or more decorators decorating user-defined
+            functions and methods to which :mod:`beartype.claw` import hooks
+            will automatically inject the :func:`beartype.beartype` decorator).
+            Defaults to :attr:`BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE`.
 
             Modifying this configures import hooks to inject
             :func:`beartype.beartype` as the first (rather than last) decorator
@@ -410,7 +407,7 @@ class BeartypeConf(object):
                from beartype import BeartypeConf, BeartypeDecorPlace
                from beartype.claw import beartype_this_package
                beartype_this_package(conf=BeartypeConf(
-                   claw_decoration_position_funcs=(
+                   claw_decor_place_func=(
                        BeartypeDecorPlace.FIRST)))
 
                # ...transforms chains of function decorators like this...
@@ -426,12 +423,12 @@ class BeartypeConf(object):
                @beartype  # <-- @beartype decorates first rather than last! \\o/
                def chad_func() -> int:
                    return 42
-        claw_decoration_position_types : BeartypeDecorPlace, optional
-            **Import hook class decorator position** (i.e., location to which
-            the :func:`beartype.beartype` decorator will be implicitly injected
-            into existing chains of one or more decorators decorating classes
-            defined by modules imported under :mod:`beartype.claw` import
-            hooks). Defaults to :attr:`BeartypeDecorPlace.LAST`.
+        claw_decor_place_type : BeartypeDecorPlace, optional
+            **Import hook class decorator place** (i.e., relative position in
+            existing chains of one or more decorators decorating user-defined
+            classes to which :mod:`beartype.claw` import hooks will
+            automatically inject the :func:`beartype.beartype` decorator).
+            Defaults to :attr:`BeartypeDecorPlace.LAST`.
 
             Modifying this configures import hooks to inject
             :func:`beartype.beartype` as the first (rather than last) decorator
@@ -447,7 +444,7 @@ class BeartypeConf(object):
                from beartype import BeartypeConf, BeartypeDecorPlace
                from beartype.claw import beartype_this_package
                beartype_this_package(conf=BeartypeConf(
-                   claw_decoration_position_types=(
+                   claw_decor_place_type=(
                        BeartypeDecorPlace.FIRST)))
 
                # ...transforms chains of class decorators like this...
@@ -785,24 +782,39 @@ class BeartypeConf(object):
         # may actually do a great deal of real-world good. Safety first, all!
         with _beartype_conf_lock:
             # ..................{ DEPRECATED                 }..................
-            # If the caller passed a deprecated parameter...
+            # If the caller passed any deprecated parameter:
+            # * Issue one non-fatal deprecation warning for each.
+            # * Pass the corresponding non-deprecated parameter instead.
             #
-            # Note that deprecated parameters *MUST* be coerced into
-            # non-deprecated parameters before caching the latter.
-            if is_check_pep557:
-                # Issue a non-fatal deprecation warning.
-                issue_warning(
-                    cls=DeprecationWarning,
-                    message=(
-                        'Beartype configuration parameter "is_check_pep557" '
-                        'deprecated by new parameter "is_pep557_fields", '
-                        'because beartype is here to annoy you when you were '
-                        'just about to go home.\n'
-                        'tl;dr: pass "is_pep557_fields" instead, please. *sigh*'
-                    ),
+            # Note that:
+            # * Deprecated parameters *MUST* be coerced into non-deprecated
+            #   parameters before caching the latter.
+            # * This could be automated with iteration iterating over a private
+            #   frozen dictionary mapping deprecated to non-deprecated option
+            #   names. Why didn't we just do that, then? *SPEED.* The current
+            #   inline approach is considerably faster. Since this logic is
+            #   necessarily performed *BEFORE* reducing to a previously cached
+            #   configuration, this logic warrants this micro-optimization.
+            #   Moreover, automation only saves a few lines... at best.
+            #   Moreover, deprecated parameters should be removed at some point
+            #   anyway! This is just irrelevant cruft, mostly.
+            if claw_decoration_position_funcs is not None:
+                issue_warning_deprecated_option(
+                    option_name_old='claw_decoration_position_funcs',
+                    option_name_new='claw_decor_place_func',
                 )
-
-                # Pass the corresponding non-deprecated parameter instead.
+                claw_decor_place_func = claw_decoration_position_funcs
+            if claw_decoration_position_types is not None:
+                issue_warning_deprecated_option(
+                    option_name_old='claw_decoration_position_types',
+                    option_name_new='claw_decor_place_type',
+                )
+                claw_decor_place_type = claw_decoration_position_types
+            if is_check_pep557 is not None:
+                issue_warning_deprecated_option(
+                    option_name_old='is_check_pep557',
+                    option_name_new='is_pep557_fields',
+                )
                 is_pep557_fields = is_check_pep557
 
             # ..................{ CACHE                      }..................
@@ -816,8 +828,8 @@ class BeartypeConf(object):
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
-                claw_decoration_position_funcs,
-                claw_decoration_position_types,
+                claw_decor_place_func,
+                claw_decor_place_type,
                 claw_is_pep526,
                 claw_skip_package_names,
                 hint_overrides,
@@ -848,8 +860,8 @@ class BeartypeConf(object):
             # defined *AFTER* this method first attempts to efficiently reduce
             # to a noop by returning a previously instantiated configuration.
             conf_kwargs = dict(
-                claw_decoration_position_funcs=claw_decoration_position_funcs,
-                claw_decoration_position_types=claw_decoration_position_types,
+                claw_decor_place_func=claw_decor_place_func,
+                claw_decor_place_type=claw_decor_place_type,
                 claw_is_pep526=claw_is_pep526,
                 claw_skip_package_names=claw_skip_package_names,
                 hint_overrides=hint_overrides,
@@ -924,10 +936,10 @@ class BeartypeConf(object):
             # parameters from the "conf_kwargs" dictionary possibly modified by
             # the above call to the default_conf_kwargs() function rather than
             # the original passed values of these parameters.
-            self._claw_decoration_position_funcs = conf_kwargs[  # pyright: ignore
-                'claw_decoration_position_funcs']
-            self._claw_decoration_position_types = conf_kwargs[  # pyright: ignore
-                'claw_decoration_position_types']
+            self._claw_decor_place_func = conf_kwargs[  # pyright: ignore
+                'claw_decor_place_func']
+            self._claw_decor_place_type = conf_kwargs[  # pyright: ignore
+                'claw_decor_place_type']
             self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
             self._claw_skip_package_names = conf_kwargs[
                 'claw_skip_package_names']  # pyright: ignore
@@ -1178,13 +1190,12 @@ class BeartypeConf(object):
 
     # ..................{ PROPERTIES ~ options : claw        }..................
     @property
-    def claw_decoration_position_funcs(self) -> BeartypeDecorPlace:
+    def claw_decor_place_func(self) -> BeartypeDecorPlace:
         '''
-        **Import hook callable decorator position** (i.e., location to which the
-        :func:`beartype.beartype` decorator will be implicitly injected into
-        existing chains of one or more decorators decorating functions and
-        methods defined by modules imported under :mod:`beartype.claw` import
-        hooks).
+        **Import hook callable decorator place** (i.e., relative position in
+        existing chains of one or more decorators decorating user-defined
+        functions and methods to which :mod:`beartype.claw` import hooks will
+        automatically inject the :func:`beartype.beartype` decorator).
 
         See Also
         --------
@@ -1192,16 +1203,16 @@ class BeartypeConf(object):
             Further details.
         '''
 
-        return self._claw_decoration_position_funcs
+        return self._claw_decor_place_func
 
 
     @property
-    def claw_decoration_position_types(self) -> BeartypeDecorPlace:
+    def claw_decor_place_type(self) -> BeartypeDecorPlace:
         '''
-        **Import hook class decorator position** (i.e., location to which the
-        :func:`beartype.beartype` decorator will be implicitly injected into
-        existing chains of one or more decorators decorating classes defined by
-        modules imported under :mod:`beartype.claw` import hooks).
+        **Import hook class decorator place** (i.e., relative position in
+        existing chains of one or more decorators decorating user-defined
+        classes to which :mod:`beartype.claw` import hooks will automatically
+        inject the :func:`beartype.beartype` decorator).
 
         See Also
         --------
@@ -1209,7 +1220,7 @@ class BeartypeConf(object):
             Further details.
         '''
 
-        return self._claw_decoration_position_types
+        return self._claw_decor_place_type
 
 
     @property

@@ -61,8 +61,8 @@ def test_conf_dataclass() -> None:
     # * The unqualified basenames of and all public fields of this class.
     BEAR_CONF_REPR_SUBSTRS = (
         'BeartypeConf',
-        'claw_decoration_position_funcs',
-        'claw_decoration_position_types',
+        'claw_decor_place_func',
+        'claw_decor_place_type',
         'claw_is_pep526',
         'claw_skip_package_names',
         'hint_overrides',
@@ -89,8 +89,8 @@ def test_conf_dataclass() -> None:
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
     BEAR_CONF_NONDEFAULT_KWARGS = dict(
-        claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
-        claw_decoration_position_types=BeartypeDecorPlace.FIRST,
+        claw_decor_place_func=BeartypeDecorPlace.LAST,
+        claw_decor_place_type=BeartypeDecorPlace.FIRST,
         claw_is_pep526=False,
         claw_skip_package_names=('Made_contrast_with', 'the_universe',),
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -131,8 +131,8 @@ def test_conf_dataclass() -> None:
     assert BeartypeConf() is BeartypeConf()
     assert (
         BeartypeConf(
-            claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
-            claw_decoration_position_types=BeartypeDecorPlace.FIRST,
+            claw_decor_place_func=BeartypeDecorPlace.LAST,
+            claw_decor_place_type=BeartypeDecorPlace.FIRST,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
@@ -163,16 +163,16 @@ def test_conf_dataclass() -> None:
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
             claw_skip_package_names=('Made_contrast_with', 'the_universe',),
-            claw_decoration_position_types=BeartypeDecorPlace.FIRST,
-            claw_decoration_position_funcs=BeartypeDecorPlace.LAST,
+            claw_decor_place_type=BeartypeDecorPlace.FIRST,
+            claw_decor_place_func=BeartypeDecorPlace.LAST,
         )
     )
 
     # ....................{ PASS ~ properties              }....................
     # Assert that the default configuration contains the expected fields.
-    assert BEAR_CONF_DEFAULT.claw_decoration_position_funcs is (
+    assert BEAR_CONF_DEFAULT.claw_decor_place_func is (
         BeartypeDecorPlace.LAST_BEFORE_DECOR_HOSTILE)
-    assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
+    assert BEAR_CONF_DEFAULT.claw_decor_place_type is (
         BeartypeDecorPlace.LAST)
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.claw_skip_package_names == ()
@@ -195,9 +195,9 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT._is_warning_cls_on_decorator_exception_set is False
 
     # Assert that the non-default configuration contains the expected fields.
-    assert BEAR_CONF_NONDEFAULT.claw_decoration_position_funcs is (
+    assert BEAR_CONF_NONDEFAULT.claw_decor_place_func is (
         BeartypeDecorPlace.LAST)
-    assert BEAR_CONF_NONDEFAULT.claw_decoration_position_types is (
+    assert BEAR_CONF_NONDEFAULT.claw_decor_place_type is (
         BeartypeDecorPlace.FIRST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
     assert BEAR_CONF_NONDEFAULT.claw_skip_package_names == (
@@ -295,10 +295,10 @@ def test_conf_dataclass() -> None:
     # Assert that instantiating a configuration with an invalid parameter raises
     # the expected exception.
     with raises(BeartypeConfParamException):
-        BeartypeConf(claw_decoration_position_funcs=(
+        BeartypeConf(claw_decor_place_func=(
             "High 'mid the shifting domes of sheeted spray"))
     with raises(BeartypeConfParamException):
-        BeartypeConf(claw_decoration_position_types=(
+        BeartypeConf(claw_decor_place_type=(
             "That canopied his path o'er the waste deep;"))
     with raises(BeartypeConfParamException):
         BeartypeConf(claw_is_pep526=(
@@ -381,10 +381,10 @@ def test_conf_dataclass() -> None:
     # Assert that attempting to modify any public read-only property of this
     # dataclass raises the expected exception.
     with raises(AttributeError):
-        BEAR_CONF_DEFAULT.claw_decoration_position_funcs = (
+        BEAR_CONF_DEFAULT.claw_decor_place_func = (
             BeartypeDecorPlace.FIRST)
     with raises(AttributeError):
-        BEAR_CONF_DEFAULT.claw_decoration_position_types = (
+        BEAR_CONF_DEFAULT.claw_decor_place_type = (
             BeartypeDecorPlace.FIRST)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
@@ -417,6 +417,10 @@ def test_conf_dataclass() -> None:
     # ....................{ FAIL ~ warn                    }....................
     # Assert that instantiating a configuration with a deprecated parameter
     # issues the expected warning.
+    with warns(DeprecationWarning):
+        BeartypeConf(claw_decoration_position_funcs=BeartypeDecorPlace.FIRST)
+    with warns(DeprecationWarning):
+        BeartypeConf(claw_decoration_position_types=BeartypeDecorPlace.FIRST)
     with warns(DeprecationWarning):
         BeartypeConf(is_check_pep557=True)
 

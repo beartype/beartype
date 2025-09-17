@@ -808,13 +808,13 @@ class BeartypeNodeTransformerImportMixin(object):
         decoration_position = (
             # If this parent decoratable node is a parent class node, the
             # class-specific decorator position.
-            conf.claw_decoration_position_types
+            conf.claw_decor_place_type
             if isinstance(node, ClassDef) else
             # Else, this parent decoratable node is *NOT* a parent class node.
             # By process of elimination, this parent decoratable node *MUST* be
             # a parent callable node. In this case, fallback to the
             # callable-specific decorator position.
-            conf.claw_decoration_position_funcs
+            conf.claw_decor_place_func
         )
         # print(f'Injecting @beartype decorator onto decoratable {unparse(node)} decorator chain...')
 

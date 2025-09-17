@@ -68,7 +68,7 @@ class BeartypeDecorPlace(Enum):
            from beartype import beartype, BeartypeConf, BeartypeDecorPlace
            from beartype.claw import beartype_this_package
            beartype_this_package(conf=BeartypeConf(
-               claw_decoration_position_types=BeartypeDecorPlace.FIRST))
+               claw_decor_place_type=BeartypeDecorPlace.FIRST))
 
            # ...transforms chains of class decorators like this...
            from dataclasses import dataclass
@@ -118,7 +118,7 @@ class BeartypeDecorPlace(Enum):
              from beartype import BeartypeConf, BeartypeDecorPlace
              from beartype.claw import beartype_all
              beartype_all(conf=BeartypeConf(
-                 claw_decoration_position_types=BeartypeDecorPlace.FIRST))
+                 claw_decor_place_type=BeartypeDecorPlace.FIRST))
     LAST : EnumMemberType
         **Last (i.e., top-most) decorator position**, configuring
         :mod:`beartype.claw` import hooks to unintelligently inject the
@@ -162,7 +162,7 @@ class BeartypeDecorPlace(Enum):
            from beartype import beartype, BeartypeConf, BeartypeDecorPlace
            from beartype.claw import beartype_this_package
            beartype_this_package(conf=BeartypeConf(
-               claw_decoration_position_funcs=BeartypeDecorPlace.LAST))
+               claw_decor_place_func=BeartypeDecorPlace.LAST))
 
            # ...transforms chains of function decorators like this...
            from functools import cache

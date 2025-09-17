@@ -24,7 +24,7 @@ beartype_package(
         'data_claw_conf_decorplace_funcs_first'
     ),
     conf=BeartypeConf(
-        claw_decoration_position_funcs=BeartypeDecorPlace.FIRST),
+        claw_decor_place_func=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
     data_claw_conf_decorplace_funcs_first)
@@ -37,7 +37,7 @@ beartype_package(
         'data_claw_conf_decorplace_types_first'
     ),
     conf=BeartypeConf(
-        claw_decoration_position_types=BeartypeDecorPlace.FIRST),
+        claw_decor_place_type=BeartypeDecorPlace.FIRST),
 )
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.conf import (
     data_claw_conf_decorplace_types_first)
