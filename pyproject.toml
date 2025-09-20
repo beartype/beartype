@@ -176,7 +176,7 @@ doc-rtd = [
     #       https://github.com/sphinx-doc/sphinx/issues/9816
     # * sphinx < 6.0.0, as more recent versions currently conflict with our
     #   Sphinx theme. See again the same upstream issue as above.
-    "sphinx >=4.2.0,<6.0.0",
+    "sphinx >=4.2.0,<8.0.0",
 
     #FIXME: Switch! So, "pydata-sphinx-theme" is ostensibly *MOSTLY* great.
     #However, there are numerous obvious eccentricities in "pydata-sphinx-theme"
@@ -264,7 +264,7 @@ doc-rtd = [
     #
     # PyData wins by literally doing nothing. Laziness prevails. All hail
     # La-Z-Boy.
-    "pydata-sphinx-theme <=0.7.2",
+    "pydata-sphinx-theme <=0.16.1",
 
     # The older version of "pydata-sphinx-theme" currently required above to
     # build this documentation assumes that Python bundles the "distutils"
