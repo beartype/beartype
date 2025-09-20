@@ -32,9 +32,11 @@ def test_get_func_contextlib_contextmanager_or_none() -> None:
     from beartype_test.a00_unit.data.data_type import (
         async_context_manager_factory,
         context_manager_factory,
+        function,
+    )
+    from beartype_test.a00_unit.data.func.data_decor import (
         decorator_isomorphic,
         decorator_nonisomorphic,
-        function,
     )
     from contextlib import (
         asynccontextmanager,

@@ -21,7 +21,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import IntType
-from beartype_test.a00_unit.data.data_type import decorator
+from beartype_test.a00_unit.data.func.data_decor import decorator
 from collections.abc import Callable
 
 # ....................{ CONSTANTS                          }....................

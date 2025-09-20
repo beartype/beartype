@@ -1,0 +1,70 @@
+---
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2025 Beartype authors.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Project-wide GitHub-specific Dependabot configuration.
+#
+# Dependabot is GitHub's homegrown solution for automated bumping of package
+# dependencies, including both security and non-security bumps.
+#
+# --------------------( SEE ALSO                           )--------------------
+# * Official documentation on file format, which is sufficiently deeply nested
+#   that it will absolutely be broken by the time you eventually read this:
+#   https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+# * Unofficial third-party blog post strongly inspiring this Python-centric
+#   Dependabot configuration:
+#   https://til.simonwillison.net/github/dependabot-python-setup
+
+# ....................{ PREAMBLE                           }....................
+# To quote the official Dependabot documentation:
+#     "Dependabot configuration syntax to use. Always: 2."
+#
+# ...wat? If this magic number is *ALWAYS* "2", then just default this magic
+# number to "2" already, Dependabot. Don't make boilerplate worse than
+# boilerplate has to be, Dependabot. Come on! Work with us here.
+version: 2
+
+# ....................{ BUMP                               }....................
+# List of all packaging ecosystems to be automatically bumped by Dependabot.
+updates:
+  # ....................{ GITHUB ACTIONS                   }....................
+  # GitHub Actions.
+  - package-ecosystem: 'github-actions'
+
+    # Find the ".github/workflows/" subdirectory relative to the top-level
+    # directory of this repository, Dependabot.
+    directory: '/'
+
+    # Bump dependencies on a somewhat relaxed (but still rigorous enough)
+    # cadence that doesn't destroy our will to code, Dependabot.
+    schedule:
+      interval: 'weekly'
+
+    # Group two or more dependency bumps into a single pull request (PR) to
+    # preserve our will to code, Dependabot.
+    groups:
+      github-actions:  # <-- arbitrary group name
+        patterns:
+          - '*'
+
+  # ....................{ PYTHON                           }....................
+  # Python.
+  - package-ecosystem: 'pip'
+
+    # Find the root "pyproject.toml" file relative to the top-level directory of
+    # this repository, Dependabot.
+    directory: '/'
+
+    # Bump dependencies on a somewhat relaxed (but still rigorous enough)
+    # cadence that doesn't destroy our will to code, Dependabot.
+    schedule:
+      interval: 'weekly'
+
+    # Group two or more dependency bumps into a single pull request (PR) to
+    # preserve our will to code, Dependabot.
+    groups:
+      python-packages:  # <-- arbitrary group name
+        patterns:
+          - '*'

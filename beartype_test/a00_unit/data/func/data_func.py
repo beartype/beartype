@@ -11,8 +11,8 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype_test.a00_unit.data.data_type import decorator_isomorphic
-from typing import Union
+from beartype.typing import Union
+from beartype_test.a00_unit.data.func.data_decor import decorator_isomorphic
 
 # ....................{ CALLABLES                          }....................
 def func_args_0() -> str:

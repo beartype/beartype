@@ -146,62 +146,6 @@ def wrapper_isomorphic(*args, **kwargs):
 
     return function(*args, **kwargs)
 
-# ....................{ CALLABLES ~ sync : decorator       }....................
-def decorator(func: Callable) -> Callable:
-    '''
-    **Identity decorator** (i.e., decorator returning the passed callable
-    unmodified).
-
-    This decorator enables logic elsewhere to exercise the
-    :mod:`beartype.beartype` decorator with respect to nested callables
-    decorated by both the :mod:`beartype.beartype` decorator and one or more
-    decorators *not* the :mod:`beartype.beartype` decorator.
-    '''
-
-    return func
-
-
-def decorator_isomorphic(func):
-    '''
-    **Isomorphic decorator** (i.e., function returning an isomorphic decorator
-    closure transparently preserving both the positions and types of all
-    parameters passed to the passed callable).
-    '''
-
-    @wraps(func)
-    def _closure_isomorphic(*args, **kwargs):
-        '''
-        **Isomorphic decorator closure** (i.e., closure transparently
-        preserving both the positions and types of all parameters and returns
-        passed to the decorated callable).
-        '''
-
-        return func(*args, **kwargs)
-
-    # Return this closure.
-    return _closure_isomorphic
-
-
-def decorator_nonisomorphic(func):
-    '''
-    **Non-isomorphic decorator** (i.e., function returning a non-isomorphic
-    decorator closure destroying the positions and/or types of one or more
-    parameters passed to the passed callable).
-    '''
-
-    @wraps(func)
-    def _closure_nonisomorphic():
-        '''
-        **Non-isomorphic decorator closure** (i.e., closure destroying the
-        positions and/or types of one or more parameters passed to the decorated
-        callable).
-        '''
-
-        return func()
-
-    # Return this closure.
-    return _closure_nonisomorphic
-
 # ....................{ CALLABLES ~ sync : wrapper         }....................
 def function_wrappee(text_one: str, text_two: str) -> str:
     '''
