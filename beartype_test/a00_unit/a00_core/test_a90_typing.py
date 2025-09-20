@@ -253,7 +253,7 @@ def test_api_typing() -> None:
     # ..................{ ASSERTS                            }..................
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: When this assertion fails, the culprit is *USUALLY* the "typing"
-    # module for the active Python module, which has probably erroneously
+    # module for the active Python version, which has probably erroneously
     # publicized one or more public attributes. In this case, the names of these
     # attributes *MUST* be manually added to the
     # "TYPING_ATTR_PUBLIC_BAD_NAMES" set defined far above.

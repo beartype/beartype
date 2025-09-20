@@ -68,3 +68,11 @@ updates:
       python-packages:  # <-- arbitrary group name
         patterns:
           - '*'
+
+    # List of all dependencies to *NOT* be automatically bumped, Dependabot.
+    ignore:
+      # Ignore Sphinx and all reverse dependencies thereof. Our Sphinx-based
+      # documentation site is archived as a frozen (read-only) snapshot *NOT*
+      # intended to be updated, maintained, modified, or edited... Ever.
+      - dependency-name: 'sphinx'
+      - dependency-name: 'pydata-sphinx-theme'
