@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: "Checking out repository..."
-        uses: 'actions/checkout@v4'
+        uses: 'actions/checkout@v5'
       - name: "Publishing GitHub release..."
         uses: 'ncipollo/release-action@v1'
         with:
@@ -83,9 +83,9 @@ jobs:
 
     steps:
       - name: "Checking out repository..."
-        uses: 'actions/checkout@v4'
+        uses: 'actions/checkout@v5'
       - name: "Installing latest stable Python 3.x..."
-        uses: 'actions/setup-python@v5'
+        uses: 'actions/setup-python@v6'
         with:
           python-version: '3.x'
 
