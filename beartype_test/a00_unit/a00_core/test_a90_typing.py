@@ -49,7 +49,7 @@ def test_api_typing() -> None:
     import typing as official_typing
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_MOST_3_13,
+        IS_PYTHON_AT_MOST_3_16,
         IS_PYTHON_AT_LEAST_3_13,
     )
 
@@ -162,12 +162,12 @@ def test_api_typing() -> None:
     }
 
     # ..................{ MAGIC ~ version                    }..................
-    # If the active Python interpreter targets Python <= 3.13...
-    if IS_PYTHON_AT_MOST_3_13:
+    # If the active Python interpreter targets Python <= 3.16...
+    if IS_PYTHON_AT_MOST_3_16:
         # Add all hard-deprecated public "typing" attributes that have since
         # been permanently removed under newer Python versions.
         TYPING_ATTR_UNEQUAL_NAMES.add('ByteString')
-    # Else, the active Python interpreter targets Python >= 3.14.
+    # Else, the active Python interpreter targets Python >= 3.17.
 
     # If the active Python interpreter targets Python >= 3.13...
     if IS_PYTHON_AT_LEAST_3_13:
@@ -243,6 +243,8 @@ def test_api_typing() -> None:
     # of either "beartype.typing" or "typing" but *NOT* both).
     DIFFERENT_TYPING_ATTR_NAMES = (
         BEARTYPE_TYPING_ATTR_NAMES ^ OFFICIAL_TYPING_ATTR_NAMES)
+    # print(f'beartype.typing: {"ByteString" in BEARTYPE_TYPING_ATTR_NAMES}')
+    # print(f'typing: {"ByteString" in OFFICIAL_TYPING_ATTR_NAMES}')
 
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose values are identical to those declared by the

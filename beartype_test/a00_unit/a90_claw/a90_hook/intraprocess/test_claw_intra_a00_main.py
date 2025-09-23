@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **intraprocess import hook unit tests** (i.e., exercising
-:mod:`beartype.claw` import hooks within the active Python process).
+Beartype **import hook general-purpose intraprocess unit tests** (i.e.,
+exercising generally applicable edge cases of :mod:`beartype.claw` import hooks
+within the active Python process).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -72,8 +73,9 @@ def test_claw_intraprocess_beartype_package() -> None:
     # configured by the default beartype configuration.
     beartype_package(PACKAGE_NAME)
 
-    # Import all submodules of the package hooked above, exercising that these
-    # submodules are subject to that import hook.
+    # Import all subpackages of the package hooked above, each of which then
+    # imports all submodules of that subpackage, exercising that these
+    # submodules are transitively subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
         conf,
         kind,

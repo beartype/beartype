@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hookable coroutine submodule** (i.e., data module
+Test-wide **beartype import hookable coroutine submodule** (i.e., data module
 containing *only* annotated asynchronous functions, mimicking real-world usage
 of the :func:`beartype.claw.beartype_package` import hook from an external
 caller).

@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hook data type subpackage initialization
-submodule** (i.e., data module mimicking real-world usage of various
-:func:`beartype.claw` import hooks on various types of objects, including both
-callables and non-callable containers).
+Test-wide **beartype import hook data type subpackage initialization submodule**
+(i.e., data module mimicking real-world usage of various :func:`beartype.claw`
+import hooks on various types of objects, including both callables and
+non-callable containers).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,7 +16,6 @@ from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import 
     # of decoratable object supported by @beartype, synchronous functions form
     # the core backbone of @beartype. If @beartype fails to decorate even
     # synchronous functions, all hope is lost for less trivial decoration below.
-    # there is *NO* hope for
     data_claw_func,
 
     # Intentionally exercise coroutines (i.e., asynchronous functions) next.
@@ -25,7 +24,7 @@ from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import 
     data_claw_coro,
 
     # Intentionally exercise types (i.e., user-defined classes) next. Types are
-    # considerably higher-level and thus  less trivial than either synchronous
+    # considerably higher-level and thus less trivial than either synchronous
     # or asynchronous functions for @beartype to decorate.
     data_claw_type,
 )

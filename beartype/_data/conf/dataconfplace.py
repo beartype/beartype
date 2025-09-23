@@ -89,7 +89,7 @@ DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = FrozenDict({
     'celery': BeartypeDecorPlacePackageTrie({
         'Celery': BeartypeDecorPlaceTypeTrie({'task': None})}),
 
-    # The third-party @.tool decorator function of the "fastmcp.FastMCP" type of
+    # The third-party @tool decorator function of the "fastmcp.FastMCP" type of
     # the FastMCP API. See also:
     #     https://github.com/beartype/beartype/issues/540
     'fastmcp': BeartypeDecorPlacePackageTrie({
