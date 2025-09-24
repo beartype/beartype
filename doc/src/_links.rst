@@ -60,6 +60,12 @@
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
 
+.. # ------------------( LINKS ~ beartype : github : security)------------------
+.. _GitHub Advisory Database:
+   https://github.com/advisories
+.. _beartype security:
+   https://github.com/beartype/beartype/blob/main/.github/SECURITY.md
+
 .. # ------------------( LINKS ~ beartype : github : time    )------------------
 .. _beartype profiler:
    https://github.com/beartype/beartype/blob/main/bin/profile.bash

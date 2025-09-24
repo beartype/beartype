@@ -26,11 +26,30 @@ class BeartypeDecorPlaceTrieABC(FrozenDict):
     pass
 
 
+class BeartypeDecorPlacePackagesTrie(BeartypeDecorPlaceTrieABC):
+    '''
+    Beartype **decorator position packages trie** (i.e., recursive tree
+    structure describing third-party packages and modules known to be hostile to
+    the :func:`beartype.beartype` decorator, such that those packages and
+    modules all transitively define one or more decorator-hostile decorators).
+
+    This trie is defined as a frozen dictionary mapping from the name of each
+    third-party root (i.e., non-nested) package or module transitively defining
+    one or more such decorator-hostile decorators to a nested
+    :class:`.BeartypeDecorPlacePackageTrie` frozen dictionary describing the
+    problematic contents of that package or module.
+    '''
+
+    pass
+
+
 class BeartypeDecorPlacePackageTrie(BeartypeDecorPlaceTrieABC):
     '''
     Beartype **decorator position (sub)package trie** (i.e., recursive tree
-    structure describing third-party decorators known to be hostile to the
-    :func:`beartype.beartype` decorator).
+    structure describing the problematic contents of third-party packages and
+    modules known to be hostile to the :func:`beartype.beartype` decorator, such
+    that those packages and modules all transitively define one or more
+    decorator-hostile decorators).
 
     This trie is defined as a frozen dictionary mapping from the unqualified
     basename of each attribute of a third-party (sub)package transitively

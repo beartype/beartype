@@ -314,6 +314,15 @@ License
 Beartype is `open-source software released <beartype license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
+########
+Security
+########
+
+Beartype encourages security researchers, institutes, and concerned netizens to
+`responsibly disclose security vulnerabilities as GitHub-originated Security
+Advisories <beartype security_>`__ – published with full acknowledgement in the
+public `GitHub Advisory Database`_.
+
 #######
 Funding
 #######

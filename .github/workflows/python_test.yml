@@ -71,29 +71,29 @@ env:
   _PIP_PACKAGE_NAMES: |
     tox
 
+# ...................{ PERMISSIONS                        }...................
+permissions:
+  # Enable third-party GitHub Actions to read the contents of this repository's
+  # ".git/" subdirectory (e.g., to list all git commits). This is the safest
+  # explicit permission that a GitHub workflow can currently grant to
+  # third-party GitHub Actions. Ideally, this permission would be the default.
+  # According to the CodeQL code scanner, however, this is *NOT* the case.
+  # CodeQL security alerts document that:
+  #     If a GitHub Actions job or workflow has no explicit permissions set,
+  #     then the repository permissions are used. Repositories created under
+  #     organizations inherit the organization permissions. The organizations or
+  #     repositories created before February 2023 have the default permissions
+  #     set to read-write. Often these permissions do not adhere to the
+  #     principle of least privilege and can be reduced to read-only, leaving
+  #     the write permission only to a specific types as issues: write or
+  #     pull-requests: write.
+  #
+  # Explicitly granting this permission elides both this CodeQL security alert
+  # and the underlying insecurity described by this alert.
+  contents: read
+
 # ....................{ MAIN                               }....................
 jobs:
-  # ...................{ PERMISSIONS                        }...................
-  permissions:
-    # Enable third-party GitHub Actions to read the contents of this
-    # repository's ".git/" subdirectory (e.g., to list all git commits). This is
-    # the safest explicit permission that a GitHub workflow can currently grant
-    # to third-party GitHub Actions. Ideally, this permission would be the
-    # default. According to the CodeQL code scanner, however, this is *NOT* the
-    # case. CodeQL security alerts document that:
-    #     If a GitHub Actions job or workflow has no explicit permissions set,
-    #     then the repository permissions are used. Repositories created under
-    #     organizations inherit the organization permissions. The organizations
-    #     or repositories created before February 2023 have the default
-    #     permissions set to read-write. Often these permissions do not adhere
-    #     to the principle of least privilege and can be reduced to read-only,
-    #     leaving the write permission only to a specific types as issues: write
-    #     or pull-requests: write.
-    #
-    # Explicitly granting this permission elides both this CodeQL security alert
-    # and the underlying insecurity described by this alert.
-    contents: read
-
   # ...................{ TESTS                              }...................
   # Job iteratively exercising our test suite against all Python interpreters
   # supported by this package (and also measuring the coverage of that suite).
