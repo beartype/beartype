@@ -402,6 +402,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # Beforelist unique to the currently visited lexical scope of the
         # currently visited module, localized for readability and efficiency.
         beforelist = self._scope.beforelist
+        # print(f'beforelist: {beforelist}')
 
         # If this name is prefixed by one or more "." delimiters, this name is a
         # PEP 328-compliant partially-qualified module name relative to the

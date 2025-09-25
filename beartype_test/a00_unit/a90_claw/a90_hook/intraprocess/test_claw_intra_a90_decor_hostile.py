@@ -38,10 +38,45 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.claw import beartype_package
     from beartype.roar import BeartypeDecorWrappeeException
+    from beartype._conf.decorplace.confplacetrie import (
+        BeartypeDecorPlacePackagesTrie,
+        BeartypeDecorPlacePackageTrie,
+    )
+    from beartype._data.conf import dataconfplace
     from beartype_test.a00_unit.data.func.data_decor import decorator_hostile
     from pytest import raises
+
+    # ....................{ MONKEY-PATCH                   }....................
+    # Monkey-patch this testing-specific decorator-hostile decorator into this
+    # decorator-hostile decorator attribute name trie. *ALL* other
+    # decorator-hostile decorators are defined by third-party packages and thus
+    # unsuitable for general-purpose unit testing.
+    #
+    # Note that this monkey-patch is intentionally isolated to this
+    # test-specific subprocess and thus implicitly safe.
+    dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE |= (
+        BeartypeDecorPlacePackagesTrie({
+            'beartype_test': BeartypeDecorPlacePackageTrie({
+                'a00_unit': BeartypeDecorPlacePackageTrie({
+                    'data': BeartypeDecorPlacePackageTrie({
+                        'func': BeartypeDecorPlacePackageTrie({
+                            'data_decor': BeartypeDecorPlacePackageTrie({
+                                'decorator_hostile': None,
+                            })
+                        })
+                    })
+                })
+            })
+        })
+    )
+    # print(dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE)
+
+    # ....................{ IMPORTS ~ monkey-patch         }....................
+    # Defer test-specific imports that transitively import the global attribute
+    # monkey-patched above to ensure that all other imports of that attribute
+    # elsewhere are monkey-patched as expected.
+    from beartype.claw import beartype_package
 
     # ....................{ PREAMBLE                       }....................
     # Validate that the decorator-hostile decorator leveraged by the package

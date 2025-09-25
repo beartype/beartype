@@ -22,7 +22,6 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._conf.decorplace.confplacetrie import (
     BeartypeDecorPlacePackagesTrie,
     BeartypeDecorPlacePackageTrie,
@@ -65,6 +64,33 @@ matching the root and non-root nesting levels of this trie.
 '''
 
 # ....................{ TRIES                              }....................
+#FIXME: *BEFORE* openly publishing this data structure to the world, let's do
+#something about the hideously ambiguous "None" references we're stuffing into
+#this data structure. Specifically:
+#* Define a new "BeartypeDecorPlaceNode" class and associated
+#  "BeartypeDecorPlaceDecoratorHostileNode" global singleton: e.g.,
+#      class BeartypeDecorPlaceNode(object):
+#          pass
+#
+#      BeartypeDecorPlaceDecoratorHostileNode = BeartypeDecorPlaceNode()
+#* Globally replace *ALL* ambiguous "None" references both here and in the
+#  associated "clawastimport" submodule with unambiguous
+#  "BeartypeDecorPlaceDecoratorHostileNode" references instead.
+#
+#Why are "None" references ambiguous? Because we'd like to eventually stuff a
+#wide variety of metadata into this data structure. For example, third-party
+#*DECORATOR-DISABLING DECORATORS*. "But what are decorator-disabling
+#decorators!?", you might now be cogitating. As the term suggests, they're
+#decorators whose existence in a chain of one or more decorators signals to
+#other decorators that those decorators should *NOT* be applied in the first
+#place. A great real-world example of a decorator-disabling decorator is the
+#@jaxtyping.jaxtyped decorator, which already internally applies a runtime
+#type-checking decorator like @beartype; ergo, @beartype should *NOT* be
+#erroneously re-applied to callables and types decorated by @jaxtyping.jaxtyped.
+#That decorator effectively disables other decorators.
+#
+#Unambiguous node singletons give us the future flexibility we need to
+#eventually support features like this. Pump that fist, bear bros! \o/
 DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = (
     BeartypeDecorPlacePackagesTrie({
         # ....................{ FUNCTIONS                  }....................
@@ -94,10 +120,11 @@ DECOR_HOSTILE_ATTR_NAME_TRIE: BeartypeDecorPlaceTrie = (
             'FastMCP': BeartypeDecorPlaceTypeTrie({'tool': None})}),
 }))
 '''
-**Decorator beforelist** (i.e., frozen dictionary mapping from the unqualified
-basename of each third-party (sub)package and (sub)module transitively defining
-one or more decorator-hostile decorators to either yet another such recursively
-nested frozen dictionary *or* :data`None`, in which case the corresponding key
-is the unqualified basename of a decorator-hostile decorator directly defined by
-that (sub)package, (sub)module, type, or instance).
+**Decorator-hostile decorator attribute name trie** (i.e., frozen dictionary
+mapping from the unqualified basename of each third-party (sub)package and
+(sub)module transitively defining one or more decorator-hostile decorators to
+either yet another such recursively nested frozen dictionary *or* :data`None`,
+in which case the corresponding key is the unqualified basename of a
+decorator-hostile decorator directly defined by that (sub)package, (sub)module,
+type, or instance).
 '''

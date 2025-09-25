@@ -138,6 +138,7 @@ class BeartypeClawState(object):
         self.packages_trie_whitelist = PackagesTrieWhitelist()
         self.packages_trie_blacklist = PackagesTrieBlacklist(
             subpackage_basename_to_trie=_PACKAGE_NAME_TO_TRIE_BLACKLISTED)
+        # print(f'node_scope_beforelist_global: {self.node_scope_beforelist_global}')
 
         #FIXME: Preserved because the above will inevitably break. *sigh*
         # self.packages_trie_blacklist = PackagesTrieBlacklist()
