@@ -12,36 +12,96 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.typing.datatyping import (
-    BeartypeableT,
-    BoolTristate,
-)
+from beartype._data.typing.datatyping import BoolTristate
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
 )
 from collections.abc import Callable
 
-# ....................{ LABELLERS ~ beartypeable           }....................
-#FIXME: Generalize to all possible objects, please. Specifically:
-#* Rename to label_object_kind().
-#* Reduce the "obj: BeartypeableT" type hint to merely "obj: object".
-def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
+# ....................{ LABELLERS ~ object                 }....................
+#FIXME: Unit test us up, please.
+def label_object(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    is_color: BoolTristate = False,
+    is_context: BoolTristate = None,
+) -> str:
     '''
-    Human-readable label describing the **kind** (i.e., single concise noun
-    synopsizing the category of) of the passed **beartypeable** (i.e., object
-    that is currently being or has already been decorated by the
-    :func:`beartype.beartype` decorator).
+    Human-readable label describing the passed arbitrary object.
 
     Parameters
     ----------
-    obj : BeartypeableT
-        Beartypeable to describe the kind of.
+    obj : object
+        Object to be labelled.
+    is_color : BoolTristate, default: False
+        Tri-state colouring boolean governing ANSI usage. See the
+        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
+        Defaults to :data:`False`.
+    is_context : BoolTristate, default: None
+        Either:
+
+        * :data:`True`, in which case this label is suffixed by additional
+          metadata contextually disambiguating the passed object if that object
+          is a callable, including:
+
+          * The line number of the first line declaring that callable in its
+            underlying source code module file.
+          * The absolute filename of that file.
+
+        * :data:`False`, in which case this label is *not* suffixed by such
+          metadata.
+        * :data:`None`, in which case this label is conditionally suffixed by
+          such metadata only if that callable is a lambda function and thus
+          ambiguously lacks any semblance of an innate context.
+
+        Defaults to :data:`None`.
 
     Returns
     -------
     str
-        Human-readable label describing the kind of this beartypeable.
+        Human-readable label describing this hintable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextrepr import represent_object
+
+    # If this object is a type, return a label describing this type.
+    if isinstance(obj, type):
+        return label_type(cls=obj, is_color=is_color)
+    # Else, this beartypeable is *NOT* a type.
+    #
+    # If this object is a callable, return a label describing this callable.
+    elif callable(obj):
+        return label_callable(
+            func=obj,
+            is_color=is_color,
+            is_context=is_context,
+        )
+    # Else, this object is neither a type or callable.
+
+    # Fallback to a simplistically heuristic concatenating (in order):
+    # * The human-readable kind of this object.
+    # * The machine-readable representation of this object.
+    return f'{label_object_kind(obj)} {represent_object(obj)}'
+
+
+def label_object_kind(obj: object) -> str:
+    '''
+    Human-readable label describing the **kind** (i.e., single concise noun
+    synopsizing the category of) of the passed object.
+
+    Parameters
+    ----------
+    obj : object
+        Object to describe the kind of.
+
+    Returns
+    -------
+    str
+        Human-readable label describing the kind of this object.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -59,15 +119,11 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     from beartype._util.func.arg.utilfuncargget import (
         get_func_arg_name_first_or_none)
 
-
     # ....................{ LOCALS                         }....................
     # String to be returned, defaulting to a sensible placeholder.
     obj_label = 'object'
 
     # ....................{ TYPE                           }....................
-    #FIXME: [SPEED] Globalize all magic strings below for efficiency, please.
-    #Actually, is there any point? Does Python itself automatically intern?
-
     # If this object is a pure-Python class, return an appropriate string.
     if isinstance(obj, type):
         obj_label = 'class'
@@ -179,6 +235,51 @@ def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     # Return this label.
     return obj_label
 
+
+#FIXME: Unit test us up, please.
+def label_object_context(obj: object) -> str:
+    '''
+    Human-readable label describing the **context** (i.e., absolute filename of
+    the module or script physically declaring the passed object *and* the
+    1-based line number of the first line declaring this object in this file) of
+    this object if this object is either a callable or class declared on-disk
+    *or* the empty string otherwise (i.e., if this object is neither a callable
+    nor class *or* is either a callable or class declared in-memory).
+
+    Parameters
+    ----------
+    func : object
+        Object to label the context of.
+
+    Returns
+    -------
+    str
+        Human-readable label describing the context of this object.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.utilobject import get_object_filename_or_none
+    from beartype._util.module.utilmodget import (
+        get_object_module_line_number_begin)
+
+    # Absolute filename of the module or script physically declaring this object
+    # if this object was defined on-disk *OR* "None" otherwise (i.e., if this
+    # object was defined in-memory).
+    obj_filename = get_object_filename_or_none(obj)
+
+    # If this object is defined on-disk...
+    if obj_filename:
+        # Line number of the first line declaring this object in that file.
+        obj_lineno = get_object_module_line_number_begin(obj)
+
+        # Return a string describing the context of this object.
+        return f'in file "{obj_filename}" line {obj_lineno}'
+    # Else, this object was defined in-memory. In this case, avoid attempting to
+    # needlessly contextualize this object.
+
+    # Let's hear it for giving up here and going home. Yeah! Go, @beartype!
+    return ''
+
 # ....................{ LABELLERS ~ callable               }....................
 #FIXME: Unit test up the "is_context" parameter, which is currently untested.
 def label_callable(
@@ -197,11 +298,11 @@ def label_callable(
     ----------
     func : Callable
         Callable to be labelled.
-    is_color : BoolTristate, optional
+    is_color : BoolTristate, default: False
         Tri-state colouring boolean governing ANSI usage. See the
         :attr:`beartype.BeartypeConf.is_color` attribute for further details.
         Defaults to :data:`False`.
-    is_context : BoolTristate, optional
+    is_context : BoolTristate, default: None
         Either:
 
         * :data:`True`, in which case this label is suffixed by additional
@@ -248,7 +349,7 @@ def label_callable(
     func_label_suffix = ''
 
     #FIXME: *HMM.* This branch should almost certainly be folded into the
-    #existing label_beartypeable_kind() function, which would then dramatically
+    #existing label_object_kind() function, which would then dramatically
     #simplify this logic here. Let's do this, yo!
     # If the passed callable is a pure-Python lambda function, that callable
     # has *NO* unique fully-qualified name. In this case, return a string
@@ -273,7 +374,7 @@ def label_callable(
     # has a unique fully-qualified name. In this case, prefix this label with a
     # substring describing the kind of that callable.
     else:
-        func_label_prefix = label_beartypeable_kind(func)
+        func_label_prefix = label_object_kind(func)
 
     # If contextualizing that callable, just do it already. Go, @beartype! Go!
     if is_context:
@@ -310,51 +411,6 @@ def label_exception(exception: Exception) -> str:
     # Return the fully-qualified name of the class of this exception followed by
     # this exception's message.
     return f'{get_object_type_name(exception)}: {str(exception)}'
-
-# ....................{ LABELLERS ~ context                }....................
-#FIXME: Unit test us up, please.
-def label_object_context(obj: object) -> str:
-    '''
-    Human-readable label describing the **context** (i.e., absolute filename of
-    the module or script physically declaring the passed object *and* the
-    1-based line number of the first line declaring this object in this file) of
-    this object if this object is either a callable or class declared on-disk
-    *or* the empty string otherwise (i.e., if this object is neither a callable
-    nor class *or* is either a callable or class declared in-memory).
-
-    Parameters
-    ----------
-    func : object
-        Object to label the context of.
-
-    Returns
-    -------
-    str
-        Human-readable label describing the context of this object.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.utilobject import get_object_filename_or_none
-    from beartype._util.module.utilmodget import (
-        get_object_module_line_number_begin)
-
-    # Absolute filename of the module or script physically declaring this object
-    # if this object was defined on-disk *OR* "None" otherwise (i.e., if this
-    # object was defined in-memory).
-    obj_filename = get_object_filename_or_none(obj)
-
-    # If this object is defined on-disk...
-    if obj_filename:
-        # Line number of the first line declaring this object in that file.
-        obj_lineno = get_object_module_line_number_begin(obj)
-
-        # Return a string describing the context of this object.
-        return f'in file "{obj_filename}" line {obj_lineno}'
-    # Else, this object was defined in-memory. In this case, avoid attempting to
-    # needlessly contextualize this object.
-
-    # Let's hear it for giving up here and going home. Yeah! Go, @beartype!
-    return ''
 
 # ....................{ LABELLERS ~ pith                   }....................
 def label_pith_value(

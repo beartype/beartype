@@ -187,6 +187,7 @@ class BeartypeNodeScopeBeforelist(object):
         if schema_package_names is None:
             schema_package_names = frozenset(
                 schema_attr_basename_trie.keys())
+            # print(f'Defaulted "schema_package_names" to {schema_package_names}.')
         # Else, the caller passed decorator-hostile module names. In either
         # case, these names are now defined.
 

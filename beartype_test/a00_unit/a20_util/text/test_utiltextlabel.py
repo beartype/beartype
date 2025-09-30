@@ -18,15 +18,15 @@ This submodule unit tests the public API of the private
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_label_beartypeable_kind() -> None:
+def test_label_object_kind() -> None:
     '''
-    Test the :func:`beartype._util.text.utiltextlabel.label_beartypeable_kind`
+    Test the :func:`beartype._util.text.utiltextlabel.label_object_kind`
     function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.text.utiltextlabel import label_beartypeable_kind
+    from beartype._util.text.utiltextlabel import label_object_kind
     from beartype_test.a00_unit.data.data_type import (
         ClassCallable,
         Class,
@@ -82,7 +82,7 @@ def test_label_beartypeable_kind() -> None:
     for beartypeable, kind in BEARTYPEABLES_KINDS:
         # Assert this labeller returns the expected string when passed this
         # input object.
-        assert label_beartypeable_kind(beartypeable) == kind
+        assert label_object_kind(beartypeable) == kind
 
 
 def test_label_callable() -> None:

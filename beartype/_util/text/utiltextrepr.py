@@ -87,23 +87,16 @@ def represent_object(
     '''
     assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
 
-    #FIXME: Render this safe against infinitely recursive data structures.
-    #Unfortunately, we *CANNOT* call the standard pprint.saferepr() function to
-    #do so, as that function is *OUTRAGEOUSLY* slow on worst-case edge cases.
-    #Instead, we'll need to implement our own performant saferepr()
-    #alternative. Fortunately, note that someone's already done so: the popular
-    #BSD-licensed Celerity project, whose celerity.utils.saferepr.saferepr()
-    #function claims to actually be faster than the repr() builtin under
-    #certain circumstances. While impressive, repurposing Celerity's saferepr()
-    #implementation for @beartype will be non-trivial; that function internally
-    #leverages a number of non-trivial internal functions, including a
-    #streaming iterator that appears to be performing some sort of ad-hoc
-    #tokenization (!) on the input object's string representation. Although
-    #that submodule is less than 300 lines, that's 300 *INTENSE* lines.
-    #Nonetheless, we'll need to do this sooner or later. Currently, later. By
-    #the time you read this next, probably sooner. Until someone pounds their
-    #fists on our issue tracker, let's pretend this isn't a compelling concern.
-    #See also:
+    #FIXME: [SPEED] Note that the popular BSD-licensed Celerity project's
+    #celerity.utils.saferepr.saferepr() function claims to actually be faster
+    #than the repr() builtin under certain circumstances. While impressive,
+    #repurposing Celerity's saferepr() implementation for @beartype will be
+    #non-trivial; that function internally leverages a number of non-trivial
+    #internal functions, including a streaming iterator that appears to be
+    #performing some sort of ad-hoc tokenization (!) on the input object's
+    #string representation. Although that submodule is less than 300 lines,
+    #that's 300 *INTENSE* lines. Until someone pounds their fists on our issue
+    #tracker (so, never), let's pretend no one cares. See also:
     #   https://github.com/celery/celery/blob/master/celery/utils/saferepr.py
 
     # For efficiency, initially attempt to *NON-RECURSIVELY* introspect the
@@ -149,6 +142,8 @@ def represent_object(
     # double-quote this representation for disambiguity with preceding
     # characters (e.g., sequence indices).
         obj_repr = f'"{obj_repr}"'
+    # Else, this representation is either prefixed by punctuation *OR* an
+    # instance of a class whose representations do *NOT* benefit from quoting.
 
     # If this representation exceeds this maximum length...
     if len(obj_repr) > max_len:
@@ -158,6 +153,7 @@ def represent_object(
         # Truncate this representation to this maximum length.
         obj_repr = truncate_str(text=obj_repr, max_len=max_len)
         # print(f'obj repr truncated: {obj_repr}')
+    # Else, this representation is less than or equal to this maximum length.
 
     # Return this representation.
     return obj_repr

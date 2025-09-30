@@ -38,6 +38,11 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
+    from beartype.claw import beartype_package
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._conf.decorplace.confplacetrie import (
         BeartypeDecorPlacePackagesTrie,
@@ -48,6 +53,11 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     from pytest import raises
 
     # ....................{ MONKEY-PATCH                   }....................
+    #FIXME: *TRASH.* This is crude, unsafe, and frankly dumb. Instead, we should
+    #just define a new "BeartypeConf" recognizing this testing-specific
+    #decorator-hostile decorator as such. Sadly, "BeartypeConf" currently fails
+    #to provide an option enabling this. *sigh*
+
     # Monkey-patch this testing-specific decorator-hostile decorator into this
     # decorator-hostile decorator attribute name trie. *ALL* other
     # decorator-hostile decorators are defined by third-party packages and thus
@@ -72,11 +82,10 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     )
     # print(dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE)
 
-    # ....................{ IMPORTS ~ monkey-patch         }....................
-    # Defer test-specific imports that transitively import the global attribute
-    # monkey-patched above to ensure that all other imports of that attribute
-    # elsewhere are monkey-patched as expected.
-    from beartype.claw import beartype_package
+    # With a submodule-specific thread-safe reentrant lock, reset our import
+    # hook state back to its initial defaults to respect the above monkey-patch.
+    with claw_lock:
+        claw_state.reinit()
 
     # ....................{ PREAMBLE                       }....................
     # Validate that the decorator-hostile decorator leveraged by the package
@@ -107,8 +116,8 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     beartype_package(PACKAGE_NAME)
 
     #FIXME: Uncomment after this actually works, please. *sigh*
-    # # Import the package hooked above, which then imports all submodules of that
-    # # package, exercising that these submodules are transitively subject to that
-    # # import hook.
-    # from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
-    #     decor_hostile)
+    # Import the package hooked above, which then imports all submodules of that
+    # package, exercising that these submodules are transitively subject to that
+    # import hook.
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
+        decor_hostile)

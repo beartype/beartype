@@ -460,6 +460,7 @@ class BeartypeNodeTransformerImportMixin(object):
             return node
         # Else, this import statement imports from a third-party package known
         # to define decorator-hostile decorators.
+        # print(f'\nParsing unfriendly import "{unparse(node)}"...')
 
         # ..................{ SEARCH ~ module                }..................
         # Current and prior child (sub)tries of the scoped decorator-hostile
@@ -626,6 +627,7 @@ class BeartypeNodeTransformerImportMixin(object):
             # imported attribute is ignorable with respect to @beartype. In this
             # case, silently continuing to the next imported attribute.
             if import_attr_name_subtrie is SENTINEL:
+                # print(f'Ignoring friendly imported-from target attribute "{import_attr_basename_src}"!')
                 continue
             # Else, this basename maps to a decorator-hostile attribute.
 
@@ -1106,6 +1108,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # below) the last decorator-hostile decorator in the chain of existing
         # decorators decorating this type or callable.
         if node_decor_index_curr <= node_decor_index_last:
+            # print(f'Injecting @beartype into decorator index {node_decor_index_curr}!')
             node.decorator_list.insert(
                 node_decor_index_curr, node_beartype_decorator)
         # Else, this is *NOT* a valid index into this list. Presumably, this
@@ -1124,9 +1127,11 @@ class BeartypeNodeTransformerImportMixin(object):
                 f'@beartype decoration chain insertion index '
                 f'{node_decor_index_curr} != {node_decor_index_last + 1}.'
             )
+            # print('Appending @beartype after existing last decorator!')
 
             # Append @beartype *AFTER* this last decorator.
             node.decorator_list.append(node_beartype_decorator)
+        # print(f'Decorator list after @beartype injection: {unparse(node.decorator_list)}')
 
     # ....................{ PRIVATE ~ finders              }....................
     def _is_node_scoped_attr_name(self, node: AST) -> Union[
@@ -1299,7 +1304,7 @@ class BeartypeNodeTransformerImportMixin(object):
         #   with associated basenames. Why? Because if all such (sub)tries had
         #   already been visited above, this method would have immediately
         #   returned true. But this method has yet to return anything! QED.
-        # print(f'Detected attribute name "{unparse(node)}" as decorator-hostile subtrie {attr_name_subtrie}!')
+        print(f'Detected attribute name "{unparse(node)}" as decorator-hostile subtrie {attr_name_subtrie}!')
 
         # Assert sanity. You never know, bear friends. And neither do we.
         assert isinstance(attr_name_subtrie, BeartypeDecorPlaceTrieABC)

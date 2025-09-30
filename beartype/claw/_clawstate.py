@@ -151,6 +151,7 @@ class BeartypeClawState(object):
         pertaining to previously hooked packages and configurations installed by
         previously called beartype import hooks.
         '''
+        # print('Renitializing "beartype.claw" state...')
 
         # Avoid circular import dependencies.
         from beartype.claw._importlib.clawimppath import (

@@ -51,6 +51,7 @@ from beartype._util.func.utilfunctest import (
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_once
 from beartype._util.module.utilmodget import get_object_module_name_or_none
+from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 
 # ....................{ DECORATORS                         }....................
@@ -237,7 +238,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # If this object is uncallable, raise an exception.
     elif not callable(obj):
         raise BeartypeDecorWrappeeException(
-            f'Uncallable {repr(obj)} not decoratable by @beartype.')
+            f'Uncallable {represent_object(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
     #
     # If this object is *NOT* a pure-Python function, this object is a

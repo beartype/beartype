@@ -24,44 +24,32 @@ from beartype._util.text.utiltextlabel import (
 )
 from collections.abc import Callable
 
-# ....................{ PREFIXERS ~ beartypeable           }....................
-#FIXME: Unit test this function with respect to classes, please.
-def prefix_beartypeable(
-    # Mandatory parameters.
-    obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
-
-    # Optional parameters.
-    is_color: BoolTristate = False,
-) -> str:
+# ....................{ PREFIXERS ~ object                 }....................
+#FIXME: Unit test this prefixer up with respect to classes, please.
+def prefix_object(obj: object, **kwargs) -> str:
     '''
-    Human-readable label describing the passed **beartypeable** (i.e., object
-    that is currently being or has already been decorated by the
-    :func:`beartype.beartype` decorator) suffixed by delimiting whitespace.
+    Human-readable label describing the passed arbitrary object suffixed by
+    delimiting whitespace.
 
     Parameters
     ----------
-    obj : BeartypeableT
-        Beartypeable to be labelled.
-    is_color : BoolTristate
-        Tri-state colouring boolean governing ANSI usage. See the
-        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
-        Defaults to :data:`False`.
+    obj : object
+        Object to be labelled.
+
+    All remaining parameters are passed as is to the lower-level
+    :func:`.label_object` function.
 
     Returns
     -------
     str
-        Human-readable label describing this beartypeable.
+        Human-readable label describing this object.
     '''
 
-    # Return either...
-    return (
-        # If this beartypeable is a class, a label describing this class;
-        f'{label_type(cls=obj, is_color=is_color)} '
-        if isinstance(obj, type) else
-        # Else, this beartypeable is a callable. In this case, a label
-        # describing this callable.
-        f'{label_callable(func=obj, is_color=is_color)} '  # type: ignore[arg-type]
-    )
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextlabel import label_object
+
+    # Return the label describing this object suffixed by delimiting whitespace.
+    return f'{label_object(obj, **kwargs)} '
 
 # ....................{ PREFIXERS : callable : name        }....................
 def prefix_callable_pith(
@@ -149,7 +137,7 @@ def prefix_callable_arg_name(
 
     # Create and return this label.
     return (
-        f'{prefix_beartypeable(obj=func, is_color=is_color)}'
+        f'{prefix_object(obj=func, is_color=is_color)}'
         f'parameter {color_arg_name(text=arg_name, is_color=is_color)} '
     )
 
@@ -183,7 +171,7 @@ def prefix_callable_return(
     '''
 
     # Create and return this label.
-    return f'{prefix_beartypeable(obj=func, is_color=is_color)}return '
+    return f'{prefix_object(obj=func, is_color=is_color)}return '
 
 # ....................{ PREFIXERS : callable : value       }....................
 def prefix_callable_arg_value(
@@ -229,7 +217,7 @@ def prefix_callable_arg_value(
 
     # Create and return this label.
     return (
-        f'{prefix_beartypeable(obj=func, is_color=is_color)}'
+        f'{prefix_object(obj=func, is_color=is_color)}'
         f'parameter {color_arg_name(text=arg_name, is_color=is_color)}='
         f'{prefix_pith_value(pith=arg_value, is_color=is_color)}'
     )

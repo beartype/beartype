@@ -27,15 +27,11 @@ from beartype._decor._nontype.decornontype import beartype_nontype
 from beartype._decor._type.decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.error.utilerrwarn import issue_warning
-from beartype._util.text.utiltextlabel import (
-    # label_exception,
-    label_object_context,
-)
 from beartype._util.text.utiltextmunge import (
     # truncate_str,
     uppercase_str_char_first,
 )
-from beartype._util.text.utiltextprefix import prefix_beartypeable
+from beartype._util.text.utiltextprefix import prefix_object
 from traceback import format_exc
 # from warnings import warn
 
@@ -248,20 +244,23 @@ def _beartype_object_nonfatal(
         #     format_exc()
         # )
 
-        # Indent this message by globally replacing *EVERY* newline in this
-        # message with a newline followed by four spaces. Doing so visually
-        # offsets this lower-level exception message from the higher-level
-        # warning message embedding this exception message below.
+        # Human-readable substring prefixing the warning message to be emitted.
+        # This substring contextually describes this beartypeable, capitalized
+        # such that the first character is uppercase.
+        warning_message_prefix = uppercase_str_char_first(
+            f'{prefix_object(obj=obj, is_color=conf.is_color, is_context=True)}'
+            f'not decoratable by @beartype, as:'
+        )
+
+        # Lower-level exception message, indented by globally replacing *EVERY*
+        # newline in this message with a newline followed by four spaces. Doing
+        # so visually offsets this lower-level exception message from the
+        # higher-level warning message embedding this exception message below.
         error_message = f'\n{error_message}'.replace('\n', '\n    ')
 
-        # Warning message to be emitted, consisting of:
-        # * A human-readable label contextually describing this beartypeable,
-        #   capitalized such that the first character is uppercase.
-        # * This indented exception message.
-        warning_message = uppercase_str_char_first(
-            f'{prefix_beartypeable(obj)}{label_object_context(obj)}:'
-            f'{error_message}'
-        )
+        # Higher-level warning message to be emitted, embedding this lower-level
+        # exception message as an indented substring.
+        warning_message = f'{warning_message_prefix}{error_message}'
 
         # Emit this message under this category.
         issue_warning(cls=warning_category, message=warning_message)

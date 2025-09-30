@@ -151,6 +151,7 @@ def packages_trie_cleared() -> Iterator[None]:
     None
         This context manager yields *no* objects.
     '''
+    # print('Clearing "beartype.claw" state...')
 
     # If one or more packages are still registered by a prior call to a beartype
     # import hook, raise an exception.

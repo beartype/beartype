@@ -29,35 +29,7 @@ def decorator(func: Callable) -> Callable:
     return func
 
 # ....................{ DECORATORS ~ hostile               }....................
-def decorator_hostile(func: Callable) -> Callable:
-    '''
-    **Decorator-hostile decorator** (i.e., decorator that prevents other
-    decorators from being applied after this decorator is applied to the
-    decorated callable or type).
-
-    This decorator returns an arbitrary uncallable object of an arbitrary type
-    defining an ``invoke()`` method calling the decorated callable or type.
-    This decorator thus "wraps" the decorated callable or type with a
-    non-standard calling convention rather than the standard ``__wrapped__``
-    dunder attribute defined by the standard :func:`functools.wraps` wrapper
-    employed by standard decorators. Doing so prevents other decorators
-    (including :func:`beartype.beartype` itself) from unwrapping the decorated
-    callable or type from the uncallable object returned by this decorator,
-    which then prevents those other decorators from introspecting the decorated
-    signature. In short, this decorator is trivially decorator-hostile.
-
-    This decorator intentionally mimics the action of real-world
-    decorator-hostile decorators, including:
-
-    * The third-party :func:`langchain_core.runnables.core` decorator function.
-    * The third-party :func:`fastmcp.FastMCP.tool` decorator method.
-    '''
-
-    # Create and return a decorator-hostile wrapper wrapping this object.
-    return _DecoratorHostileWrapper(func)
-
-
-class _DecoratorHostileWrapper(object):
+class DecoratorHostileWrapper(object):
     '''
     **Decorator-hostile wrapper** (i.e., arbitrary uncallable type defining a
     non-standard :meth:`.invoke` method calling the decorated callable or type
@@ -83,6 +55,34 @@ class _DecoratorHostileWrapper(object):
 
         # Defer to the decorated callable or type.
         return self._wrappee(*args, **kwargs)
+
+
+def decorator_hostile(func: Callable) -> DecoratorHostileWrapper:
+    '''
+    **Decorator-hostile decorator** (i.e., decorator that prevents other
+    decorators from being applied after this decorator is applied to the
+    decorated callable or type).
+
+    This decorator returns an arbitrary uncallable object of an arbitrary type
+    defining an ``invoke()`` method calling the decorated callable or type.
+    This decorator thus "wraps" the decorated callable or type with a
+    non-standard calling convention rather than the standard ``__wrapped__``
+    dunder attribute defined by the standard :func:`functools.wraps` wrapper
+    employed by standard decorators. Doing so prevents other decorators
+    (including :func:`beartype.beartype` itself) from unwrapping the decorated
+    callable or type from the uncallable object returned by this decorator,
+    which then prevents those other decorators from introspecting the decorated
+    signature. In short, this decorator is trivially decorator-hostile.
+
+    This decorator intentionally mimics the action of real-world
+    decorator-hostile decorators, including:
+
+    * The third-party :func:`langchain_core.runnables.core` decorator function.
+    * The third-party :func:`fastmcp.FastMCP.tool` decorator method.
+    '''
+
+    # Create and return a decorator-hostile wrapper wrapping this object.
+    return DecoratorHostileWrapper(func)
 
 # ....................{ DECORATORS ~ (non)isomorphic       }....................
 def decorator_isomorphic(func: Callable) -> Callable:

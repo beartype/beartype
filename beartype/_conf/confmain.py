@@ -55,6 +55,7 @@ from beartype._conf.conftest import (
 from beartype._conf.decorplace.confplaceenum import BeartypeDecorPlace
 from beartype._conf._confget import get_is_color
 from beartype._data.typing.datatyping import (
+    BoolTristate,
     BoolTristateUnpassable,
     CollectionStrs,
     DictStrToAny,
@@ -255,7 +256,7 @@ class BeartypeConf(object):
         _conf_kwargs: DictStrToAny
         _hash: int
         _hint_overrides: FrozenDict
-        _is_color: Optional[bool]
+        _is_color: BoolTristate
         _is_debug: bool
         _is_pep484_tower: bool
         _is_pep557_fields: bool
@@ -1113,7 +1114,7 @@ class BeartypeConf(object):
 
     # ..................{ PROPERTIES ~ options : bool        }..................
     @property
-    def is_color(self) -> Optional[bool]:
+    def is_color(self) -> BoolTristate:
         '''
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,

@@ -27,7 +27,7 @@ from beartype._data.typing.datatyping import (
 )
 # from beartype._util.kind.maplike.utilmapfrozen import FrozenDict
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
-from beartype._util.text.utiltextlabel import label_beartypeable_kind
+from beartype._util.text.utiltextlabel import label_object
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -135,7 +135,7 @@ def get_pep649_hintable_annotations(
 
         # Raise a human-readable exception.
         raise exception_cls(
-            f'{exception_prefix}{_prefix_hintable(hintable)}'
+            f'{exception_prefix}{label_object(hintable)} '
             f'not annotatable by type hints '
             f'(i.e., PEP 649 "__annotate__" and "__annotations__" '
             f'dunder attributes undefined).'
@@ -711,7 +711,7 @@ if IS_PYTHON_AT_LEAST_3_14:
                     # exception.
                     if not isinstance(hintable.__annotations__, dict):
                         raise exception_cls(
-                            f'{exception_prefix}{_prefix_hintable(hintable)}'
+                            f'{exception_prefix}{label_object(hintable)} '
                             f'type hints not settable to '
                             f'annotations dictionary {repr(annotations)} '
                             f'(i.e., PEP 649 "__annotate__" and "__annotations__" '
@@ -982,7 +982,7 @@ if IS_PYTHON_AT_LEAST_3_14:
 
                     # Raise an exception embedding this name.
                     raise exception_cls(
-                        f'{exception_prefix}{_prefix_hintable(hintable)}'
+                        f'{exception_prefix}{label_object(hintable)} '
                         f'unsafely annotated by unresolvable type hints, as:\n'
                         f'* One or more type hints transitively subscripted by '
                         f'unquoted forward reference "{hint_ref_name}".\n'
@@ -1258,25 +1258,3 @@ set_pep649_hintable_annotations.__doc__ = (
            ``__call__()`` dunder method).
     '''
 )
-
-# ....................{ PRIVATE ~ prefixers                }....................
-def _prefix_hintable(hintable: Pep649Hintable) -> str:
-    '''
-    Human-readable label describing the passed **hintable** (i.e., ideally
-    pure-Python object defining the ``__annotations__`` dunder dictionary as
-    well as the :pep:`649`-compliant ``__annotate__()`` dunder method if the
-    active Python interpreter targets Python >= 3.14).
-
-    Parameters
-    ----------
-    hintable : Pep649Hintable
-        Hintable to be inspected.
-
-    Returns
-    -------
-    str
-        Human-readable label describing this hintable.
-    '''
-
-    # One-liners bring one joy.
-    return f'{label_beartypeable_kind(hintable)} {repr(hintable)} '  # type: ignore[type-var]
