@@ -179,6 +179,7 @@ class BeartypeNodeTransformer(
 
     # ..................{ PROPERTIES                         }..................
     #FIXME: Unit test us up, please. *sigh*
+    @property  # type: ignore[misc]
     @property_cached
     def _module_basenames(self) -> ListStrs:
         '''

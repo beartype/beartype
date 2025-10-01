@@ -67,10 +67,12 @@ def canonicalize_pep328_module_name_relative(
     assert isinstance(module_basenames_absolute, list), (
         f'{repr(module_basenames_absolute)} not list of strings.')
 
+    # ....................{ LOCALS                         }....................
     # The passed relative module name stripped of *ALL* prefixing "." delimiters
     # (e.g., from "..subpackage.submodule" to merely "subpackage.submodule").
     module_name_relative_stripped = module_name_relative.lstrip('.')
 
+    # ....................{ LOCALS ~ length                }....................
     # Number of characters in this relative module name.
     module_name_relative_len = len(module_name_relative)
 
@@ -95,6 +97,7 @@ def canonicalize_pep328_module_name_relative(
         )
     # Else, this relative module name is prefixed by one or more "." delimiters.
 
+    # ....................{ LOCALS ~ slice                 }....................
     # Slice of unqualified basenames comprising the fully-qualified name of the
     # parent (sub)package to which this relative module name is relative.
     # Happily, the negative 0-based index of one after the last unqualified
@@ -116,7 +119,11 @@ def canonicalize_pep328_module_name_relative(
 
     # Fully-qualified name of this relative module name.
     module_name = (
-        f'{module_name_absolute_prefix}.{module_name_relative_stripped}')
+        f'{module_name_absolute_prefix}.{module_name_relative_stripped}'
+        if module_name_relative_stripped else
+        module_name_absolute_prefix
+    )
 
+    # ....................{ RETURN                         }....................
     # Return this name.
     return module_name

@@ -38,16 +38,27 @@ def test_canonicalize_pep328_module_name_relative() -> None:
         'package_name', 'subpackage_name', 'submodule_name']
 
     # ....................{ PASS                           }....................
-    # Assert this canonicalizer returns the expected string when passed a
-    # PEP 328-compliant relative module name relative to a single package level.
+    # Assert this canonicalizer returns the expected strings when passed various
+    # PEP 328-compliant relative heights *WITHOUT* suffixing module names
+    # relative to various package levels.
+    assert canonicalize_pep328_module_name_relative(
+        module_name_relative='.',
+        module_basenames_absolute=MODULE_BASENAMES_ABSOLUTE,
+    ) == 'package_name.subpackage_name'
+    assert canonicalize_pep328_module_name_relative(
+        module_name_relative='..',
+        module_basenames_absolute=MODULE_BASENAMES_ABSOLUTE,
+    ) == 'package_name'
+
+    # Assert this canonicalizer returns the expected string when passed a PEP
+    # 328-compliant relative module name relative to a single package level.
     assert canonicalize_pep328_module_name_relative(
         module_name_relative='.submodule_sibling_name',
         module_basenames_absolute=MODULE_BASENAMES_ABSOLUTE,
     ) == 'package_name.subpackage_name.submodule_sibling_name'
 
-    # Assert this canonicalizer returns the expected string when passed a
-    # PEP 328-compliant relative module name relative to two or more package
-    # levels.
+    # Assert this canonicalizer returns the expected string when passed a PEP
+    # 328-compliant relative module name relative to two or more package levels.
     assert canonicalize_pep328_module_name_relative(
         module_name_relative='..submodule_nephew_name',
         module_basenames_absolute=MODULE_BASENAMES_ABSOLUTE,

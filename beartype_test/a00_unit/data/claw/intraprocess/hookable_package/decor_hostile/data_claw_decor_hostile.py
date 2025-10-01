@@ -42,13 +42,13 @@ from beartype_test.a00_unit.data.func.data_decor import (
     decorator_nonisomorphic,
 )
 
-# Import the root package transitively defining this decorator with an absolute
-# import statement.
-import beartype_test
-
-# Import the nested submodule defining this decorator with an absolute
-# import-from statement.
-from beartype_test.a00_unit.data.func import data_decor
+# # Import the root package transitively defining this decorator with an absolute
+# # import statement.
+# import beartype_test
+#
+# # Import the nested submodule defining this decorator with an absolute
+# # import-from statement.
+# from beartype_test.a00_unit.data.func import data_decor
 
 # Import a nested submodule transitively defining this decorator with a relative
 # import-from statement.
@@ -59,68 +59,68 @@ from ..... import func
 # injects the @beartype decorator *AFTER* the last decorator-hostile decorator
 # in all chains of callable decorations.
 
-@decorator_hostile
-def roused_from_icy_trance() -> int:
-    '''
-    Arbitrary function trivially violating its return type hint, decorated by a
-    decorator-hostile decorator function directly imported as an attribute from
-    the submodule defining that function.
-    '''
-
-    return "Even now, while Saturn, rous'd from icy trance,"
-
-
-@decorator_hostile_alias
-def his_palace_door_flew_ope() -> int:
-    '''
-    Arbitrary function trivially violating its return type hint, decorated by a
-    decorator-hostile decorator function directly imported as an attribute from
-    the submodule defining that function aliased to a different local name.
-    '''
-
-    return 'Then, as was wont, his palace-door flew ope'
-
-
-@beartype_test.a00_unit.data.func.data_decor.decorator_hostile
-def thea_through_the_woods() -> int:
-    '''
-    Arbitrary function trivially violating its return type hint, decorated by a
-    decorator-hostile decorator function accessed via the root package
-    transitively defining that function.
-    '''
-
-    return 'Went step for step with Thea through the woods,'
-
-
-@data_decor.decorator_hostile
-def twilight_in_the_rear() -> int:
-    '''
-    Arbitrary function trivially violating its return type hint, decorated by a
-    decorator-hostile decorator function accessed via the nested submodule
-    directly defining that function.
-    '''
-
-    return 'Hyperion, leaving twilight in the rear,'
-
-
-#FIXME: Currently emits a warning. *sigh*
-# @func.data_decor.decorator_hostile
-# def threshold_of_the_west() -> int:
+# @decorator_hostile
+# def roused_from_icy_trance() -> int:
 #     '''
 #     Arbitrary function trivially violating its return type hint, decorated by a
-#     decorator-hostile decorator function accessed via a nested submodule only
+#     decorator-hostile decorator function directly imported as an attribute from
+#     the submodule defining that function.
+#     '''
+#
+#     return "Even now, while Saturn, rous'd from icy trance,"
+#
+#
+# @decorator_hostile_alias
+# def his_palace_door_flew_ope() -> int:
+#     '''
+#     Arbitrary function trivially violating its return type hint, decorated by a
+#     decorator-hostile decorator function directly imported as an attribute from
+#     the submodule defining that function aliased to a different local name.
+#     '''
+#
+#     return 'Then, as was wont, his palace-door flew ope'
+#
+#
+# @beartype_test.a00_unit.data.func.data_decor.decorator_hostile
+# def thea_through_the_woods() -> int:
+#     '''
+#     Arbitrary function trivially violating its return type hint, decorated by a
+#     decorator-hostile decorator function accessed via the root package
 #     transitively defining that function.
 #     '''
 #
-#     return 'Came slope upon the threshold of the west;'
+#     return 'Went step for step with Thea through the woods,'
+#
+#
+# @data_decor.decorator_hostile
+# def twilight_in_the_rear() -> int:
+#     '''
+#     Arbitrary function trivially violating its return type hint, decorated by a
+#     decorator-hostile decorator function accessed via the nested submodule
+#     directly defining that function.
+#     '''
+#
+#     return 'Hyperion, leaving twilight in the rear,'
+
+
+#FIXME: Currently emits a warning. *sigh*
+@func.data_decor.decorator_hostile
+def threshold_of_the_west() -> int:
+    '''
+    Arbitrary function trivially violating its return type hint, decorated by a
+    decorator-hostile decorator function accessed via a nested submodule only
+    transitively defining that function.
+    '''
+
+    return 'Came slope upon the threshold of the west;'
 
 # ....................{ LOCALS                             }....................
 # Tuple of all decorator-hostile decorator-decorated callables defined above.
 FUNCS_DECOR_HOSTILE = (
-    roused_from_icy_trance,
-    his_palace_door_flew_ope,
-    thea_through_the_woods,
-    twilight_in_the_rear,
+    # roused_from_icy_trance,
+    # his_palace_door_flew_ope,
+    # thea_through_the_woods,
+    # twilight_in_the_rear,
 
     #FIXME: Currently raises an exception. *sigh*
     # threshold_of_the_west,

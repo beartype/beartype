@@ -389,26 +389,56 @@ class BeartypeNodeTransformerImportMixin(object):
         # Recursively transform *ALL* child nodes of this parent node.
         self.generic_visit(node)  # type: ignore[attr-defined]
 
-        # ..................{ CANONICALIZE                   }..................
-        # Possibly fully-qualified name of the external module being imported
-        # from if any *OR* "None".
-        #
-        # Note that this name should *NEVER* be "None". Nonetheless, mypy claims
-        # this name can actually be "None". How, mypy? Even mypy has no idea. To
-        # squelch complaints from mypy, we pretend mypy is still sane.
-        import_module_name = node.module
-        if not import_module_name: return node  # <-- *SILENCE, MYPY!*
-
+        # ..................{ LOCALS                         }..................
         # Beforelist unique to the currently visited lexical scope of the
         # currently visited module, localized for readability and efficiency.
         beforelist = self._scope.beforelist
         # print(f'beforelist: {beforelist}')
 
-        # If this name is prefixed by one or more "." delimiters, this name is a
-        # PEP 328-compliant partially-qualified module name relative to the
-        # currently visited module (rather than a fully-qualified module name).
-        # In this case...
-        if import_module_name[0] == '.':
+        # Possibly fully-qualified name of the external module being imported
+        # from. This name is subsequently canonicalized from both absolute and
+        # relative imports (and thus guaranteed to be a non-empty string), but
+        # is initially either:
+        # * If this is an pure absolute import statement (e.g., "from
+        #   some_package.some_module import some_attribute"), the
+        #   fully-qualified name of the external module being imported from. In
+        #   this case, the "node.level" instance variable is guaranteed to be 0.
+        # * If this is a pure relative import statement (e.g., "from .... import
+        #   some_attribute"), "None". In this case, the "node.level" instance
+        #   variable is guaranteed to be a positive integer.
+        # * If this is a mixed absolute-relative import statement (e.g., "from
+        #   ....some_submodule import some_attribute"), the partially-qualified
+        #   name of the sibling module being imported from. In this case, the
+        #   "node.level" instance variable is also a positive integer.
+        import_module_name = node.module
+        # print(f'\nnode: {unparse(node)}')
+        # print(f'import_module_name: {import_module_name}')
+
+        # ..................{ CANONICALIZE                   }..................
+        # If this is a PEP 328-compliant relative import statement (e.g., "from
+        # .... import some_attribute"), derive the fully-qualified name of the
+        # external module being imported from from the fully-qualified name of
+        # the currently visited module and the "node.level" instance variable.
+        #
+        # An example speaks a thousand words. Thus, this code snippet:
+        #     from ..... import some_attribute
+        #     from .....some_submodule import another_attribute
+        #
+        # ...has this corresponding abstract syntax tree (AST):
+        #     Module(
+        #         body=[
+        #             ImportFrom(
+        #                 names=[
+        #                     alias(name='some_attribute')],
+        #                 level=5),
+        #             ImportFrom(
+        #                 module='some_submodule',
+        #                 names=[
+        #                     alias(name='another_attribute')],
+        #                 level=5)])
+        if node.level > 0:
+            # print(f'module_basenames: {self._module_basenames}')
+
             # If the top-level root package transitively containing the
             # currently visited module is *NOT* a third-party package known to
             # define decorator-hostile decorators, this import statement
@@ -425,14 +455,59 @@ class BeartypeNodeTransformerImportMixin(object):
             # Else, that root package is known to define decorator-hostile
             # decorators.
 
+            #FIXME: [SPEED] *EXTREMELY INEFFICIENT.* We designed the
+            #canonicalize_pep328_module_name_relative() only *AFTER* belatedly
+            #realizing that the "ast.ImportFrom" API provided a numeric level
+            #rather than a "."-prefixed module name. Instead:
+            #* Refactor canonicalize_pep328_module_name_relative() to optionally
+            #  accept a new "target_height: Optional[int] = None" parameter.
+            #* Probably rename the existing "module_name_relative: str"
+            #  parameter to "target_module_name: Optional[str] = None".
+            #* Call that function like so below:
+            #    import_module_name = canonicalize_pep328_module_name_relative(
+            #        source_module_basenames_absolute=self._module_basenames,  # type: ignore[attr-defined]
+            #        target_height=node.level,
+            #    )
+            #
+            #Thankfully, this mostly doesn't matter at all. Why? Because
+            #*NOBODY* is ever going to both (A) define a package-specific
+            #decorator-hostile decorator and (B) import that decorator
+            #relatively. Like, really. *ALL* decorator-hostile decorators are
+            #defined by external third-party packages and then imported with
+            #absolute imports into the current module. This is edge case is
+            #beyond rare. Indeed, it's unlikely this will ever trigger in any
+            #real-world code anywhere... *EVER*. Oh, well. We sigh so hard!
+
+            # String of one or more "." delimiters corresponding to the package
+            # height of this relative import to recurse upward from the
+            # fully-qualified name of the currently visited module.
+            import_module_name_prefix = '.' * node.level
+
+            # Original "."-prefixed partially-qualified name of the sibling
+            # module being imported from (e.g., "....", "....some_submodule"),
+            # reconstructed from this "ImportFrom" node, which fails to directly
+            # preserve this name. Specifically...
+            import_module_name = (
+                # If this is a pure relative import, this prefix as is;
+                import_module_name_prefix
+                if import_module_name is None else
+                # Else, this is a mixed absolute-relative import. In this case,
+                # this prefix and sibling module name.
+                f'{import_module_name_prefix}{import_module_name}'
+            )
+            # print(f'Parsing unfriendly relative import "{import_module_name}": "{unparse(node)}"...')
+
             # Canonicalize this imported module name relative to that root
             # package into an absolute imported module name.
             import_module_name = canonicalize_pep328_module_name_relative(
                 module_name_relative=import_module_name,
                 module_basenames_absolute=self._module_basenames,  # type: ignore[attr-defined]
             )
-        # Else, this name is *NOT* prefixed by one or more "." delimiters,
-        # implying this name to be fully-qualified and thus already canonical.
+            # print(f'...into unfriendly absolute import "{import_module_name}"!')
+        # Else, this is already an absolute import statement.
+        #
+        # In either case, the fully-qualified name of the external module being
+        # imported from has now been decided.
 
         # ..................{ LOCALS ~ package               }..................
         # List of each unqualified basename comprising the fully-qualified name
@@ -444,7 +519,7 @@ class BeartypeNodeTransformerImportMixin(object):
         # * The "str.split('.')" and "str.rsplit('.')" calls produce the same
         #   lists under all edge cases. We arbitrarily call the former rather
         #   than the latter for simplicity.
-        import_module_basenames = import_module_name.split('.')
+        import_module_basenames = import_module_name.split('.')  # type: ignore[union-attr]
 
         # Fully-qualified name of the top-level root package transitively
         # containing that module (e.g., "some_package" when "import_module_name"
