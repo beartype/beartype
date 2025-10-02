@@ -286,7 +286,7 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget.get_hint_pep484585_generic_base_in_module_first`
-    finder.
+    getter.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -334,7 +334,7 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
         # Assert that this finder passed this generic returns the first unerased
         # superclass of this generic declared by this package.
         assert get_hint_pep484585_generic_base_in_module_first(
-            hint=test_generic, module_name='beartype_test') is (
+            hint=test_generic, module_names=frozenset(('beartype_test',))) is (
             ToWhichThisClosingNight)
 
         # ....................{ FAIL                       }....................
@@ -344,7 +344,8 @@ def test_get_hint_pep484585_generic_base_in_module_first() -> None:
         with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_generic_base_in_module_first(
                 hint=test_generic,
-                module_name='will_be.the.dome_of.a_vast_sepulchre',
+                module_names=frozenset((
+                    'will_be.the.dome_of.a_vast_sepulchre',)),
             )
 
 # ....................{ TESTS ~ type                       }....................

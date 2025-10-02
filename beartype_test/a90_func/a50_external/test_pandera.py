@@ -17,19 +17,22 @@ annotations *not* compliant with annotation-centric PEPs).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytmark import ignore_warnings
 
-# ....................{ TESTS                              }....................
-#FIXME: Drop the "pyarrow" requirement when feasible, please. For unknown
-#reasons, pandera >= 0.20.0 now (probably accidentally) requires "pyarrow" as a
-#mandatory dependency under certain contexts. See also this upstream issue:
-#    https://github.com/unionai-oss/pandera/issues/1715
+# ....................{ TESTS ~ pandas                     }....................
 @skip_unless_package('pandera')
-@skip_unless_package('pyarrow')
-def test_decor_pandera() -> None:
+@skip_unless_package('pandas')
+def test_pandera_pandas() -> None:
     '''
-    Test that the :func:`beartype.beartype` decorator conditionally ignores
-    *all* Pandera type hints.
+    Integration test validating that the :func:`beartype.beartype` decorator
+    integrates cleanly with the third-party :class:`pandera.check_types`
+    decorator with respect to Pandas dataframes.
 
+    Specifically, this test validates that the :func:`beartype.beartype`
+    decorator conditionally ignores *all* Pandera type hints.
+
+    Motivation
+    ----------
     Pandera type hints violate Python typing standards and thus require use of
     Pandera-specific functionality to type-check. This includes the non-standard
     :func:`pandera.check_types` decorator, which performs ad-hoc
@@ -51,16 +54,14 @@ def test_decor_pandera() -> None:
     implemented by this unit test.
 
     See Also
-    ----------
+    --------
     https://pandera.readthedocs.io/en/stable/dataframe_models.html
         Official introduction to the :func:`pandera.check_types` decorator.
     '''
 
     # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    #
-    # Note that Pandera requires Pandas, which requires NumPy. Ergo, both Pandas
-    # and NumPy are guaranteed to be safely importable here.
+    # Defer test-specific imports. Note that Pandas requires NumPy, which is
+    # thus guaranteed to be safely importable here.
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintParamViolation,
@@ -71,18 +72,16 @@ def test_decor_pandera() -> None:
         DataFrame,
         to_datetime,
     )
-    from pandera import (
-        # Column,
-        DataFrameModel,
-        # Index,
-        check_types,
-    )
     from pandera.dtypes import (
         Int64,
         String,
         Timestamp,
     )
     from pandera.errors import SchemaError
+    from pandera.pandas import (
+        DataFrameModel as PandasDataFrameModel,
+        check_types as pandas_check_types,
+    )
     from pandera.typing import (
         DataFrame as PanderaDataFrame,
         Series,
@@ -114,8 +113,8 @@ def test_decor_pandera() -> None:
     # "PanderaModel" defined below.
     pandas_dataframe_bad = DataFrame()
 
-    # ....................{ CLASSES                        }....................
-    class PanderaModel(DataFrameModel):
+    # ....................{ SUBCLASSES                     }....................
+    class PanderaModel(PandasDataFrameModel):
         '''
         Pandera model validating the ``pandas_dataframe_good`` defined above.
         '''
@@ -146,7 +145,7 @@ def test_decor_pandera() -> None:
 
     # ....................{ FUNCTIONS                      }....................
     @beartype
-    @check_types
+    @pandas_check_types
     def to_the_zeniths_height(
         dataframe: PanderaDataFrame[PanderaModel],
         of_some_fierce_maenad: str,
@@ -169,7 +168,7 @@ def test_decor_pandera() -> None:
     # print(f'PanderaDataFrame[pandera_schema]: {repr(PanderaDataFrame[pandera_schema])}')
 
 
-    @check_types
+    @pandas_check_types
     @beartype
     def all_thy_congregated_might(
         dataframe: PanderaDataFrame[PanderaModel],
@@ -275,7 +274,7 @@ def test_decor_pandera() -> None:
     # type union operator utilized below...
     if IS_PYTHON_AT_LEAST_3_10:
         @beartype
-        @check_types
+        @pandas_check_types
         def convert_dataframe_column_to_series(
             dataframe: PanderaDataFrame[PanderaModel],
             column_name_or_index: str | int,
@@ -315,3 +314,97 @@ def test_decor_pandera() -> None:
         pandas_series = convert_dataframe_column_to_series(
             dataframe=pandas_dataframe_good, column_name_or_index=0)
         assert len(pandas_series) == 3
+
+# ....................{ TESTS ~ polars                     }....................
+@skip_unless_package('pandera')
+@skip_unless_package('polars')
+# Prevent pytest from capturing and displaying non-fatal deprecation warnings
+# emitted by Polars from pandera code. See also this relevant upstream issue:
+#     https://github.com/unionai-oss/pandera/issues/2104
+@ignore_warnings(DeprecationWarning)
+def test_pandera_polars() -> None:
+    '''
+    Integration test validating that the :func:`beartype.beartype` decorator
+    integrates cleanly with the third-party :class:`pandera.check_types`
+    decorator with respect to Polars dataframes.
+
+    Specifically, this test validates that the :func:`beartype.beartype`
+    decorator conditionally ignores *all* Pandera type hints.
+
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/557
+        Feature request strongly inspiring this test.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from pandera.errors import SchemaError
+    from pandera.polars import (
+        DataFrameModel as PolarsDataFrameModel,
+        Field as PolarsField,
+        check_types as polars_check_types,
+    )
+    from pandera.typing.polars import DataFrame as PolarsDataFrameType
+    from polars import DataFrame as PolarsDataFrame
+    from pytest import raises
+
+    # ....................{ SUBCLASSES                     }....................
+    class PolarsDataFrameSchema(PolarsDataFrameModel):
+        '''
+        Arbitrary Pandera-specific schema validating Polars-specific data frames
+        containing the columns and fields specified by this schema.
+        '''
+
+        smoothest_silence: str
+        solemn_tubes: str
+        serious_zephyrs: int = PolarsField(
+            in_range={'min_value': 5, 'max_value': 20})
+
+    # ....................{ FUNCTIONS                      }....................
+    @polars_check_types
+    @beartype
+    def check_polars_dataframe(polars_dataframe: PolarsDataFrame) -> (
+        PolarsDataFrameType[PolarsDataFrameSchema]):
+        '''
+        Arbitrary function annotated as accepting a Polars data frame and
+        returning that same frame validated by the Pandera data frame schema
+        defined above, decorated by both the :func:`beartype.beartype` and
+        :func:`pandera.polars.check_types` decorators.
+        '''
+
+        return polars_dataframe
+
+    # ....................{ LOCALS                         }....................
+    # Polars data frame satisfying the Pandera data frame schema defined above.
+    polars_dataframe_good = PolarsDataFrame({
+        'smoothest_silence': [
+            'In',   'In',   'In',     'smoothest', 'silence',],
+        'solemn_tubes': [
+            'save', 'what', 'solemn', 'tubes',     'Blown',],
+        'serious_zephyrs': [
+            10,     20,     15,       14,          12,]
+    })
+
+    # Polars data frame violating the Pandera data frame schema defined above.
+    polars_dataframe_bad = PolarsDataFrame({
+        'smoothest_silence': [
+            'In',   'In',   'In',     'smoothest', 'silence',],
+        'solemn_tubes': [
+            'save', 'what', 'solemn', 'tubes',     'Blown',],
+        'serious_zephyrs': [
+            10,     20,     15,       14,          0,]
+                                                   # ^-- *VIOLATION*!
+    })
+
+    # ....................{ PASS                           }....................
+    # Implicitly assert that the above function accepts a Polars data frame
+    # satisfying the Pandera data frame schema defined above.
+    check_polars_dataframe(polars_dataframe_good)
+
+    # ....................{ FAIL                           }....................
+    # Assert that the above function rejects a Polars data frame violating the
+    # Pandera data frame schema defined above by raising the expected exception.
+    with raises(SchemaError):
+        check_polars_dataframe(polars_dataframe_bad)

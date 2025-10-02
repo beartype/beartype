@@ -26,7 +26,10 @@ from beartype._data.typing.datatypingport import (
     Pep484612646TypeArgUnpackedToHint,
     TupleHints,
 )
-from beartype._data.typing.datatyping import TypeException
+from beartype._data.typing.datatyping import (
+    FrozenSetStrs,
+    TypeException,
+)
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.hint.sign.datahintsignmap import (
     HINT_MODULE_NAME_TO_HINT_BASE_EXTRINSIC_BASENAME_TO_SIGN)
@@ -41,6 +44,7 @@ from beartype._util.hint.pep.proposal.pep585 import (
     is_hint_pep585_generic,
 )
 from beartype._util.kind.sequence.utilseqmake import make_stack
+from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from itertools import count
 
 # ....................{ GETTERS ~ args                     }....................
@@ -1236,7 +1240,7 @@ def get_hint_pep484585_generic_bases_unerased(
 def get_hint_pep484585_generic_base_in_module_first(
     # Mandatory parameters.
     hint: Hint,
-    module_name: str,
+    module_names: FrozenSetStrs,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -1245,8 +1249,8 @@ def get_hint_pep484585_generic_base_in_module_first(
     '''
     Iteratively find and return the first **unerased superclass** (i.e.,
     unerased pseudo-superclass that is an actual superclass) transitively
-    defined under the third-party package or module with the passed name
-    subclassed by the unsubscripted generic type underlying the passed
+    defined under the third-party package(s) or module(s) with the passed
+    name(s) subclassed by the unsubscripted generic type underlying the passed
     :pep:`484`- or :pep:`585`-compliant **generic** (i.e., object that may *not*
     actually be a class despite subclassing at least one PEP-compliant type hint
     that also may *not* actually be a class).
@@ -1257,6 +1261,10 @@ def get_hint_pep484585_generic_base_in_module_first(
 
     * Would require all passed parameters be passed positionally, which becomes
       rather cumbersome given the number of requisite parameters.
+    * Would require callers to pass a placeholder ``exception_prefix`` rather
+      than the true ``exception_prefix``, which is typically context-dependent
+      and thus *not* readily memoizable. Although feasible, doing so becomes
+      rather cumbersome... yet again.
     * Is (currently) unnecessary, as all callers of this function are themselves
       already memoized.
 
@@ -1283,9 +1291,9 @@ def get_hint_pep484585_generic_base_in_module_first(
     ----------
     hint : Hint
         Generic type hint to be inspected.
-    module_name : str
-        Fully-qualified name of the third-party package or module to find the
-        first class in this generic type hint of.
+    module_names : frozenset[str]
+        Frozen set of the fully-qualified names of all third-party packages and
+        modules to find the first class in this generic type hint of.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep484585Exception`.
@@ -1315,11 +1323,17 @@ def get_hint_pep484585_generic_base_in_module_first(
        ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
        <class 'pandas.DataFrame'>
     '''
-    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(module_names, frozenset), (
+        f'{repr(module_names)} not frozen set.')
+    assert all(
+        isinstance(module_name, str) for module_name in module_names), (
+        f'{repr(module_names)} not frozen set of strings.')
 
+    # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodget import get_object_module_name_or_none
 
+    # ....................{ LOCALS                         }....................
     # Either:
     # * If this generic is unsubscripted, this unsubscripted generic type as is.
     # * If this generic is subscripted, the unsubscripted generic type
@@ -1331,10 +1345,6 @@ def get_hint_pep484585_generic_base_in_module_first(
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
-
-    # Fully-qualified name of the module to be searched for suffixed by a "."
-    # delimiter. This is a micro-optimization improving lookup speed below.
-    module_name_prefix = f'{module_name}.'
 
     # Tuple of the one or more unerased pseudo-superclasses which this
     # unsubscripted generic type originally subclassed prior to type erasure.
@@ -1350,6 +1360,7 @@ def get_hint_pep484585_generic_base_in_module_first(
         exception_prefix=exception_prefix,
     )
 
+    # ....................{ SEARCH                         }....................
     # For each unerased pseudo-superclass of this unsubscripted generic type...
     for hint_base in hint_type_bases:
         # If this pseudo-superclass is *NOT* an actual superclass, silently
@@ -1362,25 +1373,47 @@ def get_hint_pep484585_generic_base_in_module_first(
         # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
         hint_base_module_name = get_object_module_name_or_none(hint_base)
 
-        # If this module exists *AND* either...
-        if hint_base_module_name and (
-            # This module is the desired module itself *OR*...
-            hint_base_module_name == module_name_prefix or
-            # This module is a submodule of the desired module...
-            hint_base_module_name.startswith(module_name_prefix)
-        # Then return this superclass.
-        ):
-            # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
-            return hint_base
-        # Else, this is *NOT* the desired module. In this case, continue to the
-        # next superclass.
+        # If this module exists...
+        if hint_base_module_name:
+            # If this module is one of the passed modules, return this
+            # superclass as is.
+            if hint_base_module_name in module_names:
+                # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
+                return hint_base
+            # Else, this module is *NOT* one of the passed modules. However,
+            # this module could still be a transitive submodule of one of the
+            # passed packages.
+
+            # Fully-qualified name of the root package transitively defining
+            # the submodule declaring this superclass (e.g., "polars" when
+            # "hint_base_module_name" is "polars.dataframe").
+            #
+            # Note this has been profiled to be the fastest one-liner parsing
+            # the first "."-suffixed substring from a "."-delimited string.
+            hint_base_package_name = hint_base_module_name.partition('.')[0]
+
+            # If this package is one of the passed packages, return this
+            # superclass as is.
+            if hint_base_package_name in module_names:
+                # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
+                return hint_base
+            # Else, this package is *NOT* one of the passed packages.
+        # Else, this module does *NOT* exist.
+        #
+        # In any case, silently continue to the next superclass.
     # Else, *NO* superclass of this generic resides in the desired module.
+
+    # ....................{ RAISE                          }....................
+    # Human-readable double-quoted disjunction of all passed module names (e.g.,
+    # '"ibix", "pandas", or "polars"').
+    module_names_quoted = join_delimited_disjunction(
+        strs=module_names, is_double_quoted=True)
 
     # Raise an exception of the passed type.
     raise exception_cls(
         f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
-        f'type {repr(hint_type)} subclasses no "{module_name}" type '
-        f'(i.e., type with module name prefixed by "{module_name}" not '
+        f'type {repr(hint_type)} subclasses no {module_names_quoted} type '
+        f'(i.e., type with module name prefixed by {module_names_quoted} not '
         f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
     )
 

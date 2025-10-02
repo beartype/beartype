@@ -166,17 +166,18 @@ def reduce_hint_pandera(hint: Hint, exception_prefix: str) -> type:
     from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
         get_hint_pep484585_generic_base_in_module_first)
 
-    # Find and return the first Pandas type subclassed by this Pandera generic
-    # type hint.
+    # Find and return the first dataframe-like type subclassed by this
+    # Pandera-specific generic type hint.
     return get_hint_pep484585_generic_base_in_module_first(
         hint=hint,  # pyright: ignore
-        module_name=_PANDAS_MODULE_NAME,
+        module_names=_MODULE_NAMES_DATAFRAME,
         exception_cls=BeartypeDecorHintNonpepPanderaException,
         exception_prefix=exception_prefix,
     )
 
 # ....................{ PRIVATE ~ constants                }....................
-_PANDAS_MODULE_NAME = 'pandas'
+_MODULE_NAMES_DATAFRAME = frozenset(('pandas', 'polars',))
 '''
-Fully-qualified name of the package providing the third-party Pandas project.
+Fully-qualified names of all third-party packages defining dataframe-like types
+supported by Pandera.
 '''

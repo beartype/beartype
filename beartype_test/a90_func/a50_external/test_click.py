@@ -19,7 +19,7 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
 @skip_unless_package('click')
-def test_click_commands() -> None:
+def test_click_command() -> None:
     '''
     Integration test validating that the :func:`beartype.beartype` decorator
     integrates cleanly with the third-party :class:`click.command` decorator

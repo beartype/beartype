@@ -441,8 +441,23 @@ test-tox = [
        platform_python_implementation != 'PyPy'\
     """,
 
-    # ....................{ SCIENCE ~ data : ml : pandas   }....................
-    # Pandas-specific optional test-time dependencies.
+    # ....................{ SCIENCE ~ data : ml : dataframe}....................
+    # DataFrame (e.g., Pandas, Polars)-specific optional test-time dependencies.
+
+    #FIXME: Reenable Python >= 3.14 support *AFTER* Pydantic supports Python
+    #3.14. Pydantic currently fails to ship Python 3.14 wheels and is
+    #non-trivial to build, due to requiring Rust.
+    # Required by optional Pandera-specific integration tests. Note that:
+    # * Pandera requires Pydantic and Pandas.
+    # * The @beartype test suite requires pandera >= 0.20.1. Prior pandera
+    #   versions accidentally required "pyarrow" as a mandatory dependency.
+    #   Since "pyarrow" is non-trivial to install under GitHub Actions-based
+    #   continuous integration (CI) workflows, this effectively renders older
+    #   pandera versions unsuitable for CI.
+    "pandera >= 0.20.1; python_version < '3.14.0'",
+
+    # Required by optional Pandera- and Polars-specific integration tests.
+    "polars; python_version < '3.14.0'",
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* Pandas supports Python
     #3.14. Pandas currently fails to ship Python 3.14 wheels and is non-trivial
@@ -457,13 +472,6 @@ test-tox = [
     # Required by optional FastMCP-specific integration tests. Note that FastMCP
     # requires Pydantic.
     """fastmcp; python_version > '3.9.0' and python_version < '3.14.0'""",
-
-    #FIXME: Reenable Python >= 3.14 support *AFTER* Pydantic supports Python
-    #3.14. Pydantic currently fails to ship Python 3.14 wheels and is
-    #non-trivial to build, due to requiring Rust.
-    # Required by optional Pandera-specific integration tests. Note that Pandera
-    # requires Pydantic and Pandas.
-    "pandera; python_version < '3.14.0'",
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires

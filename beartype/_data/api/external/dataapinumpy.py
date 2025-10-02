@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **NumPy globals** (i.e., global constants describing various facets
-of the third-party :mod:`numpy` package).
+Project-wide **NumPy globals** (i.e., global constants pertaining to the
+third-party :mod:`numpy` package).
 
 This private submodule is *not* intended for importation by downstream callers.
 

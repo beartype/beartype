@@ -106,13 +106,13 @@ def test_beartype(iter_hints_piths_meta) -> None:
             return hint_param
 
         #FIXME: For unknown and probably uninteresting reasons, the
-        #pytest.warns() context manager appears to be broken on our
-        #local machine. We have no recourse but to unconditionally
-        #ignore this warning at the module level. So much rage!
-        #FIXME: It's likely this has something to do with the fact that
-        #Python filters deprecation warnings by default. This is almost
-        #certainly a pytest issue. Since this has become fairly
-        #unctuous, we should probably submit a pytest issue report.
+        #pytest.warns() context manager appears to be broken on our local
+        #machine. We have no recourse but to unconditionally ignore this warning
+        #at the module level. So much rage!
+        #FIXME: It's likely this has something to do with the fact that Python
+        #filters deprecation warnings by default. This is almost certainly a
+        #pytest issue. Since this has become fairly unctuous, we should probably
+        #submit a pytest issue report.
         #FIXME: Actually, pytest now appears to have explicit support for
         #testing that a code block emits a deprecation warning:
         #    with pytest.deprecated_call():
