@@ -47,6 +47,7 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     from beartype._conf.decorplace.confplacetrie import (
         BeartypeDecorPlacePackagesTrie,
         BeartypeDecorPlacePackageTrie,
+        BeartypeDecorPlaceTypeTrie,
     )
     from beartype._data.conf import dataconfplace
     from beartype_test.a00_unit.data.func.data_decor import decorator_hostile
@@ -58,13 +59,13 @@ def test_claw_intraprocess_decorator_hostile() -> None:
     #decorator-hostile decorator as such. Sadly, "BeartypeConf" currently fails
     #to provide an option enabling this. *sigh*
 
-    # Monkey-patch this testing-specific decorator-hostile decorator into this
-    # decorator-hostile decorator attribute name trie. *ALL* other
-    # decorator-hostile decorators are defined by third-party packages and thus
-    # unsuitable for general-purpose unit testing.
-    #
-    # Note that this monkey-patch is intentionally isolated to this
-    # test-specific subprocess and thus implicitly safe.
+    # Monkey-patch these testing-specific decorator-hostile decorator attributes
+    # into this decorator-hostile decorator attribute name trie. Note that:
+    # * The default contents of this trie describe decorator-hostile decorators
+    #   only defined by third-parties and thus unsuitable for general-purpose
+    #   unit testing.
+    # * This monkey-patch is intentionally isolated to this test-specific
+    #   subprocess and thus implicitly safe.
     dataconfplace.DECOR_HOSTILE_ATTR_NAME_TRIE |= (
         BeartypeDecorPlacePackagesTrie({
             'beartype_test': BeartypeDecorPlacePackageTrie({
@@ -73,6 +74,11 @@ def test_claw_intraprocess_decorator_hostile() -> None:
                         'func': BeartypeDecorPlacePackageTrie({
                             'data_decor': BeartypeDecorPlacePackageTrie({
                                 'decorator_hostile': None,
+                                'DecoratorHostileType': (
+                                    BeartypeDecorPlaceTypeTrie({
+                                        'decorator_hostile_method': None,
+                                    })
+                                ),
                             })
                         })
                     })

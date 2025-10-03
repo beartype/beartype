@@ -449,12 +449,10 @@ test-tox = [
     #non-trivial to build, due to requiring Rust.
     # Required by optional Pandera-specific integration tests. Note that:
     # * Pandera requires Pydantic and Pandas.
-    # * The @beartype test suite requires pandera >= 0.20.1. Prior pandera
-    #   versions accidentally required "pyarrow" as a mandatory dependency.
-    #   Since "pyarrow" is non-trivial to install under GitHub Actions-based
-    #   continuous integration (CI) workflows, this effectively renders older
-    #   pandera versions unsuitable for CI.
-    "pandera >= 0.20.1; python_version < '3.14.0'",
+    # * The @beartype test suite requires pandera >= 0.26.0. Prior pandera
+    #   versions were Pandas-specific. Modern pandera versions are API-agnostic
+    #   and now support a wide variety of DataFrame-like APIs, including Polars.
+    "pandera >= 0.26.0; python_version < '3.14.0'",
 
     # Required by optional Pandera- and Polars-specific integration tests.
     "polars; python_version < '3.14.0'",

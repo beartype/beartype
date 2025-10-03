@@ -14,5 +14,6 @@ themselves are applied in such a chain)).
 
 # ....................{ IMPORTS                            }....................
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.decor_hostile import (
-    data_claw_decor_hostile,
+    data_claw_decor_hostile_func,
+    data_claw_decor_hostile_type,
 )

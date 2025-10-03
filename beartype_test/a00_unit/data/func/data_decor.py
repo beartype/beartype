@@ -35,6 +35,13 @@ class DecoratorHostileWrapper(object):
     non-standard :meth:`.invoke` method calling the decorated callable or type
     against which this wrapper was instantiated by the parent
     :func:`.decorator_hostile` decorator).
+
+    Attributes
+    ----------
+    _wrappee : Callable
+        **Wrappee** (i.e., callable or type originally decorated by the parent
+        :func:`.decorator_hostile` decorator encapsulating that callable or type
+        with this wrapper instance).
     '''
 
     def __init__(self, wrappee: Callable) -> None:
@@ -43,8 +50,17 @@ class DecoratorHostileWrapper(object):
         callable or type.
         '''
 
-        # Classify all passed parameters.
-        self._wrappee = wrappee
+        # Classify the passed wrappee intelligently, such that...
+        self._wrappee = (
+            # If this wrappee is actually yet another instance of this same
+            # decorator-hostile wrapper class, unwrap this wrapper to the
+            # wrappee previously encapsulated by this wrapper.
+            wrappee._wrappee
+            if isinstance(wrappee, DecoratorHostileWrapper) else
+            # Else, this wrappee is presumably a callable or type. In this case,
+            # classify this wrappee as is.
+            wrappee
+        )
 
 
     def invoke(self, *args, **kwargs) -> object:
@@ -83,6 +99,37 @@ def decorator_hostile(func: Callable) -> DecoratorHostileWrapper:
 
     # Create and return a decorator-hostile wrapper wrapping this object.
     return DecoratorHostileWrapper(func)
+
+
+class DecoratorHostileType(object):
+    '''
+    **Decorator-hostile type** (i.e., arbitrary class defining one or more
+    decorator-hostile methods).
+    '''
+
+    def __init__(self) -> None:
+        '''
+        Initialize this decorator-hostile instance.
+        '''
+
+        pass
+
+
+    def decorator_hostile_method(
+        self, func: Callable) -> DecoratorHostileWrapper:
+        '''
+        **Decorator-hostile decorator method** (i.e., decorator implemented as a
+        bound instance method preventing other decorators from being applied
+        after this decorator is applied to the decorated callable or type).
+
+        See Also
+        --------
+        :func:`.decorator_hostile`
+            Further details.
+        '''
+
+        # Create and return a decorator-hostile wrapper wrapping this object.
+        return DecoratorHostileWrapper(func)
 
 # ....................{ DECORATORS ~ (non)isomorphic       }....................
 def decorator_isomorphic(func: Callable) -> Callable:
