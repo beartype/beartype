@@ -29,7 +29,7 @@ on:
     tags:
       - 'v**'   # Match "v"-prefixed tags (e.g., "v6.9.6").
 
-# ...................{ PERMISSIONS                        }...................
+# ....................{ PERMISSIONS                        }....................
 permissions:
   # Enable third-party GitHub Actions to read the contents of this repository's
   # ".git/" subdirectory (e.g., to list all git commits). This is the safest
@@ -58,6 +58,13 @@ jobs:
   release:
     name: "Create tagged release on GitHub"
     runs-on: ubuntu-latest
+
+    permissions:
+      # Permit the "ncipollo/release-action" action referenced below to
+      # dynamically "write" (i.e., generate) a new GitHub release to this
+      # repository. See also:
+      #     https://github.com/ncipollo/release-action/issues/208
+      contents: write
 
     steps:
       - name: "Checking out repository..."
@@ -94,7 +101,7 @@ jobs:
       url: https://pypi.org/project/beartype
 
     permissions:
-      # Enable third-party GitHub Actions to fetch OpenID Connect (OIDC) tokens.
+      # Permit third-party GitHub Actions to fetch OpenID Connect (OIDC) tokens.
       # Note that PyPI Trusted Publishing specifically requires this permission.
       # See also:
       #     https://github.com/pypa/gh-action-pypi-publish
