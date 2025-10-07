@@ -29,9 +29,15 @@ on:
     tags:
       - 'v**'   # Match "v"-prefixed tags (e.g., "v6.9.6").
 
+  #FIXME: Convenient albeit insecure, as this would grant mere Collaborators
+  #permission to create new releases at any time. That's... non-ideal. *sigh*
+  # # Enable this workflow to be run manually from the "Actions" tab.
+  # workflow_dispatch:
+
 # ....................{ PERMISSIONS                        }....................
+# Default job security model applied by default to all jobs performed below.
 permissions:
-  # Enable third-party GitHub Actions to read the contents of this repository's
+  # Permit third-party GitHub Actions to read the contents of this repository's
   # ".git/" subdirectory (e.g., to list all git commits). This is the safest
   # explicit permission that a GitHub workflow can currently grant to
   # third-party GitHub Actions. Ideally, this permission would be the default.

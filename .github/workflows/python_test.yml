@@ -71,9 +71,10 @@ env:
   _PIP_PACKAGE_NAMES: |
     tox
 
-# ...................{ PERMISSIONS                        }...................
+# ....................{ PERMISSIONS                        }....................
+# Default job security model applied by default to all jobs performed below.
 permissions:
-  # Enable third-party GitHub Actions to read the contents of this repository's
+  # Permit third-party GitHub Actions to read the contents of this repository's
   # ".git/" subdirectory (e.g., to list all git commits). This is the safest
   # explicit permission that a GitHub workflow can currently grant to
   # third-party GitHub Actions. Ideally, this permission would be the default.
@@ -286,7 +287,7 @@ jobs:
           python3 -c "import sysconfig; print('Py_GIL_DISABLED:', sysconfig.get_config_var('Py_GIL_DISABLED'))"
 
       # ..................{ INSTALL                          }..................
-      # Note that:
+      # Install "pip"-based Python dependencies. Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
       #   * POSIX-noncompliant platforms (e.g., Windows).
@@ -296,9 +297,11 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
+          set -xe
           python3 -m pip --quiet install --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
         run: |
+          set -xe
           python3 -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
 
       # ..................{ TYPE-CHECK                       }..................
@@ -331,7 +334,7 @@ jobs:
       #    https://github.com/jpetrucciani/mypy-check/issues/30
 
       # Type-check this package with "mypy".
-      - name: 'Type-checking package with "mypy:"...'
+      - name: 'Type-checking package with "mypy"...'
         run: |
           # Manually install "mypy" in the standard way. Note that "mypy" itself
           # requires the third-party "typing-extensions" package for support for

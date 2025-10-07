@@ -163,6 +163,26 @@ dependencies = []
 #     https://stackoverflow.com/a/72524073/2809027
 [project.optional-dependencies]
 
+# GitHub Pages (GHP)-specific documentation-time package dependencies required
+# to automatically build documentation for this project from GitHub's homegrown
+# hosting service.
+doc-ghp = [
+    # ....................{ THEME                          }....................
+    # Theme stack -- which transitively requires reasonably recent versions of
+    # both MkDocs itself as well as all requisite MkDocs plugins. Note that:
+    # * The "imaging" extra is required by popular optional "mkdocs-material"
+    #   plugins (e.g., "optimize", "social"). Doing so installs Python-centric
+    #   image-processing packages like CairoSVG and Pillow, which *COULD* prove
+    #   non-trivial to install under edge-case environments and platforms.
+    "mkdocs-material[imaging] >=9.6.0",
+
+    # ....................{ EXTENSIONS                     }....................
+    # API reference generation stack -- which transitively requires a reasonably
+    # recent version of the third-party "mkdocstrings" extension as well.
+    "mkdocstrings-python >=1.16.0",
+]
+
+#FIXME: Remove *AFTER* successfully migrating from RTD to GHP.
 # Read The Docs (RTD)-specific documentation-time package dependencies required
 # to automatically build documentation for this project from the third-party RTD
 # hosting service. For consistency, these dependencies are often constrained to
