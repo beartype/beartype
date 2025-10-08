@@ -30,7 +30,6 @@ def test_die_unless_object_isinstanceable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_isinstanceable)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         Class,
         NonIsinstanceableClass,
@@ -43,6 +42,10 @@ def test_die_unless_object_isinstanceable() -> None:
 
     # Assert this raiser accepts a tuple of isinstanceable types.
     die_unless_object_isinstanceable((Class, str))
+
+    # Assert this raiser accepts a PEP 604-compliant new-style union of
+    # isinstanceable types.
+    die_unless_object_isinstanceable(Class | str)
 
     # ....................{ FAIL                           }....................
     # Assert this raiser raises the expected exception when passed a
@@ -60,17 +63,11 @@ def test_die_unless_object_isinstanceable() -> None:
     with raises(BeartypeDecorHintPep3119Exception):
         die_unless_object_isinstanceable((Class, NonIsinstanceableClass))
 
-    # ....................{ VERSION                        }....................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604-compliant new unions...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Assert this raiser accepts a new union of isinstanceable types.
-        die_unless_object_isinstanceable(Class | str)
-
-        # Assert this raiser raises the expected exception when passed a new
-        # union of one isinstanceable type and one non-isinstanceable type.
-        with raises(BeartypeDecorHintPep3119Exception):
-            die_unless_object_isinstanceable(Class | NonIsinstanceableClass)
+    # Assert this raiser raises the expected exception when passed a PEP
+    # 604-compliant new-style union of one isinstanceable type and one
+    # non-isinstanceable type.
+    with raises(BeartypeDecorHintPep3119Exception):
+        die_unless_object_isinstanceable(Class | NonIsinstanceableClass)
 
 
 def test_die_unless_type_isinstanceable() -> None:
@@ -119,7 +116,6 @@ def test_die_unless_object_issubclassable() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.clspep3119 import (
         die_unless_object_issubclassable)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         Class,
         NonIssubclassableClass,
@@ -132,6 +128,10 @@ def test_die_unless_object_issubclassable() -> None:
 
     # Assert this raiser accepts a tuple of issubclassable types.
     die_unless_object_issubclassable((Class, str))
+
+    # Assert this raiser accepts a PEP 604-compliant new-style union of
+    # issubclassable types.
+    die_unless_object_issubclassable(Class | str)
 
     # ....................{ FAIL                           }....................
     # Assert this raiser raises the expected exception when passed a
@@ -149,17 +149,11 @@ def test_die_unless_object_issubclassable() -> None:
     with raises(BeartypeDecorHintPep3119Exception):
         die_unless_object_issubclassable((Class, NonIssubclassableClass))
 
-    # ....................{ VERSION                        }....................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604-compliant new unions...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Assert this raiser accepts a new union of issubclassable types.
-        die_unless_object_issubclassable(Class | str)
-
-        # Assert this raiser raises the expected exception when passed a new
-        # union of one issubclassable type and one non-issubclassable type.
-        with raises(BeartypeDecorHintPep3119Exception):
-            die_unless_object_issubclassable(Class | NonIssubclassableClass)
+    # Assert this raiser raises the expected exception when passed a PEP
+    # 604-compliant new-style union of one issubclassable type and one
+    # non-issubclassable type.
+    with raises(BeartypeDecorHintPep3119Exception):
+        die_unless_object_issubclassable(Class | NonIssubclassableClass)
 
 
 def test_die_unless_type_issubclassable() -> None:

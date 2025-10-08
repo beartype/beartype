@@ -104,6 +104,10 @@ def test_sphinx_docs_other(tmp_path) -> None:
     run_command_forward_output(command_words=SPHINX_ARGS)
 
 
+#FIXME: *IGNORE EVERYTHING BELOW.* Fundamentally refactor this integration test
+#from Sphinx to MkDocs. Specifically:
+#* Define a new "test_mkdocs" submodule.
+#* Rename this test to simply test_mkdocs_docs() in that submodule.
 #FIXME: For unknown reasons, this currently fails despite working for literally
 #years. The culprit is almost certainly the "sphinx.testing.fixtures" API, which
 #has yet to be properly documented. That said, we've personally validated that

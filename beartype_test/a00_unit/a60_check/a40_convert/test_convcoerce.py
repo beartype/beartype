@@ -73,7 +73,6 @@ def test_coerce_hint_any() -> None:
     # Defer test-specific imports.
     from beartype._util.cache.utilcacheclear import clear_caches
     from beartype._check.convert._convcoerce import coerce_hint_any
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
     # ..................{ PREAMBLE                           }..................
     # Clear all internal @beartype caches *BEFORE* testing this coercer. This
@@ -106,19 +105,16 @@ def test_coerce_hint_any() -> None:
     assert coerce_hint_any(list[int]) is hint_pep585
 
     # ..................{ PEP 604                            }..................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Arbitrary PEP 604-compliant union.
-        hint_pep604 = int | str | None
+    # Arbitrary PEP 604-compliant union.
+    hint_pep604 = int | str | None
 
-        # Assert this coercer preserves the first passed instance of a PEP
-        # 604-compliant union as is.
-        assert coerce_hint_any(hint_pep604) is hint_pep604
+    # Assert this coercer preserves the first passed instance of a PEP
+    # 604-compliant union as is.
+    assert coerce_hint_any(hint_pep604) is hint_pep604
 
-        # Assert this coercer returns the first passed instance of a PEP
-        # 604-compliant type hint when passed a copy of that instance. PEP
-        # 604-compliant type hints are *NOT* self-caching: e.g.,
-        #     >>> int | str is int | str
-        #     False
-        assert coerce_hint_any(int | str | None) is hint_pep604
+    # Assert this coercer returns the first passed instance of a PEP
+    # 604-compliant type hint when passed a copy of that instance. PEP
+    # 604-compliant type hints are *NOT* self-caching: e.g.,
+    #     >>> int | str is int | str
+    #     False
+    assert coerce_hint_any(int | str | None) is hint_pep604

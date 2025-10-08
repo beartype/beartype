@@ -49,7 +49,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_14,
     IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_10,
 )
 from collections import deque as _deque
 from collections.abc import (
@@ -175,52 +174,49 @@ either as C extensions or in pure Python).
 '''
 
 # ....................{ TYPES ~ core : singleton           }....................
-#FIXME: Uncomment this after dropping Python 3.9. Pyright hates this under
-#Python 3.9. *sigh*
-# # If this submodule is currently being statically type-checked by a pure static
-# # type-checker, ignore false positives complaining that these types are not
-# # types.
-# if TYPE_CHECKING:
-#     from types import (  # type: ignore[attr-defined]
-#         EllipsisType as EllipsisType,  # pyright: ignore
-#         NoneType as NoneType,  # pyright: ignore
-#         NotImplementedType as NotImplementedType,  # pyright: ignore
-#     )
-# # Else, this submodule is *NOT* currently being statically type-checked by a
-# # pure static type-checker. In this case, define these types properly. *sigh*
-#else:
-
-EllipsisType: type = type(Ellipsis)
-'''
-Type of the :data:`Ellipsis` singleton.
-'''
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that these types are not
+# types.
+if TYPE_CHECKING:
+    from types import (  # type: ignore[attr-defined]
+        EllipsisType as EllipsisType,  # pyright: ignore
+        NoneType as NoneType,  # pyright: ignore
+        NotImplementedType as NotImplementedType,  # pyright: ignore
+    )
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define these types properly. *sigh*
+else:
+    EllipsisType: type = type(Ellipsis)
+    '''
+    Type of the :data:`Ellipsis` singleton.
+    '''
 
 
-NoneType: type = type(None)
-'''
-Type of the :data:`None` singleton.
+    NoneType: type = type(None)
+    '''
+    Type of the :data:`None` singleton.
 
-Curiously, although the type of the :data:`None` object is a class object
-whose ``__name__`` attribute is ``"NoneType"``, there exists no globally
-accessible class by that name. To circumvents this obvious oversight, this
-global globally exposes this class.
+    Curiously, although the type of the :data:`None` object is a class object
+    whose ``__name__`` attribute is ``"NoneType"``, there exists no globally
+    accessible class by that name. To circumvents this obvious oversight, this
+    global globally exposes this class.
 
-This class is principally useful for annotating both:
+    This class is principally useful for annotating both:
 
-* Callable parameters accepting :data:`None` as a valid value.
-* Callables returning :data:`None` as a valid value.
+    * Callable parameters accepting :data:`None` as a valid value.
+    * Callables returning :data:`None` as a valid value.
 
-Note that, for obscure and uninteresting reasons, the standard :mod:`types`
-module defined the same type with the same name under Python 2.x but *not*
-3.x. Depressingly, this type must now be manually redefined everywhere.
-'''
+    Note that, for obscure and uninteresting reasons, the standard :mod:`types`
+    module defined the same type with the same name under Python 2.x but *not*
+    3.x. Depressingly, this type must now be manually redefined everywhere.
+    '''
 
 
-# Define this type as either...
-NotImplementedType: type = type(NotImplemented)
-'''
-Type of the :data:`NotImplemented` singleton.
-'''
+    # Define this type as either...
+    NotImplementedType: type = type(NotImplemented)
+    '''
+    Type of the :data:`NotImplemented` singleton.
+    '''
 
 # ....................{ TYPES ~ call                       }....................
 CallableCodeObjectType = _types.CodeType
@@ -1058,31 +1054,14 @@ else:
 #FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
-# If this submodule is currently being statically type-checked by a pure static
-# type-checker, ignore false positives complaining that this type is not a type.
-if TYPE_CHECKING:
-    class HintPep604Type(object): pass
-# Else, this submodule is *NOT* currently being statically type-checked by a
-# pure static type-checker. In this case, define this type properly. *sigh*
-else:
-    # Define this type as either...
-    HintPep604Type = (
-        # If the active Python interpreter targets at least Python >= 3.10 and
-        # thus supports PEP 604, this type;
-        _types.UnionType
-        if IS_PYTHON_AT_LEAST_3_10 else
-        # Else, a placeholder type.
-        UnavailableType
-    )
-    '''
-    C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
-    created by expressions of the form ``{type1} | {type2} | ... | {typeN}``) if
-    the active Python interpreter targets Python >= 3.10 *or*
-    :class:`.UnavailableType` otherwise.
+HintPep604Type = _types.UnionType
+'''
+C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
+created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
-    This type is a version-agnostic generalization of the standard
-    :class:`types.UnionType` type available only under Python >= 3.10.
-    '''
+This type is a version-agnostic generalization of the standard
+:class:`types.UnionType` type available only under Python >= 3.10.
+'''
 
 
 HintPep604ItemTypes: _TupleTyping[type, ...] = (
@@ -1098,64 +1077,40 @@ objects permissible as the items of new unions), including:
 '''
 
 # ....................{ TYPES ~ hint : pep : 612           }....................
-# If this submodule is currently being statically type-checked by a pure static
-# type-checker, ignore false positives complaining that these types are not
-# types.
-if TYPE_CHECKING:
-    class HintPep612ParamSpecType(object): pass
-    class HintPep612ParamSpecArgType(object): pass
-    class HintPep612ParamSpecKwargType(object): pass
-# Else, this submodule is *NOT* currently being statically type-checked by a
-# pure static type-checker.
-#
-# If the active Python interpreter targets at least Python >= 3.10 and thus
-# supports PEP 612, define these types properly. *sigh*
-elif IS_PYTHON_AT_LEAST_3_10:
-    HintPep612ParamSpecType = _typing.ParamSpec
-    '''
-    C-based type of all :pep:`612`-compliant **parameter specifications** (i.e.,
-    low-level C-based :obj:`typing.ParamSpec` objects) if the active Python
-    interpreter targets Python >= 3.10 *or* :class:`.UnavailableType` otherwise.
+HintPep612ParamSpecType = _typing.ParamSpec
+'''
+C-based type of all :pep:`612`-compliant **parameter specifications** (i.e.,
+low-level C-based :obj:`typing.ParamSpec` objects).
 
-    This type is a version-agnostic generalization of the standard
-    :class:`typing.ParamSpec` type available only under Python >= 3.10.
-    '''
+This type is a version-agnostic generalization of the standard
+:class:`typing.ParamSpec` type available only under Python >= 3.10.
+'''
 
 
-    HintPep612ParamSpecArgType = _typing.ParamSpecArgs
-    '''
-    C-based type of all :pep:`612`-compliant **parameter specification variadic
-    positional parameter instance variables** (i.e., low-level C-based
-    :obj:`typing.ParamSpecArgs` objects annotating variadic positional
-    parameters with syntax resembling ``*args: P.args`` for ``P`` a low-level
-    C-based :obj:`typing.ParamSpec` parent object) if the active Python
-    interpreter targets Python >= 3.10 *or* :class:`.UnavailableType` otherwise.
+HintPep612ParamSpecArgType = _typing.ParamSpecArgs
+'''
+C-based type of all :pep:`612`-compliant **parameter specification variadic
+positional parameter instance variables** (i.e., low-level C-based
+:obj:`typing.ParamSpecArgs` objects annotating variadic positional
+parameters with syntax resembling ``*args: P.args`` for ``P`` a low-level
+C-based :obj:`typing.ParamSpec` parent object).
 
-    This type is a version-agnostic generalization of the standard
-    :class:`typing.ParamSpecArgs` type available only under Python >= 3.10.
-    '''
+This type is a version-agnostic generalization of the standard
+:class:`typing.ParamSpecArgs` type available only under Python >= 3.10.
+'''
 
 
-    HintPep612ParamSpecKwargType = _typing.ParamSpecKwargs
-    '''
-    C-based type of all :pep:`612`-compliant **parameter specification variadic
-    keyword parameter instance variables** (i.e., low-level C-based
-    :obj:`typing.ParamSpecArgs` objects annotating variadic keyword
-    parameters with syntax resembling ``**kwargs: P.kwargs`` for ``P`` a
-    low-level C-based :obj:`typing.ParamSpec` parent object) if the active
-    Python interpreter targets Python >= 3.10 *or* :class:`.UnavailableType`
-    otherwise.
+HintPep612ParamSpecKwargType = _typing.ParamSpecKwargs
+'''
+C-based type of all :pep:`612`-compliant **parameter specification variadic
+keyword parameter instance variables** (i.e., low-level C-based
+:obj:`typing.ParamSpecArgs` objects annotating variadic keyword
+parameters with syntax resembling ``**kwargs: P.kwargs`` for ``P`` a
+low-level C-based :obj:`typing.ParamSpec` parent object).
 
-    This type is a version-agnostic generalization of the standard
-    :class:`typing.ParamSpecKwargs` type available only under Python >= 3.10.
-    '''
-# Else, the active Python interpreter targets Python < 3.10 and thus fails to
-# support PEP 612. In this case, define these types as placeholders. *sigh*
-else:
-    HintPep612ParamSpecType = \
-    HintPep612ParamSpecArgType = \
-    HintPep612ParamSpecKwargType = \
-        UnavailableType
+This type is a version-agnostic generalization of the standard
+:class:`typing.ParamSpecKwargs` type available only under Python >= 3.10.
+'''
 
 
 HintPep612ParamSpecVarTypes: _TupleTyping[type, ...] = (

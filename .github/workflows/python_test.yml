@@ -11,17 +11,6 @@
 # * https://hynek.me/articles/python-github-actions
 #   Well-authored blog post strongly inspiring this configuration.
 
-# ....................{ TODO                               }....................
-#FIXME: [CACHING] Add support for caching "pip" downloads across runs.
-#Currently, unresolved issues in GitHub Actions prevents sane caching of "pip"
-#downloads. Naturally, horrifying hacks circumventing these issues do exist but
-#are presumably worse than these issues. See also this pertinent comment:
-#    https://github.com/actions/cache/issues/342#issuecomment-673371329
-#FIXME: [CACHING] Huzzah! The "setup-python" action itself now supports
-#out-of-the-box caching. Note that doing so will require a minor of
-#configuration on our part -- but nothing *TOO* tremendous, hopefully. See:
-#    https://github.com/actions/setup-python#caching-packages-dependencies
-
 # ....................{ METADATA                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
@@ -115,12 +104,7 @@ jobs:
         #   POSIX-compliant low-level similarities to Linux, but... what the
         #   heck. Why not? Since this is the lowest priority, we defer macOS
         #   testing until last.
-
-        #FIXME: Re-enable "macos-latest" support *AFTER* the "setup-python"
-        #GitHub Action resolves this currently outstanding issue:
-        #    https://github.com/actions/setup-python/issues/852
-        # platform: [ubuntu-latest, windows-latest, macos-latest]
-        platform: [ubuntu-latest, windows-latest]
+        platform: [ubuntu-latest, windows-latest, macos-latest]
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # WARNING: Changes to this section *MUST* be manually synchronized with:
@@ -132,7 +116,6 @@ jobs:
         # the "[tox]" subsection in "tox.ini") to be tested, which the
         # ${TOXENV} environment variable declared below exposes to "tox".
         tox-env:
-          - py39-coverage
           - py310-coverage
           - py311-coverage
           - py312-coverage
@@ -141,13 +124,16 @@ jobs:
           - py314-coverage
           # - py314t-coverage
 
+          #FIXME: UNcomment after the first Python 3.15 alpha drops. See also:
+          #    https://peps.python.org/pep-0790
+          # - py315-coverage
+          # # - py315t-coverage
+
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
           #recently broken by work generalizing @beartype to decorate builtin
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
-          # - pypy37-coverage
-          # - pypy38-coverage
-          # - pypy39-coverage
+          # - pypy310-coverage
 
         #FIXME: Preserved in the likelihood we'll need something similar again.
         # # Avoid problematic combinations of Python versions and platforms.
@@ -181,7 +167,6 @@ jobs:
         #   selecting the Python 3.11 pre-release reduces to:
         #     python-version: "3.11.0-alpha - 3.11.0"
         include:
-          - { python-version: "3.9",   tox-env: "py39-coverage" }
           - { python-version: "3.10",  tox-env: "py310-coverage" }
           - { python-version: "3.11",  tox-env: "py311-coverage" }
           - { python-version: "3.12",  tox-env: "py312-coverage" }
@@ -200,27 +185,28 @@ jobs:
           # - tox-env: pypy310-coverage
           #   python-version: "pypy-3.10"
 
-        # Blacklist specific build combinations implicitly defined by the build
-        # matrix above that are currently known to be problematic.
-        exclude:
-          #FIXME: Uncomment in 2026 after this presumably works again. *sigh*
-          # For unknown reasons, Python 3.11-3.13 (and only these versions)
-          # currently inexplicably fail under Ubuntu (and only Ubuntu) with
-          # "pytest"-specific unreadable CI failures resembling:
-          #    ======================= 387 passed, 15 skipped in 37.13s =======================
-          #    py311-coverage: exit -11 (45.91 seconds) /home/runner/work/beartype/beartype/.tox/py311-coverage/tmp> /home/runner/work/beartype/beartype/.tox/py311-coverage/bin/python -m coverage run -m pytest --maxfail=1 -p no:asyncio -p no:xvfb /home/runner/work/beartype/beartype pid=2483
-          #    .pkg: _exit> python /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/pyproject_api/_backend.py True hatchling.build
-          #      py311-coverage: FAIL code -11 (166.94=setup[119.88]+cmd[0.00,1.15,45.91] seconds)
-          #      evaluation failed :( (167.07 seconds)
-          #    Error: Process completed with exit code 245.
-          #
-          #Everything passes locally. So... no idea, sadly. This isn't on us.
-          - platform: ubuntu-latest
-            tox-env: py311-coverage
-          - platform: ubuntu-latest
-            tox-env: py312-coverage
-          - platform: ubuntu-latest
-            tox-env: py313-coverage
+        #FIXME: Preserved for posterity. Hopefully, we *NEVER* need this again.
+        # # Blacklist specific build combinations implicitly defined by the build
+        # # matrix above that are currently known to be problematic.
+        # exclude:
+        #   #FIXME: Uncomment in 2026 after this presumably works again. *sigh*
+        #   # For unknown reasons, Python 3.11-3.13 (and only these versions)
+        #   # currently inexplicably fail under Ubuntu (and only Ubuntu) with
+        #   # "pytest"-specific unreadable CI failures resembling:
+        #   #    ======================= 387 passed, 15 skipped in 37.13s =======================
+        #   #    py311-coverage: exit -11 (45.91 seconds) /home/runner/work/beartype/beartype/.tox/py311-coverage/tmp> /home/runner/work/beartype/beartype/.tox/py311-coverage/bin/python -m coverage run -m pytest --maxfail=1 -p no:asyncio -p no:xvfb /home/runner/work/beartype/beartype pid=2483
+        #   #    .pkg: _exit> python /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/pyproject_api/_backend.py True hatchling.build
+        #   #      py311-coverage: FAIL code -11 (166.94=setup[119.88]+cmd[0.00,1.15,45.91] seconds)
+        #   #      evaluation failed :( (167.07 seconds)
+        #   #    Error: Process completed with exit code 245.
+        #   #
+        #   #Everything passes locally. So... no idea, sadly. This isn't on us.
+        #   - platform: ubuntu-latest
+        #     tox-env: py311-coverage
+        #   - platform: ubuntu-latest
+        #     tox-env: py312-coverage
+        #   - platform: ubuntu-latest
+        #     tox-env: py313-coverage
 
     # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.
@@ -274,6 +260,13 @@ jobs:
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
+
+          # Temporarily cache third-party packages subsequently installed by
+          # "pip" below. This action intelligently defines the cache key to be
+          # hashed against the top-level "pyproject.toml" file and thus silently
+          # clears this cache on each change to that file. See also:
+          #     https://github.com/actions/setup-python?tab=readme-ov-file#caching-packages-dependencies
+          cache: 'pip'
       - name: 'Displaying Python metadata...'
         run: |
           python3 -VV
@@ -297,11 +290,9 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
-          set -xe
           python3 -m pip --quiet install --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
         run: |
-          set -xe
           python3 -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
 
       # ..................{ TYPE-CHECK                       }..................

@@ -38,7 +38,6 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         HintSignUnion,
     )
     from beartype._util.api.standard.utiltyping import get_typing_attrs
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -170,6 +169,16 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         T_IsIntNonZero = TypeVar(
             'T_IsIntNonZero',
             bound=Annotated[object, IsInstance[int], IsNonEmpty],
+        )
+
+        # Type variable bounded by a PEP 604-compliant new union of beartype
+        # validators defined as lambda functions.
+        T_IsNumberNonNegativeOrStrNonEmpty = TypeVar(
+            'T_IsNumberNonNegativeOrStrNonEmpty',
+            bound=(
+                Annotated[Number, IsNonNegative] |
+                Annotated[str, IsNonEmpty]
+            ),
         )
 
         # ................{ TUPLES                             }................
@@ -548,6 +557,32 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
+            # List of lists of annotateds of a union of isinstanceable types
+            # annotated by a type variable bounded by a union of beartype
+            # validators defined as lambda functions.
+            HintPepMetadata(
+                hint=List[List[T_IsNumberNonNegativeOrStrNonEmpty]],
+                pep_sign=HintSignList,
+                isinstanceable_type=list,
+                is_pep585_builtin_subbed=List is list,
+                typeargs_packed=(T_IsNumberNonNegativeOrStrNonEmpty,),
+                piths_meta=(
+                    # List of lists of positive number constants.
+                    HintPithSatisfiedMetadata([
+                        [11, 0.11], [1, 110, 1101100]]),
+                    # List of lists of non-empty string constants.
+                    HintPithSatisfiedMetadata([
+                        ['The straining boat.', '—A whirlwind swept it on,'],
+                        ['With fierce gusts and', 'precipitating force,'],
+                    ]),
+                    # String constant *NOT* an instance of the expected type.
+                    HintPithUnsatisfiedMetadata(
+                        'Through the white ridges of the chafèd sea.'),
+                    # List of lists of negative numbers and empty strings.
+                    HintPithUnsatisfiedMetadata([[-1, '', -0.4], ['', -5, '']]),
+                ),
+            ),
+
             # ..............{ ANNOTATED ~ beartype : isattr      }..............
             # Annotated of an isinstanceable type annotated by one beartype
             # attribute validator.
@@ -689,54 +724,6 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ))
-
-        # ..................{ VERSION                        }..................
-        # If the active Python interpreter targets Python >= 3.10, the
-        # "typing.Annotated" type factory supports the "|" operator. In this
-        # case, defined unions of annotateds with this operator.
-        if IS_PYTHON_AT_LEAST_3_10:
-            # annotated by a type variable bounded by a union of beartype
-            # validators defined as lambda functions.
-            T_IsNumberNonNegativeOrStrNonEmpty = TypeVar(
-                'T_IsNumberNonNegativeOrStrNonEmpty',
-                bound=(
-                    Annotated[Number, IsNonNegative] |
-                    Annotated[str, IsNonEmpty]
-                ),
-            )
-
-            # Add PEP 593-specific test type hints to this tuple global.
-            hints_pep_meta.extend((
-                # ..............{ ANNOTATED ~ beartype : is : nes}..............
-                # List of lists of annotateds of a union of isinstanceable types
-                # annotated by a type variable bounded by a union of beartype
-                # validators defined as lambda functions.
-                HintPepMetadata(
-                    hint=List[List[T_IsNumberNonNegativeOrStrNonEmpty]],
-                    pep_sign=HintSignList,
-                    isinstanceable_type=list,
-                    is_pep585_builtin_subbed=List is list,
-                    typeargs_packed=(T_IsNumberNonNegativeOrStrNonEmpty,),
-                    piths_meta=(
-                        # List of lists of positive number constants.
-                        HintPithSatisfiedMetadata([
-                            [11, 0.11], [1, 110, 1101100]]),
-                        # List of lists of non-empty string constants.
-                        HintPithSatisfiedMetadata([
-                            ['The straining boat.', '—A whirlwind swept it on,'],
-                            ['With fierce gusts and', 'precipitating force,'],
-                        ]),
-                        # String constant *NOT* an instance of the expected type.
-                        HintPithUnsatisfiedMetadata(
-                            'Through the white ridges of the chafèd sea.'),
-                        # List of lists of negative numbers and empty strings.
-                        HintPithUnsatisfiedMetadata([[-1, '', -0.4], ['', -5, '']]),
-                    ),
-                ),
-            ))
-        # Else, the active Python interpreter targets Python < 3.10. In this
-        # case, the "typing.Annotated" type factory fails to support the "|"
-        # operator.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

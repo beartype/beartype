@@ -119,7 +119,6 @@ from beartype._data.hint.sign.datahintsignmap import (
     HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN,
 )
 from beartype._data.hint.sign.datahintsigns import (
-    HintSignNewType,
     HintSignPep484585GenericSubbed,
     HintSignPep484585GenericUnsubbed,
     HintSignPep585BuiltinSubscriptedUnknown,
@@ -131,8 +130,6 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._data.kind.datakindmap import FROZENDICT_EMPTY
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484.pep484newtype import (
-    is_hint_pep484_newtype_pre_python310)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import (
     is_hint_pep484585_generic_subbed,
     is_hint_pep484585_generic_unsubbed,
@@ -149,7 +146,6 @@ from beartype._util.hint.pep.proposal.pep646692 import (
     is_hint_pep646_tuple_unpacked_prefix,
 )
 from beartype._util.hint.pep.proposal.pep695 import is_hint_pep695_subbed
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 from collections.abc import Callable as CallableABC
 
 # ....................{ GETTERS                            }....................
@@ -677,36 +673,11 @@ def _get_hint_pep_sign_ambiguous_or_none(hint: Hint) -> Optional[HintSign]:
     elif is_hint_pep484585_generic_subbed(hint):
         return HintSignPep484585GenericSubbed
     # Else, this hint is *NOT* a PEP 484- or 585-compliant subscripted generic.
-
-    #FIXME: Consider excising the is_hint_pep589() tester entirely. We meant
-    #well... but, ultimately, the implementation is so convoluted that it's
-    #better that we violate privacy encapsulation by detecting that the type of
-    #this type is the private "typing._TypedDictMeta" metaclass instead. *shrug*
-    #FIXME: Note that the "typing" module now provides a public is_typeddict()
-    #tester function, which trivially detects that the type of this type is the
-    #private "typing._TypedDictMeta" metaclass. Just defer to that, please. \o/
-
+    #
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):
         return HintSignTypedDict
-
     # Else, this hint is *NOT* a PEP 589-compliant typed dictionary.
-    #
-    # If the active Python interpreter targets Python < 3.10 (and thus defines
-    # PEP 484-compliant "NewType" type hints as closures returned by that
-    # function that are sufficiently dissimilar from all other type hints to
-    # require unique detection) *AND* this hint is such a hint, return the
-    # corresponding sign.
-    #
-    # Note that these hints *CANNOT* be detected by the general-purpose logic
-    # performed above, as the __repr__() dunder methods of the closures created
-    # and returned by the NewType() closure factory function return a standard
-    # representation rather than a string prefixed by "typing.": e.g.,
-    #     >>> import typing as t
-    #     >>> repr(t.NewType('FakeStr', str))
-    #     '<function NewType.<locals>.new_type at 0x7fca39388050>'
-    elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python310(hint):
-        return HintSignNewType
 
     # ..................{ ERROR                              }..................
     # Else, this hint is unrecognized. In this case, this hint is of unknown

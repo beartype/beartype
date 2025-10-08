@@ -67,7 +67,6 @@ def test_pandera_pandas() -> None:
         BeartypeCallHintParamViolation,
         BeartypeCallHintReturnViolation,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pandas import (
         DataFrame,
         to_datetime,
@@ -270,50 +269,47 @@ def test_pandera_pandas() -> None:
     # data frame passed as a parameter. Let's generalize that with an additional
     # function also type-checking a series returned as a value.
 
-    # If the active Python interpreter supports Python >= 3.10 and thus the "|"
-    # type union operator utilized below...
-    if IS_PYTHON_AT_LEAST_3_10:
-        @beartype
-        @pandas_check_types
-        def convert_dataframe_column_to_series(
-            dataframe: PanderaDataFrame[PanderaModel],
-            column_name_or_index: str | int,
-        ) -> Series[Int64 | String | Timestamp]:
-            '''
-            Convert the column of the passed pandas data frame (identified by
-            the passed column name or index) into a pandas series.
-            '''
+    @beartype
+    @pandas_check_types
+    def convert_dataframe_column_to_series(
+        dataframe: PanderaDataFrame[PanderaModel],
+        column_name_or_index: str | int,
+    ) -> Series[Int64 | String | Timestamp]:
+        '''
+        Convert the column of the passed pandas data frame (identified by the
+        passed column name or index) into a pandas series.
+        '''
 
-            # Return either...
-            return (
-                # If the caller passed a column name, the non-series column with
-                # this name.
-                #
-                # Note that columns are *NOT* series; ergo, this return value
-                # intentionally violates this return type hint. Doing so enables
-                # us to assert that @beartype correctly type-checks return
-                # violations involving pandera type hints.
-                dataframe.loc
-                # dataframe.loc[:,column_name_or_index]
-                if isinstance(column_name_or_index, str) else
-                # Else, the caller passed a column index. In this case, the
-                # series converted from the column with this name.
-                #
-                # Note that this return value intentionally satisfies this hint.
-                dataframe.iloc[:,column_name_or_index]
-            )
+        # Return either...
+        return (
+            # If the caller passed a column name, the non-series column with
+            # this name.
+            #
+            # Note that columns are *NOT* series; ergo, this return value
+            # intentionally violates this return type hint. Doing so enables us
+            # to assert that @beartype correctly type-checks return violations
+            # involving pandera type hints.
+            dataframe.loc
+            # dataframe.loc[:,column_name_or_index]
+            if isinstance(column_name_or_index, str) else
+            # Else, the caller passed a column index. In this case, the series
+            # converted from the column with this name.
+            #
+            # Note that this return value intentionally satisfies this hint.
+            dataframe.iloc[:,column_name_or_index]
+        )
 
-        # Assert that calling this function with valid parameters but returning
-        # an invalid value raises the expected exception.
-        with raises(BeartypeCallHintReturnViolation):
-            convert_dataframe_column_to_series(
-                dataframe=pandas_dataframe_good, column_name_or_index='Hexspeak')
+    # Assert that calling this function with valid parameters but returning an
+    # invalid value raises the expected exception.
+    with raises(BeartypeCallHintReturnViolation):
+        convert_dataframe_column_to_series(
+            dataframe=pandas_dataframe_good, column_name_or_index='Hexspeak')
 
-        # Assert that calling this function with valid parameters and returning
-        # a valid value returns the expected object.
-        pandas_series = convert_dataframe_column_to_series(
-            dataframe=pandas_dataframe_good, column_name_or_index=0)
-        assert len(pandas_series) == 3
+    # Assert that calling this function with valid parameters and returning a
+    # valid value returns the expected object.
+    pandas_series = convert_dataframe_column_to_series(
+        dataframe=pandas_dataframe_good, column_name_or_index=0)
+    assert len(pandas_series) == 3
 
 # ....................{ TESTS ~ polars                     }....................
 @skip_unless_package('pandera')

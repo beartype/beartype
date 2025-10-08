@@ -100,6 +100,70 @@ Fully-qualified name of the top-level Python package exercising this project.
 '''
 
 # ....................{ PYTHON ~ version                   }....................
+def _convert_requires_python_to_version_min(requires_python: str) -> str:
+    '''
+    Convert the passed :pep:`621`-compliant Python version requirements string
+    into a human-readable ``.``-delimited version string (e.g., from
+    ``'requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"'`` to ``"3.10"``).
+
+    Parameters
+    ----------
+    requires_python : str
+        Python version requirements string to be converted.
+
+    Returns
+    -------
+    str
+        Python version string converted from this requirements string.
+    '''
+
+    # 0-based index of two characters past the first ">=" substring in this
+    # version specifier, thus ignoring the ignorable ">=" delimiter.
+    python_version_min_index_ge_first = requires_python.index('>=') + 2
+
+    # 0-based index of the first ignorable character in this version specifier
+    # following this first ">=" substring if this specifier contains such a
+    # character *OR* -1 otherwise. Specifiers may contain optional ","-delimited
+    # constraints additionally constraining this minimum version. For example,
+    # this specifier blacklists various release candidates known to behave
+    # problematically:
+    #     requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"
+    #
+    # Although feasible, validating these optional constraints is non-trivial.
+    # Frankly, it's *NOT* worth the excruciating effort at the moment. We are
+    # *NOT* building a full-blown Python version validator here. Ergo, we
+    # instead ignore these optional constraints.
+    python_version_min_index_ignorable_first = requires_python.find(
+        ',', python_version_min_index_ge_first)
+
+    # Version string to be returned, defined as the value of "Requires-Python"
+    # key stripped of its ">=" prefix. Notably, the value of this key is the
+    # value of the "requires-python" key in the "pyproject.toml" file: e.g.,
+    #     requires-python = ">=3.8"
+    #
+    # Since the latter is guaranteed to be prefixed by the substring ">=" of
+    # length 2, removing this prefix from this string yields the minimum version
+    # of Python required by this package as a "."-delimited string. Phew!
+    #
+    # If this version specifier contains one or more optional constraints,
+    # ignore those constraints.
+    if python_version_min_index_ignorable_first >= 1:
+        python_version_min = requires_python[
+            python_version_min_index_ge_first:
+            python_version_min_index_ignorable_first - 1
+        ]
+    # Else, this version specifier contains *NO* optional constraints.
+    else:
+        python_version_min = requires_python[
+            python_version_min_index_ge_first:]
+    # print(f'python_version_min: {python_version_min}')
+    # print(f'python_version_min_index_ge_first: {python_version_min_index_ge_first}')
+    # print(f'python_version_min_index_ignorable_first: {python_version_min_index_ignorable_first}')
+
+    # Return this version specifier.
+    return python_version_min
+
+
 PYTHON_VERSION_MIN: _Optional[str] = (
     # If this package distribution defines the "Requires-Python" key, the value
     # of this key stripped of its ">=" prefix. Notably, the value of this key is
@@ -109,7 +173,8 @@ PYTHON_VERSION_MIN: _Optional[str] = (
     # Since the latter is guaranteed to be prefixed by the substring ">=" of
     # length 2, removing this prefix from this string yields the minimum version
     # of Python required by this package as a "."-delimited string. Phew!
-    _package_metadata['Requires-Python'][2:]
+    _convert_requires_python_to_version_min(
+        _package_metadata['Requires-Python'])
     if _package_metadata['Requires-Python'] else
     # Else, this package distribution fails to define this key. In this case,
     # fallback to "None".

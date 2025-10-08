@@ -22,10 +22,8 @@ import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import (
     AST,
     AsyncFunctionDef,
-    Attribute,
     ClassDef,
     FunctionDef,
-    Name,
 )
 from beartype.typing import (
     AbstractSet,
@@ -40,7 +38,6 @@ from beartype.typing import (
     List,
     Literal,
     Mapping,
-    Optional,
     Set,
     Tuple,
     Type,
@@ -63,7 +60,6 @@ from beartype._cave._cavefast import (
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import Iota
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections import ChainMap
 from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
@@ -75,7 +71,7 @@ from types import (
 )
 
 # ....................{ AST                                }....................
-NodeCallable = Union[FunctionDef, AsyncFunctionDef]
+NodeCallable = FunctionDef | AsyncFunctionDef
 '''
 PEP-compliant type hint matching a **callable node** (i.e., abstract syntax tree
 (AST) node encapsulating the definition of a pure-Python function or method that
@@ -83,7 +79,7 @@ is either synchronous or asynchronous).
 '''
 
 
-NodeDecoratable = Union[NodeCallable, ClassDef]
+NodeDecoratable = NodeCallable | ClassDef
 '''
 PEP-compliant type hint matching a **decoratable node** (i.e., abstract syntax
 tree (AST) node encapsulating the definition of a pure-Python object supporting
@@ -92,7 +88,7 @@ pure-Python classes *and* callables).
 '''
 
 
-NodeVisitResult = Optional[Union[AST, List[AST]]]
+NodeVisitResult = AST | list[AST] | None
 '''
 PEP-compliant type hint matching a **node visitation result** (i.e., object
 returned by any visitor method of an :class:`ast.NodeVisitor` subclass).
@@ -108,7 +104,7 @@ Specifically, this hint matches either:
 '''
 
 
-NodesList = List[AST]
+NodesList = list[AST]
 '''
 PEP-compliant type hint matching an **abstract syntax tree (AST) node list**
 (i.e., list of zero or more AST nodes).
@@ -158,6 +154,13 @@ all possible callable signatures.
 BeartypeableT = TypeVar(
     'BeartypeableT',
     # The @beartype decorator decorates objects that are either...
+    #
+    # Note that this hint *MUST* be defined as an obsolete PEP 484-compliant old
+    # union rather than a PEP 604-compliant new union to avoid static
+    # type-checker complaints resembling:
+    #     beartype/_data/typing/datatyping.py:267: error: Type variable
+    #     "beartype._data.typing.datatyping.BeartypeableT" is invalid as target
+    #     for type alias  [misc]
     bound=Union[
         # Arbitrary class *OR*...
         type,
@@ -171,7 +174,7 @@ BeartypeableT = TypeVar(
 
         # C-based unbound property method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @property decorator) *OR*...
-        MethodDecoratorPropertyType,
+        MethodDecoratorPropertyType |
 
         # C-based unbound static method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @staticmethod decorator).
@@ -211,7 +214,7 @@ a warning rather than returning any value).
 '''
 
 
-CallableRaiserOrTester = Callable[[object], Optional[bool]]
+CallableRaiserOrTester = Callable[[object], bool | None]
 '''
 PEP-compliant type hint matching a **raiser or tester callable** (i.e.,
 arbitrary callable accepting a single arbitrary object and either returning no
@@ -235,7 +238,7 @@ object satisfies an arbitrary constraint *or* :data:`False` otherwise).
 '''
 
 
-Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
+Codeobjable = Callable | CodeType | FrameType | GeneratorType
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
 directly associated with a code object and thus safely passable as the first
@@ -251,7 +254,7 @@ Specifically, this hint matches:
 '''
 
 # ....................{ CALLABLE ~ args                    }....................
-CallableMethodGetitemArg = Union[int, slice]
+CallableMethodGetitemArg = int | slice
 '''
 PEP-compliant type hint matching the standard type of the single positional
 argument accepted by the ``__getitem__` dunder method.
@@ -267,6 +270,14 @@ an arbitrary object to be decorated via the optional ``obj`` parameter).
 '''
 
 
+# Note that this hint *MUST* be defined as an obsolete PEP 484-compliant old
+# union rather than a PEP 604-compliant new union to avoid static type-checker
+# complaints resembling:
+#     beartype/_decor/decormain.py:106: error: Variable
+#         "beartype._data.typing.datatyping.BeartypeReturn" is not valid as a
+#         type  [valid-type]
+#     beartype/_decor/decormain.py:106: note: See
+#         https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
 BeartypeReturn = Union[BeartypeableT, BeartypeConfedDecorator]
 '''
 PEP-compliant type hint matching any possible value returned by any invocation
@@ -275,19 +286,19 @@ in both configuration and decoration modes.
 '''
 
 # ....................{ CALLABLE ~ descriptor              }....................
-MethodDescriptorBuiltin = Union[
+MethodDescriptorBuiltin = (
     # C-based unbound class method descriptor (i.e., a pure-Python unbound
     # function decorated by the builtin @classmethod decorator).
-    MethodDecoratorClassType,
+    MethodDecoratorClassType |
 
     # C-based unbound property method descriptor (i.e., a pure-Python unbound
     # function decorated by the builtin @property decorator).
-    MethodDecoratorPropertyType,
+    MethodDecoratorPropertyType |
 
     # C-based unbound static method descriptor (i.e., a pure-Python unbound
     # function decorated by the builtin @staticmethod decorator).
-    MethodDecoratorStaticType,
-]
+    MethodDecoratorStaticType
+)
 '''
 PEP-compliant type hint matching any **builtin unbound method descriptor**
 (i.e., C-based decorator type builtin to Python whose instance is typically
@@ -295,19 +306,19 @@ uncallable but encapsulates a callable pure-Python method).
 '''
 
 
-MethodDescriptorNondata = Union[
+MethodDescriptorNondata = (
     # C-based unbound class method descriptor (i.e., a pure-Python unbound
     # function decorated by the builtin @classmethod decorator).
-    MethodDecoratorClassType,
+    MethodDecoratorClassType |
 
     # C-based unbound static method descriptor (i.e., a pure-Python unbound
     # function decorated by the builtin @staticmethod decorator).
-    MethodDecoratorStaticType,
+    MethodDecoratorStaticType |
 
     # C-based bound method descriptor (i.e., a pure-Python unbound function
     # bound to an object instance on Python's instantiation of that object).
-    MethodBoundInstanceOrClassType,
-]
+    MethodBoundInstanceOrClassType
+)
 '''
 PEP-compliant type hint matching any **builtin method non-data descriptor**
 (i.e., C-based descriptor builtin to Python defining only the ``__get__()``
@@ -368,7 +379,7 @@ objects.
 '''
 
 # ....................{ SIGN                               }....................
-HintSignOrNoneOrSentinel = Union[Optional[HintSign], Iota]
+HintSignOrNoneOrSentinel = HintSign | None | Iota
 '''
 PEP-compliant type hint matching either a **sign** (i.e., :class:`.HintSign`
 object uniquely identifying type hint), the :data:`None` singleton, or the
@@ -475,7 +486,7 @@ zero or more 2-tuples of the form ``(item_index, item)``, where:
 '''
 
 # ....................{ OBJECT                             }....................
-GetObjectAttrsDir = Optional[List[str]]
+GetObjectAttrsDir = List[str] | None
 '''
 PEP-compliant type hint matching the ``obj_dir`` parameter accepted by all
 **object attribute getters** (e.g.,
@@ -483,7 +494,7 @@ PEP-compliant type hint matching the ``obj_dir`` parameter accepted by all
 '''
 
 
-GetObjectAttrsPredicate = Optional[Callable[[str, object], bool]]
+GetObjectAttrsPredicate = Callable[[str, object], bool] | None
 '''
 PEP-compliant type hint matching the ``predicate`` parameter accepted by all
 **object attribute getters** (e.g.,
@@ -551,7 +562,7 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-IsBuiltinOrSubclassableTypes = Union[type, TupleTypes, HintPep604Type]
+IsBuiltinOrSubclassableTypes = type | TupleTypes | HintPep604Type
 '''
 PEP-compliant type hint matching any objects passable as the second parameter
 to the :func:`isinstance` and :func:`issubclass` builtins.
@@ -565,26 +576,26 @@ Specifically, this hint matches either:
 '''
 
 
-SetOrTupleTypes = Union[TupleTypes, AbstractSetTypes]
+SetOrTupleTypes = TupleTypes | AbstractSetTypes
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
 '''
 
 
-TypeOrTupleTypes = Union[type, TupleTypes]
+TypeOrTupleTypes = type | TupleTypes
 '''
 PEP-compliant type hint matching either a type *or* tuple of zero or more types.
 '''
 
 
-TypeOrSetOrTupleTypes = Union[type, TupleTypes, AbstractSetTypes]
+TypeOrSetOrTupleTypes = type | TupleTypes | AbstractSetTypes
 '''
 PEP-compliant type hint matching either a type *or* set or tuple of zero or more
 types.
 '''
 
 
-TypeStack = Optional[TupleTypes]
+TypeStack = TupleTypes | None
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
 more arbitrary types *or* :data:`None`).
@@ -666,7 +677,7 @@ superclass).
 '''
 
 
-BeartypeForwardRefArgs = Tuple[Optional[str], str, TupleTypes]
+BeartypeForwardRefArgs = Tuple[str | None, str, TupleTypes]
 '''
 PEP-compliant type hint matching a **forward reference proxy argument list**
 (i.e., tuple of all parameters passed to each call of the low-level private
@@ -687,7 +698,7 @@ creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
 # ....................{ MODULE ~ pathlib                   }....................
 # Type hints specific to the standard "pathlib" package.
 
-PathnameLike = Union[str, Path]
+PathnameLike = str | Path
 '''
 PEP-compliant type hint matching a **pathname-like object** (i.e., either a
 low-level string possibly signifying a pathname *or* a high-level :class:`Path`
@@ -695,6 +706,7 @@ instance definitely encapsulating a pathname).
 '''
 
 
+#FIXME: Shift into the "_cavefast" submodule, please. *sigh*
 PathnameLikeTuple = (str, Path)
 '''
 2-tuple of the types of all **pathname-like objects** (i.e., either
@@ -705,39 +717,24 @@ instances definitely encapsulating pathnames).
 # ....................{ PEP ~ 484                          }....................
 # Type hints required to fully comply with PEP 484.
 #
-# Note that:
-# * If the active Python interpreter targets Python >= 3.10, type unions are
-#   intentionally defined to preferably be PEP 604-compliant (e.g., "float |
-#   int").
-# * Else, type unions fallback to be PEP 484-compliant (e.g., "Union[float,
-#   int]").
-#
-# Why? Because obsolete PEP 484-compliant type unions fail to support various
-# edge cases, including recursive "beartype.HintOverrides" globally defined by
-# the "beartype._conf._confoverrides" submodule.
+# Note that type unions are intentionally defined to preferably be PEP
+# 604-compliant (e.g., "float | int"). Why? Because obsolete PEP 484-compliant
+# type unions (e.g., "Union[float, int]") fail to support various edge cases,
+# including recursive "beartype.HintOverrides" globally defined by the
+# "beartype._conf._confoverrides" submodule.
 
-#FIXME: Shift into the more appropriate "datahintpep" submodule, please.
-Pep484TowerComplex = (
-    complex | float | int  # type: ignore[operator]
-    if IS_PYTHON_AT_LEAST_3_10 else
-    Union[complex, float, int]
-)
+Pep484TowerComplex = complex | float | int
 '''
 :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
 complex numbers, floating-point numbers, and integers).
 '''
 
 
-Pep484TowerFloat = (
-    float | int  # type: ignore[operator]
-    if IS_PYTHON_AT_LEAST_3_10 else
-    Union[float, int]
-)
+Pep484TowerFloat = float | int
 '''
 :pep:`484`-compliant type hint matching the **implicit floating-point tower**
 (i.e., both floating-point numbers and integers).
 '''
-
 
 # ....................{ PEP ~ 484 : typevar                }....................
 T = TypeVar('T')
@@ -776,8 +773,7 @@ TupleTypeVars = Tuple[TypeVar, ...]
 # ....................{ PEP ~ (484|585)                    }....................
 # Type hints required to fully comply with both PEP 484 *AND* 585.
 
-#FIXME: Shift into the more appropriate "datahintpep" submodule, please.
-Pep484585ForwardRef = Union[str, ForwardRef]
+Pep484585ForwardRef = str | ForwardRef
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).
@@ -792,8 +788,8 @@ See Also
 # Type hints required to fully comply with PEP 484, 612, and 646 -- the
 # standards collectively covering type parameters.
 
-Pep484612646TypeArgPacked = Union[
-    TypeVar, HintPep612ParamSpecType, HintPep646TypeVarTupleType]
+Pep484612646TypeArgPacked = (
+    TypeVar | HintPep612ParamSpecType | HintPep646TypeVarTupleType)
 '''
 PEP-compliant type hint matching a :pep:`484`-, pep:`612`-, or
 :pep:`646`-compliant **packed type parameter** (i.e., :pep:`484`-compliant type
@@ -802,7 +798,7 @@ type variable tuple).
 '''
 
 
-Pep484612646TypeArgUnpacked = Union[TypeVar, HintPep646692UnpackedType]
+Pep484612646TypeArgUnpacked = TypeVar | HintPep646692UnpackedType
 '''
 :pep:`484`-compliant union matching a :pep:`484`-, pep:`612`-, or
 :pep:`646`-compliant **type parameter** (i.e., :pep:`484`-compliant type
@@ -841,7 +837,7 @@ specification, or :pep:`646`-compliant unpacked type variable tuples).
 
 # ....................{ PEP ~ 649                          }....................
 # Objects defining PEP 649-compliant __annotate__() dunder methods are either...
-Pep649Hintable = Union[type, Callable, ModuleType]
+Pep649Hintable = type | Callable | ModuleType
 '''
 :pep:`649`-compliant type hint matching any **hintable** (i.e., ideally
 pure-Python object defining the ``__annotations__`` dunder attribute as well as
@@ -859,7 +855,7 @@ annotating that parameter, return, or variable).
 '''
 
 # ....................{ PEP ~ 695                          }....................
-Pep695Parameterizable = Union[type, FunctionType, HintPep695TypeAlias]
+Pep695Parameterizable = type | FunctionType | HintPep695TypeAlias
 '''
 :pep:`695`-compliant type hint matching *any* :pep:`695` **parameterizable**
 (i.e., object that may be parametrized by a :pep:`695`-compliant list of one or

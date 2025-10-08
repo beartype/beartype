@@ -177,6 +177,26 @@ you. Would you like to know more?
        Wall time: 36.7 µs
    True
 
+   # ....................{ MAKE US DO IT                   }....................
+   # Don't know type hints? Do but wish you didn't? What if somebody else could
+   # write your type hints for you? @beartype: it's somebody. Let BeartypeAI™
+   # write your type hints for you. When you no longer care, call BeartypeAI™.
+   >>> from beartype.bite import infer_hint  # <----- caring begins
+
+   # What type hint describes the root state of a Pygments lexer, BeartypeAI™?
+   >>> from pygments.lexers import PythonLexer
+   >>> infer_hint(PythonLexer().tokens["root"])
+   list[
+       tuple[str | pygments.token._TokenType[str], ...] |
+       tuple[str | collections.abc.Callable[
+           typing.Concatenate[object, object, ...], object], ...] |
+       typing.Annotated[
+           collections.abc.Collection[str],
+           beartype.vale.IsInstance[pygments.lexer.include]]
+   ]  # <---- caring ends
+
+   # ...all righty then. Guess I'll just take your word for that, BeartypeAI™.
+
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods <beartype

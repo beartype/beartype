@@ -38,25 +38,25 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484585Exception
-    from beartype.typing import Any
     from beartype._data.hint.sign.datahintsigns import HintSignCallable
     from beartype._util.hint.pep.proposal.pep484585.pep484585callable import (
         get_hint_pep484585_callable_params,
         get_hint_pep484585_callable_return,
     )
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_10,
-    )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from pytest import raises
+    from typing import (
+        Any,
+        Concatenate,
+        ParamSpec,
 
-    # Intentionally import the callable type hint factory from "typing" rather
-    # than "beartype.typing" to guarantee PEP 484-compliance.
-    from typing import Callable as Pep484Callable
+        # Intentionally import the callable type hint factory from "typing"
+        # rather than "beartype.typing" to guarantee PEP 484-compliance.
+        Callable as Pep484Callable,
+    )
 
-    # Intentionally import the callable type hint factory from
-    # "collections.abc" rather than "beartype.typing" to guarantee PEP
-    # 585-compliance.
+    # Intentionally import the callable type hint factory from "collections.abc"
+    # rather than "beartype.typing" to guarantee PEP 585-compliance.
     from collections.abc import Callable as Pep585Callable
 
     # ..................{ GENERIC                            }..................
@@ -90,6 +90,11 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
         with raises(BeartypeDecorHintPep484585Exception):
             get_hint_pep484585_callable_return(not_hint_pep)
 
+    # ..................{ LOCALS                             }..................
+    # Arbitrary PEP 612-compliant child hints.
+    P = ParamSpec('P')
+    str_plus_P = Concatenate[str, P]
+
     # ..................{ CASES                              }..................
     # List of 3-tuples "(callable_hint, callable_hint_params,
     # callable_hint_return)", where:
@@ -121,27 +126,12 @@ def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
         #     TypeError: Callable[[arg, ...], result]: each arg must be a
         #     type. Got ().
         (Pep585Callable[[()], str], (), str),
+
+        # ..................{ PEP ~ 612                      }..................
+        # Extend this list with PEP 612-compliant callable type hints.
+        (Pep585Callable[P, Any], P, Any),
+        (Pep585Callable[str_plus_P, int], str_plus_P, int),
     ]
-
-    # ..................{ PEP ~ 612                          }..................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 612...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Defer version-specific imports.
-        from beartype.typing import (
-            Concatenate,
-            ParamSpec,
-        )
-
-        # Arbitrary PEP 612-compliant child type hints.
-        P = ParamSpec('P')
-        str_plus_P = Concatenate[str, P]
-
-        # Extend this list with PEP 585-compliant callable type hints.
-        CALLABLE_HINT_PARAMS_RETURN_CASES.extend((
-            (Pep585Callable[P, Any], P, Any),
-            (Pep585Callable[str_plus_P, int], str_plus_P, int),
-        ))
 
     # ..................{ PEP                                }..................
     # For each callable type hint defined above...

@@ -31,8 +31,7 @@ compact **beartype validators:**
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Type hint matching any two-dimensional NumPy array of floats of arbitrary
    # precision. Aye, typing matey. Beartype validators a-hoy!
@@ -154,8 +153,7 @@ Validator API
 
       # Import the requisite machinery.
       from beartype.vale import Is
-      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-      #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+      from typing import Annotated
 
       # Type hint matching only strings with lengths ranging [4, 40].
       LengthyString = Annotated[str, Is[lambda text: 4 <= len(text) <= 40]]
@@ -183,8 +181,7 @@ Validator API
 
       # Import the requisite machinery.
       from beartype.vale import IsAttr, IsEqual
-      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-      #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+      from typing import Annotated
 
       # Type hint matching only two-dimensional NumPy arrays. Given this,
       # @beartype generates efficient validation code resembling:
@@ -233,8 +230,7 @@ Validator API
 
       # Import the requisite machinery.
       from beartype.vale import IsEqual
-      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-      #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+      from typing import Annotated
 
       # Type hint matching only lists equal to [0, 1, 2, ..., 40, 41, 42].
       AnswerToTheUltimateQuestion = Annotated[list, IsEqual[list(range(42))]]
@@ -292,8 +288,7 @@ Validator API
 
       # Import the requisite machinery.
       from beartype.vale import IsInstance
-      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-      #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+      from typing import Annotated
 
       # Type hint matching only string and byte strings, equivalent to:
       #     StrOrBytesInstance = Union[str, bytes]
@@ -371,8 +366,7 @@ Validator API
 
       # Import the requisite machinery.
       from beartype.vale import IsSubclass
-      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-      #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+      from typing import Annotated
 
       # Type hint matching only string and byte string subclasses.
       StrOrBytesSubclass = Annotated[type, IsSubclass[str, bytes]]
@@ -551,8 +545,7 @@ validators mean you no longer have to accept the QA scraps we feed you:
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Type hint matching all integers in a list of integers in O(n) time. Please
    # never do this. You now want to, don't you? Why? You know the price! Why?!?
@@ -593,8 +586,7 @@ suffixed by a period. Look, it doesn't matter. Just do it already, beartype!
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import Is
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Validator matching only strings at least 80 characters in length.
    IsLengthy = Is[lambda text: len(text) >= 80]
@@ -729,8 +721,7 @@ integers that are *not* booleans):
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import IsInstance
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Type hint matching any non-boolean integer. This day all errata die.
    IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
@@ -760,8 +751,7 @@ sequences that are *not* strings):
    from beartype import beartype
    from beartype.vale import IsInstance
    from collections.abc import Sequence
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Type hint matching any non-string sequence. Your day has finally come.
    SequenceNonstr = Annotated[Sequence, ~IsInstance[str]]   # <--- we doin this
@@ -804,8 +794,7 @@ the functional validator in that example:
    # Import the requisite machinery.
    from beartype import beartype
    from beartype.vale import IsAttr, IsEqual, IsSubclass
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Type hint matching only two-dimensional NumPy arrays of floats of
    # arbitrary precision. This time, do it faster than anyone has ever
@@ -884,8 +873,7 @@ generality. Combine them for the best of all possible worlds:
    from beartype.vale import IsAttr, IsEqual
    from numpy import floating
    from numpy.typing import NDArray
-   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
-   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+   from typing import Annotated
 
    # Beartype validator + NumPy type hint matching all two-dimensional NumPy
    # arrays of floating-point numbers of any arbitrary precision.

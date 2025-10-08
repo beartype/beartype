@@ -106,10 +106,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignTypeVar,
         HintSignValuesView,
     )
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_MOST_3_11,
-        IS_PYTHON_AT_LEAST_3_10,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -1899,13 +1896,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             typehint_cls=NewTypeTypeHint,
             # "typing.NewType" type hints are always declared by that module.
             is_typing=True,
-            # If the active Python interpreter targets:
-            # * Python >= 3.10, "typing.NewType" type hints are instances of
-            #   that class -- which is thus declared by the "typing" module.
-            # * Else, "typing.NewType" type hints are merely pure-Python
-            #   closures of the pure-Python function type -- which is *NOT*
-            #   declared by the "typing" module.
-            is_type_typing=IS_PYTHON_AT_LEAST_3_10,
+            # "typing.NewType" type hints are instances of that class -- which
+            # is thus declared by the "typing" module.
+            is_type_typing=True,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Ishmælite‐ish, aberrant control'),
@@ -1924,13 +1917,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             typehint_cls=NewTypeTypeHint,
             # "typing.NewType" type hints are always declared by that module.
             is_typing=True,
-            # If the active Python interpreter targets:
-            # * Python >= 3.10, "typing.NewType" type hints are instances of
-            #   that class -- which is thus declared by the "typing" module.
-            # * Else, "typing.NewType" type hints are merely pure-Python
-            #   closures of the pure-Python function type -- which is *NOT*
-            #   declared by the "typing" module.
-            is_type_typing=IS_PYTHON_AT_LEAST_3_10,
+            # "typing.NewType" type hints are instances of that class -- which
+            # is thus declared by the "typing" module.
+            is_type_typing=True,
             piths_meta=(
                 # Bytestring constant.
                 HintPithSatisfiedMetadata(

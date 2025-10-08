@@ -65,17 +65,37 @@ def is_hint_pep589(hint: object) -> bool:
 
     # Return true only...
     #
-    # Note that this detection scheme is technically susceptible to false
-    # positives in unlikely edge cases. Specifically, this test queries for
-    # dunder attributes and thus erroneously returns true for user-defined
-    # "dict" subclasses *NOT* subclassing the "typing.TypedDict" superclass but
-    # nonetheless declaring the same dunder attributes declared by that
-    # superclass. Since the likelihood of any user-defined "dict" subclass
-    # accidentally defining these attributes is vanishingly small *AND* since
-    # "typing.TypedDict" usage is sorta discouraged in the typing community,
-    # this error is unlikely to meaningfully arise in real-world use cases.
-    # Ergo, it is preferable to implement this test portably, safely, and
-    # efficiently rather than accommodate this error.
+    # Note that:
+    # * This detection scheme is technically susceptible to false positives in
+    #   unlikely edge cases. Specifically, this test queries for dunder
+    #   attributes and thus erroneously returns true for user-defined "dict"
+    #   subclasses *NOT* subclassing the "typing.TypedDict" superclass but
+    #   nonetheless declaring the same dunder attributes declared by that
+    #   superclass. Since the likelihood of any user-defined "dict" subclass
+    #   accidentally defining these attributes is vanishingly small *AND* since
+    #   "typing.TypedDict" usage is sorta discouraged in the typing community,
+    #   this error is unlikely to meaningfully arise in real-world use cases.
+    #   Ergo, it is preferable to implement this test portably, safely, and
+    #   efficiently rather than accommodate this error.
+    # * This detection scheme would ideally trivially reduce to this one-liner:
+    #       from typing import is_typeddict
+    #       return is_typeddict(hint)
+    #
+    #   Deferring to that official tester suffices for typed dictionaries
+    #   defined with the official "typing.TypedDict" but *NOT* third-party
+    #   "typing_extensions.TypedDict" superclass. Even that constraint could be
+    #   circumvented by noting that the is_typeddict() tester itself trivially
+    #   reduces to a similar one-liner:
+    #       return isinstance(tp, _TypedDictMeta)
+    #
+    #   An alternate working solution covering both the "typing.TypedDict" and
+    #   "typing_extensions.TypedDict" superclasses would then resemble:
+    #       _TYPED_DICT_BASES = (
+    #            typing._TypedDictMeta, typing_extensions._TypedDictMeta,)
+    #       return isinstance(tp, _TYPED_DICT_BASES)
+    #
+    #   Of course, that solution would *STILL* violate privacy encapsulation
+    #   across not one but two distinct APIs, inviting future breakage.
     #
     # In short, the current approach is strongly preferable.
     return (

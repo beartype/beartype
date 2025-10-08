@@ -76,10 +76,7 @@ def bite_cases_infer_hint() -> (
         ValuesView,
     )
     from beartype.vale import IsInstance
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_11,
-        IS_PYTHON_AT_LEAST_3_10,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.data_type import (
         Class,
         ClassCollection,
@@ -684,8 +681,8 @@ def bite_cases_infer_hint() -> (
     CASES_STRATEGY_ON = CASES_STRATEGY_O1 + [
         # ..................{ PEP [484|585] ~ list           }..................
         # A list of items all of differing types is annotated as the PEP 484-
-        # and 585-compliant "list" type subscripted by a PEP 604- or
-        # 484-compliant union type hint of those types -- including...
+        # and 585-compliant "list" type subscripted by a PEP 604-compliant union
+        # hint of those types -- including...
         ([
             # A string.
             'Thy dazzling waves, thy loud and hollow gulfs,',
@@ -695,23 +692,14 @@ def bite_cases_infer_hint() -> (
             len('Have each their type in me: and the wide sky,'),
             # A list of strings.
             ['And measureless ocean', 'may declare', 'as soon',],
-        ], List[
-            # If the active Python interpreter targets Python >= 3.10 and thus
-            # supports PEP 604-compliant new-style unions, this kind of union;
-            str | bytes | int | List[str]
-            if IS_PYTHON_AT_LEAST_3_10 else
-            # Else, the active Python interpreter targets Python < 3.10 and thus
-            # fails to support PEP 604-compliant new-style unions. In this case,
-            # fallback to a PEP 484-compliant old-style union.
-            Union[str, bytes, int, List[str]]
-        ]),
+        ], list[str | bytes | int | list[str]]),
 
         # ..................{ PEP [484|585] ~ tuple          }..................
         # A subjectively large root tuple (i.e., tuple *NOT* contained in a
         # larger container but containing a fairly large number of items all of
         # differing types) is annotated as the variadic PEP 484- and
-        # 585-compliant "tuple" type subscripted by a single type hint matching
-        # all of those types.
+        # 585-compliant "tuple" type subscripted by a PEP 604-compliant union
+        # hint of those types.
         (
             (
                 'Fell into that immeasurable void,',
@@ -719,22 +707,7 @@ def bite_cases_infer_hint() -> (
                 37,
                 9.1725,
             ) * 4,
-            Tuple[
-                (
-                    # If the active Python interpreter targets Python >= 3.10
-                    # and thus supports PEP 604-compliant new-style unions, this
-                    # kind of union;
-                    str | bytes | int | float
-                    if IS_PYTHON_AT_LEAST_3_10 else
-                    # Else, the active Python interpreter targets Python < 3.10
-                    # and thus fails to support PEP 604-compliant new-style
-                    # unions. In this case, fallback to a PEP 484-compliant
-                    # old-style union.
-                    Union[str, bytes, int, float]
-                ),
-                # Trailing ellipsis, connoting a variadic tuple type hint.
-                ...,
-            ],
+            tuple[str | bytes | int | float, ...],
         ),
     ]
 

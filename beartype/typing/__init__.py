@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :mod:`typing` **compatibility layer.**
+Beartype :mod:`typing` **compatibility layer.**
 
 This submodule declares the exact same set of **public typing attributes**
 (i.e., module-scoped attributes listed by the :attr:`typing.__all__` global) as
@@ -120,6 +120,28 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #        Annotated = _import_typing_attr_or_fallback('Annotated', bool)
 #
 #        #FIXME: Repeat the above logic for *ALL* existing "typing" attributes.
+#FIXME: Actually, ain't nobody got time for that at the moment. The low-hanging
+#fruit here is to just trivially alias this submodule to the "typing" module
+#like so:
+#    from typing import *
+#
+#Then:
+#* Remove almost *ALL* of this submodule.
+#* Conditionally redefine various attributes (e.g., deprecated PEP 484 stuff,
+#  slow "Protocol" superclass) as needed.
+#
+#This has the dramatic improvement of innately synchronizing this submodule,
+#which has become a *NIGHTMARE* to maintain, against the official
+#implementation. Python 3.14 @beartype users hit this when early release
+#candidates of Python 3.14 removed "typing.ByteString", only for the final
+#release of Python 3.14 to add it back. @beartype then began raising exceptions
+#on importation. Since "typing" is a moving target nightmare, exposing ourselves
+#to that nightmare no longer makes sense at all.
+#
+#The only possible issue might be mypy and pyright. If either complain, we'll
+#have no choice but to eventually *DEPRECATE* this entire submodule -- probably
+#in the run up to @beartype 1.0.0. Ugly stuff, but inviting synchronization woes
+#is even uglier.
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -141,7 +163,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_13 as _IS_PYTHON_AT_LEAST_3_13,
     IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -165,6 +186,7 @@ from typing import (
     Annotated as Annotated,
     BinaryIO as BinaryIO,
     ClassVar as ClassVar,
+    Concatenate as Concatenate,  # pyright: ignore
     Final as Final,  # pyright: ignore
     ForwardRef as ForwardRef,
     Generic as Generic,
@@ -174,10 +196,15 @@ from typing import (
     NamedTuple as NamedTuple,
     NoReturn as NoReturn,
     Optional as Optional,
+    ParamSpec as ParamSpec,  # pyright: ignore
+    ParamSpecArgs as ParamSpecArgs,  # pyright: ignore
+    ParamSpecKwargs as ParamSpecKwargs,  # pyright: ignore
     Reversible as Reversible,  # pyright: ignore
     TypedDict as TypedDict,  # pyright: ignore
     Text as Text,
     TextIO as TextIO,
+    TypeAlias as TypeAlias,  # pyright: ignore
+    TypeGuard as TypeGuard,  # pyright: ignore
     TypeVar as TypeVar,
     Union as Union,
     cast as cast,
@@ -185,6 +212,7 @@ from typing import (
     get_args as get_args,  # pyright: ignore
     get_origin as get_origin,  # pyright: ignore
     get_type_hints as get_type_hints,
+    is_typeddict as is_typeddict,  # pyright: ignore
     no_type_check as no_type_check,
     no_type_check_decorator as no_type_check_decorator,
     overload as overload,
@@ -217,58 +245,46 @@ from typing import (
 #* Submitting an upstream issue requesting that mypy respect the
 #  "# type: ignore[attr-defined]" pragma rather than emitting warnings here.
 
-# If the active Python interpreter targets Python >= 3.10...
-if _IS_PYTHON_AT_LEAST_3_10:
+# If the active Python interpreter targets Python >= 3.11...
+if _IS_PYTHON_AT_LEAST_3_11:
     from typing import (  # type: ignore[attr-defined]
-        Concatenate as Concatenate,  # pyright: ignore
-        ParamSpec as ParamSpec,  # pyright: ignore
-        ParamSpecArgs as ParamSpecArgs,  # pyright: ignore
-        ParamSpecKwargs as ParamSpecKwargs,  # pyright: ignore
-        TypeAlias as TypeAlias,  # pyright: ignore
-        TypeGuard as TypeGuard,  # pyright: ignore
-        is_typeddict as is_typeddict,  # pyright: ignore
+       LiteralString as LiteralString,  # pyright: ignore
+       Never as Never,  # pyright: ignore
+       NotRequired as NotRequired,  # pyright: ignore
+       Required as Required,  # pyright: ignore
+       Self as Self,  # pyright: ignore
+       TypeVarTuple as TypeVarTuple,  # pyright: ignore
+       Unpack as Unpack,  # pyright: ignore
+       assert_never as assert_never,  # pyright: ignore
+       assert_type as assert_type,  # pyright: ignore
+       clear_overloads as clear_overloads,  # pyright: ignore
+       dataclass_transform as dataclass_transform,  # pyright: ignore
+       get_overloads as get_overloads,  # pyright: ignore
+       reveal_type as reveal_type,  # pyright: ignore
     )
 
-    # If the active Python interpreter targets Python >= 3.11...
-    if _IS_PYTHON_AT_LEAST_3_11:
+    # If the active Python interpreter targets Python >= 3.12...
+    if _IS_PYTHON_AT_LEAST_3_12:
         from typing import (  # type: ignore[attr-defined]
-           LiteralString as LiteralString,  # pyright: ignore
-           Never as Never,  # pyright: ignore
-           NotRequired as NotRequired,  # pyright: ignore
-           Required as Required,  # pyright: ignore
-           Self as Self,  # pyright: ignore
-           TypeVarTuple as TypeVarTuple,  # pyright: ignore
-           Unpack as Unpack,  # pyright: ignore
-           assert_never as assert_never,  # pyright: ignore
-           assert_type as assert_type,  # pyright: ignore
-           clear_overloads as clear_overloads,  # pyright: ignore
-           dataclass_transform as dataclass_transform,  # pyright: ignore
-           get_overloads as get_overloads,  # pyright: ignore
-           reveal_type as reveal_type,  # pyright: ignore
+            TypeAliasType as TypeAliasType,  # pyright: ignore
+            override as override,  # pyright: ignore
         )
 
-        # If the active Python interpreter targets Python >= 3.12...
-        if _IS_PYTHON_AT_LEAST_3_12:
+        # If the active Python interpreter targets Python >= 3.13...
+        if _IS_PYTHON_AT_LEAST_3_13:
             from typing import (  # type: ignore[attr-defined]
-                TypeAliasType as TypeAliasType,  # pyright: ignore
-                override as override,  # pyright: ignore
+                NoDefault as NoDefault,  # pyright: ignore
+                ReadOnly as ReadOnly,  # pyright: ignore
+                TypeIs as TypeIs,  # pyright: ignore
+                get_protocol_members as get_protocol_members,  # pyright: ignore
+                is_protocol as is_protocol,  # pyright: ignore
             )
 
-            # If the active Python interpreter targets Python >= 3.13...
-            if _IS_PYTHON_AT_LEAST_3_13:
+            # If the active Python interpreter targets Python >= 3.14...
+            if _IS_PYTHON_AT_LEAST_3_14:
                 from typing import (  # type: ignore[attr-defined]
-                    NoDefault as NoDefault,  # pyright: ignore
-                    ReadOnly as ReadOnly,  # pyright: ignore
-                    TypeIs as TypeIs,  # pyright: ignore
-                    get_protocol_members as get_protocol_members,  # pyright: ignore
-                    is_protocol as is_protocol,  # pyright: ignore
+                    evaluate_forward_ref as evaluate_forward_ref,  # pyright: ignore
                 )
-
-                # If the active Python interpreter targets Python >= 3.14...
-                if _IS_PYTHON_AT_LEAST_3_14:
-                    from typing import (  # type: ignore[attr-defined]
-                        evaluate_forward_ref as evaluate_forward_ref,  # pyright: ignore
-                    )
 
 # ....................{ IMPORTS ~ version : at most        }....................
 # Import all public attributes of the "typing" module both available under at

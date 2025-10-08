@@ -139,7 +139,15 @@ dynamic = [
 # release of the oldest version of CPython still under active development.
 # Obsolete and insecure versions of CPython that have reached their official End
 # of Life (EoL) (e.g., Python 3.7) are explicitly unsupported.
-requires-python = ">=3.9"
+#
+# Note that:
+# * This requirement specification intentionally blacklists obsolete Python 3.14
+#   release candidates, which removed the PEP 484-compliant "typing.ByteString"
+#   type hint singleton added back by Python 3.14 release candidate 3. Older
+#   release candidates are non-compliant with the official Python 3.14 release
+#   and thus @beartype itself. See also:
+#       https://github.com/beartype/beartype/issues/561#issuecomment-3379278748
+requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"
 
 # Mandatory runtime dependencies. This package intentionally requires no
 # mandatory runtime dependencies and hopefully never will.

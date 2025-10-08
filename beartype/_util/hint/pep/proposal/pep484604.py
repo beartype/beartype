@@ -12,117 +12,24 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep604Exception
+from beartype._cave._cavefast import (
+    HintPep604Type,
+    HintPep604ItemTypes,
+)
+from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import (
     Hint,
     SequenceHints,
     TypeIs,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from beartype._data.kind.datakindiota import SENTINEL
 from collections.abc import Sequence
 from functools import reduce
 from operator import __or__ as or_operator
 
-# ....................{ VERSIONS                           }....................
-# If the active Python interpreter targets Python >= 3.10 and thus supports PEP
-# 604, define testers requiring this level of support...
-if IS_PYTHON_AT_LEAST_3_10:
-    # ....................{ IMPORTS                        }....................
-    # Defer version-specific imports.
-    from beartype._cave._cavefast import (
-        HintPep604Type,
-        HintPep604ItemTypes,
-    )
-
-    # ....................{ RAISERS                        }....................
-    #FIXME: Unit test us up, please.
-    def die_if_hint_pep604_inconsistent(hint: Hint) -> None:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.utilhintget import get_hint_repr
-
-        # If this hint is invalid as an item of a PEP 604-compliant new union,
-        # silently reduce to a noop.
-        if not isinstance(hint, HintPep604ItemTypes):
-            return
-        # Else, this hint is valid as an item of a PEP 604-compliant new union.
-
-        # Machine-readable representation of this hint.
-        hint_repr = get_hint_repr(hint)
-
-        # If this representation is prefixed by the "<" character, this
-        # representation is assumed to be (at least *SOMEWHAT*) standardized and
-        # thus internally consistent. This includes:
-        # * Standard classes (e.g., "<class 'bool'>").
-        # * @beartype-specific forward reference subclasses (e.g., "<forwardref
-        #   UndeclaredClass(__beartype_scope__='some_package')>").
-        #
-        # This is *NOT* simply an optimization. Standardized representations
-        # *MUST* be excluded from consideration, as the representations of new
-        # unions containing these hints is *NOT* prefixed by "<": e.g.,
-        #     >>> repr(bool)
-        #     <class 'bool'>
-        #     >>> bool | None
-        #     bool | None
-        if hint_repr[0] == '<':
-            return
-        # Else, this representation is *NOT* prefixed by the "<" character.
-
-        # Arbitrary PEP 604-compliant new union defined as the conjunction
-        # of this hint with an arbitrary builtin type guaranteed to exist.
-        #
-        # Note that order is significant.
-        hint_pep604 = hint | int  # type: ignore[operator]
-
-        # Machine-readable representation of this new union.
-        hint_pep604_repr = get_hint_repr(hint_pep604)
-
-        # If the representation of this new union is *NOT* prefixed by the
-        # representation of this hint, raise an exception.
-        if not hint_pep604_repr.startswith(hint_repr):
-            raise BeartypeDecorHintPep604Exception(
-                f'Type hint {hint_repr} inconsistent with respect to '
-                f'repr() strings: e.g.,\n'
-                f'\t>>> repr({hint_repr})\n'
-                f'\t{hint_repr}  # <-- this is fine\n'
-                f'\t>>> repr({hint_repr} | int)\n'
-                f'\t{hint_pep604_repr}  # <-- *THIS IS REALLY SUPER BAD*\n'
-                f'\n'
-                f'\t# Ideally, that output should instead resemble:\n'
-                f'\t>>> repr({hint_repr} | int)\n'
-                f'\t{hint_repr} | int  # <-- what @beartype wants!\n'
-                f'\n'
-                f'Inconsistent type hints are unsupported by @beartype, '
-                f'which requires consistency between type hints and '
-                f'repr() strings. Consider reporting this issue to the '
-                f'third-party developers implementing this hint, which '
-                f'(probably) fails to define the PEP 585-compliant '
-                f'"__args__" and "__origin__" dunder attributes standardized '
-                f'by the "types.GenericAlias" API. See also:\n'
-                f'\thttps://peps.python.org/pep-0585/#parameters-to-generics-are-available-at-runtime'
-            )
-        # Else, the representation of this new union is prefixed by the
-        # representation of this hint as expected.
-
-    # ....................{ TESTERS                        }....................
-    def is_hint_pep604(hint: object) -> TypeIs[Hint]:
-
-        # Release the werecars, Bender!
-        return isinstance(hint, HintPep604Type)
-# Else, the active Python interpreter targets Python < 3.10 and thus fails to
-# support PEP 604. In this case, define fallback functions.
-#
-# Tonight, we howl at the moon. Tomorrow, the one-liner!
-else:
-    def die_if_hint_pep604_inconsistent(hint: Hint) -> None:
-        pass
-
-    def is_hint_pep604(hint: object) -> TypeIs[Hint]:
-        return False
-
-
-die_if_hint_pep604_inconsistent.__doc__ = (
+# ....................{ RAISERS                        }....................
+#FIXME: Unit test us up, please.
+def die_if_hint_pep604_inconsistent(hint: Hint) -> None:
     '''
     Raise an exception if the passed object is a :pep:`604`-compliant
     **inconsistent type hint** (i.e., object permissible as an item of a
@@ -202,12 +109,78 @@ die_if_hint_pep604_inconsistent.__doc__ = (
 
     Raises
     ------
-    bool
-        :data:`True` only if this object is a :pep:`604`-compliant union.
-    ''')
+    BeartypeDecorHintPep604Exception
+        If this object is a :pep:`604`-compliant inconsistent type hint.
+    '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
 
-is_hint_pep604.__doc__ = (
+    # If this hint is invalid as an item of a PEP 604-compliant new union,
+    # silently reduce to a noop.
+    if not isinstance(hint, HintPep604ItemTypes):
+        return
+    # Else, this hint is valid as an item of a PEP 604-compliant new union.
+
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # If this representation is prefixed by the "<" character, this
+    # representation is assumed to be (at least *SOMEWHAT*) standardized and
+    # thus internally consistent. This includes:
+    # * Standard classes (e.g., "<class 'bool'>").
+    # * @beartype-specific forward reference subclasses (e.g., "<forwardref
+    #   UndeclaredClass(__beartype_scope__='some_package')>").
+    #
+    # This is *NOT* simply an optimization. Standardized representations
+    # *MUST* be excluded from consideration, as the representations of new
+    # unions containing these hints is *NOT* prefixed by "<": e.g.,
+    #     >>> repr(bool)
+    #     <class 'bool'>
+    #     >>> bool | None
+    #     bool | None
+    if hint_repr[0] == '<':
+        return
+    # Else, this representation is *NOT* prefixed by the "<" character.
+
+    # Arbitrary PEP 604-compliant new union defined as the conjunction
+    # of this hint with an arbitrary builtin type guaranteed to exist.
+    #
+    # Note that order is significant.
+    hint_pep604 = hint | int  # type: ignore[operator]
+
+    # Machine-readable representation of this new union.
+    hint_pep604_repr = get_hint_repr(hint_pep604)
+
+    # If the representation of this new union is *NOT* prefixed by the
+    # representation of this hint, raise an exception.
+    if not hint_pep604_repr.startswith(hint_repr):
+        raise BeartypeDecorHintPep604Exception(
+            f'Type hint {hint_repr} inconsistent with respect to '
+            f'repr() strings: e.g.,\n'
+            f'\t>>> repr({hint_repr})\n'
+            f'\t{hint_repr}  # <-- this is fine\n'
+            f'\t>>> repr({hint_repr} | int)\n'
+            f'\t{hint_pep604_repr}  # <-- *THIS IS REALLY SUPER BAD*\n'
+            f'\n'
+            f'\t# Ideally, that output should instead resemble:\n'
+            f'\t>>> repr({hint_repr} | int)\n'
+            f'\t{hint_repr} | int  # <-- what @beartype wants!\n'
+            f'\n'
+            f'Inconsistent type hints are unsupported by @beartype, '
+            f'which requires consistency between type hints and '
+            f'repr() strings. Consider reporting this issue to the '
+            f'third-party developers implementing this hint, which '
+            f'(probably) fails to define the PEP 585-compliant '
+            f'"__args__" and "__origin__" dunder attributes standardized '
+            f'by the "types.GenericAlias" API. See also:\n'
+            f'\thttps://peps.python.org/pep-0585/#parameters-to-generics-are-available-at-runtime'
+        )
+    # Else, the representation of this new union is prefixed by the
+    # representation of this hint as expected.
+
+# ....................{ TESTERS                        }....................
+def is_hint_pep604(hint: object) -> TypeIs[Hint]:
     '''
     :data:`True` only if the passed object is a :pep:`604`-compliant **union**
     (i.e., ``|``-delimited disjunction of two or more isinstanceable types).
@@ -221,7 +194,11 @@ is_hint_pep604.__doc__ = (
     -------
     bool
         :data:`True` only if this object is a :pep:`604`-compliant union.
-    ''')
+    '''
+
+    # Release the werecars, Bender!
+    return isinstance(hint, HintPep604Type)
+
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
@@ -300,21 +277,16 @@ def make_hint_pep484604_union(hint_childs: SequenceHints) -> Hint:
     # Union of these child type hints to be returned.
     hint_union: Hint = SENTINEL  # type: ignore[assignment]
 
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Attempt to dynamically fabricate a PEP 604-compliant new-style union
-        # of these items if these items are all PEP 604-compliant.
-        try:
-            hint_union = reduce(or_operator, hint_childs)  # type: ignore[assignment]
-        # If *ANY* exception whatsoever is raised, one or more of these items
-        # are PEP 604-noncompliant. In this case, silently ignore this exception
-        # in favour of falling back to a PEP 484-compliant old-style union
-        # below. We don't make breaky. We only fix breaky, people.
-        except Exception:
-            pass
-    # Else, the active Python interpreter targets Python < 3.10 and thus fails
-    # to support PEP 604.
+    # Attempt to dynamically fabricate a PEP 604-compliant new-style union of
+    # these items if these items are all PEP 604-compliant.
+    try:
+        hint_union = reduce(or_operator, hint_childs)  # type: ignore[assignment]
+    # If *ANY* exception whatsoever is raised, one or more of these items are
+    # PEP 604-noncompliant. In this case, silently ignore this exception in
+    # favour of falling back to a PEP 484-compliant old-style union below. We
+    # don't make breaky. We only fix breaky, people.
+    except Exception:
+        pass
 
     # If a PEP 604-compliant new-style union was *NOT* fabricated above...
     if hint_union is SENTINEL:

@@ -38,7 +38,6 @@ def test_decor_pep557() -> None:
         ClassVar,
         Optional,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from dataclasses import (
         FrozenInstanceError,
         InitVar,
@@ -58,19 +57,12 @@ def test_decor_pep557() -> None:
         # The default parameter-less @dataclass decorator.
         {},
 
-        #FIXME: Uncomment *AFTER* frozen dataclasses are actually supported.
         # The frozen @dataclass decorator.
         dict(frozen=True),
-    ]
 
-    #FIXME: Uncomment *AFTER* we actually test this properly below. Notably, it
-    #looks like "ClassVar[...]"-annotated attributes *CANNOT* be modified on a
-    #slotted dataclass. That's fine, but requires adjustment below.
-    # If the active Python interpreter targets Python >= 3.10...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Append a "**kwargs" dictionary configuring the slotted @dataclass
-        # decorator, only supported under Python >= 3.10.
-        dataclasses_kwargs.append(dict(slots=True))
+        # The slotted @dataclass decorator, only supported under Python >= 3.10.
+        dict(slots=True),
+    ]
 
     # ..................{ DATACLASSES                        }..................
     # For each dictionary of keyword parameters configuring this dataclass...

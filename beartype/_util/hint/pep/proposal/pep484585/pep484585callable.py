@@ -12,12 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import beartype.typing as typing
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import (
-    TYPE_CHECKING,
-    Union,
-)
+from beartype._cave._cavefast import HintPep612ParamSpecType
 from beartype._data.typing.datatypingport import (
     Hint,
     TupleHints,
@@ -27,47 +23,38 @@ from beartype._data.hint.sign.datahintsigns import HintSignCallable
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._data.kind.datakindsequence import TUPLE_EMPTY
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
-# ....................{ HINTS                              }....................
-#FIXME: Uhh... What? Extreme overkill, thy name is this type hint. Don't bother
-#with an expanded type hint accessible only to other runtime type-checkers.
-#*WHAT* other runtime type-checkers, you know? *sigh*
+# ....................{ PRIVATE ~ hints                    }....................
 # If an external static type checker (e.g., "mypy") is currently subjecting
 # "beartype" to static analysis, reduce this hint to a simplistic facsimile of
-# its full form tolerated by static type checkers.
-if TYPE_CHECKING:
-    _HINT_PEP484585_CALLABLE_PARAMS = Union[
-        # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
-        TupleHints,
-        # For hints of the form "Callable[typing.ParamSpec[...], {return_hint}]".
-        typing.ParamSpec
-    ]
-# Else, expand this hint to its full form supported by runtime type checkers.
-else:
-    _HINT_PEP484585_CALLABLE_PARAMS = Union[
-        # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
-        TupleHints,
-        # For hints of the form "Callable[..., {return_hint}]".
-        type(Ellipsis),
-        # If the active Python interpreter targets Python >= 3.10, a union
-        # additionally matching the PEP 612-compliant "ParamSpec" type.
-        (
-            # For hints of the form "Callable[typing.ParamSpec[...],
-            # {return_hint}]".
-            typing.ParamSpec
-            if IS_PYTHON_AT_LEAST_3_10 else
-            # Else, the active Python interpreter targets Python < 3.10. In this
-            # case, a meaninglessly redundant type listed above reducing to a
-            # noop.
-            tuple
-        )
-    ]
-    '''
-    PEP-compliant type hint matching the first argument originally subscripting
-    a :pep:`484`- or :pep:`585`-compliant **callable type hint** (i.e.,
-    ``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type hint).
-    '''
+# its full form tolerated by static type-checkers.
+#
+# Note that only runtime type-checkers are currently capable of matching this
+# genuinely full form of this hint:
+#    _HintPep484585CallableParams = Union[
+#        # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
+#        TupleHints,
+#        # For hints of the form "Callable[..., {return_hint}]".
+#        EllipsisType,
+#        # For hints of the form "Callable[typing.ParamSpec[...],
+#        # {return_hint}]", additionally match the PEP 612-compliant "ParamSpec"
+#        # type.
+#        HintPep612ParamSpecType
+#    ]
+#
+# There's *NO* point bothering with an expanded type hint accessible only to
+# other runtime type-checkers. *WHAT* other runtime type-checkers, you know?
+_HintPep484585CallableParams = (
+    # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
+    TupleHints |
+    # For hints of the form "Callable[typing.ParamSpec[...], {return_hint}]".
+    HintPep612ParamSpecType
+)
+'''
+PEP-compliant type hint matching the first argument originally subscripting
+a :pep:`484`- or :pep:`585`-compliant **callable type hint** (i.e.,
+``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type hint).
+'''
 
 # ....................{ VALIDATORS                         }....................
 def _die_unless_hint_pep484585_callable(
@@ -139,7 +126,7 @@ def get_hint_pep484585_callable_params(
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> _HINT_PEP484585_CALLABLE_PARAMS:
+) -> _HintPep484585CallableParams:
     '''
     Object describing all **parameter type hints** (i.e., PEP-compliant child
     type hints typing the parameters accepted by a passed or returned callable)
@@ -173,12 +160,12 @@ def get_hint_pep484585_callable_params(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
-    _HINT_PEP484585_CALLABLE_PARAMS
+    -------
+    _HintPep484585CallableParams
         First argument originally subscripting this hint.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this hint is *not* a callable type hint.
     '''
@@ -364,13 +351,13 @@ def get_hint_pep484585_callable_return(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Last argument originally subscripting this hint.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is *not* a callable type hint.
     '''
 

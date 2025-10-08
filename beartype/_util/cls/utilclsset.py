@@ -11,8 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Callable
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+from collections.abc import Callable
 
 # ....................{ SETTERS                            }....................
 #FIXME: Unit test us up.
@@ -99,19 +98,13 @@ def set_type_attr(
         # Python version, then this exception signifies this attribute to be
         # inherited from an immutable builtin type (e.g., "str") subclassed by
         # this user-defined subclass. In this case, silently skip past this
-        # uncheckable attribute to the next.
+        # uncheckable attribute to the next. Specifically, since the active
+        # Python interpreter targets Python >= 3.10, match a message of the
+        # form:
+        #     cannot set '{attr_name}' attribute of immutable type '{cls_name}'
         if (
-            # The active Python interpreter targets Python >= 3.10, match a
-            # message of the form "cannot set '{attr_name}' attribute of
-            # immutable type '{cls_name}'".
-            IS_PYTHON_AT_LEAST_3_10 and (
-                exception_message.startswith("cannot set '") and
-                "' attribute of immutable type " in exception_message
-            # Else, the active Python interpreter targets Python <= 3.9. In this
-            # case, match a message of the form "can't set attributes of
-            # built-in/extension type '{cls_name}'".
-            ) or exception_message.startswith(
-                "can't set attributes of built-in/extension type '")
+            exception_message.startswith("cannot set '") and
+            "' attribute of immutable type " in exception_message
         ):
             return
         # Else, this message does *NOT* satisfy that pattern.

@@ -137,18 +137,15 @@ def test_pep563_module() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep604Exception
     from beartype._util.hint.pep.proposal.pep649 import (
         get_pep649_hintable_annotations,
         set_pep649_hintable_annotations,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_pep604,
         get_minecraft_end_txt_stanza,
     )
-    from pytest import raises
 
     # ....................{ LOCALS                         }....................
     # Dictionary of these callables' annotations, localized to enable debugging
@@ -171,8 +168,7 @@ def test_pep563_module() -> None:
     # are postponed under PEP 563 as expected.
     assert all(
         isinstance(param_hint, str)
-        for arg_name, param_hint in (
-            get_minecraft_end_txt_annotations.items())
+        for arg_name, param_hint in get_minecraft_end_txt_annotations.items()
     )
 
     # Assert that *NO* annotations of a @beartype-decorated callable are
@@ -201,28 +197,18 @@ def test_pep563_module() -> None:
         },
     )
 
+    # ....................{ ASSERTS ~ decorator            }....................
     # Manually decorate this callable with @beartype.
     get_minecraft_end_txt_typed = beartype(get_minecraft_end_txt)
 
-    # Assert that this callable works under PEP 563.
-    assert isinstance(get_minecraft_end_txt_typed(player_name='Notch'), str)
+    # Manually decorate a PEP 604-compliant callable with @beartype.
+    get_minecraft_end_txt_pep604_typed = beartype(get_minecraft_end_txt_pep604)
 
-    # ....................{ ASSERTS ~ pep 604              }....................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Manually decorate a PEP 604-compliant callable with @beartype.
-        get_minecraft_end_txt_typed = beartype(get_minecraft_end_txt_pep604)
-
-        # Assert that this callable works under PEP 563.
-        assert isinstance(get_minecraft_end_txt_typed(player_name='Notch'), str)
-    # Else, the active Python interpreter targets Python < 3.10 and thus fails
-    # to support PEP 604. In this case..
-    else:
-        # Assert that attempting to manually decorate a PEP 604-compliant
-        # callable with @beartype raises the expected exception.
-        with raises(BeartypeDecorHintPep604Exception):
-            beartype(get_minecraft_end_txt_pep604)
+    # Assert that these callables behave as expected under PEP 563.
+    assert isinstance(
+        get_minecraft_end_txt_typed(player_name='Notch'), str)
+    assert isinstance(
+        get_minecraft_end_txt_pep604_typed(player_name='Notch'), str)
 
 
 def test_pep563_class() -> None:

@@ -203,7 +203,7 @@ Would you like to know more?
    # Don't know type hints? Do but wish you didn't? What if somebody else could
    # write your type hints for you? @beartype: it's somebody. Let BeartypeAI™
    # write your type hints for you. When you no longer care, call BeartypeAI™.
-   >>> from beartype.door import infer_hint  # <----- caring begins
+   >>> from beartype.bite import infer_hint  # <----- caring begins
 
    # What type hint describes the root state of a Pygments lexer, BeartypeAI™?
    >>> from pygments.lexers import PythonLexer

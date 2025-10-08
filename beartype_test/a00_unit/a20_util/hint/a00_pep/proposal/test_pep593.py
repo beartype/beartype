@@ -52,27 +52,20 @@ def test_is_hint_pep593_beartype() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
-    from beartype.typing import Annotated
     from beartype.vale import Is
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593_beartype
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pytest import raises
+    from typing import Annotated
 
     # ....................{ PASS                           }....................
     # Assert this tester rejects beartype-agnostic metahints.
     assert is_hint_pep593_beartype(
         Annotated[str, 'And may there be no sadness of farewell']) is False
 
-    # If the active Python interpreter targets Python >= 3.10, assert this
-    # tester accepts a beartype-specific metahint annotated by a beartype
-    # validator defined as a lambda function. For unknown reasons, the obsolete
-    # Python 3.9-specific implementation of the standard "inspect" module fails
-    # to inspect the definition of this lambda function; this then induces
-    # unexpected warnings. Although we *COULD* catch these warnings here, it's
-    # simpler to simply ignore Python 3.9 for now. Yo! Laziness prevails.
-    if IS_PYTHON_AT_LEAST_3_10:
-        assert is_hint_pep593_beartype(
-            Annotated[str, Is[lambda text: bool(text)]]) is True
+    # Assert this tester accepts a beartype-specific metahint annotated by a
+    # beartype validator defined as a lambda function.
+    assert is_hint_pep593_beartype(
+        Annotated[str, Is[lambda text: bool(text)]]) is True
 
     # ....................{ FAIL                           }....................
     # Assert this tester raises the expected exception when passed a

@@ -26,21 +26,6 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
     with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
-    # ..................{ IMPORTS ~ early                    }..................
-    # Defer early-time imports.
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-
-    # ..................{ LOCALS                             }..................
-    # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = []
-
-    # If the active Python interpreter targets Python < 3.10, this interpreter
-    # fails to support PEP 604. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_10:
-        return hints_pep_meta
-    # Else, the active Python interpreter targets Python >= 3.10 and thus
-    # supports PEP 604.
-
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     from beartype import BeartypeConf
@@ -48,10 +33,6 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         UnionTypeHint,
     )
     from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
-    from beartype.typing import (
-        Optional,
-        Union,
-    )
     from beartype._data.hint.sign.datahintsigns import (
         HintSignList,
         HintSignMutableSequence,
@@ -81,8 +62,10 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         Iterable,
         List,
         MutableSequence,
+        Optional,
         Sequence,
         Tuple,
+        Union,
     )
 
     # ..................{ CONSTANTS                          }..................
@@ -108,8 +91,8 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
     _PEP604_IS_TYPING = IS_PYTHON_AT_LEAST_3_14
 
     # ..................{ TUPLES                             }..................
-    # Add PEP 604-specific test type hints to this tuple global.
-    hints_pep_meta.extend((
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = [
         # ................{ NEW UNION                          }................
         # Union of one non-"typing" type and an originative "typing" type,
         # exercising a prominent edge case when raising human-readable
@@ -776,8 +759,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
-
-    ))
+    ]
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
@@ -791,14 +773,7 @@ def hints_pep604_ignorable_deep() -> list:
     '''
 
     # ..................{ IMPORTS                            }..................
-    from beartype.typing import Any
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-
-    # If the active Python interpreter targets Python < 3.10, this interpreter
-    # fails to support PEP 604. In this case, return the empty list.
-    if not IS_PYTHON_AT_LEAST_3_10:
-        return []
-    # Else, this interpreter supports PEP 604.
+    from typing import Any
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific deeply ignorable type hints.

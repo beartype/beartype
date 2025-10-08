@@ -31,7 +31,6 @@ def test_get_hint_pep484585_ref_names() -> None:
     from beartype.typing import ForwardRef
     from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
         get_hint_pep484585_ref_names)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -59,37 +58,38 @@ def test_get_hint_pep484585_ref_names() -> None:
     # object defines the "__module__" dunder attribute.
     assert get_hint_pep484585_ref_names(BEING_INTERTWINED) == (None, BREATH_AND)
 
-    # If the active Python interpreter targets >= Python 3.10, then this
+    # ....................{ PASS ~ module name             }....................
+    # Since the active Python interpreter targets >= Python 3.10, then this
     # typing.ForwardRef.__init__() method accepts an additional optional
     # "module: Optional[str] = None" parameter preserving the fully-qualified
-    # names of the module to which the passed unqualified basenames is relative.
-    # In this case...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Arbitrary relative forward reference defined as a non-string relative
-        # to the fully-qualified names of a hypothetical module.
-        BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
+    # name of the module to which the passed unqualified basename is relative.
+    # Assert that this getter successfully introspects that module name.
 
-        # Arbitrary absolute forward reference defined as a non-string relative
-        # to the fully-qualified names of a hypothetical module.
-        #
-        # Note that this exercises an edge case. Technically, passing both an
-        # absolute forward reference *AND* a module names is a non-sequitur.
-        # Pragmatically, the ForwardRef.__init__() method blindly permits
-        # callers to do just that. Ergo, @beartype *MUST* guard against this.
-        DARK_GATE_OF_DEATH = ForwardRef(ALAS_ALAS, module=OF_DIM_SLEEP)
+    # Arbitrary relative forward reference defined as a non-string relative to
+    # the fully-qualified names of a hypothetical module.
+    BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
 
-        # Assert this getter canonicalizes the passed relative forward reference
-        # against the fully-qualified names of the module with which this
-        # reference was instantiated when defined as a non-string.
-        assert get_hint_pep484585_ref_names(BEAUTIFUL_SHAPE) == (
-            OF_DIM_SLEEP, THUS_TREACHEROUSLY)
+    # Arbitrary absolute forward reference defined as a non-string relative to
+    # the fully-qualified names of a hypothetical module.
+    #
+    # Note that this exercises an edge case. Technically, passing both an
+    # absolute forward reference *AND* a module names is a non-sequitur.
+    # Pragmatically, the ForwardRef.__init__() method blindly permits callers to
+    # do just that. Ergo, @beartype *MUST* guard against this.
+    DARK_GATE_OF_DEATH = ForwardRef(ALAS_ALAS, module=OF_DIM_SLEEP)
 
-        # Assert this getter preserves the passed absolute forward reference as
-        # is *WITHOUT* canonicalizing this reference against the fully-qualified
-        # names of the module with which this reference was instantiated when
-        # defined as a non-string.
-        assert get_hint_pep484585_ref_names(DARK_GATE_OF_DEATH) == (
-            OF_DIM_SLEEP, ALAS_ALAS)
+    # Assert this getter canonicalizes the passed relative forward reference
+    # against the fully-qualified names of the module with which this reference
+    # was instantiated when defined as a non-string.
+    assert get_hint_pep484585_ref_names(BEAUTIFUL_SHAPE) == (
+        OF_DIM_SLEEP, THUS_TREACHEROUSLY)
+
+    # Assert this getter preserves the passed absolute forward reference as is
+    # *WITHOUT* canonicalizing this reference against the fully-qualified names
+    # of the module with which this reference was instantiated when defined as a
+    # non-string.
+    assert get_hint_pep484585_ref_names(DARK_GATE_OF_DEATH) == (
+        OF_DIM_SLEEP, ALAS_ALAS)
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed a type hint
@@ -112,7 +112,6 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     from beartype.typing import ForwardRef
     from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
         get_hint_pep484585_ref_names_relative_to)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         ClassModuleNameFake,
         ClassModuleNameNone,
@@ -201,37 +200,38 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
         func=function_module_name_fake,
     ) == ('builtins', 'int')
 
-    # If the active Python interpreter targets >= Python 3.10, then this
+    # ....................{ PASS ~ module name             }....................
+    # Since the active Python interpreter targets >= Python 3.10, then this
     # typing.ForwardRef.__init__() method accepts an additional optional
     # "module: Optional[str] = None" parameter preserving the fully-qualified
     # name of the module to which the passed unqualified basename is relative.
-    # In this case...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Arbitrary relative forward reference defined as a non-string relative
-        # to the fully-qualified name of a hypothetical module.
-        BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
+    # Assert that this getter successfully introspects that module name.
 
-        # Arbitrary absolute forward reference defined as a non-string relative
-        # to the fully-qualified name of a hypothetical module.
-        #
-        # Note that this exercises an edge case. Technically, passing both an
-        # absolute forward reference *AND* a module name is a non-sequitur.
-        # Pragmatically, the ForwardRef.__init__() method blindly permits
-        # callers to do just that. Ergo, @beartype *MUST* guard against this.
-        DARK_GATE_OF_DEATH = ForwardRef(ALAS_ALAS, module=OF_DIM_SLEEP)
+    # Arbitrary relative forward reference defined as a non-string relative to
+    # the fully-qualified name of a hypothetical module.
+    BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
 
-        # Assert this getter canonicalizes the passed relative forward reference
-        # against the fully-qualified name of the module with which this
-        # reference was instantiated when defined as a "typing.ForwardRef".
-        assert get_hint_pep484585_ref_names_relative_to(BEAUTIFUL_SHAPE) == (
-            OF_DIM_SLEEP, THUS_TREACHEROUSLY)
+    # Arbitrary absolute forward reference defined as a non-string relative to
+    # the fully-qualified name of a hypothetical module.
+    #
+    # Note that this exercises an edge case. Technically, passing both an
+    # absolute forward reference *AND* a module name is a non-sequitur.
+    # Pragmatically, the ForwardRef.__init__() method blindly permits callers to
+    # do just that. Ergo, @beartype *MUST* guard against this.
+    DARK_GATE_OF_DEATH = ForwardRef(ALAS_ALAS, module=OF_DIM_SLEEP)
 
-        # Assert this getter preserves the passed absolute forward reference as
-        # is *WITHOUT* canonicalizing this reference against the fully-qualified
-        # name of the module with which this reference was instantiated when
-        # defined as a "typing.ForwardRef".
-        assert get_hint_pep484585_ref_names_relative_to(DARK_GATE_OF_DEATH) == (
-            OF_DIM_SLEEP, ALAS_ALAS)
+    # Assert this getter canonicalizes the passed relative forward reference
+    # against the fully-qualified name of the module with which this reference
+    # was instantiated when defined as a "typing.ForwardRef".
+    assert get_hint_pep484585_ref_names_relative_to(BEAUTIFUL_SHAPE) == (
+        OF_DIM_SLEEP, THUS_TREACHEROUSLY)
+
+    # Assert this getter preserves the passed absolute forward reference as is
+    # *WITHOUT* canonicalizing this reference against the fully-qualified name
+    # of the module with which this reference was instantiated when defined as a
+    # "typing.ForwardRef".
+    assert get_hint_pep484585_ref_names_relative_to(DARK_GATE_OF_DEATH) == (
+        OF_DIM_SLEEP, ALAS_ALAS)
 
     # ....................{ FAIL                           }....................
     # Assert that this getter raises the expected exception when passed a
