@@ -32,9 +32,10 @@ from pytest import Function
 from typing import Optional
 
 # ....................{ HOOKS ~ ini                        }....................
-def pytest_configure(config) -> None:
+def pytest_configure(config: 'pytest.Config') -> None:
     '''
-    Hook programmatically configuring the top-level ``"pytest.ini"`` file.
+    Hook programmatically configuring both the ``pytest`` comand-line interface
+    (CLI) *and* top-level ``"pytest.ini"`` file.
     '''
 
     # Programmatically add our custom "run_in_subprocess" mark, enabling tests

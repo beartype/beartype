@@ -188,6 +188,11 @@ doc-ghp = [
     # API reference generation stack -- which transitively requires a reasonably
     # recent version of the third-party "mkdocstrings" extension as well.
     "mkdocstrings-python >=1.16.0",
+
+    # "mkdocstrings-python"-specific third-party extension expanding the default
+    # "mkdocstrings-python" support for absolute cross-references with
+    # additional support for relative cross-references.
+    "mkdocstrings-python-xref >=1.16.0",
 ]
 
 #FIXME: Remove *AFTER* successfully migrating from RTD to GHP.

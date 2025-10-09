@@ -22,18 +22,22 @@ FastMCP API within the active Python process).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
 from beartype_test._util.mark.pytskip import (
-    skip_if_os_windows,
+    skip_unless_os_linux,
     skip_unless_package,
 )
 
 # ....................{ TESTS                              }....................
-# Explicitly skip this integration test under vanilla Microsoft Windows, where
-# this test inexplicably erupts in unreadable pickling errors resembling:
+# Explicitly skip this integration test under both vanilla Microsoft Windows
+# *AND* macOS, where this test inexplicably erupts in unreadable pickling errors
+# resembling:
 #     _pickle.PicklingError: Can't pickle <function test_claw_fastmcp at
 #     0x000001DCDB47AA20>: it's not the same object as
 #     beartype_test.a90_func.a40_claw.external.test_claw_fastmcp.test_claw_fastmcp
+#
+# Clearly, this relates to coroutines. Private OS-specific implementations of
+# the standard "pickle" module fail to cope with coroutines, apparently. *shrug*
 @skip_unless_package('fastmcp')
-@skip_if_os_windows()
+@skip_unless_os_linux()
 @pytest.mark.run_in_subprocess
 async def test_claw_fastmcp() -> None:
     '''
