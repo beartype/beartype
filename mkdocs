@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2025 Beartype authors.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Bash shell script wrapping this project's MkDocs-based documentation build
+# system, passing sane default options suitable for interactive terminal
+# building and otherwise passing all passed arguments as is to the
+# "mkdocs build" command.
+#
+# This script is defined as a Bash rather than Bourne script purely for the
+# canonical ${BASH_SOURCE} string global, reliably providing the absolute
+# pathnames of this script and hence this script's directory.
+
+# ....................{ PREAMBLE                           }....................
+# Enable strictness for sanity.
+set -e
+
+# ....................{ ARRAYS                             }....................
+# Array of all shell words with which to invoke "sphinx-build" below.
+#
+# Bizarrely, note that these Sphinx options are *ONLY* available in the short
+# and long forms listed here. (This is us collectively shrugging.)
+MKDOCS_BUILD_ARGS=(
+    command mkdocs build
+
+    # ..................{ SPHINX ~ core                      }..................
+    # Enforce strictness for sanity.
+    --strict
+
+    # ..................{ SPHINX ~ paths                     }..................
+    # Absolute filename of our MkDocs configuration file.
+    --config-file ./mkdocs.yml
+
+    # Absolute dirname of the directory containing target documentation.
+    --site-dir ./site
+
+    # Pass all remaining non-option arguments to "mkdocs build" as is.
+    "${@}"
+)
+echo "Running: ${MKDOCS_BUILD_ARGS[*]}"
+
+# ....................{ FUNCTIONS                          }....................
+# str canonicalize_path(str pathname)
+#
+# Canonicalize the passed pathname.
+function canonicalize_path() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local pathname="${1}"
+
+    # The "readlink" command's GNU-specific "-f" option would be preferable but
+    # is unsupported by macOS's NetBSD-specific version of "readlink". Instead,
+    # just defer to Python for portability.
+    command python3 -c "
+import os, sys
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
+}
+
+# ....................{ PATHS                              }....................
+# Absolute or relative filename of this script.
+SCRIPT_FILENAME="$(canonicalize_path "${BASH_SOURCE[0]}")"
+
+# Absolute or relative dirname of the directory directly containing this
+# script, equivalent to the top-level directory for this project.
+SCRIPT_DIRNAME="$(dirname "${SCRIPT_FILENAME}")"
+
+# ....................{ MAIN                               }....................
+# Temporarily change the current working directory to that of this project.
+# pushd "${SCRIPT_DIRNAME}/doc" >/dev/null
+pushd "${SCRIPT_DIRNAME}" >/dev/null
+
+# Build this project's documentation with all passed arguments.
+"${MKDOCS_BUILD_ARGS[@]}"
+
+# 0-based exit code reported by the prior command.
+exit_code=$?
+
+# Revert the current working directory to the prior such directory.
+popd >/dev/null
+
+# Report the same exit code from this script.
+exit ${exit_code}

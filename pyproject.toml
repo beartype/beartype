@@ -96,7 +96,7 @@ classifiers = [
 # These authors should be thought of as the corresponding authors of a paper.
 # Ideally, correspondence should be redirected to these authors.
 authors = [
-    { name="Cecil Curry", email="leycec@gmail.com" },
+    { name = "Cecil Curry", email = "leycec@gmail.com" },
 ]
 
 # List of all secondary authors of this package as a list of tables (i.e.,
@@ -673,6 +673,7 @@ include = [
     "/*.md",
     "/*.rst",
     "/conftest.py",
+    "/mkdocs",
     "/mypy",
     "/mypy.ini",
     "/pyproject.toml",
@@ -688,7 +689,15 @@ include = [
 
     # Relative dirnames of all requisite top-level installation-time
     # directories, including:
-    # * All files documenting this project.
+    # * All up-to-date MkDocs-specific files documenting this project in the
+    #   top-level "docs/" subdirectory.
+    # * All obsolete Sphinx-specific files documenting this project in the
+    #   top-level "doc/" subdirectory.
+    #
+    # Yes, this is confusing. The obsolete "doc/" subdirectory will be
+    # permanently removed at some point. For now, it lingers like a bad smell.
+    "/docs/*.md",
+    "/docs/js/*.js",
     "/doc/Makefile",
     "/doc/*.bat",
     "/doc/*.md",

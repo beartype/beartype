@@ -80,4 +80,4 @@ Our gratitude intensifies. Your eyeballs continue to make the world a safer
 place. Bet you didn't know your eyeballs could do that, huh? Yet they did. When
 humanity is secured, quality is assured.
 
-[@beartype]: https://github.com/beartype/beartype
+[@beartype]: https://github.com/beartype
