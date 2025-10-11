@@ -45,6 +45,8 @@
    https://github.com/beartype/beartype/issues/7
 .. _beartype codebase:
    https://github.com/beartype/beartype/tree/main/beartype
+.. _beartype dependents:
+   https://github.com/beartype/beartype/network/dependents
 .. _beartype issues:
    https://github.com/beartype/beartype/issues
 .. _beartype mascot:
@@ -121,8 +123,6 @@
 .. # ------------------( LINKS ~ beartype : package : meta   )------------------
 .. _Libraries.io:
    https://libraries.io
-.. _beartype dependents:
-   https://libraries.io/pypi/beartype/dependents
 
 .. # ------------------( LINKS ~ beartype : plugin           )------------------
 .. _ipython-beartype:

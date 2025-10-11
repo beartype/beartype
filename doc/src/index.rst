@@ -238,9 +238,8 @@ developed Python versions <Python status_>`__, :ref:`all Python package managers
 <install:install>`, and :ref:`multiple platform-specific package managers
 <install:install>`.
 
-.. # FIXME: Gah! Libraries.io has fallen down and cannot get back up... *AGAIN.*
-.. #     Beartype `powers quality assurance across the Python ecosystem <beartype
-.. #     dependents_>`__.
+Beartype `powers quality assurance across the Python ecosystem <beartype
+dependents_>`__.
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on

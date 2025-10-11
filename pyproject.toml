@@ -36,13 +36,14 @@ name = "beartype"
 
 # Human-readable single-line synopsis of this project.
 #
-# Note that, by PyPI design, this string *MUST*:
-# * Prefix each newline in this string with a continuation character, which then
-#   forces line wrapping.
-# * Otherwise not span multiple lines or paragraphs.
+# Note that, by PyPI design, this string *MUST* prefix each newline in this
+# string with a continuation character (which then forces line wrapping) but
+# otherwise not span multiple lines or paragraphs.
+#
+# See also official TOML documentation on multi-line strings: https://toml.io
 description = """\
-Unbearably fast near-real-time hybrid runtime-static type-checking in pure Python.
-"""
+    Unbearably fast near-real-time pure-Python runtime-static type-checker.\
+    """
 
 # Relative filename of the top-level file describing project licensing.
 #
