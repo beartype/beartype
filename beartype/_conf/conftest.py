@@ -207,7 +207,7 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "claw_skip_package_names" '
             f'value {repr(conf_kwargs["claw_skip_package_names"])} not '
-            f'collection of non-empty strings.'
+            f'collection of "."-delimited Python identifiers.'
         )
     # Else, "claw_skip_package_names" is an iterable of non-empty strings.
     #

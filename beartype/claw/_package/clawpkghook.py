@@ -113,6 +113,7 @@ def hook_packages(
         StackOverflow answer strongly inspiring the low-level implementation of
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
+    # print(f'[hook_packages]:')
 
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.

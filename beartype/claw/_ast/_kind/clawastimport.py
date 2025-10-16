@@ -1379,7 +1379,7 @@ class BeartypeNodeTransformerImportMixin(object):
         #   with associated basenames. Why? Because if all such (sub)tries had
         #   already been visited above, this method would have immediately
         #   returned true. But this method has yet to return anything! QED.
-        print(f'Detected attribute name "{unparse(node)}" as decorator-hostile subtrie {attr_name_subtrie}!')
+        # print(f'Detected attribute name "{unparse(node)}" as decorator-hostile subtrie {attr_name_subtrie}!')
 
         # Assert sanity. You never know, bear friends. And neither do we.
         assert isinstance(attr_name_subtrie, BeartypeDecorPlaceTrieABC)

@@ -16,17 +16,18 @@ This submodule unit tests the public :mod:`beartype.bite.infer_hint` function.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_unless_package
+from collections.abc import Iterable
 
 # ....................{ TESTS                              }....................
 def test_bite_infer_hint(
     bite_cases_infer_hint: (
-    'Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]')) -> None:
+    dict['beartype.BeartypeConf', Iterable[tuple[object, object]]])) -> None:
     '''
     Test the :func:`beartype.bite.infer_hint` function.
 
     Parameters
     ----------
-    bite_cases_infer_hint : Dict[beartype.BeartypeConf, Iterable[Tuple[object, object]]]
+    bite_cases_infer_hint : dict[beartype.BeartypeConf, Iterable[tuple[object, object]]]
         Dictionary mapping from each relevant beartype configuration to a
         corresponding iterable of all **type hint inference cases** specific to
         that configuration.

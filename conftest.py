@@ -9,18 +9,17 @@ run by :mod:`pytest` *before* passed command-line arguments are parsed) for
 this test suite.
 
 Caveats
-----------
-For safety, this configuration should contain *only* early-time hooks
-absolutely required by :mod:`pytest` design to be defined in this
-configuration. Hooks for which this is the case (e.g.,
-:func:`pytest_addoption`) are explicitly annotated as such in official
-:mod:`pytest` documentation with a note resembling:
+-------
+For safety, this configuration should contain *only* early-time hooks absolutely
+required by :mod:`pytest` design to be defined in this configuration. Hooks for
+which this is the case (e.g., :func:`pytest_addoption`) are explicitly annotated
+as such in official :mod:`pytest` documentation with a note resembling:
 
     Note
 
-    This function should be implemented only in plugins or ``conftest.py``
-    files situated at the tests root directory due to how pytest discovers
-    plugins during startup.
+    This function should be implemented only in plugins or ``conftest.py`` files
+    situated at the tests root directory due to how pytest discovers plugins
+    during startup.
 
 This file is the aforementioned ``conftest.py`` file "...situated at the tests
 root directory."
