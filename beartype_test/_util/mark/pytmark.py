@@ -23,7 +23,7 @@ noop = pytest.mark.noop
 Preserve the decorated test or test parameter as is with *no* modification.
 
 Caveats
-----------
+-------
 This decorator has the unintended side effect of also marking all tests and
 test parameters decorated by this decorated with the ``noop`` tag. This
 harmless albeit unfortunate side effect is the result of the :mod:`pytest.mark`
@@ -41,7 +41,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
     :class:`Warning` class.
 
     Caveats
-    ----------
+    -------
     **This high-level decorator should always be called in lieu of the
     low-level** :func:`pytest.mark.filterwarnings` **decorator,** whose syntax
     is fragile, poorly documented, and likely to silently fail.
@@ -52,12 +52,12 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
         :class:`Warning` class to be ignored when running the decorated test.
 
     Returns
-    ----------
+    -------
     Callable
         This test decorated to ignore all warnings of this class.
 
     Raises
-    ----------
+    ------
     BeartypeTestMarkException
         If this object is either:
 

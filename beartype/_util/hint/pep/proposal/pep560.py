@@ -83,7 +83,7 @@ def iter_hint_pep560_bases_unerased(
     Caveats
     -------
     **The higher-level**
-    :func:`beartype._check.pep.iter_hint_pep484585_generic_unsubbed_bases_unerased`
+    :func:`beartype._check.pep.get_hint_pep484585_generic_unsubbed_bases_unerased`
     **generator should typically be called instead.** This lower-level generator
     is *only* intended to be called by equally low-level utility functions
     throughout the :mod:`beartype._util.hint.pep.proposal` subpackage.

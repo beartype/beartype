@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.pep.checkpep484585generic import (
-    iter_hint_pep484585_generic_unsubbed_bases_unerased)
+    get_hint_pep484585_generic_unsubbed_bases_unerased)
 from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
@@ -81,10 +81,11 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
     # transitive pseudo-superclass originally declared as a superclass of this
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane, hint_child_sign in (
-        iter_hint_pep484585_generic_unsubbed_bases_unerased(
-            hint_sane=hint_sane,
-            conf=hints_meta.conf,
-            exception_prefix=hints_meta.exception_prefix,
+        get_hint_pep484585_generic_unsubbed_bases_unerased(
+            hint_sane,
+            hints_meta.cls_stack,
+            hints_meta.conf,
+            hints_meta.exception_prefix,
         )
     ):
         # print(f'Visiting generic type hint {hint_curr_sane} unerased base {hint_child_sane}...')

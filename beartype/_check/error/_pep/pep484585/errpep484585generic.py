@@ -18,7 +18,7 @@ from beartype._data.hint.sign.datahintsigns import (
 from beartype._check.error.errcause import ViolationCause
 from beartype._check.error._errtype import find_cause_instance_type
 from beartype._check.pep.checkpep484585generic import (
-    iter_hint_pep484585_generic_unsubbed_bases_unerased)
+    get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs)
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type_isinstanceable)
 from beartype._util.text.utiltextansi import color_hint
@@ -70,8 +70,9 @@ def find_cause_pep484585_generic_unsubbed(
     # transitive pseudo-superclass originally declared as a superclass of this
     # unsubscripted generic *AND* the sign identifying this pseudo-superclass...
     for hint_child_sane, hint_child_sign in (
-        iter_hint_pep484585_generic_unsubbed_bases_unerased(
+        get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
             hint_sane=cause.hint_sane,
+            cls_stack=cause.cls_stack,
             conf=cause.conf,
             exception_prefix=cause.exception_prefix,
         )

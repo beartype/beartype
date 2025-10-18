@@ -1378,7 +1378,7 @@ def make_check_expr(
                 #    class UserTypedDict(TypedDict, Generic[T]): ...
                 #
                 #When such a subclass is used as a type hint, the
-                #iter_hint_pep484585_generic_unsubbed_bases_unerased() detects
+                #get_hint_pep484585_generic_unsubbed_bases_unerased() detects
                 #"TypeDict" to be an extrinsic pseudo-superclass and then yields
                 #both the typed dictionary generic itself (e.g., "UserTypedDict"
                 #above) *AND* "HintSignTypedDict", which then causes this

@@ -352,15 +352,9 @@ test-tox = [
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* nuitka and all reverse
     #dependencies thereof officially ship Python 3.14 wheels.
-    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
-    #Actions-hosted continuous integration (CI) for the moment. Doing so is
-    #non-trivial enough under local testing workflows. *sigh*
     # Required by optional nuitka-specific integration tests if the current
     # platform is a Linux distribution.
     "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0'",
-
-    # Required by optional SQLAlchemy-specific integration tests.
-    "sqlalchemy",
 
     # ....................{ CLI                            }....................
     # Required by optional Typer-specific integration tests.
@@ -374,6 +368,13 @@ test-tox = [
     # Required by optional Celery-specific integration tests. Note that Celery
     # requires Click.
     "celery",
+
+    # ....................{ DATABASE                       }....................
+    # Required by optional Redis-specific integration tests.
+    "redis",
+
+    # Required by optional SQLAlchemy-specific integration tests.
+    "sqlalchemy",
 
     # ....................{ SCIENCE ~ data                 }....................
     # Data science-centric optional test-time dependencies.

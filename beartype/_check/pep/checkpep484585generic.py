@@ -13,11 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
-from beartype.typing import (
-    Iterable,
-    Optional,
-    Tuple,
-)
 from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.hint.hintsane import (
     HINT_SANE_IGNORABLE,
@@ -30,13 +25,10 @@ from beartype._data.typing.datatyping import (
     TypeException,
     TypeStack,
 )
+from beartype._data.typing.datatypingport import Hint
 from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
-from beartype._util.cache.pool.utilcachepoollistfixed import (
-    FIXED_LIST_SIZE_MEDIUM,
-    acquire_fixed_list,
-    release_fixed_list,
-)
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_base_extrinsic_sign_or_none,
     get_hint_pep484585_generic_bases_unerased,
@@ -45,12 +37,23 @@ from beartype._util.hint.pep.proposal.pep484585.generic.pep484585gentest import 
     is_hint_pep484585_generic_user)
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 
-# ....................{ ITERATORS                          }....................
-#FIXME: Unit test us up, please.
-#FIXME: Note that this would be, ideally, internally refactored to leverage the
-#lower-level iter_hint_pep560_bases_unerased() iterator. We tried,
-#actually... and failed hard. The current approach is "good enough." *shrug*
-def iter_hint_pep484585_generic_unsubbed_bases_unerased(
+# ....................{ PRIVATE ~ hints                    }....................
+HintPep484585GenericUnsubbedBaseUnerased = tuple[HintSane, HintSign]
+'''
+:pep:`585`-compliant type hint matching each item of the tuple returned by the
+:func:`.get_hint_pep484585_generic_unsubbed_bases_unerased` getter.
+'''
+
+
+HintPep484585GenericUnsubbedBasesUnerased = tuple[
+    HintPep484585GenericUnsubbedBaseUnerased, ...]
+'''
+:pep:`585`-compliant type hint matching the tuple returned by the
+:func:`.get_hint_pep484585_generic_unsubbed_bases_unerased` getter.
+'''
+
+# ....................{ GETTERS                            }....................
+def get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs(
     # Mandatory parameters.
     hint_sane: HintSane,
 
@@ -59,25 +62,68 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> Iterable[Tuple[HintSane, HintSign]]:
+) -> HintPep484585GenericUnsubbedBasesUnerased:
     '''
-    Generator iteratively yielding the one or more **unerased
-    pseudo-superclasses** (i.e., unignorable PEP-compliant type hints originally
-    declared as transitive superclasses prior to type erasure) of the passed
-    :pep:`484`- or :pep:`585`-compliant unsubscripted generic, effectively
-    performing a breadth-first search (BFS) over these pseudo-superclasses.
+    Unmemoized stub enabling callers to effectively pass keyword parameters to
+    the memoized :func:`.get_hint_pep484585_generic_unsubbed_bases_unerased`
+    getter, which accepts *only* positional parameters for efficiency.
 
-    This generator yields the full tree of all pseudo-superclasses by
-    transitively visiting both all direct pseudo-superclasses of this generic
-    *and* all indirect pseudo-superclasses transitively superclassing all direct
-    pseudo-superclasses of this generic. For efficiency, this generator is
-    internally implemented with an efficient imperative First In First Out
-    (FILO) queue rather than an inefficient (and dangerous, due to both
-    unavoidable stack exhaustion and avoidable infinite recursion) tree of
-    recursive function calls.
+    See Also
+    --------
+    :func:`.get_hint_pep484585_generic_unsubbed_bases_unerased`
+        Further details.
+    '''
 
-    This generator is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator). Memoization is the caller's responsibility.
+    # Defer to this lower-level memoized getter.
+    return get_hint_pep484585_generic_unsubbed_bases_unerased(
+        hint_sane,
+        cls_stack,
+        conf,
+        exception_prefix,
+        exception_cls,
+    )
+
+
+#FIXME: Unit test us up, please.
+#FIXME: Note that this would be, ideally, internally refactored to leverage the
+#lower-level iter_hint_pep560_bases_unerased() iterator. We tried,
+#actually... and failed hard. The current approach is "good enough." *shrug*
+@callable_cached
+def get_hint_pep484585_generic_unsubbed_bases_unerased(
+    # Mandatory parameters.
+    hint_sane: HintSane,
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize the order of these parameters with the
+    # get_hint_pep484585_generic_unsubbed_bases_unerased_kwargs() wrapper above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Optional parameters.
+    #
+    # Note that these parameters are intentionally ordered so as to trivialize
+    # the calling convention. Since this getter is memoized, callers *MUST* pass
+    # these parameters positionally rather than by keyword.
+    cls_stack: TypeStack = None,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    exception_prefix: str = '',
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+) -> HintPep484585GenericUnsubbedBasesUnerased:
+    '''
+    Tuple of the one or more **unerased pseudo-superclasses** (i.e., unignorable
+    PEP-compliant type hints originally declared as transitive superclasses
+    prior to type erasure) of the passed :pep:`484`- or :pep:`585`-compliant
+    unsubscripted generic, effectively performing a breadth-first search (BFS)
+    over these pseudo-superclasses.
+
+    The tuple returned by this getter describes the full tree of all
+    pseudo-superclasses by transitively visiting both all direct
+    pseudo-superclasses of this generic *and* all indirect pseudo-superclasses
+    transitively superclassing all direct pseudo-superclasses of this generic.
+    For efficiency, this generator is internally implemented with an efficient
+    imperative First In First Out (FILO) queue rather than an inefficient (and
+    dangerous, due to both unavoidable stack exhaustion and avoidable infinite
+    recursion) tree of recursive function calls.
+
+    This getter is memoized for efficiency.
 
     Caveats
     -------
@@ -241,14 +287,15 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         Human-readable substring prefixing raised exception messages. Defaults
         to the empty string.
 
-    Yields
+    Returns
     ------
-    Tuple[HintSane, HintSign]
+    tuple[tuple[HintSane, HintSign], ...]
         2-tuple ``(hint_sane, hint_sign)``, where:
 
-        * ``hint_sane`` is an unignorable unerased transitive pseudo-superclass
-          originally declared as a superclass prior to its type erasure of this
-          unsubscripted generic.
+        * ``hint_sane`` is metadata encapsulating the sanification of an
+          unignorable unerased transitive pseudo-superclass originally declared
+          as a superclass prior to its type erasure of this unsubscripted
+          generic.
         * ``hint_sign`` is the sign uniquely identifying this pseudo-superclass.
           Since this sign does *not* necessarily correspond to the sign returned
           by the :func:`.get_hint_pep_sign_or_none` getter when passed this
@@ -272,6 +319,13 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     # This unsubscripted generic.
     hint = hint_sane.hint
 
+    # List of 2-tuples "(hint_sane, hint_sign)" to be returned, where:
+    # * "hint_sane" is metadata encapsulating the sanification of an unignorable
+    #   unerased transitive pseudo-superclass originally declared as a
+    #   superclass prior to its type erasure of this unsubscripted generic.
+    # * "hint_sign" is the sign uniquely identifying this pseudo-superclass.
+    hint_bases: list[HintPep484585GenericUnsubbedBaseUnerased] = []
+
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
     # superclasses prior to their type erasure by this unsubscripted generic.
     hint_bases_direct = get_hint_pep484585_generic_bases_unerased(
@@ -281,12 +335,11 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     )
     # print(f'generic {hint} hint_bases_direct: {hint_bases_direct}')
 
-    # ....................{ LOCALS ~ bases : indirect      }....................
-    # Fixed list of 2-tuples "(hint_base, hint_base_subclass_sane)" describing
-    # the one or more unerased transitive pseudo-superclasses originally listed
-    # as superclasses prior to their type erasure by this generic that have yet
-    # to be visited by the breadth-first search (BFS) over these
-    # pseudo-superclasses performed below, where:
+    # Stack of unerased transitive pseudo-superclasses originally listed as
+    # superclasses prior to their type erasure by this generic that have yet to
+    # be visited by the breadth-first search (BFS) over these
+    # pseudo-superclasses performed below. This stack is defined as a list of
+    # 2-tuples "(hint_base, hint_base_subclass_sane)", where:
     # * "hint_base" is each such pseudo-superclass.
     # * "hint_base_subclass_sane" is the sanified hint metadata encapsulating
     #   the direct pseudo-*SUBCLASS* of this "hint_base", which will then be
@@ -297,40 +350,46 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
     #   * Else, this "hint_base" is a transitive pseudo-superclass two or more
     #     class levels above the passed generic. In this case, this is the
     #     "hint_base_sane" local calculated below.
-    hint_bases = acquire_fixed_list(size=FIXED_LIST_SIZE_MEDIUM)
-
-    # 0-based index of the currently visited pseudo-superclass of this list.
-    hint_bases_index_curr = 0
-
-    # 0-based index of one *PAST* the last pseudo-superclass of this list.
-    hint_bases_index_past_last = len(hint_bases_direct)
+    #
+    # Note that this stack was previously defined as a fixed list. Sadly,
+    # real-world torture tests like the third-party "redis.Redis" class of
+    # "redis-py" fame obstruct the constraints imposed by fixed lists. That
+    # class literally subclasses over 256 superclasses! For any fixed size,
+    # there exists a real-world generic whose method-resolution order (MRO)
+    # exceeds that size. The catastrophic cost of beartype raising spurious
+    # exceptions against popular packages is significantly higher than any
+    # negligible gains associated with microoptimizing this allocation away.
+    hint_bases_visit: list[tuple[Hint, HintSane]] = []
 
     #FIXME: [SPEED] Optimize into a "while" loop. *sigh*
     # For the 0-based index of each direct pseudo-superclass of the passed
     # generic *AND* this direct pseudo-superclass...
-    for hint_base_direct_index, hint_base_direct in enumerate(hint_bases_direct):
+    #
+    # Note that this iteration guarantees this stack to initially be non-empty,
+    # as "hint_bases_direct" itself is guaranteed to be non-empty.
+    for hint_base_direct in hint_bases_direct:
         # Enqueue this direct pseudo-superclass and the sanified hint metadata
-        # applicable to this pseudo-superclass onto the "hint_bases" list.
-        hint_bases[hint_base_direct_index] = (hint_base_direct, hint_sane)
-    # print(f'generic pseudo-superclasses [initial]: {repr(hint_bases_direct}')
+        # applicable to this pseudo-superclass onto this stack.
+        hint_bases_visit.append((hint_base_direct, hint_sane))
+    # print(f'generic pseudo-superclasses [initial]: {repr(hint_bases_direct)}')
 
     # ....................{ SEARCH                         }....................
-    # While the 0-based index of the next visited pseudo-superclass does *NOT*
-    # exceed that of the last pseudo-superclass in this list, there remains one
-    # or more pseudo-superclasses to be visited in this BFS. Let us do so.
+    # While there exists at least one unerased transitive pseudo-superclasses to
+    # be visited by this breadth-first search (BFS)...
     #
     # Each iteration of this search is subdivided into two phases, enabling this
     # search to discern between intrinsic and extrinsic pseudo-superclasses --
     # whose handling is fundamentally different. See the function docstring for
     # the distinction between the two.
-    while hint_bases_index_curr < hint_bases_index_past_last:
+    while hint_bases_visit:
         # ....................{ LOCALS                     }....................
-        # Dismantled, this is:
+        # Pop the next unerased transitive pseudo-superclass to be visited by
+        # this BFS off this stack. Dismantled, this is:
         # * "hint_base", the currently visited transitive pseudo-superclass of
         #   the passed generic.
         # * "hint_base_subclass_sane", the sanified hint metadata applicable to
-        #   this "hint_base". See the "hint_bases" definition above for details.
-        hint_base, hint_base_subclass_sane = hint_bases[hint_bases_index_curr]
+        #   this "hint_base". See "hint_bases_visit" above for details.
+        hint_base, hint_base_subclass_sane = hint_bases_visit.pop()
 
         # ....................{ PHASE ~ extrinsic          }....................
         # In this first phase, we:
@@ -436,31 +495,21 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
                     exception_prefix=exception_prefix,
                 )
 
-                # 0-based index of the last pseudo-superclass of this list
-                # *BEFORE* adding onto this list.
-                hint_bases_index_past_last_prev = hint_bases_index_past_last
-
-                # 0-based index of the last pseudo-superclass of this list
-                # *AFTER* adding onto this list.
-                hint_bases_index_past_last += len(hint_child_bases)
-
                 #FIXME: [SPEED] Optimize into a "while" loop, please. *sigh*
-                # For the 0-based index of each parent pseudo-superclass of
-                # this child pseudo-superclass *AND* that parent
+                # For each parent pseudo-superclass of this child
                 # pseudo-superclass...
-                for hint_child_base_index, hint_child_base in enumerate(
-                    hint_child_bases):
+                for hint_child_base in hint_child_bases:
+                    # print(f'hint_child_base: {hint_child_base}')
+                    # print(f'hint_child_sane: {hint_child_sane}')
+                    # print(f'hint_bases_visit: {len(hint_bases_visit)}')
+
                     # Enqueue this parent pseudo-superclass and the sanified
-                    # hint metadata applicable to this pseudo-superclass
-                    # onto the "hint_bases" list.
-                    hint_bases[
-                        hint_bases_index_past_last_prev +
-                        hint_child_base_index
-                    ] = (hint_child_base, hint_child_sane)
-            # Else, this pseudo-superclass is neither an ignorable
-            # user-defined PEP 484-compliant generic *NOR* an ignorable
-            # 544-compliant protocol. In either case, this pseudo-superclass
-            # is unignorable.
+                    # hint metadata applicable to this pseudo-superclass onto
+                    # this stack.
+                    hint_bases_visit.append((hint_child_base, hint_child_sane))
+            # Else, this pseudo-superclass is neither an ignorable user-defined
+            # PEP 484-compliant generic *NOR* an ignorable 544-compliant
+            # protocol. This implies this pseudo-superclass to be unignorable..
             else:
                 # Sign uniquely identifying this pseudo-superclass if this
                 # pseudo-superclass is PEP-compliant *OR* "None" otherwise
@@ -493,9 +542,13 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
                 # pseudo-superclass is a type hint conveying meaningful
                 # semantics. In this case...
                 if hint_child_sign is not None:
-                    # Yield (and thus generate code type-checking) both this
-                    # pseudo-superclass and its identifying sign.
-                    yield hint_child_sane, hint_child_sign
+                    # print(f'Yielding generic {repr(hint)} base {repr(hint_child_sane)} ({hint_child_sign})...')
+
+                    # Append the 2-tuple encapsulating both this
+                    # pseudo-superclass and its identifying sign to this list to
+                    # be returned, thus generating code type-checking this
+                    # pseudo-superclass.
+                    hint_bases.append((hint_child_sane, hint_child_sign))
                 # Else, this pseudo-superclass is an isinstanceable type
                 # conveying *NO* meaningful semantics and is thus effectively
                 # ignorable. Why? Because the caller already type-checks this
@@ -508,15 +561,6 @@ def iter_hint_pep484585_generic_unsubbed_bases_unerased(
         #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')
         #     print(f'Is generic {hint} base {repr(hint_base)} type? {isinstance(hint_base, type)}')
 
-        # Nullify the previously visited pseudo-superclass in this list,
-        # avoiding spurious memory leaks by encouraging garbage collection.
-        hint_bases[hint_bases_index_curr] = None
-
-        # Increment the 0-based index of the next visited pseudo-superclass in
-        # this list *BEFORE* visiting that pseudo-superclass (but *AFTER*
-        # performing all other logic for the current pseudo-superclass).
-        hint_bases_index_curr += 1
-
-    # ....................{ POSTAMBLE                      }....................
-    # Release this list. Pray for salvation, for we find none here.
-    release_fixed_list(hint_bases)
+    # ....................{ RETURN                         }....................
+    # Return a tuple coerced from this list.
+    return tuple(hint_bases)

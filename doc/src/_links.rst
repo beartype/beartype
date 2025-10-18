@@ -454,6 +454,12 @@
 .. _langchain_core.runnables.chain:
    https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.base.chain.html
 
+.. # ------------------( LINKS ~ py : package : redis        )------------------
+.. _redis:
+   https://redis.readthedocs.io
+.. _redis.Redis:
+   https://redis.readthedocs.io/en/stable/connections.html#redis.Redis
+
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
    https://www.sphinx-doc.org

@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: Generalize to support generic "TypedDict" and "NamedTuple" subclasses as
 #follows:
-#* Improve the iter_hint_pep484585_generic_unsubbed_bases_unerased() iterator as
+#* Improve the get_hint_pep484585_generic_unsubbed_bases_unerased() iterator as
 #  follows:
 #      hint_sign_nongeneric = get_hint_pep_sign_or_none(
 #          hint, _IGNORE_HINT_SIGNS_PEP484585_GENERIC_UNSUBSCRIPTED)
