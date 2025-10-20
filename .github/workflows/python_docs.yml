@@ -193,7 +193,7 @@ jobs:
           mkdocs build --config-file ./mkdocs.yml --strict --site-dir ./_site
 
       - name: "Preparing static site for deployment..."
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: '_site'
 
