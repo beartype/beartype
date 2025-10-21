@@ -86,6 +86,7 @@ from beartype.meta import (
     COPYRIGHT,
     NAME,
     SPHINX_THEME_NAME,
+    URL_BLUESKY,
     URL_CONDA,
     URL_LIBRARIES,
     URL_PYPI,
@@ -163,8 +164,10 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   `Please consider sponsoring us <GitHub Sponsors_>`__. **Your support is our
-   quality assurance.** `💗 <GitHub Sponsors_>`__.
+   💗 Feed @beartype with `GitHub Sponsors`_ or `SonarQube Advanced Security
+   (Tidelift) <SonarQube Advanced Security_>`__. Follow `@leycec on Bluesky
+   <beartype Bluesky_>`__ for release announcements. Your loving support is our
+   quality assurance. 💗
 '''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
@@ -580,16 +583,21 @@ html_theme_options = {
     #   https://fontawesome.com/icons?d=gallery&m=free
     #
     # Note that:
-    # * This theme requires long-form FontAwesome styles (e.g., "fa-brand",
+    # * This theme requires long-form FontAwesome styles (e.g., "fa-brands",
     #   "fa-solid") to be abbreviated to these three-letter abbreviations:
-    #   * "fa-brand" -> "fab".
+    #   * "fa-brands" -> "fab".
     #   * "fa-regular" -> "far".
     #   * "fa-solid" -> "fas".
     'icon_links': [
         {
+            'name': 'Bluesky',
+            'url': URL_BLUESKY,
+            'icon': 'fab fa-bluesky',
+        },
+        {
             'name': 'GitHub',
             'url': URL_REPO,
-            'icon': 'fab fa-github-square',
+            'icon': 'fab fa-github',
         },
         {
             'name': 'PyPI',
@@ -599,7 +607,7 @@ html_theme_options = {
         {
             'name': 'Anaconda',
             'url': URL_CONDA,
-            'icon': 'far fa-circle',
+            'icon': 'fas fa-staff-snake',
         },
         {
             'name': 'Libraries.io',

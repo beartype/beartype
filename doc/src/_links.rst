@@ -16,6 +16,14 @@
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
+.. # ------------------( LINKS ~ beartype : maintainer       )------------------
+.. _beartype Bluesky:
+   https://leycec.bsky.social
+.. _@leycec:
+   https://github.com/leycec
+.. _leycec:
+   https://github.com/leycec
+
 .. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
    https://github.com/betsee/betse
@@ -33,6 +41,8 @@
    https://www.alleninstitute.org/what-we-do/frontiers-group/news-press/press-resources/press-releases/paul-g-allen-frontiers-group-announces-allen-discovery-center-tufts-university
 .. _Paul G. Allen Frontiers Group:
    https://www.alleninstitute.org/what-we-do/frontiers-group
+.. _SonarQube Advanced Security:
+   https://www.sonarsource.com/products/sonarqube/advanced-security
 .. _Tufts University:
    https://www.tufts.edu
 .. _beadspace9:
@@ -79,10 +89,6 @@
    https://github.com/patrick-kidger
 .. _harens:
    https://github.com/harens
-.. _@leycec:
-   https://github.com/leycec
-.. _leycec:
-   https://github.com/leycec
 
 .. # ------------------( LINKS ~ beartype : local            )------------------
 .. _beartype license:

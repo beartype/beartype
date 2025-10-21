@@ -266,6 +266,14 @@ attribution, see the `contributors graph`_ for this project.
 # (Don't Repeat Yourself) principle by repeating various URLs already specified
 # in our top-level "pyproject.toml" file.
 
+URL_BLUESKY = 'https://leycec.bsky.social'
+'''
+URL of this project's entry on **Bluesky** (i.e., popular third-party social
+media site, leveraged by project maintainers to publicly announce new releases
+and associated news).
+'''
+
+
 URL_CONDA = f'https://anaconda.org/conda-forge/{PACKAGE_NAME}'
 '''
 URL of this project's entry on **Anaconda** (i.e., alternate third-party Python
