@@ -164,10 +164,11 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   💗 Feed @beartype with `GitHub Sponsors`_ or `SonarQube Advanced Security
-   (Tidelift) <SonarQube Advanced Security_>`__. Follow `@leycec on Bluesky
-   <beartype Bluesky_>`__ for release announcements. Your loving support is our
-   quality assurance. 💗
+   💗 **Upbear us** at `GitHub Sponsors`_ and `SonarQube Advanced Security
+   (Tidelift) <SonarQube Advanced Security_>`__. **Follow us** `on Bluesky
+   <beartype Bluesky_>`__.
+
+   Your generous support is our quality assurance. 💗
 '''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
@@ -592,7 +593,10 @@ html_theme_options = {
         {
             'name': 'Bluesky',
             'url': URL_BLUESKY,
-            'icon': 'fab fa-bluesky',
+            #FIXME: Preferable, but unavailable under the older FontAwesome
+            #dialect leveraged by this obsolete theme version. *sigh*
+            # 'icon': 'fab fa-bluesky',
+            'icon': 'fas fa-cloud',  # <-- whatevahs!
         },
         {
             'name': 'GitHub',
@@ -607,7 +611,12 @@ html_theme_options = {
         {
             'name': 'Anaconda',
             'url': URL_CONDA,
-            'icon': 'fas fa-staff-snake',
+            #FIXME: Preferable, but unavailable under the older FontAwesome
+            #dialect leveraged by this obsolete theme version. *sigh*
+            # 'icon': 'fas fa-staff-snake',
+            #FIXME: Actually, it'd probably be preferable just to use the
+            #Unicode snake character, which is *ADORABLE*: 🐍
+            'icon': 'fas fa-circle',  # <-- whatevahs!
         },
         {
             'name': 'Libraries.io',

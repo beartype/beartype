@@ -28,6 +28,9 @@
 /.webassets-cache/
 /instance/
 
+# Ignore all top-level Gemini-specific temporary directories.
+/.gemini/
+
 # Ignore all top-level Hypothesis-specific temporary directories.
 /.hypothesis/
 
@@ -122,6 +125,9 @@ __pycache__/
 /db.sqlite3
 /db.sqlite3-journal
 
+# Ignore all top-level GitHub App-specific credentials.
+/gha-creds-*.json
+
 # Ignore all top-level mypy-specific state files.
 /.dmypy.json
 /dmypy.json
@@ -195,3 +201,6 @@ local_settings.py
 
 # Ignore all "trace"-specific output files.
 *.cover
+
+.gemini/
+gha-creds-*.json
