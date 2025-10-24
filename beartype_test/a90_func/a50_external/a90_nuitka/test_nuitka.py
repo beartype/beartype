@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Project-wide nuitka integration tests.**
+Project-wide **nuitka integration tests.**
 
 This submodule functionally tests that the third-party ``nuitka`` compiler
 successfully compiles this pure-Python project.
@@ -31,9 +31,9 @@ from beartype_test._util.mark.pytskip import (
 @skip_unless_os_linux()
 @skip_unless_package('nuitka')
 @skip_unless_pathable('gcc')
-def test_nuitka(capsys, tmp_path) -> None:
+def test_nuitka(capsys, tmp_path: 'pathlib.Path') -> None:
     '''
-    Functional test testing that the third-party ``nuitka`` compiler
+    Integration test testing that the third-party ``nuitka`` compiler
     successfully compiles a minimal-length example (MLE) extensively leveraging
     this project.
 
@@ -42,8 +42,8 @@ def test_nuitka(capsys, tmp_path) -> None:
     capsys
         :mod:`pytest`-specific systems capability fixture.
     tmp_path : pathlib.Path
-        Abstract path encapsulating a temporary directory unique to this unit
-        test, created in the base temporary directory.
+        Abstract path encapsulating a temporary directory unique to this test,
+        created in the base temporary directory.
     '''
 
     # ....................{ IMPORTS                        }....................

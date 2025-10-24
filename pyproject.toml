@@ -148,7 +148,7 @@ dynamic = [
 #   release candidates are non-compliant with the official Python 3.14 release
 #   and thus @beartype itself. See also:
 #       https://github.com/beartype/beartype/issues/561#issuecomment-3379278748
-requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"
+requires-python = ">=3.10,!=3.14.0rc1,!=3.14.0rc2"
 
 # Mandatory runtime dependencies. This package intentionally requires no
 # mandatory runtime dependencies and hopefully never will.
@@ -334,7 +334,13 @@ test-tox = [
     # old by now. I feel depressed just reading comments like this...
     "pytest >=4.0.0",
 
-    # ....................{ DOCOS                          }....................
+    # ....................{ BUILD                          }....................
+    # Build-centric optional test-time dependencies.
+
+    # Required by optional Poetry-specific integration tests.
+    "poetry",
+
+    # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
 
     # Required by optional Sphinx-specific integration tests.
@@ -721,6 +727,59 @@ include = [
     # Relative filenames of all requisite package-level installation-time files.
     "/beartype/py.typed",
 ]
+
+# ....................{ NON-PEP ~ poetry                   }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Uncomment these Poetry-specific settings *ONLY* to locally test
+# installation of this package with Poetry by running these shell commands:
+#     # Create and enter a new Poetry-specific virtual environment.
+#     $ eval "$(poetry env activate)"
+#
+#     # Install this this package editably into this environment.
+#     $ poetry install
+#
+#     # Print metadata about this environment. Consider manually deleting the
+#     # corresponding directory after completing Poetry testing. Ugh!
+#     $ poetry env info
+#
+# Permanently uncommenting these settings is likely to induce harmful side
+# effects for end users. You are ignoring this warning, aren't you!? *sigh*
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# PEP-noncompliant section declaring Poetry-specific settings. Since this
+# package utilizes Hatch(ling) rather than Poetry, you should now be reasonably
+# cogitating: "Why Poetry-specific settings, then?" In a word: "build testing."
+# Although this package does *NOT* leverage Poetry, other packages do. Those
+# packages require this package as a mandatory or optional dependency.
+# Installing those packages with Poetry thus transitively installs *THIS*
+# package with Poetry as well. Ideally, that would be fine. Pragmatically, that
+# is less fine than expected. Why? Because Poetry often violates build-time PEP
+# standards in unexpected ways. Indeed, Poetry was Python's last build tool to
+# fully comply with PEPs 517 and 621 -- collectively required to parse
+# "pyproject.toml" files in a build tool-agnostic manner.
+#
+# More recently, Poetry failed to correctly parse PEP 440-compliant Python
+# version specifiers supported by alternate package manegers (e.g., "pip"):
+#     requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"
+#
+# Whereas "pip" transparently accepted that, Poetry fell down with the
+# non-human-readable installation-time error:
+#     Invalid marker for 'python_full_version': > 3.14rc1.0":
+#
+# Reproducing Poetry-specific errors like that generalizing this otherwise
+# Poetry-agnostic configuration file to comply with frankly nonsensical
+# Poetry-specific configuration settings isolated to this subsection.
+#
+# See also this @beartype issue:
+#     https://github.com/beartype/beartype/issues/569
+# [tool.poetry]
+#
+# # Poetry-specific placeholder version. Poetry emits the following error at
+# # installation time when this setting is unspecified:
+# #     The Poetry configuration is invalid:
+# #      - Either [project.version] or [tool.poetry.version] is required in
+# #        package mode.
+# version = "0.0.1"  # <-- *TOTALLY MADE UP NONSENSE, YO*
 
 # ....................{ NON-PEP ~ pyright                  }....................
 # PEP-noncompliant section declaring pyright-specific settings. See also:
