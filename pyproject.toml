@@ -3,13 +3,13 @@
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
-# Project-wide packager-agnostic configuration. Unlike all other top-level
-# configuration files (e.g., "setup.py", "MANIFEST.in") specific to some
-# utility in Python's package management ecosystem (e.g., "pip", "setuptools"),
-# this file strictly conforms to a standards-compliant PEP and hence
-# generically applies to *ALL* such utilities.
+# Packager-agnostic package build configuration. Unlike obsolete package build
+# configarution formats (e.g., "setup.py", "MANIFEST.in") unique to a subset of
+# third-party package management devtools (e.g., "pip", "setuptools"), this file
+# conforms to official standards (e.g., PEPs 517, 518, 621) and hence
+# generically supports *ALL* such devtools.
 #
-# Welcome to project distribution hell, where only twenty distinct files in
+# Say goodbye to project distribution hell, where only twenty distinct files in
 # twenty distinct formats suffice to distribute a single project.
 #
 # --------------------( USAGE                              )--------------------
@@ -128,10 +128,33 @@ dynamic = [
 #   * The "jobs/tests/strategy/matrix/{tox-env,include/python-version}"
 #     settings of the GitHub Actions-specific
 #     ".github/workflows/python_test.yml" file.
+# * Integration test data, including:
+#   * The "beartype_test/a90_func/data/external/poetry/pyproject.toml" file.
 # * Front-facing documentation (e.g., "doc/src/pep.rst").
 # * Signs declared by the private "beartype._data.hint.pep.datapepsign"
 #   submodule, which *MUST* be synchronized against the "__all__" dunder list
 #   global of the "typing" module bundled with the most recent CPython release.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Downstream consumers leveraging Poetry effectively require this
+# version to be *SIMPLE* rather than *VERBOSE*. Why? Because Poetry enforces
+# transitive Python interpreter version constraints. Previously, we attempted to
+# require exact versions by blacklisting problematic Python release candidates
+# known to be incompatible with beartype: e.g.,
+#     requires-python = ">=3.10,!=3.14.0rc1,!=3.14.0rc2"
+#
+# Technically, doing so resolved problematic incompatibilities with users.
+# Pragmatically, doing so also then required *EVERY* Poetry user to adopt the
+# same requirement string in their own "pyproject.toml" files -- even though
+# literally no one cared about those problematic Python release candidates at
+# that point, because the next stable Python release had already been published.
+# Poetry greeted users failing to do so with crazy walls of text beginning with:
+#     The current project's supported Python range (>=3.10) is not compatible
+#     with some of the required packages Python requirement:
+#       - beartype requires Python !=3.14.0rc1,!=3.14.0rc2,>=3.10, so it will
+#         not be installable for Python 3.14.0rc1 || 3.14.0rc2
+#
+# To prevent beartype requirements from polluting the entire Python ecosystem,
+# simple version requirements are strongly preferable.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Minimum Python interpreter version required by this package.
 #
@@ -148,7 +171,7 @@ dynamic = [
 #   release candidates are non-compliant with the official Python 3.14 release
 #   and thus @beartype itself. See also:
 #       https://github.com/beartype/beartype/issues/561#issuecomment-3379278748
-requires-python = ">=3.10,!=3.14.0rc1,!=3.14.0rc2"
+requires-python = ">=3.10"
 
 # Mandatory runtime dependencies. This package intentionally requires no
 # mandatory runtime dependencies and hopefully never will.
@@ -727,59 +750,6 @@ include = [
     # Relative filenames of all requisite package-level installation-time files.
     "/beartype/py.typed",
 ]
-
-# ....................{ NON-PEP ~ poetry                   }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Uncomment these Poetry-specific settings *ONLY* to locally test
-# installation of this package with Poetry by running these shell commands:
-#     # Create and enter a new Poetry-specific virtual environment.
-#     $ eval "$(poetry env activate)"
-#
-#     # Install this this package editably into this environment.
-#     $ poetry install
-#
-#     # Print metadata about this environment. Consider manually deleting the
-#     # corresponding directory after completing Poetry testing. Ugh!
-#     $ poetry env info
-#
-# Permanently uncommenting these settings is likely to induce harmful side
-# effects for end users. You are ignoring this warning, aren't you!? *sigh*
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# PEP-noncompliant section declaring Poetry-specific settings. Since this
-# package utilizes Hatch(ling) rather than Poetry, you should now be reasonably
-# cogitating: "Why Poetry-specific settings, then?" In a word: "build testing."
-# Although this package does *NOT* leverage Poetry, other packages do. Those
-# packages require this package as a mandatory or optional dependency.
-# Installing those packages with Poetry thus transitively installs *THIS*
-# package with Poetry as well. Ideally, that would be fine. Pragmatically, that
-# is less fine than expected. Why? Because Poetry often violates build-time PEP
-# standards in unexpected ways. Indeed, Poetry was Python's last build tool to
-# fully comply with PEPs 517 and 621 -- collectively required to parse
-# "pyproject.toml" files in a build tool-agnostic manner.
-#
-# More recently, Poetry failed to correctly parse PEP 440-compliant Python
-# version specifiers supported by alternate package manegers (e.g., "pip"):
-#     requires-python = ">=3.10,!=3.14rc1,!=3.14rc2"
-#
-# Whereas "pip" transparently accepted that, Poetry fell down with the
-# non-human-readable installation-time error:
-#     Invalid marker for 'python_full_version': > 3.14rc1.0":
-#
-# Reproducing Poetry-specific errors like that generalizing this otherwise
-# Poetry-agnostic configuration file to comply with frankly nonsensical
-# Poetry-specific configuration settings isolated to this subsection.
-#
-# See also this @beartype issue:
-#     https://github.com/beartype/beartype/issues/569
-# [tool.poetry]
-#
-# # Poetry-specific placeholder version. Poetry emits the following error at
-# # installation time when this setting is unspecified:
-# #     The Poetry configuration is invalid:
-# #      - Either [project.version] or [tool.poetry.version] is required in
-# #        package mode.
-# version = "0.0.1"  # <-- *TOTALLY MADE UP NONSENSE, YO*
 
 # ....................{ NON-PEP ~ pyright                  }....................
 # PEP-noncompliant section declaring pyright-specific settings. See also:

@@ -1,0 +1,62 @@
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2025 Beartype authors.
+# See "LICENSE" for further details.
+#
+# --------------------( SYNOPSIS                           )--------------------
+# Poetry-specific package build configuration for an empty project requiring
+# beartype as a mandatory dependency, leveraged by Poetry-specific integration
+# tests to guarantee that beartype remains installable by Poetry.
+
+# ....................{ PEP 621                            }....................
+# PEP 621-compliant section generically defining project metadata in a build
+# tool-agnostic manner.
+[project]
+
+# Fully-qualified name of this project's top-level Python package.
+name = "lustrous_long_arcades"  # <-- *TOTALLY MADE UP NONSENSE, YO*
+
+# PEP 440-compliant version of this project.
+version = "0.0.1"  # <-- *MORE TOTALLY MADE UP NONSENSE, YO YO*
+
+# ....................{ PEP 621 ~ dependencies             }....................
+# Minimum Python interpreter version required by this package.
+#
+# Note that Poetry requires this version to *EXACTLY* match that of the same key
+# in the "pyproject.toml" file for beartype itself, unfortunately. If this is
+# *NOT* the case, Poetry emits an extremely verbose wall of text beginning with:
+#     The current project's supported Python range (>=3.10) is not compatible
+#     with some of the required packages Python requirement:
+#       - beartype requires Python !=3.14.0rc1,!=3.14.0rc2,>=3.10, so it will
+#         not be installable for Python 3.14.0rc1 || 3.14.0rc2
+#
+# Synchronizing these two versions will be a pain point, but is certainly
+# preferable to Poetry refusing to install future versions of beartype.
+requires-python = ">=3.10"
+
+# ....................{ PEP 517                            }....................
+# PEP 517-compliant section declaring the third-party build tools required to
+# install this "pyproject.toml"-based project.
+[build-system]
+
+# List of all third-party Python packages required to build (i.e., install) this
+# project from both codebase tarballs and binary wheels.
+requires = ["poetry-core >=1.0.0"]
+
+# Fully-qualified name of the Python submodule of a third-party Python package
+# listed above to be imported at runtime by third-party Python package managers
+# (e.g., "pip") to build this project.
+build-backend = "poetry.core.masonry.api"
+
+# ....................{ NON-PEP ~ poetry                   }....................
+# PEP-noncompliant section declaring Poetry-specific settings. See also:
+# * Official documentation for this section.
+#   https://python-poetry.org/docs/pyproject
+[tool.poetry.dependencies]
+
+# Poetry-specific mandatory runtime dependencies. Since this project exists
+# *ONLY* to guarantee that beartype remains installable by Poetry, this project
+# *ONLY* requires the live version of the "beartype" package accessible to this
+# project via the local "../beartype/" parent subdirectory. The Poetry-specific
+# integration tests installing this Poetry-managed project create this
+# subdirectory as a symbolic link to the currently tested "beartype" package.
+beartype = {path = "../beartype", develop = true}

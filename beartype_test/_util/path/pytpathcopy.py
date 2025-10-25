@@ -4,9 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Test-specific **pathname utilities** (i.e., low-level callables inspecting all
-categories of pathnames, including basenames, dirnames, filenames, and
-filetypes).
+Test-specific **path copy utilities** (i.e., low-level callables non-recursively
+copying files and recursively copying directories from source to target paths).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -14,9 +13,6 @@ filetypes).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# ....................{ IMPORTS                            }....................
-from os.path import sep as DIRNAME_DELIMITER
 
 # ....................{ EXCEPTIONS ~ basename              }....................
 #FIXME: Unit test us up, please.

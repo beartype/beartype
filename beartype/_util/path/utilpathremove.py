@@ -29,7 +29,7 @@ def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
     all subpackages of that package regardless of nesting depth.
 
     Usage
-    ----------
+    -----
     This function is typically intended for usage in our test suite. Unit tests
     exercising :mod:`beartype` functionality that dynamically modifies the
     contents of bytecode files guarantee idempotency (i.e., reproducibility) by
@@ -42,7 +42,7 @@ def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
     bytecode files requires calling this function beforehand.
 
     Caveats
-    ----------
+    -------
     **This function is subject to subtle race conditions if multiple threads
     and/or processes concurrently attempt to mutate this package on the local
     filesystem.** Since *all* filesystem-centric logic suffers similar issues,
@@ -106,7 +106,7 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
       both this directory and all subdirectories of this directory).
 
     Caveats
-    ----------
+    -------
     **This function silently ignores all non-empty directories matched by this
     glob expression.** Consider an alternate approach leveraging recursive
     directory tree traversal if requiring non-empty directory removal.
@@ -137,7 +137,7 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
         directories to be removed from this directory (e.g., ``"*.jpg"``).
 
     Raises
-    ----------
+    ------
     _BeartypeUtilPathException
         If either:
 

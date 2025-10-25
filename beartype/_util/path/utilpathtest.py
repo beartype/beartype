@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilPathException
 from beartype._data.typing.datatyping import (
     PathnameLike,
-    # PathnameLikeTuple,
+    PathnameLikeTuple,
     TypeException,
 )
 from os import (
@@ -24,7 +24,105 @@ from os import (
 )
 from pathlib import Path
 
+# ....................{ RAISERS ~ path                     }....................
+#FIXME: Unit test us up, please.
+def die_if_subpath(
+    # Mandatory parameters.
+    parent_pathname: PathnameLike,
+    child_pathname: PathnameLike,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilPathException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception of the passed type if the child path with the passed
+    pathname is a **child** (i.e., either a subdirectory *or* a file in a
+    subdirectory) of the parent path with the passed pathname.
+
+    Parameters
+    ----------
+    parent_dirname: PathnameLike
+        Absolute or relative dirname of the parent path to be validated.
+    child_dirname: PathnameLike
+        Absolute or relative dirname of the child path to be validated.
+    exception_cls : Type[Exception], default: _BeartypeUtilPathException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilPathException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixed raised exceptions messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If this child path is a child of this parent path.
+    '''
+
+    # If this child path is a child of this parent path...
+    if is_subpath(parent_pathname, child_pathname):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception.
+        raise exception_cls(
+            f'{exception_prefix}'
+            f'child path "{child_pathname}" is relative to '
+            f'parent path "{parent_pathname}".'
+        )
+    # Else, this child path is *NOT* a child of this parent path.
+
 # ....................{ RAISERS ~ dir                      }....................
+#FIXME: Unit test us up, please.
+def die_if_dir(
+    # Mandatory parameters.
+    dirname: PathnameLike,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilPathException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception of the passed type if a directory with the passed
+    dirname already exists.
+
+    Parameters
+    ----------
+    dirname : PathnameLike
+        Dirname to be validated.
+    exception_cls : Type[Exception], default: _BeartypeUtilPathException
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilPathException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixed raised exceptions messages. Defaults
+        to the empty string.
+
+    Raises
+    ------
+    exception_cls
+        If a directory with the passed dirname already exists.
+    '''
+    assert isinstance(dirname, PathnameLikeTuple), (
+        f'{repr(dirname)} neither string nor "Path" object.')
+
+    # High-level "Path" object encapsulating this dirname.
+    dirname_path = Path(dirname)
+
+    # If a directory with this dirname already exists...
+    if dirname_path.is_dir():
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise an exception.
+        raise exception_cls(
+            f'{exception_prefix}path "{dirname_path}" already directory.')
+    # Else, *NO* directory with this dirname exists.
+
+
 #FIXME: Unit test us up, please.
 def die_unless_dir(
     # Mandatory parameters.
@@ -32,6 +130,7 @@ def die_unless_dir(
 
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilPathException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception of the passed type if *no* directory with the passed
@@ -41,15 +140,20 @@ def die_unless_dir(
     ----------
     dirname : PathnameLike
         Dirname to be validated.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: _BeartypeUtilPathException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`._BeartypeUtilPathException`.
+    exception_prefix : str, default: ''
+        Human-readable substring prefixed raised exceptions messages. Defaults
+        to the empty string.
 
     Raises
     ------
     exception_cls
         If *no* directory with the passed dirname exists.
     '''
+    assert isinstance(dirname, PathnameLikeTuple), (
+        f'{repr(dirname)} neither string nor "Path" object.')
 
     # High-level "Path" object encapsulating this dirname.
     dirname_path = Path(dirname)
@@ -58,16 +162,20 @@ def die_unless_dir(
     # exists but this path is not a directory...
     if not dirname_path.is_dir():
         assert isinstance(exception_cls, type), (
-            f'{repr(exception_cls)} not type.')
+            f'{repr(exception_cls)} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
 
         # If no path with this pathname exists, raise an appropriate exception.
         if not dirname_path.exists():
-            raise exception_cls(f'Directory "{dirname_path}" not found.')
+            raise exception_cls(
+                f'{exception_prefix}directory "{dirname_path}" not found.')
         # Else, a path with this pathname exists.
 
         # By elimination, a path with this pathname exists but this path is not
         # a directory. In this case, raise an appropriate exception.
-        raise exception_cls(f'Path "{dirname_path}" not directory.')
+        raise exception_cls(
+            f'{exception_prefix}path "{dirname_path}" not directory.')
     # Else, a directory with this dirname exists.
 
 # ....................{ RAISERS ~ file                     }....................
@@ -168,3 +276,46 @@ def die_unless_file_executable(
         raise exception_cls(f'File "{filename_str}" not executable.')
     # Else, the current user has permission to execute this file. Ergo, this
     # file is an executable file with respect to this user.
+
+# ....................{ TESTERS ~ path                     }....................
+#FIXME: Unit test us up, please.
+def is_subpath(
+    parent_pathname: PathnameLike, child_pathname: PathnameLike) -> bool:
+    '''
+    :data:`True` only if the child path with the passed pathname is a **child**
+    (i.e., either a subdirectory *or* a file in a subdirectory) of the parent
+    path with the passed pathname.
+
+    Parameters
+    -----------
+    parent_dirname: PathnameLike
+        Absolute or relative dirname of the parent path to be tested.
+    child_dirname: PathnameLike
+        Absolute or relative dirname of the child path to be tested.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this child path is a child of this parent path.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/66626684/2809027
+        StackOverflow answer strongly inspiring this implementation.
+    '''
+    assert isinstance(parent_pathname, PathnameLikeTuple), (
+        f'{repr(parent_pathname)} neither string nor "Path" object.')
+    assert isinstance(child_pathname, PathnameLikeTuple), (
+        f'{repr(child_pathname)} neither string nor "Path" object.')
+
+    # High-level "Path" objects encapsulating these pathnames.
+    parent_path = Path(parent_pathname)
+    child_path = Path(child_pathname)
+
+    # Canonicalize these possibly relative pathnames into absolute pathnames,
+    # silently resolving both relative pathnames and symbolic links as needed.
+    parent_path = parent_path.resolve()
+    child_path = child_path.resolve()
+
+    # Return true only if this child path is a child of this parent path.
+    return child_path.is_relative_to(parent_path)

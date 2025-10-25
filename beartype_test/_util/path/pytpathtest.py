@@ -25,7 +25,7 @@ from pathlib import Path
 @callable_cached
 def get_test_package_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **top-level test
+    :class:`.Path` encapsulating the absolute dirname of the **top-level test
     package** (i.e., directory providing this project's top-level test package
     containing at least an ``__init__.py`` file) if found *or* raise an
     exception otherwise.
@@ -41,7 +41,7 @@ def get_test_package_dir() -> Path:
 @callable_cached
 def get_test_func_subpackage_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level
     functional test subpackage** (i.e., directory providing all functional
     tests of this project's test suite) if found *or* raise an exception
     otherwise.
@@ -54,7 +54,7 @@ def get_test_func_subpackage_dir() -> Path:
 @callable_cached
 def get_test_func_data_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level
     functional test data directory** (i.e., directory providing sample data
     used throughout this project's functional tests) if found *or* raise an
     exception otherwise.
@@ -63,11 +63,11 @@ def get_test_func_data_dir() -> Path:
     # Questionable destination!
     return DirRelative(get_test_func_subpackage_dir(), 'data')
 
-# ....................{ GETTERS ~ dir : func : api         }....................
+# ....................{ GETTERS ~ dir : func : lib         }....................
 @callable_cached
 def get_test_func_data_lib_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level
     third-party dependency functional test data directory** (i.e., directory
     providing sample data used throughout this project's functional tests
     exercising third-party dependencies) if found *or* raise an exception
@@ -81,7 +81,7 @@ def get_test_func_data_lib_dir() -> Path:
 @callable_cached
 def get_test_func_data_lib_nuitka_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **low-level nuitka
+    :class:`.Path` encapsulating the absolute dirname of the **low-level nuitka
     functional test data directory** (i.e., directory providing sample code
     used throughout this project's :mod:`nuitka`-specific functional tests) if
     found *or* raise an exception otherwise.
@@ -92,9 +92,22 @@ def get_test_func_data_lib_nuitka_dir() -> Path:
 
 
 @callable_cached
+def get_test_func_data_lib_poetry_dir() -> Path:
+    '''
+    :class:`.Path` encapsulating the absolute dirname of the **low-level Poetry
+    functional test data directory** (i.e., directory providing sample code
+    used throughout this project's :mod:`poetry`-specific functional tests) if
+    found *or* raise an exception otherwise.
+    '''
+
+    # Nascent ascendency!
+    return DirRelative(get_test_func_data_lib_dir(), 'poetry')
+
+
+@callable_cached
 def get_test_func_data_lib_sphinx_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **low-level Sphinx
+    :class:`.Path` encapsulating the absolute dirname of the **low-level Sphinx
     functional test data directory** (i.e., directory providing sample data
     used throughout this project's :mod:`sphinx`-specific functional tests) if
     found *or* raise an exception otherwise.
@@ -107,7 +120,7 @@ def get_test_func_data_lib_sphinx_dir() -> Path:
 @callable_cached
 def get_test_func_data_lib_nuitka_file() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute filename of the **low-level nuitka
+    :class:`.Path` encapsulating the absolute filename of the **low-level nuitka
     functional test data file** (i.e., file providing sample code used
     throughout this project's :mod:`nuitka`-specific functional tests) if found
     *or* raise an exception otherwise.
@@ -121,7 +134,7 @@ def get_test_func_data_lib_nuitka_file() -> Path:
 @callable_cached
 def get_test_unit_subpackage_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level unit test
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit test
     subpackage** (i.e., directory providing all unit tests of this project's
     test suite) if found *or* raise an exception otherwise.
     '''
@@ -133,7 +146,7 @@ def get_test_unit_subpackage_dir() -> Path:
 @callable_cached
 def get_test_unit_data_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level unit test
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit test
     data directory** (i.e., directory providing sample data used throughout this
     project's unit tests) if found *or* raise an exception otherwise.
     '''
@@ -145,7 +158,7 @@ def get_test_unit_data_dir() -> Path:
 @callable_cached
 def get_test_unit_data_claw_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level import
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level import
     hook unit test data directory** (i.e., directory providing sample data used
     throughout this project's unit tests exercising import hooks published by
     the :mod:`beartype.claw` subpackage) if found *or* raise an exception
@@ -159,7 +172,7 @@ def get_test_unit_data_claw_dir() -> Path:
 @callable_cached
 def get_test_unit_data_claw_extraprocess_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level
     extraprocess import hook unit test data directory** (i.e., directory
     providing sample data used throughout this project's unit tests exercising
     import hooks published by the :mod:`beartype.claw` subpackage in Python
@@ -174,7 +187,7 @@ def get_test_unit_data_claw_extraprocess_dir() -> Path:
 @callable_cached
 def get_test_unit_data_door_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level Decidedly
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level Decidedly
     Object-Oriented Runtime-checking (DOOR) unit test data directory** (i.e.,
     directory providing sample data used throughout this project's unit tests
     exercising type-checkers published by the :mod:`beartype.door` subpackage)
@@ -188,7 +201,7 @@ def get_test_unit_data_door_dir() -> Path:
 @callable_cached
 def get_test_unit_data_door_extraprocess_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level
     extraprocess Decidedly Object-Oriented Runtime-checking (DOOR) unit test
     data directory** (i.e., directory providing sample data used throughout this
     project's unit tests exercising type-checkers published by the

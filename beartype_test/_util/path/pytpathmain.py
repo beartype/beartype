@@ -28,7 +28,7 @@ from pathlib import Path
 @callable_cached
 def get_main_dir() -> Path:
     '''
-    :mod:`Path` encapsulating the absolute dirname of the **top-level project
+    :class:`.Path` encapsulating the absolute dirname of the **top-level project
     directory** (i.e., directory containing both a ``.git/`` subdirectory and a
     subdirectory providing this project's package) if found *or* raise an
     exception otherwise.
