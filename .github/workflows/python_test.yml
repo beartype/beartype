@@ -104,14 +104,7 @@ jobs:
         #   POSIX-compliant low-level similarities to Linux, but... what the
         #   heck. Why not? Since this is the lowest priority, we defer macOS
         #   testing until last.
-
-        #FIXME: Uncomment after "beartype.claw" import hooks stop spuriously
-        #failing under macOS. Since *NO* macOS user has complained about severe
-        #breakage, this is almost certainly a GitHub Actions-specific non-issue.
-        #See also:
-        #    https://github.com/beartype/beartype/actions/runs/18812362487/job/53676546982
-        # platform: [ubuntu-latest, windows-latest, macos-latest]
-        platform: [ubuntu-latest, windows-latest]
+        platform: [ubuntu-latest, windows-latest, macos-latest]
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # WARNING: Changes to this section *MUST* be manually synchronized with:

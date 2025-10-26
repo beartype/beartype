@@ -48,8 +48,9 @@ def clean_claws_func() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     # exercise and which *MUST* be confined to a context manager for test
     # idempotency.
     from beartype_test.a90_func.data import claw
-    from beartype_test._util.data.pytdataclean import clean_data_claw_subpackage
+    from beartype_test._util.data.pytdataclean import (
+        data_claw_subpackage_cleaned)
 
     # Recursively remove *ALL* previously compiled bytecode files from both this
     # subpackage *and* *ALL* subsubpackages of this subpackage.
-    yield from clean_data_claw_subpackage(claw)
+    yield from data_claw_subpackage_cleaned(claw)

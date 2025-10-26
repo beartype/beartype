@@ -50,8 +50,8 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
 
     Motivation
     ----------
-    This cache provides an efficient ``O(1)`` alternative to the comparatively
-    less efficient
+    This cache provides an efficient :math:`O(1)` alternative to the
+    comparatively less efficient
     :func:`beartype.claw._package.clawpkgtrie.get_package_conf_or_none` function,
     which exhibits worst-case runtime complexity of ``O(k)`` for ``k`` the
     maximum depth of our global package trie. Doing so enables the

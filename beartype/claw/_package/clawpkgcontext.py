@@ -14,23 +14,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawstate import (
-    claw_lock,
-    claw_state,
-)
 from beartype.claw._package.clawpkgtrie import (
-    die_if_packages_trie,
-    remove_beartype_pathhook_unless_packages_trie,
-)
+    remove_beartype_pathhook_unless_packages_trie)
 from beartype.typing import (
     Iterator,
     Optional,
 )
-from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
+from beartype._conf.confmain import BeartypeConf
 from contextlib import contextmanager
 
 # ....................{ CONTEXTS                           }....................
+#FIXME: Highly non-ideal. As defined, this context manager currently fails to
+#behave as expected by users. This context manager claims to be thread-safe, but
+#almost certainly isn't. Why? Because it registers the beartype_all() hook --
+#which then applies to *ALL* threads. Ideally, this context manager should
+#*ONLY* apply to the current thread of operation.
 #FIXME: Unit test us up, please.
 @contextmanager
 def beartyping(
@@ -83,6 +82,10 @@ def beartyping(
 
     # Avoid circular import dependencies.
     from beartype.claw import beartype_all
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
 
     # Prior global beartype configuration registered by a prior call to the
     # beartype_all() function if any *OR* "None" otherwise.
@@ -127,15 +130,17 @@ def beartyping(
             # conflicting beartype configuration. In this case, preserve that
             # configuration as is.
 
-
+# ....................{ CONTEXTS ~ test                    }....................
 #FIXME: Unit test us up, please.
 @contextmanager
-def packages_trie_cleared() -> Iterator[None]:
+def packages_trie_reverted() -> Iterator[None]:
     '''
-    Test-specific context manager reverting (i.e., clearing, resetting) the
-    :data:`beartype.claw._package.clawpkgtrie.packages_trie_whitelist` global
-    back to its initial state *after* running the body of the caller-defined
-    ``with beartyping(...):`` block.
+    Test-specific context manager reverting (i.e., clearing, resetting) *all*
+    **import hook global state** (i.e., the contents of the
+    :data:`beartype.claw._clawstate.claw_state` global dataclass) back to its
+    **prior state** (i.e., the state *before* invoking this context manager)
+    *after* running the body of the caller-defined ``with
+    packages_trie_reverted(...):`` block.
 
     This context manager is thread-safe.
 
@@ -153,10 +158,19 @@ def packages_trie_cleared() -> Iterator[None]:
     '''
     # print('Clearing "beartype.claw" state...')
 
-    # If one or more packages are still registered by a prior call to a beartype
-    # import hook, raise an exception.
-    die_if_packages_trie()
-    # Else, *NO* packages are still registered.
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
+
+    # With a submodule-specific thread-safe reentrant lock, capture the prior
+    # global state of the "beartype.claw" subpackage *BEFORE* performing the
+    # caller-defined body of the parent "with" statement.
+    with claw_lock:
+        #FIXME: *UHM. NO. WE NOW NEED TO MAKE A DEEP COPY OF THIS ENTIRE
+        #FRIGGIN' DATA STRUCTURE.* Oh, boy. *sigh*
+        claw_state_prior = claw_state.copy_deep()
 
     # Perform the caller-defined body of the parent "with" statement.
     try:
@@ -165,7 +179,28 @@ def packages_trie_cleared() -> Iterator[None]:
     finally:
         # print(f'claw_state [after test]: {repr(claw_state)}')
 
-        # With a submodule-specific thread-safe reentrant lock, reset our import
-        # hook state back to its initial defaults.
+        # With a submodule-specific thread-safe reentrant lock...
         with claw_lock:
+            #FIXME: *UHM. NO. WE NOW NEED TO RESTORE THE DEEP COPY MADE ABOVE.*
+            #This is sorta trivial, but sorta not. For safety, we probably want
+            #to define a new *THREAD-SAFE* utility function in the "_clawstate"
+            #submodule resembling:
+            #    def set_claw_state(claw_state_new: BeartypeClawState) -> None:
+            #        assert isinstance(claw_state_new, BeartypeClawState), (
+            #            f'{repr(claw_state_new)} not "beartype.claw" state.')
+            #
+            #        global claw_state
+            #
+            #        with claw_lock:
+            #            claw_state = claw_state_new
+
+            # Restore the global state of the "beartype.claw" subpackage back to
+            # its prior state *BEFORE* performing the caller-defined body of the
+            # parent "with" statement.
             claw_state.reinit()
+
+            # If *NO* packages are currently hooked by "beartype.claw" import
+            # hooks, remove the beartype import path hook added by any import
+            # hooks registered by the caller-defined body of the parent "with"
+            # statement. Phew!
+            remove_beartype_pathhook_unless_packages_trie()

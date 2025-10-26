@@ -22,7 +22,7 @@ def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
     pure-Python bytecode compiled to platform-dependent temporary files residing
-    in temporary ``__pycache__/`` subdirectories) of the test-specific
+    in temporary ``__pycache__/`` subdirectories) from the test-specific
     :mod:`beartype_test.a00_unit.data` subpackage and all subsubpackages of that
     subpackage regardless of depth.
 
@@ -48,8 +48,9 @@ def clean_claws_unit() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     # exercise and which *MUST* be confined to a context manager for test
     # idempotency.
     from beartype_test.a00_unit.data import claw
-    from beartype_test._util.data.pytdataclean import clean_data_claw_subpackage
+    from beartype_test._util.data.pytdataclean import (
+        data_claw_subpackage_cleaned)
 
-    # Recursively remove *ALL* previously compiled bytecode files from both this
-    # subpackage *and* *ALL* subsubpackages of this subpackage.
-    yield from clean_data_claw_subpackage(claw)
+    # Recursively remove all previously compiled bytecode files from both this
+    # subpackage *AND* sub-subpackages of this subpackage.
+    yield from data_claw_subpackage_cleaned(claw)

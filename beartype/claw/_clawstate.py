@@ -87,6 +87,8 @@ class BeartypeClawState(object):
 
     # ..................{ CLASS VARIABLES                    }..................
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: When adding a new slot, ensure that the copy_deep() method
+    # defined below deeply copies that slot as well.
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
@@ -168,6 +170,34 @@ class BeartypeClawState(object):
         # been added (e.g., by a prior call to an import hook) *OR* silently
         # reduce to a noop otherwise.
         remove_beartype_pathhook()
+
+    # ..................{ COPIERS                            }..................
+    #FIXME: Unit test us up, please.
+    def copy_deep(self) -> 'BeartypeClawState':
+        '''
+        Deep copy of this beartype import hook state.
+        '''
+
+        # New initially empty beartype import hook state.
+        claw_state_copy = BeartypeClawState()
+
+        #FIXME: Deeply copy all of the remaining stuff, including:
+        #* "module_name_to_beartype_conf".
+        #* "node_scope_beforelist_global".
+
+        # Deeply copy *ALL* container-specific instance variables necessitating
+        # a deep copy from the current beartype import hook state into this
+        # copy.
+        claw_state_copy.packages_trie_blacklist = (
+            self.packages_trie_blacklist.copy_deep())
+        claw_state_copy.packages_trie_whitelist = (
+            self.packages_trie_whitelist.copy_deep())
+
+        # Shallowly copy *ALL* remaining instance variables.
+        claw_state_copy.beartype_pathhook = self.beartype_pathhook
+
+        # Return this deep copy.
+        return claw_state_copy
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
