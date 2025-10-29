@@ -96,6 +96,11 @@ jobs:
         uses: 'actions/setup-python@v6'
         with:
           python-version: '3.x'
+      - name: 'Installing uv...'
+        uses: 'astral-sh/setup-uv@v5'
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
       - name: 'Displaying Python metadata...'
         run: |
           python3 -VV
@@ -149,7 +154,7 @@ jobs:
       #       mkdocs-material-
 
       # ..................{ INSTALL                          }..................
-      # Install "pip"-based Python dependencies. Note that:
+      # Install "uv"-based Python dependencies. Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
       #   * POSIX-noncompliant platforms (e.g., Windows).
@@ -160,7 +165,7 @@ jobs:
       - name: "Upgrading packager dependencies..."
         run: |
           set -xe
-          python3 -m pip --quiet install --upgrade pip hatch wheel
+          uv pip install --system --upgrade pip hatch wheel
 
       # Install all documentation-time dependencies required to generate
       # documentation for this project. Technically, this also uselessly
@@ -174,7 +179,7 @@ jobs:
       - name: "Installing package dependencies..."
         run: |
           set -xe
-          python3 -m pip --quiet install -e .[doc-ghp]
+          uv pip install --system -e .[doc-ghp]
 
       # ..................{ DOCUMENTATION                    }..................
       # Generate the MkDocs-driven static site for this repository in the local

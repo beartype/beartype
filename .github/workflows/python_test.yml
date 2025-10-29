@@ -260,13 +260,11 @@ jobs:
         with:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
-
-          # Temporarily cache third-party packages subsequently installed by
-          # "pip" below. This action intelligently defines the cache key to be
-          # hashed against the top-level "pyproject.toml" file and thus silently
-          # clears this cache on each change to that file. See also:
-          #     https://github.com/actions/setup-python?tab=readme-ov-file#caching-packages-dependencies
-          cache: 'pip'
+      - name: 'Installing uv...'
+        uses: 'astral-sh/setup-uv@v5'
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
       - name: 'Displaying Python metadata...'
         run: |
           python3 -VV
@@ -280,7 +278,7 @@ jobs:
           python3 -c "import sysconfig; print('Py_GIL_DISABLED:', sysconfig.get_config_var('Py_GIL_DISABLED'))"
 
       # ..................{ INSTALL                          }..................
-      # Install "pip"-based Python dependencies. Note that:
+      # Install "uv"-based Python dependencies. Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
       #   * POSIX-noncompliant platforms (e.g., Windows).
@@ -290,10 +288,10 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
-          python3 -m pip --quiet install --upgrade pip hatch wheel
+          uv pip install --system --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
         run: |
-          python3 -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
+          uv pip install --system --upgrade ${{ env._PIP_PACKAGE_NAMES }}
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
@@ -333,7 +331,7 @@ jobs:
           # "typing.TypeForm" hint factory under Python >= 3.14 backported as
           # "typing_extensions.TypeForm" to prior Python versions). Ergo,
           # "typing-extensions" need *NOT* be explicitly specified here.
-          python3 -m pip --quiet install mypy
+          uv pip install --system mypy
           # Log this "mypy" version for debuggability.
           python3 -m mypy --version
           # Run this "mypy" instance against our main package.
