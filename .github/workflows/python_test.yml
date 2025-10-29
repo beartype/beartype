@@ -37,6 +37,8 @@ on:
   pull_request:
     branches:
       - main  # '**'
+  # Enable manual workflow triggering from the Actions tab.
+  workflow_dispatch:
 
 # ....................{ VARIABLES                          }....................
 # List of private environment variables specific to this configuration and
