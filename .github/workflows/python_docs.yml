@@ -97,10 +97,15 @@ jobs:
         with:
           python-version: '3.x'
       - name: 'Installing uv...'
-        uses: 'astral-sh/setup-uv@v5'
+        uses: 'astral-sh/setup-uv@v7'
         with:
+          # Temporarily cache third-party packages subsequently installed by
+          # "uv pip" below. This action intelligently defines the cache key to
+          # be hashed against the top-level "pyproject.toml" file and thus
+          # silently clears this cache on each change to that file. See also:
+          #     https://github.com/actions/setup-python?tab=readme-ov-file#caching-packages-dependencies
           enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
+          cache-dependency-glob: 'pyproject.toml'
       - name: 'Displaying Python metadata...'
         run: |
           python3 -VV
@@ -154,7 +159,7 @@ jobs:
       #       mkdocs-material-
 
       # ..................{ INSTALL                          }..................
-      # Install "uv"-based Python dependencies. Note that:
+      # Install "pip"-based Python dependencies. Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
       #   * POSIX-noncompliant platforms (e.g., Windows).
@@ -165,7 +170,7 @@ jobs:
       - name: "Upgrading packager dependencies..."
         run: |
           set -xe
-          uv pip install --system --upgrade pip hatch wheel
+          uv pip install --quiet --system --upgrade pip hatch wheel
 
       # Install all documentation-time dependencies required to generate
       # documentation for this project. Technically, this also uselessly
@@ -179,7 +184,7 @@ jobs:
       - name: "Installing package dependencies..."
         run: |
           set -xe
-          uv pip install --system -e .[doc-ghp]
+          uv pip install --quiet --system -e .[doc-ghp]
 
       # ..................{ DOCUMENTATION                    }..................
       # Generate the MkDocs-driven static site for this repository in the local

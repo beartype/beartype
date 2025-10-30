@@ -375,8 +375,8 @@ by starlight, we all howl to commit by dawn.
    :alt: Beartype stargazers
 
 .. # ------------------( IMAGES ~ badge                      )------------------
-.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
-   :target: https://github.com/beartype/beartype/actions?workflow=test
+.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/tests/badge.svg
+   :target: https://github.com/beartype/beartype/actions?workflow=tests
    :alt: beartype continuous integration (CI) status
 .. |codecov-badge| image:: https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ
    :target: https://codecov.io/gh/beartype/beartype
