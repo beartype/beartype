@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hints test data.**
+Test-wide **PEP-compliant type hints test data.**
 
 This submodule predefines low-level global constants whose values are
 PEP-compliant type hints, exercising known edge cases on behalf of higher-level

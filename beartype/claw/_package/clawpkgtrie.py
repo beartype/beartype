@@ -201,16 +201,19 @@ class PackagesTrieBlacklist(PackageBasenameToTrieBlacklist):
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
-    def copy_deep(self) -> 'PackagesTrieBlacklist':
-        '''
-        Deep copy of this packages trie blacklist.
-        '''
-
-        # Create and return a new deep copy of this packages trie blacklist.
-        return PackagesTrieBlacklist(
-            package_basename=self.package_basename,
-            subpackage_basename_to_trie=self,
-        )
+    #FIXME: Comment out all of this for the moment, please. This method isn't
+    #implemented correctly at the moment, sadly. It needs to call itself
+    #recursively. It currently doesn't. Thus, we all sigh. *sigh*
+    # def copy_deep(self) -> 'PackagesTrieBlacklist':
+    #     '''
+    #     Deep copy of this packages trie blacklist.
+    #     '''
+    #
+    #     # Create and return a new deep copy of this packages trie blacklist.
+    #     return PackagesTrieBlacklist(
+    #         package_basename=self.package_basename,
+    #         subpackage_basename_to_trie=self,
+    #     )
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:
@@ -387,16 +390,19 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
-    def copy_deep(self) -> 'PackagesTrieWhitelist':
-        '''
-        Deep copy of this packages trie whitelist.
-        '''
-
-        # Create and return a new deep copy of this packages trie whitelist.
-        return PackagesTrieWhitelist(
-            conf_if_hooked=self.conf_if_hooked,
-            package_basename=self.package_basename,
-        )
+    #FIXME: Comment out all of this for the moment, please. This method isn't
+    #implemented correctly at the moment, sadly. It needs to call itself
+    #recursively. It currently doesn't. Thus, we all sigh. *sigh*
+    # def copy_deep(self) -> 'PackagesTrieWhitelist':
+    #     '''
+    #     Deep copy of this packages trie whitelist.
+    #     '''
+    #
+    #     # Create and return a new deep copy of this packages trie whitelist.
+    #     return PackagesTrieWhitelist(
+    #         conf_if_hooked=self.conf_if_hooked,
+    #         package_basename=self.package_basename,
+    #     )
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:

@@ -55,7 +55,8 @@ usability, unsubstantiated jargon we just made up, and thrilling puns.
 .. code-block:: bash
 
    # Install beartype.
-   $ pip3 install beartype
+   $ pip install beartype
+
    # Edit the "{your_package}.__init__" submodule with your favourite IDE.
    $ vim {your_package}/__init__.py      # <-- so, i see that you too vim
 

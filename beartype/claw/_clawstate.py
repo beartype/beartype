@@ -173,31 +173,35 @@ class BeartypeClawState(object):
 
     # ..................{ COPIERS                            }..................
     #FIXME: Unit test us up, please.
-    def copy_deep(self) -> 'BeartypeClawState':
-        '''
-        Deep copy of this beartype import hook state.
-        '''
-
-        # New initially empty beartype import hook state.
-        claw_state_copy = BeartypeClawState()
-
-        #FIXME: Deeply copy all of the remaining stuff, including:
-        #* "module_name_to_beartype_conf".
-        #* "node_scope_beforelist_global".
-
-        # Deeply copy *ALL* container-specific instance variables necessitating
-        # a deep copy from the current beartype import hook state into this
-        # copy.
-        claw_state_copy.packages_trie_blacklist = (
-            self.packages_trie_blacklist.copy_deep())
-        claw_state_copy.packages_trie_whitelist = (
-            self.packages_trie_whitelist.copy_deep())
-
-        # Shallowly copy *ALL* remaining instance variables.
-        claw_state_copy.beartype_pathhook = self.beartype_pathhook
-
-        # Return this deep copy.
-        return claw_state_copy
+    #FIXME: Comment out all of this for the moment, please. That includes the
+    #copy_deep() methods implemented below as well. They're not implemented
+    #correctly at the moment, sadly. They need to call themselves recursively.
+    #They don't. Thus, we all sigh. *sigh*
+    # def copy_deep(self) -> 'BeartypeClawState':
+    #     '''
+    #     Deep copy of this beartype import hook state.
+    #     '''
+    #
+    #     # New initially empty beartype import hook state.
+    #     claw_state_copy = BeartypeClawState()
+    #
+    #     #FIXME: Deeply copy all of the remaining stuff, including:
+    #     #* "module_name_to_beartype_conf".
+    #     #* "node_scope_beforelist_global".
+    #
+    #     # Deeply copy *ALL* container-specific instance variables necessitating
+    #     # a deep copy from the current beartype import hook state into this
+    #     # copy.
+    #     claw_state_copy.packages_trie_blacklist = (
+    #         self.packages_trie_blacklist.copy_deep())
+    #     claw_state_copy.packages_trie_whitelist = (
+    #         self.packages_trie_whitelist.copy_deep())
+    #
+    #     # Shallowly copy *ALL* remaining instance variables.
+    #     claw_state_copy.beartype_pathhook = self.beartype_pathhook
+    #
+    #     # Return this deep copy.
+    #     return claw_state_copy
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:

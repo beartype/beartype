@@ -36,6 +36,7 @@ def hints_nonpep_meta() -> 'Tuple[HintNonpepMetadata]':
         # PEP-compliant type hints.
         'beartype_test.a00_unit.data.hint.nonpep.beartype._data_nonpepbeartype.hints_nonpepbeartype_meta',
         'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484.hints_nonpep484_meta',
+        'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep695.hints_nonpep695_meta',
     ))
 
     # ..................{ YIELD                              }..................

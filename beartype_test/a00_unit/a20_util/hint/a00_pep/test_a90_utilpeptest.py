@@ -163,7 +163,7 @@ def test_is_hint_pep_subbed(hints_pep_meta, hints_nonpep_meta) -> None:
 #     from beartype._util.hint.pep.utilpeptest import is_hint_pep_uncached
 #     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 #     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-#     from beartype_test.a00_unit.data.hint.pep.data_pep import (
+#     from beartype_test.a00_unit.data.hint.pep.data_pepfixture import (
 #         HINTS_PEP_META)
 #
 #     # Assert this tester accepts concrete PEP-compliant type hints.

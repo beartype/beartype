@@ -33,7 +33,7 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 # ....................{ TESTS ~ reducers                   }....................
 #FIXME: This unit test is getting a bit long in the tooth. Consider splitting
 #into smaller PEP-specific unit tests using the same pseudo-fixture approach as
-#implemented by the "beartype_test.a00_unit.data.hint.pep.data_pep" submodule.
+#implemented by the "beartype_test.a00_unit.data.hint.pep.data_pepfixture" submodule.
 def test_reduce_hint() -> None:
     '''
     Test the private

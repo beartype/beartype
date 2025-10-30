@@ -19,6 +19,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import HintPep646TypeVarTupleType
+from beartype._data.cls.datacls import TYPES_NONPEP_TYPEARGS_PACKED
 from beartype._data.typing.datatypingport import (
     Hint,
     HintOrNone,
@@ -352,8 +353,12 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
     singleton objects defined by the :mod:`typing` module (e.g.,
     :attr:`typing.Any`, :attr:`typing.NoReturn`) fail to define this attribute,
     guaranteeing :class:`AttributeError` exceptions from all general-purpose
-    logic attempting to directly access this attribute. Thus this function,
-    which "fills in the gaps" by implementing this oversight.
+    logic attempting to directly access this attribute. Likewise, still other
+    singleton objects defined by the :mod:`typing` module (e.g.,
+    :attr:`typing.TypeAliasType`, :attr:`typing.Union`) define this attribute to
+    be non-standard C-based class slots of some obscure type rather than
+    standard tuples of type parameters. Thus this function, which "fills in the
+    gaps" by circumventing these oversights.
 
     **Generics** (i.e., PEP-compliant type hints whose classes subclass one or
     more public :mod:`typing` pseudo-superclasses) are often but *not* always
@@ -455,16 +460,39 @@ def get_hint_pep_typeargs_packed(hint: Hint) -> TuplePep484612646TypeArgsPacked:
         # valid hints, this "__parameters__" implementation is *TECHNICALLY*
         # also valid albeit semantically meaningless. In this case, simply
         # return the empty tuple.
-        if hint is Union:
+
+        # If this hint is...
+        if (
+            # A type *AND*...
+            isinstance(hint, type) and
+            # This is a standard type well-known to violate PEP standards by
+            # defining the "__parameters__" dunder attribute to *NOT* be a tuple
+            # of PEP-compliant packed type parameters.
+            hint in TYPES_NONPEP_TYPEARGS_PACKED
+        ):
+            # Then is a probably an unsubscripted standard type hint factory
+            # (e.g., "typing.Union") semantically equivalent to a valid hint
+            # (e.g., "typing.Union[typing.Any]"). This factory is probably
+            # implemented as a C-based type whose "__parameters__" dunder
+            # attribute is implemented as a C-based slotted class attribute of
+            # some obscure type. Since this type is a valid hint, this otherwise
+            # PEP-noncompliant "__parameters__" dunder attribute is technically
+            # PEP-compliant (for certain broad definitions) despite being
+            # semantically meaningless. Silently coerce this PEP-noncompliance
+            # into PEP-compliance by reducing to the empty tuple.
             return ()
-        # Else, this hint is *NOT* the unsubscripted "typing.Union" hint. In
-        # this case, raise an exception.
-        else:
-            raise BeartypeDecorHintPepException(
-                f'PEP-noncompliant hint {repr(hint)} '
-                f'"__parameters__" dunder attribute {repr(hint_typeargs)} '
-                f'invalid (i.e., not tuple of child hints).'
-            )
+        # Else, this hint either is not a type *OR* is a user-defined type. In
+        # either case, this hint defines an invalid "__parameters__" dunder
+        # attribute and is thus PEP-noncompliant.
+
+        # Raise an exception as a necessary fallback for safety.
+        raise BeartypeDecorHintPepException(
+            f'PEP-noncompliant hint {repr(hint)} '
+            f'"__parameters__" dunder attribute value '
+            f'{repr(hint_typeargs)} '
+            f'invalid (i.e., not tuple of '
+            f'PEP 484-, 612-, or PEP 646-compliant type parameters).'
+        )
 
     # Return this attribute.
     return hint_typeargs

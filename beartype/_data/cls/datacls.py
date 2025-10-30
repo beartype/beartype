@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     ForwardRef,
     Generic,
+    Union,
 
     # The non-standard "beartype.typing.Protocol" superclass subclasses the
     # standard "typing.Protocol" superclass. Since "typing.Protocol" is the
@@ -28,6 +29,7 @@ from beartype._cave._cavefast import (
     ClassType,
     EnumMemberType,
     FunctionType,
+    HintPep695TypeAlias,
     # MethodBoundInstanceOrClassType,
     MethodDecoratorBuiltinTypes,
     # ModuleType,
@@ -168,7 +170,47 @@ exceptions raised when a **namespace** (e.g., global or local scope, class or
 object dictionary) fails to define a given attribute or name).
 '''
 
-# ....................{ PEP ~ 484                          }....................
+# ....................{ TYPES ~ non-pep                    }....................
+TYPES_NONPEP_TYPEARGS_PACKED = frozenset((
+    # ....................{ PEP (484|604)                  }....................
+    # The PEP 484- and 604-compliant unsubscripted "typing.Union" hint
+    # semantically equivalent to the subscripted "typing.Union[typing.Any]" hint
+    # is a valid C-based type whose whose "__parameters__" dunder attribute is a
+    # C-based slotted class attribute of some obscure type under Python >= 3.14:
+    #     >>> from typing import Union
+    #     >>> Union.__parameters__
+    #     <attribute '__parameters__' of 'typing.Union' objects>
+    Union,
+
+    # ....................{ PEP 695                        }....................
+    # The PEP 695-compliant "typing.TypeAliasType" type of all PEP 695-compliant
+    # type aliases of the syntactic form "type = {alias}" is a valid C-based
+    # type whose whose "__parameters__" dunder attribute is a C-based slotted
+    # class attribute of some obscure type under Python >= 3.12:
+    #     >>> from typing import TypeAliasType
+    #     >>> TypeAliasType.__parameters__
+    #     <attribute '__parameters__' of 'typing.TypeAliasType' objects>
+    HintPep695TypeAlias,
+))
+'''
+Frozen set of all **PEP-noncompliant packed type parameters types** (i.e.,
+standard types well-known to violate PEP standards by defining the
+``__parameters__`` dunder attribute to *not* be a tuple of :pep:`484`-,
+:pep:`612`-, and :pep:`646`-compliant packed type parameters).
+
+These types are typically C-based unsubscripted type hint factories defined by
+the private standard :class:`_typing` C extension. For unknown (and presumably
+uninteresting) reasons, these factories define the ``__parameters__`` dunder
+attribute to be a C-based slotted class attribute of some obscure type rather
+than a tuple -- fundamentally violating :pep:`484`, :pep:`612`, and :pep:`646`.
+
+When passed any of these types, the
+:func:`beartype._util.hint.pep.utilpepget.get_hint_pep_typeargs_packed` getter
+ignores erroneous ``__parameters__`` dunder attributes defined on these types by
+returning the empty tuple (rather than raising obscure exceptions).
+'''
+
+# ....................{ TYPES ~ pep : 484                  }....................
 TYPES_PEP484_GENERIC_IO = frozenset((BinaryIO, IO, TextIO,))
 '''
 Frozen set of all :pep:`484`-compliant **I/O generics** (i.e., public
@@ -180,7 +222,7 @@ Note that these generics are *not* :pep:`544`-compliant protocols. These
 generics are thus mostly useless for most real-world purposes.
 '''
 
-# ....................{ PEP ~ (484|585)                    }....................
+# ....................{ TYPES ~ pep : (484|585)            }....................
 TYPES_PEP484585_REF = (str, ForwardRef)
 '''
 Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
@@ -202,7 +244,7 @@ approach is the demonstrably wrong approach, because encapsulating strings only
 harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
-# ....................{ PEP ~ 544                          }....................
+# ....................{ TYPES ~ pep : 544                  }....................
 #FIXME: *YIKES.* This omits "typing_extensions.Protocol", which is a distinct
 #type from "typing.Protocol". *sigh*
 
@@ -226,7 +268,7 @@ Frozen set of all **generic superclasses** (i.e., types defined by the standard
 :pep:`484`-compliant generics and/or :pep:`544`-compliant protocols).
 '''
 
-# ....................{ PEP ~ 586                          }....................
+# ....................{ TYPES ~ pep : 586                  }....................
 TYPES_PEP586_ARG = (bool, bytes, int, str, EnumMemberType, NoneType)
 '''
 Tuple of the types of all objects permissible as arguments subscripting the

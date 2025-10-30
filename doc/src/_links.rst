@@ -280,7 +280,7 @@
 .. _Python:
    https://www.python.org
 .. _Python status:
-   https://devguide.python.org/#status-of-python-branches
+   https://devguide.python.org/versions/#versions
 .. _pip:
    https://pip.pypa.io
 

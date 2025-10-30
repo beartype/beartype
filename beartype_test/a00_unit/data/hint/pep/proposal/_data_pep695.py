@@ -37,6 +37,7 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
         FrozenDict,
     )
     from beartype.typing import Any
+    from beartype._cave._cavefast import HintPep695TypeAlias
     from beartype._data.hint.sign.datahintsigns import (
         HintSignPep695TypeAliasSubscripted,
         HintSignPep695TypeAliasUnsubscripted,

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide  **forward reference data submodule.**
+Test-wide **forward reference data submodule.**
 
 This submodule exercises **forward reference type hints** (i.e., strings whose
 values are the names of classes and tuples of classes, one or more of which

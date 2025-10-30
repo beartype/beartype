@@ -164,13 +164,17 @@ def packages_trie_reverted() -> Iterator[None]:
         claw_state,
     )
 
-    # With a submodule-specific thread-safe reentrant lock, capture the prior
-    # global state of the "beartype.claw" subpackage *BEFORE* performing the
-    # caller-defined body of the parent "with" statement.
-    with claw_lock:
-        #FIXME: *UHM. NO. WE NOW NEED TO MAKE A DEEP COPY OF THIS ENTIRE
-        #FRIGGIN' DATA STRUCTURE.* Oh, boy. *sigh*
-        claw_state_prior = claw_state.copy_deep()
+    #FIXME: Uncomment this *AFTER*:
+    #* Correctly implementing the copy_deep() method called below. *sigh*
+    #* Defining and calling the set_claw_state() function documented below.
+    # # With a submodule-specific thread-safe reentrant lock, capture the prior
+    # # global state of the "beartype.claw" subpackage *BEFORE* performing the
+    # # caller-defined body of the parent "with" statement.
+    # with claw_lock:
+    #     # Deep copy of the current beartype import hook state, enabling this
+    #     # context manager below to transparently restore this state *BEFORE*
+    #     # returning.
+    #     claw_state_prior = claw_state.copy_deep()
 
     # Perform the caller-defined body of the parent "with" statement.
     try:
