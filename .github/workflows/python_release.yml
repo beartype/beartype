@@ -123,6 +123,11 @@ jobs:
         uses: 'actions/setup-python@v6'
         with:
           python-version: '3.x'
+      - name: 'Installing uv...'
+        uses: 'astral-sh/setup-uv@v5'
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
 
       # See "python_test.yml" for further details.
       - name: 'Upgrading packager dependencies...'
@@ -130,7 +135,7 @@ jobs:
           set -xe
           python -VV
           python -m site
-          python -m pip --quiet install --upgrade pip hatch wheel
+          uv pip install --system --upgrade pip hatch wheel
       - name: "Creating source tarball and binary wheel..."
         run: |
           set -xe
