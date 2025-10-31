@@ -9,8 +9,19 @@ subprocesses of the active Python process).
 
 This private submodule is *not* intended for importation by downstream callers.
 
+Environment Variables
+---------------------
+Environment variables may be "passed" to external commands in various ways.
+With respect to test-specific command execution, the ideal approach is to (in
+order):
+
+#. Require the ``monkeypatch : 'pytest.MonkeyPatch'`` fixture.
+#. Call the ``monkeypatch.setenv({{env_name}}, {{env_value}})`` method as needed
+   to temporarily set all requisite environment variables immediately *before*
+   calling a command runner defined by this submodule.
+
 Command Words Arguments
-----------
+-----------------------
 Most runners accept a mandatory ``command_words`` parameter, a list of one or
 more shell words comprising this command whose:
 
@@ -35,7 +46,7 @@ more shell words comprising this command whose:
     shell-quoted.
 
 ``Popen()`` Keyword Arguments
-----------
+-----------------------------
 Most runners accept the same optional keyword arguments accepted by the
 :meth:`subprocess.Popen.__init__` constructor, including:
 
@@ -52,7 +63,7 @@ Most runners accept the same optional keyword arguments accepted by the
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
-    Iterable,
+    # Iterable,
     Mapping,
     Optional,
     Tuple,
@@ -143,14 +154,14 @@ def run_command_forward_stderr_return_stdout(
         which case the empty dictionary is assumed.
 
     Returns
-    ----------
+    -------
     str
         All standard output captured from this subprocess, stripped of all
         trailing newlines (as under most POSIX shells) *and* decoded with the
         current locale's preferred encoding (e.g., UTF-8).
 
     Raises
-    ----------
+    ------
     CalledProcessError
         If the subprocess running this command report non-zero exit status.
     '''
@@ -192,7 +203,7 @@ def run_command_forward_output(
         which case the empty dictionary is assumed.
 
     Raises
-    ----------
+    ------
     CalledProcessError
         If the subprocess running this command report non-zero exit status.
     '''
@@ -211,6 +222,7 @@ def run_command_forward_output(
     # run_command_forward_output_return_status() runner called above.
     if is_failure(exit_status):
         raise CalledProcessError(exit_status, command_words)
+    # Else, this command succeeded.
 
 
 #FIXME: Unit test us up, please.
@@ -228,7 +240,7 @@ def run_command_forward_output_return_status(
     and error file handles of the active Python process.
 
     Caveats
-    ----------
+    -------
     **This function raises no exceptions on subprocess failure.** To do so,
     consider calling the :func:`run_command_forward_output` function instead.
 
@@ -242,7 +254,7 @@ def run_command_forward_output_return_status(
         which case the empty dictionary is assumed.
 
     Returns
-    ----------
+    -------
     int
         Exit status returned by this subprocess.
     '''
@@ -291,7 +303,7 @@ def run_command_return_stdout_stderr(
         which case the empty dictionary is assumed.
 
     Returns
-    ----------
+    -------
     Tuple[str, str]
         All standard output and error (in that order) captured from this
         subprocess, stripped of all trailing newlines (as under most POSIX
@@ -299,7 +311,7 @@ def run_command_return_stdout_stderr(
         (e.g., UTF-8).
 
     Raises
-    ----------
+    ------
     CalledProcessError
         If the subprocess running this command reports non-zero exit status.
     '''
@@ -365,7 +377,7 @@ def _init_popen_kwargs(
     the passed shell words with the passed user-defined keyword arguments.
 
     Caveats
-    ----------
+    -------
     If the current platform is vanilla Windows *and* none of the ``stdin``,
     ``stdout``, ``stderr``, or ``close_fds`` parameters are passed, this
     function defaults the ``close_fds`` parameter if unpassed to :data:`False`.
@@ -408,7 +420,7 @@ def _init_popen_kwargs(
         which case the empty dictionary is assumed.
 
     Returns
-    ----------
+    -------
     _HINT_POPEN_KWARGS
         This dictionary of keyword arguments sanitized.
     '''

@@ -72,8 +72,8 @@ def beartype(
     # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
     if obj is not None:
         return beartype_object(obj, conf)
-    # Else, we were passed *NO* object to be decorated. In this case, this
-    # decorator is in configuration rather than decoration mode.
+    # Else, this decorator was passed *NO* object to be decorated. In this case,
+    # this decorator is in configuration rather than decoration mode.
 
     # Private decorator (possibly previously generated and cached by a prior
     # call to this decorator also in configuration mode) generically applying
@@ -94,7 +94,7 @@ def beartype(
 
     # Define a private decorator generically applying this configuration to any
     # beartypeable object passed to this decorator.
-    def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
+    def _beartype_confed(obj: BeartypeableT) -> BeartypeableT:
         '''
         Decorate the passed **beartypeable** (i.e., pure-Python callable or
         class) with optimal type-checking dynamically generated unique to
@@ -107,17 +107,17 @@ def beartype(
             Beartypeable to be decorated.
 
         Returns
-        ----------
+        -------
         BeartypeableT
             Either:
 
-            * If the passed object is a class, this existing class
-              embellished with dynamically generated type-checking.
-            * If the passed object is a callable, a new callable wrapping
-              that callable with dynamically generated type-checking.
+            * If the passed object is a class, this existing class embellished
+              with dynamically generated type-checking.
+            * If the passed object is a callable, a new callable wrapping that
+              callable with dynamically generated type-checking.
 
         See Also
-        ----------
+        --------
         :func:`beartype.beartype`
             Further details.
         '''
@@ -127,10 +127,10 @@ def beartype(
         return beartype_object(obj, conf)
 
     # Cache this private decorator against this configuration.
-    _bear_conf_to_decor[conf] = beartype_confed
+    _bear_conf_to_decor[conf] = _beartype_confed
 
     # Return this private decorator.
-    return beartype_confed
+    return _beartype_confed
 
 # ....................{ SINGLETONS                         }....................
 _bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
