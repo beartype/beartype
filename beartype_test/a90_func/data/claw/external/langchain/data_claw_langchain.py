@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **import hookable LangChain integration submodule** (i.e., data module
+Test-wide **import hookable LangChain integration submodule** (i.e., data module
 defining LangChain-specific Runnables decorated by the third-party
 decorator-hostile :func:`langchain_core.runnables.chain` decorator which the
 :mod:`beartype.beartype` decorator will then be injected *after* rather than

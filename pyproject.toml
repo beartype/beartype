@@ -354,8 +354,12 @@ test-tox = [
 
     # ....................{ CORE                           }....................
     # A relatively modern version of "pytest" is required. It's probably quite
-    # old by now. I feel depressed just reading comments like this...
-    "pytest >=4.0.0",
+    # old by now. I feel depressed just reading comments like this. Dismantled,
+    # this is:
+    # * "pytest 6.2.0" first publicized the "pytest.MonkeyPatch" object, which
+    #   previously was *ONLY* accessible via the "monkeypatch" fixture. Now,
+    #   this object is conveniently directly importable.
+    "pytest >=6.2.0",
 
     # ....................{ BUILD                          }....................
     # Build-centric optional test-time dependencies.

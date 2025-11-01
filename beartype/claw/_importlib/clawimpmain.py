@@ -4,13 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once low-level package name cache.**
-
-This private submodule caches package names on behalf of the higher-level
-:func:`beartype.claw.beartype_package` function. Beartype import
-path hooks internally created by that function subsequently lookup these package
-names from this cache when deciding whether or not (and how) to decorate a
-submodule being imported with :func:`beartype.beartype`.
+Beartype **import hook path hook registrars** (i.e., high-level functions both
+adding and removing our beartype import path hook singleton to and from the
+front of the standard :mod:`sys.path_hooks` list, which when added recursively
+applies the :func:`beartype.beartype` decorator to all well-typed callables and
+classes defined by all submodules of all packages previously registered by a
+call to a public :func:`beartype.claw` import hook).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -50,13 +49,13 @@ def add_beartype_pathhook() -> None:
     already been added).
 
     Caveats
-    ----------
+    -------
     **This function is non-thread-safe.** For both simplicity and efficiency,
     the caller is expected to provide thread-safety through a higher-level
     locking primitive managed by the caller.
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/43573798/2809027
         StackOverflow answer strongly inspiring the low-level implementation of
         this function with respect to inscrutable :mod:`importlib` machinery.
@@ -121,7 +120,7 @@ def remove_beartype_pathhook() -> None:
     yet to be added).
 
     Caveats
-    ----------
+    -------
     **This function is non-thread-safe.** For both simplicity and efficiency,
     the caller is expected to provide thread-safety through a higher-level
     locking primitive managed by the caller.
@@ -177,14 +176,14 @@ _LOADERS_DETAILS = (
 Tuple of all **file-based module loader details** (i.e., 2-tuple ``(file_loader,
 filetypes)`` of the undocumented format expected by the
 :meth:`FileFinder.path_hook` class method called by the
-:func:`beartype.claw._importlib.clawimppath.add_beartype_pathhook` function,
+:func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook` function,
 associating each file-based module loader with the platform-specific filetypes
 of all modules loaded by that module).
 
 We didn't do it. Don't blame the bear.
 
 See Also
-----------
+--------
 :func:`importlib.machinery._get_supported_file_loaders`
     Low-level private getter function strongly inspiring the definition of this
     global, which implements nearly identical functionality (albeit in a

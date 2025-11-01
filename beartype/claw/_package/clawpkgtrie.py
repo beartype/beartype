@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
+from beartype.claw._importlib.clawimpmain import remove_beartype_pathhook
 from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
     TYPE_CHECKING,
@@ -305,7 +305,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
         Either:
 
         * If this (sub)package has been explicitly registered by a prior call to
-          the :func:`beartype.claw._package.clawpkghook.hook_packages` function,
+          the :func:`beartype.claw._package.clawpkgmain.hook_packages` function,
           the beartype configuration encapsulating all settings configuring
           type-checking for this (sub)package.
         * Else, :data:`None`.
@@ -358,7 +358,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 
             * If this (sub)package has been explicitly registered by a prior
               call to the
-              :func:`beartype.claw._package.clawpkghook.hook_packages` function,
+              :func:`beartype.claw._package.clawpkgmain.hook_packages` function,
               the beartype configuration encapsulating all settings configuring
               type-checking for this (sub)package.
             * Else, :data:`None`.
@@ -423,7 +423,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 # def die_if_packages_trie() -> None:
 #     '''
 #     Raise an exception if one or more packages have been registered by a prior
-#     call to the :func:`beartype.claw._package.clawpkghook.hook_packages`
+#     call to the :func:`beartype.claw._package.clawpkgmain.hook_packages`
 #     function.
 #
 #     This raiser is thread-safe.
@@ -432,7 +432,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 #     ------
 #     BeartypeClawHookException
 #         If one or more packages have been registered by a prior call to the
-#         :func:`beartype.claw._package.clawpkghook.hook_packages` function.
+#         :func:`beartype.claw._package.clawpkgmain.hook_packages` function.
 #     '''
 #
 #     # Avoid circular import dependencies.
@@ -476,7 +476,7 @@ class PackagesTrieWhitelist(PackageBasenameToTrieWhitelist):
 def is_packages_trie() -> bool:
     '''
     :data:`True` only if one or more packages have been registered by a prior
-    call to the :func:`beartype.claw._package.clawpkghook.hook_packages`
+    call to the :func:`beartype.claw._package.clawpkgmain.hook_packages`
     function.
 
     Caveats
@@ -711,7 +711,7 @@ def iter_packages_trie(
     whitelist** (i.e., :class:`PackagesTrieWhitelist` instance) describing each
     transitive parent package of the package with the passed name if this
     package or a parent package of this package was hooked by a prior call to
-    the :func:`beartype.claw._package.clawpkghook.hook_packages` function *or*
+    the :func:`beartype.claw._package.clawpkgmain.hook_packages` function *or*
     the empty iterable otherwise otherwise (i.e., if neither this package nor a
     parent package of this package was hooked by such a call).
 

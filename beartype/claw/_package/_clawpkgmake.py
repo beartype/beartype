@@ -103,14 +103,14 @@ def make_package_names_from_args(
 ) -> Optional[IterableStrs]:
     '''
     Validate all parameters passed by the caller to the current call of the
-    parent :func:`beartype.claw._package.clawpkghook.hook_packages` or
-    :func:`beartype.claw._package.clawpkghook.unhook_packages` function.
+    parent :func:`beartype.claw._package.clawpkgmain.hook_packages` or
+    :func:`beartype.claw._package.clawpkgmain.unhook_packages` function.
 
     Parameters
     ----------
     All keyword-only parameters accepted by the current call of the
-    parent :func:`beartype.claw._package.clawpkghook.hook_packages` or
-    :func:`beartype.claw._package.clawpkghook.unhook_packages` function.
+    parent :func:`beartype.claw._package.clawpkgmain.hook_packages` or
+    :func:`beartype.claw._package.clawpkgmain.unhook_packages` function.
 
     Returns
     -------

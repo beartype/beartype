@@ -24,7 +24,7 @@ from beartype.claw._package._clawpkgmake import (
     make_conf_hookable,
     make_package_names_from_args,
 )
-from beartype.claw._importlib.clawimppath import (
+from beartype.claw._importlib.clawimpmain import (
     add_beartype_pathhook,
     # remove_beartype_pathhook,
 )
@@ -32,6 +32,7 @@ from beartype.roar import BeartypeClawHookException
 from beartype.typing import Optional
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import IterableStrs
+from beartype._util.py.utilpyinterpreter import is_python_optimized
 from collections.abc import (
     Iterable as IterableABC,
 )
@@ -115,6 +116,17 @@ def hook_packages(
     '''
     # print(f'[hook_packages]:')
 
+    # ....................{ PREAMBLE                       }....................
+    # If the active Python interpreter is optimized either at process-invocation
+    # time (e.g., by the user passing one or more "-O" command-line options *OR*
+    # setting the '${PYTHONOPTIMIZE}" environment variable to a positive integer
+    # when the active Python interpreter was forked) *OR* after
+    # process-invocation time (e.g., by the user setting the '${PYTHONOPTIMIZE}"
+    # environment variable to a positive integer in an interactive REPL). Our
+    # awesome userbase requested this.
+    if is_python_optimized():
+        return 
+
     # ....................{ IMPORTS                        }....................
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import claw_lock
@@ -133,6 +145,7 @@ def hook_packages(
         package_names=package_names,
     )
 
+    # ....................{ HOOKS                          }....................
     # With a submodule-specific thread-safe reentrant lock...
     with claw_lock:
         # ....................{ BLACKLIST                  }....................

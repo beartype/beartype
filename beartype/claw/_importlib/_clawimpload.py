@@ -197,7 +197,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._package.clawpkghook` submodule (e.g., by a call to
+        :mod:`beartype.claw._package.clawpkgmain` submodule (e.g., by a call to
         the :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been

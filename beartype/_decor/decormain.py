@@ -19,6 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
@@ -31,11 +32,7 @@ from collections.abc import Callable
 # Intentionally import the standard mypy-friendly @typing.overload decorator
 # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
 # which, in any case, would be needlessly inefficient and thus bad.
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-    overload,
-)
+from typing import overload
 
 # ....................{ OVERLOADS                          }....................
 # Declare PEP 484-compliant overloads to avoid breaking downstream code
@@ -58,34 +55,15 @@ def beartype(*, conf: BeartypeConf) -> (
     Callable[[BeartypeableT], BeartypeableT]): ...
 
 # ....................{ DECORATORS                         }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: *THE ORDER OF CONDITIONAL STATEMENTS BELOW IS SIGNIFICANT.* Notably,
-# mypy 0.940 erroneously emits this fatal error when the "TYPE_CHECKING or"
-# condition is *NOT* the first condition of this "if" statement:
-#     beartype/_decor/main.py:294: error: Condition can't be inferred, unable
-#     to merge overloads [misc]
-# See also: https://github.com/python/mypy/issues/12335#issuecomment-1065591703
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# If the active Python interpreter is either...
-if (
-    # Running under an external static type checker -- in which case there is
-    # *NO** benefit to attempting runtime type-checking whatsoever...
-    #
-    # Note that this test is largely pointless. By definition, static type
-    # checkers should *NOT* actually run any code -- merely parse and analyze
-    # that code. Ergo, this boolean constant should *ALWAYS* be false from the
-    # runtime context under which @beartype is only ever run. Nonetheless, this
-    # test is only performed once per process and is thus effectively free.
-    TYPE_CHECKING or
-    # Optimized at process invocation time (e.g., at least one "-O" command-line
-    # option was set when this interpreter forked) *OR*...
-    not __debug__ or
-    # Optimized *AFTER* process invocation time (e.g., in an interactive REPL by
-    # the external user). Yes, our awesome userbase actually requested this.
-    is_python_optimized()
-):
-# Then unconditionally disable @beartype-based type-checking across the entire
-# codebase by reducing the @beartype decorator to the identity decorator.
+# If the active Python interpreter is optimized either at process-invocation
+# time (e.g., by the user passing one or more "-O" command-line options *OR*
+# setting the '${PYTHONOPTIMIZE}" environment variable to a positive integer
+# when the active Python interpreter was forked) *OR* after process-invocation
+# time (e.g., by the user setting the '${PYTHONOPTIMIZE}" environment variable
+# to a positive integer in an interactive REPL), then unconditionally disable
+# @beartype-based type-checking across the entire codebase by reducing the
+# @beartype decorator to the identity decorator.
+#
 # Ideally, this would have been implemented at the top rather than bottom of
 # this submodule as a conditional resembling:
 #     if __debug__:
@@ -94,10 +72,11 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize the signature of this identity decorator with the
-# non-identity decorator imported below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if is_python_optimized():
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize the signature of this identity decorator with the
+    # non-identity decorator imported below.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def beartype(  # type: ignore[no-redef]
         obj: Optional[BeartypeableT] = None,
 
@@ -158,7 +137,7 @@ if (
 # case, define the @beartype decorator in the standard way.
 else:
     # This is where @beartype *REALLY* lives. Grep here for all the goods.
-    from beartype._decor.decorcache import beartype
+    from beartype._decor.decorcache import beartype  # type: ignore[no-redef]
 
 # ....................{ DECORATORS ~ doc                   }....................
 # Document the @beartype decorator with the same documentation regardless of
@@ -220,7 +199,7 @@ beartype.__doc__ = (
         configuration.
 
     Returns
-    ----------
+    -------
     BeartypeReturn
         Either:
 
@@ -237,7 +216,7 @@ beartype.__doc__ = (
           configuration.
 
     Raises
-    ----------
+    ------
     BeartypeConfException
         If the passed configuration is *not* actually a configuration (i.e.,
         instance of the :class:`BeartypeConf` class).

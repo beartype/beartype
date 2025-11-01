@@ -18,7 +18,7 @@ from pytest import fixture
 
 # ....................{ FIXTURES ~ equality                }....................
 @fixture(autouse=True, scope='function')
-def clean_claws_func() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
+def clean_claws_func() -> None:  # <-- heh. get it... clean *CLAWS*? it's punny.
     '''
     Permanently, silently, and recursively remove all **bytecode files** (i.e.,
     pure-Python bytecode compiled to platform-dependent temporary files residing
@@ -26,12 +26,12 @@ def clean_claws_func() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny
     :mod:`beartype_test.a90_func.data` subpackage and all subsubpackages of that
     subpackage regardless of depth.
 
-    Note that this unit test-scoped fixture is implicitly performed *before*
-    each unit test transitively defined in sibling and child submodules of the
-    subpackage directly containing this submodule. Why? Because failing to do so
-    would invite subtle but easily reproducible desynchronization woes between
-    those files and more recent changes to the implementation of the
-    :mod:`beartype.claw` subpackage in the main codebase.
+    Note that this integration test-scoped fixture is implicitly performed
+    *before* each integration test transitively defined in sibling and child
+    submodules of the subpackage directly containing this submodule. Why?
+    Because failing to do so would invite subtle but easily reproducible
+    desynchronization woes between those files and more recent changes to the
+    implementation of the :mod:`beartype.claw` subpackage in the main codebase.
 
     See Also
     --------

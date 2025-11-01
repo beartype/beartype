@@ -17,6 +17,7 @@ from beartype._data.typing.datatyping import CommandWords
 from beartype._util.cache.utilcachecall import callable_cached
 from platform import python_implementation
 from sys import executable as sys_executable
+from typing import TYPE_CHECKING
 
 # ....................{ TESTERS                            }....................
 @callable_cached
@@ -30,17 +31,16 @@ def is_python_pypy() -> bool:
     return python_implementation() == 'PyPy'
 
 
-
 def is_python_optimized() -> bool:
     '''
     :data:`True` only if the active Python interpreter is currently
-    **optimized** (i.e., either the current Python process was invoked with at
-    least one ``-O`` command-line option *or* the ``${PYTHONOPTIMIZE}``
-    environment variable is currently set to a non-zero integer).
+    **optimized** (i.e., either the active Python process was passed one or more
+    ``-O`` command-line options *or* the ``${PYTHONOPTIMIZE}`` environment
+    variable is currently set to a positive integer).
 
     This tester is intentionally *not* memoized (e.g., by the
     ``@callable_cached`` decorator), as doing so would prevent this tester from
-    detecting dynamic changes to the ``PYTHONOPTIMIZE`` environment variable
+    detecting dynamic changes to the ``${PYTHONOPTIMIZE}`` environment variable
     manually applied by the external user. Technically, Python itself detects
     *no* such changes. Pragmatically, there's *no* demonstrable justification
     for :mod:`beartype` itself to behave similarly; since testing environment
@@ -52,14 +52,41 @@ def is_python_optimized() -> bool:
        https://github.com/beartype/beartype/issues/341
     '''
 
-    # If Python disabled the "__debug__" dunder global, either the current
-    # Python process was invoked with at least one ``-O`` command-line option
-    # *OR* the "${PYTHONOPTIMIZE}" environment variable was set to a non-zero
-    # integer at process invocation time. In either case, return true.
-    if not __debug__:  # pragma: no cover
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: *THE ORDER OF CONDITIONAL STATEMENTS BELOW IS SIGNIFICANT.*
+    # Notably, mypy 0.940 erroneously emits this error when the "TYPE_CHECKING
+    # or" condition is *NOT* the first condition of this "if" statement:
+    #     beartype/_decor/main.py:294: error: Condition can't be inferred,
+    #     unable to merge overloads [misc]
+    #
+    # See also:
+    #     https://github.com/python/mypy/issues/12335#issuecomment-1065591703
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # If the active Python interpreter is either...
+    if (  # pragma: no cover
+        # Running under an external static type-checker (in which case there is
+        # *NO* benefit to @beartype runtime type-checking whatsoever) *OR*...
+        #
+        # Note that this test is largely pointless. By definition, static type
+        # checkers should *NOT* actually run any code -- merely parse and
+        # analyze that code. Ergo, this boolean constant should *ALWAYS* be
+        # false from the runtime context under which @beartype is only ever run.
+        # Nonetheless, this test is only performed once per process and is thus
+        # effectively free.
+        TYPE_CHECKING or
+        # Disabling the "__debug__" dunder global, either the current Python
+        # process was invoked with one or more ``-O`` command-line option *OR*
+        # the "${PYTHONOPTIMIZE}" environment variable was set to a positive
+        # integer at process invocation time.
+        not __debug__
+    ):
+        # Then this interpreter was optimized at process invocation time. In
+        # this case, immediately return true.
         return True
-    # Else, Python enabled the "__debug__" dunder global. Although the
-    # "${PYTHONOPTIMIZE}" environment variable was *NOT* set to a non-zero
+    # Else, this interpreter is *NOT* running under an external static
+    # type-checker and the "__debug__" dunder global is enabled. Although the
+    # "${PYTHONOPTIMIZE}" environment variable was *NOT* set to a positive
     # integer at process invocation time, that variable *COULD* have since been
     # set by the external user (e.g., in an interactive REPL). Let's decide.
 

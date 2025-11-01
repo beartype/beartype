@@ -51,18 +51,14 @@ async def test_claw_fastmcp() -> None:
     from beartype import beartype
     from beartype.claw import beartype_package
 
-    # ....................{ LOCALS                         }....................
-    # Name of the single package to be subject to beartype import hooks below.
-    PACKAGE_NAME = 'beartype_test.a90_func.data.claw.fastmcp'
-
     # ....................{ PASS                           }....................
-    # Explicitly subject this single package to a beartype import hook
+    # Subject a FastMCP-specific data package to a beartype import hook,
     # configured by the default beartype configuration.
-    beartype_package(PACKAGE_NAME)
+    beartype_package('beartype_test.a90_func.data.claw.external.fastmcp')
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
-    from beartype_test.a90_func.data.claw.fastmcp.data_claw_fastmcp import (
+    from beartype_test.a90_func.data.claw.external.fastmcp.data_claw_fastmcp import (
         data_claw_fastmcp_main,
         with_stride_colossal,
     )

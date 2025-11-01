@@ -47,10 +47,10 @@ class BeartypeClawState(object):
         Either:
 
         * If the
-          :func:`beartype.claw._importlib.clawimppath.add_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.add_beartype_pathhook`
           function has been previously called at least once under the active
           Python interpreter and the
-          :func:`beartype.claw._importlib.clawimppath.remove_beartype_pathhook`
+          :func:`beartype.claw._importlib.clawimpmain.remove_beartype_pathhook`
           function has not been called more recently, the **beartype import path
           hook singleton** (i.e., factory closure creating and returning a new
           :class:`importlib.machinery.FileFinder` instance itself creating and
@@ -156,7 +156,7 @@ class BeartypeClawState(object):
         # print('Renitializing "beartype.claw" state...')
 
         # Avoid circular import dependencies.
-        from beartype.claw._importlib.clawimppath import (
+        from beartype.claw._importlib.clawimpmain import (
             remove_beartype_pathhook)
 
         # Perform the subset of reinitialization that is safe to be called from

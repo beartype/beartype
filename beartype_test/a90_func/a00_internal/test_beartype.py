@@ -122,7 +122,7 @@ print('\\n'.join(module_name for module_name in modules.keys()))
         )
 
 
-def test_beartype_optimize(monkeypatch: 'pytest.MonkeyPatch') -> None:
+def test_beartype_optimized(monkeypatch: 'pytest.MonkeyPatch') -> None:
     '''
     Integration test ensuring that the :func:`beartype.beartype` decorator
     behaves as expected under **Python optimization** (e.g., by the
@@ -150,6 +150,7 @@ def test_beartype_optimize(monkeypatch: 'pytest.MonkeyPatch') -> None:
 from beartype import beartype, BeartypeConf
 from beartype.roar import BeartypeCallHintParamViolation
 from beartype.typing import Union
+from beartype._util.py.utilpyinterpreter import is_python_optimized
 from pytest import raises
 
 # ....................{ MAIN                               }....................
@@ -191,13 +192,13 @@ assert untowering_func(3) == 24
 # Type of exception expected to be raised by passing this callable invalid
 # input, defined as either...
 exception_type_expected = (
-    # If the active Python interpreter is unoptimized, the expected
-    # @beartype-specific type-checking violation;
-    BeartypeCallHintParamViolation
-    if __debug__ else
-    # Else, the active Python interpreter is optimized. In this case, the
-    # expected low-level builtin CPython runtime exception.
+    # If the active Python interpreter is optimized, the expected low-level
+    # builtin CPython runtime exception;
     TypeError
+    if is_python_optimized() else
+    # Else, the active Python interpreter is unoptimized. In this case, the
+    # expected @beartype-specific type-checking violation.
+    BeartypeCallHintParamViolation
 )
 
 # Assert these callables when passed invalid input raise the expected exception.

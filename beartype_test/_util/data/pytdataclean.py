@@ -43,7 +43,7 @@ def data_claw_subpackage_cleaned(
     ------
     beartype.roar.BeartypeClawHookException
         If one or more packages have been registered by a prior call to the
-        :func:`beartype.claw._package.clawpkghook.hook_packages` function.
+        :func:`beartype.claw._package.clawpkgmain.hook_packages` function.
     '''
 
     # Defer fixture-specific imports.
