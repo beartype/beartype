@@ -258,6 +258,12 @@ def get_func_codeobj_or_none(
         #   this function.
         # * Else, this function as is.
         func_codeobj = (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+
+        # On PyPy, C-based functions (like tuple.count after unwrapping) can have
+        # code objects with co_filename indicating they're builtin. Check for this
+        # and return None if detected.
+        if func_codeobj and func_codeobj.co_filename in ('<builtin>', '<built-in>'):
+            return None
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this object is a pure-Python generator, return this generator's code
