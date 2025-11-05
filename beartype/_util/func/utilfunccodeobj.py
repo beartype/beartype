@@ -276,8 +276,21 @@ def get_func_codeobj_or_none(
         #parameter and calling that callback. Are there even C-based callables
         #like that in the wild?
         func_codeobj = func.f_code
-    # Else, this object is *NOT* a call stack frame. Since none of the above
-    # tests matched, this object *MUST* be a C-based callable. Return "None"!
+    # Else, this object is *NOT* a call stack frame.
+    #
+    # If this object is a method-wrapper (e.g., func.__call__ which wraps the
+    # __call__ method of a function object), check if it wraps a pure-Python
+    # function by examining its __self__ attribute.
+    else:
+        # Get the object this method-wrapper is bound to, if any.
+        func_self = getattr(func, '__self__', None)
+
+        # If this method-wrapper is bound to a FunctionType object, return that
+        # function's code object. This handles cases like func.__call__ in
+        # Python 3.14 where accessing __call__ returns a method-wrapper.
+        if isinstance(func_self, FunctionType):
+            func_codeobj = func_self.__code__
+    # Else, this object is a C-based callable. Return "None"!
 
     # Return this code object.
     return func_codeobj
