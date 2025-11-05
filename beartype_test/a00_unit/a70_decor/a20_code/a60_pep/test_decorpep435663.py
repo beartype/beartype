@@ -16,13 +16,21 @@ This submodule unit tests :pep:`435` and :pep:`663` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_less_than,
+    skip_if_pypy,
+)
 
 # ....................{ TESTS                              }....................
+@skip_if_pypy()
 def test_decor_pep435() -> None:
     '''
     Test :pep:`435` (i.e., :class:`enum.Enum`) support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test is skipped on PyPy because PyPy's enum implementation has
+    C-based internal methods (like _new_member_) that beartype cannot introspect
+    or decorate, causing BeartypeDecorWrappeeException.
     '''
 
     # ....................{ IMPORTS                        }....................
