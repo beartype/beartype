@@ -589,12 +589,12 @@ def set_type_attr_cached(
             # If __sizeof__ doesn't exist on the class (e.g., on PyPy), create a simple
             # default implementation that returns a reasonable default value. Note that
             # on PyPy, even object.__sizeof__ doesn't exist, so we can't use that as
-            # a fallback.
+            # a fallback. In this case, create a standalone implementation.
             if cls_sizeof_old is None:
                 # Create a minimal __sizeof__() implementation for PyPy that returns
                 # a simple constant. This is only used for beartype's internal caching
                 # and doesn't need to be accurate since __sizeof__() is rarely called.
-                def cls_sizeof(self) -> int:
+                def _cls_sizeof_default(self) -> int:
                     '''
                     Minimal __sizeof__() implementation for PyPy compatibility.
 
@@ -604,6 +604,11 @@ def set_type_attr_cached(
                     production code.
                     '''
                     return object.__basicsize__ if hasattr(object, '__basicsize__') else 56
+
+                # Assign to cls_sizeof for consistency with the else branch.
+                # Type ignore: mypy sees this as incompatible with FunctionType, but
+                # at runtime this is correct and necessary for PyPy compatibility.
+                cls_sizeof = _cls_sizeof_default  # type: ignore[assignment]
             else:
                 # New pure-Python __sizeof__() dunder method wrapping the original
                 # C-based __sizeof__() dunder method declared by this class.
