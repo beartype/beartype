@@ -1055,15 +1055,25 @@ else:
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
 
-# Attempt to import types.UnionType for PEP 604-compliant unions.
-# Note: PyPy may not have types.UnionType, so we need a fallback.
-HintPep604Type: type  # type: ignore[misc]
-try:
-    HintPep604Type = _types.UnionType
-except AttributeError:
-    # On PyPy or other implementations without types.UnionType, use UnavailableType
-    # as a placeholder. This will cause PEP 604 union detection to fail gracefully.
-    HintPep604Type = UnavailableType()  # type: ignore[assignment]
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, provide a proper type for mypy to avoid "not valid as a type"
+# errors in Union[...] expressions.
+if TYPE_CHECKING:
+    # Import types.UnionType for static type checking. Static type checkers
+    # assume CPython with full PEP 604 support.
+    from types import UnionType as HintPep604Type
+# Else, this submodule is *NOT* currently being statically type-checked.
+# Define this type dynamically based on runtime availability.
+else:
+    # Attempt to import types.UnionType for PEP 604-compliant unions.
+    # Note: PyPy may not have types.UnionType, so we need a fallback.
+    try:
+        HintPep604Type = _types.UnionType
+    except AttributeError:
+        # On PyPy or other implementations without types.UnionType, use
+        # UnavailableType as a placeholder. This will cause PEP 604 union
+        # detection to fail gracefully.
+        HintPep604Type = UnavailableType()  # type: ignore[assignment]
 
 '''
 C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
