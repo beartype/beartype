@@ -128,10 +128,14 @@ def test_pep563_class_self_reference_override() -> None:
     assert Karma.if_your_colors().dreams == DREAMS
 
 # ....................{ TESTS ~ scope                      }....................
+@skip_if_pypy()
 def test_pep563_module() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test is skipped on PyPy because the imported test data module
+    uses Union type hints which are not fully supported on PyPy.
     '''
 
     # ....................{ IMPORTS                        }....................
