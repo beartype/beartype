@@ -225,9 +225,19 @@ def test_pep563_class() -> None:
     '''
     Test class-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test is skipped on PyPy because the imported test data module
+    uses Union type hints which are not fully supported on PyPy.
     '''
 
     # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
+    from pytest import skip
+
+    # Skip this test on PyPy due to Union type hint incompatibility
+    if is_python_pypy():
+        skip('Incompatible with PyPy.')
+
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         MinecraftEndTxtUnscrambler)
 
@@ -253,9 +263,19 @@ def test_pep563_closure_nonnested() -> None:
     '''
     Test non-nested closure-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test is skipped on PyPy because the imported test data module
+    uses Union type hints which are not fully supported on PyPy.
     '''
 
     # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
+    from pytest import skip
+
+    # Skip this test on PyPy due to Union type hint incompatibility
+    if is_python_pypy():
+        skip('Incompatible with PyPy.')
+
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure)
 
