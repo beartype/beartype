@@ -2749,7 +2749,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         )]),
 
         # Nested union of no non-"typing" type and multiple "typing" types.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
+        # argument. This metadata uses MutableSequence[Union[bytes, Callable]]
+        # which causes beartype to fail on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
             isinstanceable_type=MutableSequence,
@@ -2796,7 +2799,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        ),
+        )]),
 
         # ................{ CONFIGURATION ~ overrides          }................
         # PEP 585-compliant type hints exercising the beartype configuration

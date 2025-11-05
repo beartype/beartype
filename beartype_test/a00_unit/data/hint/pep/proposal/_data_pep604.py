@@ -539,7 +539,10 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Nested union of one non-"typing" type and one "typing" type.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
+        # argument. This metadata uses Sequence[Union[str, bytes]] which causes
+        # beartype to fail on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
@@ -583,10 +586,13 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        ),
+        )]),
 
         # Nested union of *NO* isinstanceable type and multiple "typing" types.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
+        # argument. This metadata uses MutableSequence[Union[bytes, CallableABC]]
+        # which causes beartype to fail on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=MutableSequence[Union[bytes, CallableABC]],
             pep_sign=HintSignMutableSequence,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
@@ -633,7 +639,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        ),
+        )]),
 
         # ................{ UNION ~ optional                   }................
         # Ignorable unsubscripted "Optional" attribute.
