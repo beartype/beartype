@@ -1057,6 +1057,7 @@ else:
 
 # Attempt to import types.UnionType for PEP 604-compliant unions.
 # Note: PyPy may not have types.UnionType, so we need a fallback.
+HintPep604Type: type  # type: ignore[misc]
 try:
     HintPep604Type = _types.UnionType
 except AttributeError:
