@@ -751,13 +751,13 @@ if is_python_pypy():
     '''
 else:
     # CPython supports PEP 604 unions, which handle recursive HintOverrides better
-    Pep484TowerComplex: object = complex | float | int  # type: ignore[misc]
+    Pep484TowerComplex: object = complex | float | int  # type: ignore[misc,no-redef]
     '''
     :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
     complex numbers, floating-point numbers, and integers).
     '''
 
-    Pep484TowerFloat: object = float | int  # type: ignore[misc]
+    Pep484TowerFloat: object = float | int  # type: ignore[misc,no-redef]
     '''
     :pep:`484`-compliant type hint matching the **implicit floating-point tower**
     (i.e., both floating-point numbers and integers).
