@@ -24,12 +24,16 @@ import pytest
 from beartype_test._util.mark.pytskip import skip_if_pypy
 
 # ....................{ TESTS                              }....................
+@skip_if_pypy()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_this_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_this_package` import hook against a
     data subpackage in this test suite exercising *all* edge cases associated
     with this import hook.
+
+    Note: This test is skipped on PyPy for the same reasons as
+    test_claw_intraprocess_beartype_package().
     '''
     # print('Here!')
 
@@ -217,12 +221,16 @@ def test_claw_intraprocess_beartype_packages() -> None:
         )
 
 
+@skip_if_pypy()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_all() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_all` import hook against *all* data
     subpackages in this test suite exercising *all* edge cases associated with
     this import hook.
+
+    Note: This test is skipped on PyPy for the same reasons as
+    test_claw_intraprocess_beartype_package().
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -292,12 +300,16 @@ def test_claw_intraprocess_beartype_all() -> None:
         beartype_all(conf=BeartypeConf(is_debug=True))
 
 
+@skip_if_pypy()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartyping() -> None:
     '''
     Test the :mod:`beartype.claw.beartyping` import hook against *all* data
     subpackages in this test suite exercising *all* edge cases associated with
     this import hook.
+
+    Note: This test is skipped on PyPy for the same reasons as
+    test_claw_intraprocess_beartype_package().
     '''
 
     # ....................{ IMPORTS                        }....................
