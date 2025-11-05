@@ -24,6 +24,7 @@ from beartype._util.func.utilfuncwrap import (
     unwrap_func_boundmethod_once,
     unwrap_func_class_or_static_method_once,
 )
+from beartype._util.py.utilpyinterpreter import is_python_pypy
 
 # ....................{ DECORATORS                         }....................
 def beartype_descriptor_boundmethod(
@@ -50,6 +51,16 @@ def beartype_descriptor_boundmethod(
     '''
     assert is_func_boundmethod(descriptor), (
         f'{repr(descriptor)} not builtin bound method descriptor.')
+
+    # If running under PyPy, return the descriptor unmodified. PyPy's
+    # implementation of method descriptors differs from CPython's in ways that
+    # prevent reliable descriptor decoration. Rather than fail, we gracefully
+    # degrade by skipping descriptor decoration on PyPy while still providing
+    # @beartype functionality for regular functions and classes.
+    #
+    # See also: https://github.com/beartype/beartype/issues/...
+    if is_python_pypy():
+        return descriptor  # type: ignore[return-value]
 
     # Avoid circular import dependencies.
     from beartype._decor._nontype.decornontype import beartype_func
@@ -134,6 +145,11 @@ def beartype_descriptor_decorator_builtin_property(
     assert isinstance(descriptor, MethodDecoratorPropertyType), (
         f'{repr(descriptor)} not builtin @property method descriptor.')
 
+    # If running under PyPy, return the descriptor unmodified. See the
+    # beartype_descriptor_boundmethod() function above for details.
+    if is_python_pypy():
+        return descriptor  # type: ignore[return-value]
+
     # Avoid circular import dependencies.
     from beartype._decor._nontype.decornontype import beartype_func
 
@@ -197,6 +213,11 @@ def beartype_descriptor_decorator_builtin_class_or_static_method(
     BeartypeableT
         New pure-Python callable wrapping this descriptor with type-checking.
     '''
+
+    # If running under PyPy, return the descriptor unmodified. See the
+    # beartype_descriptor_boundmethod() function above for details.
+    if is_python_pypy():
+        return descriptor  # type: ignore[return-value]
 
     # Avoid circular import dependencies.
     from beartype._decor.decorcore import beartype_object

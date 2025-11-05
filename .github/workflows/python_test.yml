@@ -131,11 +131,17 @@ jobs:
           # - py315-coverage
           # # - py315t-coverage
 
-          #FIXME: Uncomment after we resolve tests currently broken under *ANY*
-          #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
-          #recently broken by work generalizing @beartype to decorate builtin
-          #method descriptors (e.g., @property, @classmethod, @staticmethod).
-          # - pypy310-coverage
+          #FIXME: Re-enabled to test PyPy compatibility after descriptor decoration
+          #work. Tests previously broke due to PyPy's different implementation of
+          #method descriptors. Re-enabling to identify specific test failures and
+          #implement appropriate fixes or skip markers.
+          #
+          #Previously disabled with comment (retained for reference):
+          # Uncomment after we resolve tests currently broken under *ANY*
+          # PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
+          # recently broken by work generalizing @beartype to decorate builtin
+          # method descriptors (e.g., @property, @classmethod, @staticmethod).
+          - pypy310-coverage
 
         #FIXME: Preserved in the likelihood we'll need something similar again.
         # # Avoid problematic combinations of Python versions and platforms.
@@ -183,9 +189,10 @@ jobs:
           # - { python-version: "3.13t", tox-env: "py313t-coverage" }
           # - { python-version: "3.14t", tox-env: "py314t-coverage" }
 
-          #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
-          # - tox-env: pypy310-coverage
-          #   python-version: "pypy-3.10"
+          #FIXME: Re-enabled to test PyPy compatibility. Leaving this FIXME comment
+          #as a marker that PyPy support may be limited for descriptor decoration.
+          - tox-env: pypy310-coverage
+            python-version: "pypy-3.10"
 
         #FIXME: Preserved for posterity. Hopefully, we *NEVER* need this again.
         # # Blacklist specific build combinations implicitly defined by the build
