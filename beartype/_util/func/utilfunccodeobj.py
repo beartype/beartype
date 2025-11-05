@@ -233,7 +233,9 @@ def get_func_codeobj_or_none(
     # immediately. On PyPy, builtin functions can have __code__ attributes that
     # make them appear to be pure-Python functions, but they should still be
     # treated as C-based callables without code objects.
-    if isinstance(func, BuiltinFunctionType):
+    #
+    # Check both the type and the module to catch all C-based builtins on PyPy.
+    if isinstance(func, BuiltinFunctionType) or getattr(func, '__module__', None) == 'builtins':
         return None
     # Else, this object is *NOT* a C-based builtin function.
     #
