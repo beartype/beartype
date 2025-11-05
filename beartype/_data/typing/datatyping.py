@@ -738,26 +738,26 @@ from beartype._util.py.utilpyinterpreter import is_python_pypy
 # Conditionally define numeric tower type hints based on Python implementation
 if is_python_pypy():
     # PyPy doesn't support PEP 604 unions, so use Union syntax
-    Pep484TowerComplex = Union[complex, float, int]
+    Pep484TowerComplex: object = Union[complex, float, int]  # type: ignore[misc]
     '''
     :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
     complex numbers, floating-point numbers, and integers).
     '''
 
-    Pep484TowerFloat = Union[float, int]
+    Pep484TowerFloat: object = Union[float, int]  # type: ignore[misc]
     '''
     :pep:`484`-compliant type hint matching the **implicit floating-point tower**
     (i.e., both floating-point numbers and integers).
     '''
 else:
     # CPython supports PEP 604 unions, which handle recursive HintOverrides better
-    Pep484TowerComplex = complex | float | int
+    Pep484TowerComplex: object = complex | float | int  # type: ignore[misc]
     '''
     :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
     complex numbers, floating-point numbers, and integers).
     '''
 
-    Pep484TowerFloat = float | int
+    Pep484TowerFloat: object = float | int  # type: ignore[misc]
     '''
     :pep:`484`-compliant type hint matching the **implicit floating-point tower**
     (i.e., both floating-point numbers and integers).
