@@ -234,8 +234,12 @@ def get_func_codeobj_or_none(
     # make them appear to be pure-Python functions, but they should still be
     # treated as C-based callables without code objects.
     #
-    # Check both the type and the module to catch all C-based builtins on PyPy.
-    if isinstance(func, BuiltinFunctionType) or getattr(func, '__module__', None) == 'builtins':
+    # Check both:
+    # 1. If it's a BuiltinFunctionType (C-based builtin on CPython)
+    # 2. If it's a FunctionType from builtins module (C-based on PyPy)
+    if isinstance(func, BuiltinFunctionType):
+        return None
+    elif isinstance(func, FunctionType) and getattr(func, '__module__', None) == 'builtins':
         return None
     # Else, this object is *NOT* a C-based builtin function.
     #
