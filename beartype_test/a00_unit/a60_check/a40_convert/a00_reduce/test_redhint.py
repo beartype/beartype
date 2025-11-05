@@ -63,6 +63,7 @@ def test_reduce_hint() -> None:
         make_hint_pep484604_union)
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_str_or_bytes)
@@ -218,10 +219,12 @@ def test_reduce_hint() -> None:
         # ..................{ PEP 484 ~ typevar              }..................
         # A PEP 484-compliant constrained type variable reduces to the PEP 484-
         # or 604-compliant union of those constraints.
-        HintReductionValid(
+        # SKIPPED ON PYPY: PyPy doesn't support PEP 604 unions. T_str_or_bytes
+        # reduces to "str | bytes" which causes beartype to fail on PyPy.
+        *([] if is_python_pypy() else [HintReductionValid(
             hint_unreduced=T_str_or_bytes,
             hint_reduced=make_hint_pep484604_union((str, bytes,)),
-        ),
+        )]),
 
         # ..................{ PEP 557                        }..................
         # A PEP 557-compliant "InitVar" is reduced to its child hint.
