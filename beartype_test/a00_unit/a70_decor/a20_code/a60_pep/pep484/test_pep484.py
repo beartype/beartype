@@ -15,6 +15,7 @@ to :pep:`484`-compliant type hints.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_pypy
 
 # ....................{ TESTS ~ decor : no_type_check      }....................
 def test_decor_pep484_no_type_check() -> None:
@@ -137,12 +138,17 @@ async def test_decor_pep484_hint_noreturn_async() -> None:
         raise ValueError('The work of hunters is another thing:')
 
 # ....................{ TESTS ~ hint : sequence            }....................
+@skip_if_pypy()
 def test_decor_pep484_namedtuple() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of
     instances of user-defined subclasses of the :pep:`484`-compliant
     :attr:`typing.NamedTuple` superclass, which are instances rather than types
     and thus invalid as actual type hints.
+
+    Note: This test is skipped on PyPy because PyPy's implementation of NamedTuple
+    differs from CPython's, and beartype's type attribute caching mechanism doesn't
+    work the same way for NamedTuple's synthesized __new__() method on PyPy.
     '''
 
     # ..................{ IMPORTS                            }..................
