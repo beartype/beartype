@@ -732,11 +732,11 @@ instances definitely encapsulating pathnames).
 #
 # However, PyPy does not support PEP 604 unions, so we must use Union syntax.
 
-# Import for conditional PyPy check
-from beartype._util.py.utilpyinterpreter import is_python_pypy
+# Import for conditional PyPy check (use platform directly to avoid circular import)
+from platform import python_implementation
 
 # Conditionally define numeric tower type hints based on Python implementation
-if is_python_pypy():
+if python_implementation() == 'PyPy':
     # PyPy doesn't support PEP 604 unions, so use Union syntax
     Pep484TowerComplex: object = Union[complex, float, int]  # type: ignore[misc]
     '''
