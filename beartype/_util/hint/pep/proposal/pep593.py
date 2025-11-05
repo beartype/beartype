@@ -133,7 +133,7 @@ def is_hint_pep593_beartype(hint: Hint) -> bool:
     # If the metaclass of the first argument subscripting this hint overrides
     # the __isinstancecheck__() dunder method to raise an exception, silently
     # ignore this exception by returning false instead.
-    except:
+    except Exception:
         return False
 
 # ....................{ GETTERS                            }....................

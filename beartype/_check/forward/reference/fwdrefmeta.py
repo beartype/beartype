@@ -529,7 +529,7 @@ class BeartypeForwardRefMeta(type):
                 )
                 # Else, this referent is isinstanceable.
             # If doing so raised *ANY* exception whatsoever...
-            except:
+            except Exception:
                 # Uncache this referent. See above.
                 del _forwardref_to_referent[cls]
 

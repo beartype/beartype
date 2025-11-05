@@ -104,7 +104,7 @@ def is_python_optimized() -> bool:
         try:
             PYTHONOPTIMIZE_int = int(PYTHONOPTIMIZE_str)
         # If doing so raises *ANY* exception whatsoever, return false.
-        except:
+        except (ValueError, TypeError):
             return False
 
         # If this integer is non-zero, this environment variable has since been
