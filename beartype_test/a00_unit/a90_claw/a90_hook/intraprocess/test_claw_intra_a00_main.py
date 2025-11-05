@@ -125,12 +125,16 @@ def test_claw_intraprocess_beartype_package() -> None:
         )
 
 
+@skip_if_pypy()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_packages() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_packages` import hook against multiple
     data subpackages in this test suite exercising *all* edge cases associated
     with this import hook.
+
+    Note: This test is skipped on PyPy for the same reasons as
+    test_claw_intraprocess_beartype_package().
     '''
 
     # ....................{ IMPORTS                        }....................
