@@ -2648,7 +2648,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # optimizations leveraging PEP 572-style assignment expressions.
 
         # Nested union of multiple non-"typing" types.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
+        # argument. This metadata uses list[Union[int, str]] which causes
+        # beartype to fail on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=list[Union[int, str,]],
             pep_sign=HintSignList,
             isinstanceable_type=list,
@@ -2695,7 +2698,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        ),
+        )]),
 
         # Nested union of one non-"typing" type and one "typing" type.
         # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type

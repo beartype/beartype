@@ -586,17 +586,30 @@ def set_type_attr_cached(
             # Avoid circular import dependencies.
             from beartype._util.cls.utilclsset import set_type_attr
 
-            # If __sizeof__ doesn't exist on the class (e.g., on PyPy), try to get
-            # it from the object base class as a fallback.
+            # If __sizeof__ doesn't exist on the class (e.g., on PyPy), create a simple
+            # default implementation that returns a reasonable default value. Note that
+            # on PyPy, even object.__sizeof__ doesn't exist, so we can't use that as
+            # a fallback.
             if cls_sizeof_old is None:
-                cls_sizeof_old = object.__sizeof__
+                # Create a minimal __sizeof__() implementation for PyPy that returns
+                # a simple constant. This is only used for beartype's internal caching
+                # and doesn't need to be accurate since __sizeof__() is rarely called.
+                def cls_sizeof(self) -> int:
+                    '''
+                    Minimal __sizeof__() implementation for PyPy compatibility.
 
-            # New pure-Python __sizeof__() dunder method wrapping the original
-            # C-based __sizeof__() dunder method declared by this class (or by the
-            # object base class as a fallback on PyPy).
-            @wraps(cls_sizeof_old)
-            def cls_sizeof(self) -> int:
-                return cls_sizeof_old(self)  # type: ignore[call-arg]
+                    This method exists solely to allow beartype to cache type attributes
+                    by monkey-patching them into this method. The actual size value
+                    returned is largely irrelevant, as this method is rarely called in
+                    production code.
+                    '''
+                    return object.__basicsize__ if hasattr(object, '__basicsize__') else 56
+            else:
+                # New pure-Python __sizeof__() dunder method wrapping the original
+                # C-based __sizeof__() dunder method declared by this class.
+                @wraps(cls_sizeof_old)
+                def cls_sizeof(self) -> int:
+                    return cls_sizeof_old(self)  # type: ignore[call-arg]
 
             # Replace the original C-based __sizeof__() dunder method with this
             # wrapper. For safety, we intentionally call our high-level
