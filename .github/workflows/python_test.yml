@@ -32,6 +32,8 @@ on:
   push:
     branches:
       - main
+      # Temporarily enable CI on claude/* branches for testing PyPy compatibility
+      - 'claude/**'
   # Pull requests against the main branch. Pull requests against other branches
   # should, ideally, *NEVER* occur; if and when they do, we ignore them.
   pull_request:
