@@ -40,6 +40,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         HintSignSequence,
         HintSignUnion,
     )
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_14
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -92,20 +93,25 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ TUPLES                             }..................
     # List of all PEP-specific type hint metadata to be returned.
-    hints_pep_meta = [
-        # ................{ NEW UNION                          }................
-        # Union of one non-"typing" type and an originative "typing" type,
-        # exercising a prominent edge case when raising human-readable
-        # exceptions describing the failure of passed parameters or returned
-        # values to satisfy this union.
-        #
-        # Interestingly, Python preserves this union as a PEP 604-compliant
-        # new-style union rather than implicitly coercing this into a PEP
-        # 484-compliant old-style union: e.g.,
-        #     >>> int | list[str]
-        #     int | list[str]
-        HintPepMetadata(
-            hint=int | list[str],
+    hints_pep_meta = []
+
+    # PyPy does not support PEP 604 unions (i.e., the "|" operator for types).
+    # Skip all PEP 604 union hints on PyPy to avoid TypeError during hint creation.
+    if not is_python_pypy():
+        hints_pep_meta.extend([
+            # ................{ NEW UNION                          }................
+            # Union of one non-"typing" type and an originative "typing" type,
+            # exercising a prominent edge case when raising human-readable
+            # exceptions describing the failure of passed parameters or returned
+            # values to satisfy this union.
+            #
+            # Interestingly, Python preserves this union as a PEP 604-compliant
+            # new-style union rather than implicitly coercing this into a PEP
+            # 484-compliant old-style union: e.g.,
+            #     >>> int | list[str]
+            #     int | list[str]
+            HintPepMetadata(
+                hint=int | list[str],
             pep_sign=HintSignUnion,
             is_type_typing=_PEP604_IS_TYPING,
             piths_meta=(
@@ -242,14 +248,17 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
+        ])
 
-        # ................{ OLD UNION                          }................
-        # Note that unions of one argument (e.g., "Union[str]") *CANNOT* be
-        # listed here, as the "typing" module implicitly reduces these unions
-        # to only that argument (e.g., "str") on our behalf.
-        #
-        # Thanks. Thanks alot, "typing".
+    # ................{ OLD UNION                          }................
+    # Note that unions of one argument (e.g., "Union[str]") *CANNOT* be
+    # listed here, as the "typing" module implicitly reduces these unions
+    # to only that argument (e.g., "str") on our behalf.
+    #
+    # Thanks. Thanks alot, "typing".
 
+    # Old-style Union[...] hints work on all Python implementations including PyPy.
+    hints_pep_meta.extend([
         # Ignorable unsubscripted "Union" attribute.
         HintPepMetadata(
             hint=Union,
@@ -759,7 +768,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ),
-    ]
+    ])
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
@@ -774,8 +783,14 @@ def hints_pep604_ignorable_deep() -> list:
 
     # ..................{ IMPORTS                            }..................
     from typing import Any
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
 
     # ..................{ RETURN                             }..................
+    # PyPy does not support PEP 604 unions (i.e., the "|" operator for types).
+    # Return an empty list on PyPy to avoid TypeError during hint creation.
+    if is_python_pypy():
+        return []
+
     # Return this list of all PEP-specific deeply ignorable type hints.
     return [
         # New-style unions containing any ignorable type hint.
