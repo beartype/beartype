@@ -106,6 +106,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignTypeVar,
         HintSignValuesView,
     )
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -309,7 +310,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Constrained type variable declared by the "typing" module.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy does not support PEP 604 unions, and AnyStr's
+        # constraints are represented as "bytes | str" on Python 3.10+, causing
+        # beartype to fail when trying to process this TypeVar on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
@@ -323,10 +327,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
                     'Of Politico‐policed diction maledictions,',
-                    'Of that numeral addicts’ “—Additive game,” self‐',
+                    'Of that numeral addicts' "—Additive game," self‐',
                 ]),
             ),
-        ),
+        )]),
 
         # User-defined constrained type variable.
         HintPepMetadata(
