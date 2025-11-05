@@ -386,8 +386,13 @@ test-tox = [
     #FIXME: Reenable Python >= 3.14 support *AFTER* nuitka and all reverse
     #dependencies thereof officially ship Python 3.14 wheels.
     # Required by optional nuitka-specific integration tests if the current
-    # platform is a Linux distribution.
-    "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0'",
+    # platform is a Linux distribution. Nuitka is incompatible with PyPy as it's
+    # a Python-to-C compiler that requires CPython internals.
+    """nuitka >=1.2.6; \
+       sys_platform == 'linux' and \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # ....................{ CLI                            }....................
     # Required by optional Typer-specific integration tests.
@@ -413,8 +418,12 @@ test-tox = [
     # Data science-centric optional test-time dependencies.
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* Numba supports Python 3.14.
-    # Required by optional numba-specific integration tests.
-    "numba; python_version < '3.14.0'",
+    # Required by optional numba-specific integration tests. Numba only supports
+    # CPython and does not work with PyPy.
+    """numba; \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # ....................{ SCIENCE ~ data : ml            }....................
     # Machine learning-centric optional test-time dependencies. These
@@ -427,8 +436,12 @@ test-tox = [
     #FIXME: Reenable Python >= 3.14 support *AFTER* PyTorch supports Python
     #3.14.
     # Required by optional PyTorch-specific integration tests if the current
-    # platform is a Linux distribution.
-    "torch; sys_platform == 'linux' and python_version < '3.14.0'",
+    # platform is a Linux distribution. PyTorch does not provide PyPy wheels.
+    """torch; \
+       sys_platform == 'linux' and \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # ....................{ SCIENCE ~ data : ml : jax      }....................
     # JAX-specific optional test-time dependencies.
@@ -449,17 +462,29 @@ test-tox = [
     # installs a low-level CPU-specific variant of the C-based "jaxlib" package.
     # Since GitHub Actions-based continuous integration (CI) workflows are
     # unlikely to reliably provide GPU or TPU compute hardware or APIs, the only
-    # safe and reliable alternative is CPU-specific.
-    "jax[cpu]; sys_platform == 'linux' and python_version < '3.14.0'",
+    # safe and reliable alternative is CPU-specific. JAX does not support PyPy.
+    """jax[cpu]; \
+       sys_platform == 'linux' and \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # Required by optional JAX- and Equinox-specific integration tests.
-    "jaxtyping; sys_platform == 'linux'",
+    # jaxtyping requires JAX, which doesn't support PyPy.
+    """jaxtyping; \
+       sys_platform == 'linux' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* JAX is readily installable
     #under Python 3.14. See above for further commentary.
     # Required by optional Equinox-specific integration tests. Note that Equinox
-    # requires JAX.
-    "equinox; sys_platform == 'linux' and python_version < '3.14.0'",
+    # requires JAX, which doesn't support PyPy.
+    """equinox; \
+       sys_platform == 'linux' and \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # ....................{ SCIENCE ~ data : ml : numpy    }....................
     # NumPy-specific optional test-time dependencies.
@@ -529,8 +554,11 @@ test-tox = [
     #3.14. Pandas currently fails to ship Python 3.14 wheels and is non-trivial
     #to build.
     # Required by optional xarray-specific integration tests. Note that xarray
-    # requires Pandas.
-    "xarray; python_version < '3.14.0'",
+    # requires NumPy, which doesn't support PyPy.
+    """xarray; \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
