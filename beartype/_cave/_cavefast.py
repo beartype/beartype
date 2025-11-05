@@ -1056,35 +1056,34 @@ else:
 #standard "typing.Union" type.
 
 # If this submodule is currently being statically type-checked by a pure static
-# type-checker, provide a proper type for mypy to avoid "not valid as a type"
-# errors in Union[...] expressions.
+# type-checker, provide a proper type class for mypy.
 if TYPE_CHECKING:
-    # Import types.UnionType for static type checking. Static type checkers
-    # assume CPython with full PEP 604 support.
-    from types import UnionType as HintPep604Type
+    # Define a dummy class for static type checking. This ensures mypy
+    # recognizes HintPep604Type as an exported type.
+    class HintPep604Type(object): pass
 # Else, this submodule is *NOT* currently being statically type-checked.
 # Define this type dynamically based on runtime availability.
 else:
     # Attempt to import types.UnionType for PEP 604-compliant unions.
     # Note: PyPy may not have types.UnionType, so we need a fallback.
     try:
-        HintPep604Type = _types.UnionType
+        HintPep604Type = _types.UnionType  # type: ignore[misc]
     except AttributeError:
         # On PyPy or other implementations without types.UnionType, use
         # UnavailableType as a placeholder. This will cause PEP 604 union
         # detection to fail gracefully.
-        HintPep604Type = UnavailableType()  # type: ignore[assignment]
+        HintPep604Type = UnavailableType()  # type: ignore[misc,assignment]
 
-'''
-C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
-created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
+    '''
+    C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
+    created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
-This type is a version-agnostic generalization of the standard
-:class:`types.UnionType` type available only under Python >= 3.10.
+    This type is a version-agnostic generalization of the standard
+    :class:`types.UnionType` type available only under Python >= 3.10.
 
-**This type is unavailable on PyPy**, where it defaults to
-:class:`UnavailableType` for safety.
-'''
+    **This type is unavailable on PyPy**, where it defaults to
+    :class:`UnavailableType` for safety.
+    '''
 
 
 HintPep604ItemTypes: _TupleTyping[type, ...] = (
