@@ -146,7 +146,22 @@ jobs:
           # rpds-py (required by fastmcp) needs PyPy 3.11+ due to PyO3 requirements.
           - pypy311-coverage
 
-        #FIXME: Preserved in the likelihood we'll need something similar again.
+        # Avoid problematic combinations of Python versions and platforms.
+        exclude:
+          # Avoid PyPy under Windows. PyPy on Windows is notoriously slow and
+          # resource-intensive, often timing out during package installation.
+          # The 7+ minute timeout (exit code 0xC000013A) encountered during
+          # dependency installation makes Windows PyPy testing impractical.
+          - platform: windows-latest
+            tox-env: pypy311-coverage
+
+          # Avoid PyPy under macOS. Most PyPy users are on Linux, and testing
+          # on multiple platforms provides diminishing returns given PyPy's
+          # limited platform-specific differences.
+          - platform: macos-latest
+            tox-env: pypy311-coverage
+
+        #FIXME: Preserved for reference. Historical exclude rules below.
         # # Avoid problematic combinations of Python versions and platforms.
         # exclude:
         #   # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
