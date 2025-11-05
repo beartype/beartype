@@ -729,19 +729,39 @@ instances definitely encapsulating pathnames).
 # type unions (e.g., "Union[float, int]") fail to support various edge cases,
 # including recursive "beartype.HintOverrides" globally defined by the
 # "beartype._conf._confoverrides" submodule.
+#
+# However, PyPy does not support PEP 604 unions, so we must use Union syntax.
 
-Pep484TowerComplex = complex | float | int
-'''
-:pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
-complex numbers, floating-point numbers, and integers).
-'''
+# Import for conditional PyPy check
+from beartype._util.py.utilpyinterpreter import is_python_pypy
 
+# Conditionally define numeric tower type hints based on Python implementation
+if is_python_pypy():
+    # PyPy doesn't support PEP 604 unions, so use Union syntax
+    Pep484TowerComplex = Union[complex, float, int]
+    '''
+    :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
+    complex numbers, floating-point numbers, and integers).
+    '''
 
-Pep484TowerFloat = float | int
-'''
-:pep:`484`-compliant type hint matching the **implicit floating-point tower**
-(i.e., both floating-point numbers and integers).
-'''
+    Pep484TowerFloat = Union[float, int]
+    '''
+    :pep:`484`-compliant type hint matching the **implicit floating-point tower**
+    (i.e., both floating-point numbers and integers).
+    '''
+else:
+    # CPython supports PEP 604 unions, which handle recursive HintOverrides better
+    Pep484TowerComplex = complex | float | int
+    '''
+    :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
+    complex numbers, floating-point numbers, and integers).
+    '''
+
+    Pep484TowerFloat = float | int
+    '''
+    :pep:`484`-compliant type hint matching the **implicit floating-point tower**
+    (i.e., both floating-point numbers and integers).
+    '''
 
 # ....................{ PEP ~ 484 : typevar                }....................
 T = TypeVar('T')
