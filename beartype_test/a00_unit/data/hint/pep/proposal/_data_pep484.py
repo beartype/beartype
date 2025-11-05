@@ -333,7 +333,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         )]),
 
         # User-defined constrained type variable.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy does not support PEP 604 unions, and T_str_or_bytes's
+        # constraints are represented as "str | bytes" on Python 3.10+, causing
+        # beartype to fail when trying to process this TypeVar on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=T_str_or_bytes,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
@@ -349,10 +352,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
                     'Into lavishly crested, crestfallen ',
-                    'epaulette‐cross‐pollinated st‐Ints,',
+                    'epaulette-cross-pollinated st-Ints,',
                 ]),
             ),
-        ),
+        )]),
 
         # User-defined bounded type variable.
         HintPepMetadata(
