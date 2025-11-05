@@ -1054,13 +1054,25 @@ else:
 #FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
-HintPep604Type = _types.UnionType
+
+# Attempt to import types.UnionType for PEP 604-compliant unions.
+# Note: PyPy may not have types.UnionType, so we need a fallback.
+try:
+    HintPep604Type = _types.UnionType
+except AttributeError:
+    # On PyPy or other implementations without types.UnionType, use UnavailableType
+    # as a placeholder. This will cause PEP 604 union detection to fail gracefully.
+    HintPep604Type = UnavailableType()  # type: ignore[assignment]
+
 '''
 C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
 created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
 This type is a version-agnostic generalization of the standard
 :class:`types.UnionType` type available only under Python >= 3.10.
+
+**This type is unavailable on PyPy**, where it defaults to
+:class:`UnavailableType` for safety.
 '''
 
 
