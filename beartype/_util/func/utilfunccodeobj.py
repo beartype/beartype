@@ -260,10 +260,17 @@ def get_func_codeobj_or_none(
         func_codeobj = (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
 
         # On PyPy, C-based functions (like tuple.count after unwrapping) can have
-        # code objects with co_filename indicating they're builtin. Check for this
-        # and return None if detected.
-        if func_codeobj and func_codeobj.co_filename in ('<builtin>', '<built-in>'):
-            return None
+        # code objects indicating they're builtin. Check for this and return None
+        # if detected. Note that:
+        # * Some PyPy code objects are 'builtin-code' type without co_filename
+        # * Some PyPy code objects have co_filename set to '<builtin>' or '<built-in>'
+        if func_codeobj:
+            # Check if it's a builtin-code object (no co_filename attribute)
+            if type(func_codeobj).__name__ == 'builtin-code':
+                return None
+            # Check if co_filename indicates a builtin (has co_filename attribute)
+            elif getattr(func_codeobj, 'co_filename', None) in ('<builtin>', '<built-in>'):
+                return None
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this object is a pure-Python generator, return this generator's code
