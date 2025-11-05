@@ -128,7 +128,6 @@ def test_pep563_class_self_reference_override() -> None:
     assert Karma.if_your_colors().dreams == DREAMS
 
 # ....................{ TESTS ~ scope                      }....................
-@skip_if_pypy()
 def test_pep563_module() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
@@ -145,6 +144,13 @@ def test_pep563_module() -> None:
         get_pep649_hintable_annotations,
         set_pep649_hintable_annotations,
     )
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
+    from pytest import skip
+
+    # Skip this test on PyPy due to Union type hint incompatibility
+    if is_python_pypy():
+        skip('Incompatible with PyPy.')
+
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_pep604,
