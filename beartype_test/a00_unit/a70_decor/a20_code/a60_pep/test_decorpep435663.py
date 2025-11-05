@@ -70,10 +70,13 @@ def test_decor_pep435() -> None:
 
 
 @skip_if_python_version_less_than('3.11.0')
+@skip_if_pypy()
 def test_decor_pep663() -> None:
     '''
     Test :pep:`663` (i.e., :class:`enum.StrEnum`) support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test is skipped on PyPy for the same reasons as test_decor_pep435().
     '''
 
     # ....................{ IMPORTS                        }....................
