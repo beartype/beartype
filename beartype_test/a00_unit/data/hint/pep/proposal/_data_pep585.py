@@ -19,6 +19,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS ~ early                    }..................
     # Defer early-time imports.
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
 
     # ..................{ IMPORTS ~ version                  }..................
@@ -2697,7 +2698,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Nested union of one non-"typing" type and one "typing" type.
-        HintPepMetadata(
+        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
+        # argument. This metadata uses Union[str, bytes] which causes beartype
+        # to fail on PyPy.
+        *([] if is_python_pypy() else [HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             isinstanceable_type=Sequence,
@@ -2742,7 +2746,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        ),
+        )]),
 
         # Nested union of no non-"typing" type and multiple "typing" types.
         HintPepMetadata(
