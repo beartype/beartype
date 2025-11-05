@@ -69,8 +69,8 @@ def test_decor_pep435() -> None:
         as_unknown_he_passed = 'have pined'
 
 
-@skip_if_python_version_less_than('3.11.0')
 @skip_if_pypy()
+@skip_if_python_version_less_than('3.11.0')
 def test_decor_pep663() -> None:
     '''
     Test :pep:`663` (i.e., :class:`enum.StrEnum`) support implemented in the
