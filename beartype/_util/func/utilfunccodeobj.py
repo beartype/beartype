@@ -23,6 +23,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from types import (
+    BuiltinFunctionType,
     CodeType,
     FrameType,
     FunctionType,
@@ -228,6 +229,14 @@ def get_func_codeobj_or_none(
     # Code object to be returned, defaulting to "None".
     func_codeobj = None
 
+    # If this object is a C-based builtin function (e.g., iter, len), return None
+    # immediately. On PyPy, builtin functions can have __code__ attributes that
+    # make them appear to be pure-Python functions, but they should still be
+    # treated as C-based callables without code objects.
+    if isinstance(func, BuiltinFunctionType):
+        return None
+    # Else, this object is *NOT* a C-based builtin function.
+    #
     # If this object is a pure-Python function...
     #
     # Note that:
@@ -237,7 +246,7 @@ def get_func_codeobj_or_none(
     # * This test intentionally leverages the standard "types.FunctionType"
     #   class rather than our equivalent "beartype.cave.FunctionType" class to
     #   avoid circular import issues.
-    if isinstance(func, FunctionType):
+    elif isinstance(func, FunctionType):
         # Return the code object of either:
         # * If unwrapping this function, the lowest-level wrappee wrapped by
         #   this function.
