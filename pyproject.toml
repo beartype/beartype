@@ -545,10 +545,20 @@ test-tox = [
     # * The @beartype test suite requires pandera >= 0.26.0. Prior pandera
     #   versions were Pandas-specific. Modern pandera versions are API-agnostic
     #   and now support a wide variety of DataFrame-like APIs, including Polars.
-    "pandera >= 0.26.0; python_version < '3.14.0'",
+    # * Pandera requires Pydantic, which requires Rust compilation and is slow
+    #   on PyPy.
+    """pandera >= 0.26.0; \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     # Required by optional Pandera- and Polars-specific integration tests.
-    "polars; python_version < '3.14.0'",
+    # Polars is Rust-based and requires extensive compilation, which is extremely
+    # slow on PyPy.
+    """polars; \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* Pandas supports Python
     #3.14. Pandas currently fails to ship Python 3.14 wheels and is non-trivial
@@ -563,9 +573,15 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
-    # Required by optional FastMCP-specific integration tests. Note that FastMCP
-    # requires Pydantic.
-    """fastmcp; python_version > '3.9.0' and python_version < '3.14.0'""",
+    # Required by optional FastMCP-specific integration tests. Note that:
+    # * FastMCP requires Pydantic, which requires Rust compilation.
+    # * FastMCP also depends on rpds-py, which requires Rust compilation.
+    # * Both are extremely slow to compile on PyPy.
+    """fastmcp; \
+       python_version > '3.9.0' and \
+       python_version < '3.14.0' and \
+       platform_python_implementation != 'PyPy'\
+    """,
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires
