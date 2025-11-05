@@ -562,7 +562,7 @@ the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
 
-IsBuiltinOrSubclassableTypes = type | TupleTypes | HintPep604Type
+IsBuiltinOrSubclassableTypes = Union[type, TupleTypes, HintPep604Type]
 '''
 PEP-compliant type hint matching any objects passable as the second parameter
 to the :func:`isinstance` and :func:`issubclass` builtins.
@@ -573,10 +573,14 @@ Specifically, this hint matches either:
 * A tuple of zero or more types.
 * A :pep:`604`-compliant **new union** (i.e., two or more types delimited by the
   ``|`` operator under Python >= 3.10).
+
+Note: This uses Union[...] syntax instead of PEP 604 | syntax to ensure it
+remains a valid type alias even when HintPep604Type is conditionally unavailable
+(e.g., on PyPy).
 '''
 
 
-SetOrTupleTypes = TupleTypes | AbstractSetTypes
+SetOrTupleTypes = Union[TupleTypes, AbstractSetTypes]
 '''
 PEP-compliant type hint matching a set *or* tuple of zero or more types.
 '''
@@ -588,14 +592,17 @@ PEP-compliant type hint matching either a type *or* tuple of zero or more types.
 '''
 
 
-TypeOrSetOrTupleTypes = type | TupleTypes | AbstractSetTypes
+TypeOrSetOrTupleTypes = Union[type, TupleTypes, AbstractSetTypes]
 '''
 PEP-compliant type hint matching either a type *or* set or tuple of zero or more
 types.
+
+Note: This uses Union[...] syntax instead of PEP 604 | syntax for consistency
+with other type aliases that must remain valid when components are unavailable.
 '''
 
 
-TypeStack = TupleTypes | None
+TypeStack = Union[TupleTypes, None]
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
 more arbitrary types *or* :data:`None`).
