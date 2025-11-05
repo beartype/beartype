@@ -376,18 +376,17 @@ jobs:
           # The kludge leveraged here is the canonical solution. See also:
           #     https://github.com/numpy/numpy/issues/15947#issuecomment-745428684
           #
-          # Ideally, we would instead isolate setting this environment variable
-          # in a prior step with sane GitHub Actions syntax: e.g.,
-          #     if: ${{ matrix.platform }} == 'macos-latest'
-          #     env:
-          #       _TOX_PIP_INSTALL_OPTIONS: '--force-reinstall'
+          # NOTE: The _TOX_PIP_INSTALL_OPTIONS environment variable is no longer
+          # needed after migrating to tox-uv. The tox-uv plugin automatically
+          # handles package reinstallation more intelligently without requiring
+          # platform-specific flags. Previously, this was used to set
+          # "--force-reinstall" on macOS to work around NumPy issues.
           #
-          # Sadly, the "env:" map only locally exports the environment
-          # variables it declares to the current step. Thanks, GitHub Actions.
-          if [[ ${{ matrix.platform }} == 'macos-latest' ]]; then
-              export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
-              echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
-          fi
+          # Prior implementation (no longer needed with tox-uv):
+          #   if [[ ${{ matrix.platform }} == 'macos-latest' ]]; then
+          #       export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
+          #       echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
+          #   fi
           # Dismantled, this is:
           # * "--skip-missing-interpreters=false" disables the corresponding
           #   "skip_missing_interpreters = true" setting globally enabled by
