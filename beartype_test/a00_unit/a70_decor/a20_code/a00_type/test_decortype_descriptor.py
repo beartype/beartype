@@ -20,13 +20,20 @@ irrespective of lower-level type hinting concerns (e.g., PEP-compliance and
 from beartype_test._util.mark.pytskip import (
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,
+    skip_if_pypy,
 )
 
 # ....................{ TESTS ~ builtin                    }....................
+@skip_if_pypy()
 def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
-    method descriptors** (i.e., methods decorated by builtin method decorators).
+    method descriptors** (i.e., methods decorated by builtin method descriptors).
+
+    Note: This test is skipped on PyPy because PyPy's descriptor implementation
+    differs significantly from CPython's C-based descriptors. On PyPy, the type
+    attribute caching mechanism (which relies on __sizeof__) doesn't work the
+    same way for builtin descriptors like staticmethod, classmethod, and property.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -228,12 +235,16 @@ def test_decor_type_descriptor_builtin() -> None:
     assert exception_message == 'And their place is not known.'
 
 
+@skip_if_pypy()
 def test_decor_type_descriptor_builtin_called() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **explicitly called C-based
     unbound builtin method descriptors** (i.e., builtin method decorators that
     are explicitly called as functions rather than implicitly called as
     decorators).
+
+    Note: This test is skipped on PyPy for the same reasons as
+    test_decor_type_descriptor_builtin().
     '''
 
     # ....................{ IMPORTS                        }....................
