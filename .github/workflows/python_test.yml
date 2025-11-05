@@ -147,19 +147,15 @@ jobs:
           - pypy311-coverage
 
         # Avoid problematic combinations of Python versions and platforms.
-        exclude:
-          # Avoid PyPy under Windows. PyPy on Windows is notoriously slow and
-          # resource-intensive, often timing out during package installation.
-          # The 7+ minute timeout (exit code 0xC000013A) encountered during
-          # dependency installation makes Windows PyPy testing impractical.
-          - platform: windows-latest
-            tox-env: pypy311-coverage
-
-          # Avoid PyPy under macOS. Most PyPy users are on Linux, and testing
-          # on multiple platforms provides diminishing returns given PyPy's
-          # limited platform-specific differences.
-          - platform: macos-latest
-            tox-env: pypy311-coverage
+        # exclude:
+          # Previously excluded PyPy under Windows and macOS due to timeout issues
+          # during package installation (Rust-based packages like polars, pandera).
+          # Re-enabled after fixing compatibility issues and excluding problematic
+          # dependencies on PyPy via platform_python_implementation markers.
+          # - platform: windows-latest
+          #   tox-env: pypy311-coverage
+          # - platform: macos-latest
+          #   tox-env: pypy311-coverage
 
         #FIXME: Preserved for reference. Historical exclude rules below.
         # # Avoid problematic combinations of Python versions and platforms.
