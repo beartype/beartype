@@ -113,25 +113,57 @@ type(pattern.sub)  # CPython: C-based bound method
 
 ---
 
-### 4. **PEP 563 Nested Closures** (1 test) ⚠️
+### 4. **PEP 563 Nested Closures** (1 test) ❌
 **Test:**
-- `test_pep563_closure_nested` - PEP 563 with nested closures
+- `test_pep563_closure_nested` - PEP 563 with deeply nested closures (3+ levels)
 
 **Location:**
 - `beartype_test/a00_unit/a70_decor/a20_code/a60_pep/test_decorpep563.py:314`
 
 **Reason:**
-This test is skipped for **BOTH** PyPy AND CPython >= 3.10 due to CPython PEP 563 bugs.
+PyPy's `FrameType.f_locals` dictionary **omits local variables from distant parent callables** when those variables are only accessed in annotations.
+
+**Error:**
+```
+BeartypeCallHintForwardRefException: Forward reference "IntLike" unimportable
+from module "beartype_test.a00_unit.data.pep.pep563.data_pep563_poem".
+```
 
 **Technical Details:**
 - Has TWO skip decorators: `@skip_if_pypy311()` AND `@skip_if_python_version_greater_than_or_equal_to('3.10.0')`
-- Comment in code: "CPython is subtly broken with respect to 'from __future__ import annotations' imports under Python >= 3.10"
-- Deep dive testing shows PEP 563 itself works perfectly on PyPy
-- This specific test fails due to CPython bugs, not PyPy issues
+- **PyPy issue**: `f_locals` doesn't include annotation-only variables from grandparent scopes
+- **CPython >= 3.10 issue**: Different PEP 563 bugs affecting nested closures
+- Example: `outer()` defines `IntLike`, `middle()` is parent, `inner(x: IntLike)` can't resolve `IntLike`
+- Works if variable is used in function **body**, fails if used only in **annotations**
+- This is a real PyPy limitation with `f_locals` computation
 
-**Workaround:** None needed - this is a CPython limitation affecting all Python >= 3.10.
+**Workaround:** Use module-level type hints instead of closure-local ones:
+```python
+# BAD - Fails on PyPy
+@beartype
+def outer() -> Callable:
+    IntLike = Union[float, int]  # Local to outer
+    @beartype
+    def middle() -> Callable:
+        @beartype
+        def inner(x: IntLike) -> int:  # Can't find IntLike
+            return int(x)
 
-**Can it be fixed?** ⏳ Waiting for upstream CPython fix.
+# GOOD - Use module-level
+IntLike = Union[float, int]  # Module-level
+
+@beartype
+def outer() -> Callable:
+    @beartype
+    def middle() -> Callable:
+        @beartype
+        def inner(x: IntLike) -> int:  # Works!
+            return int(x)
+```
+
+**Can it be fixed?** ⏳ Requires PyPy to fix `f_locals` computation for annotation-only variables.
+
+**Impact:** Very rare - requires 3+ nesting levels with closure-local type aliases.
 
 ---
 
@@ -149,9 +181,11 @@ These fail because PyPy uses C-based implementations that beartype cannot intros
 These correctly identify PyPy implementation differences:
 - Cave FunctionOrMethodCType
 
-### CPython Bugs Affecting All Python >= 3.10 (1 test) ⏳
-Not PyPy-specific - waiting for upstream CPython fix:
-- PEP 563 nested closure
+### PyPy f_locals Limitation (1 test) ⚠️
+PyPy-specific issue with workaround available:
+- PEP 563 nested closures - PyPy's `f_locals` omits annotation-only variables from grandparent scopes
+- **Also broken on CPython >= 3.10** (different PEP 563 bugs)
+- **Workaround:** Use module-level type hints instead of closure-local ones
 
 ---
 
