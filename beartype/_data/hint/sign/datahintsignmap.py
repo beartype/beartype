@@ -542,7 +542,7 @@ def _init() -> None:
 
     # ..................{ INIT ~ types                       }..................
     # Conditionally populate the 'types' module mapping based on runtime availability.
-    # CPython has types.UnionType; PyPy has _pypy_generic_alias.UnionType.
+    # PyPy may not have types.UnionType, so we only add it if it exists.
     try:
         import types as _types_check
         if hasattr(_types_check, 'UnionType'):
@@ -555,19 +555,8 @@ def _init() -> None:
             # "__args__", "__parameters__"), enabling subsequent code generation to
             # conflate the two without issue.
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['types']['UnionType'] = HintSignUnion
-        else:
-            # On PyPy, types.UnionType doesn't exist. Try to get PyPy's UnionType.
-            try:
-                import _pypy_generic_alias
-                if hasattr(_pypy_generic_alias, 'UnionType'):
-                    # Map PyPy's UnionType to the same sign.
-                    HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN.setdefault('_pypy_generic_alias', {})
-                    HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['_pypy_generic_alias']['UnionType'] = HintSignUnion
-            except ImportError:
-                # Not running on PyPy or PyPy version doesn't have UnionType. Skip it.
-                pass
     except (ImportError, AttributeError):
-        # types module doesn't exist. Skip it.
+        # types module doesn't have UnionType (e.g., on PyPy). Skip it.
         pass
 
     # ..................{ INIT ~ modules                     }..................
