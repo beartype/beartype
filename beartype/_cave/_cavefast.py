@@ -270,13 +270,20 @@ standard functions,** including:
   :func:`staticmethod` decorator, regardless of whether those methods are
   accessed on their declaring classes or associated instances).
 
-**This type matches no callables whatsoever under some non-CPython
-interpreters,** including:
+**This type matches the same callables on PyPy as on CPython,** despite PyPy's
+implementation differences:
 
-* PyPy, which unconditionally compiles *all* pure-Python functions into C-based
-  functions. Ergo, under PyPy, *all* functions are guaranteed to be of the type
-  :class:`FunctionOrMethodCType` regardless of whether those functions were
-  initially defined in Python or C.
+* **PyPy uses Just-In-Time (JIT) compilation** to compile Python bytecode to
+  native machine code at runtime for performance optimization. However, this is
+  an **implementation detail** that does *not* affect Python's type system.
+* User-defined functions on PyPy remain :class:`FunctionType` and are *not*
+  :class:`FunctionOrMethodCType` (i.e., :class:`BuiltinFunctionType`). They
+  still have ``__code__`` attributes containing Python bytecode, can be
+  disassembled with :mod:`dis`, and behave identically to CPython functions
+  from a type-checking perspective.
+* Only true builtin functions (e.g., :func:`len`, :func:`iter`) implemented
+  directly in C or RPython are :class:`BuiltinFunctionType` on PyPy, just as
+  on CPython.
 
 See Also
 --------
@@ -1634,8 +1641,19 @@ CallablePyTypes = (
 Tuple of all **pure-Python callable types** (i.e., types whose instances are
 callable objects implemented in high-level Python rather than low-level C).
 
-**This tuple is empty under PyPy,** which unconditionally compiles *all*
-pure-Python callables into C-based callables.
+**This tuple contains the same types on PyPy as on CPython.** Although PyPy
+uses Just-In-Time (JIT) compilation to optimize Python bytecode to native
+machine code at runtime, this is an implementation detail that does *not*
+change how callables are classified in Python's type system:
+
+* User-defined functions remain :class:`FunctionType` on PyPy, not
+  :class:`BuiltinFunctionType`, and can be distinguished from C-based builtins
+  using ``isinstance()`` checks.
+* Bound methods remain :class:`MethodBoundInstanceOrClassType` on PyPy and
+  behave identically to CPython bound methods.
+* PyPy's JIT compilation is transparent to Python code and does not affect the
+  observable types of callable objects, even though it dramatically improves
+  runtime performance.
 '''
 
 

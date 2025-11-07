@@ -852,12 +852,8 @@ CALLABLES_C = frozenset((
     object().__str__, # Method Wrapper Type
     str.join,         # Method Descriptor Type
 
-    #FIXME: *UGH.* This probably should be callable under PyPy 3.6, but
-    #it's not, which is why we've currently disabled this. That's clearly a
-    #PyPy bug. Uncomment this *AFTER* we drop support for PyPy 3.6 (and any
-    #newer PyPy versions also failing to implement this properly). We
-    #should probably also consider filing an upstream issue with PyPy,
-    #because this is non-ideal and non-orthogonal behaviour with CPython.
+    #FIXME: This is not callable under PyPy (including 3.11+), which is a
+    #PyPy bug. Uncomment if/when PyPy fixes this non-orthogonal behavior.
     #dict.__dict__['fromkeys'],
 ))
 '''

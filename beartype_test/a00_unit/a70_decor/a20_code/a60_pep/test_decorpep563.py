@@ -27,7 +27,7 @@ This submodule unit tests :pep:`563` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test._util.mark.pytskip import (
-    skip_if_pypy,
+    skip_if_pypy311,
     skip_if_python_version_less_than,
     skip_if_python_version_greater_than_or_equal_to,
 )
@@ -132,6 +132,9 @@ def test_pep563_module() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: PyPy 3.11+ fully supports both typing.Union and PEP 604 (int | str)
+    syntax, including with PEP 563 stringified annotations.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -141,6 +144,8 @@ def test_pep563_module() -> None:
         get_pep649_hintable_annotations,
         set_pep649_hintable_annotations,
     )
+
+    # PyPy 3.11+ supports Union types in PEP 563 contexts.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_pep604,
@@ -215,6 +220,9 @@ def test_pep563_class() -> None:
     '''
     Test class-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: PyPy 3.11+ fully supports both typing.Union and PEP 604 (int | str)
+    syntax, including with PEP 563 stringified annotations.
     '''
 
     # Defer test-specific imports.
@@ -243,9 +251,12 @@ def test_pep563_closure_nonnested() -> None:
     '''
     Test non-nested closure-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
+
+    Note: This test now works on PyPy thanks to proper Union type support.
     '''
 
     # Defer test-specific imports.
+    # PyPy 3.11+ supports Union types in PEP 563 contexts.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure)
 
@@ -297,7 +308,7 @@ def test_pep563_closure_nonnested() -> None:
 #FIXME: CPython is subtly broken with respect to "from __future__ import
 #annotations" imports under Python >= 3.10. Until resolved, disable this.
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @skip_if_python_version_greater_than_or_equal_to('3.10.0')
 def test_pep563_closure_nested() -> None:
     '''
@@ -387,6 +398,9 @@ def test_pep563_hint_pep604() -> None:
     :obj:`dataclasses.dataclass`-decorated subclasses also decorated by this
     decorator if the active Python interpreter targets Python >= 3.10 and thus
     supports :pep:`604`.
+
+    Note: PyPy 3.11+ is fully supported. beartype's sign detection mechanism
+    handles `_pypy_generic_alias.UnionType` correctly.
     '''
 
     # .....................{ IMPORTS                       }....................

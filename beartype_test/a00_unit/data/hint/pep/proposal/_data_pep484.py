@@ -106,6 +106,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignTypeVar,
         HintSignValuesView,
     )
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_11
     from beartype_test.a00_unit.data.data_type import (
         Class,
@@ -322,8 +323,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPithUnsatisfiedMetadata(0x8BADF00D),  # <-- 2343432205
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
-                    'Of Politico‐policed diction maledictions,',
-                    'Of that numeral addicts’ “—Additive game,” self‐',
+                    'Of Politico-policed diction maledictions,',
+                    'Of that numeral addicts\' "—Additive game," self-',
                 ]),
             ),
         ),
@@ -345,7 +346,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # List of string constants.
                 HintPithUnsatisfiedMetadata([
                     'Into lavishly crested, crestfallen ',
-                    'epaulette‐cross‐pollinated st‐Ints,',
+                    'epaulette-cross-pollinated st-Ints,',
                 ]),
             ),
         ),

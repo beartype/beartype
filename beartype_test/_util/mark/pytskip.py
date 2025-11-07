@@ -277,6 +277,29 @@ def skip_if_pypy():
     return skip_if(is_python_pypy(), reason='Incompatible with PyPy.')
 
 
+def skip_if_pypy311():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is
+    PyPy 3.11.x.
+
+    This decorator is useful for tests that fail specifically on PyPy 3.11 but
+    may work on newer PyPy versions (3.12+) where compatibility improvements
+    have been made.
+
+    Returns
+    -------
+    pytest.skipif
+        Decorator skipping this text or fixture if this interpreter is PyPy
+        3.11.x *or* the identity decorator reducing to a noop otherwise.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_pypy311
+
+    # Skip this test if the active Python interpreter is PyPy 3.11.
+    return skip_if(is_python_pypy311(), reason='Incompatible with PyPy 3.11.')
+
+
 def skip_if_python_version_greater_than_or_equal_to(version: str):
     '''
     Skip the decorated test or fixture if the version of the active Python

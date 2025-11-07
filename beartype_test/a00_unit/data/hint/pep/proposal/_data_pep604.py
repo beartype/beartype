@@ -93,19 +93,19 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
     # ..................{ TUPLES                             }..................
     # List of all PEP-specific type hint metadata to be returned.
     hints_pep_meta = [
-        # ................{ NEW UNION                          }................
-        # Union of one non-"typing" type and an originative "typing" type,
-        # exercising a prominent edge case when raising human-readable
-        # exceptions describing the failure of passed parameters or returned
-        # values to satisfy this union.
-        #
-        # Interestingly, Python preserves this union as a PEP 604-compliant
-        # new-style union rather than implicitly coercing this into a PEP
-        # 484-compliant old-style union: e.g.,
-        #     >>> int | list[str]
-        #     int | list[str]
-        HintPepMetadata(
-            hint=int | list[str],
+            # ................{ NEW UNION                          }................
+            # Union of one non-"typing" type and an originative "typing" type,
+            # exercising a prominent edge case when raising human-readable
+            # exceptions describing the failure of passed parameters or returned
+            # values to satisfy this union.
+            #
+            # Interestingly, Python preserves this union as a PEP 604-compliant
+            # new-style union rather than implicitly coercing this into a PEP
+            # 484-compliant old-style union: e.g.,
+            #     >>> int | list[str]
+            #     int | list[str]
+            HintPepMetadata(
+                hint=int | list[str],
             pep_sign=HintSignUnion,
             is_type_typing=_PEP604_IS_TYPING,
             piths_meta=(
@@ -249,7 +249,6 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         # to only that argument (e.g., "str") on our behalf.
         #
         # Thanks. Thanks alot, "typing".
-
         # Ignorable unsubscripted "Union" attribute.
         HintPepMetadata(
             hint=Union,

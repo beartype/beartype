@@ -230,18 +230,16 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
 
     # ..................{ TYPES                              }..................
     # Standard module containing common low-level C-based types.
-    'types': {
-        #FIXME: Excise this *AFTER* dropping Python 3.13 support, please.
-        # ..................{ PEP 604                        }..................
-        # Python <= 3.13 implements PEP 604-compliant |-style unions (e.g., "int
-        # | float") as instances of the low-level C-based "types.UnionType"
-        # type. Thankfully, these unions are semantically interchangeable with
-        # comparable PEP 484-compliant unions (e.g., "typing.Union[int,
-        # float]"); both kinds expose equivalent dunder attributes (e.g.,
-        # "__args__", "__parameters__"), enabling subsequent code generation to
-        # conflate the two without issue.
-        'UnionType': HintSignUnion,
-    },
+    # Note: The 'types' dictionary is conditionally populated below based on
+    # what's available in the runtime. PyPy HAS types.UnionType, but its
+    # __module__ attribute is '_pypy_generic_alias' instead of 'types'.
+    'types': {},
+
+    # ..................{ PYPY                               }..................
+    # PyPy-specific module for generic aliases, including UnionType.
+    # On PyPy, types.UnionType is actually _pypy_generic_alias.UnionType,
+    # so we need to map both module names to ensure proper detection.
+    '_pypy_generic_alias': {},
 
     # ..................{ TYPING                             }..................
     # Standard typing module.
@@ -548,6 +546,32 @@ def _init() -> None:
             HintSignContextManager: _ARGS_LEN_1,
         })
     # print(f'HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE: {HINT_SIGN_ORIGIN_ISINSTANCEABLE_TO_ARGS_LEN_RANGE}')
+
+    # ..................{ INIT ~ types                       }..................
+    # Conditionally populate the 'types' module mapping based on runtime availability.
+    # Note: PyPy HAS types.UnionType, but its __module__ attribute is '_pypy_generic_alias'
+    # instead of 'types'. We map both module names to ensure hint sign detection works
+    # correctly on both CPython and PyPy.
+    try:
+        import types as _types_check
+        if hasattr(_types_check, 'UnionType'):
+            #FIXME: Excise this *AFTER* dropping Python 3.13 support, please.
+            # Python <= 3.13 implements PEP 604-compliant |-style unions (e.g., "int
+            # | float") as instances of the low-level C-based "types.UnionType"
+            # type. Thankfully, these unions are semantically interchangeable with
+            # comparable PEP 484-compliant unions (e.g., "typing.Union[int,
+            # float]"); both kinds expose equivalent dunder attributes (e.g.,
+            # "__args__", "__parameters__"), enabling subsequent code generation to
+            # conflate the two without issue.
+            HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['types']['UnionType'] = HintSignUnion
+
+            # On PyPy, types.UnionType.__module__ is '_pypy_generic_alias', not 'types'.
+            # We need to also map the PyPy module name to ensure sign detection works.
+            if _types_check.UnionType.__module__ == '_pypy_generic_alias':
+                HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['_pypy_generic_alias']['UnionType'] = HintSignUnion
+    except (ImportError, AttributeError):
+        # types module doesn't have UnionType (only on Python < 3.10). Skip it.
+        pass
 
     # ..................{ INIT ~ modules                     }..................
     # For the fully-qualified name of each quasi-standard typing module...
