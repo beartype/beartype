@@ -16,7 +16,7 @@ from beartype.roar._roarexc import (
 from beartype._data.typing.datatyping import CommandWords
 from beartype._util.cache.utilcachecall import callable_cached
 from platform import python_implementation
-from sys import executable as sys_executable
+from sys import executable as sys_executable, version_info
 from typing import TYPE_CHECKING
 
 # ....................{ TESTERS                            }....................
@@ -29,6 +29,23 @@ def is_python_pypy() -> bool:
     '''
 
     return python_implementation() == 'PyPy'
+
+
+@callable_cached
+def is_python_pypy311() -> bool:
+    '''
+    :data:`True` only if the active Python interpreter is **PyPy 3.11.x**.
+
+    This tester is memoized for efficiency and provides more specific PyPy
+    version detection, as different PyPy versions may behave differently
+    regarding Union types and PEP 604 support.
+    '''
+
+    return (
+        python_implementation() == 'PyPy' and
+        version_info[0] == 3 and
+        version_info[1] == 11
+    )
 
 
 def is_python_optimized() -> bool:
