@@ -16,7 +16,7 @@ positional-only, variadic positional, variadic keyword).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip, skip_if_pypy
+from beartype_test._util.mark.pytskip import skip, skip_if_pypy, skip_if_pypy311
 
 # ....................{ TESTS ~ name                       }....................
 def test_decor_arg_name_fail() -> None:
@@ -459,7 +459,6 @@ def test_decor_arg_kind_posonly() -> None:
         the_taste_and_the_hunger(b'That was my plan')
 
 
-@skip_if_pypy311()
 def test_decor_arg_kind_posonly_flex_varpos_kwonly() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed a
@@ -467,8 +466,7 @@ def test_decor_arg_kind_posonly_flex_varpos_kwonly() -> None:
     flexible parameter, variadic positional parameter, and keyword-only
     parameter, all annotated with PEP-compliant type hints.
 
-    Note: This test is skipped on PyPy because the imported data module contains
-    Union type hints which are not fully supported on PyPy.
+    Note: This test now works on PyPy thanks to proper Union type support.
     '''
 
     # Defer test-specific imports.

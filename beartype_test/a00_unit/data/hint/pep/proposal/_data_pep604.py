@@ -489,10 +489,9 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
         # optimizations leveraging PEP 572-style assignment expressions.
 
         # Nested union of multiple non-"typing" types.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses List[Union[int, str]] which causes
-        # beartype to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=List[Union[int, str,]],
             pep_sign=HintSignList,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
@@ -539,13 +538,12 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # Nested union of one non-"typing" type and one "typing" type.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses Sequence[Union[str, bytes]] which causes
-        # beartype to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
@@ -589,13 +587,12 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # Nested union of *NO* isinstanceable type and multiple "typing" types.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses MutableSequence[Union[bytes, CallableABC]]
-        # which causes beartype to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=MutableSequence[Union[bytes, CallableABC]],
             pep_sign=HintSignMutableSequence,
             warning_type=BeartypeDecorHintPep585DeprecationWarning,
@@ -642,7 +639,7 @@ def hints_pep604_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # ................{ UNION ~ optional                   }................
         # Ignorable unsubscripted "Optional" attribute.
@@ -788,18 +785,15 @@ def hints_pep604_ignorable_deep() -> list:
     '''
     List of :pep:`604`-compliant **deeply ignorable type hints** (i.e.,
     ignorable only on the non-trivial basis of their nested child type hints).
+
+    Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+    detection in beartype's sign detection mechanism.
     '''
 
     # ..................{ IMPORTS                            }..................
     from typing import Any
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
 
     # ..................{ RETURN                             }..................
-    # PyPy does not support PEP 604 unions (i.e., the "|" operator for types).
-    # Return an empty list on PyPy to avoid TypeError during hint creation.
-    if is_python_pypy():
-        return []
-
     # Return this list of all PEP-specific deeply ignorable type hints.
     return [
         # New-style unions containing any ignorable type hint.

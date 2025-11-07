@@ -310,10 +310,9 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         ),
 
         # Constrained type variable declared by the "typing" module.
-        # SKIPPED ON PYPY: PyPy does not support PEP 604 unions, and AnyStr's
-        # constraints are represented as "bytes | str" on Python 3.10+, causing
-        # beartype to fail when trying to process this TypeVar on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
@@ -330,13 +329,12 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     'Of that numeral addicts\' "—Additive game," self-',
                 ]),
             ),
-        )]),
+        ),
 
         # User-defined constrained type variable.
-        # SKIPPED ON PYPY: PyPy does not support PEP 604 unions, and T_str_or_bytes's
-        # constraints are represented as "str | bytes" on Python 3.10+, causing
-        # beartype to fail when trying to process this TypeVar on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=T_str_or_bytes,
             pep_sign=HintSignTypeVar,
             typehint_cls=TypeVarTypeHint,
@@ -355,7 +353,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     'epaulette-cross-pollinated st-Ints,',
                 ]),
             ),
-        )]),
+        ),
 
         # User-defined bounded type variable.
         HintPepMetadata(

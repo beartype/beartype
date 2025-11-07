@@ -2648,10 +2648,9 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         # optimizations leveraging PEP 572-style assignment expressions.
 
         # Nested union of multiple non-"typing" types.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses list[Union[int, str]] which causes
-        # beartype to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=list[Union[int, str,]],
             pep_sign=HintSignList,
             isinstanceable_type=list,
@@ -2698,13 +2697,12 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # Nested union of one non-"typing" type and one "typing" type.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses Union[str, bytes] which causes beartype
-        # to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             isinstanceable_type=Sequence,
@@ -2749,13 +2747,12 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # Nested union of no non-"typing" type and multiple "typing" types.
-        # SKIPPED ON PYPY: PyPy doesn't support typing.Union as a child type
-        # argument. This metadata uses MutableSequence[Union[bytes, Callable]]
-        # which causes beartype to fail on PyPy.
-        *([] if is_python_pypy() else [HintPepMetadata(
+        # Note: Now works on PyPy thanks to proper _pypy_generic_alias.UnionType
+        # detection in beartype's sign detection mechanism.
+        HintPepMetadata(
             hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
             isinstanceable_type=MutableSequence,
@@ -2802,7 +2799,7 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
                     ),
                 ),
             ),
-        )]),
+        ),
 
         # ................{ CONFIGURATION ~ overrides          }................
         # PEP 585-compliant type hints exercising the beartype configuration

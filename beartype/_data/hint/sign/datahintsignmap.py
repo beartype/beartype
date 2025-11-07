@@ -234,6 +234,12 @@ HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN = _init_hint_sign_trie({
     # what's available in the runtime (e.g., PyPy may not have UnionType).
     'types': {},
 
+    # ..................{ PYPY                               }..................
+    # PyPy-specific module for generic aliases, including UnionType.
+    # On PyPy, types.UnionType is actually _pypy_generic_alias.UnionType,
+    # so we need to map both module names to ensure proper detection.
+    '_pypy_generic_alias': {},
+
     # ..................{ TYPING                             }..................
     # Standard typing module.
     'typing': {
@@ -555,8 +561,13 @@ def _init() -> None:
             # "__args__", "__parameters__"), enabling subsequent code generation to
             # conflate the two without issue.
             HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['types']['UnionType'] = HintSignUnion
+
+            # On PyPy, types.UnionType.__module__ is '_pypy_generic_alias', not 'types'.
+            # We need to also map the PyPy module name to ensure sign detection works.
+            if _types_check.UnionType.__module__ == '_pypy_generic_alias':
+                HINT_MODULE_NAME_TO_TYPE_BASENAME_TO_SIGN['_pypy_generic_alias']['UnionType'] = HintSignUnion
     except (ImportError, AttributeError):
-        # types module doesn't have UnionType (e.g., on PyPy). Skip it.
+        # types module doesn't have UnionType (e.g., on older Python/PyPy). Skip it.
         pass
 
     # ..................{ INIT ~ modules                     }..................

@@ -144,13 +144,8 @@ def test_pep563_module() -> None:
         get_pep649_hintable_annotations,
         set_pep649_hintable_annotations,
     )
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
-    from pytest import skip
 
-    # Skip this test on PyPy due to Union type hint incompatibility
-    if is_python_pypy():
-        skip('Incompatible with PyPy.')
-
+    # Note: This test now works on PyPy thanks to proper Union type support.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
         get_minecraft_end_txt_pep604,
@@ -231,22 +226,9 @@ def test_pep563_class() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
-    from pytest import skip
-
-    # Skip this test on PyPy due to Union type hint incompatibility.
-    # We must check before attempting import since the module itself contains
-    # Union type hints that fail during import on PyPy.
-    if is_python_pypy():
-        skip('Incompatible with PyPy.')
-
-    # Import must succeed since we're not on PyPy
-    try:
-        from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
-            MinecraftEndTxtUnscrambler)
-    except Exception as e:
-        # If import fails anyway (shouldn't happen), skip with error details
-        skip(f'Failed to import test data module: {e}')
+    # Note: This test now works on PyPy thanks to proper Union type support.
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
+        MinecraftEndTxtUnscrambler)
 
     # Assert that instantiating a class with a @beartype-decorated __init__()
     # method declaring a @beartype-decorated method closure works.
@@ -271,23 +253,13 @@ def test_pep563_closure_nonnested() -> None:
     Test non-nested closure-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator.
 
-    Note: This test is skipped on PyPy because the imported test data module
-    uses Union type hints which are not fully supported on PyPy.
+    Note: This test now works on PyPy thanks to proper Union type support.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
-    from pytest import skip
-
-    # Skip this test on PyPy due to Union type hint incompatibility
-    if is_python_pypy():
-        skip('Incompatible with PyPy.')
-
-    try:
-        from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
-            get_minecraft_end_txt_closure)
-    except Exception as e:
-        skip(f'Failed to import test data module: {e}')
+    # Note: This test now works on PyPy thanks to proper Union type support.
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
+        get_minecraft_end_txt_closure)
 
     # Assert that declaring a @beartype-decorated closure works under PEP 563.
     get_minecraft_end_txt_substr = get_minecraft_end_txt_closure(
@@ -422,7 +394,6 @@ def test_pep563_hint_pep484_noreturn() -> None:
         to_love_and_wonder()
 
 # .....................{ TESTS ~ pep : 604                 }....................
-@skip_if_pypy311()
 @skip_if_python_version_less_than('3.10.0')
 def test_pep563_hint_pep604() -> None:
     '''
@@ -433,10 +404,8 @@ def test_pep563_hint_pep604() -> None:
     decorator if the active Python interpreter targets Python >= 3.10 and thus
     supports :pep:`604`.
 
-    Note: While PyPy 3.11+ supports basic PEP 604 unions via
-    `_pypy_generic_alias.UnionType`, the combination of PEP 563 (string
-    annotations) with PEP 604 unions has edge cases that cause test failures.
-    The core HintPep604Type detection works correctly on PyPy.
+    Note: This test now works on PyPy 3.11+ thanks to proper handling of
+    `_pypy_generic_alias.UnionType` in beartype's sign detection mechanism.
     '''
 
     # .....................{ IMPORTS                       }....................
