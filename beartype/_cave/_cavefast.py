@@ -1054,39 +1054,14 @@ else:
 #FIXME: Excise the obsolete "HintPep604Type" type *AFTER* dropping Python 3.13
 #support, please. Under Python >= 3.14, this type is a trivial alias of the
 #standard "typing.Union" type.
+HintPep604Type = _types.UnionType
+'''
+C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
+created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
 
-# If this submodule is currently being statically type-checked by a pure static
-# type-checker, provide a proper type class for mypy.
-if TYPE_CHECKING:
-    HintPep604Type = _types.UnionType  # <-- it's not hard, Claude
-# Else, this submodule is *NOT* currently being statically type-checked.
-# Define this type dynamically based on runtime availability.
-else:
-    # Attempt to import types.UnionType for PEP 604-compliant unions.
-    # Note: PyPy may not have types.UnionType, so we need a fallback.
-    try:
-        HintPep604Type = _types.UnionType  # type: ignore[misc]
-    except AttributeError:
-        # On PyPy or other implementations without types.UnionType, gracefully
-        # fallback to dynamically introspecting the type of a placeholder union.
-        try:
-            HintPep604Type = type(int | str)  # <-- IT'S NOT HARD, CLAUDE
-        except TypeError:
-            # If even the "|" operator fails (very old PyPy or other edge cases),
-            # fallback to UnavailableType as a last resort.
-            HintPep604Type = UnavailableType()  # type: ignore[misc,assignment]
-
-    '''
-    C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
-    created by expressions of the form ``{type1} | {type2} | ... | {typeN}``).
-
-    This type is a version-agnostic generalization of the standard
-    :class:`types.UnionType` type available only under Python >= 3.10.
-
-    On PyPy, :class:`types.UnionType` is unavailable. Instead, this type is
-    dynamically introspected from ``type(int | str)`` if the ``|`` operator is
-    supported, or falls back to :class:`UnavailableType` if not.
-    '''
+This type is a version-agnostic generalization of the standard
+:class:`types.UnionType` type available only under Python >= 3.10.
+'''
 
 
 HintPep604ItemTypes: _TupleTyping[type, ...] = (
