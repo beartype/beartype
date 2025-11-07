@@ -1058,9 +1058,7 @@ else:
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, provide a proper type class for mypy.
 if TYPE_CHECKING:
-    # Define a dummy class for static type checking. This ensures mypy
-    # recognizes HintPep604Type as an exported type.
-    class HintPep604Type(object): pass
+    HintPep604Type = _types.UnionType  # <-- it's not hard, Claude
 # Else, this submodule is *NOT* currently being statically type-checked.
 # Define this type dynamically based on runtime availability.
 else:
@@ -1069,10 +1067,9 @@ else:
     try:
         HintPep604Type = _types.UnionType  # type: ignore[misc]
     except AttributeError:
-        # On PyPy or other implementations without types.UnionType, use
-        # UnavailableType as a placeholder. This will cause PEP 604 union
-        # detection to fail gracefully.
-        HintPep604Type = UnavailableType()  # type: ignore[misc,assignment]
+        # On PyPy or other implementations without types.UnionType, gracefully
+        # fallback to dynamically introspecting the type of a placeholder union.
+        HintPep604Type = type(int | str)  # <-- IT'S NOT HARD, CLAUDE
 
     '''
     C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
