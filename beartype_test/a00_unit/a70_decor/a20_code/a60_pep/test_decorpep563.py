@@ -422,6 +422,7 @@ def test_pep563_hint_pep484_noreturn() -> None:
         to_love_and_wonder()
 
 # .....................{ TESTS ~ pep : 604                 }....................
+@skip_if_pypy()
 @skip_if_python_version_less_than('3.10.0')
 def test_pep563_hint_pep604() -> None:
     '''
@@ -431,6 +432,10 @@ def test_pep563_hint_pep604() -> None:
     :obj:`dataclasses.dataclass`-decorated subclasses also decorated by this
     decorator if the active Python interpreter targets Python >= 3.10 and thus
     supports :pep:`604`.
+
+    Note: Skipped on PyPy because PyPy's PEP 604 support is incomplete or
+    behaves differently than CPython in certain edge cases involving PEP 563
+    string annotations.
     '''
 
     # .....................{ IMPORTS                       }....................

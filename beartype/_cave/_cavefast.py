@@ -1069,7 +1069,12 @@ else:
     except AttributeError:
         # On PyPy or other implementations without types.UnionType, gracefully
         # fallback to dynamically introspecting the type of a placeholder union.
-        HintPep604Type = type(int | str)  # <-- IT'S NOT HARD, CLAUDE
+        try:
+            HintPep604Type = type(int | str)  # <-- IT'S NOT HARD, CLAUDE
+        except TypeError:
+            # If even the "|" operator fails (very old PyPy or other edge cases),
+            # fallback to UnavailableType as a last resort.
+            HintPep604Type = UnavailableType()  # type: ignore[misc,assignment]
 
     '''
     C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
@@ -1078,8 +1083,9 @@ else:
     This type is a version-agnostic generalization of the standard
     :class:`types.UnionType` type available only under Python >= 3.10.
 
-    **This type is unavailable on PyPy**, where it defaults to
-    :class:`UnavailableType` for safety.
+    On PyPy, :class:`types.UnionType` is unavailable. Instead, this type is
+    dynamically introspected from ``type(int | str)`` if the ``|`` operator is
+    supported, or falls back to :class:`UnavailableType` if not.
     '''
 
 
