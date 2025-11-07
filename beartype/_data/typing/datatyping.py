@@ -729,39 +729,19 @@ instances definitely encapsulating pathnames).
 # type unions (e.g., "Union[float, int]") fail to support various edge cases,
 # including recursive "beartype.HintOverrides" globally defined by the
 # "beartype._conf._confoverrides" submodule.
-#
-# However, PyPy does not support PEP 604 unions, so we must use Union syntax.
 
-# Import for conditional PyPy check (use platform directly to avoid circular import)
-from platform import python_implementation
+Pep484TowerComplex = complex | float | int
+'''
+:pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
+complex numbers, floating-point numbers, and integers).
+'''
 
-# Conditionally define numeric tower type hints based on Python implementation
-if python_implementation() == 'PyPy':
-    # PyPy doesn't support PEP 604 unions, so use Union syntax
-    Pep484TowerComplex: object = Union[complex, float, int]  # type: ignore[misc]
-    '''
-    :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
-    complex numbers, floating-point numbers, and integers).
-    '''
 
-    Pep484TowerFloat: object = Union[float, int]  # type: ignore[misc]
-    '''
-    :pep:`484`-compliant type hint matching the **implicit floating-point tower**
-    (i.e., both floating-point numbers and integers).
-    '''
-else:
-    # CPython supports PEP 604 unions, which handle recursive HintOverrides better
-    Pep484TowerComplex: object = complex | float | int  # type: ignore[misc,no-redef]
-    '''
-    :pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
-    complex numbers, floating-point numbers, and integers).
-    '''
-
-    Pep484TowerFloat: object = float | int  # type: ignore[misc,no-redef]
-    '''
-    :pep:`484`-compliant type hint matching the **implicit floating-point tower**
-    (i.e., both floating-point numbers and integers).
-    '''
+Pep484TowerFloat = float | int
+'''
+:pep:`484`-compliant type hint matching the **implicit floating-point tower**
+(i.e., both floating-point numbers and integers).
+'''
 
 # ....................{ PEP ~ 484 : typevar                }....................
 T = TypeVar('T')
