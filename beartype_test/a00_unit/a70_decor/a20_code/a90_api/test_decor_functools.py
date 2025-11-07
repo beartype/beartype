@@ -15,20 +15,14 @@ the standard :mod:`functools` module.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_pypy311
 
 # ....................{ TESTS                              }....................
-@skip_if_pypy311()
 def test_decor_functools_lru_cache() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on
     :func:`functools.lru_cache`-based **memoized callables** (i.e., pure-Python
     callables decorated by that standard decorator, which then creates and
     returns low-level C-based callable objects memoizing those callables).
-
-    Note: This test is skipped on PyPy because PyPy's implementation of
-    staticmethod and functools.lru_cache differs from CPython, preventing
-    beartype from properly wrapping and type-checking these decorators.
     '''
 
     # ....................{ IMPORTS                        }....................
