@@ -342,15 +342,11 @@ def test_pep563_closure_nested() -> None:
         'It is reading our thoughts as though they were words on a screen.')
 
 # .....................{ TESTS ~ pep : 484                 }....................
-@skip_if_pypy311()
 def test_pep563_hint_pep484_namedtuple() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
     :func:`beartype.beartype` decorator with respect to :pep:`484`-compliant
     :obj:`typing.NamedTuple` subclasses decorated by this decorator.
-
-    Note: This test is skipped on PyPy because PyPy's NamedTuple implementation
-    differs from CPython, causing beartype's type-checking to behave differently.
     '''
 
     # .....................{ IMPORTS                       }....................
