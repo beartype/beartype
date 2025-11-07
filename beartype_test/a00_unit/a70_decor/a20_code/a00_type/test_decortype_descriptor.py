@@ -20,11 +20,11 @@ irrespective of lower-level type hinting concerns (e.g., PEP-compliance and
 from beartype_test._util.mark.pytskip import (
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,
-    skip_if_pypy,
+    skip_if_pypy311,
 )
 
 # ....................{ TESTS ~ builtin                    }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
@@ -235,7 +235,7 @@ def test_decor_type_descriptor_builtin() -> None:
     assert exception_message == 'And their place is not known.'
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_decor_type_descriptor_builtin_called() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **explicitly called C-based

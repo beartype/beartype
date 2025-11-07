@@ -15,7 +15,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import argparse, functools, re, sys, weakref
-from beartype_test._util.mark.pytskip import skip_if_pypy, skip_unless_package
+from beartype_test._util.mark.pytskip import skip_if_pypy311, skip_unless_package
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal
@@ -488,7 +488,7 @@ def test_api_cave_type_core() -> None:
         _THAT_OUR_SONS_MIGHT_FOLLOW_AFTER_BY_THE_BONES_ON_THE_WAY)
 
 # ....................{ TESTS ~ type : skip                }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_api_cave_type_core_nonpypy() -> None:
     '''
     Test all core simple types published by the :mod:`beartype.cave` submodule

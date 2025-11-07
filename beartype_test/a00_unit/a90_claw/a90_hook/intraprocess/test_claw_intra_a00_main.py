@@ -21,10 +21,10 @@ within the active Python process).
 # subprocesses to ensure these tests may be run in any arbitrary order.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
-from beartype_test._util.mark.pytskip import skip_if_pypy
+from beartype_test._util.mark.pytskip import skip_if_pypy311
 
 # ....................{ TESTS                              }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_this_package() -> None:
     '''
@@ -53,7 +53,7 @@ def test_claw_intraprocess_beartype_this_package() -> None:
     from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_package() -> None:
     '''
@@ -129,7 +129,7 @@ def test_claw_intraprocess_beartype_package() -> None:
         )
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_packages() -> None:
     '''
@@ -221,7 +221,7 @@ def test_claw_intraprocess_beartype_packages() -> None:
         )
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartype_all() -> None:
     '''
@@ -300,7 +300,7 @@ def test_claw_intraprocess_beartype_all() -> None:
         beartype_all(conf=BeartypeConf(is_debug=True))
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @pytest.mark.run_in_subprocess
 def test_claw_intraprocess_beartyping() -> None:
     '''

@@ -18,7 +18,7 @@ This submodule unit tests high-level functionality of the
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
-    skip_if_pypy,
+    skip_if_pypy311,
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,
 )
@@ -107,7 +107,7 @@ def test_decor_nontype_wrapper_isomorphic() -> None:
         when_the_moon(b"Filled the mysterious halls with floating shades")
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_decor_nontype_wrapper_type() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **type wrappers**

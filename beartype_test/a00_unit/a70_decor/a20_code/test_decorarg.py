@@ -459,7 +459,7 @@ def test_decor_arg_kind_posonly() -> None:
         the_taste_and_the_hunger(b'That was my plan')
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_decor_arg_kind_posonly_flex_varpos_kwonly() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed a

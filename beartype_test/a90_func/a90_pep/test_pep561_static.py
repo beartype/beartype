@@ -17,7 +17,7 @@ third-party static type-checkers and hence :pep:`561`.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
     skip_if_ci,
-    skip_if_pypy,
+    skip_if_pypy311,
     skip_unless_package,
     skip_unless_pathable,
 )
@@ -57,7 +57,7 @@ from beartype_test._util.mark.pytskip import (
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 @skip_unless_package('mypy')
 @skip_if_ci()
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_pep561_mypy() -> None:
     '''
     Functional test testing this project's compliance with :pep:`561` by

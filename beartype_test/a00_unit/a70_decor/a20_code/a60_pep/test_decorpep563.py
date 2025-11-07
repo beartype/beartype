@@ -27,7 +27,7 @@ This submodule unit tests :pep:`563` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from beartype_test._util.mark.pytskip import (
-    skip_if_pypy,
+    skip_if_pypy311,
     skip_if_python_version_less_than,
     skip_if_python_version_greater_than_or_equal_to,
 )
@@ -337,7 +337,7 @@ def test_pep563_closure_nonnested() -> None:
 #FIXME: CPython is subtly broken with respect to "from __future__ import
 #annotations" imports under Python >= 3.10. Until resolved, disable this.
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @skip_if_python_version_greater_than_or_equal_to('3.10.0')
 def test_pep563_closure_nested() -> None:
     '''
@@ -370,7 +370,7 @@ def test_pep563_closure_nested() -> None:
         'It is reading our thoughts as though they were words on a screen.')
 
 # .....................{ TESTS ~ pep : 484                 }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_pep563_hint_pep484_namedtuple() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
@@ -422,7 +422,7 @@ def test_pep563_hint_pep484_noreturn() -> None:
         to_love_and_wonder()
 
 # .....................{ TESTS ~ pep : 604                 }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 @skip_if_python_version_less_than('3.10.0')
 def test_pep563_hint_pep604() -> None:
     '''

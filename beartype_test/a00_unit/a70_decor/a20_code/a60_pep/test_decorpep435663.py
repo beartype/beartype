@@ -18,11 +18,11 @@ This submodule unit tests :pep:`435` and :pep:`663` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
     skip_if_python_version_less_than,
-    skip_if_pypy,
+    skip_if_pypy311,
 )
 
 # ....................{ TESTS                              }....................
-@skip_if_pypy()
+@skip_if_pypy311()
 def test_decor_pep435() -> None:
     '''
     Test :pep:`435` (i.e., :class:`enum.Enum`) support implemented in the
@@ -69,7 +69,7 @@ def test_decor_pep435() -> None:
         as_unknown_he_passed = 'have pined'
 
 
-@skip_if_pypy()
+@skip_if_pypy311()
 @skip_if_python_version_less_than('3.11.0')
 def test_decor_pep663() -> None:
     '''
