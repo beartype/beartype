@@ -17,7 +17,7 @@ third-party static type-checkers and hence :pep:`561`.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
     skip_if_ci,
-    skip_if_pypy,
+    skip_if_pypy311,
     skip_unless_package,
     skip_unless_pathable,
 )
@@ -51,13 +51,13 @@ from beartype_test._util.mark.pytskip import (
 #   package against "mypy", explicitly exercising this package against "mypy"
 #   yet again would only needlessly complicate CI workflows and consume excess
 #   CI minutes for *NO* gain.
-# * The active Python interpreter is *NOT* PyPy. mypy is currently incompatible
-#   with PyPy for inscrutable reasons that should presumably be fixed at some
-#   future point. See also:
+#
+# Note: As of mypy 1.18.2+, mypy is fully compatible with PyPy 3.11+. Earlier
+# versions of mypy were incompatible with PyPy due to dependencies on typed-ast
+# and internal CPython APIs. See:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 @skip_unless_package('mypy')
 @skip_if_ci()
-@skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
     Functional test testing this project's compliance with :pep:`561` by

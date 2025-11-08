@@ -26,7 +26,7 @@ from beartype_test._util.mark.pytskip import (
 def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
-    method descriptors** (i.e., methods decorated by builtin method decorators).
+    method descriptors** (i.e., methods decorated by builtin method descriptors).
     '''
 
     # ....................{ IMPORTS                        }....................

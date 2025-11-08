@@ -16,7 +16,7 @@ positional-only, variadic positional, variadic keyword).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip
+from beartype_test._util.mark.pytskip import skip, skip_if_pypy, skip_if_pypy311
 
 # ....................{ TESTS ~ name                       }....................
 def test_decor_arg_name_fail() -> None:
@@ -465,6 +465,8 @@ def test_decor_arg_kind_posonly_flex_varpos_kwonly() -> None:
     mandatory positional-only parameter, optional positional-only parameter,
     flexible parameter, variadic positional parameter, and keyword-only
     parameter, all annotated with PEP-compliant type hints.
+
+    Note: PyPy 3.11+ fully supports Union types.
     '''
 
     # Defer test-specific imports.

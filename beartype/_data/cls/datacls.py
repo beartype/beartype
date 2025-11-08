@@ -302,11 +302,14 @@ def _init() -> None:
         if (
             # This attribute is a type *AND*...
             isinstance(builtin_value, type) and
-            # This is *NOT* a dunder attribute.
+            # This is *NOT* a dunder attribute *AND*...
             not (
                 builtin_name.startswith('__') and
                 builtin_name.endswith  ('__')
-            )
+            ) and
+            # This is *NOT* a fake builtin type like NoneType (which is not
+            # globally accessible despite having module 'builtins').
+            builtin_value is not NoneType
         )
     }
 

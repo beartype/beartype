@@ -63,6 +63,7 @@ def test_reduce_hint() -> None:
         make_hint_pep484604_union)
     from beartype._util.hint.pep.proposal.pep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.pep.data_pep484 import (
         T_str_or_bytes)

@@ -32,6 +32,8 @@ on:
   push:
     branches:
       - main
+      # Temporarily enable CI on claude/* branches for testing PyPy compatibility
+      - 'claude/**'
   # Pull requests against the main branch. Pull requests against other branches
   # should, ideally, *NEVER* occur; if and when they do, we ignore them.
   pull_request:
@@ -131,13 +133,33 @@ jobs:
           # - py315-coverage
           # # - py315t-coverage
 
-          #FIXME: Uncomment after we resolve tests currently broken under *ANY*
-          #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
-          #recently broken by work generalizing @beartype to decorate builtin
-          #method descriptors (e.g., @property, @classmethod, @staticmethod).
-          # - pypy310-coverage
+          #FIXME: Re-enabled to test PyPy compatibility after descriptor decoration
+          #work. Tests previously broke due to PyPy's different implementation of
+          #method descriptors. Re-enabling to identify specific test failures and
+          #implement appropriate fixes or skip markers.
+          #
+          #Previously disabled with comment (retained for reference):
+          # Uncomment after we resolve tests currently broken under *ANY*
+          # PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
+          # recently broken by work generalizing @beartype to decorate builtin
+          # method descriptors (e.g., @property, @classmethod, @staticmethod).
+          #
+          # Note: Using PyPy 3.11 instead of 3.10 to avoid rpds-py build failures.
+          # rpds-py (required by fastmcp) needs PyPy 3.11+ due to PyO3 requirements.
+          - pypy311-coverage
 
-        #FIXME: Preserved in the likelihood we'll need something similar again.
+        # Avoid problematic combinations of Python versions and platforms.
+        # exclude:
+          # Previously excluded PyPy under Windows and macOS due to timeout issues
+          # during package installation (Rust-based packages like polars, pandera).
+          # Re-enabled after fixing compatibility issues and excluding problematic
+          # dependencies on PyPy via platform_python_implementation markers.
+          # - platform: windows-latest
+          #   tox-env: pypy311-coverage
+          # - platform: macos-latest
+          #   tox-env: pypy311-coverage
+
+        #FIXME: Preserved for reference. Historical exclude rules below.
         # # Avoid problematic combinations of Python versions and platforms.
         # exclude:
         #   # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
@@ -183,9 +205,11 @@ jobs:
           # - { python-version: "3.13t", tox-env: "py313t-coverage" }
           # - { python-version: "3.14t", tox-env: "py314t-coverage" }
 
-          #FIXME: Uncomment if and when we ever care about PyPy again. *shrug*
-          # - tox-env: pypy310-coverage
-          #   python-version: "pypy-3.10"
+          #FIXME: Re-enabled to test PyPy compatibility. Leaving this FIXME comment
+          #as a marker that PyPy support may be limited for descriptor decoration.
+          # Using PyPy 3.11 (not 3.10) to avoid rpds-py build failures with PyO3.
+          - tox-env: pypy311-coverage
+            python-version: "pypy-3.11"
 
         #FIXME: Preserved for posterity. Hopefully, we *NEVER* need this again.
         # # Blacklist specific build combinations implicitly defined by the build
@@ -369,18 +393,17 @@ jobs:
           # The kludge leveraged here is the canonical solution. See also:
           #     https://github.com/numpy/numpy/issues/15947#issuecomment-745428684
           #
-          # Ideally, we would instead isolate setting this environment variable
-          # in a prior step with sane GitHub Actions syntax: e.g.,
-          #     if: ${{ matrix.platform }} == 'macos-latest'
-          #     env:
-          #       _TOX_PIP_INSTALL_OPTIONS: '--force-reinstall'
+          # NOTE: The _TOX_PIP_INSTALL_OPTIONS environment variable is no longer
+          # needed after migrating to tox-uv. The tox-uv plugin automatically
+          # handles package reinstallation more intelligently without requiring
+          # platform-specific flags. Previously, this was used to set
+          # "--force-reinstall" on macOS to work around NumPy issues.
           #
-          # Sadly, the "env:" map only locally exports the environment
-          # variables it declares to the current step. Thanks, GitHub Actions.
-          if [[ ${{ matrix.platform }} == 'macos-latest' ]]; then
-              export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
-              echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
-          fi
+          # Prior implementation (no longer needed with tox-uv):
+          #   if [[ ${{ matrix.platform }} == 'macos-latest' ]]; then
+          #       export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
+          #       echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
+          #   fi
           # Dismantled, this is:
           # * "--skip-missing-interpreters=false" disables the corresponding
           #   "skip_missing_interpreters = true" setting globally enabled by

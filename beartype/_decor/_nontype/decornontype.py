@@ -50,6 +50,7 @@ from beartype._util.func.utilfunctest import (
     is_func_wrapper,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_once
+from beartype._util.py.utilpyinterpreter import is_python_pypy
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
@@ -618,8 +619,20 @@ def _beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # Else, either this pseudo-callable object is not a wrapper *OR* this
     # unbound __call__() dunder method is already a wrapper.
 
+    # If running on PyPy *AND* the bound __call__() method is not codeobjable
+    # (e.g., when trying to decorate Enum.__new__, the __call__ resolves to
+    # builtin_function.__call__ which has a builtin-code object), return the
+    # original pseudo-callable without decoration. This occurs when the __call__
+    # method is implemented in C and cannot be introspected for type-checking.
+    #
+    # This check is PyPy-specific to avoid false positives with other pseudo-
+    # callables like JAX JIT-compiled functions, which may have non-codeobjable
+    # __call__ methods on CPython but should still be decorated.
+    if is_python_pypy() and not is_func_codeobjable(pseudofunc_call_boundmethod):
+        return pseudofunc
+
     # Unbound __call__() dunder method runtime type-checking the original bound
     # __call__() dunder method of the passed pseudo-callable object.
     pseudofunc_call_type_method_checked = beartype_func(
         func=pseudofunc_call_boundmethod, **kwargs)
-    return pseudofunc_call_type_method_checked
+    return pseudofunc_call_type_method_checked  # type: ignore[return-value]
