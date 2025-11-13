@@ -15,6 +15,7 @@ This submodule unit tests :pep:`544` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_pypy
 
 # ....................{ TESTS                              }....................
 def test_decor_pep544() -> None:
@@ -340,6 +341,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
         _lies_all_lies(OneFish())
 
 
+@skip_if_pypy()
 def test_typingpep544_protocol_custom_direct_typevar() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
