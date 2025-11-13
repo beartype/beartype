@@ -31,6 +31,17 @@ def is_python_pypy() -> bool:
     return python_implementation() == 'PyPy'
 
 
+@callable_cached
+def is_python_graalpy() -> bool:
+    '''
+    :data:`True` only if the active Python interpreter is **GraalPy**.
+
+    This tester is memoized for efficiency.
+    '''
+
+    return python_implementation() == 'GraalVM'
+
+
 def is_python_optimized() -> bool:
     '''
     :data:`True` only if the active Python interpreter is currently

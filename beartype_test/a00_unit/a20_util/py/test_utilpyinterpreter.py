@@ -30,6 +30,19 @@ def test_is_python_pypy() -> None:
     assert isinstance(IS_PY_PYPY, bool)
 
 
+def test_is_python_graalpy() -> None:
+    '''
+    Test the :func:`beartype._util.py.utilpyinterpreter.is_python_graalpy` tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_graalpy
+
+    # Assert this tester returns a boolean.
+    IS_PY_GRAALPY = is_python_graalpy()
+    assert isinstance(IS_PY_GRAALPY, bool)
+
+
 def test_is_python_optimized(monkeypatch: 'pytest.MonkeyPatch') -> None:
     '''
     Test the :func:`beartype._util.py.utilpyinterpreter.is_python_optimized`
