@@ -130,15 +130,14 @@ jobs:
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
           # - pypy310-coverage
 
-        #FIXME: Preserved in the likelihood we'll need something similar again.
-        # # Avoid problematic combinations of Python versions and platforms.
-        # exclude:
-        #   # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
-        #   # GitHub Actions-based Windows runner appears to ship a GIL-free
-        #   # "free-threading" build of Python 3.13.0, which then appears to
-        #   # produce cataclysmic failures at "pytest" test collection time.
-        #   - platform: windows-latest
-        #     tox-env: py313-coverage
+        # Avoid problematic combinations of Python versions and platforms.
+        exclude:
+          # Avoid GraalPy on Windows - not available
+          - platform: windows-latest
+            tox-env: gpy25-coverage
+          # Avoid GraalPy on macOS - not available
+          - platform: macos-latest
+            tox-env: gpy25-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
@@ -258,6 +257,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
       - name: 'Installing uv...'
+        if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
         uses: 'astral-sh/setup-uv@v7'
         with:
           # Temporarily cache third-party packages subsequently installed by
@@ -298,10 +298,20 @@ jobs:
       #   expensive, and failure-prone noop.
       - name: 'Upgrading packager dependencies...'
         run: |
-          uv pip install --quiet --system --upgrade pip hatch wheel
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade pip hatch wheel
+          else
+            uv pip install --quiet --system --upgrade pip hatch wheel
+          fi
+        shell: bash
       - name: 'Installing package dependencies...'
         run: |
-          uv pip install --quiet --system --upgrade tox
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade tox
+          else
+            uv pip install --quiet --system --upgrade tox
+          fi
+        shell: bash
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
