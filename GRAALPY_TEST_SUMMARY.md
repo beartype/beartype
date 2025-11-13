@@ -136,9 +136,10 @@ Successfully installed and tested on GraalPy 25.0.1:
 
 **Performance**:
 - Collection itself is fast (~1-2s per directory, not a bottleneck)
-- Startup overhead: ~1s per file × 161 files = ~2.7 minutes
-- Test execution: ~3-5 minutes for all files
-- Total expected CI time: ~6-8 minutes
+- Per file overhead: startup ~1s + execution ~1-3s = ~2-4s per passing test file
+- Files that hit timeout: 60s each (15-20 files with failures)
+- Calculation: ~140 files × 3s + ~20 files × 60s = ~420s + ~1200s = **~27 minutes**
+- Total expected CI time: **20-30 minutes** (observed: 26+ minutes)
 
 ## Code Changes for GraalPy Compatibility
 
@@ -242,9 +243,9 @@ Unit test for `is_python_graalpy()`.
    - Avoid edge cases: async generators, complex Protocol scenarios, subprocess-based claw hooks
 
 2. **For CI**: File-by-file testing required to isolate hanging tests
-   - 60-minute timeout recommended (conservative, expect ~6-8 minutes actual)
+   - 60-minute timeout is necessary (actual runs take 20-30 minutes for all 161 files)
    - Use `continue-on-error: true` for non-blocking CI
-   - Pytest startup overhead is the main time cost (~1s × 161 files)
+   - Time breakdown: ~140 passing files (3s each) + ~20 timeout files (60s each) = 27min
 
 3. **For Developers**:
    - Avoid `is` checks on singleton tuples; use `==` instead

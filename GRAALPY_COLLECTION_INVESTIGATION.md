@@ -68,7 +68,10 @@ Per file:
   - Total per file: ~1-3s
 
 For 161 files:
-  - Total time: ~161s to ~500s (2.7 to 8.3 minutes)
+  - Passing files (~140): ~3s each = ~420s
+  - Failing/timeout files (~20): ~60s each = ~1200s
+  - **Total time: ~1620s = 27 minutes**
+  - Observed in CI: 20-30 minutes
 ```
 
 ### Batch Testing (What We Tried Before)
