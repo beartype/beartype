@@ -81,6 +81,8 @@ jobs:
   tests:
     # ..................{ MATRIX                             }..................
     strategy:
+      # Allow all jobs to complete even if one fails (important for GraalPy testing)
+      fail-fast: false
       matrix:
         # List of all platform-specific Docker images to test against,
         # including:
@@ -221,7 +223,8 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    timeout-minutes: 10
+    # Increased to 30 for GraalPy (slower dependency installation)
+    timeout-minutes: 30
 
     # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.
