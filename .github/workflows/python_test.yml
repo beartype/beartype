@@ -224,8 +224,8 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    # Increased to 30 for GraalPy (slower dependency installation)
-    timeout-minutes: 30
+    # Increased to 60 for GraalPy (file-by-file testing takes longer)
+    timeout-minutes: 60
 
     # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.
