@@ -32,6 +32,7 @@ on:
   push:
     branches:
       - main
+      - graalpy  # Enable CI for GraalPy compatibility testing
 
   # Pull requests against the main branch. Pull requests against other branches
   # should, ideally, *NEVER* occur; if and when they do, we ignore them.
