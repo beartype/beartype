@@ -95,7 +95,7 @@ def test_doc_readme(monkeypatch) -> None:
 
     # Attempt to render this "README.rst" file as reST, implicitly invoking this
     # monkey-patch.
-    publish_parts(source=README_CONTENTS, writer_name='html4css1')
+    publish_parts(source=README_CONTENTS, writer='html4css1')
 
     # Assert "docutils" to have emitted *NO* warnings or errors.
     assert not system_messages
