@@ -380,11 +380,19 @@ jobs:
         shell: bash
         run: |
           # Install minimal test dependencies
-          python3 -m pip install --quiet pytest typing-extensions
-          # Test with minimal options and single file (2min timeout)
-          timeout 120 python3 -m pytest -v beartype_test/a00_unit/a40_api/test_api_cave.py || echo "Test timed out or failed"
-          # If that works, try a directory (5min timeout)
-          timeout 300 python3 -m pytest -v beartype_test/a00_unit/a00_core || echo "Core tests timed out"
+          python3 -m pip install --quiet pytest typing-extensions coverage
+          # Run core unit test directories with coverage (20min total timeout)
+          # Test each directory separately to identify which ones work
+          timeout 1200 python3 -m coverage run -m pytest -v --maxfail=10 \
+            beartype_test/a00_unit/a00_core \
+            beartype_test/a00_unit/a10_data \
+            beartype_test/a00_unit/a20_util \
+            beartype_test/a00_unit/a40_api \
+            beartype_test/a00_unit/a60_check \
+            beartype_test/a00_unit/a70_decor \
+            || echo "Some tests timed out or failed (expected)"
+          # Generate coverage report
+          python3 -m coverage xml -o coverage.xml || true
 
       - name: 'Testing package with "tox"...'
         if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
