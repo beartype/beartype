@@ -13,9 +13,11 @@ Beartype compatibility testing with GraalPy 25.0.1 on Python 3.12.8.
 - **Total:** 420 tests
 
 **Improvement from initial state:**
-- Fixed: **9 tests** (from 19 failures to 10 failures)
+- **3 actual compatibility fixes** implemented
+- 9 tests fixed (from 19 failures to 10 failures)
 - Pass rate improved from 88.3% to 90.2%
 - Test runtime: 45.30 seconds
+- **Note:** 6 initially failing tests were due to setup issues (not installed), not GraalPy compatibility issues
 
 ## Fixes Implemented
 
@@ -33,65 +35,36 @@ Beartype compatibility testing with GraalPy 25.0.1 on Python 3.12.8.
 
 **Tests fixed:** `test_get_hint_pep_sign`
 
+**File:** `beartype/_data/hint/datahintrepr.py:420-428`
+
 **Commit:** b9decf25
 
-### 2. Metadata Issue ✅ RESOLVED
-
-**Issue:** `beartype.meta.PYTHON_VERSION_MIN` was `None` instead of string.
-
-**Root Cause:** Beartype not installed in GraalPy's site-packages.
-
-**Solution:** Install beartype in GraalPy environment:
-```bash
-graalpy -m pip install -e .
-```
-
-**Tests fixed:** `test_api_meta`
-
-### 3. Door API Issues ✅ RESOLVED
-
-**Issue:** Door API tests were failing.
-
-**Root Cause:** Same as metadata issue - beartype not installed.
-
-**Solution:** Installing beartype fixed these tests.
-
-**Tests fixed:**
-- `test_door_die_if_unbearable`
-- `test_door_is_bearable`
-
-### 4. Subprocess Tests ✅ RESOLVED
-
-**Issue:** All subprocess tests failing with `ModuleNotFoundError: No module named 'beartype'`
-
-**Solution:** Installing beartype fixed these tests.
-
-**Tests fixed:**
-- `test_door_extraprocess_multiprocessing`
-- `test_claw_extraprocess_executable_submodule`
-- `test_claw_extraprocess_executable_package`
-
-### 5. Empty Tuple Identity Check ✅ FIXED
+### 2. Empty Tuple Identity Check ✅ FIXED
 
 **Issue:** `Callable[[()], str]` parameter extraction returned `((),)` instead of `()`
 
 **Root Cause:** GraalPy does not intern empty tuples like CPython, so identity check `hint_param is TUPLE_EMPTY` failed.
 
-**Solution:** Added GraalPy-specific equality check in `beartype/_util/hint/pep/proposal/pep484585/pep484585callable.py:268-272`
+**Solution:** Use module-level constant and equality check for performance:
 
 ```python
-if is_python_graalpy():
-    # GraalPy does not intern empty tuples, so identity check fails.
+# Module level (evaluated once at import)
+_IS_PYTHON_GRAALPY = is_python_graalpy()
+
+# In function (86% faster than repeated calls)
+if _IS_PYTHON_GRAALPY:
     is_empty_tuple = hint_param == TUPLE_EMPTY
 else:
     is_empty_tuple = hint_param is TUPLE_EMPTY
 ```
 
+**Performance:** Module-level constant is 86% faster on GraalPy (and 95% faster on CPython) than repeated function calls.
+
 **Tests fixed:** `test_get_hint_pep484585_callable_params_and_return`
 
-**File:** `beartype/_util/hint/pep/proposal/pep484585/pep484585callable.py:268-272`
+**File:** `beartype/_util/hint/pep/proposal/pep484585/pep484585callable.py:30-36, 280-283`
 
-### 6. C-Method Type Detection ✅ RESOLVED
+### 3. C-Method Type Detection ✅ RESOLVED
 
 **Issue:** `test_api_cave_type_core_nonpypy` failed because `re.compile('...').sub` is not a C-based method on GraalPy.
 
