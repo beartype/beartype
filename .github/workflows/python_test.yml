@@ -115,6 +115,7 @@ jobs:
           # - py313t-coverage
           - py314-coverage
           # - py314t-coverage
+          - graalpy312-coverage
 
           #FIXME: UNcomment after the first Python 3.15 alpha drops. See also:
           #    https://peps.python.org/pep-0790
@@ -126,6 +127,15 @@ jobs:
           #recently broken by work generalizing @beartype to decorate builtin
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
           # - pypy310-coverage
+
+        # Avoid problematic combinations of Python versions and platforms.
+        exclude:
+          # Test GraalPy only on Linux for now, as it's the primary supported
+          # platform and most stable for CI testing.
+          - platform: windows-latest
+            tox-env: graalpy312-coverage
+          - platform: macos-latest
+            tox-env: graalpy312-coverage
 
         #FIXME: Preserved in the likelihood we'll need something similar again.
         # # Avoid problematic combinations of Python versions and platforms.
@@ -164,6 +174,7 @@ jobs:
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.14",  tox-env: "py314-coverage" }
+          - { python-version: "graalpy-25.0",  tox-env: "graalpy312-coverage" }
 
           #FIXME: Actually, let's just avoid free-threading builds for now. It'd
           #be great to test them, but only 20% of all C extensions support them

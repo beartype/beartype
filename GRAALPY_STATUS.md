@@ -80,6 +80,55 @@ else:
 
 The following 10 failures are **confirmed GraalPy bugs**, not beartype code issues. All tests pass when run directly (outside pytest/multiprocessing context) on GraalPy.
 
+### Workaround for pytest Issues
+
+If you need tests to pass on GraalPy + pytest, you can conditionally disable `@beartype` in pytest context:
+
+```python
+from beartype._util.py.utilpyinterpreter import is_python_graalpy
+import sys
+
+def conditional_beartype(func):
+    """Apply @beartype only if NOT (GraalPy + pytest)."""
+    if is_python_graalpy() and ('pytest' in sys.modules or '_pytest' in sys.modules):
+        # Skip beartype decoration in GraalPy + pytest
+        return func
+    else:
+        # Normal beartype decoration
+        from beartype import beartype
+        return beartype(func)
+
+# Usage:
+@conditional_beartype
+async def my_async_func(x: Union[str, int]) -> int:
+    return 42
+```
+
+**⚠️ IMPORTANT WARNINGS:**
+
+1. **This disables runtime type checking** in pytest context on GraalPy
+2. **Use only for testing** - not recommended for production code
+3. **Tests pass but don't verify type safety** in that context
+4. **Full type checking still works**:
+   - ✅ On CPython (all contexts)
+   - ✅ On GraalPy (direct execution)
+   - ❌ On GraalPy + pytest (workaround disables it)
+
+**Better Alternatives:**
+
+1. **Wait for GraalPy fix** - This is a GraalPy bug, not beartype issue
+2. **Test directly** - Run `graalpy script.py` instead of `graalpy -m pytest`
+3. **Report bug** - Help improve GraalPy by reporting the issue
+
+**Detection Methods:**
+
+The workaround detects pytest context using:
+- `'pytest' in sys.modules` - pytest module is imported
+- `'_pytest' in sys.modules` - pytest internals loaded
+- `'PYTEST_CURRENT_TEST' in os.environ` - pytest sets this env var
+
+See `beartype_test/graalpy_analytics/test_workaround_idea.py` for full example.
+
 ### 1. Async Tests (6 failures) - pytest/multiprocessing-GraalPy Bug
 
 **Tests:**
@@ -230,6 +279,47 @@ GraalPy 25.0.1 is suitable for beartype in production with the following caveats
 - pytest integration has some issues (async tests, protocol isinstance)
 - These are pytest-specific issues, not runtime issues
 - Direct execution (outside pytest) works correctly
+
+⚠️ **Architectural Differences (Fixed in beartype):**
+
+**1. The `is` Operator Behavior**
+
+GraalPy's `is` operator works differently than CPython for certain objects:
+
+```python
+# CPython:
+() is ()  # True (interns empty tuples)
+
+# GraalPy:
+() is ()  # False (different Java objects)
+id(()) == id(())  # True (same logical hash: 0x1b)
+```
+
+**Root Cause:**
+- **CPython:** `id()` returns memory address; empty tuples are interned (single object)
+- **GraalPy:** `id()` returns logical hash for optimization; `is` compares Java object identity
+
+**This is NOT a bug** - it's a valid implementation choice per Python spec (tuple interning is not guaranteed).
+
+**Impact on beartype:** Fixed by using equality checks (`==`) instead of identity checks (`is`) for tuples on GraalPy.
+
+**For users:** Avoid using `is` for tuple comparison - always use `==`:
+```python
+# ✗ WRONG (fails on GraalPy):
+if my_tuple is ():
+    ...
+
+# ✓ CORRECT (works everywhere):
+if my_tuple == ():
+    ...
+
+# ✓ ALSO CORRECT (reference comparison):
+EMPTY = ()
+if my_tuple is EMPTY:  # Works if my_tuple = EMPTY was assigned
+    ...
+```
+
+See `GRAALPY_DEEP_INVESTIGATION.md` for detailed analysis.
 
 ### For Testing
 
