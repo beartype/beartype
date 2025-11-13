@@ -8,8 +8,6 @@
 
 - **Executable code**: ~33 lines
 - **Inline documentation**: ~25 lines
-- **Performance improvement**: 86% faster on GraalPy, 95% faster on CPython
-- **Tests fixed**: 9 (improved pass rate from 88.3% to 90.2%)
 - **Compatibility fixes**: 3 distinct issues resolved
 
 ## 1. Core Code Changes (Shipped with Package)
@@ -32,7 +30,7 @@ if is_python_graalpy():
 
 ### File: `beartype/_util/hint/pep/proposal/pep484585/pep484585callable.py` (+11 lines net)
 
-**Purpose**: Fix empty tuple identity check + optimize performance
+**Purpose**: Fix empty tuple identity check
 
 **Changes**:
 - Added module-level constant: `_IS_PYTHON_GRAALPY = is_python_graalpy()`
@@ -41,13 +39,10 @@ if is_python_graalpy():
 
 **Code**:
 ```python
-# At module level (evaluated once at import for performance)
+# At module level
 _IS_PYTHON_GRAALPY = is_python_graalpy()
 '''
 :data:`True` only if the active Python interpreter is GraalPy.
-
-This module-level constant caches the result for performance, as profiling
-shows repeated function calls add 172% overhead on GraalPy and 71% on CPython.
 '''
 
 # In function
@@ -56,10 +51,6 @@ if _IS_PYTHON_GRAALPY:
 else:
     is_empty_tuple = hint_param is TUPLE_EMPTY  # Identity check
 ```
-
-**Performance Impact**:
-- **Before**: Repeated `is_python_graalpy()` calls = 172% overhead on GraalPy
-- **After**: Module-level constant = **86% faster on GraalPy, 95% faster on CPython**
 
 **Why**: GraalPy's `id()` returns logical hash (not memory address), so `() is ()` returns False even though `id(()) == id(())` returns True. This is a valid design choice per Python spec.
 
@@ -203,12 +194,12 @@ def test_is_python_graalpy() -> None:
 
 **Location**: `beartype_test/graalpy_analytics/`
 
-**Contents**: 19 investigation and profiling scripts including:
-- `profile_cache_decorator.py` - Proved cache is harmful (172% slower)
-- `investigate_is_operator.py` - Deep dive into 'is' semantics
-- `investigate_tuple_literal.py` - Why same ID ≠ same identity
+**Contents**: 19 investigation scripts including:
+- `profile_cache_decorator.py` - Cache decorator analysis
+- `investigate_is_operator.py` - 'is' operator semantics
+- `investigate_tuple_literal.py` - Tuple identity behavior
 - `investigate_pytest_bug.py` - pytest interaction analysis
-- `investigate_async_union_bug.py` - Async function type hint failure
+- `investigate_async_union_bug.py` - Async function type hint issues
 - And 14 more investigation scripts
 
 **Purpose**:
@@ -251,12 +242,6 @@ def test_is_python_graalpy() -> None:
 - ✅ **3 distinct compatibility fixes** (module names, tuple identity, C-method detection)
 - ✅ **Minimal code footprint** (58 lines core code)
 - ✅ **Zero impact on other interpreters** (all changes wrapped in conditionals)
-- ✅ **Performance improvement** (86% faster on GraalPy, 95% on CPython)
-
-**Testing**:
-- ✅ **Tests fixed**: 9
-- ✅ **Pass rate**: 88.3% → 90.2%
-- ⚠️ **Known issues**: 10 (all GraalPy pytest bugs, not beartype issues)
 
 **Documentation**:
 - ✅ **Comprehensive status documentation** (275 lines)
@@ -265,7 +250,6 @@ def test_is_python_graalpy() -> None:
 - ✅ **Preserved investigation scripts** (1,554 lines)
 
 **Process**:
-- ✅ **Evidence-based** (profiling data for every decision)
 - ✅ **Root cause analysis** (not just symptom fixes)
 - ✅ **Reproducible** (all investigation scripts preserved)
 - ✅ **Well-documented** (comprehensive inline and external docs)
@@ -296,6 +280,5 @@ This GraalPy compatibility work demonstrates **surgical precision**:
 - **1,979 lines of documentation** ensure users understand the status
 - **1,554 lines of analytics** provide reproducible evidence
 - **Zero impact** on existing CPython/PyPy users
-- **Performance improvement** across all interpreters
 
-The high documentation-to-code ratio (34:1) reflects a commitment to understanding root causes rather than applying superficial fixes. Every line of code is justified by evidence from profiling and investigation.
+The high documentation-to-code ratio (34:1) reflects a commitment to understanding root causes rather than applying superficial fixes.
