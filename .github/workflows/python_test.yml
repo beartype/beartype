@@ -82,8 +82,7 @@ jobs:
   tests:
     # ..................{ MATRIX                             }..................
     strategy:
-      # Allow all jobs to complete even if one fails (important for GraalPy testing)
-      fail-fast: false
+      fail-fast: false  # Allow all jobs to complete even if one fails
       matrix:
         # List of all platform-specific Docker images to test against,
         # including:
@@ -118,7 +117,7 @@ jobs:
           # - py313t-coverage
           - py314-coverage
           # - py314t-coverage
-          - gpy25-coverage
+          - gpy25-coverage  # GraalPy 25.0
 
           #FIXME: UNcomment after the first Python 3.15 alpha drops. See also:
           #    https://peps.python.org/pep-0790
@@ -130,15 +129,6 @@ jobs:
           #recently broken by work generalizing @beartype to decorate builtin
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
           # - pypy310-coverage
-
-        # Avoid problematic combinations of Python versions and platforms.
-        exclude:
-          # Test GraalPy only on Linux for now, as it's the primary supported
-          # platform and most stable for CI testing.
-          - platform: windows-latest
-            tox-env: gpy25-coverage
-          - platform: macos-latest
-            tox-env: gpy25-coverage
 
         #FIXME: Preserved in the likelihood we'll need something similar again.
         # # Avoid problematic combinations of Python versions and platforms.
@@ -224,8 +214,8 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    # Increased to 60 for GraalPy (file-by-file testing takes longer)
-    timeout-minutes: 60
+    # Increased to 45 minutes for GraalPy (slower test execution)
+    timeout-minutes: 45
 
     # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.
@@ -307,25 +297,11 @@ jobs:
       #   outside those virtual environments, thus reducing to a pointless,
       #   expensive, and failure-prone noop.
       - name: 'Upgrading packager dependencies...'
-        # For GraalPy, use native pip (cffi/hatch don't compile with uv)
-        # For other Pythons, use uv for speed
-        shell: bash
         run: |
-          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
-            python3 -m pip install --quiet --upgrade pip wheel
-          else
-            uv pip install --quiet --system --upgrade pip hatch wheel
-          fi
+          uv pip install --quiet --system --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
-        # For GraalPy, use native pip
-        # For other Pythons, use uv for speed
-        shell: bash
         run: |
-          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
-            python3 -m pip install --quiet --upgrade tox
-          else
-            uv pip install --quiet --system --upgrade tox
-          fi
+          uv pip install --quiet --system --upgrade tox
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
@@ -357,6 +333,7 @@ jobs:
       #    https://github.com/jpetrucciani/mypy-check/issues/30
 
       # Type-check this package with "mypy".
+      # Skip on GraalPy (mypy has compatibility issues with GraalPy's C extensions)
       - name: 'Type-checking package with "mypy"...'
         if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
         run: |
@@ -373,41 +350,9 @@ jobs:
           python3 -m mypy ./beartype/
 
       # ..................{ TEST                             }..................
-      # GraalPy: Skip tox and run pytest directly due to tox hanging issues
-      # Test ALL directories file-by-file to avoid slow collection when scanning multiple files
-      - name: 'Testing GraalPy package with pytest (no tox)...'
-        if: ${{ startsWith(matrix.python-version, 'graalpy') }}
-        continue-on-error: true
-        shell: bash
-        run: |
-          # Install minimal test dependencies
-          python3 -m pip install --quiet pytest typing-extensions coverage
-
-          # Test all core unit test directories file-by-file
-          # GraalPy has very slow test collection even with 10+ files, so we test one file at a time
-          echo "=== Testing all directories file-by-file ==="
-          for dir in \
-            beartype_test/a00_unit/a00_core \
-            beartype_test/a00_unit/a10_data \
-            beartype_test/a00_unit/a20_util \
-            beartype_test/a00_unit/a40_api \
-            beartype_test/a00_unit/a60_check \
-            beartype_test/a00_unit/a70_decor
-          do
-            file_count=$(find "$dir" -name 'test_*.py' -type f | wc -l)
-            echo "Testing directory: $dir ($file_count files)"
-            find "$dir" -name 'test_*.py' -type f | sort | while read -r file; do
-              echo "  Testing: $(basename "$file")"
-              timeout 60 python3 -m coverage run --append -m pytest -v --maxfail=3 "$file" \
-                || echo "    Warning: Failed or timed out"
-            done
-          done
-
-          # Generate combined coverage report
-          python3 -m coverage xml -o coverage.xml || true
-
+      # Allow GraalPy tests to fail without failing the entire CI run
       - name: 'Testing package with "tox"...'
-        if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
+        continue-on-error: ${{ startsWith(matrix.python-version, 'graalpy') }}
         # Run the subsequent script as a Bash script. Although POSIX-compliant
         # platforms (e.g., Linux, macOS) sensibly default to Bash, Windows
         # insanely defaults to a Windows-specific shell (e.g., PowerShell).

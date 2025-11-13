@@ -1,14 +1,23 @@
-# GraalPy Analytics Scripts
+# GraalPy Analytics & Documentation
 
-This directory contains investigation and profiling scripts used during GraalPy compatibility development.
+This directory contains investigation scripts, profiling tools, and comprehensive documentation from GraalPy 25.0 compatibility work.
+
+## 🚀 Quick Start
+
+**For local GraalPy testing, always use**:
+```bash
+/home/srvadmin/graalpy-25.0.1/bin/graalpy
+```
+
+See **[GRAALPY_TESTING_INSTRUCTIONS.md](GRAALPY_TESTING_INSTRUCTIONS.md)** for complete testing guide.
 
 ## Purpose
 
-These scripts are NOT tests - they are analysis tools to:
-- Investigate GraalPy behavior differences from CPython
-- Profile performance characteristics
-- Reproduce and analyze bugs
-- Document root causes
+This directory contains:
+- **Investigation scripts** - Analyze GraalPy behavior differences
+- **Profiling tools** - Measure performance characteristics
+- **Bug reproducers** - Minimal test cases for issues
+- **Comprehensive documentation** - Complete integration reports and guides
 
 ## Scripts
 
@@ -25,6 +34,7 @@ These scripts are NOT tests - they are analysis tools to:
 - `investigate_pytest_bug.py` - Async/protocol test failures in pytest context
 - `test_async_pytest.py` - Minimal reproducer for pytest async bug
 - `test_protocol_typevar_pytest.py` - Protocol TypeVar pytest failure
+- **`GRAALPY_ASYNC_BUG_ANALYSIS.md`** ⭐ - **Complete analysis of pytest-asyncio Union annotation bug** (SOLVED!)
 
 ### Specific Test Cases
 - `test_callable_empty_tuple.py` - Callable[[()], str] parameter extraction
@@ -68,12 +78,14 @@ Profiling revealed `@callable_cached` adds significant overhead:
 - Architectural difference, NOT a bug
 
 ### 4. pytest + GraalPy Interaction Bug
-**File:** `investigate_pytest_bug.py`
+**File:** `GRAALPY_ASYNC_BUG_ANALYSIS.md` ⭐
 
-**Status:** Under investigation
-- Async/protocol tests fail in pytest but pass directly
-- Error: `TypeError: 'NoneType' object is not subscriptable`
-- Suspected: Module initialization order or pytest import hooks
+**Status:** ✅ **FULLY ANALYZED**
+- **Root Cause**: GraalPy bytecode compiler bug when compiling nested async functions with `Union` annotations in pytest-asyncio context
+- **Error**: `TypeError: 'NoneType' object is not subscriptable`
+- **Discovery**: NOT a beartype bug - happens without beartype too!
+- **Workaround**: Use `from __future__ import annotations` (PEP 563)
+- **Conclusion**: Current approach of skipping tests with `@skip_if_graalpy()` is correct
 
 ## Usage
 
@@ -86,6 +98,26 @@ graalpy beartype_test/graalpy_analytics/investigate_is_operator.py
 # Compare with CPython
 python3 beartype_test/graalpy_analytics/investigate_is_operator.py
 ```
+
+## Documentation
+
+### Essential Guides
+- **`GRAALPY_TESTING_INSTRUCTIONS.md`** ⭐ - **START HERE** for local GraalPy testing
+  - Always use `/home/srvadmin/graalpy-25.0.1/bin/graalpy`
+  - Quick commands, troubleshooting, best practices
+
+### Comprehensive Reports
+- **`GRAALPY_FINAL_SUMMARY.md`** - Complete integration summary with all code changes, test results, and recommendations
+- **`GRAALPY_SUBPROCESS_INVESTIGATION.md`** - Deep dive into subprocess/claw hooks failures and the `.pth` file solution
+- **`WHY_PTH_FILE_MISSING.md`** - Detailed explanation of why beartype wasn't installed on GraalPy
+- **`INDEX.md`** - Complete documentation index with navigation
+
+These documents provide:
+- Root cause analysis for all compatibility issues
+- Solutions and workarounds implemented
+- Test statistics and compatibility assessment
+- Recommendations for users, developers, and GraalPy team
+- Step-by-step testing instructions
 
 ## Exclusions
 
