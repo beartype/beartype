@@ -14,10 +14,10 @@
 # ....................{ METADATA                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
-# * The "|GitHub Actions badge|" image URL in our top-level "README.rst".
+# * The "|GitHub Actions badge|" image URL in our top-level "README.rst" file.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# Non-human-readable (i.e., machine-readable) label associated with this
-# GitHub Actions workflow.
+# Non-human-readable (i.e., machine-readable) label associated with this GitHub
+# Actions workflow.
 name: tests
 
 # ....................{ TRIGGER                            }....................
@@ -32,35 +32,24 @@ on:
   push:
     branches:
       - main
+
   # Pull requests against the main branch. Pull requests against other branches
   # should, ideally, *NEVER* occur; if and when they do, we ignore them.
   pull_request:
     branches:
       - main  # '**'
+
   # Enable manual workflow triggering from the Actions tab.
   workflow_dispatch:
 
 # ....................{ VARIABLES                          }....................
+#FIXME: Preserved in the likelihood we'll need this sort of thing again someday.
 # List of private environment variables specific to this configuration and
 # globally set for *ALL* jobs declared below. To avoid conflict with
 # third-party processes, prefix the name of each variable by "_".
-env:
-  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  # CAUTION: Optional in-flight test-time dependencies (e.g., NumPy, mypy) are
-  # intentionally listed in the "test" key of the
-  # "[project.optional-dependencies]" section of the top-level "pyproject.toml"
-  # file rather than below. "tox" isolates both the package being tested and its
-  # dependency tree to virtual environments. Listing in-flight dependencies
-  # here would install those dependencies outside those virtual environments,
-  # thus reducing to a pointless, expensive, and failure-prone noop.
-  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  # Whitespace-delimited list of the names of all Python packages to be
-  # installed by "pip" below. Although this package has *NO* mandatory runtime
-  # dependencies, fully exercising all tests necessitates these pre-flight
-  # test-time dependencies. These include:
-  # * "tox", the only mandatory test-time dependency.
-  _PIP_PACKAGE_NAMES: |
-    tox
+# env:
+#   _PIP_PACKAGE_NAMES: |
+#     tox
 
 # ....................{ PERMISSIONS                        }....................
 # Default job security model applied by default to all jobs performed below.
@@ -114,6 +103,7 @@ jobs:
         # * The "include" setting below.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+        #FIXME: Enable "3.15" as well once that lands. \o/
         # List of all "tox" environments (defined by the "envlist" setting of
         # the "[tox]" subsection in "tox.ini") to be tested, which the
         # ${TOXENV} environment variable declared below exposes to "tox".
@@ -293,12 +283,20 @@ jobs:
       #   Bash) *MUST* be avoided.
       # * Packaging dependencies (e.g., "pip") are upgraded *BEFORE* all
       #   remaining dependencies (e.g., "tox").
+      # * Optional in-flight test-time dependencies (e.g., NumPy, mypy) are
+      #   intentionally listed in the "test" key of the
+      #   "[project.optional-dependencies]" section of the top-level
+      #   "pyproject.toml" file rather than below. "tox" isolates both the
+      #   package being tested and its dependency tree to virtual environments.
+      #   Listing in-flight dependencies here would install those dependencies
+      #   outside those virtual environments, thus reducing to a pointless,
+      #   expensive, and failure-prone noop.
       - name: 'Upgrading packager dependencies...'
         run: |
           uv pip install --quiet --system --upgrade pip hatch wheel
       - name: 'Installing package dependencies...'
         run: |
-          uv pip install --quiet --system --upgrade ${{ env._PIP_PACKAGE_NAMES }}
+          uv pip install --quiet --system --upgrade tox
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because

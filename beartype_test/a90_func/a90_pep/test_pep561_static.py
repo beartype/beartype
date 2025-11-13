@@ -24,13 +24,6 @@ from beartype_test._util.mark.pytskip import (
 
 # ....................{ TESTS ~ mypy                       }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
-#FIXME: Sadly, diz iz no longer l33t. Mypy broke its runtime API. This test now
-#spuriously fails under CI with a non-human-readable exception message
-#resembling:
-#       TypeError: 'mypy' is not a package
-#
-#The solution? Refactor this test ala the existing test_pep561_pyright() test,
-#which thankfully already does everything we want here. Rejoice!
 
 # If the third-party "mypy" package is unavailable, skip this test. Note that:
 # * "mypy" is the reference standard for static type-checking in Python.

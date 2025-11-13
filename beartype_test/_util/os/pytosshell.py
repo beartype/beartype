@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Testable path factories** (i.e., callables creating and returning
+Test-wide **path factories** (i.e., callables creating and returning
 :class:`pathlib.Path` instances encapsulating testing-specific paths).
 '''
 
@@ -37,7 +37,7 @@ def shell_quote(text: str) -> str:
         String to be shell-quoted.
 
     Returns
-    ----------
+    -------
     str
         This string shell-quoted.
     '''

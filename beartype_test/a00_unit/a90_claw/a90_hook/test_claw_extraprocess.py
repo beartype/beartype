@@ -68,7 +68,7 @@ def test_claw_extraprocess_executable_submodule(
         assert PYTHON_STDOUT == str(float(len(
             'His infancy was nurtured. Every sight')))
     # If doing so raised *ANY* exception whatsoever...
-    except:
+    except Exception:
         # Re-run the same module as a script except forward both all standard
         # output *AND* error emitted by this subprocess to the standard output
         # and error file handles of this parent Python process. Doing so

@@ -477,13 +477,13 @@ class BeartypeForwardRefMeta(type):
                 )
             # Else, this referent is *NOT* a subscripted generic.
 
-            # Cache this referent for subsequent lookup by this property *BEFORE*
-            # validating this referent to be isinstanceable. If this property is
-            # validated to be *NOT* isinstanceable, this referent will be
-            # immediately uncached. Of course, this is insane. Ideally, this
-            # referent would be cached only *AFTER* validating this referent to be
-            # isinstanceable. Pragmatically, doing so invites infinite recursion
-            # as follows (in order):
+            # Cache this referent for subsequent lookup by this property
+            # *BEFORE* validating this referent to be isinstanceable. If this
+            # property is validated to *NOT* be isinstanceable, this referent
+            # will be immediately uncached. Of course, this is insane. Ideally,
+            # this referent would be cached only *AFTER* validating this
+            # referent to be isinstanceable. Pragmatically, doing so invites
+            # infinite recursion as follows (in order):
             # * This __type_beartype__() property getter calls...
             # * die_unless_object_isinstanceable(), which calls...
             # * "isinstance(None, cls)", which calls...
@@ -503,7 +503,7 @@ class BeartypeForwardRefMeta(type):
             #* Define a new is_object_isinstanceable() tester. Note that this
             #  will be somewhat non-trivial (well -- tedious, mostly), which is
             #  why we haven't bothered yet. *sigh*
-            #* Refactor the following "try: ... except:" logic as follows:
+            #* Refactor the following "try: ... except Exception:" logic as follows:
             #     if not is_object_isinstanceable(referent):
             #         del _forwardref_to_referent[cls]
             #         die_unless_object_isinstanceable(
@@ -529,7 +529,7 @@ class BeartypeForwardRefMeta(type):
                 )
                 # Else, this referent is isinstanceable.
             # If doing so raised *ANY* exception whatsoever...
-            except:
+            except Exception:
                 # Uncache this referent. See above.
                 del _forwardref_to_referent[cls]
 

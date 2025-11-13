@@ -10,12 +10,18 @@ This submodule functionally tests the syntactic validity of this project's
 top-level ``README.rst`` file.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Refactor
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import (
+    # skip,
+    skip_unless_package,
+)
 
 # ....................{ TESTS                              }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
@@ -27,7 +33,7 @@ from beartype_test._util.mark.pytskip import skip_unless_package
 #   Unsurprisingly, even Sphinx parses reST with "docutils".
 # * This test makes assumptions about the "docutils" public API satisfied
 #   *ONLY* by this minimum version.
-@skip_unless_package(package_name='docutils', minimum_version='0.15')
+@skip_unless_package(package_name='docutils', minimum_version='0.22.0')
 def test_doc_readme(monkeypatch) -> None:
     '''
     Functional test testing the syntactic validity of this project's top-level
@@ -95,7 +101,7 @@ def test_doc_readme(monkeypatch) -> None:
 
     # Attempt to render this "README.rst" file as reST, implicitly invoking this
     # monkey-patch.
-    publish_parts(source=README_CONTENTS, writer_name='html4css1')
+    publish_parts(source=README_CONTENTS, writer='html4css1')
 
     # Assert "docutils" to have emitted *NO* warnings or errors.
     assert not system_messages

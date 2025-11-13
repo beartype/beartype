@@ -83,7 +83,7 @@ else:
     # transpile, or freeze this package. Downstream consumers of this submodule
     # *MUST* thus explicitly detect imported globals whose values are "None" and
     # react nicely.
-    except:
+    except Exception:
         from collections import defaultdict as _defaultdict
         _package_metadata = _defaultdict(lambda: None)
 

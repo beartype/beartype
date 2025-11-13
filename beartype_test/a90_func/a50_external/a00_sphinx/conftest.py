@@ -25,5 +25,5 @@ try:
         test_params,
     )
 # If doing so fails, silently ignore this failure.
-except:
+except Exception:
     pass

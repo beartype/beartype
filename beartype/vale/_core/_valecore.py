@@ -439,7 +439,7 @@ class BeartypeValidator(object):
             # If doing so raises an exception, this short-circuited validator
             # was *NOT* intended to be called under short-circuiting. In this
             # case, silently ignore this exception. See the above discussion.
-            except:
+            except Exception:
                 pass
         # Else, this validator is *NOT* short-circuited. In this case, this
         # validator is *NOT* expected to raise exceptions. Nonetheless, if this

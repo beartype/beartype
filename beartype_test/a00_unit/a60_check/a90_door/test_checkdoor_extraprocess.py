@@ -71,7 +71,7 @@ def test_door_extraprocess_multiprocessing(monkeypatch: 'MonkeyPatch') -> None:
         # Assert this output to be the expected output printed by this module.
         assert PYTHON_STDOUT == 'And faster still, beyond all human speed,'
     # If doing so raised *ANY* exception whatsoever...
-    except:
+    except Exception:
         # Re-run the same module as a script except forward both all standard
         # output *AND* error emitted by this subprocess to the standard output
         # and error file handles of this parent Python process. Doing so

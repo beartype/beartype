@@ -1881,7 +1881,7 @@
 #          # overhead of handling this exception is preferable to violating DRY
 #          # by duplicating this logic with an explicit
 #          # "if self._iter == None:" block.
-#          except:
+#          except Exception:
 #              # Reinitialize this iterator.
 #              self._iter = self.items()
 #

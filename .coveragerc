@@ -13,13 +13,18 @@
 #
 # --------------------( CAVEATS                            )--------------------
 # This configuration does *NOT* apply to the third-party Codecov service, which
-# instead leverages its own ad-hoc ".codecov.yml" format. *sigh* 
+# instead leverages its own ad-hoc ".codecov.yml" format. *sigh*
 #
 # --------------------( SEE ALSO                           )--------------------
 # https://pytest-cov.readthedocs.io/en/latest/config.html
 #     "pytest-cov" documentation on this file and configuration in general.
 # https://coverage.readthedocs.io/en/latest/config.html
 #     "coverage" documentation on this file.
+
+# ....................{ TODO                                }...................
+#FIXME: Generalize to combine coverage reports for Python subprocesses. In
+#theory, doing should be somewhat trivial. See also:
+#    https://coverage.readthedocs.io/en/latest/subprocess.html#id1
 
 # ....................{ RUN                                 }...................
 # Low-level settings configuring how coverage is measured.

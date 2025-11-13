@@ -4,7 +4,7 @@
 #
 # --------------------( SYNOPSIS                           )--------------------
 # Packager-agnostic package build configuration. Unlike obsolete package build
-# configarution formats (e.g., "setup.py", "MANIFEST.in") unique to a subset of
+# configuration formats (e.g., "setup.py", "MANIFEST.in") unique to a subset of
 # third-party package management devtools (e.g., "pip", "setuptools"), this file
 # conforms to official standards (e.g., PEPs 517, 518, 621) and hence
 # generically supports *ALL* such devtools.
@@ -370,6 +370,12 @@ test-tox = [
     # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
 
+    # Required by optional Docutils-specific integration tests. Dismantled, this
+    # is:
+    # * "docutils 0.22.0" deprecated the "writer_name" parameter accepted by the
+    #   docutils.core.publish_parts() function.
+    "docutils >=0.22.0",
+
     # Required by optional Sphinx-specific integration tests.
     "sphinx",
 
@@ -433,10 +439,10 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : jax      }....................
     # JAX-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* JAX is readily installable
-    #under Python 3.14. JAX requires so many mandatory dependencies that this
+    #FIXME: Reenable Python >= 3.15 support *AFTER* JAX is readily installable
+    #under Python 3.15. JAX requires so many mandatory dependencies that this
     #may take some time indeed. For example, JAX transitively requires SciPy,
-    #which currently fails to ship Python 3.14 wheels and, moreover, is not even
+    #which currently fails to ship Python 3.15 wheels and, moreover, is not even
     #readily buildable under my local Arch machine that can build anything.
     # Required by optional JAX-specific integration tests and JAX-dependent
     # packages (e.g., Equinox) if the current platform is a Linux distribution.
@@ -450,23 +456,21 @@ test-tox = [
     # Since GitHub Actions-based continuous integration (CI) workflows are
     # unlikely to reliably provide GPU or TPU compute hardware or APIs, the only
     # safe and reliable alternative is CPU-specific.
-    "jax[cpu]; sys_platform == 'linux' and python_version < '3.14.0'",
+    "jax[cpu]; sys_platform == 'linux' and python_version < '3.15.0'",
 
     # Required by optional JAX- and Equinox-specific integration tests.
     "jaxtyping; sys_platform == 'linux'",
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* JAX is readily installable
-    #under Python 3.14. See above for further commentary.
+    #FIXME: Reenable Python >= 3.15 support *AFTER* JAX is readily installable
+    #under Python 3.15. See above for further commentary.
     # Required by optional Equinox-specific integration tests. Note that Equinox
     # requires JAX.
-    "equinox; sys_platform == 'linux' and python_version < '3.14.0'",
+    "equinox; sys_platform == 'linux' and python_version < '3.15.0'",
 
     # ....................{ SCIENCE ~ data : ml : numpy    }....................
     # NumPy-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* NumPy supports Python 3.14.
-    #See also this currently open upstream issue:
-    #   https://github.com/numpy/numpy/issues/29062
+    #FIXME: Reenable Python >= 3.15 support *AFTER* NumPy supports Python 3.14.
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
@@ -494,12 +498,12 @@ test-tox = [
     # See also this upstream NumPy issue:
     #     https://github.com/numpy/numpy/issues/15947
     """numpy; \
-       python_version < '3.14.0' and \
+       python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
        platform_python_implementation != 'PyPy'\
     """,
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* NumPy supports Python 3.14.
+    #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
     #See above for further commentary.
     # Required by optional LangChain-specific integration tests. Note that
     # LangChain requires both NumPy and Pydantic.
@@ -512,9 +516,8 @@ test-tox = [
     # ....................{ SCIENCE ~ data : ml : dataframe}....................
     # DataFrame (e.g., Pandas, Polars)-specific optional test-time dependencies.
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* Pydantic supports Python
-    #3.14. Pydantic currently fails to ship Python 3.14 wheels and is
-    #non-trivial to build, due to requiring Rust.
+    #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported. See:
+    #    https://github.com/unionai-oss/pandera/pull/2158
     # Required by optional Pandera-specific integration tests. Note that:
     # * Pandera requires Pydantic and Pandas.
     # * The @beartype test suite requires pandera >= 0.26.0. Prior pandera
@@ -522,22 +525,22 @@ test-tox = [
     #   and now support a wide variety of DataFrame-like APIs, including Polars.
     "pandera >= 0.26.0; python_version < '3.14.0'",
 
+    #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
     # Required by optional Pandera- and Polars-specific integration tests.
     "polars; python_version < '3.14.0'",
 
-    #FIXME: Reenable Python >= 3.14 support *AFTER* Pandas supports Python
-    #3.14. Pandas currently fails to ship Python 3.14 wheels and is non-trivial
-    #to build.
+    #FIXME: Reenable Python >= 3.15 support *AFTER* explicitly supported
     # Required by optional xarray-specific integration tests. Note that xarray
     # requires Pandas.
-    "xarray; python_version < '3.14.0'",
+    "xarray; python_version < '3.15.0'",
 
     # ....................{ SCIENCE ~ data : ml : pydantic }....................
     # Pydantic-specific optional test-time dependencies.
 
+    #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
     # Required by optional FastMCP-specific integration tests. Note that FastMCP
     # requires Pydantic.
-    """fastmcp; python_version > '3.9.0' and python_version < '3.14.0'""",
+    """fastmcp; python_version < '3.14.0'""",
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires

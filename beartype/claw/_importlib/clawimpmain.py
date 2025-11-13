@@ -90,7 +90,7 @@ def add_beartype_pathhook() -> None:
     #     try:
     #         file_finder = path_hook('/usr/lib/python3.11')
     #         print(f'file_finder: {file_finder} [{file_finder._loaders}]')
-    #     except:
+    #     except Exception:
     #         pass
 
     # Prevent subsequent calls to this function from erroneously re-adding

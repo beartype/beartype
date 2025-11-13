@@ -64,7 +64,6 @@ pushd "${script_dirname}" >/dev/null
 
 # Statically type-check this project's codebase with all passed arguments.
 # command python3 -m mypy "${@}"
-# command python3.9 -m mypy "${@}"
 # command python3.10 -m mypy "${@}"
 # command python3.11 -m mypy "${@}"
 # command python3.12 -m mypy "${@}"
