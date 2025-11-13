@@ -617,9 +617,6 @@ test-tox-graalpy = [
     "typer",
     "click",
     "rich-click",
-    "celery",
-    "redis",
-    "sqlalchemy",
     "pyright >=1.1.370",
     'typing-extensions >=3.10.0.0',
 ]
