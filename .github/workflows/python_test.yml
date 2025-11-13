@@ -374,7 +374,7 @@ jobs:
 
       # ..................{ TEST                             }..................
       # GraalPy: Skip tox and run pytest directly due to tox hanging issues
-      # Start with small directories, then test larger ones file-by-file if needed
+      # Test ALL directories file-by-file to avoid slow collection when scanning multiple files
       - name: 'Testing GraalPy package with pytest (no tox)...'
         if: ${{ startsWith(matrix.python-version, 'graalpy') }}
         continue-on-error: true
@@ -383,39 +383,23 @@ jobs:
           # Install minimal test dependencies
           python3 -m pip install --quiet pytest typing-extensions coverage
 
-          # Test small directories (2-4 files) as a group - fast collection
-          echo "=== Testing small directories ==="
+          # Test all core unit test directories file-by-file
+          # GraalPy has very slow test collection even with 10+ files, so we test one file at a time
+          echo "=== Testing all directories file-by-file ==="
           for dir in \
             beartype_test/a00_unit/a00_core \
-            beartype_test/a00_unit/a10_data
-          do
-            echo "Testing directory: $dir"
-            timeout 120 python3 -m coverage run --append -m pytest -v --maxfail=5 "$dir" \
-              || echo "  Warning: $dir timed out or had failures"
-          done
-
-          # Test medium directories (15-16 files) one at a time - slower collection
-          echo "=== Testing medium directories ==="
-          for dir in \
+            beartype_test/a00_unit/a10_data \
+            beartype_test/a00_unit/a20_util \
             beartype_test/a00_unit/a40_api \
-            beartype_test/a00_unit/a60_check
+            beartype_test/a00_unit/a60_check \
+            beartype_test/a00_unit/a70_decor
           do
-            echo "Testing directory: $dir"
-            timeout 180 python3 -m coverage run --append -m pytest -v --maxfail=5 "$dir" \
-              || echo "  Warning: $dir timed out or had failures"
-          done
-
-          # Test large directories (37-89 files) file-by-file - avoids collection timeout
-          echo "=== Testing large directories file-by-file ==="
-          for dir in \
-            beartype_test/a00_unit/a70_decor \
-            beartype_test/a00_unit/a20_util
-          do
-            echo "Testing directory: $dir (file-by-file)"
+            file_count=$(find "$dir" -name 'test_*.py' -type f | wc -l)
+            echo "Testing directory: $dir ($file_count files)"
             find "$dir" -name 'test_*.py' -type f | sort | while read -r file; do
-              echo "  Testing file: $file"
+              echo "  Testing: $(basename "$file")"
               timeout 60 python3 -m coverage run --append -m pytest -v --maxfail=3 "$file" \
-                || echo "    Warning: $file timed out or had failures"
+                || echo "    Warning: Failed or timed out"
             done
           done
 
