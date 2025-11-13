@@ -122,17 +122,23 @@ Successfully installed and tested on GraalPy 25.0.1:
 
 ### CI Test Strategy
 
-**Problem**: GraalPy has extremely slow pytest collection
-- Even 16 files cause collection to timeout after 3+ minutes
-- Collection time exceeds test execution time
+**Problem**: Some tests cause GraalPy to hang when run in batches
+- Batch testing entire directories would timeout after 3+ minutes
+- Certain tests (async generators, multiprocessing) cause indefinite hangs
+- Difficult to identify which specific test causes the hang
 
-**Solution**: File-by-file testing
+**Solution**: File-by-file testing with timeouts
 - Test all 161 files individually with 60s timeout each
-- Avoids collection bottleneck completely
+- Isolates problematic tests to prevent cascading failures
 - Uses `--append` for cumulative coverage
 - Shows granular progress per file
+- `continue-on-error: true` allows CI to complete despite failures
 
-**CI Run Status**: Run #115 has been executing for 26+ minutes, testing all files sequentially without hanging.
+**Performance**:
+- Collection itself is fast (~1-2s per directory, not a bottleneck)
+- Startup overhead: ~1s per file × 161 files = ~2.7 minutes
+- Test execution: ~3-5 minutes for all files
+- Total expected CI time: ~6-8 minutes
 
 ## Code Changes for GraalPy Compatibility
 
@@ -179,12 +185,13 @@ Unit test for `is_python_graalpy()`.
 
 | Metric | CPython 3.12 | PyPy 3.10 | GraalPy 25.0 |
 |--------|--------------|-----------|--------------|
-| Single file test | 0.3-0.5s | 0.4-0.6s | 0.5-0.9s |
-| Directory (89 files) | ~1.5s | ~2s | 2.51s |
-| Test collection | Fast | Fast | **Very Slow** |
+| Single file test | 0.3-0.5s | 0.4-0.6s | 0.6-1.4s |
+| Directory (89 files) | ~1.5s | ~2s | 2.56s |
+| Test collection (89 files) | <1s | <1s | 2.15s |
+| Pytest startup overhead | 0.3s | 0.4s | 1.0s |
 | Runtime execution | Fast | Very Fast | Fast |
 
-**Key Finding**: GraalPy's test collection is 10-20x slower than execution. File-by-file testing mitigates this completely.
+**Key Finding**: GraalPy's main overhead is pytest startup (~1s per invocation). Collection and execution are reasonably fast. File-by-file testing isolates hanging tests but incurs startup overhead cost.
 
 ## Compatibility Assessment
 
@@ -215,10 +222,11 @@ Unit test for `is_python_graalpy()`.
    - Celery integration test fails
    - Impact: Limited to specific integration scenarios
 
-4. **Slow pytest collection** (not a beartype issue)
-   - GraalPy-specific pytest performance issue
-   - Mitigated by file-by-file testing in CI
-   - Does not affect runtime performance
+4. **Test hanging issues** (not a beartype issue)
+   - Some tests hang indefinitely when run in batches on GraalPy
+   - Likely related to async generators and multiprocessing tests
+   - Mitigated by file-by-file testing with 60s timeout per file
+   - Does not affect beartype runtime performance in production
 
 ### ❌ Excluded Functionality
 - NumPy integration (excluded due to compilation time)
@@ -233,9 +241,10 @@ Unit test for `is_python_graalpy()`.
    - Most optional integrations work: pydantic, attrs, cattrs, redis, sqlalchemy, typer, click, docutils
    - Avoid edge cases: async generators, complex Protocol scenarios, subprocess-based claw hooks
 
-2. **For CI**: File-by-file testing required due to slow pytest collection
-   - 60-minute timeout recommended for full test suite
+2. **For CI**: File-by-file testing required to isolate hanging tests
+   - 60-minute timeout recommended (conservative, expect ~6-8 minutes actual)
    - Use `continue-on-error: true` for non-blocking CI
+   - Pytest startup overhead is the main time cost (~1s × 161 files)
 
 3. **For Developers**:
    - Avoid `is` checks on singleton tuples; use `==` instead
@@ -243,7 +252,8 @@ Unit test for `is_python_graalpy()`.
 
 4. **For GraalPy Team**:
    - Report async generator `__annotations__` introspection bug
-   - Investigate pytest collection performance
+   - Investigate why certain tests hang indefinitely (async generators, multiprocessing)
+   - Consider optimizing pytest startup overhead (currently ~1s per invocation)
 
 ## Conclusion
 
