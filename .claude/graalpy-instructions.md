@@ -45,6 +45,79 @@ Initial test run (GraalPy 25.0.1):
 
 ## Development Guidelines
 
+### 0. CRITICAL RULES (Read This First)
+
+**MANDATORY PRACTICES:**
+
+1. **DO NOT touch existing docstrings**
+   - Never modify, rewrite, or "improve" existing docstrings
+   - Leave original docstrings completely unchanged
+   - Only add NEW docstrings when creating NEW functions
+
+2. **WRAP ALL CHANGES in `if is_python_graalpy():`**
+   - Every GraalPy-specific change MUST be conditional
+   - Use the pattern: `if is_python_graalpy(): ... else: ...`
+   - Keep the original code in the `else` branch
+   - Never change default behavior for non-GraalPy interpreters
+
+3. **MINIMAL docstrings only**
+   - Keep docstrings short and factual
+   - Document WHAT, not HOW
+   - Avoid verbose explanations
+   - Example: `:data:`True` only if...` (good) vs. long paragraphs (bad)
+
+4. **VERIFY ALL CLAIMS before documenting**
+   - Double-check every statement in docstrings
+   - Test claims with the actual interpreter
+   - Don't copy assumptions from other sources
+   - If unsure, investigate or omit the claim
+
+5. **USE THE LOCAL INTERPRETER to investigate**
+   - Always test behavior directly with GraalPy
+   - Use: `graalpy -c "import sys; print(...)"`
+   - Check actual values, don't assume
+   - Compare with CPython when needed
+
+6. **NO GUESSING**
+   - If you don't know something, test it
+   - If you can't test it, ask or document as uncertain
+   - Never make assumptions about GraalPy behavior
+   - Base all fixes on observed, tested behavior
+
+**Example of CORRECT approach:**
+```python
+# Test first
+# $ graalpy -c "from collections import OrderedDict; print(type(OrderedDict))"
+# $ graalpy -c "import sys; print(sys.version_info)"
+
+# Then implement with conditional
+if is_python_graalpy():
+    # GraalPy 25.0.1: OrderedDict reports as _collections.OrderedDict
+    # Verified behavior on 2025-11-13
+    return handle_graalpy_ordereddict(hint)
+else:
+    return handle_standard_ordereddict(hint)
+```
+
+**Example of WRONG approach:**
+```python
+# ❌ NO: Modifying existing docstring
+def existing_function():
+    '''
+    Old docstring.
+
+    Updated to handle GraalPy.  # ❌ NEVER DO THIS
+    '''
+
+# ❌ NO: Unguarded changes
+return graalpy_specific_behavior()  # ❌ Must be conditional!
+
+# ❌ NO: Guessing behavior
+# GraalPy probably does X...  # ❌ Test it, don't guess!
+```
+
+---
+
 ### 1. Using `is_python_graalpy()`
 
 A cached function `is_python_graalpy()` has been created in `beartype/_util/py/utilpyinterpreter.py`.
