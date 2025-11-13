@@ -23,6 +23,7 @@ from beartype._data.hint.sign.datahintsigns import HintSignCallable
 from beartype._data.hint.sign.datahintsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._data.kind.datakindsequence import TUPLE_EMPTY
+from beartype._util.py.utilpyinterpreter import is_python_graalpy
 
 # ....................{ PRIVATE ~ hints                    }....................
 # If an external static type checker (e.g., "mypy") is currently subjecting
@@ -264,6 +265,12 @@ def get_hint_pep484585_callable_params(
     # parameter type hint against a set (e.g., "hint_param in {..., ()}"). This
     # parameter type hint is *NOT* guaranteed to be hashable and thus testable
     # against a hash-based collection.
+    if is_python_graalpy():
+        # GraalPy does not intern empty tuples, so identity check fails.
+        is_empty_tuple = hint_param == TUPLE_EMPTY
+    else:
+        is_empty_tuple = hint_param is TUPLE_EMPTY
+
     if (
         # An ellipsis, return an ellipsis.
         hint_param is ... or
@@ -275,7 +282,7 @@ def get_hint_pep484585_callable_params(
         #     (bool,)  # <------ this is good
         #     >>> Callable[[()], bool].__args__
         #     ((), bool,)  # <-- this is bad, so pretend this never happens
-        hint_param is TUPLE_EMPTY
+        is_empty_tuple
     ):
         return hint_param
     # Else, this parameter type hint is neither the empty tuple *NOR* an

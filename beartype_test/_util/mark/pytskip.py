@@ -271,7 +271,11 @@ def skip_if_pypy():
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
+    from beartype._util.py.utilpyinterpreter import is_python_pypy, is_python_graalpy
+
+    # Skip if PyPy or GraalPy (GraalPy has same C-method limitations as PyPy).
+    if is_python_graalpy():
+        return skip_if(True, reason='Incompatible with GraalPy.')
 
     # Skip this test if the active Python interpreter is PyPy.
     return skip_if(is_python_pypy(), reason='Incompatible with PyPy.')
