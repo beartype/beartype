@@ -503,7 +503,8 @@ test-tox = [
     """numpy; \
        python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
-       platform_python_implementation != 'PyPy'\
+       platform_python_implementation != 'PyPy' and \
+       platform_python_implementation != 'GraalVM'\
     """,
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
@@ -513,7 +514,8 @@ test-tox = [
     """langchain; \
        python_version < '3.14.0' and \
        sys_platform != 'darwin' and \
-       platform_python_implementation != 'PyPy'\
+       platform_python_implementation != 'PyPy' and \
+       platform_python_implementation != 'GraalVM'\
     """,
 
     # ....................{ SCIENCE ~ data : ml : dataframe}....................
@@ -567,7 +569,8 @@ test-tox = [
     # Note that PyPy currently fails to support mypy. See also this official
     # documentation discussing this regrettable incompatibility:
     #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-    "mypy >=0.800; platform_python_implementation != 'PyPy'",
+    # GraalPy also has compatibility issues with mypy's C extensions.
+    "mypy >=0.800; platform_python_implementation != 'PyPy' and platform_python_implementation != 'GraalVM'",
 
     # Require a reasonably recent version of pyright known to behave well. Less
     # recent versions are significantly deficient with respect to error
