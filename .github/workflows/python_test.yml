@@ -303,11 +303,25 @@ jobs:
       #   outside those virtual environments, thus reducing to a pointless,
       #   expensive, and failure-prone noop.
       - name: 'Upgrading packager dependencies...'
+        # For GraalPy, use native pip (cffi/hatch don't compile with uv)
+        # For other Pythons, use uv for speed
+        shell: bash
         run: |
-          uv pip install --quiet --system --upgrade pip hatch wheel
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade pip wheel
+          else
+            uv pip install --quiet --system --upgrade pip hatch wheel
+          fi
       - name: 'Installing package dependencies...'
+        # For GraalPy, use native pip
+        # For other Pythons, use uv for speed
+        shell: bash
         run: |
-          uv pip install --quiet --system --upgrade tox
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade tox
+          else
+            uv pip install --quiet --system --upgrade tox
+          fi
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
