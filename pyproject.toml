@@ -365,7 +365,8 @@ test-tox = [
     # Build-centric optional test-time dependencies.
 
     # Required by optional Poetry-specific integration tests.
-    "poetry",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "poetry; platform_python_implementation != 'GraalVM'",
 
     # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
@@ -377,7 +378,8 @@ test-tox = [
     "docutils >=0.22.0",
 
     # Required by optional Sphinx-specific integration tests.
-    "sphinx",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "sphinx; platform_python_implementation != 'GraalVM'",
 
     # ....................{ DOOR                           }....................
     # DOOR-specific optional test-time dependencies required to exercise all
@@ -393,7 +395,8 @@ test-tox = [
     #dependencies thereof officially ship Python 3.14 wheels.
     # Required by optional nuitka-specific integration tests if the current
     # platform is a Linux distribution.
-    "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0'",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0' and platform_python_implementation != 'GraalVM'",
 
     # ....................{ CLI                            }....................
     # Required by optional Typer-specific integration tests.
