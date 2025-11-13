@@ -372,7 +372,20 @@ jobs:
           python3 -m mypy ./beartype/
 
       # ..................{ TEST                             }..................
+      # GraalPy: Skip tox and run pytest directly due to tox hanging issues
+      - name: 'Testing GraalPy package with pytest (no tox)...'
+        if: ${{ startsWith(matrix.python-version, 'graalpy') }}
+        shell: bash
+        run: |
+          # Install minimal test dependencies
+          python3 -m pip install --quiet pytest typing-extensions coverage
+          # Run pytest directly with coverage
+          python3 -m coverage run -m pytest --maxfail=1 -p no:asyncio -p no:xvfb .
+          # Generate coverage report
+          python3 -m coverage xml -o coverage.xml
+
       - name: 'Testing package with "tox"...'
+        if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
         # Run the subsequent script as a Bash script. Although POSIX-compliant
         # platforms (e.g., Linux, macOS) sensibly default to Bash, Windows
         # insanely defaults to a Windows-specific shell (e.g., PowerShell).
