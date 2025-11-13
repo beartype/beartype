@@ -8,6 +8,36 @@ This branch adds GraalPy 25.0.1 compatibility to beartype. Review focus:
 - All claims verified with actual testing
 - Clear distinction between beartype issues vs GraalPy bugs
 
+## Reviewer Mindset
+
+**You are a reviewer with anal fixation, pedantic, precise, and thorough.**
+
+Your approach:
+- ✓ **Every Single Line:** Review every line of comment and code introduced
+- ✓ **Verify All Claims:** Check each claim to ensure it is factually true - re-test everything
+- ✓ **No Trust, Only Verification:** Don't believe any claim without testing it yourself and finding the real root cause
+- ✓ **Artifact Detection:** Point out what should NOT be documented because it's just a development artifact
+  - Example: "**Root Cause:** Beartype not installed in GraalPy's site-packages" is a development artifact, not a compatibility issue
+- ✓ **Code Quality:** Point out and/or correct any code that is not nice, coherent, or has poor performance
+- ✓ **Wrapper Verification:** Check if every single shred of code is wrapped in `if is_python_graalpy():`, including in tests
+- ✓ **Cache Decorator Scrutiny:** Verify cache decorators are actually useful
+  - Profile with real workloads, not only synthetic tests
+  - Check if memoization provides measurable benefit
+  - Verify cache hit rates and memory overhead
+- ✓ **Root Cause Investigation:** Investigate every issue to its true root cause
+  - Don't accept surface-level explanations
+  - Use profiling, debugging, and comparative analysis
+  - Document the actual underlying mechanism, not just symptoms
+- ✓ **Perfectionist Standard:** Accept nothing less than perfect
+
+**Your Questions:**
+- "Is this claim actually true? Let me test it."
+- "Is this code wrapped in `if is_python_graalpy():`? What about tests?"
+- "Is this documentation describing a real issue or just a development artifact?"
+- "Is this cache decorator actually beneficial? Show me profiling data."
+- "What is the REAL root cause here, not just the symptom?"
+- "Can this code be cleaner, more efficient, more coherent?"
+
 ## Pre-Review Checklist
 
 ### Test Results
@@ -57,6 +87,141 @@ git diff origin/main -- '*.py' | grep -B5 -A5 "is_python_graalpy"
 **Rule 4: Claims verified**
 - Each fix has evidence in GRAALPY_STATUS.md
 - Test results provided for each change
+
+### Pedantic Review: Specific Issues to Scrutinize
+
+#### 1. Cache Decorator Usage
+**File:** `beartype/_util/py/utilpyinterpreter.py:51`
+
+The `@callable_cached` decorator is used on `is_python_graalpy()`. **Question:** Is this actually beneficial?
+
+**Verification Required:**
+```python
+# Profile with real workload
+import timeit
+from beartype._util.py.utilpyinterpreter import is_python_graalpy
+
+# Measure call overhead
+uncached_time = timeit.timeit('platform.python_implementation() == "GraalVM"', setup='import platform', number=1000000)
+cached_time = timeit.timeit('is_python_graalpy()', setup='from beartype._util.py.utilpyinterpreter import is_python_graalpy', number=1000000)
+
+print(f"Uncached: {uncached_time:.6f}s")
+print(f"Cached: {cached_time:.6f}s")
+print(f"Benefit: {uncached_time - cached_time:.6f}s ({((uncached_time - cached_time) / uncached_time * 100):.2f}%)")
+```
+
+**Reviewer Action:**
+- [ ] Run profiling code above on GraalPy
+- [ ] Verify cache hit rate in real beartype usage
+- [ ] Confirm benefit > overhead in typical workloads
+- [ ] If benefit < 1%, consider removing `@callable_cached`
+
+#### 2. Test Code Wrapping
+**Issue:** Are test modifications also wrapped in `if is_python_graalpy():`?
+
+**File:** `beartype_test/_util/mark/pytskip.py:276-278`
+
+```python
+if is_python_graalpy():
+    return skip_if(True, reason='Incompatible with GraalPy.')
+```
+
+**Reviewer Questions:**
+- ✓ Is this wrapped? **YES** - Good!
+- ✓ Should this be a separate function `skip_if_graalpy()` instead? Consider code clarity.
+- ✓ Are there any other test changes that are NOT wrapped?
+
+**Action:** Search for ALL changes in `beartype_test/`:
+```bash
+git diff origin/main -- 'beartype_test/**/*.py' | grep -v "is_python_graalpy\|is_python_pypy" | grep -A5 -B5 "^[+]"
+```
+
+If any GraalPy-specific test code is found, it MUST be wrapped.
+
+#### 3. Documentation Artifacts
+**File:** `GRAALPY_STATUS.md`
+
+**Section to Remove/Rewrite:**
+Lines 37-48 discuss "Metadata Issue" and "Door API Issues" with root cause "Beartype not installed in GraalPy's site-packages."
+
+**Problem:** This is a **development artifact**, not a compatibility issue. This describes setup problems during development, not actual GraalPy incompatibilities.
+
+**Reviewer Action:**
+- [ ] Remove sections 2, 3, and 4 from "Fixes Implemented" (lines 37-72)
+- [ ] These are NOT fixes - they were setup issues
+- [ ] Document only ACTUAL compatibility fixes:
+  1. Type Detection Issues (module name differences)
+  2. Empty Tuple Identity Check
+  3. C-Method Type Detection (skip for GraalPy)
+
+**Corrected "Fixes Implemented" should only include:**
+- Type mappings fix (`_collections`, `_sre` modules)
+- Empty tuple identity fix
+- C-method skip extension
+
+#### 4. Root Cause Analysis Depth
+**Current claims in GRAALPY_STATUS.md:**
+
+- "GraalPy uses different internal module names" - **Verify:** Why? Is this CPython C extension vs GraalPy Python implementation?
+- "GraalPy does not intern empty tuples" - **Verify:** Why not? Is this by design or a bug? Check GraalPy source/docs.
+- "pytest-GraalPy interaction bug" - **Verify:** Is it pytest, GraalPy, or the interaction? Which component has the bug?
+
+**Reviewer Action:**
+For each root cause claim:
+- [ ] Investigate WHY, not just WHAT
+- [ ] Check GraalPy source code if possible
+- [ ] Check GraalPy documentation
+- [ ] Check GraalPy issue tracker
+- [ ] Document the actual underlying mechanism
+
+#### 5. Code Quality Issues
+**File:** `beartype/_util/hint/pep/proposal/pep484585/pep484585callable.py:268-272`
+
+Current code:
+```python
+if is_python_graalpy():
+    # GraalPy does not intern empty tuples, so identity check fails.
+    is_empty_tuple = hint_param == TUPLE_EMPTY
+else:
+    is_empty_tuple = hint_param is TUPLE_EMPTY
+```
+
+**Reviewer Questions:**
+- Performance: Is the `if is_python_graalpy():` check evaluated every time this function runs?
+- Could this be optimized with module-level constant?
+- Is the comment accurate? "does not intern" - verify this is the actual reason.
+
+**Alternative approach to consider:**
+```python
+# At module level (only evaluated once on import)
+_IS_GRAALPY = is_python_graalpy()
+
+# In function (no repeated checks)
+if _IS_GRAALPY:
+    is_empty_tuple = hint_param == TUPLE_EMPTY
+else:
+    is_empty_tuple = hint_param is TUPLE_EMPTY
+```
+
+**Action:**
+- [ ] Profile both approaches
+- [ ] Measure call frequency of this function
+- [ ] If called > 1000 times per typical run, optimize
+- [ ] If called < 100 times per typical run, current approach is fine
+
+#### 6. Missing Wrapper Checks
+**Action:** Verify NO unwrapped GraalPy-specific code exists:
+
+```bash
+# Find all occurrences of GraalPy-specific patterns
+git diff origin/main -- '*.py' | grep -i "graalpy\|graalvm" | grep -v "is_python_graalpy"
+
+# Should return ONLY:
+# - Comments mentioning GraalPy
+# - Docstrings mentioning GraalPy
+# - Test function names containing graalpy
+# NO executable code outside if is_python_graalpy(): blocks
+```
 
 ### 2. Review Core Changes
 
