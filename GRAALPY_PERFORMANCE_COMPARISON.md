@@ -16,7 +16,7 @@
 - CPython 3.14: 383 passed, 9 skipped in **5.20s** (wall time: **5.5s**)
 - GraalPy 25.0: 371 passed, 15 skipped, 6 failed in **44.40s** (wall time: **48.3s**)
 
-**Code Changes**: Only **139 net lines** of code/config changes to support GraalPy
+**Code Changes**: Only **143 net lines** of code/config changes to support GraalPy
 
 ---
 
@@ -27,10 +27,10 @@
 | Category                        | Files  | Lines Added | Lines Removed | Net      |
 |---------------------------------|--------|-------------|---------------|----------|
 | Core beartype                   | 3      | 42          | 1             | +41      |
-| Test suite                      | 6      | 54          | 5             | +49      |
+| Test suite                      | 7      | 59          | 6             | +53      |
 | CI/CD                           | 1      | 31          | 12            | **+19**  |
 | Config (tox, pyproject, pytest) | 3      | 37          | 7             | +30      |
-| **Total Code/Config**           | **13** | **164**     | **25**        | **+139** |
+| **Total Code/Config**           | **14** | **169**     | **26**        | **+143** |
 | Documentation                   | ~15    | ~2200       | 0             | +2200    |
 
 ### Key Changes Summary
