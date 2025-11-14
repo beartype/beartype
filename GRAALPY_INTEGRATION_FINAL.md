@@ -12,20 +12,20 @@
 
 ## 📊 Final Statistics
 
-### Code Changes
+### Code Changes (vs upstream beartype/beartype:main)
 
-| Category | Files | Lines Added | Lines Removed | Net |
-|----------|-------|-------------|---------------|-----|
-| Core beartype | 3 | 43 | 0 | +43 |
-| Test suite | 5 | 37 | 0 | +37 |
-| CI/CD | 1 | 9 | 64 | **-55** |
-| Config (tox, pyproject, pytest) | 3 | 53 | 0 | +53 |
-| **Total Code/Config** | **12** | **142** | **64** | **+78** |
-| Documentation | 15 | ~2000 | 0 | +2000 |
+| Category                        | Files  | Lines Added | Lines Removed | Net      |
+|---------------------------------|--------|-------------|---------------|----------|
+| Core beartype                   | 3      | 42          | 1             | +41      |
+| Test suite                      | 7      | 59          | 5             | +54      |
+| CI/CD                           | 1      | 31          | 12            | +19      |
+| Config (tox, pyproject, pytest) | 3      | 37          | 7             | +30      |
+| **Total Code/Config**           | **14** | **169**     | **25**        | **+144** |
+| Documentation                   | ~15    | ~2200       | 0             | +2200    |
 
-**Net Code Change**: Only **78 lines** of actual code/config added!
+**Net Code Change**: Only **144 lines** of actual code/config added!
 
-**CI/CD**: Dramatically simplified - **net reduction of 55 lines**
+**CI/CD**: Minimal changes - only **+19 net lines** for GraalPy support
 
 ---
 

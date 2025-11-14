@@ -15,7 +15,7 @@
 - Decorator functionality
 - Data validation: pydantic, attrs, cattrs
 - Database/cache: redis, sqlalchemy
-- CLI libraries: typer, click, rich-click
+- CLI libraries: typer, click, rich-clickrun tests locall
 - Documentation: docutils
 
 ### ⚠️ Known Limitations

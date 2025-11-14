@@ -15,10 +15,14 @@ the standard :mod:`contextlib` module.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import (
+    skip_if_graalpy,
+    skip_if_python_version_less_than,
+)
 
 # ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.11.0')
+@skip_if_graalpy()
 async def test_decor_contextlib_asynccontextmanager() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on
