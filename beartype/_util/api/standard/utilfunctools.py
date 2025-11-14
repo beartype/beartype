@@ -59,8 +59,14 @@ def is_func_functools_lru_cache(func: Any) -> TypeIs[Callable]:
 
     # Return true only if the type of that callable is the low-level C-based
     # private type of all objects created and returned by the standard
-    # @functools.lru_cache decorator.
-    return isinstance(func, CallableFunctoolsLruCacheType)
+    # @functools.lru_cache decorator *AND* that callable exposes lru_cache-
+    # specific attributes. The latter check is required for PyPy compatibility,
+    # where lru_cache wrappers have the same type as regular functions.
+    return (
+        isinstance(func, CallableFunctoolsLruCacheType) and
+        hasattr(func, 'cache_info') and
+        hasattr(func, 'cache_clear')
+    )  # Glinte: suspicious, perf concerns?
 
 
 def is_func_functools_partial(func: Any) -> TypeIs[

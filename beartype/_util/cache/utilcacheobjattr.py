@@ -336,14 +336,18 @@ def get_type_attr_cached_or_sentinel(
         # called by the sys.getsizeof() utility function, which itself is only
         # ever called manually in a REPL or by third-party object sizing
         # packages. In short, __sizeof__() is perfect.
-        cls_sizeof = cls.__sizeof__
+        #
+        # Note: PyPy doesn't expose __sizeof__ on type objects the same way CPython
+        # does. Use getattr() with SENTINEL as default to handle this gracefully.
+        cls_sizeof = getattr(cls, '__sizeof__', SENTINEL)
 
-        # If this method is *NOT* pure-Python, this method is C-based and thus
-        # *CANNOT* possibly have been monkey-patched by a prior call to the
-        # set_type_attr_cached() setter, which would have necessarily wrapped
-        # this non-monkey-patchable C-based method with a monkey-patchable
-        # pure-Python equivalent. In this case, return the sentinel placeholder.
-        if not isinstance(cls_sizeof, FunctionType):
+        # If this method does *NOT* exist (e.g., on PyPy) *OR* is *NOT* pure-Python,
+        # this method is either non-existent or C-based and thus *CANNOT* possibly
+        # have been monkey-patched by a prior call to the set_type_attr_cached()
+        # setter, which would have necessarily wrapped this non-monkey-patchable
+        # C-based method with a monkey-patchable pure-Python equivalent. In this
+        # case, return the sentinel placeholder.
+        if cls_sizeof is SENTINEL or not isinstance(cls_sizeof, FunctionType):
             return SENTINEL
         # Else, this method is pure-Python and thus *COULD* possibly have been
         # monkey-patched by a prior call to the set_type_attr_cached() setter.
@@ -566,23 +570,51 @@ def set_type_attr_cached(
     with OBJECT_ATTR_CACHE_LOCK:
         # __sizeof__() dunder method currently declared by this class. See the
         # get_type_attr_cached_or_sentinel() getter for details.
-        cls_sizeof_old = cls.__sizeof__
+        #
+        # Note: PyPy doesn't expose __sizeof__ on type objects the same way CPython
+        # does. Use getattr() with None as default to handle this gracefully.
+        cls_sizeof_old = getattr(cls, '__sizeof__', None)
 
-        # If this method is already pure-Python, this method is already
+        # If this method exists and is already pure-Python, this method is already
         # monkey-patchable. In this case, monkey-patch this method directly.
         if isinstance(cls_sizeof_old, FunctionType):
             cls_sizeof = cls_sizeof_old  # pyright: ignore
-        # Else, this method is *NOT* pure-Python, implying this method is
-        # C-based and *NOT* monkey-patchable. In this case...
+        # Else, either this method doesn't exist (e.g., on PyPy) *OR* this method
+        # is *NOT* pure-Python, implying this method is C-based and *NOT*
+        # monkey-patchable. In this case...
         else:
             # Avoid circular import dependencies.
             from beartype._util.cls.utilclsset import set_type_attr
 
-            # New pure-Python __sizeof__() dunder method wrapping the original
-            # C-based __sizeof__() dunder method declared by this class.
-            @wraps(cls_sizeof_old)
-            def cls_sizeof(self) -> int:
-                return cls_sizeof_old(self)  # type: ignore[call-arg]
+            # If __sizeof__ doesn't exist on the class (e.g., on PyPy), create a simple
+            # default implementation that returns a reasonable default value. Note that
+            # on PyPy, even object.__sizeof__ doesn't exist, so we can't use that as
+            # a fallback. In this case, create a standalone implementation.
+            if cls_sizeof_old is None:
+                # Create a minimal __sizeof__() implementation for PyPy that returns
+                # a simple constant. This is only used for beartype's internal caching
+                # and doesn't need to be accurate since __sizeof__() is rarely called.
+                def _cls_sizeof_default(self) -> int:
+                    '''
+                    Minimal __sizeof__() implementation for PyPy compatibility.
+
+                    This method exists solely to allow beartype to cache type attributes
+                    by monkey-patching them into this method. The actual size value
+                    returned is largely irrelevant, as this method is rarely called in
+                    production code.
+                    '''
+                    return object.__basicsize__ if hasattr(object, '__basicsize__') else 56
+
+                # Assign to cls_sizeof for consistency with the else branch.
+                # Type ignore: mypy sees this as incompatible with FunctionType, but
+                # at runtime this is correct and necessary for PyPy compatibility.
+                cls_sizeof = _cls_sizeof_default  # type: ignore[assignment]
+            else:
+                # New pure-Python __sizeof__() dunder method wrapping the original
+                # C-based __sizeof__() dunder method declared by this class.
+                @wraps(cls_sizeof_old)
+                def cls_sizeof(self) -> int:
+                    return cls_sizeof_old(self)  # type: ignore[call-arg]
 
             # Replace the original C-based __sizeof__() dunder method with this
             # wrapper. For safety, we intentionally call our high-level

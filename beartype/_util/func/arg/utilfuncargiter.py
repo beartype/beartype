@@ -401,7 +401,20 @@ def iter_func_args(
     # parameters (i.e., all optional positional-only *AND* optional flexible
     # (i.e., positional or keyword) parameters) accepted by that callable if any
     # *OR* the empty tuple otherwise.
-    args_defaults_posonly_or_flex = func.__defaults__ or ()  # type: ignore[attr-defined]
+    #
+    # Glinte: very sus, pls double check
+    #
+    # Note: In Python 3.13+, accessing func.__call__ on a function returns a
+    # method-wrapper that doesn't have __defaults__ attribute. In this case, we
+    # need to get __defaults__ from the __self__ attribute (the wrapped function).
+    # On PyPy, func.__call__ returns a method with __defaults__ = None, which is
+    # handled correctly by the first branch (None or () → ()).
+    if hasattr(func, '__defaults__'):
+        args_defaults_posonly_or_flex = func.__defaults__ or ()  # type: ignore[attr-defined]
+    elif hasattr(func, '__self__') and hasattr(func.__self__, '__defaults__'):  # type: ignore[attr-defined]
+        args_defaults_posonly_or_flex = func.__self__.__defaults__ or ()  # type: ignore[attr-defined]
+    else:
+        args_defaults_posonly_or_flex = ()
     # print(f'args_defaults_posonly_or_flex: {args_defaults_posonly_or_flex}')
 
     # Dictionary mapping from the name of each optional keyword-only parameter
@@ -416,7 +429,14 @@ def iter_func_args(
     #     True
     #     >>> {} is {}
     #     False
-    args_defaults_kwonly = func.__kwdefaults__ or FROZENDICT_EMPTY  # type: ignore[attr-defined]
+    #
+    # Note: Similar to __defaults__, handle method-wrappers in Python 3.14+.
+    if hasattr(func, '__kwdefaults__'):
+        args_defaults_kwonly = func.__kwdefaults__ or FROZENDICT_EMPTY  # type: ignore[attr-defined]
+    elif hasattr(func, '__self__') and hasattr(func.__self__, '__kwdefaults__'):  # type: ignore[attr-defined]
+        args_defaults_kwonly = func.__self__.__kwdefaults__ or FROZENDICT_EMPTY  # type: ignore[attr-defined]
+    else:
+        args_defaults_kwonly = FROZENDICT_EMPTY
 
     # ..................{ LOCALS ~ len                       }..................
     # Number of both optional and mandatory positional-only parameters accepted
