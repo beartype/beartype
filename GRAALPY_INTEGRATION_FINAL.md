@@ -23,7 +23,10 @@
 | **Total Code/Config**           | **14** | **169**     | **26**        | **+143** |
 | Documentation                   | ~15    | ~2200       | 0             | +2200    |
 
-**Net Code Change**: Only **143 lines** of actual code/config added!
+**Composition of +143 Net Lines**:
+- **+91 lines** of actual executable code (108 added - 17 removed)
+- **+27 lines** of comments/documentation (36 added - 9 removed)
+- **+25 lines** blank lines for readability
 
 **CI/CD**: Minimal changes - only **+19 net lines** for GraalPy support
 

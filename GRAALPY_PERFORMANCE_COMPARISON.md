@@ -33,6 +33,11 @@
 | **Total Code/Config**           | **14** | **169**     | **26**        | **+143** |
 | Documentation                   | ~15    | ~2200       | 0             | +2200    |
 
+**Composition of +143 Net Lines**:
+- **+91 lines** of actual code (108 added - 17 removed)
+- **+27 lines** of comments (36 added - 9 removed)
+- **+25 lines** blank lines for readability
+
 ### Key Changes Summary
 
 **Core beartype** (43 lines):
