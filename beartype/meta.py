@@ -87,7 +87,7 @@ else:
         from collections import defaultdict as _defaultdict
         _package_metadata = _defaultdict(lambda: None)
 
-# ....................{ METADATA ~ license                 }....................
+# ....................{ METADATA ~ package                 }....................
 PACKAGE_NAME = NAME
 '''
 Fully-qualified name of the top-level Python package containing this submodule.
@@ -96,7 +96,7 @@ Fully-qualified name of the top-level Python package containing this submodule.
 
 PACKAGE_TEST_NAME = f'{PACKAGE_NAME}_test'
 '''
-Fully-qualified name of the top-level Python package exercising this project.
+Fully-qualified name of the top-level Python package testing this project.
 '''
 
 # ....................{ PYTHON ~ version                   }....................

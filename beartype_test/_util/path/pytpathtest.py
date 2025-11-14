@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Test-specific **test suite paths** (i.e., :class:`pathlib.Path` instances
-encapsulating test-specific paths unique to this test suite).
+Test-wide **test suite paths** (i.e., low-level callables creating and returning
+:class:`pathlib.Path` objects encapsulating test-specific paths unique to this
+test suite).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -42,7 +43,7 @@ def get_test_package_dir() -> Path:
 def get_test_func_subpackage_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **mid-level
-    functional test subpackage** (i.e., directory providing all functional
+    integration test subpackage** (i.e., directory providing all integration
     tests of this project's test suite) if found *or* raise an exception
     otherwise.
     '''
@@ -55,8 +56,8 @@ def get_test_func_subpackage_dir() -> Path:
 def get_test_func_data_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **mid-level
-    functional test data directory** (i.e., directory providing sample data
-    used throughout this project's functional tests) if found *or* raise an
+    integration test data directory** (i.e., directory providing sample data
+    used throughout this project's integration tests) if found *or* raise an
     exception otherwise.
     '''
 
@@ -68,8 +69,8 @@ def get_test_func_data_dir() -> Path:
 def get_test_func_data_lib_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **mid-level
-    third-party dependency functional test data directory** (i.e., directory
-    providing sample data used throughout this project's functional tests
+    third-party dependency integration test data directory** (i.e., directory
+    providing sample data used throughout this project's integration tests
     exercising third-party dependencies) if found *or* raise an exception
     otherwise.
     '''
@@ -82,8 +83,8 @@ def get_test_func_data_lib_dir() -> Path:
 def get_test_func_data_lib_nuitka_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level nuitka
-    functional test data directory** (i.e., directory providing sample code
-    used throughout this project's :mod:`nuitka`-specific functional tests) if
+    integration test data directory** (i.e., directory providing sample code
+    used throughout this project's :mod:`nuitka`-specific integration tests) if
     found *or* raise an exception otherwise.
     '''
 
@@ -95,8 +96,8 @@ def get_test_func_data_lib_nuitka_dir() -> Path:
 def get_test_func_data_lib_poetry_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level Poetry
-    functional test data directory** (i.e., directory providing sample code
-    used throughout this project's :mod:`poetry`-specific functional tests) if
+    integration test data directory** (i.e., directory providing sample code
+    used throughout this project's :mod:`poetry`-specific integration tests) if
     found *or* raise an exception otherwise.
     '''
 
@@ -108,8 +109,8 @@ def get_test_func_data_lib_poetry_dir() -> Path:
 def get_test_func_data_lib_sphinx_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level Sphinx
-    functional test data directory** (i.e., directory providing sample data
-    used throughout this project's :mod:`sphinx`-specific functional tests) if
+    integration test data directory** (i.e., directory providing sample data
+    used throughout this project's :mod:`sphinx`-specific integration tests) if
     found *or* raise an exception otherwise.
     '''
 
@@ -121,8 +122,8 @@ def get_test_func_data_lib_sphinx_dir() -> Path:
 def get_test_func_data_lib_nuitka_file() -> Path:
     '''
     :class:`.Path` encapsulating the absolute filename of the **low-level nuitka
-    functional test data file** (i.e., file providing sample code used
-    throughout this project's :mod:`nuitka`-specific functional tests) if found
+    integration test data file** (i.e., file providing sample code used
+    throughout this project's :mod:`nuitka`-specific integration tests) if found
     *or* raise an exception otherwise.
     '''
 
@@ -134,9 +135,9 @@ def get_test_func_data_lib_nuitka_file() -> Path:
 @callable_cached
 def get_test_unit_subpackage_dir() -> Path:
     '''
-    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit test
-    subpackage** (i.e., directory providing all unit tests of this project's
-    test suite) if found *or* raise an exception otherwise.
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit
+    test subpackage** (i.e., directory providing all unit tests of this
+    project's test suite) if found *or* raise an exception otherwise.
     '''
 
     # Redacted didactic!
@@ -146,9 +147,9 @@ def get_test_unit_subpackage_dir() -> Path:
 @callable_cached
 def get_test_unit_data_dir() -> Path:
     '''
-    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit test
-    data directory** (i.e., directory providing sample data used throughout this
-    project's unit tests) if found *or* raise an exception otherwise.
+    :class:`.Path` encapsulating the absolute dirname of the **mid-level unit
+    test data directory** (i.e., directory providing sample data used throughout
+    this project's unit tests) if found *or* raise an exception otherwise.
     '''
 
     # Galactic antacid!
