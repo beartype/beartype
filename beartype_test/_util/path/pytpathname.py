@@ -65,7 +65,7 @@ def is_basename(pathname: str) -> bool:
         Pathname to be tested.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this pathname is a pure basename.
     '''

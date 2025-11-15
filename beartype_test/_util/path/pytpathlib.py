@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Testable path factories** (i.e., callables creating and returning
+Test-wide **path factories** (i.e., low-level callables creating and returning
 :class:`pathlib.Path` instances encapsulating testing-specific paths).
 '''
 
