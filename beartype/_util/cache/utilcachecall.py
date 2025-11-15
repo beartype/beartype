@@ -316,16 +316,10 @@ def _callable_cached_general(func: CallableT) -> CallableT:
     # if any (i.e., if that call did *NOT* raise an exception).
     args_flat_to_return_value: Dict[tuple, object] = {}
 
-    # get() method of this dictionary, localized for efficiency.
-    args_flat_to_return_value_get = args_flat_to_return_value.get
-
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
     args_flat_to_exception: Dict[tuple, Exception] = {}
-
-    # get() method of this dictionary, localized for efficiency.
-    args_flat_to_exception_get = args_flat_to_exception.get
 
     # ....................{ CLOSURE                        }....................
     @wraps(func)
@@ -370,24 +364,17 @@ def _callable_cached_general(func: CallableT) -> CallableT:
             #   values is *NOT* needed here. Although a sentinel placeholder
             #   could still be employed, doing so would slightly reduce
             #   efficiency for *NO* real-world gain.
-            exception = args_flat_to_exception_get(args_flat)
-
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
-            if exception:
-                raise exception  # pyright: ignore
+            if args_flat in args_flat_to_exception:
+                raise args_flat_to_exception[args_flat]  # pyright: ignore
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
 
-            # Value returned by a prior call to the decorated callable when
-            # passed these parameters *OR* a sentinel placeholder otherwise
-            # (i.e., if this callable has yet to be passed these parameters).
-            return_value = args_flat_to_return_value_get(args_flat, SENTINEL)
-
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.
-            if return_value is not SENTINEL:
-                return return_value
+            if args_flat in args_flat_to_return_value:
+                return args_flat_to_return_value[args_flat]
             # Else, this callable has yet to be called with these parameters.
 
             # Attempt to...
@@ -553,16 +540,10 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
     # if any (i.e., if that call did *NOT* raise an exception).
     args_flat_to_return_value: Dict[tuple, object] = {}
 
-    # get() method of this dictionary, localized for efficiency.
-    args_flat_to_return_value_get = args_flat_to_return_value.get
-
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
     args_flat_to_exception: Dict[tuple, Exception] = {}
-
-    # get() method of this dictionary, localized for efficiency.
-    args_flat_to_exception_get = args_flat_to_exception.get
 
     # ....................{ CLOSURE                        }....................
     @wraps(func)
@@ -597,24 +578,17 @@ def method_cached_arg_by_id(func: CallableT) -> CallableT:
             #   values is *NOT* needed here. Although a sentinel placeholder
             #   could still be employed, doing so would slightly reduce
             #   efficiency for *NO* real-world gain.
-            exception = args_flat_to_exception_get(args_flat)
-
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
-            if exception:
-                raise exception  # pyright: ignore
+            if args_flat in args_flat_to_exception:
+                raise args_flat_to_exception[args_flat]  # pyright: ignore
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
 
-            # Value returned by a prior call to the decorated callable when
-            # passed these parameters *OR* a sentinel placeholder otherwise
-            # (i.e., if this callable has yet to be passed these parameters).
-            return_value = args_flat_to_return_value_get(args_flat, SENTINEL)
-
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.
-            if return_value is not SENTINEL:
-                return return_value
+            if args_flat in args_flat_to_return_value:
+                return args_flat_to_return_value[args_flat]
             # Else, this callable has yet to be called with these parameters.
 
             # Attempt to...
