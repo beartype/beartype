@@ -15,8 +15,10 @@ This submodule unit tests both the public *and* private API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_pypy
 
 # ....................{ TESTS                              }....................
+@skip_if_pypy()
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private

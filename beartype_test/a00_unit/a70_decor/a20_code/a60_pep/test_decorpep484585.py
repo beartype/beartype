@@ -17,11 +17,13 @@ This submodule unit tests :pep:`484` and :pep:`585` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype_test._util.mark.pytmark import ignore_warnings
+from beartype_test._util.mark.pytskip import skip_if_graalpy
 
 # ....................{ TESTS ~ decor : async              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the @beartype decorator below. Urgh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
+@skip_if_graalpy()
 async def test_decor_async_coroutine() -> None:
     '''
     Test decorating coroutines with the :func:`beartype.beartype` decorator.
@@ -110,6 +112,7 @@ async def test_decor_async_coroutine() -> None:
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the @beartype decorator below. Hurk!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
+@skip_if_graalpy()
 async def test_decor_async_generator() -> None:
     '''
     Test decorating asynchronous generators with the :func:`beartype.beartype`

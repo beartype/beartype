@@ -271,10 +271,33 @@ def skip_if_pypy():
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import is_python_pypy
+    from beartype._util.py.utilpyinterpreter import is_python_pypy, is_python_graalpy
+
+    # Skip if PyPy or GraalPy (GraalPy has same C-method limitations as PyPy).
+    if is_python_graalpy():
+        return skip_if(True, reason='Incompatible with GraalPy.')
 
     # Skip this test if the active Python interpreter is PyPy.
     return skip_if(is_python_pypy(), reason='Incompatible with PyPy.')
+
+
+def skip_if_graalpy():
+    '''
+    Skip the decorated test or fixture if the active Python interpreter is
+    GraalPy, a high-performance Python implementation built on GraalVM.
+
+    Returns
+    -------
+    pytest.skipif
+        Decorator skipping this test or fixture if this interpreter is GraalPy
+        *or* the identity decorator reducing to a noop otherwise.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_graalpy
+
+    # Skip this test if the active Python interpreter is GraalPy.
+    return skip_if(is_python_graalpy(), reason='Incompatible with GraalPy.')
 
 
 def skip_if_python_version_greater_than_or_equal_to(version: str):

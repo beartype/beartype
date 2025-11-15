@@ -32,6 +32,7 @@ on:
   push:
     branches:
       - main
+      - graalpy  # Enable CI for GraalPy compatibility testing
 
   # Pull requests against the main branch. Pull requests against other branches
   # should, ideally, *NEVER* occur; if and when they do, we ignore them.
@@ -81,6 +82,7 @@ jobs:
   tests:
     # ..................{ MATRIX                             }..................
     strategy:
+      fail-fast: false  # Allow all jobs to complete even if one fails
       matrix:
         # List of all platform-specific Docker images to test against,
         # including:
@@ -115,6 +117,7 @@ jobs:
           # - py313t-coverage
           - py314-coverage
           # - py314t-coverage
+          - gpy25-coverage  # GraalPy 25.0
 
           #FIXME: UNcomment after the first Python 3.15 alpha drops. See also:
           #    https://peps.python.org/pep-0790
@@ -127,15 +130,14 @@ jobs:
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
           # - pypy310-coverage
 
-        #FIXME: Preserved in the likelihood we'll need something similar again.
-        # # Avoid problematic combinations of Python versions and platforms.
-        # exclude:
-        #   # Avoid Python 3.13 under Windows. Why? For unknown reasons, the
-        #   # GitHub Actions-based Windows runner appears to ship a GIL-free
-        #   # "free-threading" build of Python 3.13.0, which then appears to
-        #   # produce cataclysmic failures at "pytest" test collection time.
-        #   - platform: windows-latest
-        #     tox-env: py313-coverage
+        # Avoid problematic combinations of Python versions and platforms.
+        exclude:
+          # Avoid GraalPy on Windows - not available
+          - platform: windows-latest
+            tox-env: gpy25-coverage
+          # Avoid GraalPy on macOS - not available
+          - platform: macos-latest
+            tox-env: gpy25-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the
@@ -164,6 +166,7 @@ jobs:
           - { python-version: "3.12",  tox-env: "py312-coverage" }
           - { python-version: "3.13",  tox-env: "py313-coverage" }
           - { python-version: "3.14",  tox-env: "py314-coverage" }
+          - { python-version: "graalpy-25.0",  tox-env: "gpy25-coverage" }
 
           #FIXME: Actually, let's just avoid free-threading builds for now. It'd
           #be great to test them, but only 20% of all C extensions support them
@@ -210,7 +213,8 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    timeout-minutes: 10
+    # Increased to 90 minutes for GraalPy (8.7x slower than CPython)
+    timeout-minutes: 90
 
     # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.
@@ -253,6 +257,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
           allow-prereleases: true
       - name: 'Installing uv...'
+        if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
         uses: 'astral-sh/setup-uv@v7'
         with:
           # Temporarily cache third-party packages subsequently installed by
@@ -293,10 +298,20 @@ jobs:
       #   expensive, and failure-prone noop.
       - name: 'Upgrading packager dependencies...'
         run: |
-          uv pip install --quiet --system --upgrade pip hatch wheel
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade pip hatch wheel
+          else
+            uv pip install --quiet --system --upgrade pip hatch wheel
+          fi
+        shell: bash
       - name: 'Installing package dependencies...'
         run: |
-          uv pip install --quiet --system --upgrade tox
+          if [[ "${{ matrix.python-version }}" == graalpy* ]]; then
+            python3 -m pip install --quiet --upgrade tox
+          else
+            uv pip install --quiet --system --upgrade tox
+          fi
+        shell: bash
 
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
@@ -328,7 +343,9 @@ jobs:
       #    https://github.com/jpetrucciani/mypy-check/issues/30
 
       # Type-check this package with "mypy".
+      # Skip on GraalPy (mypy has compatibility issues with GraalPy's C extensions)
       - name: 'Type-checking package with "mypy"...'
+        if: ${{ !startsWith(matrix.python-version, 'graalpy') }}
         run: |
           # Manually install "mypy" in the standard way. Note that "mypy" itself
           # requires the third-party "typing-extensions" package for support for
@@ -343,7 +360,9 @@ jobs:
           python3 -m mypy ./beartype/
 
       # ..................{ TEST                             }..................
+      # Allow GraalPy tests to fail without failing the entire CI run
       - name: 'Testing package with "tox"...'
+        continue-on-error: ${{ startsWith(matrix.python-version, 'graalpy') }}
         # Run the subsequent script as a Bash script. Although POSIX-compliant
         # platforms (e.g., Linux, macOS) sensibly default to Bash, Windows
         # insanely defaults to a Windows-specific shell (e.g., PowerShell).

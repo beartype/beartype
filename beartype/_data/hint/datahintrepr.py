@@ -413,6 +413,18 @@ def _init() -> None:
                 f'{typing_module_name}.{typing_attr_basename}'] = (
                 hint_sign_typing)
 
+    # ..................{ GRAALPY                            }..................
+    # GraalPy-specific mappings.
+    from beartype._util.py.utilpyinterpreter import is_python_graalpy
+
+    if is_python_graalpy():
+        # GraalPy 25.0.1: OrderedDict uses _collections instead of collections
+        HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN['_collections.OrderedDict'] = (
+            HintSignOrderedDict)
+        # GraalPy 25.0.1: re.Match and re.Pattern use _sre instead of re
+        HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN['_sre.Match'] = HintSignMatch
+        HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN['_sre.Pattern'] = HintSignPattern
+
     # ..................{ SYNTHESIS                          }..................
     # Freeze all relevant global sets for safety.
     HINTS_PEP484_REPR_PREFIX_DEPRECATED = frozenset(

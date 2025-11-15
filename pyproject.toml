@@ -365,7 +365,8 @@ test-tox = [
     # Build-centric optional test-time dependencies.
 
     # Required by optional Poetry-specific integration tests.
-    "poetry",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "poetry; platform_python_implementation != 'GraalVM'",
 
     # ....................{ DOCUMENTATION                  }....................
     # Documentation-centric optional test-time dependencies.
@@ -377,7 +378,8 @@ test-tox = [
     "docutils >=0.22.0",
 
     # Required by optional Sphinx-specific integration tests.
-    "sphinx",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "sphinx; platform_python_implementation != 'GraalVM'",
 
     # ....................{ DOOR                           }....................
     # DOOR-specific optional test-time dependencies required to exercise all
@@ -393,7 +395,8 @@ test-tox = [
     #dependencies thereof officially ship Python 3.14 wheels.
     # Required by optional nuitka-specific integration tests if the current
     # platform is a Linux distribution.
-    "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0'",
+    # Skip on GraalPy (slow native compilation, not essential for beartype tests).
+    "nuitka >=1.2.6; sys_platform == 'linux' and python_version < '3.14.0' and platform_python_implementation != 'GraalVM'",
 
     # ....................{ CLI                            }....................
     # Required by optional Typer-specific integration tests.
@@ -500,7 +503,8 @@ test-tox = [
     """numpy; \
        python_version < '3.15.0' and \
        sys_platform != 'darwin' and \
-       platform_python_implementation != 'PyPy'\
+       platform_python_implementation != 'PyPy' and \
+       platform_python_implementation != 'GraalVM'\
     """,
 
     #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
@@ -510,7 +514,8 @@ test-tox = [
     """langchain; \
        python_version < '3.14.0' and \
        sys_platform != 'darwin' and \
-       platform_python_implementation != 'PyPy'\
+       platform_python_implementation != 'PyPy' and \
+       platform_python_implementation != 'GraalVM'\
     """,
 
     # ....................{ SCIENCE ~ data : ml : dataframe}....................
@@ -564,7 +569,8 @@ test-tox = [
     # Note that PyPy currently fails to support mypy. See also this official
     # documentation discussing this regrettable incompatibility:
     #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-    "mypy >=0.800; platform_python_implementation != 'PyPy'",
+    # GraalPy also has compatibility issues with mypy's C extensions.
+    "mypy >=0.800; platform_python_implementation != 'PyPy' and platform_python_implementation != 'GraalVM'",
 
     # Require a reasonably recent version of pyright known to behave well. Less
     # recent versions are significantly deficient with respect to error
@@ -600,6 +606,13 @@ test-tox = [
 # references this extra.
 test-tox-coverage = [
     "coverage >=5.5",
+]
+
+# GraalPy-specific minimal test dependencies. Absolute bare minimum to run tests.
+# Excludes all optional integration test dependencies to avoid CI timeouts.
+test-tox-graalpy = [
+    "pytest >=6.2.0",
+    'typing-extensions >=3.10.0.0',
 ]
 
 # Developer-specific test-time dependencies required to test this package via
