@@ -96,6 +96,11 @@ def callable_cached(func: CallableT) -> CallableT:
     significant performance penalties defeating the purpose of caching. This
     decorator now intentionally memoizes *only* positional parameters.
 
+    Note that functions with ``**kwargs`` in their signature are correctly
+    detected and will not be routed to the zero-arg fast path. However, such
+    functions will still raise a ``TypeError`` when called with keyword
+    arguments, as the decorator wrapper only accepts positional parameters.
+
     **The decorated callable must accept no variadic positional parameters.**
     While memoizing variadic parameters would of course be feasible, this
     decorator has yet to implement support for doing so.
@@ -176,15 +181,15 @@ def callable_cached(func: CallableT) -> CallableT:
 
     # Check if this callable accepts zero arguments by inspecting:
     # * co_argcount: Number of positional and keyword parameters (excluding
-    #   *args and **kwargs). For plain functions, 0 means no arguments. For
-    #   methods, 1 means only self/cls (which we treat as zero user arguments).
+    #   *args and **kwargs). For plain functions, 0 means no arguments.
     # * co_kwonlyargcount: Number of keyword-only parameters.
     # * CO_VARARGS (0x04): Flag indicating *args is present.
     # * CO_VARKEYWORDS (0x08): Flag indicating **kwargs is present.
     has_zero_args = (
         func_code.co_argcount == 0 and
         func_code.co_kwonlyargcount == 0 and
-        (func_code.co_flags & 0x04) == 0  # No *args
+        (func_code.co_flags & 0x04) == 0 and  # No *args
+        (func_code.co_flags & 0x08) == 0      # No **kwargs
     )
 
     # ....................{ ROUTE                          }....................
