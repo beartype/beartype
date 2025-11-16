@@ -10,12 +10,6 @@ performing general-purpose memoization of function and method calls).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: [IMPLEMENTED 2025-11-15] This optimization has been implemented. The
-#@callable_cached decorator now automatically detects zero-argument functions
-#and uses an optimized fast path (_callable_cached_zero_args) that provides
-#1.5-3x speedup by eliminating argument handling overhead.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 from beartype.typing import Dict
