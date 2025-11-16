@@ -272,15 +272,18 @@ def _callable_cached_general(func: CallableT) -> CallableT:
     General-purpose memoization for multi-argument callables.
 
     This is the **general path** implementation that handles callables with
-    arbitrary arguments by maintaining argument-keyed dictionaries for caching.
+    one or more positional arguments by maintaining argument-keyed dictionaries
+    for caching.
 
     This function handles:
 
     #. One or more positional arguments.
-    #. Keyword arguments.
-    #. Variadic arguments (``*args``, ``**kwargs``).
+    #. Variadic positional arguments (``*args``).
     #. Unhashable arguments (falls back to uncached execution).
     #. Exception caching.
+
+    This implementation does **not** handle keyword arguments or ``**kwargs``,
+    as the decorator wrapper only accepts positional parameters for performance.
 
     This implementation is the original :func:`callable_cached` logic extracted
     into a separate function to enable automatic fast-path routing for
