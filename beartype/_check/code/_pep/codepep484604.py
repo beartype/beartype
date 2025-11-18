@@ -33,7 +33,7 @@ from beartype._check.metadata.hint.hintsane import (
     ListHintSane,
     TupleHintSane,
 )
-from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_OR
+from beartype._data.code.datacodelen import LINE_RSTRIP_INDEX_OR
 from beartype._data.code.pep.datacodepep484604 import (
     CODE_PEP484604_UNION_CHILD_PEP_format,
     CODE_PEP484604_UNION_CHILD_NONPEP_format,

@@ -25,7 +25,7 @@ from beartype.typing import (
     Optional,
     Set,
 )
-from beartype._check.checkmagic import ARG_NAME_ARGS_NAME_KEYWORDABLE
+from beartype._data.code.datacodename import ARG_NAME_ARGS_NAME_KEYWORDABLE
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convmain import sanify_hint_root_func
 from beartype._check.metadata.hint.hintsane import (
@@ -37,7 +37,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._decor._nontype._wrap.wrapsnip import (
+from beartype._data.code.datacodefunc import (
     CODE_INIT_ARGS_LEN,
     # EXCEPTION_PREFIX_DEFAULT,
     ARG_KIND_TO_CODE_LOCALIZE,

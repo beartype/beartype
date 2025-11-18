@@ -776,7 +776,7 @@ def is_func_async_generator(func: object) -> TypeIs[Callable]:
 def is_func_sync_generator(func: object) -> TypeIs[Callable]:
     '''
     :data:`True` only if the passed object is an **synchronous generator
-    factory** (i.e., awaitable callable containing one or more ``yield``
+    factory** (i.e., iterable callable containing one or more ``yield``
     expressions implicitly creating and returning a generator object (i.e.,
     satisfying the :class:`collections.abc.Generator` protocol) by being
     declared via the ``def`` rather than ``async def`` syntax).

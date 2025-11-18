@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkmagic import VAR_NAME_RANDOM_INT
+from beartype._data.code.datacodename import VAR_NAME_RANDOM_INT
 from beartype._data.typing.datatyping import CallableStrFormat
 
 # ....................{ CODE ~ container : (reiterable|seq)}....................

@@ -21,16 +21,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkmagic import (
-    ARG_NAME_CHECK_META,
-    ARG_NAME_FUNC,
-)
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._decor._nontype._wrap.wrapsnip import (
+from beartype._data.code.datacodefunc import (
     CODE_RETURN_UNCHECKED_format,
     CODE_SIGNATURE,
+)
+from beartype._data.code.datacodename import (
+    ARG_NAME_CHECK_META,
+    ARG_NAME_FUNC,
 )
 from beartype._decor._nontype._wrap._wrapargs import (
     code_check_args as _code_check_args)
@@ -117,11 +117,13 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
         happen, a private non-human-readable exception is raised in this case.
     '''
 
+    # ....................{ ARGS                           }....................
     # Python code snippet type-checking all callable parameters if one or more
     # such parameters are annotated with unignorable type hints *OR* the empty
     # string otherwise.
     code_check_params = _code_check_args(decor_meta)
 
+    # ....................{ (RETURN|YIELD)                 }....................
     # Python code snippet type-checking the callable return if this return is
     # annotated with an unignorable type hint *OR* the empty string otherwise.
     code_check_return = _code_check_return(decor_meta)
@@ -140,12 +142,26 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
             return ''
         # Else, one or more callable parameters require type-checking.
 
+        #FIXME: Ho, ho! Fun stuff. Turns out we should be able to transparently
+        #support synchronous (but *NOT* asynchronous) generator mimicry here
+        #en-route to resolving #423 by:
+        #* Setting "decor_meta.func_wrapper_code_call_prefix" elsewhere in that
+        #  reinit() method to 'yield from '.
+        #
+        #Fascinatingly, that should then propagate *EVERYWHERE*.
+        #FIXME: Unit test this generalization extensively, including:
+        #* Tests of a synchronous generator function annotated by one or more
+        #  parameter hints but *NO* return hint.
+        #* Tests of a synchronous generator function annotated by *NO* parameter
+        #  hint but a return hint.
+
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
         code_check_return = CODE_RETURN_UNCHECKED_format(
             func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
     # Else, the callable return requires type-checking.
 
+    # ....................{ SCOPE                          }....................
     # Dictionary mapping from the name to value of each attribute referenced in
     # the signature of this wrapper function, localized merely for readability.
     func_scope = decor_meta.func_wrapper_scope
@@ -154,10 +170,10 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
     # "beartype"-specific hidden parameter whose default value is the
     # "BeartypeCheckMeta" dataclass instance encapsulating *ALL* metadata
     # required by each call to this wrapper function) to this wrapper function.
-    # Doing so dramatically simplifies calls the get_func_pith_violation()
+    # Doing so dramatically simplifies calls to the get_func_pith_violation()
     # getter inside the body of this wrapper function by enabling this metadata
-    # to be passed as a single unified parameter rather than individually as
-    # many distinct parameters.
+    # to be passed as a single unified parameter (rather than individually as
+    # multiple distinct parameters).
     func_scope[ARG_NAME_CHECK_META] = BeartypeCheckMeta.make_from_decor_meta(
         decor_meta)
 
@@ -169,6 +185,7 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
     # function is frequently called).
     func_scope[ARG_NAME_FUNC] = decor_meta.func_wrappee
 
+    # ....................{ SIGNATURE                      }....................
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
     # function is even required.
@@ -180,7 +197,9 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
         conf=decor_meta.conf,
     )
 
+    # ....................{ TYPE-CHECK                     }....................
     # Return Python code defining the wrapper type-checking this callable.
+    #
     # While there exist numerous alternatives to string formatting (e.g.,
     # appending to a list or bytearray before joining the items of that
     # iterable into a string), these alternatives are either:

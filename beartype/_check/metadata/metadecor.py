@@ -23,12 +23,12 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
     TypeStack,
 )
+from beartype._data.typing.datatypingport import Hint
 from beartype._util.cache.pool.utilcachepoolinstance import (
     acquire_instance,
     release_instance,
@@ -471,6 +471,7 @@ class BeartypeDecorMeta(object):
         self.conf = conf
         self.cls_stack = cls_stack
 
+        # ..................{ CLASSIFY ~ func : wrappee      }..................
         # Wrappee callable currently being decorated.
         self.func_wrappee = func
 
@@ -511,6 +512,7 @@ class BeartypeDecorMeta(object):
             exception_cls=BeartypeDecorWrappeeException,
         )
 
+        # ..................{ CLASSIFY ~ func : wrapper      }..................
         # Wrapper callable to be unwrapped in the event that the
         # decorated callable differs from the callable to be unwrapped.
         self.func_wrapper = wrapper
@@ -522,6 +524,7 @@ class BeartypeDecorMeta(object):
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
 
+        # ..................{ CLASSIFY ~ func : hints        }..................
         # Dictionary mapping from the name of each annotated parameter accepted
         # by the unwrapped callable to the type hint annotating that parameter
         # *AFTER* resolving all postponed type hints elsewhere.
@@ -581,6 +584,7 @@ class BeartypeDecorMeta(object):
         # dict.get() method bound to this dictionary.
         self.func_annotations_get = self.func_annotations.get
 
+        # ..................{ CLASSIFY ~ func : kind         }..................
         # If this callable is an asynchronous coroutine callable (i.e.,
         # callable declared with "async def" rather than merely "def" keywords
         # containing *NO* "yield" expressions)...
@@ -606,9 +610,8 @@ class BeartypeDecorMeta(object):
         #   keyword. Whereas asynchronous coroutine objects implicitly returned
         #   by all asynchronous coroutine callables return a single awaitable
         #   value, asynchronous generator objects implicitly returned by all
-        #   asynchronous generator callables *NEVER* return any awaitable
-        #   value; they instead yield one or more values to external "async
-        #   for" loops.
+        #   asynchronous generator callables *NEVER* return any awaitable value;
+        #   they instead yield one or more values to external "async for" loops.
         if func_wrappee_codeobj and is_func_coro(func_wrappee_codeobj):
             # Code snippet prefixing all calls to this callable.
             self.func_wrapper_code_call_prefix = 'await '
@@ -674,7 +677,8 @@ class BeartypeDecorMeta(object):
         '''
         Safely set the hint annotating the parameter or return with the passed
         name of the decorated callable to the passed hint in a portable manner
-        consistent with both :pep:`649` and Python >= 3.14.
+        consistent with Python >= 3.14 (and thus both :pep:`649` and :pep:`749`,
+        which fundamentally complicate hint mutation).
 
         Parameters
         ----------

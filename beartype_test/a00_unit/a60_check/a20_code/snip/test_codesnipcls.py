@@ -26,7 +26,7 @@ def test_pith_index_to_var_name() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
-    from beartype._check.checkmagic import VAR_NAME_PITH_PREFIX
+    from beartype._data.code.datacodename import VAR_NAME_PITH_PREFIX
     from pytest import raises
 
     # ....................{ PASS                           }....................

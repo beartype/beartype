@@ -549,7 +549,7 @@ def express_func_scope_type_ref(
     typically has yet to be declared) as a Python expression evaluating to this
     forward reference when accessed via the beartypistry singleton added as a
     new key-value pair of the passed dictionary, whose key is the string
-    :attr:`beartype._check.checkmagic.ARG_NAME_TYPISTRY` and whose value is the
+    :attr:`beartype._data.code.datacodename.ARG_NAME_TYPISTRY` and whose value is the
     beartypistry singleton.
 
     Parameters

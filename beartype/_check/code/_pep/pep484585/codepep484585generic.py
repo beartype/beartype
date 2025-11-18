@@ -20,7 +20,7 @@ from beartype._data.code.pep.datacodepep484585 import (
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
 )
-from beartype._data.code.datacodemagic import LINE_RSTRIP_INDEX_AND
+from beartype._data.code.datacodelen import LINE_RSTRIP_INDEX_AND
 from beartype._util.hint.pep.proposal.pep484585.generic.pep484585genget import (
     get_hint_pep484585_generic_type_isinstanceable)
 
