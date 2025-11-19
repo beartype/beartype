@@ -17,8 +17,8 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import (
+    CallableCodeObjectType,
     MethodBoundInstanceOrClassType,
-    # MethodDecoratorBuiltinTypes,
     MethodDecoratorClassOrStaticTypes,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -27,7 +27,6 @@ from beartype._cave._cavefast import (
 from beartype._data.typing.datatypingport import TypeIs
 from beartype._data.typing.datatyping import (
     Codeobjable,
-    # MethodDescriptorBuiltin,
     TypeException,
 )
 # from beartype._util.cache.utilcachecall import callable_cached
@@ -797,21 +796,29 @@ def is_func_sync_generator(func: object) -> TypeIs[Callable]:
         Stdlib function strongly inspiring this implementation.
     '''
 
-    # If this object is uncallable, immediately return False.
+    # If this object is neither...
     #
-    # Note this test is explicitly required to differentiate synchronous
-    # generator callables from synchronous generator objects (i.e., the objects
-    # they implicitly create and return). Whereas both asynchronous coroutine
-    # objects *AND* asynchronous generator objects do *NOT* contain code
-    # objects whose "CO_COROUTINE" and "CO_ASYNC_GENERATOR" flags are non-zero,
-    # synchronous generator objects do contain code objects whose
-    # "CO_GENERATOR" flag is non-zero. This implies synchronous generator
-    # callables to create and return synchronous generator objects that are
-    # themselves technically valid synchronous generator callables, which is
-    # absurd. We prohibit this ambiguity by differentiating the two here.
-    if not callable(func):
+    # This logic enables this tester to differentiate synchronous generator
+    # *FACTORIES* from synchronous generator *OBJECTS* (i.e., the objects those
+    # factories implicitly create and return). Whereas neither asynchronous
+    # coroutine objects *NOR* asynchronous generator objects have code objects
+    # whose "CO_COROUTINE" and "CO_ASYNC_GENERATOR" flags are enabled,
+    # synchronous generator objects do have code objects whose "CO_GENERATOR"
+    # flag is enabled. Ergo, synchronous generator factories create and return
+    # synchronous generator objects that are themselves technically valid
+    # synchronous generator factories... which, frankly, is absurd. Explicitly
+    # prohibit this ambiguity by differentiating the two here.
+    if not (
+        # A callable *NOR*...
+        callable(func) or
+        # A code object (which is uncallable by definition).
+        isinstance(func, CallableCodeObjectType)
+    ):
+        # Then immediately return false to prevent synchronous generator objects
+        # from being ambiguously conflated with synchronous generator factories.
         return False
-    # Else, this object is callable.
+    # Else, this object is either callable *OR* a code object. In either case,
+    # this object is *NOT* a synchronous generator object.
 
     # Code object underlying this pure-Python callable if any *OR* "None".
     func_codeobj = get_func_codeobj_or_none(func)

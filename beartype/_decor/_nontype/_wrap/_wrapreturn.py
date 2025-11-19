@@ -29,8 +29,8 @@ from beartype._data.func.datafuncarg import (
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.code.datacodefunc import (
-    CODE_RETURN_CHECK_PREFIX,
-    CODE_RETURN_CHECK_SUFFIX,
+    CODE_RETURN_CHECK_PREFIX_format,
+    CODE_RETURN_CHECK_SUFFIX_format,
 )
 from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
@@ -223,9 +223,13 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                 #        f'{CODE_RETURN_CHECK_SUFFIX}'
                 #    )
 
-                # Code snippet type-checking this return.
-                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
+                # Code snippets prefixing and suffixing the type-checking of
+                # this return.
+                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX_format(
                     func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
+                code_return_check_suffix = CODE_RETURN_CHECK_SUFFIX_format(
+                    func_return_prefix=(
+                        decor_meta.func_wrapper_code_return_prefix))
 
                 # Full code snippet to be returned, consisting of:
                 # * Calling the decorated callable and localize its return
@@ -235,7 +239,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                 func_wrapper_code = (
                     f'{code_return_check_prefix}'
                     f'{code_return_check}'
-                    f'{CODE_RETURN_CHECK_SUFFIX}'
+                    f'{code_return_check_suffix}'
                 )
             # Else, this hint is ignorable.
             # if not func_wrapper_code: print(f'Ignoring {decor_meta.func_name} return hint {repr(hint)}...')

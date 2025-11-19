@@ -31,7 +31,6 @@ async def test_decor_contextlib_asynccontextmanager() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from asyncio import run as asyncio_run
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import (
@@ -159,9 +158,11 @@ def test_decor_contextlib_contextmanager() -> None:
     # Assert that the ideal context manager when passed an invalid parameter
     # raises the expected exception.
     with raises(BeartypeCallHintParamViolation):
-        and_motions_of('No human hands with pious reverence reared,')
+        with and_motions_of('No human hands with pious reverence reared,'):
+            pass
 
     # Assert that the non-ideal context manager when passed an invalid parameter
     # raises the expected exception.
     with raises(BeartypeCallHintParamViolation):
-        may_modulate_with(b'There was a Poet whose untimely tomb')
+        with may_modulate_with(b'There was a Poet whose untimely tomb'):
+            pass

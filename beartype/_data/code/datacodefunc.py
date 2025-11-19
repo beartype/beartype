@@ -38,7 +38,7 @@ internally interpolates these format variables into this string as follows:
 * ``code_signature_prefix`` is replaced by:
 
   * For synchronous callables, the empty string.
-  * For asynchronous callables (e.g., asynchronous generators, coroutines),
+  * For asynchronous coroutines (but *not* asynchronous generators, curiously),
     the space-suffixed keyword ``"async "``.
 
 * ``code_signature_scope_args`` is replaced by a comma-delimited string listing
@@ -138,13 +138,25 @@ CODE_RETURN_CHECK_PREFIX = f'''
 Code snippet calling the decorated callable and localizing the value returned by
 that call.
 
-Note that this snippet intentionally terminates on a noop increasing the
-indentation level, enabling subsequent type-checking code to effectively ignore
-indentation level and thus uniformly operate on both:
+Note that:
 
-* Parameters localized via values of the
-  :data:`PARAM_KIND_TO_PEP_CODE_LOCALIZE` dictionary.
-* Return values localized via this snippet.
+* The :func:`beartype._decor._nontype._wrap.wrapmaingenerate_code` factory
+  function internally interpolates these format variables into this string as
+  follows:
+
+  * ``func_call_prefix`` is replaced by:
+
+    * For synchronous callables, the empty string.
+    * For asynchronous coroutine factories (but *not* asynchronous generator
+      factories, curiously), the space-suffixed keyword ``"await "``.
+
+* This snippet intentionally terminates on a noop increasing the indentation
+  level, enabling subsequent type-checking code to effectively ignore
+  indentation level and thus uniformly operate on both:
+
+  * Parameters localized via values of the
+    :data:`.PARAM_KIND_TO_PEP_CODE_LOCALIZE` dictionary.
+  * Return values localized via this snippet.
 
 See Also
 --------
@@ -155,25 +167,42 @@ https://stackoverflow.com/a/18124151/2809027
 
 
 CODE_RETURN_CHECK_SUFFIX = f'''
-    return {VAR_NAME_PITH_ROOT}'''
+    {{func_return_prefix}}{VAR_NAME_PITH_ROOT}'''
 '''
 Code snippet returning from the wrapper function the successfully type-checked
 value returned from the decorated callable.
+
+Note that the :func:`beartype._decor._nontype._wrap.wrapmaingenerate_code`
+factory function internally interpolates these format variables into this string
+as follows:
+
+* ``func_return_prefix`` is replaced by:
+
+  * For synchronous generator factories (but *not* asynchronous generator
+    factories, curiously), the space-suffixed keyword ``"yield from "``.
+  * For all other callables, the space-suffixed keyword ``"return "``.
 '''
 
 # ....................{ CODE ~ return ~ uncheck            }....................
 CODE_RETURN_UNCHECKED = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    return {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
+    {{func_return_prefix}}{{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
 '''
 Code snippet calling the decorated (either synchronous or non-synchronous)
 non-generator callable *without* type-checking the value returned by that call
 (if any).
+
+See Also
+--------
+:data:`.CODE_RETURN_CHECK_PREFIX`
+:data:`.CODE_RETURN_CHECK_SUFFIX`
+    Further details on format variables.
 '''
 
 # ..................{ FORMATTERS                             }..................
 # str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
 # This is an absurd micro-optimization. *fight me, github developer community*
-CODE_RETURN_UNCHECKED_format: Callable = (
-    CODE_RETURN_UNCHECKED.format)
+CODE_RETURN_CHECK_PREFIX_format: Callable = CODE_RETURN_CHECK_PREFIX.format
+CODE_RETURN_CHECK_SUFFIX_format: Callable = CODE_RETURN_CHECK_SUFFIX.format
+CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format

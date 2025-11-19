@@ -40,6 +40,7 @@ from beartype._util.func.utilfunccodeobj import (
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
+    is_func_sync_generator,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.proposal.pep649 import (
@@ -212,6 +213,14 @@ class BeartypeDecorMeta(object):
           nor asynchronous generator), the empty string.
         * If the decorated callable is asynchronous (i.e., either a coroutine
           nor asynchronous generator), the ``"await "`` keyword.
+    func_wrapper_code_return_prefix : str
+        Code snippet prefixing the value returned by calling the decorated
+        callable in the body of the wrapper function wrapping that callable with
+        type checking. This string is guaranteed to be either:
+
+        * If the decorated callable is a synchronous generator,
+          ``"yield from "``.
+        * Else, ``"return "``.
     func_wrapper_code_signature_prefix : str
         Code snippet prefixing the signature declaring the wrapper function
         wrapping the decorated callable with type checking. This string is
@@ -249,6 +258,7 @@ class BeartypeDecorMeta(object):
         'func_wrappee_wrappee_codeobj',
         'func_wrapper',
         'func_wrapper_code_call_prefix',
+        'func_wrapper_code_return_prefix',
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_scope',
@@ -270,6 +280,7 @@ class BeartypeDecorMeta(object):
         func_wrappee_wrappee_codeobj: CallableCodeObjectType
         func_wrapper: Callable
         func_wrapper_code_call_prefix: str
+        func_wrapper_code_return_prefix: str
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_scope: LexicalScope
@@ -340,6 +351,7 @@ class BeartypeDecorMeta(object):
         self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
         self.func_wrapper) = (  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
+        self.func_wrapper_code_return_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_name) = None  # type: ignore[assignment]
 
@@ -466,21 +478,14 @@ class BeartypeDecorMeta(object):
         # Else, the caller either passed no class stack *OR* an empty class
         # stack. In either case, ignore this parameter.
 
-        # ..................{ CLASSIFY                       }..................
+        # ..................{ VARS                           }..................
         # Classify all passed parameters.
         self.conf = conf
         self.cls_stack = cls_stack
 
-        # ..................{ CLASSIFY ~ func : wrappee      }..................
+        # ..................{ VARS ~ func : wrappee          }..................
         # Wrappee callable currently being decorated.
         self.func_wrappee = func
-
-        # Possibly unwrapped callable unwrapped from this wrappee callable.
-        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
-            func=func, wrapper=wrapper)
-        # print(f'func_wrappee: {self.func_wrappee}')
-        # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
-        # print(f'{dir(self.func_wrappee_wrappee)}')
 
         # True only if this wrappee callable is nested. As a minor efficiency
         # gain, we can avoid the slightly expensive call to is_func_nested() by
@@ -495,16 +500,23 @@ class BeartypeDecorMeta(object):
         self.func_wrappee_scope_forward = None
         self.func_wrappee_scope_nested_names = None
 
-        # Possibly wrapped callable wrappee code object (i.e., code object
-        # underlying the callable currently being type-checked by the
-        # @beartype.beartype decorator) if this wrappee is pure-Python *OR*
-        # "None" otherwise.
+        # Possibly wrapped wrappee code object (i.e., code object underlying the
+        # callable currently being type-checked by the @beartype decorator) if
+        # this wrappee is pure-Python *OR* "None" otherwise.
         #
-        # Note that only the possibly unwrapped callable (i.e.,
-        # "self.func_wrappee_wrappee") need actually be pure-Python. Whereas the
-        # latter is required to have a code object, the "self.func_wrappee" is
-        # permitted to be C-based and thus *NOT* have a code object.
+        # Note that only the possibly unwrapped wrappee wrappee defined below
+        # (i.e., "func_wrappee_wrappee") *MUST* be pure-Python and thus *MUST*
+        # have a code object. This higher-level wrappee is permitted to be
+        # C-based and thus need *NOT* have a code object.
         func_wrappee_codeobj = get_func_codeobj_or_none(func)
+
+        # ..................{ VARS ~ func : wrappee wrappee  }..................
+        # Possibly unwrapped callable unwrapped from this wrappee callable.
+        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
+            func=func, wrapper=wrapper)
+        # print(f'func_wrappee: {self.func_wrappee}')
+        # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
+        # print(f'{dir(self.func_wrappee_wrappee)}')
 
         # Possibly unwrapped callable code object.
         self.func_wrappee_wrappee_codeobj = get_func_codeobj(
@@ -512,7 +524,7 @@ class BeartypeDecorMeta(object):
             exception_cls=BeartypeDecorWrappeeException,
         )
 
-        # ..................{ CLASSIFY ~ func : wrapper      }..................
+        # ..................{ VARS ~ func : wrapper          }..................
         # Wrapper callable to be unwrapped in the event that the
         # decorated callable differs from the callable to be unwrapped.
         self.func_wrapper = wrapper
@@ -524,7 +536,7 @@ class BeartypeDecorMeta(object):
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
 
-        # ..................{ CLASSIFY ~ func : hints        }..................
+        # ..................{ VARS ~ func : hints            }..................
         # Dictionary mapping from the name of each annotated parameter accepted
         # by the unwrapped callable to the type hint annotating that parameter
         # *AFTER* resolving all postponed type hints elsewhere.
@@ -584,47 +596,120 @@ class BeartypeDecorMeta(object):
         # dict.get() method bound to this dictionary.
         self.func_annotations_get = self.func_annotations.get
 
-        # ..................{ CLASSIFY ~ func : kind         }..................
-        # If this callable is an asynchronous coroutine callable (i.e.,
-        # callable declared with "async def" rather than merely "def" keywords
-        # containing *NO* "yield" expressions)...
-        #
-        # Note that:
-        # * The code object of the higher-level wrapper rather than lower-level
-        #   wrappee is passed. Why? Because @beartype directly decorates *ONLY*
-        #   the former, whose asynchronicity has *NO* relation to that of the
-        #   latter. Notably, it is both feasible and (relatively) commonplace
-        #   for third-party decorators to enable:
-        #   * Synchronous callables to be called asynchronously by wrapping
-        #     synchronous callables with asynchronous closures.
-        #   * Asynchronous callables to be called synchronously by wrapping
-        #     asynchronous callables with synchronous closures. Indeed, our
-        #     top-level "conftest.py" pytest plugin does exactly this --
-        #     enabling asynchronous tests to be safely called by pytest's
-        #     currently synchronous framework.
-        # * The higher-level is_func_async() tester is intentionally *NOT*
-        #   called here, as doing so would also implicitly prefix all calls to
-        #   asynchronous generator callables (i.e., callables also declared
-        #   with the "async def" rather than merely "def" keywords but
-        #   containing one or more "yield" expressions) with the "await"
-        #   keyword. Whereas asynchronous coroutine objects implicitly returned
-        #   by all asynchronous coroutine callables return a single awaitable
-        #   value, asynchronous generator objects implicitly returned by all
-        #   asynchronous generator callables *NEVER* return any awaitable value;
-        #   they instead yield one or more values to external "async for" loops.
-        if func_wrappee_codeobj and is_func_coro(func_wrappee_codeobj):
-            # Code snippet prefixing all calls to this callable.
-            self.func_wrapper_code_call_prefix = 'await '
+        # ..................{ VARS ~ func : kind             }..................
+        # Default the return prefix to the "return" keyword, which suffices to
+        # return the type-checked value returned by this wrappee for all kinds
+        # of wrappees *EXCEPT* synchronous generator callables. (See below.)
+        self.func_wrapper_code_return_prefix = 'return '
 
-            # Code snippet prefixing the declaration of the wrapper function
-            # wrapping this callable with type-checking.
-            self.func_wrapper_code_signature_prefix = 'async '
-        # Else, this callable is synchronous (i.e., callable declared with
-        # "def" rather than "async def"). In this case, reduce these code
-        # snippets to the empty string.
-        else:
-            self.func_wrapper_code_call_prefix = ''
-            self.func_wrapper_code_signature_prefix = ''
+        # Default all remaining code snippets to the empty string.
+        self.func_wrapper_code_call_prefix = ''
+        self.func_wrapper_code_signature_prefix = ''
+
+        # If the wrappee callable currently being decorated is pure-Python...
+        if func_wrappee_codeobj:
+            # print(f'Decorated callable {repr(func)}...')
+            # print(f'synchronous generator factory? {is_func_sync_generator(func_wrappee_codeobj)}')
+
+            # If this wrappee is an asynchronous coroutine factory (i.e.,
+            # callable declared with "async def" rather than merely "def"
+            # keywords and containing *NO* "yield" expressions)...
+            #
+            # Note that:
+            # * The code object of the higher-level wrapper rather than
+            #   lower-level wrappee is passed. Why? Because @beartype directly
+            #   decorates *ONLY* the former, whose asynchronicity has *NO*
+            #   relation to that of the latter. Notably, it is both feasible and
+            #   (relatively) commonplace for third-party decorators to enable:
+            #   * Synchronous callables to be called asynchronously by wrapping
+            #     synchronous callables with asynchronous closures.
+            #   * Asynchronous callables to be called synchronously by wrapping
+            #     asynchronous callables with synchronous closures. Indeed, our
+            #     top-level "conftest.py" pytest plugin does exactly this --
+            #     enabling asynchronous tests to be safely called by pytest's
+            #     currently synchronous framework.
+            # * The higher-level is_func_async() tester is intentionally *NOT*
+            #   called here, as doing so would also implicitly prefix all calls
+            #   to asynchronous generator factories (i.e., callables also
+            #   declared with the "async def" rather than merely "def" keywords
+            #   but containing one or more "yield" expressions) with the "await"
+            #   keyword. Whereas asynchronous coroutine objects implicitly
+            #   returned by all asynchronous coroutine callables return a single
+            #   awaitable value, asynchronous generator objects implicitly
+            #   returned by all asynchronous generator callables *NEVER* return
+            #   any awaitable value; they instead yield one or more values to
+            #   external "async for" loops.
+            if is_func_coro(func_wrappee_codeobj):
+                # Code snippet prefixing all calls to this coroutine factory.
+                self.func_wrapper_code_call_prefix = 'await '
+
+                # Code snippet prefixing the declaration of the wrapper function
+                # wrapping this coroutine factory with type-checking.
+                self.func_wrapper_code_signature_prefix = 'async '
+            # Else, this wrappee is *NOT* an asynchronous coroutine factory.
+            #
+            # If this wrappee is a synchronous generator factory (i.e.,
+            # callable declared with merely the "def" rather than "async def"
+            # keywords and containing one or more "yield" expressions)...
+            elif is_func_sync_generator(func_wrappee_codeobj):
+                # print(f'Decorated synchronous generator factory {repr(func)} detected!')
+
+                # Code snippet yielding from (i.e., deferring to) the
+                # synchronous generator returned by calling this synchronous
+                # generator factory.
+                #
+                # Note that:
+                # * This prefix is required *ONLY* to force the active Python
+                #   interpreter to implicitly enable the "inspect.CO_GENERATOR"
+                #   bit flag in the "func.__code__.co_flags" bit field of the
+                #   high-level wrapper subsequently generated by the @beartype
+                #   decorator wrapping this lower-level wrappee with
+                #   type-checking when that wrapper is defined. Why? Because the
+                #   standard inspect.isgeneratorfunction() tester conflates a
+                #   fictitious one-to-one relation between synchronous generator
+                #   factories and pure-Python callables enabling this bit flag.
+                #   If @beartype neglected to add "yield from" expressions to
+                #   the code generated for type-checking wrappers wrapping
+                #   synchronous generator factories, then:
+                #   * inspect.isgeneratorfunction() would declare those wrappers
+                #     to *NOT* be synchronous generator factories despite those
+                #     wrappers literally being such factories.
+                #   * Third-party packages (e.g., Gradio) improperly calling
+                #     inspect.isgeneratorfunction() to detect synchronous
+                #     generator factories would misidentify those wrappers to
+                #     *NOT* be synchronous generator factories.
+                # * Technically, high-level synchronous generator factories that
+                #   defer to lower-level synchronous generator factories do
+                #   *NOT* need to perform "yield from" expressions to be usable
+                #   as synchronous generator factories. Ergo, the standard
+                #   inspect.isgeneratorfunction() tester blatantly returns false
+                #   negatives in common use cases. Previously, @beartype was
+                #   such a use case. No one should call that tester. Of course,
+                #   everyone calls that tester.
+                # * This prefix serves *NO* other practical or useful purpose.
+                #   Indeed, @beartype previously generated high-level wrappers
+                #   for synchronous generator factories simply by calling those
+                #   factories and returning the synchronous generators returned
+                #   by those calls. That worked for a decade... until
+                #   third-party packages outside our control began
+                #   inappropriately calling inspect.isgeneratorfunction().
+                #
+                # See also this closed issue:
+                #     https://github.com/beartype/beartype/issues/423
+
+                #FIXME: Actually, this has an additional side benefit. Thanks to
+                #this, we can now type-check the value returned by a generator
+                #as well against the child hint "{hint_return}" if the return
+                #hint annotating this generator factory is of the expanded form
+                #"Generator[{hint_yield}, {hint_send}, {hint_return}]". Of
+                #course, basically *NOBODY* ever returns *ANYTHING* from a
+                #generator. So, it's unclear how many practical value this has.
+                #Still, it's feasible now. And that's half the battle.
+                self.func_wrapper_code_return_prefix = 'yield from '
+            # Else, this wrappee is *NOT* a synchronous generator factory. In
+            # this case, preserve these code snippets as the empty string.
+        # Else, this wrappee is *NOT* pure-Python. In this case, preserve these
+        # code snippets as the empty string.
 
     # ..................{ DUNDERS                            }..................
     def __repr__(self) -> str:

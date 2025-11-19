@@ -142,23 +142,12 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
             return ''
         # Else, one or more callable parameters require type-checking.
 
-        #FIXME: Ho, ho! Fun stuff. Turns out we should be able to transparently
-        #support synchronous (but *NOT* asynchronous) generator mimicry here
-        #en-route to resolving #423 by:
-        #* Setting "decor_meta.func_wrapper_code_call_prefix" elsewhere in that
-        #  reinit() method to 'yield from '.
-        #
-        #Fascinatingly, that should then propagate *EVERYWHERE*.
-        #FIXME: Unit test this generalization extensively, including:
-        #* Tests of a synchronous generator function annotated by one or more
-        #  parameter hints but *NO* return hint.
-        #* Tests of a synchronous generator function annotated by *NO* parameter
-        #  hint but a return hint.
-
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
         code_check_return = CODE_RETURN_UNCHECKED_format(
-            func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
+            func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
+            func_return_prefix=decor_meta.func_wrapper_code_return_prefix,
+        )
     # Else, the callable return requires type-checking.
 
     # ....................{ SCOPE                          }....................

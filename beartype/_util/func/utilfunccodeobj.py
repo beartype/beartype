@@ -5,8 +5,8 @@
 
 '''
 Project-wide **callable code object utilities** (i.e., callables introspecting
-**code objects** (i.e., instances of the :class:`CodeType` type) underlying all
-pure-Python callables).
+**code objects** (i.e., instances of the :class:`.CallableCodeObjectType` type)
+underlying all pure-Python callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,18 +17,17 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._cave._cavefast import (
+    CallableCodeObjectType,
+    CallableFrameType,
+    FunctionType,
+    GeneratorCType,
+)
 from beartype._data.typing.datatyping import (
     Codeobjable,
     TypeException,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
-from types import (
-    CodeType,
-    FrameType,
-    FunctionType,
-    GeneratorType,
-    # MethodType,
-)
 
 # ....................{ GETTERS                            }....................
 def get_func_codeobj(
@@ -39,12 +38,12 @@ def get_func_codeobj(
     is_unwrap: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
     exception_prefix: str = '',
-) -> CodeType:
+) -> CallableCodeObjectType:
     '''
-    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed **codeobjable** (i.e., pure-Python object directly associated
-    with a code object) if this object is codeobjable *or* raise an exception
-    otherwise (e.g., if this object is *not* codeobjable).
+    **Code object** (i.e., instance of the :class:`.CallableCodeObjectType`
+    type) underlying the passed **codeobjable** (i.e., pure-Python object
+    directly associated with a code object) if this object is codeobjable *or*
+    raise an exception otherwise (e.g., if this object is *not* codeobjable).
 
     For convenience, this getter also accepts a code object, in which case that
     code object is simply returned as is.
@@ -101,7 +100,7 @@ def get_func_codeobj(
 
     Returns
     -------
-    CodeType
+    CallableCodeObjectType
         Code object underlying this codeobjable.
 
     Raises
@@ -140,12 +139,12 @@ def get_func_codeobj_or_none(
 
     # Optional parameters.
     is_unwrap: bool = False,
-) -> Optional[CodeType]:
+) -> Optional[CallableCodeObjectType]:
     '''
-    **Code object** (i.e., instance of the :class:`CodeType` type) underlying
-    the passed **codeobjable** (i.e., pure-Python object directly associated
-    with a code object) if this object is codeobjable *or* :data:`None`
-    otherwise (e.g., if this object is *not* codeobjable).
+    **Code object** (i.e., instance of the :class:`.CallableCodeObjectType`
+    type) underlying the passed **codeobjable** (i.e., pure-Python object
+    directly associated with a code object) if this object is codeobjable *or*
+    :data:`None` otherwise (e.g., if this object is *not* codeobjable).
 
     Specifically, if the passed object is a:
 
@@ -185,7 +184,7 @@ def get_func_codeobj_or_none(
 
     Returns
     -------
-    Optional[CodeType]
+    Optional[CallableCodeObjectType]
         Either:
 
         * If this codeobjable is pure-Python, the code object underlying this
@@ -215,7 +214,7 @@ def get_func_codeobj_or_none(
     # exceptions) and is thus considerably less safe.
 
     # If this object is already a code object, return this object as is.
-    if isinstance(func, CodeType):
+    if isinstance(func, CallableCodeObjectType):
         return func
     # Else, this object is *NOT* already a code object.
     #
@@ -234,7 +233,7 @@ def get_func_codeobj_or_none(
     # * This test is intentionally a new "if" conditional rather than an
     #   extension of the prior "elif" conditional. Doing so trivially unwraps
     #   the pure-Python function encapsulated by a bound method descriptor.
-    # * This test intentionally leverages the standard "types.FunctionType"
+    # * This test intentionally leverages the standard "FunctionType"
     #   class rather than our equivalent "beartype.cave.FunctionType" class to
     #   avoid circular import issues.
     if isinstance(func, FunctionType):
@@ -247,12 +246,12 @@ def get_func_codeobj_or_none(
     #
     # If this object is a pure-Python generator, return this generator's code
     # object.
-    elif isinstance(func, GeneratorType):
+    elif isinstance(func, GeneratorCType):
         func_codeobj = func.gi_code
     # Else, this object is *NOT* a pure-Python generator.
     #
     # If this object is a call stack frame, return this frame's code object.
-    elif isinstance(func, FrameType):
+    elif isinstance(func, CallableFrameType):
         #FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for frames
         #encapsulating pure-Python callables. For frames encapsulating C-based
         #callables, this is likely to fail with an "AttributeError" exception.
