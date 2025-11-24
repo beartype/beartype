@@ -89,7 +89,7 @@ jobs:
     steps:
       # ..................{ SETUP                            }..................
       - name: "Checking out repository..."
-        uses: 'actions/checkout@v5'
+        uses: 'actions/checkout@v6'
       - name: "Preparing GitHub Pages..."
         uses: 'actions/configure-pages@v5'
       - name: "Installing Python..."
