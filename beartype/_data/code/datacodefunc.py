@@ -21,8 +21,8 @@ from beartype._data.code.datacodename import (
     VAR_NAME_PITH_ROOT,
 )
 from beartype._data.code.datacodeindent import CODE_INDENT_1
+from beartype._data.typing.datatyping import CallableStrFormat
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from collections.abc import Callable
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
@@ -203,6 +203,9 @@ See Also
 # ..................{ FORMATTERS                             }..................
 # str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
 # This is an absurd micro-optimization. *fight me, github developer community*
-CODE_RETURN_CHECK_PREFIX_format: Callable = CODE_RETURN_CHECK_PREFIX.format
-CODE_RETURN_CHECK_SUFFIX_format: Callable = CODE_RETURN_CHECK_SUFFIX.format
-CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format
+CODE_RETURN_CHECK_PREFIX_format: CallableStrFormat = (
+    CODE_RETURN_CHECK_PREFIX.format)
+CODE_RETURN_CHECK_SUFFIX_format: CallableStrFormat = (
+    CODE_RETURN_CHECK_SUFFIX.format)
+CODE_RETURN_UNCHECKED_format: CallableStrFormat = (
+    CODE_RETURN_UNCHECKED.format)

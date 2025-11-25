@@ -214,12 +214,17 @@ class BeartypeDecorMeta(object):
         * If the decorated callable is asynchronous (i.e., either a coroutine
           nor asynchronous generator), the ``"await "`` keyword.
     func_wrapper_code_return_prefix : str
-        Code snippet prefixing the value returned by calling the decorated
-        callable in the body of the wrapper function wrapping that callable with
-        type checking. This string is guaranteed to be either:
+        Code snippet prefixing the value to be returned or yielded to the caller
+        after calling the decorated callable in the body of the wrapper function
+        wrapping that callable with type checking. This string is guaranteed to
+        be either:
 
-        * If the decorated callable is a synchronous generator,
-          ``"yield from "``.
+        * If the decorated callable is a :pep:`380`-compliant synchronous
+          generator factory, ``"yield from "``.
+        * If the decorated callable is a :pep:`525`-compliant asynchronous
+          generator factory, a pure-Python snippet safely implementing the
+          hypothetical equivalent of an ``"async yield from "`` expression (if
+          that expression existed, which it doesn't).
         * Else, ``"return "``.
     func_wrapper_code_signature_prefix : str
         Code snippet prefixing the signature declaring the wrapper function
@@ -599,7 +604,7 @@ class BeartypeDecorMeta(object):
         # ..................{ VARS ~ func : kind             }..................
         # Default the return prefix to the "return" keyword, which suffices to
         # return the type-checked value returned by this wrappee for all kinds
-        # of wrappees *EXCEPT* synchronous generator callables. (See below.)
+        # of wrappees *EXCEPT* generator factories. (See below.)
         self.func_wrapper_code_return_prefix = 'return '
 
         # Default all remaining code snippets to the empty string.
@@ -655,8 +660,8 @@ class BeartypeDecorMeta(object):
                 # print(f'Decorated synchronous generator factory {repr(func)} detected!')
 
                 # Code snippet yielding from (i.e., deferring to) the
-                # synchronous generator returned by calling this synchronous
-                # generator factory.
+                # synchronous generator returned by calling this PEP
+                # 380-compliant synchronous generator factory.
                 #
                 # Note that:
                 # * This prefix is required *ONLY* to force the active Python
