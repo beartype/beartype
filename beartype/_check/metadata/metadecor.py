@@ -23,6 +23,7 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
+from beartype._data.code.pep.datacodepep525 import CODE_PEP525_RETURN_PREFIX
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
@@ -41,6 +42,7 @@ from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
     is_func_sync_generator,
+    is_func_async_generator,
 )
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from beartype._util.hint.pep.proposal.pep649 import (
@@ -608,8 +610,8 @@ class BeartypeDecorMeta(object):
         self.func_wrapper_code_return_prefix = 'return '
 
         # Default all remaining code snippets to the empty string.
-        self.func_wrapper_code_call_prefix = ''
         self.func_wrapper_code_signature_prefix = ''
+        self.func_wrapper_code_call_prefix = ''
 
         # If the wrappee callable currently being decorated is pure-Python...
         if func_wrappee_codeobj:
@@ -645,12 +647,12 @@ class BeartypeDecorMeta(object):
             #   any awaitable value; they instead yield one or more values to
             #   external "async for" loops.
             if is_func_coro(func_wrappee_codeobj):
-                # Code snippet prefixing all calls to this coroutine factory.
-                self.func_wrapper_code_call_prefix = 'await '
-
                 # Code snippet prefixing the declaration of the wrapper function
                 # wrapping this coroutine factory with type-checking.
                 self.func_wrapper_code_signature_prefix = 'async '
+
+                # Code snippet prefixing all calls to this coroutine factory.
+                self.func_wrapper_code_call_prefix = 'await '
             # Else, this wrappee is *NOT* an asynchronous coroutine factory.
             #
             # If this wrappee is a synchronous generator factory (i.e.,
@@ -710,9 +712,61 @@ class BeartypeDecorMeta(object):
                 #course, basically *NOBODY* ever returns *ANYTHING* from a
                 #generator. So, it's unclear how many practical value this has.
                 #Still, it's feasible now. And that's half the battle.
+                #FIXME: Actually, we can do *FAR* better than that. By employing
+                #a similar technique as the solution below for asynchronous
+                #generators, we can now efficiently (and, more importantly,
+                #safely) type-check both synchronous and asynchronous generator
+                #*YIELDS* in O(1) time. How? Just:
+                #* If this callable is decorated by a return hint (which is
+                #  trivially detectable here) *AND* the yield-specific child
+                #  hint subscripting that return hint is unignorable (e.g., is
+                #  neither "object" nor "typing.Any"), then we should instead
+                #  assign "self.func_wrapper_code_return_prefix" here to a
+                #  full-blown code snippet implementing our best approximation
+                #  of "yield from" in pure-Python augmented with type-checking.
+                #* Else, preserve this assignment of
+                #  "self.func_wrapper_code_return_prefix" to "yield from", which
+                #  is both implemented in C *AND* is the official
+                #  implementation. So, it's guaranteed to be the fastest *AND*
+                #  safest means of deferring between synchronous generators.
+
                 self.func_wrapper_code_return_prefix = 'yield from '
-            # Else, this wrappee is *NOT* a synchronous generator factory. In
-            # this case, preserve these code snippets as the empty string.
+            # Else, this wrappee is *NOT* a synchronous generator factory.
+            #
+            # If this wrappee is a asynchronous generator factory (i.e.,
+            # callable declared with "async def" keywords and containing one or
+            # more "yield" expressions)...
+            elif is_func_async_generator(func_wrappee_codeobj):
+                # Code snippet prefixing the declaration of the wrapper function
+                # wrapping this coroutine factory with type-checking.
+                self.func_wrapper_code_signature_prefix = 'async '
+
+                # Code snippet yielding from (i.e., deferring to) the
+                # asynchronous generator returned by calling this PEP
+                # 525-compliant asynchronous generator factory.
+                #
+                # Note that:
+                # * All of the caveats documented above for the case in which
+                #   this wrappee is a synchronous generator factory also apply
+                #   here, substituting:
+                #   * "inspect.CO_GENERATOR" with "CO_ASYNC_GENERATOR".
+                #   * inspect.isgeneratorfunction() with
+                #     inspect.isasyncgenfunction().
+                # * Additional caveats also apply. Currently, there exists *NO*
+                #   C-based "async yield from" expression for asynchronous
+                #   generators equivalent to the PEP 380-compliant C-based
+                #   "yield from" expression for synchronous generators. This
+                #   pure-Python code snippet is our best approximation of a
+                #   pure-Python "async yield from" expression. See the docstring
+                #   and commentary surrounding the definition of this snippet
+                #   for gruesome details that will exhaust your will to code.
+                #
+                # See also this closed issue:
+                #     https://github.com/beartype/beartype/issues/592
+                self.func_wrapper_code_return_prefix = CODE_PEP525_RETURN_PREFIX
+            # Else, this wrappee is *NOT* an asynchronous generator factory.
+            #
+            # In this case, preserve these code snippets as the empty string.
         # Else, this wrappee is *NOT* pure-Python. In this case, preserve these
         # code snippets as the empty string.
 
