@@ -155,9 +155,14 @@ CODE_PEP525_RETURN_PREFIX = f'''
                 # Propagate this exception to the inner generator *AND*, if the
                 # inner generator also catches this exception and then resumes
                 # operation by yielding a value, capture this value.
+                #
+                # Note that *ONLY* the anext() method is efficiently
+                # accessible as a builtin. For unknown reasons, the athrow()
+                # method is *NOT* and must instead be looked up explicitly.
                 try:
-                    __beartype_agen_yield_pith = await athrow(
-                        __beartype_agen_exception)
+                    __beartype_agen_yield_pith = (
+                        await {VAR_NAME_PITH_ROOT}.athrow(
+                            __beartype_agen_exception))
                 # If doing so raised a PEP 525-compliant "StopAsyncIteration"
                 # exception, the inner generator caught this exception and then
                 # finished immediately without yielding anything further. This
@@ -181,9 +186,14 @@ CODE_PEP525_RETURN_PREFIX = f'''
                     # Else, the caller sent a value into this outer generator.
                     # Propagate this value to the inner generator *AND* capture
                     # the value yielded in response. This is an edge case.
+                    #
+                    # Note that *ONLY* the anext() method is efficiently
+                    # accessible as a builtin. For unknown reasons, the asend()
+                    # method is *NOT* and must instead be looked up explicitly.
                     else:
-                        __beartype_agen_yield_pith = await asend(
-                            __beartype_agen_send_pith)
+                        __beartype_agen_yield_pith = (
+                            await {VAR_NAME_PITH_ROOT}.asend(
+                                __beartype_agen_send_pith))
                 # If doing so raised a PEP 525-compliant "StopAsyncIteration"
                 # exception, the inner generator finished immediately without
                 # yielding anything further. This is a valid use case. Squelch
