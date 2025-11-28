@@ -76,7 +76,7 @@ permissions:
 # ....................{ MAIN                               }....................
 jobs:
   # ...................{ TESTS                              }...................
-  # Job iteratively exercising our test suite against all Python interpreters
+  # Job iteratively validating our test suite against all Python interpreters
   # supported by this package (and also measuring the coverage of that suite).
   tests:
     # ..................{ MATRIX                             }..................
@@ -379,7 +379,9 @@ jobs:
               export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
               echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
           fi
-          # Dismantled, this is:
+          # Note that the "${TOXENV}" environment variable defined above
+          # confines this "tox" run to the "tox" environment defined by the
+          # current "tox-env" strategy matrix include. Dismantled, this is:
           # * "--skip-missing-interpreters=false" disables the corresponding
           #   "skip_missing_interpreters = true" setting globally enabled by
           #   our top-level "tox.ini" configuration, forcing CI failures for
@@ -387,7 +389,26 @@ jobs:
           #       https://github.com/tox-dev/tox/issues/903
           python3 -m tox --skip-missing-interpreters=false
 
+  # ...................{ TESTS                              }...................
+  # Job iteratively validating our test suite against all Python interpreters
+  # supported by this package (and also measuring the coverage of that suite).
+  coverage:
+    name: "Publish test coverage to Codecov"
+    runs-on: ubuntu-latest
+
+    steps:
       # ..................{ COVERAGE                         }..................
+      # Run the "tox"-specific "finally" environment defined by our top-level
+      # "tox.ini" configuration, which (in order):
+      # * Combines *ALL* Coverage.py-specific ".coverage.*" files emitted by
+      #   test-specific "tox" environments previously run by the "tests" job
+      #   above into a single ".coverage" file.
+      # * Converts this ".coverage" file (which is *NOT* usable by Codecov) into
+      #   an equivalent ".coverage.xml" file (which *IS* usable by Codecov).
+      - name: 'Collecting test coverage...'
+        run: |
+          python3 -m tox finally
+
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v5'
         with:
