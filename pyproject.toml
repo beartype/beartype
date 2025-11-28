@@ -195,6 +195,11 @@ dependencies = []
 #     https://stackoverflow.com/a/72524073/2809027
 [project.optional-dependencies]
 
+#FIXME: Most of these "extras" should be transformed into PEP 735-compliant
+#"[dependency-groups]" instead. Since the current approach "just works," we
+#can't really be bothered to do the right thing at the moment. See also:
+#    https://peps.python.org/pep-0735
+
 # GitHub Pages (GHP)-specific documentation-time package dependencies required
 # to automatically build documentation for this project from GitHub's homegrown
 # hosting service.

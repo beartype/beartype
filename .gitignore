@@ -116,10 +116,12 @@ __pycache__/
 /celerybeat-schedule
 /celerybeat.pid
 
-# Ignore all top-level Coverage.py-specific output files.
+# Ignore all top-level Coverage.py-specific output files. Note that these glob
+# expressions intentionally omit the ".coveragerc" configuration file -- which
+# is the *ONLY* Coverage.py-specific file that should be tracked by "git".
 /.coverage
 /.coverage.*
-/coverage.xml
+/coverage.*
 
 # Ignore all top-level Django-specific binary databases.
 /db.sqlite3
