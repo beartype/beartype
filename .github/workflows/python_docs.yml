@@ -213,6 +213,8 @@ jobs:
   deploy:
     name: "Deploy static site to GitHub Pages"
     runs-on: ubuntu-latest
+
+    # Perform this job *ONLY* if the prior job succeeded.
     needs: build
 
     # GitHub Environment associated with this job. Note that the third-party
