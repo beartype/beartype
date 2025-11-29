@@ -339,6 +339,8 @@
    https://www.sympy.org
 .. _TensorFlow:
    https://www.tensorflow.org
+.. _gradio:
+   https://www.gradio.app
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
 .. _numerary:
@@ -674,14 +676,6 @@
 .. _collections.abc.ValuesView:
    https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView
 
-.. # ------------------( LINKS ~ py : stdlib : contextlib    )------------------
-.. _contextlib:
-   https://docs.python.org/3/library/contextlib.html
-.. _contextlib.AbstractAsyncContextManager:
-   https://docs.python.org/3/library/contextlib.html#contextlib.AbstractAsyncContextManager
-.. _contextlib.AbstractContextManager:
-   https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
-
 .. # ------------------( LINKS ~ py : stdlib : abc           )------------------
 .. _dataclasses:
    https://docs.python.org/3/library/dataclasses.html
@@ -690,9 +684,25 @@
 .. _dataclasses.dataclass:
    https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass
 
+.. # ------------------( LINKS ~ py : stdlib : contextlib    )------------------
+.. _contextlib:
+   https://docs.python.org/3/library/contextlib.html
+.. _contextlib.AbstractAsyncContextManager:
+   https://docs.python.org/3/library/contextlib.html#contextlib.AbstractAsyncContextManager
+.. _contextlib.AbstractContextManager:
+   https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
+
 .. # ------------------( LINKS ~ py : stdlib : enum          )------------------
 .. _enum.Enum:
    https://docs.python.org/3/library/enum.html#enum.Enum
+
+.. # ------------------( LINKS ~ py : stdlib : inspect       )------------------
+.. _inspect:
+   https://docs.python.org/3/library/inspect.html
+.. _inspect.isasyncgenfunction:
+   https://docs.python.org/3/library/inspect.html#inspect.isasyncgenfunction
+.. _inspect.isgeneratorfunction:
+   https://docs.python.org/3/library/inspect.html#inspect.isgeneratorfunction
 
 .. # ------------------( LINKS ~ py : stdlib : io            )------------------
 .. _io:
