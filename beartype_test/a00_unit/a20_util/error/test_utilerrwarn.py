@@ -99,7 +99,7 @@ def test_reissue_warnings_placeholder() -> None:
         '''
 
         # With a context manager "catching" *ALL* non-fatal warnings emitted
-        # during this logic for subsequent "playrback" below...
+        # during this logic for subsequent "playback" below...
         with catch_warnings(record=True) as warnings_issued:
             # Call this low-level callable to emit multiple warnings.
             portend_his_brain()

@@ -126,7 +126,7 @@ next parameter to be type-checked.
 '''
 
 # ....................{ CODE ~ return ~ check              }....................
-CODE_RETURN_CHECK_PREFIX = f'''
+CODE_CALL_CHECKED = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
     {VAR_NAME_PITH_ROOT} = {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)
@@ -166,46 +166,39 @@ https://stackoverflow.com/a/18124151/2809027
 '''
 
 
-CODE_RETURN_CHECK_SUFFIX = f'''
-    {{func_return_prefix}}{VAR_NAME_PITH_ROOT}'''
+CODE_NORMAL_RETURN_CHECKED = f'''
+    return {VAR_NAME_PITH_ROOT}'''
 '''
 Code snippet returning from the wrapper function the successfully type-checked
-value returned from the decorated callable.
-
-Note that the :func:`beartype._decor._nontype._wrap.wrapmaingenerate_code`
-factory function internally interpolates these format variables into this string
-as follows:
-
-* ``func_return_prefix`` is replaced by:
-
-  * For synchronous generator factories (but *not* asynchronous generator
-    factories, curiously), the space-suffixed keyword ``"yield from "``.
-  * For all other callables, the space-suffixed keyword ``"return "``.
+value returned from the **normal callable** (either synchronous or asynchronous
+non-generator callable decorated by :func:`beartype.beartype`).
 '''
 
 # ....................{ CODE ~ return ~ uncheck            }....................
-CODE_RETURN_UNCHECKED = f'''
+CODE_NORMAL_RETURN_UNCHECKED_SYNC = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call as is (without being type-checked).
-    {{func_return_prefix}}{{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
+    return {ARG_NAME_FUNC}(*args, **kwargs)'''
 '''
-Code snippet calling the decorated (either synchronous or non-synchronous)
-non-generator callable *without* type-checking the value returned by that call
+Code snippet calling the **normal synchronous callable** (non-generator callable
+decorated by :func:`beartype.beartype` defined with the ``def`` rather than
+``async def`` keyword) *without* type-checking the value returned by that call
 (if any).
+'''
 
-See Also
---------
-:data:`.CODE_RETURN_CHECK_PREFIX`
-:data:`.CODE_RETURN_CHECK_SUFFIX`
-    Further details on format variables.
+
+CODE_NORMAL_RETURN_UNCHECKED_ASYNC = f'''
+    # Call this function with all passed parameters and return the value
+    # returned from this call as is (without being type-checked).
+    return await {ARG_NAME_FUNC}(*args, **kwargs)'''
+'''
+Code snippet calling the **normal asynchronous callable** (non-generator
+callable decorated by :func:`beartype.beartype` defined with the ``async def``
+rather than ``def`` keywords) *without* type-checking the value returned by that
+call (if any).
 '''
 
 # ..................{ FORMATTERS                             }..................
 # str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
 # This is an absurd micro-optimization. *fight me, github developer community*
-CODE_RETURN_CHECK_PREFIX_format: CallableStrFormat = (
-    CODE_RETURN_CHECK_PREFIX.format)
-CODE_RETURN_CHECK_SUFFIX_format: CallableStrFormat = (
-    CODE_RETURN_CHECK_SUFFIX.format)
-CODE_RETURN_UNCHECKED_format: CallableStrFormat = (
-    CODE_RETURN_UNCHECKED.format)
+CODE_CALL_CHECKED_format: CallableStrFormat = CODE_CALL_CHECKED.format

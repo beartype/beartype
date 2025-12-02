@@ -24,10 +24,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.signature.sigmake import make_func_signature
-from beartype._data.code.datacodefunc import (
-    CODE_RETURN_UNCHECKED_format,
-    CODE_SIGNATURE,
-)
+from beartype._data.code.datacodefunc import CODE_SIGNATURE
 from beartype._data.code.datacodename import (
     ARG_NAME_CHECK_META,
     ARG_NAME_FUNC,
@@ -144,10 +141,7 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
 
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
-        code_check_return = CODE_RETURN_UNCHECKED_format(
-            func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
-            func_return_prefix=decor_meta.func_wrapper_code_return_prefix,
-        )
+        code_check_return = decor_meta.func_wrapper_code_return_unchecked
     # Else, the callable return requires type-checking.
 
     # ....................{ SCOPE                          }....................

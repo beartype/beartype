@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype decorator :pep:`525`-compliant asynchronous generator unit tests.
+Beartype decorator :pep:`342`-compliant synchronous generator unit tests.
 
-This submodule unit tests :pep:`525` support for asynchronous generators
+This submodule unit tests :pep:`342` support for synchronous generators
 implemented in the :func:`beartype.beartype` decorator.
 '''
 
@@ -20,17 +20,16 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS                              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
-# beartype-specific warnings emitted by the @beartype decorator below. Hurk!
+# beartype-specific warnings emitted by the @beartype decorator below. Blargh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-async def test_decor_pep525_async_generator_check() -> None:
+def test_decor_pep342_sync_generator_checked() -> None:
     '''
-    Test :func:`beartype.beartype`-decorated asynchronous generators with
+    Test :func:`beartype.beartype`-decorated synchronous generators with
     respect to core type-checking.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from asyncio import sleep
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintParamViolation,
@@ -38,185 +37,150 @@ async def test_decor_pep525_async_generator_check() -> None:
     )
     from beartype_test._util.pytroar import raises_uncached
     from collections.abc import (
-        AsyncGenerator as Pep585AsyncGenerator,
-        AsyncIterable as Pep585AsyncIterable,
-        AsyncIterator as Pep585AsyncIterator,
+        Generator as Pep585Generator,
+        Iterable as Pep585Iterable,
+        Iterator as Pep585Iterator,
     )
-    from inspect import isasyncgenfunction
+    from inspect import isgeneratorfunction
     from typing import (
         Any,
         Union,
-        AsyncGenerator as Pep484AsyncGenerator,
-        AsyncIterable as Pep484AsyncIterable,
-        AsyncIterator as Pep484AsyncIterator,
+        Generator as Pep484Generator,
+        Iterable as Pep484Iterable,
+        Iterator as Pep484Iterator,
     )
 
     # ....................{ LOCALS                         }....................
     # Tuple of all PEP 484- or 585-compliant type hints annotating the returns
-    # of asynchronous generators -- exercising all possible edge cases.
+    # of synchronous generators covering all possible edge cases.
     HINTS_RETURN = (
         # ....................{ NON-PEP                    }....................
-        # The unsubscripted "collections.abc.AsyncGenerator" superclass is a
-        # PEP-noncompliant hint.
-        Pep585AsyncGenerator,
+        # The unsubscripted "collections.abc.Generator" ABC is a
+        # PEP-noncompliant type.
+        Pep585Generator,
 
         # ....................{ PEP 484                    }....................
         # Ignorable object preventing code generation from type-checking the
         # asynchronous generator created and returned by that factory.
         Any,
 
-        Pep484AsyncGenerator[Union[str, float], None],
-        Pep484AsyncIterable[Union[str, float]],
-        Pep484AsyncIterator[Union[str, float]],
+        Pep484Generator[Union[str, float], None, None],
+        Pep484Iterable[Union[str, float]],
+        Pep484Iterator[Union[str, float]],
 
         # ....................{ PEP 585                    }....................
-        Pep585AsyncGenerator[Union[str, float], None],
-        Pep585AsyncIterable[Union[str, float]],
-        Pep585AsyncIterator[Union[str, float]],
+        Pep585Generator[Union[str, float], None, None],
+        Pep585Iterable[Union[str, float]],
+        Pep585Iterator[Union[str, float]],
     )
 
     # ....................{ PASS                           }....................
     # For each return type hint defined above...
     for hint_return in HINTS_RETURN:
         @beartype
-        async def some_kind_of_spiritual_thing(
+        def western_logocentric_stuff(
             said_the: Union[str, int], bigger_greener_bat: Union[str, float]
         ) -> hint_return:
             '''
-            :func:`beartype.beartype`-decorated asynchronous generator whose
+            :func:`beartype.beartype`-decorated synchronous generator whose
             return is annotated by a :pep:`484`- or :pep:`585`-compliant type
             hint deeply type-checking the value yielded by this generator.
             '''
 
-            # Silently reduce to an asynchronous noop. See above for details.
-            await sleep(0)
-
-            # Return an arbitrary combination of the passed parameters.
+            # Yield an arbitrary combination of the passed parameters.
             yield said_the + bigger_greener_bat
 
         # Assert that the high-level wrapper generated by the @beartype
-        # decorator type-checking the low-level asynchronous generator defined
+        # decorator type-checking the low-level synchronous generator defined
         # above preserves "inspect"-based metadata describing this generator.
         # Specifically, assert that this wrapper is still a generator.
-        assert isasyncgenfunction(some_kind_of_spiritual_thing) is True
+        assert isgeneratorfunction(western_logocentric_stuff) is True
 
-        # Assert that asynchronously iterating the asynchronous generator
-        # created by passing this function valid parameters yields the expected
-        # items. For safety, we intentionally iterate over *ALL* items of this
-        # asynchronous generator -- of which there is exactly one. Although
-        # asynchronous generators are technically iterators and thus support
-        # manual iteration via the aiter() and anext() builtins, these builtins
-        # are mostly *NOT* intended to be called manually. Whereas synchronous
-        # generators *CAN* be (and often are) manually iterated by calling
-        # iter() and next(), asynchronous generators technically also *CAN* be
-        # (but pragmatically *NEVER* are) manually iterated by similarly calling
-        # aiter() and anext(). Thus, aiter() and anext() are useless for most
-        # practical intents and purposes. Whereas synchronous generators do
-        # *NOT* explicitly require finalization, asynchronous generators do.
-        # Why? Because asynchronous generators are registered with a parent
-        # "asyncio"-based event loop and *MUST* be cleanly closed before being
-        # garbage-collected. If this is *NOT* done, then Python raises obscure
-        # "asyncio"-specific exceptions resembling:
-        #     RuntimeWarning: coroutine method 'aclose' of
-        #     'test_decor_async_generator.<locals>.some_kind_of_spiritual_thing'
-        #     was never awaited
-        #
-        # Pytest then responds with an ever *MORE* obscure exception resembling:
-        #     pytest.PytestUnraisableExceptionWarning: Exception ignored while
-        #     finalizing async generator <async_generator object
-        #     test_decor_async_generator.<locals>.some_kind_of_spiritual_thing
-        #     at 0x7f4f959d1020>: None
-        #
-        # See also this relevant StackOverflow post:
-        #     https://stackoverflow.com/a/42561322/2809027
-        async for some_kind_of_spiritual in some_kind_of_spiritual_thing(
-            'I should be trying to do some kind of spiritual thing ',
-            'involving radical acceptance and enlightenment and such.',
-        ):
-            assert some_kind_of_spiritual == (
-                'I should be trying to do some kind of spiritual thing '
-                'involving radical acceptance and enlightenment and such.'
-            )
+        # Assert that iterating the synchronous generator created by passing
+        # this function valid parameters yields the expected item.
+        assert next(western_logocentric_stuff(
+              'all my Western logocentric stuff ', 'about factoring numbers',
+        )) == 'all my Western logocentric stuff about factoring numbers'
 
         # Assert that passing this factory invalid parameters raises the
         # expected violation.
         with raises_uncached(BeartypeCallHintParamViolation):
-            await anext(some_kind_of_spiritual_thing(
-                b'A thousand stars of sertraline ',
-                b'whirled round quetiapine moons'
+            next(western_logocentric_stuff(
+                b'asking the entities you meet',
+                b'to factor large numbers',
             ))
 
     # ....................{ FAIL                           }....................
-    # Assert that @beartype raises the expected exception when decorating an
-    # asynchronous generator annotating its return as anything *EXCEPT*
-    # "AsyncGenerator[...]", "AsyncIterable[...]", or "AsyncIterator[...]".
+    # Assert that @beartype raises the expected exception when decorating a
+    # synchronous generator annotating its return as anything *EXCEPT*
+    # "Generator[...]", "Iterable[...]", and "Iterator[...]".
     with raises_uncached(BeartypeDecorHintPep484585Exception):
         @beartype
-        async def upside_down_trees(
-            roots_in_the_breeze: str, branches_underground: str) -> str:
-            # Silently reduce to an asynchronous noop. See above for details.
-            await sleep(0)
-
+        def GET_OUT_OF_THE_CAR(
+            FOR_THE_LOVE_OF_GOD: str, FACTOR_THE_NUMBER: str) -> str:
             # Return an arbitrary object (sorta) satisfying this return hint.
-            yield roots_in_the_breeze + branches_underground
+            yield FOR_THE_LOVE_OF_GOD + FACTOR_THE_NUMBER
 
 
-async def test_decor_pep525_async_generator_api() -> None:
+def test_decor_pep342_sync_generator_api() -> None:
     '''
-    Test :func:`beartype.beartype`-decorated asynchronous generators with
+    Test :func:`beartype.beartype`-decorated synchronous generators with
     respect to **bidirectional communication** (i.e., the pure-Python
     implementation of a hypothetical ``async yield from`` expression dynamically
     injected into the bodies of higher-level wrapper functions type-checking
-    lower-level :func:`beartype.beartype`-decorated asynchronous generator
+    lower-level :func:`beartype.beartype`-decorated synchronous generator
     factories).
 
     This unit test validates that higher-level wrapper functions type-checking
-    lower-level :func:`beartype.beartype`-decorated asynchronous generator
-    factories continue to comply with :pep:`525` semantics, despite the
+    lower-level :func:`beartype.beartype`-decorated synchronous generator
+    factories continue to comply with :pep:`342` semantics, despite the
     syntactic lack of a ``async yield from`` expression comparable to the
     existing :pep:`380`-compliant ``yield from`` expression. Specifically, this
     unit test validates comformance with:
 
-    * :meth:`types.AsyncGeneratorType.aclose` semantics.
-    * :meth:`types.AsyncGeneratorType.asend` semantics.
-    * :meth:`types.AsyncGeneratorType.athrow` semantics.
+    * :meth:`types.GeneratorType.close` semantics.
+    * :meth:`types.GeneratorType.send` semantics.
+    * :meth:`types.GeneratorType.throw` semantics.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from asyncio import sleep
     from beartype import beartype
-    from collections.abc import AsyncGenerator
+    from collections.abc import Generator
     from pytest import raises
     from typing import Any
 
     # ....................{ LOCALS                         }....................
     # Tuple of all return hints with which to repeatedly annotate the non-empty
-    # asynchronous generator factory declared below, each validating a unique
+    # synchronous generator factory declared below, each validating a unique
     # edge case in code generation for that factory.
     HINTS_RETURN = (
         # Ignorable object preventing code generation from type-checking the
-        # asynchronous generator created and returned by that factory.
+        # synchronous generator created and returned by that factory.
         Any,
 
-        # PEP 525-compliant return hint instructing code generation to
-        # type-check both the yields *AND* sends of that generator.
-        AsyncGenerator[int, str],
+        # PEP 342-compliant return hunt instructing code generation to
+        # type-check the yields, sends, *AND* returns of that generator.
+        Generator[int, str, bytes],
     )
 
     # Arbitrary list to be appended to by the "finally:" block of the non-empty
-    # asynchronous generator why_do_i_know_ye() defined below, enabling logic
+    # synchronous generator why_do_i_know_ye() defined below, enabling logic
     # below to validate that that block was run as expected *AFTER* the caller
-    # prematurely closes that generator by calling its aclose() method.
+    # prematurely closes that generator by calling its close() method.
     to_see_and_to_behold = []
 
     # Arbitrary string to be inserted into this list below.
     HORRORS_NEW = 'To see and to behold these horrors new?'
 
+    # Arbitrary byte string to be returned from the non-empty synchronous
+    # generator why_do_i_know_ye() defined below.
+    SATURN_FALLEN = b'Saturn is fallen, am I too to fall?'
+
     # ....................{ EXCEPTIONS                     }....................
-    class _BeartypeAsyncGeneratorThrowException(Exception):
+    class _BeartypeGeneratorThrowException(Exception):
         '''
-        Arbitrary exception asynchronously thrown below into an asynchronous
+        Arbitrary exception synchronously thrown below into an synchronous
         generator during iteration.
         '''
 
@@ -224,9 +188,9 @@ async def test_decor_pep525_async_generator_api() -> None:
 
     # ....................{ CALLABLES                      }....................
     @beartype
-    async def is_my_eternal_essence() -> AsyncGenerator:
+    def is_my_eternal_essence() -> Generator:
         '''
-        :func:`beartype.beartype`-decorated asynchronous generator guaranteed to
+        :func:`beartype.beartype`-decorated synchronous generator guaranteed to
         finalize *before* yielding anything.
 
         See Also
@@ -235,33 +199,33 @@ async def test_decor_pep525_async_generator_api() -> None:
             StackOverflow answer inspiring this implementation.
         '''
 
-        # Silently reduce to an asynchronous noop. See above for details.
-        await sleep(0)
-
         # Immediately return *BEFORE* yielding. (Look. Don't ask.)
         return
 
-        # Declare this function to be an asynchronous generator factory rather
-        # than an asynchronous coroutine. Without this "yield" statement, this
+        # Declare this function to be an synchronous generator factory rather
+        # than an synchronous coroutine. Without this "yield" statement, this
         # function would instead be interpreted as the latter.
         #
-        # This asynchronous generator is guaranteed to return before yielding.
-        # This asynchronous generator is guaranteed to thus be empty.
+        # This synchronous generator is guaranteed to return before yielding.
+        # This synchronous generator is guaranteed to thus be empty.
         yield
 
     # ....................{ LOOP                           }....................
     # For each return hint with which to repeatedly annotate the non-empty
-    # asynchronous generator factory declared below...
+    # synchronous generator factory declared below...
     for hint_return in HINTS_RETURN:
         @beartype
-        async def why_do_i_know_ye(yield_int_max: int) -> hint_return:
+        def why_do_i_know_ye(yield_int_max: int) -> hint_return:
             '''
-            :func:`beartype.beartype`-decorated non-empty asynchronous generator
+            :func:`beartype.beartype`-decorated non-empty synchronous generator
             yielding:
 
             * When sent an arbitrary string, the length of that string.
             * Else, non-negative integers in the inclusive range
               ``[0, yield_int_max]``.
+
+            This generator then yields a final byte string *after* exhaustion
+            (i.e., yielding all of these values).
 
             Parameters
             ----------
@@ -269,9 +233,6 @@ async def test_decor_pep525_async_generator_api() -> None:
                 Maximum non-negative integer to be yielded.
             '''
             assert yield_int_max >= 0
-
-            # Silently reduce to an asynchronous noop. See above for details.
-            await sleep(0)
 
             # Attempt to...
             try:
@@ -291,19 +252,23 @@ async def test_decor_pep525_async_generator_api() -> None:
                             sent_str = yield len(sent_str)
                         # Else, the caller sent *NO* values into this generator.
                     # If the caller explicitly threw an exception into this
-                    # generator by calling this generator's athrow() method,
+                    # generator by calling this generator's throw() method,
                     # yield the negation of the length of this exception's
                     # message as confirmation of receipt.
-                    except _BeartypeAsyncGeneratorThrowException as exception:
+                    except _BeartypeGeneratorThrowException as exception:
                         yield -len(str(exception))  # <-- wat lol
             # Append an arbitrary object to the list defined above, enabling
             # logic below to validate this finalizer was run as expected after
-            # the caller prematurely closes this generator with aclose().
+            # the caller prematurely closes this generator with close().
             finally:
                 to_see_and_to_behold.append(HORRORS_NEW)
 
+            # Return an arbitrary object, enabling logic below to validate this
+            # extremely uncommon (yet vital) edge case.
+            return SATURN_FALLEN
+
         # ....................{ ASSERTS ~ empty : yield    }....................
-        # Validate that a @beartype-decorated empty asynchronous generator
+        # Validate that a @beartype-decorated empty synchronous generator
         # factory preserves PEP 580-compliant "yield" semantics.
 
         # True only if this generator truly is empty.
@@ -311,27 +276,52 @@ async def test_decor_pep525_async_generator_api() -> None:
 
         # If this generator yields *ANY* values, note this generator to be
         # non-empty.
-        async for yielded_value in is_my_eternal_essence():
+        for yielded_value in is_my_eternal_essence():
             is_my_eternal_essence_empty = False
 
         # Assert that this generator truly is empty.
         assert is_my_eternal_essence_empty is True
 
-        # ....................{ ASSERTS ~ non-empty : yield ....................
-        # Validate that a @beartype-decorated non-empty asynchronous generator
+        # ....................{ ASSERTS ~ non-empty : yield}....................
+        # Validate that a @beartype-decorated non-empty synchronous generator
         # factory preserves PEP 580-compliant "yield" semantics.
 
-        # List of all values subsequently yielded by iterating over this
-        # generator.
-        yielded_values = []
-
-        # Iteratively append each value yielded by this generator when passed a
+        # Synchronous generator produced by priming this factory with a
         # small (but still non-zero) maximum value to be yielded.
-        async for yielded_value in why_do_i_know_ye(3):
-            yielded_values.append(yielded_value)
+        am_i_too_to_fall = why_do_i_know_ye(3)
 
-        # Assert that this generator yielded the expected values.
-        assert yielded_values == [0, 1, 2, 3]
+        # Assert that each value iteratively yielded by this generator is the
+        # expected yield. To permit subsequent logic to capture the value
+        # returned by this generator, this logic intentionally avoids iterating
+        # over this generator with a "for" loop. Why? Because doing so would
+        # implicitly capture the first "StopIteration" exception implicitly
+        # raised by exhausting this generator. Since the first and *ONLY* the
+        # first "StopIteration" exception implicitly raised by exhausting a
+        # generator defines a "value" instance variable whose value is the value
+        # returned by that generator, manual iteration is the *ONLY* means of
+        # capturing generator returns. Insane... but that's generators for you.
+        assert next(am_i_too_to_fall) == 0
+        assert next(am_i_too_to_fall) == 1
+        assert next(am_i_too_to_fall) == 2
+        assert next(am_i_too_to_fall) == 3
+
+        # ....................{ ASSERTS ~ non-empty : retur}....................
+        # Validate that a @beartype-decorated non-empty synchronous generator
+        # factory preserves PEP 580-compliant "return" semantics.
+
+        # Assert that attempting to iterate this generator once raises the
+        # expected PEP 342-compliant "StopIteration" exception.
+        with raises(StopIteration) as exception_info:
+            next(am_i_too_to_fall)
+
+        # Exception encapsulated by this "pytest"-specific metadata, localized
+        # simply for readability. "exception_info.value.value" reads
+        # nonsensically. This is already inscrutable enough, folks.
+        exception = exception_info.value
+
+        # Assert that the value returned with this exception is the same byte
+        # string returned by this generator above.
+        assert exception.value is SATURN_FALLEN
 
         # Assert that this generator's "finally:" block finalized this generator
         # by appending the expected string to this closure list.
@@ -341,10 +331,10 @@ async def test_decor_pep525_async_generator_api() -> None:
         to_see_and_to_behold.clear()
 
         # ....................{ ASSERTS ~ non-empty : send }....................
-        # Validate that a @beartype-decorated non-empty asynchronous generator
-        # factory preserves PEP 580-compliant asend() semantics.
+        # Validate that a @beartype-decorated non-empty synchronous generator
+        # factory preserves PEP 580-compliant send() semantics.
 
-        # Asynchronous generator produced by priming this factory as above.
+        # Synchronous generator produced by priming this factory as above.
         why_have_i_seen_ye = why_do_i_know_ye(3)
         # print(f'why_have_i_seen_ye: {dir(why_have_i_seen_ye)}')
 
@@ -355,48 +345,48 @@ async def test_decor_pep525_async_generator_api() -> None:
         #
         # Note that:
         # * This obtuse alternative to explicit iteration is equivalent to this
-        #   standard idiom for manually iterating an asynchronous generator:
-        #     assert await anext(why_have_i_seen_ye) == 0
-        # * One *CANNOT* send a non-"None" value into an asynchronous generator
+        #   standard idiom for manually iterating an synchronous generator:
+        #     assert next(why_have_i_seen_ye) == 0
+        # * One *CANNOT* send a non-"None" value into an synchronous generator
         #   before that generator yields its first value after being iterated at
         #   least once. Violating that maxim raises this exception:
         #     TypeError: can't send non-None value to a just-started async
         #     generator
-        assert await why_have_i_seen_ye.asend(None) == 0
+        assert why_have_i_seen_ye.send(None) == 0
 
         # Assert that the next value yielded by this generator is the expected.
-        assert await anext(why_have_i_seen_ye) == 1
+        assert next(why_have_i_seen_ye) == 1
 
         # Assert that the value yielded by this generator after sending a string
         # into this generator is the length of this string.
-        assert await why_have_i_seen_ye.asend(
+        assert why_have_i_seen_ye.send(
             'Why do I know ye? why have I seen ye? why') == 41
 
         # Assert that the value yielded by this generator after sending another
         # string into this generator is the length of this string.
-        assert await why_have_i_seen_ye.asend(
+        assert why_have_i_seen_ye.send(
             'Is my eternal essence thus distraught') == 37
 
         # Assert that the next value yielded by this generator is the expected.
-        assert await anext(why_have_i_seen_ye) == 2
+        assert next(why_have_i_seen_ye) == 2
 
         # ....................{ ASSERTS ~ non-empty : throw}....................
         # Assert that the value yielded by this generator after throwing an
         # exception into this generator is the negation of the length of this
         # exception's message. Just accept it.
-        assert await why_have_i_seen_ye.athrow(
-            _BeartypeAsyncGeneratorThrowException(
+        assert why_have_i_seen_ye.throw(
+            _BeartypeGeneratorThrowException(
                 'To see and to behold these horrors new?')) == -39
 
         # ....................{ ASSERTS ~ non-empty : send }....................
         # Assert that the final value yielded by this generator is the expected.
-        assert await anext(why_have_i_seen_ye) == 3
+        assert next(why_have_i_seen_ye) == 3
 
         # Assert that iterating this generator one final time raises the
-        # expected PEP 525-compliant exception -- implying this generator has
+        # expected PEP 342-compliant exception -- implying this generator has
         # nothing further to yield and has thus been exhausted (finalized).
-        with raises(StopAsyncIteration):
-            await anext(why_have_i_seen_ye)
+        with raises(StopIteration):
+            next(why_have_i_seen_ye)
 
         # Assert that this generator's "finally:" block finalized this generator
         # by appending the expected string to this closure list.
@@ -406,14 +396,14 @@ async def test_decor_pep525_async_generator_api() -> None:
         to_see_and_to_behold.clear()
 
         # ....................{ ASSERTS ~ non-empty : close}....................
-        # Asynchronous generator produced by priming this factory as above.
+        # hronous generator produced by priming this factory as above.
         thus_distraught = why_do_i_know_ye(3)
 
         # Assert that the first value yielded by this generator is the expected.
-        assert await anext(thus_distraught) == 0
+        assert next(thus_distraught) == 0
 
         # Prematurely close this generator.
-        await thus_distraught.aclose()
+        thus_distraught.close()
 
         # Assert that this generator's "finally:" block finalized this generator
         # by appending the expected string to this closure list.
@@ -423,7 +413,7 @@ async def test_decor_pep525_async_generator_api() -> None:
         to_see_and_to_behold.clear()
 
         # Assert that iterating this generator one final time raises the
-        # expected PEP 525-compliant exception -- implying this generator has
+        # expected PEP 342-compliant exception -- implying this generator has
         # nothing further to yield and has thus been exhausted (finalized).
-        with raises(StopAsyncIteration):
-            await anext(thus_distraught)
+        with raises(StopIteration):
+            next(thus_distraught)

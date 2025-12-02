@@ -23,7 +23,19 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.pep.datacodepep525 import CODE_PEP525_RETURN_PREFIX
+from beartype._data.code.datacodefunc import (
+    CODE_NORMAL_RETURN_CHECKED,
+    CODE_NORMAL_RETURN_UNCHECKED_SYNC,
+    CODE_NORMAL_RETURN_UNCHECKED_ASYNC,
+)
+from beartype._data.code.pep.datacodepep342 import (
+    CODE_PEP342_RETURN_CHECKED,
+    CODE_PEP342_RETURN_UNCHECKED,
+)
+from beartype._data.code.pep.datacodepep525 import (
+    CODE_PEP525_RETURN_CHECKED,
+    CODE_PEP525_RETURN_UNCHECKED,
+)
 from beartype._data.typing.datatyping import (
     LexicalScope,
     Pep649HintableAnnotations,
@@ -215,19 +227,15 @@ class BeartypeDecorMeta(object):
           nor asynchronous generator), the empty string.
         * If the decorated callable is asynchronous (i.e., either a coroutine
           nor asynchronous generator), the ``"await "`` keyword.
-    func_wrapper_code_return_prefix : str
-        Code snippet prefixing the value to be returned or yielded to the caller
-        after calling the decorated callable in the body of the wrapper function
-        wrapping that callable with type checking. This string is guaranteed to
-        be either:
-
-        * If the decorated callable is a :pep:`380`-compliant synchronous
-          generator factory, ``"yield from "``.
-        * If the decorated callable is a :pep:`525`-compliant asynchronous
-          generator factory, a pure-Python snippet safely implementing the
-          hypothetical equivalent of an ``"async yield from "`` expression (if
-          that expression existed, which it doesn't).
-        * Else, ``"return "``.
+    func_wrapper_code_return_checked : str
+        Code snippet returning the value returned by calling the decorated
+        callable in the body of the wrapper function wrapping that callable with
+        type-checking.
+    func_wrapper_code_return_unchecked : str
+        Code snippet returning the value returned by calling the decorated
+        callable in the body of the wrapper function *without* wrapping that
+        callable with type-checking. This snippet is an optimization for the
+        common case in which the return of that callable is left unannotated.
     func_wrapper_code_signature_prefix : str
         Code snippet prefixing the signature declaring the wrapper function
         wrapping the decorated callable with type checking. This string is
@@ -265,7 +273,8 @@ class BeartypeDecorMeta(object):
         'func_wrappee_wrappee_codeobj',
         'func_wrapper',
         'func_wrapper_code_call_prefix',
-        'func_wrapper_code_return_prefix',
+        'func_wrapper_code_return_checked',
+        'func_wrapper_code_return_unchecked',
         'func_wrapper_code_signature_prefix',
         'func_wrapper_name',
         'func_wrapper_scope',
@@ -287,7 +296,8 @@ class BeartypeDecorMeta(object):
         func_wrappee_wrappee_codeobj: CallableCodeObjectType
         func_wrapper: Callable
         func_wrapper_code_call_prefix: str
-        func_wrapper_code_return_prefix: str
+        func_wrapper_code_return_checked: str
+        func_wrapper_code_return_unchecked: str
         func_wrapper_code_signature_prefix: str
         func_wrapper_name: str
         func_wrapper_scope: LexicalScope
@@ -358,7 +368,8 @@ class BeartypeDecorMeta(object):
         self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
         self.func_wrapper) = (  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
-        self.func_wrapper_code_return_prefix) = (  # type: ignore[assignment]
+        self.func_wrapper_code_return_checked) = (  # type: ignore[assignment]
+        self.func_wrapper_code_return_unchecked) = (  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix) = (  # type: ignore[assignment]
         self.func_wrapper_name) = None  # type: ignore[assignment]
 
@@ -604,14 +615,15 @@ class BeartypeDecorMeta(object):
         self.func_annotations_get = self.func_annotations.get
 
         # ..................{ VARS ~ func : kind             }..................
-        # Default the return prefix to the "return" keyword, which suffices to
-        # return the type-checked value returned by this wrappee for all kinds
-        # of wrappees *EXCEPT* generator factories. (See below.)
-        self.func_wrapper_code_return_prefix = 'return '
-
         # Default all remaining code snippets to the empty string.
         self.func_wrapper_code_signature_prefix = ''
         self.func_wrapper_code_call_prefix = ''
+
+        # Default the same code snippets set below to those returning values
+        # from normal (i.e., non-generator) synchronous callables for sanity.
+        self.func_wrapper_code_return_checked = CODE_NORMAL_RETURN_CHECKED
+        self.func_wrapper_code_return_unchecked = (
+            CODE_NORMAL_RETURN_UNCHECKED_SYNC)
 
         # If the wrappee callable currently being decorated is pure-Python...
         if func_wrappee_codeobj:
@@ -653,12 +665,18 @@ class BeartypeDecorMeta(object):
 
                 # Code snippet prefixing all calls to this coroutine factory.
                 self.func_wrapper_code_call_prefix = 'await '
+
+                # Default the same code snippets set below to those returning
+                # values from normal (i.e., non-generator) asynchronous
+                # callables.
+                self.func_wrapper_code_return_unchecked = (
+                    CODE_NORMAL_RETURN_UNCHECKED_ASYNC)
             # Else, this wrappee is *NOT* an asynchronous coroutine factory.
             #
             # If this wrappee is a synchronous generator factory (i.e.,
             # callable declared with merely the "def" rather than "async def"
             # keywords and containing one or more "yield" expressions)...
-            elif is_func_sync_generator(func_wrappee_codeobj):
+            if is_func_sync_generator(func_wrappee_codeobj):
                 # print(f'Decorated synchronous generator factory {repr(func)} detected!')
 
                 # Code snippet yielding from (i.e., deferring to) the
@@ -730,7 +748,10 @@ class BeartypeDecorMeta(object):
                 #  implementation. So, it's guaranteed to be the fastest *AND*
                 #  safest means of deferring between synchronous generators.
 
-                self.func_wrapper_code_return_prefix = 'yield from '
+                self.func_wrapper_code_return_checked = (
+                    CODE_PEP342_RETURN_CHECKED)
+                self.func_wrapper_code_return_unchecked = (
+                    CODE_PEP342_RETURN_UNCHECKED)
             # Else, this wrappee is *NOT* a synchronous generator factory.
             #
             # If this wrappee is a asynchronous generator factory (i.e.,
@@ -763,10 +784,11 @@ class BeartypeDecorMeta(object):
                 #
                 # See also this closed issue:
                 #     https://github.com/beartype/beartype/issues/592
-                self.func_wrapper_code_return_prefix = CODE_PEP525_RETURN_PREFIX
+                self.func_wrapper_code_return_checked = (
+                    CODE_PEP525_RETURN_CHECKED)
+                self.func_wrapper_code_return_unchecked = (
+                    CODE_PEP525_RETURN_UNCHECKED)
             # Else, this wrappee is *NOT* an asynchronous generator factory.
-            #
-            # In this case, preserve these code snippets as the empty string.
         # Else, this wrappee is *NOT* pure-Python. In this case, preserve these
         # code snippets as the empty string.
 

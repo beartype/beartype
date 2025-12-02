@@ -13,14 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.code.datacodename import VAR_NAME_PITH_ROOT
-from beartype._data.typing.datatyping import CallableStrFormat
+from beartype._data.code.datacodename import (
+    ARG_NAME_FUNC,
+    VAR_NAME_PITH_ROOT,
+)
 
 # ....................{ CODE                               }....................
-#FIXME: Conditionally assign this string to the
-#"self.func_wrapper_code_return_prefix" instance variable in the
-#BeartypeDecorMeta.reinit() method, please.
-
 # This pure-Python code snippet is *EXTREMELY* inspired by a comparable snippet
 # exhibited in the "Formal Semantics" subsection of PEP 380, which standardized
 # the "yield from" expression applicable *ONLY* to synchronous generators:
@@ -91,21 +89,10 @@ from beartype._data.typing.datatyping import CallableStrFormat
 # 3. Type-checking. Obviously, the original snippet in PEP 380 fails to apply
 #    type-checking. Thankfully, doing so is mostly trivial. Thus, we do.
 #
-# Lastly, note that:
-# * Asynchronous generators *CANNOT* return values -- unlike synchronous
-#   generators, which may. While the original snippet in PEP 380 handles such
-#   returns, the snippet below *CANNOT* and is thus somewhat terser.
-# * The trailing comment "# Pretend you didn't see this:" is a cheap yet
-#   worthwhile syntactic hack simplifying code generation elsewhere. For
-#   simplicity, the parent
-#   "beartype._data.code.datacodefunc.CODE_RETURN_CHECK_SUFFIX" code snippet
-#   embedding this child snippet via the "{func_return_prefix}" format variable
-#   unconditionally appends "{VAR_NAME_PITH_ROOT}" (i.e., "__beartype_pith_0")
-#   to this snippet -- which suffices for all kinds of callables *EXCEPT*:
-#   * Asynchronous generators, which are prohibited from returning anything.
-#   * Synchronous generators whose returns are annotated, which @beartype
-#     type-checks by approximating "yield from" with similar pure-Python logic.
-CODE_PEP525_RETURN_PREFIX = f'''
+# Lastly, note that Asynchronous generators *CANNOT* return values -- unlike
+# synchronous generators, which may. While the original snippet in PEP 380
+# handles such returns, the snippet below *CANNOT* and is thus somewhat terser.
+CODE_PEP525_RETURN_CHECKED = f'''
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # [BEGIN "async yield from"] What follows is the pure-Python implementation
     # of the "async yield from" expression... if that existed, which it doesn't.
@@ -212,12 +199,11 @@ CODE_PEP525_RETURN_PREFIX = f'''
                     return
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # [END "async yield from"]
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Pretend you didn't see this, bear fam: '''
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'''
 '''
-:pep:`525`-compliant code snippet prefixing the values to be iteratively yielded
-to the caller after calling the decorated asynchronous generator factory in the
-body of the wrapper function wrapping that factory with type checking.
+:pep:`525`-compliant code snippet facilitating full-blown bidirectional
+communication between the higher-level caller and lower-level asynchronous
+generator factory wrapped by :func:`beartype.beartype`-driven type-checking.
 
 This pure-Python code snippet safely implements the hypothetical equivalent of
 the ``"async yield from "`` expression -- if that expression existed, which it
@@ -244,8 +230,17 @@ https://github.com/rbroderi/future-async-yield-from
     solution applicable throughout the wider Python ecosystem.
 '''
 
-# ....................{ FORMATTERS                         }....................
-# str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
-# This is an absurd micro-optimization. *fight me, github developer community*
-CODE_PEP525_RETURN_PREFIX_format: CallableStrFormat = (
-    CODE_PEP525_RETURN_PREFIX.format)
+
+CODE_PEP525_RETURN_UNCHECKED = f'''
+    {VAR_NAME_PITH_ROOT} = {ARG_NAME_FUNC}(*args, **kwargs)
+    {CODE_PEP525_RETURN_CHECKED}'''
+'''
+:pep:`525`-compliant code snippet facilitating full-blown bidirectional
+communication between the higher-level caller and lower-level asynchronous
+generator factory wrapped by :func:`beartype.beartype` *without* type-checking
+any values asynchronously produced by that generator (including yields, sends,
+and returns).
+
+This snippet is an optimization for the common case in which the return of that
+factory is left unannotated.
+'''

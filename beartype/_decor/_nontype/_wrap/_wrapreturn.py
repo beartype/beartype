@@ -28,10 +28,7 @@ from beartype._data.func.datafuncarg import (
 )
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._data.typing.datatypingport import Hint
-from beartype._data.code.datacodefunc import (
-    CODE_RETURN_CHECK_PREFIX_format,
-    CODE_RETURN_CHECK_SUFFIX_format,
-)
+from beartype._data.code.datacodefunc import CODE_CALL_CHECKED_format
 from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
@@ -110,7 +107,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # Attempt to...
     try:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
-        # during this logic for subsequent "playrback" below...
+        # during this logic for subsequent "playback" below...
         with catch_warnings(record=True) as warnings_issued:
             # Sanified hint metadata sanified from this possibly insane return.
             # If this hint is unsupported by @beartype, raise an exception.
@@ -209,27 +206,12 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     hint_refs_type_basename=hint_refs_type_basename,
                 )
 
-                #FIXME: [SPEED] Optimize the following two string munging
-                #operations into a single string-munging operation resembling:
-                #    func_wrapper_code = CODE_RETURN_CHECK.format(
-                #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
-                #        check_expr=code_return_check_pith_unmemoized,
-                #    )
-                #
-                #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
-                #resemble:
-                #    CODE_RETURN_CHECK = (
-                #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
-                #        f'{CODE_RETURN_CHECK_SUFFIX}'
-                #    )
-
                 # Code snippets prefixing and suffixing the type-checking of
                 # this return.
-                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX_format(
+                code_return_check_prefix = CODE_CALL_CHECKED_format(
                     func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
-                code_return_check_suffix = CODE_RETURN_CHECK_SUFFIX_format(
-                    func_return_prefix=(
-                        decor_meta.func_wrapper_code_return_prefix))
+                code_return_check_suffix = (
+                    decor_meta.func_wrapper_code_return_checked)
 
                 # Full code snippet to be returned, consisting of:
                 # * Calling the decorated callable and localize its return

@@ -676,7 +676,7 @@ metadata, as trivially provided by the length of this tuple.
 
 # ....................{ MODULE ~ beartype                  }....................
 #FIXME: mypy used to type-check this properly. Pyright never did. But even mypy
-#0.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
+#1.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
 BeartypeForwardRef = Type[
     'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
 '''
