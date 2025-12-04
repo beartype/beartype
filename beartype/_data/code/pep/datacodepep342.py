@@ -20,25 +20,23 @@ from beartype._data.code.datacodename import (
 
 # ....................{ CODE                               }....................
 # Note that outstanding deficiencies in CPython's Parser Expression Grammar
-# (PEG) prevent these two statements from being optimized into a single
-# statement resembling:
-#     return yield from {VAR_NAME_PITH_ROOT}
-#
-# Why? Because PEP 380-compliant "yield from" syntax isn't a full-blown
-# expression. That syntax can appear only at the start of either a statement
-# *OR* right-hand side (RHS) of an assignment. The "return" and "yield from"
-# keywords *CANNOT* be combined. Attempting to do so induces CPython to raise a
-# non-descriptive "SyntaxError" resembling:
+# (PEG) requires the inner "yield from" expression to be parenthesized. Why
+# Because PEP 380-compliant "yield from" syntax isn't a full-blown expression;
+# it's an expression prefix. That syntax can appear only at the *START* of an
+# expression. The "return" and "yield from" keywords *CANNOT* be directly
+# combined. Attempting to do so induces CPython to raise a non-descriptive
+# "SyntaxError" resembling:
 #     >>> def bad_generator_should_be_good():
 #     ...     return yield from ()
 #                    ^^^^^
 #     SyntaxError: invalid syntax
+#
+# Yes, this is nonsensical. We didn't write that PEG. Somebody who hates us did.
 CODE_PEP342_RETURN_CHECKED = f'''
     # Value returned by this synchronous generator if this generator returns a
     # value or "None" otherwise, obtained *AFTER* the caller successfully
     # exhausts all values yielded by this generator.
-    {VAR_NAME_PITH_ROOT} = yield from {VAR_NAME_PITH_ROOT}
-    return {VAR_NAME_PITH_ROOT}'''
+    return (yield from {VAR_NAME_PITH_ROOT})'''
 '''
 :pep:`342`-compliant code snippet facilitating full-blown bidirectional
 communication between the higher-level caller and lower-level synchronous
@@ -47,8 +45,7 @@ generator factory wrapped by :func:`beartype.beartype`-driven type-checking.
 
 
 CODE_PEP342_RETURN_UNCHECKED = f'''
-    {VAR_NAME_PITH_ROOT} = yield from {ARG_NAME_FUNC}(*args, **kwargs)
-    return {VAR_NAME_PITH_ROOT}'''
+    return (yield from {ARG_NAME_FUNC}(*args, **kwargs))'''
 '''
 :pep:`342`-compliant code snippet facilitating full-blown bidirectional
 communication between the higher-level caller and lower-level synchronous
