@@ -88,7 +88,13 @@ async def test_decor_pep525_async_generator_check() -> None:
             hint deeply type-checking the value yielded by this generator.
             '''
 
-            # Silently reduce to an asynchronous noop. See above for details.
+            # Silently reduce to an asynchronous noop. Asynchronous callables
+            # are required to call the "await" keyword at least once. Since the
+            # object yielded below is synchronous and thus *CANNOT* be
+            # asynchronously awaited, we have *NO* recourse but to
+            # asynchronously await a minimal-cost awaitable. Aaaaaaand...
+            #
+            # This is why the "asyncio" API is Python's most hated. We sigh!
             await sleep(0)
 
             # Return an arbitrary combination of the passed parameters.

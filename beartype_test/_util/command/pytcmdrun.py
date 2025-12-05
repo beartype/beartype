@@ -62,16 +62,10 @@ Most runners accept the same optional keyword arguments accepted by the
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    # Iterable,
-    Mapping,
-    Optional,
-    Tuple,
-)
 from beartype._data.typing.datatyping import CommandWords
 from collections.abc import (
-    Iterable as IterableABC,
-    Mapping as MappingABC,
+    Iterable,
+    Mapping,
 )
 from os import environ
 from subprocess import (
@@ -81,6 +75,7 @@ from subprocess import (
     check_output as subprocess_check_output,
     run as subprocess_run,
 )
+from typing import Optional
 
 # ....................{ GLOBALS                            }....................
 BUFFER_SIZE_DEFAULT = -1
@@ -126,57 +121,7 @@ PEP-compliant type hint matching the ``popen_kwargs`` parameter passed to most
 callables declared by this submodule.
 '''
 
-# ....................{ RUNNERS ~ command                  }....................
-#FIXME: Unit test us up, please.
-def run_command_forward_stderr_return_stdout(
-    # Mandatory parameters.
-    command_words: CommandWords,
-
-    # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
-) -> str:
-    '''
-    Run the passed command as a subprocess of the active Python process, raising
-    an exception on subprocess failure while both forwarding all standard error
-    of this subprocess to the standard error file handle of the active Python
-    process *and* capturing and returning all standard output of this
-    subprocess.
-
-    This exception contains the exit status of this subprocess.
-
-    Parameters
-    ----------
-    command_words : CommandWords
-        Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
-        Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
-        which case the empty dictionary is assumed.
-
-    Returns
-    -------
-    str
-        All standard output captured from this subprocess, stripped of all
-        trailing newlines (as under most POSIX shells) *and* decoded with the
-        current locale's preferred encoding (e.g., UTF-8).
-
-    Raises
-    ------
-    CalledProcessError
-        If the subprocess running this command report non-zero exit status.
-    '''
-
-    # Sanitize these arguments.
-    popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
-
-    # Capture this command's stdout, raising an exception on command failure
-    # (including failure due to an expired timeout).
-    command_stdout = subprocess_check_output(command_words, **popen_kwargs)
-
-    # Return this stdout, stripped of all trailing newlines.
-    return command_stdout.rstrip('\n')
-
-
+# ....................{ RUNNERS ~ command : forward        }....................
 #FIXME: Unit test us up, please.
 def run_command_forward_output(
     # Mandatory parameters.
@@ -279,13 +224,63 @@ def run_command_forward_output_return_status(
     return exit_status
 
 
+#FIXME: Unit test us up, please.
+def run_command_forward_stderr_return_stdout(
+    # Mandatory parameters.
+    command_words: CommandWords,
+
+    # Optional parameters.
+    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+) -> str:
+    '''
+    Run the passed command as a subprocess of the active Python process, raising
+    an exception on subprocess failure while both forwarding all standard error
+    of this subprocess to the standard error file handle of the active Python
+    process *and* capturing and returning all standard output of this
+    subprocess.
+
+    This exception contains the exit status of this subprocess.
+
+    Parameters
+    ----------
+    command_words : CommandWords
+        Iterable of one or more shell words comprising this command.
+    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+        Dictionary of all keyword arguments to be passed to the
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
+        which case the empty dictionary is assumed.
+
+    Returns
+    -------
+    str
+        All standard output captured from this subprocess, stripped of all
+        trailing newlines (as under most POSIX shells) *and* decoded with the
+        current locale's preferred encoding (e.g., UTF-8).
+
+    Raises
+    ------
+    CalledProcessError
+        If the subprocess running this command report non-zero exit status.
+    '''
+
+    # Sanitize these arguments.
+    popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
+
+    # Capture this command's stdout, raising an exception on command failure
+    # (including failure due to an expired timeout).
+    command_stdout = subprocess_check_output(command_words, **popen_kwargs)
+
+    # Return this stdout, stripped of all trailing newlines.
+    return command_stdout.rstrip('\n')
+
+# ....................{ RUNNERS ~ command : return         }....................
 def run_command_return_stdout_stderr(
     # Mandatory parameters.
     command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     '''
     Run the passed command as a subprocess of the active Python process, raising
     an exception on subprocess failure while capturing and returning both all
@@ -323,7 +318,7 @@ def run_command_return_stdout_stderr(
     # Else, these keyword arguments are non-empty.
 
     # In either case, these keyword arguments are now a dictionary. Assert this.
-    assert isinstance(popen_kwargs, MappingABC), (
+    assert isinstance(popen_kwargs, Mapping), (
         f'{repr(popen_kwargs)} not mapping.')
 
     # Enable capturing of both standard output and error.
@@ -358,8 +353,8 @@ parameter to false under **vanilla Microsoft Windows** (i.e., *not* running the
 Cygwin POSIX compatibility layer).
 
 See Also
-----------
-:func:`_init_popen_kwargs`
+--------
+:func:`._init_popen_kwargs`
     Further details.
 '''
 
@@ -438,10 +433,10 @@ def _init_popen_kwargs(
     # In either case, these keyword arguments are now a dictionary.
 
     # Validate these parameters *AFTER* defaulting them above if needed.
-    assert isinstance(command_words, IterableABC), (
+    assert isinstance(command_words, Iterable), (
         f'{repr(command_words)} not iterable.')
     assert bool(command_words), '"command_words" empty.'
-    assert isinstance(popen_kwargs, MappingABC), (
+    assert isinstance(popen_kwargs, Mapping), (
         f'{repr(popen_kwargs)} not mapping.')
 
     #FIXME: Uncomment if we ever feel like implementing this additional
