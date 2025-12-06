@@ -147,6 +147,7 @@ if is_package coverage && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
     # "Initialization: determining rootdir and inifile":
     #     https://docs.pytest.org/en/latest/customize.html
     "${PYTHON_ARGS[@]}" -m coverage run -m "${PYTEST_ARGS[@]}" . &&
+    "${PYTHON_ARGS[@]}" -m coverage combine &&
     "${PYTHON_ARGS[@]}" -m coverage report
 # Else, run this project's pytest-based test suite with all passed arguments
 # *WITHOUT* measuring coverage.

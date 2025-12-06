@@ -358,9 +358,8 @@ test-tox = [
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # ....................{ CORE                           }....................
-    # A relatively modern version of "pytest" is required. It's probably quite
-    # old by now. I feel depressed just reading comments like this. Dismantled,
-    # this is:
+    # A relatively modern version of "pytest" is required. It's old by now. I
+    # feel depressed just reading comments like this. Dismantled, this is:
     # * "pytest 6.2.0" first publicized the "pytest.MonkeyPatch" object, which
     #   previously was *ONLY* accessible via the "monkeypatch" fixture. Now,
     #   this object is conveniently directly importable.
@@ -545,7 +544,7 @@ test-tox = [
     #FIXME: Reenable Python >= 3.14 support *AFTER* explicitly supported.
     # Required by optional FastMCP-specific integration tests. Note that FastMCP
     # requires Pydantic.
-    """fastmcp; python_version < '3.14.0'""",
+    "fastmcp; python_version < '3.14.0'",
 
     #FIXME: Actually, let's *NOT* install "pyarrow". "pyarrow" is super-intense,
     #because Apache Arrow is super-intense. Since nothing in @beartype requires
@@ -613,8 +612,8 @@ test = [
     # Tox-specific test-time dependencies.
     "beartype[test-tox,test-tox-coverage]",
 
-    # A relatively modern version of "tox" is required. It's probably quite old
-    # by now. I feel depressed just reading comments like this...
+    # A relatively modern version of "tox" is required. It's quite old by now. I
+    # feel depressed just reading comments like this...
     'tox >=3.20.1',
 ]
 

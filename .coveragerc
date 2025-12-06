@@ -21,11 +21,6 @@
 # https://coverage.readthedocs.io/en/latest/config.html
 #     "coverage" documentation on this file.
 
-# ....................{ TODO                                }...................
-#FIXME: Generalize to combine coverage reports for Python subprocesses. In
-#theory, doing should be somewhat trivial. See also:
-#    https://coverage.readthedocs.io/en/latest/subprocess.html#id1
-
 # ....................{ RUN                                 }...................
 # Low-level settings configuring how coverage is measured.
 [run]

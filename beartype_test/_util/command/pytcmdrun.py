@@ -70,8 +70,8 @@ from collections.abc import (
 from os import environ
 from subprocess import (
     CalledProcessError,
+    CompletedProcess,
     TimeoutExpired,
-    call as subprocess_call,
     check_output as subprocess_check_output,
     run as subprocess_run,
 )
@@ -108,17 +108,10 @@ newline inclusive and the prior newline exclusive is consumed.
 '''
 
 # ....................{ PRIVATE ~ hints                    }....................
-_HINT_POPEN_KWARGS = Mapping[str, object]
+_HintPopenKwargs = Mapping[str, object]
 '''
 PEP-compliant type hint matching the return value of the private
 :func:`_init_popen_kwargs` function.
-'''
-
-
-_HINT_POPEN_KWARGS_OPTIONAL = Optional[_HINT_POPEN_KWARGS]
-'''
-PEP-compliant type hint matching the ``popen_kwargs`` parameter passed to most
-callables declared by this submodule.
 '''
 
 # ....................{ RUNNERS ~ command : forward        }....................
@@ -128,7 +121,7 @@ def run_command_forward_output(
     command_words: CommandWords,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+    popen_kwargs: Optional[_HintPopenKwargs] = None,
 ) -> None:
     '''
     Run the passed command as a subprocess of the active Python process,
@@ -142,7 +135,7 @@ def run_command_forward_output(
     ----------
     command_words : CommandWords
         Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+    popen_kwargs : Optional[_HintPopenKwargs]
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
@@ -176,7 +169,7 @@ def run_command_forward_output_return_status(
     command_words: CommandWords,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
+    popen_kwargs: Optional[_HintPopenKwargs] = None
 ) -> int:
     '''
     Run the passed command as a subprocess of the active Python process,
@@ -193,7 +186,7 @@ def run_command_forward_output_return_status(
     ----------
     command_words : CommandWords
         Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+    popen_kwargs : Optional[_HintPopenKwargs]
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
@@ -204,21 +197,16 @@ def run_command_forward_output_return_status(
         Exit status returned by this subprocess.
     '''
 
-    # Defer test-specific imports.
-    from beartype_test._util.command.pytcmdexit import FAILURE_DEFAULT
-
     # Sanitize these arguments.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
 
-    # Run this command *WITHOUT* raising an exception on command failure.
-    try:
-        exit_status = subprocess_call(command_words, **popen_kwargs)
-    # If this command failed to halt before triggering a timeout, the "timeout"
-    # keyword argument was passed *AND* this command has effectively failed.
-    # Since the prior call has already guaranteeably terminated this command,
-    # this exception is safely convertible into default failure exit status.
-    except TimeoutExpired:
-        exit_status = FAILURE_DEFAULT
+    # Object encapsulating the result of running this shell command in a
+    # subprocess of the active Python interpreter.
+    command_result = _run_command(
+        command_words=command_words, popen_kwargs=popen_kwargs)
+
+    # Non-zero exit status of this command.
+    exit_status = command_result.returncode
 
     # Return this exit status.
     return exit_status
@@ -230,7 +218,7 @@ def run_command_forward_stderr_return_stdout(
     command_words: CommandWords,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+    popen_kwargs: Optional[_HintPopenKwargs] = None,
 ) -> str:
     '''
     Run the passed command as a subprocess of the active Python process, raising
@@ -245,7 +233,7 @@ def run_command_forward_stderr_return_stdout(
     ----------
     command_words : CommandWords
         Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+    popen_kwargs : Optional[_HintPopenKwargs]
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
@@ -279,7 +267,7 @@ def run_command_return_stdout_stderr(
     command_words: CommandWords,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+    popen_kwargs: Optional[_HintPopenKwargs] = None,
 ) -> tuple[str, str]:
     '''
     Run the passed command as a subprocess of the active Python process, raising
@@ -292,7 +280,7 @@ def run_command_return_stdout_stderr(
     ----------
     command_words : CommandWords
         Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+    popen_kwargs : Optional[_HintPopenKwargs]
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
@@ -332,15 +320,16 @@ def run_command_return_stdout_stderr(
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
 
     # "subprocess.CompletedProcess" object encapsulating the result of running
-    # this command.
-    command_result = subprocess_run(command_words, **popen_kwargs)
+    # this shell command in a subprocess of the active Python interpreter.
+    command_result = _run_command(
+        command_words=command_words, popen_kwargs=popen_kwargs)
 
     # Standard output and error emitted by this command, stripped of all
     # trailing newlines.
     command_stdout = command_result.stdout.rstrip('\n')
     command_stderr = command_result.stderr.rstrip('\n')
 
-    # Return this standard output and error.
+    # Return the 2-tuple of this standard output and error.
     return command_stdout, command_stderr
 
 # ....................{ PRIVATE ~ constants                }....................
@@ -364,8 +353,8 @@ def _init_popen_kwargs(
     command_words: CommandWords,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
-) -> _HINT_POPEN_KWARGS:
+    popen_kwargs: Optional[_HintPopenKwargs] = None
+) -> _HintPopenKwargs:
     '''
     Sanitized dictionary of all keyword arguments to pass to the
     :class:`subprocess.Popen` callable when running the command specified by
@@ -409,14 +398,14 @@ def _init_popen_kwargs(
     ----------
     command_words : CommandWords
         Iterable of one or more shell words comprising this command.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
+    popen_kwargs : Optional[_HintPopenKwargs]
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Returns
     -------
-    _HINT_POPEN_KWARGS
+    _HintPopenKwargs
         This dictionary of keyword arguments sanitized.
     '''
 
@@ -448,6 +437,15 @@ def _init_popen_kwargs(
     # Log the command to be run before doing so.
     # log_debug('Running command: %s', ' '.join(command_words))
 
+    # Isolate the current set of environment variables to this command,
+    # preventing concurrent changes in these variables in the active process
+    # from affecting this command's subprocess.
+    popen_kwargs.setdefault('env', environ.copy())
+
+    # Both encode command input *AND* decode command output with the current
+    # locale's preferred encoding.
+    popen_kwargs.setdefault('text', True)
+
     # If this is vanilla Windows *AND* the caller passed no keyword arguments
     # that would prevent us from safely defaulting the "close_fds" parameter to
     # false, sanitize that parameter to false.
@@ -455,15 +453,70 @@ def _init_popen_kwargs(
         mapping=popen_kwargs,
         keys=_INIT_POPEN_KWARGS_POPEN_KWARGS_NAMES_CLOSE_FDS_CONFLICTING,
     ):
-        popen_kwargs['close_fds'] = False
-
-    # Isolate the current set of environment variables to this command,
-    # preventing concurrent changes in these variables in the active process
-    # from affecting this command's subprocess.
-    popen_kwargs['env'] = environ.copy()
-
-    # Decode command output with the current locale's preferred encoding.
-    popen_kwargs['universal_newlines'] = True
+        popen_kwargs.setdefault('close_fds', False)
 
     # Return these keyword arguments.
     return popen_kwargs
+
+# ....................{ PRIVATE ~ runners                  }....................
+#FIXME: Call above in lieu of subprocess_run(), please. *sigh*
+def _run_command(
+    command_words: CommandWords,
+    popen_kwargs: _HintPopenKwargs,
+) -> CompletedProcess:
+    '''
+    Run the passed shell command as a subprocess of the active Python
+    interpreter, returning a :class:`.CompletedProcess` object encapsulating the
+    result of doing so.
+
+    Parameters
+    ----------
+    command_words : CommandWords
+        Iterable of one or more shell words comprising this command.
+    popen_kwargs : _HintPopenKwargs
+        Dictionary of all keyword arguments to be passed to the
+        :meth:`subprocess.Popen.__init__` method.
+
+    Returns
+    -------
+    CompletedProcess
+        Object encapsulating the result of running this shell command.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype_test._util.command.pytcmdexit import FAILURE_DEFAULT
+
+    # Object encapsulating the result of running this shell command in a
+    # subprocess of the active Python interpreter.
+    command_result: CompletedProcess = None
+
+    # Prefer the caller to assert the success or failure of this command. Doing
+    # so substantially improves debuggability. Enabling "check=True" does so
+    # little that it's questionable why Python even defines this parameter.
+    #
+    # Note that:
+    # * This optional parameter is unique to this higher-level subprocess.run()
+    #   function. The lower-level Popen.__init__() constructor does *NOT* accept
+    #   this parameter.
+    # * When this parameter is left undefined, linters complain at us. Go away!
+    popen_kwargs.setdefault('check', False)
+
+    # Attempt to...
+    try:
+        # Run this shell command in a subprocess of the active Python process.
+        command_result = subprocess_run(command_words, **popen_kwargs)
+    # If this command failed to halt before triggering a timeout, the "timeout"
+    # keyword argument was passed *AND* this command has effectively failed.
+    # Since the prior call has already guaranteeably terminated this command,
+    # this exception is safely convertible into the default failure exit status.
+    except TimeoutExpired as exception:
+        # Synthesize a new result object from this exception.
+        command_result = CompletedProcess(
+            args=command_words,
+            returncode=FAILURE_DEFAULT,
+            stdout=exception.output,  # <-- Non-orthogonality ahoy. What an API.
+            stderr=exception.stderr,
+        )
+
+    # Return this result.
+    return command_result

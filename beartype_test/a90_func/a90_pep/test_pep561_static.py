@@ -53,7 +53,7 @@ from beartype_test._util.mark.pytskip import (
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
-    Functional test testing this project's compliance with :pep:`561` by
+    Integration test testing this project's compliance with :pep:`561` by
     externally running :mod:`mypy` (i.e., the most popular third-party static
     type checker as of this test) against this project's top-level package.
     '''
@@ -176,12 +176,12 @@ def test_pep561_mypy() -> None:
 @skip_if_ci()
 def test_pep561_pyright(monkeypatch) -> None:
     '''
-    Functional test testing this project's compliance with :pep:`561` by
+    Integration test testing this project's compliance with :pep:`561` by
     externally running :mod:`pyright` (i.e., the most popular third-party static
     type checker as of this test) against this project's top-level package.
 
     See Also
-    ----------
+    --------
     :mod:`pytest_pyright`
         Third-party :mod:`pytest` plugin automating this integration. Since this
         integration is trivial *and* since :mod:`beartype` assiduously avoids
