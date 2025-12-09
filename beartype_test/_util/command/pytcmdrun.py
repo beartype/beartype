@@ -61,6 +61,14 @@ Most runners accept the same optional keyword arguments accepted by the
   indefinitely.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: The separate "pytcmdexit" submodule is nonsensical overkill. Refactor as
+#follows, please:
+#* Shift the "SUCCESS" and "FAILURE_DEFAULT" exit codes here.
+#* Refactor the single call to is_failure() below to just test against
+#  ""FAILURE_DEFAULT" directly.
+#* Remove that submodule entirely.
+
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import CommandWords
 from collections.abc import (

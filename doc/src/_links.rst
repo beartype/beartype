@@ -333,6 +333,8 @@
    https://hypothesis.readthedocs.io
 .. _NetworkX:
    https://networkx.org
+.. _PyInstaller:
+   https://pyinstaller.org
 .. _PyTorch:
    https://pytorch.org
 .. _SymPy:

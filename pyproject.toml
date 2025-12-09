@@ -412,6 +412,10 @@ test-tox = [
     # requires Click.
     "celery",
 
+    # ....................{ CLI ~ exe                      }....................
+    # Required by optional PyInstaller-specific integration tests.
+    "pyinstaller",
+
     # ....................{ DATABASE                       }....................
     # Required by optional Redis-specific integration tests.
     "redis",
