@@ -36,6 +36,32 @@ from beartype._data.typing.datatyping import (
     BeartypeableT,
 )
 from beartype._decor.decorcore import beartype_object
+from collections.abc import Callable
+
+# Intentionally import the standard mypy-friendly @typing.overload decorator
+# rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
+# which, in any case, would be needlessly inefficient and thus bad.
+from typing import overload
+
+# ....................{ OVERLOADS                          }....................
+# Declare PEP 484-compliant overloads to avoid breaking downstream code
+# statically type-checked by a static type checker (e.g., mypy). The concrete
+# @beartype decorator declared below is permissively annotated as returning a
+# union of multiple types desynchronized from the types of the passed arguments
+# and thus fails to accurately convey the actual public API of that decorator.
+# See also:
+#     https://www.python.org/dev/peps/pep-0484/#function-method-overloading
+#
+# Note that the "Callable[[BeartypeableT], BeartypeableT]" type hint should
+# ideally instead be a reference to our "BeartypeConfedDecorator" type hint.
+# Indeed, it used to be. Unfortunately, a significant regression in mypy
+# required us to inline that type hint away. See also this issue:
+#     https://github.com/beartype/beartype/issues/332
+@overload
+def beartype(obj: BeartypeableT) -> BeartypeableT: ...
+@overload
+def beartype(*, conf: BeartypeConf) -> (
+    Callable[[BeartypeableT], BeartypeableT]): ...
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
