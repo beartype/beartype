@@ -34,7 +34,7 @@ from sys import argv
 if len(argv) != 2:
     raise ValueError(
         f'Exactly one non-empty string argument expected. '
-        f'Received {len(argv)} string arguments:\n\t{argv}'
+        f'Received {len(argv) - 1} string arguments:\n\t{argv}'
     )
 # Else, the caller passed exactly one command-line argument.
 
@@ -47,7 +47,7 @@ i_cannot_see: str = argv[1]
 # exit status by raising a runtime type-checking violation.
 if i_cannot_see == EVEN_HERE_INTO_MY_CENTRE_OF_REPOSE:
     # Print an otherwise ignorable statement as a sanity check for the caller.
-    print('Inducing PEP 526-compliant annotated variable assignment violation!')
+    # print('Inducing PEP 526-compliant annotated variable assignment violation!')
 
     # PEP 526-compliant annotated variable assignment whose assigned value
     # violates the hint annotating this variable. The beartype_this_package()

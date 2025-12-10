@@ -18,6 +18,24 @@ executable script (which no one cares about) exists solely to facilitate the
 execution of this package (which everyone cares about).
 '''
 
-# ....................{ IMPORTS                            }....................
-# Make it so, Captain Keats.
+# ....................{ IMPORTS ~ beartype                 }....................
+# Import from a package registering a "beartype.claw" import hook *BEFORE*
+# importing from any other packages. Prior to the resolution of the issue
+# validated by this integration test, the first import performed *AFTER* (but
+# not before) the first import from a package registering a "beartype.claw"
+# import hook in a PyInstaller-bundled binary fails with an unreadable
+# "ModuleNotFoundError" exception. Only importing from a package registering a
+# "beartype.claw" import hook reliably reproduces the underlying issue validated
+# by this integration test.
 from the_blaze import the_splendour
+
+# ....................{ IMPORTS ~ non-beartype             }....................
+# Import an arbitrary attribute from an arbitrary standard Python module
+# guaranteed to exist.
+from argparse import ArgumentParser
+
+# ....................{ MAIN                               }....................
+# Trivially validate an arbitrary fact about this attribute as a sanity check.
+if not isinstance(ArgumentParser, type):
+    raise ValueError(
+        f'"argparse.ArgumentParser" {repr(ArgumentParser)} not type.')

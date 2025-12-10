@@ -66,7 +66,7 @@ def get_test_func_data_dir() -> Path:
 
 # ....................{ GETTERS ~ dir : func : lib         }....................
 @callable_cached
-def get_test_func_data_lib_dir() -> Path:
+def get_test_func_data_external_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **mid-level
     third-party dependency integration test data directory** (i.e., directory
@@ -80,7 +80,7 @@ def get_test_func_data_lib_dir() -> Path:
 
 
 @callable_cached
-def get_test_func_data_lib_nuitka_dir() -> Path:
+def get_test_func_data_external_nuitka_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level nuitka
     integration test data directory** (i.e., directory providing sample code
@@ -89,11 +89,11 @@ def get_test_func_data_lib_nuitka_dir() -> Path:
     '''
 
     # Nascent ascendency!
-    return DirRelative(get_test_func_data_lib_dir(), 'nuitka')
+    return DirRelative(get_test_func_data_external_dir(), 'nuitka')
 
 
 @callable_cached
-def get_test_func_data_lib_poetry_dir() -> Path:
+def get_test_func_data_external_poetry_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level Poetry
     integration test data directory** (i.e., directory providing sample code
@@ -102,11 +102,24 @@ def get_test_func_data_lib_poetry_dir() -> Path:
     '''
 
     # Nascent ascendency!
-    return DirRelative(get_test_func_data_lib_dir(), 'poetry')
+    return DirRelative(get_test_func_data_external_dir(), 'poetry')
 
 
 @callable_cached
-def get_test_func_data_lib_sphinx_dir() -> Path:
+def get_test_func_data_external_pyinstaller_dir() -> Path:
+    '''
+    :class:`.Path` encapsulating the absolute dirname of the **low-level
+    PyInstaller integration test data directory** (i.e., directory providing
+    sample code used throughout this project's :mod:`pyinstaller`-specific
+    integration tests) if found *or* raise an exception otherwise.
+    '''
+
+    # Nascent ascendency!
+    return DirRelative(get_test_func_data_external_dir(), 'pyinstaller')
+
+
+@callable_cached
+def get_test_func_data_external_sphinx_dir() -> Path:
     '''
     :class:`.Path` encapsulating the absolute dirname of the **low-level Sphinx
     integration test data directory** (i.e., directory providing sample data
@@ -115,11 +128,11 @@ def get_test_func_data_lib_sphinx_dir() -> Path:
     '''
 
     # Flamboyant buoyancy!
-    return DirRelative(get_test_func_data_lib_dir(), 'sphinx')
+    return DirRelative(get_test_func_data_external_dir(), 'sphinx')
 
 # ....................{ GETTERS ~ file : func : lib        }....................
 @callable_cached
-def get_test_func_data_lib_nuitka_file() -> Path:
+def get_test_func_data_external_nuitka_file() -> Path:
     '''
     :class:`.Path` encapsulating the absolute filename of the **low-level nuitka
     integration test data file** (i.e., file providing sample code used
@@ -129,7 +142,7 @@ def get_test_func_data_lib_nuitka_file() -> Path:
 
     # Ergastically eristic!
     return FileRelative(
-        get_test_func_data_lib_nuitka_dir(), 'beartype_nuitka.py')
+        get_test_func_data_external_nuitka_dir(), 'beartype_nuitka.py')
 
 # ....................{ GETTERS ~ dir : unit               }....................
 @callable_cached

@@ -50,7 +50,7 @@ def test_sphinx_docs_other(tmp_path) -> None:
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import run_command_forward_output
     from beartype_test._util.path.pytpathtest import (
-        get_test_func_data_lib_sphinx_dir)
+        get_test_func_data_external_sphinx_dir)
 
     # ..................{ SPHINX-BUILD                       }..................
     # Tuple of all shell words with which to run the "sphinx-build" command.
@@ -91,7 +91,7 @@ def test_sphinx_docs_other(tmp_path) -> None:
         # Absolute or relative dirname of a test-specific subdirectory
         # containing a sample Sphinx structure exercising edge cases in the
         # @beartype decorator.
-        str(get_test_func_data_lib_sphinx_dir()),
+        str(get_test_func_data_external_sphinx_dir()),
 
         # Absolute or relative dirname of a test-specific temporary directory to
         # which Sphinx will emit ignorable rendered documentation files.

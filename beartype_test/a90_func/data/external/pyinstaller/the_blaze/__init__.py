@@ -12,7 +12,7 @@ this package into an executable binary file).
 
 # ....................{ PREAMBLE                           }....................
 # Print an otherwise ignorable statement as a sanity check for the caller.
-print('Registering beartype.claw.beartype_this_package() import hook...')
+# print('Registering beartype.claw.beartype_this_package() import hook...')
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw import beartype_this_package
