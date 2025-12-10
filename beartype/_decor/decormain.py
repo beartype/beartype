@@ -27,32 +27,8 @@ from beartype._data.typing.datatyping import (
     BeartypeableT,
 )
 from beartype._util.py.utilpyinterpreter import is_python_optimized
-from collections.abc import Callable
 
-# Intentionally import the standard mypy-friendly @typing.overload decorator
-# rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
-# which, in any case, would be needlessly inefficient and thus bad.
-from typing import overload
-
-# ....................{ OVERLOADS                          }....................
-# Declare PEP 484-compliant overloads to avoid breaking downstream code
-# statically type-checked by a static type checker (e.g., mypy). The concrete
-# @beartype decorator declared below is permissively annotated as returning a
-# union of multiple types desynchronized from the types of the passed arguments
-# and thus fails to accurately convey the actual public API of that decorator.
-# See also:
-#     https://www.python.org/dev/peps/pep-0484/#function-method-overloading
-#
-# Note that the "Callable[[BeartypeableT], BeartypeableT]" type hint should
-# ideally instead be a reference to our "BeartypeConfedDecorator" type hint.
-# Indeed, it used to be. Unfortunately, a significant regression in mypy
-# required us to inline that type hint away. See also this issue:
-#     https://github.com/beartype/beartype/issues/332
-@overload  # type: ignore[misc,no-overload-impl]
-def beartype(obj: BeartypeableT) -> BeartypeableT: ...
-@overload
-def beartype(*, conf: BeartypeConf) -> (
-    Callable[[BeartypeableT], BeartypeableT]): ...
+from typing import TYPE_CHECKING
 
 # ....................{ DECORATORS                         }....................
 # If the active Python interpreter is optimized either at process-invocation
@@ -72,12 +48,16 @@ def beartype(*, conf: BeartypeConf) -> (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-if is_python_optimized():
+#
+# Additionally, we use `and not TYPE_CHECKING` to ensure that static type checkers
+# (e.g., mypy) always see the real implementation of @beartype rather than this
+# optimized identity implementation.
+if is_python_optimized() and not TYPE_CHECKING:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize the signature of this identity decorator with the
     # non-identity decorator imported below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def beartype(  # type: ignore[no-redef]
+    def beartype(
         obj: Optional[BeartypeableT] = None,
 
         # Optional keyword-only parameters.
@@ -137,7 +117,7 @@ if is_python_optimized():
 # case, define the @beartype decorator in the standard way.
 else:
     # This is where @beartype *REALLY* lives. Grep here for all the goods.
-    from beartype._decor.decorcache import beartype  # type: ignore[no-redef]
+    from beartype._decor.decorcache import beartype as beartype
 
 # ....................{ DECORATORS ~ doc                   }....................
 # Document the @beartype decorator with the same documentation regardless of
