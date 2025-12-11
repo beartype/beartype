@@ -19,7 +19,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._conf.confmain import BeartypeConf
 from beartype._data.typing.datatyping import (
@@ -27,8 +26,10 @@ from beartype._data.typing.datatyping import (
     BeartypeableT,
 )
 from beartype._util.py.utilpyinterpreter import is_python_optimized
-
-from typing import TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 # ....................{ DECORATORS                         }....................
 # If the active Python interpreter is optimized either at process-invocation
@@ -40,18 +41,24 @@ from typing import TYPE_CHECKING
 # @beartype-based type-checking across the entire codebase by reducing the
 # @beartype decorator to the identity decorator.
 #
-# Ideally, this would have been implemented at the top rather than bottom of
-# this submodule as a conditional resembling:
+# Note that:
+# * Ideally, this would have been implemented at the top rather than bottom of
+#   this submodule as a conditional resembling:
 #     if __debug__:
 #         def beartype(func: CallableTypes) -> CallableTypes:
 #             return func
 #         return
 #
-# Tragically, Python fails to support module-scoped "return" statements. *sigh*
-#
-# Additionally, we use `and not TYPE_CHECKING` to ensure that static type checkers
-# (e.g., mypy) always see the real implementation of @beartype rather than this
-# optimized identity implementation.
+#   Sadly, Python fails to support module-scoped "return" statements. *sigh*
+# * The "and not TYPE_CHECKING" condition assists static type-checkers to detect
+#   the "real" implementation of the @beartype decorator imported below rather
+#   than this optimized placeholder defined here. Since the
+#   is_python_optimized() tester returns true when "TYPE_CHECKING" is true, this
+#   condition iteratively reduces to the following under static type-checking:
+#       if TYPE_CHECKING and not TYPE_CHECKING:
+#       if True and not True:
+#       if True and False:
+#       if False:
 if is_python_optimized() and not TYPE_CHECKING:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize the signature of this identity decorator with the
