@@ -31,6 +31,11 @@ from beartype._check.forward.reference.fwdrefabc import (
     _BeartypeForwardRefIndexableABC_BASES,
 )
 from beartype._util.cls.utilclsmake import make_type
+from beartype._util.func.utilfuncframe import (
+    get_frame_module_name_or_none,
+    iter_frames,
+)
+from beartype._util.module.utilmodimport import import_module_or_none
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ FACTORIES                          }....................
@@ -180,7 +185,86 @@ def _make_forwardref_subtype(
     # non-trivial, we defer this validation to subsequent importation logic.
     if not type_module_name:
         type_module_name = scope_name
-    # Else, this module name is non-empty.
+    # Else, this module name is non-empty. However, it might be a **nested
+    # class forward reference** (e.g., "Outer.Inner" where "Outer" is a class
+    # rather than a module). In this case, "type_module_name" will be "Outer"
+    # which is *NOT* importable as a module. We need to detect this case and
+    # resolve the forward reference against the actual module containing the
+    # outer class.
+    elif import_module_or_none(type_module_name) is None:
+        # Unqualified basename of the outermost class in this nested reference
+        # (e.g., "Outer" for the forward reference "Outer.Inner").
+        base_class_name = hint_name.partition('.')[0]
+
+        # True only if "scope_name" refers to a module defining "base_class_name".
+        scope_can_resolve = False
+
+        # If a scope name was passed, check if that scope can resolve this
+        # nested class reference.
+        if scope_name is not None:
+            try:
+                scope_module = import_module_or_none(scope_name)
+                if scope_module is not None:
+                    scope_can_resolve = hasattr(scope_module, base_class_name)
+            except Exception:
+                pass
+
+        # If the passed scope can resolve this reference, prefer it.
+        if scope_can_resolve:
+            type_module_name = scope_name
+        # Else, the passed scope either does *NOT* exist or cannot resolve this
+        # reference. This commonly occurs when:
+        # * The decorator providing the scope (e.g., jaxtyping) does *NOT*
+        #   reside in the same module as the decorated callable.
+        # * The forward reference is being resolved during class definition
+        #   (i.e., before the outer class is fully defined).
+        #
+        # In either case, inspect the call stack to find the module where the
+        # outer class is being defined.
+        else:
+            # For each stack frame on the call stack...
+            for frame in iter_frames(func_stack_frames_ignore=1):
+                # Fully-qualified name of the module for this frame if any.
+                frame_module_name = get_frame_module_name_or_none(frame)
+
+                # If this frame has no module name, skip it.
+                if not frame_module_name:
+                    continue
+                # Else, this frame has a module name.
+
+                # Code object for this frame, providing the name of the lexical
+                # scope (class, function, or module) being executed.
+                frame_code = getattr(frame, 'f_code', None)
+                if frame_code is None:
+                    continue
+                frame_code_name = frame_code.co_name
+
+                # If this frame is executing a class body whose name matches
+                # the base class we're looking for (e.g., frame is inside
+                # "class Outer:" when resolving "Outer.Inner"), this is almost
+                # certainly the module defining that class.
+                if frame_code_name == base_class_name:
+                    type_module_name = frame_module_name
+                    scope_name = frame_module_name
+                    break
+
+                # Otherwise, check if this module already defines the base class.
+                # This handles the case where the class is fully defined.
+                try:
+                    frame_module = import_module_or_none(frame_module_name)
+                    if frame_module is not None and hasattr(frame_module, base_class_name):
+                        type_module_name = frame_module_name
+                        scope_name = frame_module_name
+                        break
+                except Exception:
+                    pass
+
+            # If we still couldn't resolve, fall back to scope_name (may be None).
+            if (
+                not type_module_name or
+                import_module_or_none(type_module_name) is None
+            ):
+                type_module_name = scope_name
 
     # Forward reference proxy to be returned.
     forwardref_subtype = make_type(
