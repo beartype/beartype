@@ -414,22 +414,26 @@ def import_module_attr_or_sentinel(
         # * By the prior validation, this split is guaranteed to be safe.
         module_name_from_attr, _, attr_basename = attr_name.rpartition('.')
 
-        # Check if the inferred module name is actually importable.
-        # If it is, use it. Otherwise, this might be a nested class reference
-        # like "Outer.Inner" where "Outer" is a class, not a module.
+        # If the inferred module name is actually importable, use it.
         if import_module_or_none(module_name_from_attr) is not None:
             module_name = module_name_from_attr
+        # Else, this might be a **nested class forward reference** (e.g.,
+        # "Outer.Inner" where "Outer" is a class rather than a module). In this
+        # case, "module_name_from_attr" will be "Outer" which is *NOT*
+        # importable as a module.
         elif module_name:
-            # The inferred "module" is not importable, but we have a 
-            # fallback module_name. Use it and treat the full attr_name
-            # as a dotted attribute path to look up (e.g., "Outer.Inner").
+            # A fallback module name was passed. Use it and treat the full
+            # "attr_name" as a dotted attribute path to look up against that
+            # module (e.g., for "Outer.Inner", look up "module.Outer.Inner").
             attr_basename = attr_name
         else:
-            # No fallback - use the inferred name and let it fail below.
+            # No fallback available. Use the inferred name and let import fail
+            # below with an appropriate exception.
             module_name = module_name_from_attr
     # In any case:
     # * "module_name" is now a non-empty string.
-    # * "attr_basename" is now either an unqualified basename or a dotted path.
+    # * "attr_basename" is now either an unqualified basename *OR* a dotted
+    #   attribute path for nested class references.
 
     # Module with this fully-qualified name if importable *OR* "None" otherwise.
     module = import_module_or_none(module_name)
@@ -442,14 +446,19 @@ def import_module_attr_or_sentinel(
     # Attribute with this name if that module declares this attribute *OR* the
     # sentinel otherwise.
     #
-    # If attr_basename contains "." characters (e.g., "Outer.Inner" for a nested
-    # class reference), we need to traverse the attribute path.
+    # If "attr_basename" is a dotted path (e.g., "Outer.Inner" for a nested
+    # class reference), traverse the attribute chain. Otherwise, perform a
+    # simple single-level attribute lookup.
     if '.' in attr_basename:
+        # Iteratively resolve each component of the dotted path.
         module_attr = module
         for attr_part in attr_basename.split('.'):
             module_attr = getattr(module_attr, attr_part, SENTINEL)
+
+            # If any component in the path is undefined, halt immediately.
             if module_attr is SENTINEL:
                 break
+    # Else, "attr_basename" is an unqualified basename. Perform a simple lookup.
     else:
         module_attr = getattr(module, attr_basename, SENTINEL)
 
