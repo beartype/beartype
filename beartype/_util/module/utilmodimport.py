@@ -412,10 +412,24 @@ def import_module_attr_or_sentinel(
         #   authoritative. The passed module name is only an optional fallback
         #   in the event that this attribute name contains *NO* "." characters.
         # * By the prior validation, this split is guaranteed to be safe.
-        module_name, _, attr_basename = attr_name.rpartition('.')
+        module_name_from_attr, _, attr_basename = attr_name.rpartition('.')
+
+        # Check if the inferred module name is actually importable.
+        # If it is, use it. Otherwise, this might be a nested class reference
+        # like "Outer.Inner" where "Outer" is a class, not a module.
+        if import_module_or_none(module_name_from_attr) is not None:
+            module_name = module_name_from_attr
+        elif module_name:
+            # The inferred "module" is not importable, but we have a 
+            # fallback module_name. Use it and treat the full attr_name
+            # as a dotted attribute path to look up (e.g., "Outer.Inner").
+            attr_basename = attr_name
+        else:
+            # No fallback - use the inferred name and let it fail below.
+            module_name = module_name_from_attr
     # In any case:
     # * "module_name" is now a non-empty string.
-    # * "attr_basename" is now an unqualified basename.
+    # * "attr_basename" is now either an unqualified basename or a dotted path.
 
     # Module with this fully-qualified name if importable *OR* "None" otherwise.
     module = import_module_or_none(module_name)
@@ -427,7 +441,17 @@ def import_module_attr_or_sentinel(
 
     # Attribute with this name if that module declares this attribute *OR* the
     # sentinel otherwise.
-    module_attr = getattr(module, attr_basename, SENTINEL)
+    #
+    # If attr_basename contains "." characters (e.g., "Outer.Inner" for a nested
+    # class reference), we need to traverse the attribute path.
+    if '.' in attr_basename:
+        module_attr = module
+        for attr_part in attr_basename.split('.'):
+            module_attr = getattr(module_attr, attr_part, SENTINEL)
+            if module_attr is SENTINEL:
+                break
+    else:
+        module_attr = getattr(module, attr_basename, SENTINEL)
 
     # If...
     if (
