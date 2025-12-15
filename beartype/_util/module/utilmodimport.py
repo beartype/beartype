@@ -451,7 +451,7 @@ def import_module_attr_or_sentinel(
     # simple single-level attribute lookup.
     if '.' in attr_basename:
         # Iteratively resolve each component of the dotted path.
-        module_attr = module
+        module_attr: Any = module
         for attr_part in attr_basename.split('.'):
             module_attr = getattr(module_attr, attr_part, SENTINEL)
 
