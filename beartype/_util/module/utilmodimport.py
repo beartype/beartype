@@ -23,7 +23,7 @@ from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.typing.datatyping import TypeException
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
-from beartype._data.kind.datakindiota import SENTINEL
+from beartype._data.kind.datakindiota import SENTINEL, Iota
 from importlib import import_module as importlib_import_module
 
 # ....................{ IMPORTERS                          }....................
@@ -389,6 +389,7 @@ def import_module_attr_or_sentinel(
     attr_basename = attr_name
 
     # If this attribute name is an unqualified basename...
+    module_attr: Any | Iota
     if is_attr_name_unqualified:
         # If either no module name was passed *OR* only an empty module name was
         # passed...
@@ -451,7 +452,7 @@ def import_module_attr_or_sentinel(
     # simple single-level attribute lookup.
     if '.' in attr_basename:
         # Iteratively resolve each component of the dotted path.
-        module_attr = module  # type: ignore[assignment]
+        module_attr = module
         for attr_part in attr_basename.split('.'):
             module_attr = getattr(module_attr, attr_part, SENTINEL)
 
