@@ -76,7 +76,7 @@ permissions:
 # ....................{ MAIN                               }....................
 jobs:
   # ...................{ TESTS                              }...................
-  # Job iteratively exercising our test suite against all Python interpreters
+  # Job iteratively validating our test suite against all Python interpreters
   # supported by this package (and also measuring the coverage of that suite).
   tests:
     # ..................{ MATRIX                             }..................
@@ -255,7 +255,7 @@ jobs:
     steps:
       # ..................{ SETUP                            }..................
       - name: 'Checking out repository...'
-        uses: 'actions/checkout@v5'
+        uses: 'actions/checkout@v6'
       - name: "Installing Python ${{ matrix.python-version }}..."
         uses: 'actions/setup-python@v6'
         with:
@@ -388,7 +388,9 @@ jobs:
               export _TOX_PIP_INSTALL_OPTIONS='--force-reinstall'
               echo "Massaging macOS dependencies with \"pip install ${_TOX_PIP_INSTALL_OPTIONS}\"..."
           fi
-          # Dismantled, this is:
+          # Note that the "${TOXENV}" environment variable defined above
+          # confines this "tox" run to the "tox" environment defined by the
+          # current "tox-env" strategy matrix include. Dismantled, this is:
           # * "--skip-missing-interpreters=false" disables the corresponding
           #   "skip_missing_interpreters = true" setting globally enabled by
           #   our top-level "tox.ini" configuration, forcing CI failures for
@@ -397,6 +399,74 @@ jobs:
           python3 -m tox --skip-missing-interpreters=false
 
       # ..................{ COVERAGE                         }..................
+      #FIXME: Consider moving away from Codecov. The current approach is
+      #*INSANE*, honestly. Codecov is fragile. We're also unconvinced this
+      #approach is even working to properly aggregate code coverage across this
+      #matrix strategy. Instead, handroll all of this manually. Interestingly,
+      #the resulting configuration is far more sensible, stable, and robust. It
+      #just requires us to manually do stuff like create our own coverage badge.
+      #See these two blog articles for pertinent working code:
+      #    https://hynek.me/articles/ditch-codecov-python/
+      #    https://nedbatchelder.com/blog/202209/making_a_coverage_badge.html
+      #
+      #When we do, here's how we can define a new "coverage" job. This is a
+      #non-working first-draft, of course. It lacks essential functionality like
+      #artifacts, which is how you communicate data between jobs. *WHATEVAH.*
+      # # Job iteratively validating our test suite against all Python interpreters
+      # # supported by this package (and also measuring the coverage of that suite).
+      # coverage:
+      #   name: "Publish test coverage to Codecov"
+      #   runs-on: ubuntu-latest
+      #
+      #   # Perform this job *ONLY* if the prior job succeeded.
+      #   needs: release
+      #
+      #   steps:
+      #     # ..................{ COVERAGE                         }..................
+      #     # Run the "tox"-specific "finally" environment defined by our top-level
+      #     # "tox.ini" configuration, which (in order):
+      #     # * Combines *ALL* Coverage.py-specific ".coverage.*" files emitted by
+      #     #   test-specific "tox" environments previously run by the "tests" job
+      #     #   above into a single ".coverage" file.
+      #     # * Converts this ".coverage" file (which is *NOT* usable by Codecov) into
+      #     #   an equivalent ".coverage.xml" file (which *IS* usable by Codecov).
+      #     - name: 'Collecting test coverage...'
+      #       run: |
+      #         python3 -m tox finally
+      #
+      #     - name: 'Publishing test coverage to Codecov...'
+      #       uses: 'codecov/codecov-action@v5'
+      #       with:
+      #         name: "${{ matrix.platform }}-${{ matrix.python-version }}"
+      #         token: ${{ secrets.CODECOV_TOKEN }}
+      #         verbose: true
+      #         fail_ci_if_error: false
+      #
+      #Interestingly, I wonder if we could combine both approaches? The first
+      #blog article presented above delineates how to download and upload these
+      #oddball ".coverage.*" files between jobs. That's pretty much all we need,
+      #right? Contemplate at a later date, please.
+
+      # Note that we would ideally run the "tox"-specific "finally"
+      # environment defined by our top-level "tox.ini" configuration, which
+      # (in order):
+      # * Combines *ALL* Coverage.py-specific ".coverage.*" files emitted by
+      #   test-specific "tox" environments previously run by the "tests" job
+      #   above into a single ".coverage" file.
+      # * Converts this ".coverage" file (which is *NOT* usable by Codecov) into
+      #   an equivalent ".coverage.xml" file (which *IS* usable by Codecov).
+      #
+      # To do so, we'd probably try something like this:
+      #    - name: 'Collecting test coverage...'
+      #      run: |
+      #        python3 -m tox finally
+      #
+      # Of course, that doesn't work. Why? Because this entire job is
+      # parallelized according to the matrix strategy defined above and thus
+      # run multiple times, once for each resulting entry of that strategy.
+      #
+      # Instead, we just forcefully embed the commands run by the "finally"
+      # environment into the default "tox" environment. It works.
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v5'
         with:

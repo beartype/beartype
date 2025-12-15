@@ -12,10 +12,10 @@ parsed).
 into *all* submodules of this subpackage.
 
 See Also
-----------
+--------
 https://github.com/pytest-dev/pytest-asyncio/blob/master/pytest_asyncio/plugin.py
     :mod:`pytest` plugin strongly inspiring this implementation. Despite its
-    popularity,, pytest-asyncio is mostly unmaintained, poorly commented and
+    popularity, pytest-asyncio is mostly unmaintained, poorly commented and
     documented, overly obfuscatory, has an extreme number of unresolved issues
     and unmerged pull requests, and just generally exhibits code smells.
 '''
@@ -43,7 +43,7 @@ from warnings import (
 
 # ....................{ HOOKS ~ configure                  }....................
 @hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
+def pytest_pyfunc_call(pyfuncitem: 'pytest.Function') -> None:
     '''
     Hook wrapper called immediately *before* calling the passed test function.
 
@@ -77,13 +77,13 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
     test_func = pyfuncitem.obj
 
     # If this test function is an asynchronous coroutine function (i.e.,
-    # callable declared with "async def" containing *NO* "yield"
+    # callable declared with "async def" whose body contains *NO* "yield"
     # expressions)...
     #
     # Note that we intentionally prefer calling this well-tested tester of the
     # well-tested "inspect" module rather than our comparable
-    # beartype._util.func.utilfunctest.is_func_coro() tester, which
-    # is hopefully but *NOT* necessarily known to be working here.
+    # beartype._util.func.utilfunctest.is_func_coro() tester, which is only
+    # hopefully (but *NOT* necessarily) known to be working here.
     if iscoroutinefunction(test_func):
         @wraps(test_func)
         def test_func_synchronous(*args, **kwargs):

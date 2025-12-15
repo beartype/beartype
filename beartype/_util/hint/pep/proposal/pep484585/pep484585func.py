@@ -130,35 +130,6 @@ def reduce_hint_pep484585_func_return(
         # "Coroutine[None, None, {hint}]".
     # Else, the decorated callable is *NOT* a coroutine.
     #
-    # If the decorated callable is an asynchronous generator...
-    elif is_func_async_generator(func):
-        # If this hint is neither...
-        if not (
-            # A PEP-compliant type hint acceptable as the return annotation of
-            # an synchronous generator *NOR*...
-            hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
-            # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
-            # a subclass of that ABC...
-            is_type_subclass(hint, AsyncGenerator)
-        # Then this hint is semantically invalid as the return annotation of
-        # this callable. In this case, raise an exception.
-        ):
-            _die_of_hint_return_invalid(
-                func=func,
-                exception_suffix=(
-                    ' (i.e., expected either '
-                    'collections.abc.AsyncGenerator[YieldType, SendType], '
-                    'collections.abc.AsyncIterable[YieldType], '
-                    'collections.abc.AsyncIterator[YieldType], '
-                    'typing.AsyncGenerator[YieldType, SendType], '
-                    'typing.AsyncIterable[YieldType], or '
-                    'typing.AsyncIterator[YieldType] '
-                    'type hint).'
-                ),
-            )
-        # Else, this hint is valid as the return annotation of this callable.
-    # Else, the decorated callable is *NOT* an asynchronous generator.
-    #
     # If the decorated callable is a synchronous generator...
     elif is_func_sync_generator(func):
         # If this hint is neither...
@@ -168,7 +139,9 @@ def reduce_hint_pep484585_func_return(
             hint_sign in HINT_SIGNS_RETURN_GENERATOR_SYNC or
             # The "collections.abc.Generator" abstract base class (ABC) or a
             # subclass of that ABC...
-            is_type_subclass(hint, Generator)
+            is_type_subclass(hint, Generator) or
+            # The ignorable "object" superclass...
+            hint is object
         # Then this hint is semantically invalid as the return annotation of
         # this callable. In this case, raise an exception.
         ):
@@ -180,9 +153,40 @@ def reduce_hint_pep484585_func_return(
                     'collections.abc.Iterable[YieldType], '
                     'collections.abc.Iterator[YieldType], '
                     'typing.Generator[YieldType, SendType, ReturnType], '
-                    'typing.Iterable[YieldType], or '
-                    'typing.Iterator[YieldType] '
-                    'type hint).'
+                    'typing.Iterable[YieldType], '
+                    'typing.Iterator[YieldType], or '
+                    'typing.Any type hint).'
+                ),
+            )
+        # Else, this hint is valid as the return annotation of this callable.
+    # Else, the decorated callable is *NOT* a synchronous generator.
+    #
+    # If the decorated callable is an asynchronous generator...
+    elif is_func_async_generator(func):
+        # If this hint is neither...
+        if not (
+            # A PEP-compliant type hint acceptable as the return annotation of
+            # an synchronous generator *NOR*...
+            hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
+            # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
+            # a subclass of that ABC *NOR*...
+            is_type_subclass(hint, AsyncGenerator) or
+            # The ignorable "object" superclass...
+            hint is object
+        # Then this hint is semantically invalid as the return annotation of
+        # this callable. In this case, raise an exception.
+        ):
+            _die_of_hint_return_invalid(
+                func=func,
+                exception_suffix=(
+                    ' (i.e., expected either '
+                    'collections.abc.AsyncGenerator[YieldType, SendType], '
+                    'collections.abc.AsyncIterable[YieldType], '
+                    'collections.abc.AsyncIterator[YieldType], '
+                    'typing.AsyncGenerator[YieldType, SendType], '
+                    'typing.AsyncIterable[YieldType], '
+                    'typing.AsyncIterator[YieldType], or '
+                    'typing.Any type hint).'
                 ),
             )
         # Else, this hint is valid as the return annotation of this callable.

@@ -56,7 +56,7 @@ def test_nuitka(capsys, tmp_path: 'pathlib.Path') -> None:
     )
     from beartype_test._util.os.pytosshell import shell_quote
     from beartype_test._util.path.pytpathtest import (
-        get_test_func_data_lib_nuitka_file)
+        get_test_func_data_external_nuitka_file)
 
     # ....................{ COMMAND                        }....................
     #FIXME: "nuitka" occasionally attempts to download external third-party
@@ -89,7 +89,7 @@ def test_nuitka(capsys, tmp_path: 'pathlib.Path') -> None:
 
         # Absolute filename of a minimal-length example (MLE) leveraging this
         # project to be compiled by "nuitka".
-        str(get_test_func_data_lib_nuitka_file()),
+        str(get_test_func_data_external_nuitka_file()),
     )
 
     # With pytest's default capturing of standard output and error temporarily

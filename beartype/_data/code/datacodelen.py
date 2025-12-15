@@ -4,13 +4,13 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **magic Python expression substrings** (i.e., string constants
-intended to be embedded in dynamically generated Python expressions).
+Project-wide **Python expression-specific magic numbers** (i.e., integer
+constants describing dynamically generated Python expressions).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ CODE ~ operator                    }....................
+# ....................{ INTEGERS                           }....................
 LINE_RSTRIP_INDEX_AND = -len(' and')
 '''
 Negative index relative to the end of any arbitrary newline-delimited Python

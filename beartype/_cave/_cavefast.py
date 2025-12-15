@@ -526,11 +526,11 @@ Caveats
 **This is not the type of generator callables** but rather the type implicitly
 created and *returned* by these callables. Since these callables are simply
 callables subject to syntactic sugar, the type of these callables is simply
-:data:`CallableTypes`.
+:data:`.CallableTypes`.
 
 See Also
 --------
-:class:`GeneratorCType`
+:class:`.GeneratorCType`
     Subtype of all C-based generators.
 '''
 

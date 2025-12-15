@@ -21,11 +21,6 @@
 # https://coverage.readthedocs.io/en/latest/config.html
 #     "coverage" documentation on this file.
 
-# ....................{ TODO                                }...................
-#FIXME: Generalize to combine coverage reports for Python subprocesses. In
-#theory, doing should be somewhat trivial. See also:
-#    https://coverage.readthedocs.io/en/latest/subprocess.html#id1
-
 # ....................{ RUN                                 }...................
 # Low-level settings configuring how coverage is measured.
 [run]
@@ -56,6 +51,37 @@ omit = beartype_test/*
 #
 # See also: https://coverage.readthedocs.io/en/latest/branch.html#branch
 branch = True
+
+# Whitespace-delimited list of the names of all coverage-specific monkey patches
+# to be applied to the active Python interpreter as a means of improving
+# coverage measurement. Each patch monkey-patches a corresponding Python feature
+# that *COULD* interfere with coverage by injecting coverage-specific code to
+# collect the correct data.
+#
+# The "subprocess" patch collects coverage across Python subprocesses -- which,
+# for safety, is *NOT* enabled by default. This patch:
+# * Configures the parent Python process to extend coverage to subprocesses
+#   created by the standard "subprocess" submodule, the os.system() call, and
+#   one of the execv() or spawnv() family of functions. Note that the exec*e()
+#   and spawn*e() family of functions require additional handling.
+# * Implicitly enables the "parallel = True" setting, which thus need *NOT* be
+#   explicitly enabled below. *ACTUALLY, THAT'S A HUGE LIE.* Ugh!
+# * Requires combining data files before reporting.
+#
+# See also upstream documentation on:
+# * This "patch" setting:
+#   https://coverage.readthedocs.io/en/latest/config.html#config-run-patch
+# * Python subprocess coverage:
+#   https://coverage.readthedocs.io/en/latest/subprocess.html
+# * Coverage data file combining:
+#   https://coverage.readthedocs.io/en/latest/commands/cmd_combine.html#cmd-combine
+patch = subprocess
+
+# Uniquify the ".coverage" filename to be output by appending machine- and
+# (sub)process-specific metadata to that filename. Oddly, Coverage.py requires
+# this setting to be explicitly set despite official documentation claiming that
+# setting "patch = subprocess" implicitly enables this setting. It does not.
+parallel = True
 
 # ....................{ REPORT                              }...................
 # High-level settings configuring how coverage reports measurements.

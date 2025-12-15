@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkmagic import (
+from beartype._data.code.datacodename import (
     ARG_NAME_CHECK_META,
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
@@ -32,7 +32,7 @@ CODE_CHECKER_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
 ):'''
 '''
 Code snippet declaring the signature of all type-checking tester functions
-created by the :func:`beartype._check.checkmagic.make_func_tester` factory.
+created by the :func:`beartype._data.code.datacodename.make_func_tester` factory.
 
 Note that:
 

@@ -49,19 +49,21 @@ class BeartypeSourceFileLoader(SourceFileLoader):
     importation of that package or module, complete with a reference back to
     this originating loader).
 
-    The :func:`beartype_package` function injects a low-level **import path
-    hook** (i.e., factory closure instantiating this class as an item of the
-    standard :mod:`sys.path_hooks` list) to the front of that list. When called
-    by a higher-level parent **import metapath hook** (i.e., object suitable for
-    use as an item of the standard :mod:`sys.meta_path` list), that closure:
+    The low-level :func:`beartype.claw._package.clawpkgmain.hook_packages`
+    import hook underlying *all* high-level :mod:`beartype.claw` import hooks
+    injects a lower-level **import path hook** (i.e., factory closure
+    instantiating this class as an item of the standard :mod:`sys.path_hooks`
+    list) to the front of that list. When called by a higher-level parent
+    **import metapath hook** (i.e., object suitable for use as an item of the
+    standard :mod:`sys.meta_path` list), that import path hook closure:
 
     #. Instantiates one instance of the standard
        :class:`importlib._bootstrap_external.FileFinder` class for each
        **imported Python package** (i.e., package on the :mod:`sys.path` list).
        The :meth:``importlib._bootstrap_external.FileFinder.find_spec` method of
-       that instance then returns this :class:`BeartypeSourceFileLoader` class
-       uninstantiated for each **imported Python package submodule** (i.e.,
-       submodule directly contained in that package).
+       that instance then returns this uninstantiated
+       :class:`.BeartypeSourceFileLoader` class for each **imported Python
+       package submodule** (i.e., submodule directly contained in that package).
     #. Adds a new key-value pair to the standard :mod:`sys.path_importer_cache`
        dictionary, whose:
 

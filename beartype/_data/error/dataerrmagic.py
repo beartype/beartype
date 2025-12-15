@@ -79,3 +79,13 @@ those fragments to the lower-level callables raising exception messages
 containing those fragments. The indirect approach avoids percolation, thus
 streamlining the implementations of all callables involved. Phew!
 '''
+
+
+EXCEPTION_PREFIX_DEFAULT = f'{EXCEPTION_PLACEHOLDER}default '
+'''
+Non-human-readable source substring to be globally replaced by a human-readable
+target substring in the messages of memoized exceptions passed to the
+:func:`reraise_exception` function caused by violations raised when
+type-checking the default values of optional parameters for
+:func:`beartype.beartype`-decorated callables.
+'''

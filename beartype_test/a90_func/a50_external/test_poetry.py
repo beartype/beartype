@@ -46,7 +46,29 @@ def test_poetry(
         run_command_forward_output)
     from beartype_test._util.path.pytpathmain import get_main_dir
     from beartype_test._util.path.pytpathtest import (
-        get_test_func_data_lib_poetry_dir)
+        get_test_func_data_external_poetry_dir)
+
+    # ....................{ CONSTANTS                      }....................
+    # Tuple of all shell words with which to run the external "poetry" command.
+    POETRY_ARGS = get_interpreter_command_words() + (
+        # Fully-qualified name of the "poetry" package to be run.
+        '-m', 'poetry',
+
+        # Instruct Poetry to run the "install" subcommand.
+        'install',
+
+        # Force Poetry to implicitly answer "Yes" to all interactive queries.
+        '--no-interaction',
+
+        # *ONLY* install beartype as a mandatory runtime dependency of this
+        # Poetry project. Do *NOT* bother installing this Poetry project itself.
+        '--no-root',
+
+        # For safety, simplicity, and efficiency, only pretend to install this
+        # Poetry project. Thankfully, pretending suffices to validate that
+        # Poetry and @beartype play nice with one another.
+        '--dry-run',
+    )
 
     # ....................{ LOCALS                         }....................
     # Path object encapsulating the absolute dirname of the top-level directory
@@ -64,12 +86,12 @@ def test_poetry(
     # directory containing an empty Poetry-managed project whose
     # "pyproject.toml" file requires "beartype" as a Poetry-specific mandatory
     # runtime dependency.
-    project_dir_src = get_test_func_data_lib_poetry_dir()
+    project_dir_src = get_test_func_data_external_poetry_dir()
 
     # Path object encapsulating the absolute dirname of this same Poetry project
     # copied into this temporary directory. Although a symbolic link *MIGHT*
-    # suffice as well, we lack in Poetry. In all likelihood, Poetry expects to
-    # be able to safely modify the contents of this directory.
+    # suffice as well, we lack faith in Poetry. In all likelihood, Poetry
+    # expects to be able to safely modify the contents of this directory.
     project_dir_trg = tmp_path / 'poetry'
 
     # ....................{ PATHS                          }....................
@@ -83,25 +105,6 @@ def test_poetry(
     monkeypatch.chdir(project_dir_trg)
 
     # ....................{ COMMANDS                       }....................
-    # # Tuple of all shell words with which to run the external "poetry" command.
-    POETRY_ARGS = get_interpreter_command_words() + (
-        # Fully-qualified name of the "poetry" package to be run.
-        '-m', 'poetry',
-
-        # Instruct Poetry to run the "install" subcommand.
-        'install',
-
-        # Force Poetry to implicitly answer "Yes" to all interactive queries.
-        '--no-interaction',
-
-        # *ONLY* install beartype as a mandatory runtime dependency of this
-        # Poetry project. Do *NOT* bother installing this Poetry project itself.
-        '--no-root',
-
-        #FIXME: Let's see if this suffices. If so, wonderful! If not, we sigh.
-        '--dry-run',
-    )
-
     # Run the "poetry" command in the current ${PATH} with these options and
     # arguments, raising an exception on subprocess failure while forwarding
     # all standard output and error output by this subprocess to the

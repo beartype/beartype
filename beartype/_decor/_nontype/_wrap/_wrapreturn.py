@@ -13,31 +13,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    NoReturn,
-)
 from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.convert.convmain import sanify_hint_root_func
-from beartype._check.metadata.hint.hintsane import (
-    HINT_SANE_IGNORABLE,
-    # HintSane,
-)
+from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
+from beartype._data.code.pep.datacodepep484 import PEP484_CODE_CHECK_NORETURN
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
-from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import LexicalScope
-from beartype._decor._nontype._wrap.wrapsnip import (
-    CODE_RETURN_CHECK_PREFIX,
-    CODE_RETURN_CHECK_SUFFIX,
-    PEP484_CODE_CHECK_NORETURN,
-)
+from beartype._data.typing.datatypingport import Hint
+from beartype._data.code.datacodefunc import CODE_CALL_CHECKED_format
 from beartype._decor._nontype._wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
@@ -45,6 +36,7 @@ from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.kind.maplike.utilmapset import update_mapping
 from beartype._util.text.utiltextprefix import prefix_callable_return
 from beartype._data.kind.datakindiota import SENTINEL
+from typing import NoReturn
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
@@ -115,7 +107,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     # Attempt to...
     try:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
-        # during this logic for subsequent "playrback" below...
+        # during this logic for subsequent "playback" below...
         with catch_warnings(record=True) as warnings_issued:
             # Sanified hint metadata sanified from this possibly insane return.
             # If this hint is unsupported by @beartype, raise an exception.
@@ -214,23 +206,12 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                     hint_refs_type_basename=hint_refs_type_basename,
                 )
 
-                #FIXME: [SPEED] Optimize the following two string munging
-                #operations into a single string-munging operation resembling:
-                #    func_wrapper_code = CODE_RETURN_CHECK.format(
-                #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
-                #        check_expr=code_return_check_pith_unmemoized,
-                #    )
-                #
-                #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
-                #resemble:
-                #    CODE_RETURN_CHECK = (
-                #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
-                #        f'{CODE_RETURN_CHECK_SUFFIX}'
-                #    )
-
-                # Code snippet type-checking this return.
-                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
+                # Code snippets prefixing and suffixing the type-checking of
+                # this return.
+                code_return_check_prefix = CODE_CALL_CHECKED_format(
                     func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
+                code_return_check_suffix = (
+                    decor_meta.func_wrapper_code_return_checked)
 
                 # Full code snippet to be returned, consisting of:
                 # * Calling the decorated callable and localize its return
@@ -240,7 +221,7 @@ def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
                 func_wrapper_code = (
                     f'{code_return_check_prefix}'
                     f'{code_return_check}'
-                    f'{CODE_RETURN_CHECK_SUFFIX}'
+                    f'{code_return_check_suffix}'
                 )
             # Else, this hint is ignorable.
             # if not func_wrapper_code: print(f'Ignoring {decor_meta.func_name} return hint {repr(hint)}...')

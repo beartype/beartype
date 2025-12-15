@@ -41,7 +41,7 @@ from beartype.roar import (
     BeartypeDecorHintPepUnsupportedException,
 )
 from beartype.typing import Optional
-from beartype._check.checkmagic import (
+from beartype._data.code.datacodename import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PITH_ROOT,
 )
@@ -65,7 +65,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._check.metadata.hint.hintsane import HintSane
 from beartype._conf.confmain import BeartypeConf
-from beartype._data.code.datacodemagic import (
+from beartype._data.code.datacodelen import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )

@@ -191,7 +191,7 @@ def _test_func_in_subprocess(test_func: Callable) -> object:
 
     # Monkey-patch the unbuffered standard error and output streams of this
     # subprocess with buffered equivalents, ensuring that pytest will reliably
-    # capture *all* standard error and output emitted by running this test.
+    # capture *ALL* standard error and output emitted by running this test.
     sys.stderr = _UnbufferedOutputStream(sys.stderr)
     sys.stdout = _UnbufferedOutputStream(sys.stdout)
 

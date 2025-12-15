@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkmagic import VAR_NAME_PITH_PREFIX
+from beartype._data.code.datacodename import VAR_NAME_PITH_PREFIX
 
 # ....................{ PRIVATE ~ subclasses               }....................
 class _HintIndexToHintPlaceholder(dict):

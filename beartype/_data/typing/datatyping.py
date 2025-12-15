@@ -69,6 +69,14 @@ from types import (
     FrameType,
     GeneratorType,
 )
+from typing import TYPE_CHECKING
+
+#FIXME: Doesn't seem to help. mypy 0.19.0 appears to busted, sadly. We sigh.
+# # If a static type-checker is type-checking us, import circular imports. Ugh!
+# if TYPE_CHECKING:
+#     from beartype._check.forward.reference.fwdrefabc import (
+#         BeartypeForwardRefABC)
+# # Else, Python is running us. Bless ye, Python. Bless ye.
 
 # ....................{ AST                                }....................
 NodeCallable = FunctionDef | AsyncFunctionDef
@@ -667,8 +675,10 @@ metadata, as trivially provided by the length of this tuple.
 '''
 
 # ....................{ MODULE ~ beartype                  }....................
+#FIXME: mypy used to type-check this properly. Pyright never did. But even mypy
+#1.19.0 no longer accepts this. Weird stuff. Oh, well... who cares, huh?
 BeartypeForwardRef = Type[
-    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']  # pyright: ignore
+    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']   # type: ignore[name-defined]
 '''
 PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
 subclass of the abstract

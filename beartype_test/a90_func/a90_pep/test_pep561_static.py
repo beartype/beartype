@@ -44,16 +44,15 @@ from beartype_test._util.mark.pytskip import (
 #   package against "mypy", explicitly exercising this package against "mypy"
 #   yet again would only needlessly complicate CI workflows and consume excess
 #   CI minutes for *NO* gain.
-#
-# Note: As of mypy 1.18.2+, mypy is fully compatible with PyPy 3.11+. Earlier
-# versions of mypy were incompatible with PyPy due to dependencies on typed-ast
-# and internal CPython APIs. See:
+# * The active Python interpreter is *NOT* PyPy. Mypy is currently incompatible
+#   with PyPy for inscrutable reasons that should presumably be fixed at some
+#   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
 @skip_unless_package('mypy')
 @skip_if_ci()
 def test_pep561_mypy() -> None:
     '''
-    Functional test testing this project's compliance with :pep:`561` by
+    Integration test testing this project's compliance with :pep:`561` by
     externally running :mod:`mypy` (i.e., the most popular third-party static
     type checker as of this test) against this project's top-level package.
     '''
@@ -63,7 +62,9 @@ def test_pep561_mypy() -> None:
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import (
-        run_command_return_stdout_stderr)
+        run_command_forward_output,
+        # run_command_return_stdout_stderr,
+    )
     from beartype_test._util.path.pytpathmain import (
         get_main_mypy_config_file,
         get_main_package_dir,
@@ -84,54 +85,61 @@ def test_pep561_mypy() -> None:
         str(get_main_package_dir()),
     )
 
+    #FIXME: Preserved in case we need to resurrect more fine-grained mypy output
+    #parsing. For the moment, the trivial solution behaves as expected. *shrug*
+    # # Run this command, raising an exception on subprocess failure while
+    # # forwarding all standard output and error output by this subprocess to the
+    # # standard output and error file handles of the active Python process.
+    # #
+    # # Note that we intentionally do *NOT* assert that call to have exited with
+    # # a successful exit code. Although mypy does exit with success on local
+    # # developer machines, it inexplicably does *NOT* under remote GitHub
+    # # Actions-based continuous integration despite "mypy_stderr" being empty.
+    # # Ergo, we conveniently ignore the former in favour of the latter.
+    # mypy_stdout, mypy_stderr = run_command_return_stdout_stderr(
+    #     command_words=MYPY_ARGS)
+    #
+    # # ....................{ ASSERT                         }....................
+    # # If "mypy" emitted *NO* warnings or errors to either standard
+    # # output or error.
+    # #
+    # # Note that "mypy" predominantly emits both warnings and errors to "stdout"
+    # # rather than "stderr", despite this contravening sane POSIX semantics.
+    # # They did this because some guy complained about not being able to
+    # # trivially grep "mypy" output, regardless of the fact that redirecting
+    # # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
+    # # break everything just because some guy can't shell. See also:
+    # #     https://github.com/python/mypy/issues/1051
+    # #
+    # # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
+    # # Unfortunately, doing so is complicated by the failure of "mypy" to
+    # # conform to sane POSIX semantics. Specifically:
+    # # * If "mypy" succeeds, "mypy" emits to "stdout" a single line resembling:
+    # #       Success: no issues found in 83 source files
+    # # * If "mypy" fails, "mypy" emits to "stdout" *ANY* other line(s).
+    # #
+    # # Ergo, asserting this string to start with "Success:" suffices. Note this
+    # # assertion depends on "mypy" internals and is thus fragile, but that we
+    # # have *NO* sane alternative. Specifically, if either...
+    # if (
+    #     # Mypy emitted one or more characters to standard error *OR*...
+    #     mypy_stderr or
+    #     # Mypy emitted standard output that does *NOT* contain this substring...
+    #     'Success: no issues found' not in mypy_stdout
+    # ):
+    #     # Print this string to standard output for debuggability, which pytest
+    #     # then captures and reprints on this subsequent assertion failure.
+    #     print(mypy_stdout)
+    #
+    #     # Force an unconditional assertion failure.
+    #     assert False
+    # # Else, "mypy" emitted *NO* warnings or errors to either standard output or
+    # # error. In this case, encourage this test to succeed by reducing to a noop.
+
     # Run this command, raising an exception on subprocess failure while
     # forwarding all standard output and error output by this subprocess to the
     # standard output and error file handles of the active Python process.
-    #
-    # Note that we intentionally do *NOT* assert that call to have exited with
-    # a successful exit code. Although mypy does exit with success on local
-    # developer machines, it inexplicably does *NOT* under remote GitHub
-    # Actions-based continuous integration despite "mypy_stderr" being empty.
-    # Ergo, we conveniently ignore the former in favour of the latter.
-    mypy_stdout, mypy_stderr = run_command_return_stdout_stderr(
-        command_words=MYPY_ARGS)
-
-    # ....................{ ASSERT                         }....................
-    # If "mypy" emitted *NO* warnings or errors to either standard
-    # output or error.
-    #
-    # Note that "mypy" predominantly emits both warnings and errors to "stdout"
-    # rather than "stderr", despite this contravening sane POSIX semantics.
-    # They did this because some guy complained about not being able to
-    # trivially grep "mypy" output, regardless of the fact that redirecting
-    # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
-    # break everything just because some guy can't shell. See also:
-    #     https://github.com/python/mypy/issues/1051
-    #
-    # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
-    # Unfortunately, doing so is complicated by the failure of "mypy" to
-    # conform to sane POSIX semantics. Specifically:
-    # * If "mypy" succeeds, "mypy" emits to "stdout" a single line resembling:
-    #       Success: no issues found in 83 source files
-    # * If "mypy" fails, "mypy" emits to "stdout" *ANY* other line(s).
-    #
-    # Ergo, asserting this string to start with "Success:" suffices. Note this
-    # assertion depends on "mypy" internals and is thus fragile, but that we
-    # have *NO* sane alternative. Specifically, if either...
-    if (
-        # Mypy emitted one or more characters to standard error *OR*...
-        mypy_stderr or
-        # Mypy emitted standard output that does *NOT* contain this substring...
-        'Success: no issues found' not in mypy_stdout
-    ):
-        # Print this string to standard output for debuggability, which pytest
-        # then captures and reprints on this subsequent assertion failure.
-        print(mypy_stdout)
-
-        # Force an unconditional assertion failure.
-        assert False
-    # Else, "mypy" emitted *NO* warnings or errors to either standard output or
-    # error. In this case, encourage this test to succeed by reducing to a noop.
+    run_command_forward_output(command_words=MYPY_ARGS)
 
 # ....................{ TESTS ~ pyright                    }....................
 # If the external third-party "pyright" command is *NOT* pathable (i.e., an
@@ -167,12 +175,12 @@ def test_pep561_mypy() -> None:
 @skip_if_ci()
 def test_pep561_pyright(monkeypatch) -> None:
     '''
-    Functional test testing this project's compliance with :pep:`561` by
+    Integration test testing this project's compliance with :pep:`561` by
     externally running :mod:`pyright` (i.e., the most popular third-party static
     type checker as of this test) against this project's top-level package.
 
     See Also
-    ----------
+    --------
     :mod:`pytest_pyright`
         Third-party :mod:`pytest` plugin automating this integration. Since this
         integration is trivial *and* since :mod:`beartype` assiduously avoids

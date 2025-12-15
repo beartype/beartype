@@ -195,6 +195,11 @@ dependencies = []
 #     https://stackoverflow.com/a/72524073/2809027
 [project.optional-dependencies]
 
+#FIXME: Most of these "extras" should be transformed into PEP 735-compliant
+#"[dependency-groups]" instead. Since the current approach "just works," we
+#can't really be bothered to do the right thing at the moment. See also:
+#    https://peps.python.org/pep-0735
+
 # GitHub Pages (GHP)-specific documentation-time package dependencies required
 # to automatically build documentation for this project from GitHub's homegrown
 # hosting service.
@@ -353,9 +358,8 @@ test-tox = [
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # ....................{ CORE                           }....................
-    # A relatively modern version of "pytest" is required. It's probably quite
-    # old by now. I feel depressed just reading comments like this. Dismantled,
-    # this is:
+    # A relatively modern version of "pytest" is required. It's old by now. I
+    # feel depressed just reading comments like this. Dismantled, this is:
     # * "pytest 6.2.0" first publicized the "pytest.MonkeyPatch" object, which
     #   previously was *ONLY* accessible via the "monkeypatch" fixture. Now,
     #   this object is conveniently directly importable.
@@ -412,6 +416,10 @@ test-tox = [
     # Required by optional Celery-specific integration tests. Note that Celery
     # requires Click.
     "celery",
+
+    # ....................{ CLI ~ exe                      }....................
+    # Required by optional PyInstaller-specific integration tests.
+    "pyinstaller",
 
     # ....................{ DATABASE                       }....................
     # Required by optional Redis-specific integration tests.
@@ -579,7 +587,6 @@ test-tox = [
     # Required by optional FastMCP-specific integration tests. Note that FastMCP
     # requires Pydantic.
      """fastmcp; \
-       python_version > '3.9.0' and \
        python_version < '3.14.0' and \
        platform_python_implementation != 'PyPy'\
     """,
@@ -650,8 +657,8 @@ test = [
     # Tox-specific test-time dependencies.
     "beartype[test-tox,test-tox-coverage]",
 
-    # A relatively modern version of "tox" is required. It's probably quite old
-    # by now. I feel depressed just reading comments like this...
+    # A relatively modern version of "tox" is required. It's quite old by now. I
+    # feel depressed just reading comments like this...
     'tox >=3.20.1',
 ]
 

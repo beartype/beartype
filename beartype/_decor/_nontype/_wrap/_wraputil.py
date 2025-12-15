@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.checkmagic import CODE_PITH_ROOT_NAME_PLACEHOLDER
+from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER
 from beartype._check.code.codescope import add_func_scope_ref
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,

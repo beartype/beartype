@@ -440,7 +440,7 @@ def iter_func_args(
 
     # ..................{ LOCALS ~ len                       }..................
     # Number of both optional and mandatory positional-only parameters accepted
-    # by that callable,  standardized under Python >= 3.8 by PEP 570.
+    # by that callable, standardized under Python >= 3.8 by PEP 570.
     args_len_posonly = func_codeobj.co_posonlyargcount  # type: ignore[attr-defined]
     assert args_len_posonly_or_flex >= args_len_posonly, (
         f'Positional-only and flexible argument count {args_len_posonly_or_flex} < '

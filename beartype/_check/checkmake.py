@@ -18,7 +18,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.checkmagic import (
+from beartype._data.code.datacodename import (
     ARG_NAME_CONF,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GETRANDBITS,
