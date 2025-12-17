@@ -281,6 +281,27 @@ Arbitrary **type alias** (i.e., global attribute whose value is a composite type
 hint defined as a standard type hint subscripted by an arbitrary type).
 '''
 
+# ....................{ FUNCTIONS ~ nested class           }....................
+# Arbitrary functions annotated by PEP-compliant forward references to nested
+# classes (e.g., "Outer.Inner") inside generic containers. This exercises the
+# nested class resolution logic in _make_forwardref_subtype().
+# See: https://github.com/beartype/beartype/issues/603
+
+# Import the class with a nested class for testing nested forward references.
+from beartype_test.a00_unit.data.data_type import Class as ClassWithNested
+
+
+@beartype
+def rugged_and_dark_winding(
+    among_the_springs: 'List[ClassWithNested.NestedClass]',
+) -> 'List[ClassWithNested.NestedClass]':
+    '''
+    Decorated function annotated by a forward reference to a nested class
+    inside a generic container (i.e., ``List['Outer.Inner']``).
+    '''
+
+    return among_the_springs
+
 # ....................{ CLOSURES                           }....................
 #FIXME: Technically, @beartype *MAYBE* could actually resolve nested forward
 #references by dynamically inspecting the call stack (depending on whether
