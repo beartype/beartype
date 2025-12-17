@@ -61,14 +61,6 @@ Most runners accept the same optional keyword arguments accepted by the
   indefinitely.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: The separate "pytcmdexit" submodule is nonsensical overkill. Refactor as
-#follows, please:
-#* Shift the "SUCCESS" and "FAILURE_DEFAULT" exit codes here.
-#* Refactor the single call to is_failure() below to just test against
-#  ""FAILURE_DEFAULT" directly.
-#* Remove that submodule entirely.
-
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import CommandWords
 from collections.abc import (
@@ -77,15 +69,31 @@ from collections.abc import (
 )
 from os import environ
 from subprocess import (
+    PIPE,
     CalledProcessError,
     CompletedProcess,
     TimeoutExpired,
-    check_output as subprocess_check_output,
     run as subprocess_run,
 )
 from typing import Optional
 
-# ....................{ GLOBALS                            }....................
+# ....................{ CONSTANTS ~ int : status           }....................
+STATUS_SUCCESS = 0
+'''
+Exit status signifying a process to have terminated successfully.
+'''
+
+
+STATUS_FAILURE_DEFAULT = 1
+'''
+Exit status typically signifying a process to have terminated prematurely with
+a fatal error.
+
+Although any exit status in the range ``[1, 255]`` signifies failure, this
+particular exit status is the most common and thus preferred default.
+'''
+
+# ....................{ CONSTANTS ~ int : buffer           }....................
 BUFFER_SIZE_DEFAULT = -1
 '''
 Default subprocess buffer size for the current platform (synonymous with the
@@ -154,9 +162,6 @@ def run_command_forward_output(
         If the subprocess running this command report non-zero exit status.
     '''
 
-    # Defer test-specific imports.
-    from beartype_test._util.command.pytcmdexit import is_failure
-
     # 0-based exit status reported by running this command.
     exit_status = run_command_forward_output_return_status(
         command_words=command_words, popen_kwargs=popen_kwargs)
@@ -166,7 +171,7 @@ def run_command_forward_output(
     # rather than explicitly call that function. The latter approach would
     # require duplicating logic between this and the
     # run_command_forward_output_return_status() runner called above.
-    if is_failure(exit_status):
+    if exit_status == STATUS_FAILURE_DEFAULT:
         raise CalledProcessError(exit_status, command_words)
     # Else, this command succeeded.
 
@@ -259,15 +264,41 @@ def run_command_forward_stderr_return_stdout(
         If the subprocess running this command report non-zero exit status.
     '''
 
+    # If these keyword arguments are empty, default to the empty dictionary
+    # *BEFORE* setting dictionary keys below.
+    if popen_kwargs is None:
+        popen_kwargs = {}
+    # Else, these keyword arguments are non-empty.
+
+    # In either case, these keyword arguments are now a dictionary. Assert this.
+    assert isinstance(popen_kwargs, Mapping), (
+        f'{repr(popen_kwargs)} not mapping.')
+
+    # Capture *ONLY* standard output emitted by this command. Note that this
+    # idiom, although obscure and unreadable, is the official means of doing so
+    # detailed in the "subprocess" documentation.
+    popen_kwargs.setdefault('stdout', PIPE)
+
+    # Instruct the underlying subprocess.run() function to raise an exception
+    # when this command fails with non-zero exit status.
+    popen_kwargs.setdefault('check', True)
+
+    # Sanitize these arguments *AFTER* setting function-specific defaults above.
     # Sanitize these arguments.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
 
-    # Capture this command's stdout, raising an exception on command failure
-    # (including failure due to an expired timeout).
-    command_stdout = subprocess_check_output(command_words, **popen_kwargs)
+    # "CompletedProcess" object encapsulating the result of running this shell
+    # command in a subprocess of the active Python interpreter, raising an
+    # exception on command failure (including failure due to a timeout).
+    command_result = _run_command(
+        command_words=command_words, popen_kwargs=popen_kwargs)
 
-    # Return this stdout, stripped of all trailing newlines.
-    return command_stdout.rstrip('\n')
+    # Standard output emitted by this command, stripped of all trailing
+    # newlines.
+    command_stdout = command_result.stdout.rstrip('\n')
+
+    # Return this standard output.
+    return command_stdout
 
 # ....................{ RUNNERS ~ command : return         }....................
 def run_command_return_stdout_stderr(
@@ -295,11 +326,11 @@ def run_command_return_stdout_stderr(
 
     Returns
     -------
-    Tuple[str, str]
-        All standard output and error (in that order) captured from this
-        subprocess, stripped of all trailing newlines (as under most POSIX
-        shells) *and* decoded with the current locale's preferred encoding
-        (e.g., UTF-8).
+    tuple[str, str]
+        2-tuple ``(stdout, stderr)`` of all standard output and error (in that
+        order) captured from this subprocess, stripped of all trailing newlines
+        (as under most POSIX shells) *and* decoded with the current locale's
+        preferred encoding (e.g., UTF-8).
 
     Raises
     ------
@@ -317,18 +348,19 @@ def run_command_return_stdout_stderr(
     assert isinstance(popen_kwargs, Mapping), (
         f'{repr(popen_kwargs)} not mapping.')
 
-    # Enable capturing of both standard output and error.
-    popen_kwargs['capture_output'] = True
+    # Capture both standard output and error.
+    popen_kwargs.setdefault('capture_output', True)
 
-    # Enable raising of a "CalledProcessError" exception when this command
-    # reports non-zero exit status.
-    popen_kwargs['check'] = True
+    # Instruct the underlying subprocess.run() function to raise an exception
+    # when this command fails with non-zero exit status.
+    popen_kwargs.setdefault('check', True)
 
-    # Sanitize these arguments.
+    # Sanitize these arguments *AFTER* setting function-specific defaults above.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
 
-    # "subprocess.CompletedProcess" object encapsulating the result of running
-    # this shell command in a subprocess of the active Python interpreter.
+    # "CompletedProcess" object encapsulating the result of running this shell
+    # command in a subprocess of the active Python interpreter, raising an
+    # exception on command failure (including failure due to a timeout).
     command_result = _run_command(
         command_words=command_words, popen_kwargs=popen_kwargs)
 
@@ -462,6 +494,10 @@ def _init_popen_kwargs(
         keys=_INIT_POPEN_KWARGS_POPEN_KWARGS_NAMES_CLOSE_FDS_CONFLICTING,
     ):
         popen_kwargs.setdefault('close_fds', False)
+    # Else, this is any platform other than vanilla Windows *OR* the caller
+    # passed one or more keyword arguments that would prevent us from safely
+    # defaulting the "close_fds" parameter to false. In either case, preserve
+    # the "close_fds" parameter as is for safety.
 
     # Return these keyword arguments.
     return popen_kwargs
@@ -491,9 +527,6 @@ def _run_command(
         Object encapsulating the result of running this shell command.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype_test._util.command.pytcmdexit import FAILURE_DEFAULT
-
     # Object encapsulating the result of running this shell command in a
     # subprocess of the active Python interpreter.
     command_result: CompletedProcess = None
@@ -521,7 +554,7 @@ def _run_command(
         # Synthesize a new result object from this exception.
         command_result = CompletedProcess(
             args=command_words,
-            returncode=FAILURE_DEFAULT,
+            returncode=STATUS_FAILURE_DEFAULT,
             stdout=exception.output,  # <-- Non-orthogonality ahoy. What an API.
             stderr=exception.stderr,
         )
