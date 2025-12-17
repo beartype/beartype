@@ -159,6 +159,7 @@ def test_import_module_attr_or_sentinel() -> None:
     from beartype._util.module.utilmodimport import (
         import_module_attr_or_sentinel)
     from beartype._data.kind.datakindiota import SENTINEL
+    from beartype_test.a00_unit.data.data_type import Class
     from pytest import (
         raises,
         warns,
@@ -168,6 +169,9 @@ def test_import_module_attr_or_sentinel() -> None:
     # Fully-qualified name of a test-specific module defining attributes
     # intended to be dynamically imported below.
     MODULE_NAME = 'beartype_test.a00_unit.data.util.mod.data_utilmodule_good'
+
+    # Module containing Class with a NestedClass.
+    DATA_TYPE_MODULE = 'beartype_test.a00_unit.data.data_type'
 
     # ....................{ PASS                           }....................
     # Assert that passing this importer an arbitrary attribute name of an
@@ -203,6 +207,27 @@ def test_import_module_attr_or_sentinel() -> None:
     # unqualified name of a builtin type returns the sentinel.
     assert import_module_attr_or_sentinel(
         'attrbad', module_name=MODULE_NAME) is SENTINEL
+
+    # Test resolving a nested class via a dotted attribute path when a fallback
+    # module_name is provided. This exercises the fix for GitHub issue #603.
+    nested_class = import_module_attr_or_sentinel(
+        attr_name='Class.NestedClass',
+        module_name=DATA_TYPE_MODULE,
+    )
+    assert nested_class is Class.NestedClass
+
+    # Test the case where no fallback module_name is provided and the inferred
+    # module_name is not importable.
+    assert import_module_attr_or_sentinel(
+        attr_name='NotAModule.SomeClass',
+    ) is SENTINEL
+
+    # Assert that passing a dotted path where an intermediate component
+    # doesn't exist returns the sentinel.
+    assert import_module_attr_or_sentinel(
+        attr_name='Class.NonExistentNested',
+        module_name=DATA_TYPE_MODULE,
+    ) is SENTINEL
 
     # ....................{ FAIL                           }....................
     # Assert this function emits the expected warning when passed the
