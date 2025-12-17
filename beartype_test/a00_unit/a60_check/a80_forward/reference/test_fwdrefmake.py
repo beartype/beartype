@@ -16,6 +16,14 @@ This submodule unit tests the
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# NOTE: This module-scope import is required for the nested class forward
+# reference test below (see "PASS ~ nested" section). Frame inspection in
+# _make_forwardref_subtype() uses hasattr(module, 'Class') to find modules that
+# define a class. Function-local imports do NOT make the class a module
+# attribute, so we must import at module scope for the test to work.
+# See: https://github.com/beartype/beartype/issues/603
+from beartype_test.a00_unit.data.data_type import Class
+
 # ....................{ TESTS                              }....................
 def test_make_forwardref_indexable_subtype() -> None:
     '''
@@ -24,11 +32,14 @@ def test_make_forwardref_indexable_subtype() -> None:
     factory.
     '''
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import (
         BeartypeCallHintForwardRefException,
         BeartypeDecorHintForwardRefException,
+    )
+    from beartype._check.forward.reference.fwdrefmake import (
+        make_forwardref_indexable_subtype,
     )
     from beartype_test.a00_unit.data.check.forward.data_fwdref import (
         CLASS_BASENAME,
@@ -115,6 +126,40 @@ def test_make_forwardref_indexable_subtype() -> None:
     # Assert that this representation contains the expected substrings.
     for fwdref_repr_substr in FORWARDREF_REPR_SUBSTRS:
         assert fwdref_repr_substr in FORWARDREF_REPR
+
+    # ....................{ PASS ~ nested                  }....................
+    # Test nested class forward references where the first component is a class
+    # rather than a module. This exercises the frame inspection fallback in
+    # _make_forwardref_subtype.
+    #
+    # To trigger frame inspection, we pass a scope_name that CANNOT resolve
+    # "Class". The frame inspection code will iterate through the call stack
+    # and find this test module, which has "Class" imported above. It will then
+    # use this test module as the scope for resolving the nested class.
+
+    # A scope that does NOT define "Class", forcing frame inspection fallback.
+    UNRELATED_SCOPE = 'beartype._util.module.utilmodimport'
+
+    # Create a forward reference proxy to a nested class. Since UNRELATED_SCOPE
+    # cannot resolve "Class", the code must use frame inspection to find that
+    # this test module has "Class" imported.
+    forwardref_nested = make_forwardref_indexable_subtype(
+        scope_name=UNRELATED_SCOPE,
+        hint_name='Class.NestedClass',
+    )
+
+    # Assert the forward reference proxy has the expected attributes.
+    # The scope_name should have been updated to this test module's name
+    # by the frame inspection logic.
+    assert forwardref_nested.__name__ == 'NestedClass'
+    assert forwardref_nested.__name_beartype__ == 'Class.NestedClass'
+
+    # Assert the forward reference proxy resolves to the correct type.
+    assert forwardref_nested.__type_beartype__ is Class.NestedClass
+
+    # Assert isinstance checks work with the nested class forward reference.
+    nested_instance = Class.NestedClass()
+    assert isinstance(nested_instance, forwardref_nested)
 
     # ....................{ FAIL                           }....................
     # Assert that attempting to access an undefined dunder attribute of a

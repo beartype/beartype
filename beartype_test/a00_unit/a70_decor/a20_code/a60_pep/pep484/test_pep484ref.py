@@ -32,12 +32,14 @@ def test_pep484_ref_data() -> None:
     from beartype.roar import BeartypeCallHintReturnViolation
     from beartype_test.a00_unit.data.hint.data_hintref import (
         BeforeTheHurricane,
+        ClassWithNested,
         TheDarkestEveningOfTheYear,
         WithSluggishSurge,
         a_little_shallop,
         but_i_have_promises,
         its_fields_of_snow,
         of_easy_wind,
+        rugged_and_dark_winding,
         stopping_by_woods_on,
         the_dry_leaf,
         the_woods_are_lovely,
@@ -70,6 +72,12 @@ def test_pep484_ref_data() -> None:
         TheDarkestEveningOfTheYear)
     assert RUGGED_AND_DARK.or_where_the_secret_caves() is RUGGED_AND_DARK
     assert winding_among_the_springs(RUGGED_AND_DARK) is RUGGED_AND_DARK
+
+    # Test nested class forward references inside generic containers (e.g.,
+    # List['Outer.Inner']). This exercises the nested class resolution logic
+    # added to fix issue #603.
+    NESTED_LIST = [ClassWithNested.NestedClass(), ClassWithNested.NestedClass()]
+    assert rugged_and_dark_winding(NESTED_LIST) is NESTED_LIST
 
     # ..................{ FAIL                               }..................
     # Assert that calling a method violating its return annotated as a 2-tuple
