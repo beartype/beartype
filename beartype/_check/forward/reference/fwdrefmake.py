@@ -43,22 +43,22 @@ def make_forwardref_indexable_subtype(
     concrete subclass of the :class:`._BeartypeForwardRefIndexableABC` abstract
     base class (ABC) deferring the resolution of the unresolved type hint with
     the passed name, transparently permitting this type hint to be subscripted
-    by any arbitrary positional and keyword parameters).
+    by any arbitrary positional or keyword parameters).
 
-    This factory is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the lower-level private
+    This factory is effectively memoized despite not being explicitly memoized
+    (e.g., by the :func:`callable_cached` decorator), as the lower-level private
     :func:`._make_forwardref_subtype` factory called by this higher-level public
-    factory is itself memoized.
+    factory is itself internally memoized.
 
     Parameters
     ----------
     scope_name : Optional[str]
         Possibly ignored lexical scope name. Specifically:
 
-        * If ``hint_name`` is absolute (i.e., contains one or more ``.``
+        * If ``hint_name`` is absolute (i.e., contains one or more ``"."``
           delimiters), this parameter is silently ignored in favour of the
           fully-qualified name of the module prefixing ``hint_name``.
-        * If ``hint_name`` is relative (i.e., contains *no* ``.`` delimiters),
+        * If ``hint_name`` is relative (i.e., contains *no* ``"."`` delimiters),
           this parameter declares the absolute (i.e., fully-qualified) name of
           the lexical scope to which this unresolved type hint is relative.
 
@@ -102,8 +102,8 @@ def _make_forwardref_subtype(
 ) -> BeartypeForwardRef:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
-    subclass of the passed abstract base class (ABC) deferring the resolution of
-    the type hint with the passed name transparently).
+    subclass of the passed abstract base class (ABC) transparently deferring the
+    resolution of the type hint with the passed name).
 
     This factory is internally memoized for efficiency.
 
@@ -152,6 +152,8 @@ def _make_forwardref_subtype(
         return forwardref_subtype
     # Else, this proxy has yet to be created.
 
+    # Validate all passed parameters *AFTER* attempting to reuse a previously
+    # memoized forward reference, for efficiency.
     assert isinstance(scope_name, NoneTypeOr[str]), (
         f'{repr(scope_name)} neither string nor "None".')
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'

@@ -189,7 +189,7 @@ class BeartypeForwardRefMeta(type):
         replaces unusable stringified absolute forward references that are root
         type hints annotating the parameters and returns of
         :func:`beartype.beartype`-decorated callable with usable forward
-        reference proxies. Popular third-party frameworks like ``pytest`` and
+        reference proxies. Popular third-party frameworks like pytest and
         Django then introspect those forward reference proxies during their
         non-trivial workloads. This introspection either directly calls the
         :func:`hasattr` builtin *or* replicates that builtin in pure-Python to
@@ -433,13 +433,13 @@ class BeartypeForwardRefMeta(type):
                 circularly proxies itself.
         '''
 
-        # Forward referent referred to by this forward reference proxy if a prior
-        # access of this property has already resolved this referent *OR* "None"
-        # otherwise (i.e., if this is the first access of this property).
+        # Referent referred to by this forward reference proxy if a prior access
+        # of this property has already resolved this referent *OR* "None" (i.e.,
+        # if this is the first access of this property).
         referent = _forwardref_to_referent_get(cls)
 
-        # If this forward referent has yet to be resolved, this is the first call
-        # to this property. In this case...
+        # If this referent has yet to be resolved, this is the first call to
+        # this property. In this case...
         if referent is None:  # type: ignore[has-type]
             # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
 

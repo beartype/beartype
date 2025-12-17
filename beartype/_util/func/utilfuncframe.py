@@ -462,6 +462,10 @@ def get_frame_module_name_or_none(frame: CallableFrameType) -> Optional[str]:
 #     return frame_name
 
 # ....................{ ITERATORS                          }....................
+#FIXME: Generalize with a new "is_module_boundary_stop: bool = True" optional
+#parameter. If true, this generator implicitly halts at a "<module>" boundary.
+#FIXME: For orthogonality with every other function defined above, rename the
+#overly verbose "func_stack_frames_ignore" parameter to simply "ignore_frames".
 def iter_frames(
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
@@ -509,7 +513,7 @@ def iter_frames(
 
     Parameters
     ----------
-    func_stack_frames_ignore : int, optional
+    func_stack_frames_ignore : int, default: 0
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past). Defaults to 0.
 
@@ -520,39 +524,41 @@ def iter_frames(
 
     See Also
     --------
+    :func:`.get_frame_or_none`
+        Further details on the ``func_stack_frames_ignore`` parameter.
     :func:`.get_frame`
         Further details on stack frame objects.
 
     Examples
     --------
-    :: code-block:: pycon
+    :: code-block:: python
 
-       >>> from beartype._util.func.utilfunccodeobj import (
-       ...     get_func_codeobj_or_none)
-       >>> from beartype._util.func.utilfuncframe import iter_frames
+       from beartype._util.func.utilfunccodeobj import (
+           get_func_codeobj_or_none)
+       from beartype._util.func.utilfuncframe import iter_frames
 
        # For each stack frame on the call stack...
-       >>> for func_frame in iter_frames():
-       ...     # Code object underlying this frame's scope if this scope is
-       ...     # pure-Python *OR* "None" otherwise.
-       ...     func_frame_codeobj = get_func_codeobj_or_none(func_frame)
-       ...
-       ...     # If this code object does *NOT* exist, this scope is C-based.
-       ...     # In this case, silently ignore this scope and proceed to the
-       ...     # next frame in the call stack.
-       ...     if func_frame_codeobj is None:
-       ...         continue
-       ...     # Else, this code object exists, implying this scope to be
-       ...     # pure-Python.
-       ...
-       ...     # Fully-qualified name of this scope's module.
-       ...     func_frame_module_name = func_frame.f_globals['__name__']
-       ...
-       ...     # Unqualified name of this scope.
-       ...     func_frame_name = func_frame_codeobj.co_name
-       ...
-       ...     # Print the fully-qualified name of this scope.
-       ...     print(f'On {func_frame_module_name}.{func_frame_name}()!')
+       for func_frame in iter_frames():
+           # Code object underlying this frame's scope if this scope is
+           # pure-Python *OR* "None" otherwise.
+           func_frame_codeobj = get_func_codeobj_or_none(func_frame)
+       
+           # If this code object does *NOT* exist, this scope is C-based. In
+           # this case, silently ignore this scope and proceed to the next frame
+           # in the call stack.
+           if func_frame_codeobj is None:
+               continue
+           # Else, this code object exists, implying this scope to be
+           # pure-Python.
+       
+           # Fully-qualified name of this scope's module.
+           func_frame_module_name = func_frame.f_globals['__name__']
+       
+           # Unqualified name of this scope.
+           func_frame_name = func_frame_codeobj.co_name
+       
+           # Print the fully-qualified name of this scope.
+           print(f'On {func_frame_module_name}.{func_frame_name}()!')
     '''
     assert isinstance(func_stack_frames_ignore, int), (
         f'{func_stack_frames_ignore} not integer.')
@@ -562,14 +568,12 @@ def iter_frames(
     # If the active Python interpreter fails to declare the private
     # sys._getframe() getter, reduce to the empty generator (i.e., noop).
     if get_frame is None:  # pragma: no cover
-        yield from ()
-        return
+        return (yield from ())
     # Else, the active Python interpreter declares the sys._getframe() getter.
 
-    # Attempt to obtain the...
+    # Attempt to obtain the next non-ignored frame after the last ignored frame,
+    # ignoring an additional frame embodying the current call to this iterator.
     try:
-        # Next non-ignored frame following the last ignored frame, ignoring an
-        # additional frame embodying the current call to this iterator.
         func_frame = get_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
     # If doing so raises a "ValueError" exception...
     except ValueError as value_error:

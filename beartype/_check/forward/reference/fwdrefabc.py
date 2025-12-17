@@ -103,10 +103,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
             class referred to by this forward reference subclass.
         '''
 
-        # # Resolve the external class referred to by this forward reference and
-        # # permanently store that class in the "__type_beartype__" variable.
-        # cls.__beartype_resolve_type__()
-
         # Return true only if this object is an instance of the external class
         # referenced by this forward reference.
         return isinstance(obj, cls.__type_beartype__)  # type: ignore[arg-type]
@@ -129,10 +125,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
             :data:`True` only if this object is a subclass of the external class
             referred to by this forward reference subclass.
         '''
-
-        # # Resolve the external class referred to by this forward reference and
-        # # permanently store that class in the "__type_beartype__" variable.
-        # cls.__beartype_resolve_type__()
 
         # Return true only if this object is a subclass of the external class
         # referenced by this forward reference.

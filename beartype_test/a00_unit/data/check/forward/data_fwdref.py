@@ -47,7 +47,7 @@ Fully-qualified name of that class.
 '''
 
 
-SCOPE_NAME = '__name__'
+SCOPE_NAME = __name__
 '''
 Fully-qualified name of the current test module.
 '''
