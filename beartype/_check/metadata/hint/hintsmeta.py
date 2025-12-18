@@ -20,7 +20,6 @@ from beartype.typing import (
     Optional,
 )
 from beartype._check.code.codemagic import EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL
-from beartype._check.code.codescope import add_func_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.convert.convmain import sanify_hint_child
 from beartype._check.metadata.hint.hintmeta import HintMeta
@@ -151,6 +150,14 @@ class HintsMeta(FixedList):
     hint_curr_meta: HintMeta
         Metadata describing the currently visited hint, appended by the
         previously visited parent hint to this queue.
+    hint_refs_type_basename : Optional[set]
+        Either:
+
+        * If one or more **relative forward references** (i.e., unqualified
+          basenames of all types referred to by all relative forward references
+          relative to this scope) have been visited, the non-empty set of these
+          relative forward references
+        * Else, :data:`None`.
     indent_curr : str
         Python code snippet expanding to the current level of indentation
         appropriate for the currently visited hint.
@@ -222,6 +229,7 @@ class HintsMeta(FixedList):
         'pith_curr_assign_expr',
         'pith_curr_var_name',
         'pith_curr_var_name_index',
+        'hint_refs_type_basename',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -243,15 +251,20 @@ class HintsMeta(FixedList):
         pith_curr_assign_expr: str
         pith_curr_var_name: str
         pith_curr_var_name_index: int
+        hint_refs_type_basename: Optional[set]
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
         '''
-        Initialize this type-checking metadata list.
+        Initialize this type-checking metadata queue.
         '''
 
         # Initialize our superclass.
         super().__init__(size=FIXED_LIST_SIZE_MEDIUM)
+
+        # Classify all instance variables that currently *NEVER* change across
+        # all reinitializations of this queue.
+        self.exception_prefix = EXCEPTION_PREFIX
 
         # Initialize this type-checking metadata queue.
         self.reinit()
@@ -289,12 +302,6 @@ class HintsMeta(FixedList):
         self.index_last = -1
 
         # Nullify all remaining passed parameters.
-
-        #FIXME: Does this actually ever change? If not, this should either:
-        #* Just be initialized once in the __init__() method.
-        #* Just be hard-coded as "EXCEPTION_PREFIX" everywhere.
-        self.exception_prefix = EXCEPTION_PREFIX
-
         self.func_curr_code = None  # type: ignore[assignment]
         self.func_wrapper_scope = {}
         self.hint_curr_expr = None
@@ -306,6 +313,7 @@ class HintsMeta(FixedList):
         self.pith_curr_assign_expr = None  # type: ignore[assignment]
         self.pith_curr_var_name = None  # type: ignore[assignment]
         self.pith_curr_var_name_index = 0
+        self.hint_refs_type_basename = None
 
     # ..................{ DUNDERS                            }..................
     def __getitem__(self, hint_index: int) -> HintMeta:  # type: ignore[override]
@@ -460,6 +468,9 @@ class HintsMeta(FixedList):
         :func:`beartype._check.code.codescope.add_func_scope_type_or_types`
             Further details.
         '''
+
+        # Avoid circular import dependencies.
+        from beartype._check.code.codescope import add_func_scope_type_or_types
 
         # Defer to the lower-level add_func_scope_type_or_types() adder.
         return add_func_scope_type_or_types(

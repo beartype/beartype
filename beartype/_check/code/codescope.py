@@ -23,10 +23,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    comments in the "beartype.plug._plughintable" submodule pertaining to that
 #    protocol for further details on properly building out this stack.
 #  * When that algorithm visits a forward reference:
-#    * That algorithm calls the express_func_scope_type_ref() function
+#    * That algorithm calls the _express_func_scope_type_ref() function
 #      generating type-checking code for that reference. Refactor that call to
 #      additionally pass that stack of parent hints to that function.
-#    * Refactor the express_func_scope_type_ref() function to:
+#    * Refactor the _express_func_scope_type_ref() function to:
 #      * If the passed forward reference is relative, additionally return that
 #        stack in the returned 3-tuple
 #        "(forwardref_expr, refs_type_basename, forwardref_parent_hints)",
@@ -38,7 +38,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      basename of an existing attribute in a local or global scope of the
 #      currently decorated callable *AND* the value of that attribute is a
 #      parent type hint on the stack of parent type hints returned by the
-#      previously called express_func_scope_type_ref() function, then
+#      previously called _express_func_scope_type_ref() function, then
 #      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
 #      * Replace this forward reference with a new recursive type-checking
 #        "beartype._check.forward.reference.fwdrefabc.BeartypeForwardRef_{forwardref}"
@@ -56,20 +56,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
-from beartype.typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple,
-)
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
-from beartype._check.forward.reference.fwdreftest import is_beartype_forwardref
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype)
+from beartype._check.forward.reference.fwdreftest import is_beartype_forwardref
+from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -88,6 +83,7 @@ from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
     get_hint_pep484585_ref_names)
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Set
+from typing import Optional
 
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.
@@ -436,6 +432,7 @@ def add_func_scope_types(
 
             # Halt iteration.
             break
+        # Else, this type is *NOT* a beartype-specific forward reference proxy.
 
     # If this container contains at least one such proxy...
     if is_types_ref:
@@ -443,11 +440,11 @@ def add_func_scope_types(
         #
         # Note that we intentionally avoid instantiating this pair of lists
         # above in the common case that this container contains no such proxies.
-        types_ref: List[type] = []
+        types_ref: list[type] = []
 
         # List of all other types in this container (i.e., normal types that are
         # *NOT* beartype-specific forward reference proxies).
-        types_nonref: List[type] = []
+        types_nonref: list[type] = []
 
         # For each type in this container...
         for cls in types:
@@ -490,7 +487,7 @@ def add_func_scope_types(
     # Else, this container contains *NO* such proxies. In this case, preserve
     # the ordering of items in this container as is.
     else:
-        # If this container is a set, coerce this frozenset into a tuple.
+        # If this container is a set, coerce this set into a tuple.
         if isinstance(types, Set):
             types = tuple(types)
         # Else, this container is *NOT* a set. By elimination, this container
@@ -534,72 +531,62 @@ def add_func_scope_types(
         attr=types, func_scope=func_scope, exception_prefix=exception_prefix)
 
 # ....................{ EXPRESSERS ~ type                  }....................
+#FIXME: Call in lieu of the lower-level _express_func_scope_type_ref() expresser
+#defined below, please. *sigh*
 def express_func_scope_type_ref(
-    # Mandatory parameters.
-    func_scope: LexicalScope,
-    forwardref: Pep484585ForwardRef,
-    refs_type_basename: Optional[set],
-
-    # Optional parameters.
-    exception_prefix: str = 'Globally or locally scoped forward reference ',
-) -> Tuple[str, Optional[set]]:
+    hints_meta: HintsMeta, forwardref: Pep484585ForwardRef) -> str:
     '''
-    Express the passed :pep:`484`- or :pep:`585`-compliant **forward reference**
-    (i.e., fully-qualified or unqualified name of an arbitrary class that
-    typically has yet to be declared) as a Python expression evaluating to this
-    forward reference when accessed via the beartypistry singleton added as a
-    new key-value pair of the passed dictionary, whose key is the string
-    :attr:`beartype._data.code.datacodename.ARG_NAME_TYPISTRY` and whose value is the
-    beartypistry singleton.
+    Python expression evaluating to the passed :pep:`484`- or
+    :pep:`585`-compliant **forward reference** (i.e., either fully-qualified
+    name *or* unqualified basename of an arbitrary class that typically has yet
+    to be declared) when accessed via the beartypistry singleton added as a new
+    key-value pair of the local scope encapsulated by the passed type-checking
+    metadata queue, whose:
+
+    * Key is the string
+      :attr:`beartype._data.code.datacodename.ARG_NAME_TYPISTRY`.
+    * Value is the beartypistry singleton.
 
     Parameters
     ----------
-    func_scope : LexicalScope
-        Local or global scope to add this forward reference to.
+    hints_meta : HintsMeta
+        Stack of metadata describing all visitable hints currently discovered by
+        this breadth-first search (BFS).
     forwardref : Pep484585ForwardRef
-        Forward reference to be expressed relative to this scope.
-    refs_type_basename : Optional[set]
-        Set of all existing **relative forward references** (i.e., unqualified
-        basenames of all types referred to by all relative forward references
-        relative to this scope) if any *or* :data:`None` otherwise (i.e., if no
-        relative forward references have been expressed relative to this scope).
-    exception_prefix : str, optional
-        Human-readable substring prefixing raised exception messages. Defaults
-        to a sensible string.
+        Forward reference to be expressed relative to the local or global scope
+        encapsulated by this stack of metadata.
 
     Returns
     -------
-    Tuple[str, Optional[set]]
-        2-tuple ``(forwardref_expr, refs_type_basename)``, where:
-
-        * ``forwardref_expr`` is the Python expression evaluating to this
-          forward reference when accessed via the beartypistry singleton added
-          to this scope.
-        * ``refs_type_basename`` is either:
-
-          * If this forward reference is a fully-qualified classname, the
-            passed ``refs_type_basename`` set as is.
-          * If this forward reference is an unqualified classname, either:
-
-            * If the passed ``refs_type_basename`` set is *not* :data:`None`,
-              this set with this classname added to it.
-            * Else, a new set containing only this classname.
+    str
+        Python expression evaluating to this forward reference when accessed via
+        the beartypistry singleton added to this scope.
 
     Raises
     ------
     BeartypeDecorHintForwardRefException
         If this forward reference is *not* actually a forward reference.
     '''
+    assert isinstance(hints_meta, HintsMeta), (
+        f'{repr(hints_meta)} not "HintsMeta" object.')
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
     ref_module_name, ref_name = get_hint_pep484585_ref_names(
-        hint=forwardref, exception_prefix=exception_prefix)
+        hint=forwardref, exception_prefix=hints_meta.exception_prefix)
 
     # If either...
     if (
         # This reference was instantiated with a module name...
         ref_module_name or
+
+        #FIXME: Generalize to consider "hints_meta.cls_stack", please. Doing so
+        #efficiently should be a fun puzzle. \o/
+        #FIXME: Indeed, this is a nice macro-optimization that we should have
+        #considered sooner. If "ref_name" matches the fully-qualified possibly
+        #nested classname implied by "hints_meta.cls_stack", then this function
+        #should trivially call and return the result of add_func_scope_type().
+
         # This classname contains one or more "." characters and is thus already
         # (...hopefully) fully-qualified...
         '.' in ref_name
@@ -610,24 +597,21 @@ def express_func_scope_type_ref(
         # Name of the hidden parameter providing this forward reference
         # proxy to be passed to this wrapper function.
         ref_expr = add_func_scope_ref(
-            func_scope=func_scope,
+            func_scope=hints_meta.func_wrapper_scope,
             ref_module_name=ref_module_name,
             ref_name=ref_name,
-            exception_prefix=exception_prefix,
+            exception_prefix=hints_meta.exception_prefix,
         )
     # Else, this classname is unqualified. In this case...
     else:
-        assert isinstance(refs_type_basename, NoneTypeOr[set]), (
-            f'{repr(refs_type_basename)} neither set nor "None".')
-
         # If this set of unqualified classnames referred to by all relative
         # forward references has yet to be instantiated, do so.
-        if refs_type_basename is None:
-            refs_type_basename = set()
-        # In any case, this set now exists.
+        if hints_meta.hint_refs_type_basename is None:
+            hints_meta.hint_refs_type_basename = set()
+        # In either case, this set now exists.
 
         # Add this unqualified classname to this set.
-        refs_type_basename.add(ref_name)
+        hints_meta.hint_refs_type_basename.add(ref_name)
 
         # Placeholder substring to be replaced by the caller with a Python
         # expression evaluating to this unqualified classname canonicalized
@@ -639,11 +623,11 @@ def express_func_scope_type_ref(
             f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
         )
 
-    # Return a 2-tuple of this expression and set of unqualified classnames.
-    return (ref_expr, refs_type_basename)
+    # Return this expression.
+    return ref_expr
 
 # ....................{ PRIVATE ~ globals                  }....................
-_tuple_union_to_tuple_union: Dict[TupleTypes, TupleTypes] = {}
+_tuple_union_to_tuple_union: dict[TupleTypes, TupleTypes] = {}
 '''
 **Tuple union cache** (i.e., dictionary mapping from each tuple union passed to
 the :func:`.add_func_scope_types` adder to that same union, preventing tuple

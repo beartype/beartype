@@ -311,12 +311,6 @@ def make_check_expr(
     # fixed list.
     hints_meta_index_curr = 0
 
-    # ..................{ LOCALS ~ pep : 484                 }..................
-    # Set of the unqualified classnames referred to by all relative forward
-    # references visitable from this root hint if any *OR* "None" otherwise
-    # (i.e., if no such forward references are visitable).
-    hint_refs_type_basename: Optional[set] = None
-
     # ..................{ LOCALS ~ func : code               }..................
     # Python code snippet type-checking the root pith against the root hint:
     # * Localized separately from the "func_wrapper_code" snippet to enable this
@@ -517,25 +511,11 @@ def make_check_expr(
             # ..............{ FORWARDREF                         }..............
             # If this hint is a forward reference...
             elif hint_curr_sign is HintSignForwardRef:
-                # Render this forward reference accessible to the body of this
-                # wrapper function by populating:
-                # * A Python expression evaluating to a new forward reference
-                #   proxy encapsulating the class referred to by this forward
-                #   reference.
-                # * A set of the unqualified classnames referred to by *ALL*
-                #   relative forward references visited by this BFS, including
-                #   this reference if relative. If this set was previously
-                #   uninstantiated (i.e., "None"), this assignment initializes
-                #   this local to the new set instantiated by this call; else,
-                #   this assignment preserves this local set as is.
-                (
-                    hints_meta.hint_curr_expr,
-                    hint_refs_type_basename,
-                ) = express_func_scope_type_ref(
+                # Python expression evaluating to a new forward reference proxy
+                # encapsulating the type referred to by this forward reference.
+                hints_meta.hint_curr_expr = express_func_scope_type_ref(
+                    hints_meta=hints_meta,
                     forwardref=hint_curr,  # type: ignore[arg-type]
-                    refs_type_basename=hint_refs_type_basename,
-                    func_scope=hints_meta.func_wrapper_scope,
-                    exception_prefix=EXCEPTION_PREFIX,
                 )
 
                 #FIXME: *REDUNDANT.* Shallow type-checking code defined below
@@ -1185,14 +1165,9 @@ def make_check_expr(
                         # superclass, expose this forward reference to the body
                         # of this wrapper function. See above for commentary.
                         if hint_child_sign is HintSignForwardRef:
-                            (
-                                hint_curr_expr,
-                                hint_refs_type_basename,
-                            ) = express_func_scope_type_ref(
+                            hint_curr_expr = express_func_scope_type_ref(
+                                hints_meta=hints_meta,
                                 forwardref=hint_child,  # type: ignore[arg-type]
-                                refs_type_basename=hint_refs_type_basename,
-                                func_scope=hints_meta.func_wrapper_scope,
-                                exception_prefix=EXCEPTION_PREFIX,
                             )
                         # Else, this child hint is *NOT* a forward reference. In
                         # this case...
@@ -1225,8 +1200,9 @@ def make_check_expr(
                             # Else, this child hint is an issubclassable object.
 
                             # Python expression evaluating to this child hint.
-                            hint_curr_expr = hints_meta.add_func_scope_type_or_types(
-                                hint_child)  # type: ignore[arg-type]
+                            hint_curr_expr = (
+                                hints_meta.add_func_scope_type_or_types(
+                                    hint_child))  # type: ignore[arg-type]
 
                         # Code type-checking this pith against this superclass.
                         hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
@@ -1514,9 +1490,9 @@ def make_check_expr(
         # If *NO* relative forward references are visitable from this root
         # hint, the empty tuple;
         ()
-        if hint_refs_type_basename is None else
+        if hints_meta.hint_refs_type_basename is None else
         # Else, that set converted into a tuple.
-        tuple(hint_refs_type_basename)
+        tuple(hints_meta.hint_refs_type_basename)
     )
     # print(f'func_wrapper_scope: {hints_meta.func_wrapper_scope}')
 

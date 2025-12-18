@@ -301,6 +301,14 @@ URL of this project's entry on **ReadTheDocs (RTD)** (i.e., popular Python
 documentation host, shockingly hosting this project's documentation).
 '''
 
+
+URL_ZULIP = 'https://beartype.zulipchat.com'
+'''
+URL of this project's entry on **Zulip** (i.e., popular third-party real-time
+chat site, leveraged by project maintainers to publicly communicate with the
+project userbase).
+'''
+
 # ....................{ METADATA ~ urls : docs             }....................
 URL_HOMEPAGE = f'https://{PACKAGE_NAME}.readthedocs.io'
 '''

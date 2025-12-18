@@ -17,8 +17,6 @@
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
 .. # ------------------( LINKS ~ beartype : maintainer       )------------------
-.. _beartype Bluesky:
-   https://leycec.bsky.social
 .. _@leycec:
    https://github.com/leycec
 .. _leycec:
@@ -139,6 +137,12 @@
    https://pypi.org/project/pytest-beartype
 .. _pytest-beartype GitHub:
    https://github.com/beartype/pytest-beartype
+
+.. # ------------------( LINKS ~ beartype : social           )------------------
+.. _beartype Bluesky:
+   https://leycec.bsky.social
+.. _beartype Zulip:
+   https://beartype.zulipchat.com
 
 .. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:
