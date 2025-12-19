@@ -4,26 +4,23 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`- and :pep:`585`-compliant **forward reference type hint
-utilities** (i.e., callables generically applicable to both :pep:`484`- and
-:pep:`585`-compliant forward reference type hints).
+Project-wide :pep:`484`--compliant **forward reference type hint utilities**
+(i.e., low-level callables introspecting :pep:`484`-compliant forward reference
+type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import (
     TYPE_BUILTIN_NAME_TO_TYPE,
-    TYPES_PEP484585_REF,
+    TYPES_PEP484_FORWARDREF,
 )
 from beartype._data.typing.datatyping import (
-    Pep484585ForwardRef,
+    HintPep484ForwardRef,
+    TupleStrOrNoneAndStr,
     TypeException,
     TypeStack,
 )
@@ -35,6 +32,7 @@ from collections.abc import (
     Callable,
     Sequence,
 )
+from typing import Optional
 
 # ....................{ RAISERS                            }....................
 #FIXME: Validate that this forward reference string is *NOT* the empty string.
@@ -43,7 +41,7 @@ from collections.abc import (
 #performing that validation somewhere, so let's reuse that here, please.
 #Right. So, we already have an is_identifier() tester; now, we just need to
 #define a new die_unless_identifier() validator.
-def die_unless_hint_pep484585_ref(
+def die_unless_hint_pep484_ref(
     # Mandatory parameters.
     hint: object,
 
@@ -52,9 +50,9 @@ def die_unless_hint_pep484585_ref(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception unless the passed object is either a :pep:`484`- or
-    :pep:`585`-compliant **forward reference type hint** (i.e., object
-    referring to a user-defined class that typically has yet to be defined).
+    Raise an exception unless the passed object is a :pep:`484`-compliant
+    **forward reference hint** (i.e., object referring to a user-defined type
+    that typically has yet to be defined).
 
     Equivalently, this validator raises an exception if this object is neither:
 
@@ -84,7 +82,7 @@ def die_unless_hint_pep484585_ref(
     '''
 
     # If this object is *NOT* a forward reference type hint, raise an exception.
-    if not isinstance(hint, TYPES_PEP484585_REF):
+    if not isinstance(hint, TYPES_PEP484_FORWARDREF):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
@@ -98,19 +96,19 @@ def die_unless_hint_pep484585_ref(
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep484585_ref_names(
+def get_hint_pep484_ref_names(
     # Mandatory parameters.
-    hint: Pep484585ForwardRef,
+    hint: HintPep484ForwardRef,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
-) -> Tuple[Optional[str], str]:
+) -> TupleStrOrNoneAndStr:
     '''
     Possibly undefined fully-qualified module name and possibly qualified
-    classname referred to by the passed **forward reference type hint** (i.e.,
-    object indirectly referring to a user-defined class that typically has yet
-    to be defined).
+    classname referred to by the passed :pep:`484`-compliant **forward reference
+    hint** (i.e., object indirectly referring to a user-defined type that
+    typically has yet to be defined).
 
     This getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation mostly reduces to an
@@ -119,7 +117,7 @@ def get_hint_pep484585_ref_names(
     Caveats
     -------
     **Callers are recommended to call the higher-level**
-    :func:`.get_hint_pep484585_ref_names_relative_to` **getter rather than this
+    :func:`.get_hint_pep484_ref_names_relative_to` **getter rather than this
     lower-level getter,** which fails to guarantee canonicalization and is thus
     considerably less safe.
 
@@ -127,16 +125,16 @@ def get_hint_pep484585_ref_names(
     ----------
     hint : object
         Forward reference to be introspected.
-    exception_cls : Type[Exception]
+    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Returns
     -------
-    Tuple[Optional[str], str]
+    tuple[Optional[str], str]
         2-tuple ``(ref_module_name, ref_name)`` where:
 
         * ``ref_module_name`` is the possibly undefined fully-qualified module
@@ -172,7 +170,7 @@ def get_hint_pep484585_ref_names(
     '''
 
     # If this is *NOT* a forward reference, raise an exception.
-    die_unless_hint_pep484585_ref(hint)
+    die_unless_hint_pep484_ref(hint)
     # Else, this is a forward reference.
 
     # Possibly unqualified basename of the class to which reference refers.
@@ -241,22 +239,23 @@ def get_hint_pep484585_ref_names(
     return hint_module_name, hint_name
 
 
-def get_hint_pep484585_ref_names_relative_to(
+def get_hint_pep484_ref_names_relative_to(
     # Mandatory parameters.
-    hint: Pep484585ForwardRef,
+    hint: HintPep484ForwardRef,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
     func: Optional[Callable] = None,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
-) -> Tuple[Optional[str], str]:
+) -> TupleStrOrNoneAndStr:
     '''
     Possibly undefined fully-qualified module name and possibly qualified
-    classname referred to by the passed **forward reference type hint** (i.e.,
-    object indirectly referring to a user-defined class that typically has yet
-    to be defined), canonicalized relative to the module declaring the passed
-    type stack and/or callable (in that order) if this classname is unqualified.
+    classname referred to by the passed :pep:`484`-compliant **forward reference
+    hint** (i.e., object indirectly referring to a user-defined type that
+    typically has yet to be defined), canonicalized relative to the module
+    declaring the passed type stack and/or callable (in that order) if this
+    classname is unqualified.
 
     This getter is intentionally *not* memoized (e.g., by the
     ``callable_cached`` decorator), as the implementation mostly reduces to an
@@ -317,7 +316,7 @@ def get_hint_pep484585_ref_names_relative_to(
     ----------
     hint : object
         Forward reference to be canonicalized.
-    cls_stack : TypeStack
+    cls_stack : TypeStack, default: None
         Either:
 
         * If this forward reference annotates a method of a class, the
@@ -328,7 +327,7 @@ def get_hint_pep484585_ref_names_relative_to(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    func : Optional[Callable]
+    func : Optional[Callable], default: None
         Either:
 
         * If this forward reference annotates a callable, that callable.
@@ -337,16 +336,16 @@ def get_hint_pep484585_ref_names_relative_to(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    exception_cls : Type[Exception]
+    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Returns
     -------
-    Tuple[Optional[str], str]
+    tuple[Optional[str], str]
         2-tuple ``(ref_module_name, ref_name)`` where:
 
         * ``ref_module_name`` is the possibly undefined fully-qualified module
@@ -378,13 +377,13 @@ def get_hint_pep484585_ref_names_relative_to(
 
     See Also
     --------
-    :func:`.get_hint_pep484585_ref_names`
+    :func:`.get_hint_pep484_ref_names`
         Lower-level getter returning possibly relative forward references.
     '''
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    hint_module_name, hint_ref_name = get_hint_pep484585_ref_names(
+    hint_module_name, hint_ref_name = get_hint_pep484_ref_names(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -549,9 +548,9 @@ def get_hint_pep484585_ref_names_relative_to(
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.
-def import_pep484585_ref_type(
+def import_pep484_ref_type(
     # Mandatory parameters.
-    hint: Pep484585ForwardRef,
+    hint: HintPep484ForwardRef,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -559,11 +558,11 @@ def import_pep484585_ref_type(
     **kwargs
 ) -> type:
     '''
-    Class referred to by the passed :pep:`484` or :pep:`585`-compliant
-    **forward reference type hint** (i.e., object indirectly referring to a
-    user-defined class that typically has yet to be defined) canonicalized if
-    this hint is unqualified relative to the module declaring the first of
-    whichever of the passed owner type and/or callable is *not* :data:`None`.
+    Class referred to by the passed :pep:`484`-compliant **forward reference
+    hint** (i.e., object indirectly referring to a user-defined type that
+    typically has yet to be defined) canonicalized if this hint is unqualified
+    relative to the module declaring the first of whichever of the passed owner
+    type and/or callable is *not* :data:`None`.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the passed object is typically a
@@ -572,17 +571,17 @@ def import_pep484585_ref_type(
 
     Parameters
     ----------
-    hint : Pep484585ForwardRef
+    hint : HintPep484ForwardRef
         Forward reference type hint to be resolved.
-    exception_cls : Type[Exception]
+    exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
-    exception_prefix : str, optional
+    exception_prefix : str, default: ''
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.get_hint_pep484585_ref_names_relative_to` getter.
+    :func:`.get_hint_pep484_ref_names_relative_to` getter.
 
     Returns
     -------
@@ -610,7 +609,7 @@ def import_pep484585_ref_type(
 
     See Also
     --------
-    :func:`.get_hint_pep484585_ref_names_relative_to`
+    :func:`.get_hint_pep484_ref_names_relative_to`
         Further details.
     '''
 
@@ -621,7 +620,7 @@ def import_pep484585_ref_type(
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference relative to this type
     # stack and callable.
-    hint_module_name, hint_ref_name = get_hint_pep484585_ref_names_relative_to(
+    hint_module_name, hint_ref_name = get_hint_pep484_ref_names_relative_to(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

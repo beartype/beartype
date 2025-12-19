@@ -68,7 +68,7 @@ from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.typing.datatyping import (
     LexicalScope,
-    Pep484585ForwardRef,
+    HintPep484ForwardRef,
     SetOrTupleTypes,
     TypeOrSetOrTupleTypes,
     TupleTypes,
@@ -79,13 +79,13 @@ from beartype._util.cls.pep.clspep3119 import (
 )
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-    get_hint_pep484585_ref_names)
+from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+    get_hint_pep484_ref_names)
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Set
 from typing import Optional
 
-# ....................{ ADDERS ~ type                      }....................
+# ....................{ ADDERS ~ forwardref                }....................
 #FIXME: Unit test us up, please.
 def add_func_scope_ref(
     # Mandatory parameters.
@@ -534,7 +534,7 @@ def add_func_scope_types(
 #FIXME: Call in lieu of the lower-level _express_func_scope_type_ref() expresser
 #defined below, please. *sigh*
 def express_func_scope_type_ref(
-    hints_meta: HintsMeta, forwardref: Pep484585ForwardRef) -> str:
+    hints_meta: HintsMeta, forwardref: HintPep484ForwardRef) -> str:
     '''
     Python expression evaluating to the passed :pep:`484`- or
     :pep:`585`-compliant **forward reference** (i.e., either fully-qualified
@@ -552,7 +552,7 @@ def express_func_scope_type_ref(
     hints_meta : HintsMeta
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
-    forwardref : Pep484585ForwardRef
+    forwardref : HintPep484ForwardRef
         Forward reference to be expressed relative to the local or global scope
         encapsulated by this stack of metadata.
 
@@ -572,7 +572,7 @@ def express_func_scope_type_ref(
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    ref_module_name, ref_name = get_hint_pep484585_ref_names(
+    ref_module_name, ref_name = get_hint_pep484_ref_names(
         hint=forwardref, exception_prefix=hints_meta.exception_prefix)
 
     # If either...
@@ -594,8 +594,8 @@ def express_func_scope_type_ref(
     # either case, the class referred to by this reference can now be
     # dynamically imported at a later time. In this case...
     ):
-        # Name of the hidden parameter providing this forward reference
-        # proxy to be passed to this wrapper function.
+        # Name of the hidden parameter providing this forward reference proxy to
+        # be passed to this wrapper function.
         ref_expr = add_func_scope_ref(
             func_scope=hints_meta.func_wrapper_scope,
             ref_module_name=ref_module_name,

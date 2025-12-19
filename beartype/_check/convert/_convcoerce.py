@@ -123,6 +123,21 @@ def coerce_func_hint_root(
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................
+    #FIXME: Unconvinced this is universally useful. Lower-level reducers (e.g.,
+    #reduce_hint_pep484_ref()) already efficiently reduce forward references to
+    #more useful objects across a variety of common use cases. We *REALLY* don't
+    #want to duplicate that logic across both those reducers *AND* the
+    #resolve_hint() function called below.
+    #
+    #Ideally, this code path should *ONLY* be performed to resolve PEP
+    #563-compliant forward references. Even in that case, though, shouldn't we
+    #efficiently resolve *ALL* PEP 563-compliant forward references for the
+    #decorated callable all at once by calling beartype.peps.resolve_pep563()
+    #instead? In other words, this logic smells. The smell is wafting badly.
+    #FIXME: For generality, shouldn't this also apply to "typing.ForwardRef"
+    #instances? That's yet another reason to defer to the more general-purpose
+    #reduce_hint_pep484_ref() reducer discussed above.
+
     # If this hint is stringified (e.g., as a PEP 484- or 563-compliant forward
     # reference), resolve this hint to the non-string hint to which this hint
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of

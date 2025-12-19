@@ -19,8 +19,8 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-    get_hint_pep484585_ref_names_relative_to)
+from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+    get_hint_pep484_ref_names_relative_to)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
 
@@ -102,12 +102,13 @@ def unmemoize_func_wrapper_code(
             # Possibly undefined fully-qualified module name and possibly
             # unqualified classname referred to by this relative forward
             # reference, relative to the decorated type stack and callable.
-            ref_module_name, ref_name = get_hint_pep484585_ref_names_relative_to(
-                hint=ref_basename,
-                cls_stack=cls_stack,
-                func=func,
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
+            ref_module_name, ref_name = (
+                get_hint_pep484_ref_names_relative_to(
+                    hint=ref_basename,
+                    cls_stack=cls_stack,
+                    func=func,
+                    exception_prefix=EXCEPTION_PLACEHOLDER,
+                ))
 
             # Name of the hidden parameter providing this forward reference
             # proxy to be passed to this wrapper function.
@@ -128,8 +129,8 @@ def unmemoize_func_wrapper_code(
                     f'{ref_name}'
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
-                # Python expression evaluating to this class when accessed via
-                # this hidden parameter.
+                # This Python expression evaluating to this class when accessed
+                # with this hidden parameter.
                 new=ref_expr,
             )
 

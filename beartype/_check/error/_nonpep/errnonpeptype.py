@@ -27,8 +27,8 @@ from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal)
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
-from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-    import_pep484585_ref_type)
+from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+    import_pep484_ref_type)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
@@ -220,7 +220,7 @@ def find_cause_instance_type_forwardref(
         f'{cause.hint_sign} not forward reference.')
 
     # Class referred to by this absolute or relative forward reference.
-    hint_ref_type = import_pep484585_ref_type(
+    hint_ref_type = import_pep484_ref_type(
         hint=cause.hint,  # type: ignore[arg-type]
         cls_stack=cause.cls_stack,
         func=cause.func,

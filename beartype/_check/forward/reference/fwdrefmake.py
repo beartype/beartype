@@ -138,6 +138,36 @@ def _make_forwardref_subtype(
           * :data:`None`.
     '''
 
+    # ....................{ MEMOIZE                        }....................
+    # Memoization of forward references is guaranteed to be safe despite the
+    # commonality of relative forward references that are contextually relative
+    # to the current module and possibly current nested class hierarchy being
+    # decorated in that module. Why? Because the caller has (thankfully) already
+    # guaranteed the following pair of constraints to hold:
+    # * If the caller passed an unqualified "hint_name" and a "scope_name" that
+    #   is "None", then "hint_name" *MUST* be the name of a builtin type (e.g.,
+    #   "int", "str"). Clearly, builtin types are universal.
+    # * If the caller passed either a fully-qualified "hint_name" *OR* a
+    #   "scope_name" that is non-"None", then the caller has effectively passed
+    #   the absolute name of a fully-qualified module to which this forward
+    #   reference is relative. Altogether, this pair of "hint_name" and
+    #   "scope_name" parameters uniquely refers to a fully-qualified module
+    #   attribute and is thus also universal.
+    #
+    # How did the caller guarantee the above pair of constraints? Typically, by
+    # calling the external get_hint_pep484_ref_names_relative_to() getter in
+    # the "beartype._util.hint.pep.proposal.pep484.pep484ref" submodule.
+    #
+    # Clearly, these constraints are mutually exclusive. Exactly one holds.
+    # Regardless of which constraint holds, this pair of "hint_name" and
+    # "scope_name" parameters uniquely refers to an absolute (rather than
+    # relative) attribute. From the low-level perspective of this factory,
+    # relative forward references are merely high-level syntactic sugar that the
+    # caller has already reduced on our behalf to equivalent absolute forward
+    # references and are thus of no interest or concern to this factory. Since
+    # memoization of absolute forward references is guaranteed to be safe,
+    # memoization is guaranteed to be safe here. So say we all.
+
     # Tuple of all passed parameters (in arbitrary order).
     args: BeartypeForwardRefArgs = (scope_name, hint_name, type_bases)
 
@@ -152,6 +182,7 @@ def _make_forwardref_subtype(
         return forwardref_subtype
     # Else, this proxy has yet to be created.
 
+    # ....................{ VALIDATE                       }....................
     # Validate all passed parameters *AFTER* attempting to reuse a previously
     # memoized forward reference, for efficiency.
     assert isinstance(scope_name, NoneTypeOr[str]), (
@@ -169,6 +200,7 @@ def _make_forwardref_subtype(
     )
     # Else, this attribute name is a syntactically valid Python identifier.
 
+    # ....................{ LOCALS                         }....................
     # Possibly empty fully-qualified module name and unqualified basename of the
     # type referred to by this forward reference.
     type_module_name, _, type_name = hint_name.rpartition('.')
@@ -184,6 +216,7 @@ def _make_forwardref_subtype(
         type_module_name = scope_name
     # Else, this module name is non-empty.
 
+    # ....................{ PROXY                          }....................
     # Forward reference proxy to be returned.
     forwardref_subtype = make_type(
         type_name=type_name,

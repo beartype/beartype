@@ -167,7 +167,7 @@ def get_func_locals(
     ----------
     func : Callable
         Callable to be inspected.
-    func_scope_names_ignore : int, optional
+    func_scope_names_ignore : int, default: 0
         Number of parent lexical scopes in the fully-qualified name of that
         callable to be ignored (i.e., silently incremented past), such that the
         next non-ignored lexical scope preceding the first ignored lexical scope
@@ -178,12 +178,12 @@ def get_func_locals(
         stack (e.g., due to being currently decorated by
         :func:`beartype.beartype`). See the :mod:`beartype._decor._pep.pep563`
         submodule for the standard use case. Defaults to 0.
-    func_stack_frames_ignore : int, optional
+    func_stack_frames_ignore : int, default: 0
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past), such that the next non-ignored frame following the
         last ignored frame is the parent callable or module directly declaring
         the passed callable. Defaults to 0.
-    exception_cls : Type[Exception], optional
+    exception_cls : Type[Exception], default: _BeartypeUtilCallableScopeException
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableScopeException`.
 
@@ -458,8 +458,8 @@ def get_func_locals(
         func_frame_name = func_frame_codeobj.co_name
         # print(f'{func_frame_name}() locals: {repr(func_frame.f_locals)}')
 
-        # If this scope is the placeholder string assigned by Python to all
-        # scopes encapsulating the top-most lexical scope of a module
+        # If this scope is the placeholder string assigned by Python to *ALL*
+        # lexical scopes encapsulating the top-most lexical scope of a module
         # declaration in the current call stack, this search has just crossed a
         # module declaration boundary and is thus no longer searching within the
         # module declaring this nested callable and has thus failed to find the

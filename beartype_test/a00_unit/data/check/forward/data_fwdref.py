@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **forward reference proxy data** submodule.
+Test-wide **forward reference proxy test data** submodule.
 
 This submodule predefines **forward reference proxies** (i.e., low-level objects
 created by the :func:`beartype._check.forward.reference.fwdrefmake` submodule)

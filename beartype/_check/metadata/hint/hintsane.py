@@ -122,9 +122,9 @@ class HintSane(object):
         :pep:`646`-compliant unpacked type variable tuple) originally
         parametrizing the origins of all transitive parent hints of this hint if
         any to the corresponding child hints subscripting those parent hints).
-        This table enables :func:`beartype.beartype` to efficiently reduce a
-        proper subset of type parameters to non-type parameters at decoration
-        time, including:
+        This lookup table enables the :func:`beartype.beartype` decorator to
+        efficiently reduce a proper subset of type parameters to non-type
+        parameters at decoration time, including:
 
         * :pep:`484`- or :pep:`585`-compliant **subscripted generics.** For
           example, this table enables runtime type-checkers to reduce the
@@ -173,6 +173,7 @@ class HintSane(object):
         hint: Hint
         hint_recursable_to_depth: FrozenDictHintToInt
         typearg_to_hint: Pep484612646TypeArgUnpackedToHint
+        _hash: int
 
 
     _INIT_ARG_NAMES = frozenset((
@@ -377,14 +378,14 @@ HINT_SANE_RECURSIVE = HintSane(hint=HINT_IGNORABLE)
 '''
 **Recursive sanified type hint metadata** (i.e., singleton :class:`.HintSane`
 instance to which **deeply recursive type hints** (i.e., recursive type hints
-whose reducers recursively expand to at least two levels of of recursion) are
+whose reducers recursively expand to at least two levels of recursion) are
 reduced by :mod:`beartype._check.convert.convmain` sanifiers).
 
 This singleton enables callers to trivially differentiate deeply recursive from
 ignorable hints. While deeply recursive hints are ignorable in *most* contexts,
-deeply recursive hints are unignorable in other contexts (e.g., when child hints
-of parent unions). Differentiating between these two cases thus requires a
-distinct singleton from the comparable and significantly more common
+deeply recursive hints are unignorable in *some* contexts (e.g., child hints
+subscripting parent unions). Differentiating between these two cases thus
+requires a distinct singleton from the comparable and significantly more common
 :data:`.HINT_SANE_IGNORABLE` singleton.
 
 After sanification, if a hint is sanified to:

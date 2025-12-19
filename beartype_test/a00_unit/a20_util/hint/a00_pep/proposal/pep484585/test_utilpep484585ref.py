@@ -8,7 +8,7 @@ Project-wide :pep:`484` and :pep:`585` **forward reference type hint utility
 unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.pep484585ref` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484.pep484ref` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,10 +18,10 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ getter                     }....................
-def test_get_hint_pep484585_ref_names() -> None:
+def test_get_hint_pep484_ref_names() -> None:
     '''
     Test
-    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585ref.get_hint_pep484585_ref_names`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484ref.get_hint_pep484_ref_names`
     getter.
     '''
 
@@ -29,8 +29,8 @@ def test_get_hint_pep484585_ref_names() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-        get_hint_pep484585_ref_names)
+    from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+        get_hint_pep484_ref_names)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -51,12 +51,12 @@ def test_get_hint_pep484585_ref_names() -> None:
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a string, regardless of whether the second passed object
     # defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_ref_names(ALAS_ALAS) == (None, ALAS_ALAS)
+    assert get_hint_pep484_ref_names(ALAS_ALAS) == (None, ALAS_ALAS)
 
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a non-string, regardless of whether the second passed
     # object defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_ref_names(BEING_INTERTWINED) == (None, BREATH_AND)
+    assert get_hint_pep484_ref_names(BEING_INTERTWINED) == (None, BREATH_AND)
 
     # ....................{ PASS ~ module name             }....................
     # Since the active Python interpreter targets >= Python 3.10, then this
@@ -81,28 +81,28 @@ def test_get_hint_pep484585_ref_names() -> None:
     # Assert this getter canonicalizes the passed relative forward reference
     # against the fully-qualified names of the module with which this reference
     # was instantiated when defined as a non-string.
-    assert get_hint_pep484585_ref_names(BEAUTIFUL_SHAPE) == (
+    assert get_hint_pep484_ref_names(BEAUTIFUL_SHAPE) == (
         OF_DIM_SLEEP, THUS_TREACHEROUSLY)
 
     # Assert this getter preserves the passed absolute forward reference as is
     # *WITHOUT* canonicalizing this reference against the fully-qualified names
     # of the module with which this reference was instantiated when defined as a
     # non-string.
-    assert get_hint_pep484585_ref_names(DARK_GATE_OF_DEATH) == (
+    assert get_hint_pep484_ref_names(DARK_GATE_OF_DEATH) == (
         OF_DIM_SLEEP, ALAS_ALAS)
 
     # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed a type hint
     # that is *NOT* a valid forward reference.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names(
+        get_hint_pep484_ref_names(
             b'Beyond the realms of dream that fleeting shade;')
 
 
-def test_get_hint_pep484585_ref_names_relative_to() -> None:
+def test_get_hint_pep484_ref_names_relative_to() -> None:
     '''
     Test
-    :func:`beartype._util.hint.pep.proposal.pep484585.pep484585ref.get_hint_pep484585_ref_names_relative_to`
+    :func:`beartype._util.hint.pep.proposal.pep484.pep484ref.get_hint_pep484_ref_names_relative_to`
     getter.
     '''
 
@@ -110,8 +110,8 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-        get_hint_pep484585_ref_names_relative_to)
+    from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+        get_hint_pep484_ref_names_relative_to)
     from beartype_test.a00_unit.data.data_type import (
         ClassModuleNameFake,
         ClassModuleNameNone,
@@ -161,23 +161,23 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # ....................{ PASS                           }....................
     # Assert that this getter preserves an absolute forward reference in string
     # format as is.
-    assert get_hint_pep484585_ref_names_relative_to(THE_MASK_OF_ANARCHY) == (
+    assert get_hint_pep484_ref_names_relative_to(THE_MASK_OF_ANARCHY) == (
         None, THE_MASK_OF_ANARCHY)
 
     # Assert that this getter preserves an absolute forward reference in
     # "typing.ForwardRef" format as is.
-    assert get_hint_pep484585_ref_names_relative_to(WITH_GREAT_POWER) == (
+    assert get_hint_pep484_ref_names_relative_to(WITH_GREAT_POWER) == (
         None, WITH_GREAT_POWER_IT)
 
     # Assert that this getter canonicalizes a relative forward reference against
     # the "__module__" dunder attribute of a function to the expected string.
-    assert get_hint_pep484585_ref_names_relative_to(
+    assert get_hint_pep484_ref_names_relative_to(
         hint=VERY_SMOOTH, func=and_pendent_mountains) == (
         THIS_MODULE_NAME, VERY_SMOOTH)
 
     # Assert that this getter canonicalizes a relative forward reference against
     # the "__module__" dunder attribute of a type stack to the expected string.
-    assert get_hint_pep484585_ref_names_relative_to(
+    assert get_hint_pep484_ref_names_relative_to(
         hint=VERY_SMOOTH,
         cls_stack=[OfRainbowClouds],
         func=and_pendent_mountains,
@@ -186,7 +186,7 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # Assert that this getter preserves the passed relative forward reference as
     # is when this reference is the name of a builtin type, even when passed
     # neither a class *NOR* callable.
-    assert get_hint_pep484585_ref_names_relative_to('int') == (
+    assert get_hint_pep484_ref_names_relative_to('int') == (
         'builtins', 'int')
 
     # Assert that this getter preserves the passed relative forward reference as
@@ -194,7 +194,7 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # a class and callable both defining the "__module__" dunder attribute to be
     # the fully-qualified names of imaginary and thus unimportable modules that
     # do *NOT* physically exist.
-    assert get_hint_pep484585_ref_names_relative_to(
+    assert get_hint_pep484_ref_names_relative_to(
         hint='int',
         cls_stack=(ClassModuleNameFake,),
         func=function_module_name_fake,
@@ -223,28 +223,28 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # Assert this getter canonicalizes the passed relative forward reference
     # against the fully-qualified name of the module with which this reference
     # was instantiated when defined as a "typing.ForwardRef".
-    assert get_hint_pep484585_ref_names_relative_to(BEAUTIFUL_SHAPE) == (
+    assert get_hint_pep484_ref_names_relative_to(BEAUTIFUL_SHAPE) == (
         OF_DIM_SLEEP, THUS_TREACHEROUSLY)
 
     # Assert this getter preserves the passed absolute forward reference as is
     # *WITHOUT* canonicalizing this reference against the fully-qualified name
     # of the module with which this reference was instantiated when defined as a
     # "typing.ForwardRef".
-    assert get_hint_pep484585_ref_names_relative_to(DARK_GATE_OF_DEATH) == (
+    assert get_hint_pep484_ref_names_relative_to(DARK_GATE_OF_DEATH) == (
         OF_DIM_SLEEP, ALAS_ALAS)
 
     # ....................{ FAIL                           }....................
     # Assert that this getter raises the expected exception when passed a
     # relative forward reference and neither a class *NOR* callable.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(VERY_SMOOTH)
+        get_hint_pep484_ref_names_relative_to(VERY_SMOOTH)
 
     # Assert that this getter raises the expected exception when passed a
     # relative forward reference and a class and callable both defining the
     # "__module__" dunder attribute to be the fully-qualified names of imaginary
     # and thus unimportable modules that do *NOT* physically exist.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(
+        get_hint_pep484_ref_names_relative_to(
             hint=VERY_SMOOTH,
             cls_stack=(ClassModuleNameFake,),
             func=function_module_name_fake,
@@ -254,7 +254,7 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # relative forward reference and a class and callable both defining the
     # "__module__" dunder attribute to be "None".
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(
+        get_hint_pep484_ref_names_relative_to(
             hint=VERY_SMOOTH,
             cls_stack=(ClassModuleNameNone,),
             func=function_module_name_none,
@@ -265,12 +265,12 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # "__module__" dunder attribute to be the fully-qualified name of an
     # imaginary and thus unimportable module that does *NOT* physically exist.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(
+        get_hint_pep484_ref_names_relative_to(
             hint=VERY_SMOOTH, func=function_module_name_fake)
 
     # Assert that this getter raises the expected exception when passed a
     # relative forward reference and *ONLY* a callable defining the
     # "__module__" dunder attribute to be "None".
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(
+        get_hint_pep484_ref_names_relative_to(
             hint=VERY_SMOOTH, func=function_module_name_none)

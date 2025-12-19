@@ -167,8 +167,8 @@ rst_prolog = '''
 
    💗 **Upbear us** at `GitHub Sponsors`_ and `SonarQube Advanced Security
    (Tidelift) <SonarQube Advanced Security_>`__. **Follow us** `on Bluesky
-   <beartype Bluesky_>`__. **Hang out with us** `on Zulip
-   <beartype Zulip_>`__. Your generous support is our quality assurance. 💗
+   <beartype Bluesky_>`__. **Friendzone us** `at Zulip <beartype Zulip_>`__.
+   Your generous support is our quality assurance. 💗
 '''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
@@ -595,7 +595,7 @@ html_theme_options = {
             'url': URL_ZULIP,
             #FIXME: Does Zulip even have a FontAwesome icon? Probably... not.
             # 'icon': 'fab fa-zulip',
-            'icon': 'fas fa-z',  # <-- whatevahs!
+            'icon': 'fas fa-comments',  # <-- whatevahs!
         },
         {
             'name': 'Bluesky',

@@ -69,7 +69,7 @@ from types import (
     FrameType,
     GeneratorType,
 )
-from typing import TYPE_CHECKING
+# from typing import TYPE_CHECKING
 
 #FIXME: Doesn't seem to help. mypy 0.19.0 appears to busted, sadly. We sigh.
 # # If a static type-checker is type-checking us, import circular imports. Ugh!
@@ -366,72 +366,11 @@ PEP-compliant type hint matching a dictionary mapping from strings to frozen
 sets of strings.
 '''
 
-# ....................{ CHAINMAP ~ str                     }....................
+# ....................{ CHAINMAP                           }....................
 ChainMapStrToAny = ChainMap[str, Any]
 '''
 PEP-compliant type hint matching a chain map mapping from strings to arbitrary
 objects.
-'''
-
-# ....................{ LIST                               }....................
-ListStrs = List[str]
-'''
-PEP-compliant type hint matching a list of strings.
-'''
-
-# ....................{ MAPPING                            }....................
-MappingStrToAny = Mapping[str, object]
-'''
-PEP-compliant type hint matching a mapping mapping from keys to arbitrary
-objects.
-'''
-
-# ....................{ SIGN                               }....................
-HintSignOrNoneOrSentinel = HintSign | None | Iota
-'''
-PEP-compliant type hint matching either a **sign** (i.e., :class:`.HintSign`
-object uniquely identifying type hint), the :data:`None` singleton, or the
-sentinel placeholder.
-'''
-
-# ....................{ SIGN ~ container                   }....................
-FrozenSetHintSign = FrozenSet[HintSign]
-'''
-PEP-compliant type matching matching a frozen set of **signs** (i.e.,
-:class:`.HintSign` objects uniquely identifying type hints).
-'''
-
-
-IterableHintSign = Iterable[HintSign]
-'''
-PEP-compliant type matching matching a iterable of **signs** (i.e.,
-:class:`.HintSign` objects uniquely identifying type hints).
-'''
-
-# ....................{ SIGN ~ container : dict            }....................
-DictStrToHintSign = Dict[str, HintSign]
-'''
-PEP-compliant type hint matching a dictionary mapping from strings to **signs**
-(i.e., :class:`.HintSign` objects uniquely identifying type hints).
-'''
-
-
-HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
-'''
-PEP-compliant type hint matching a **sign trie** (i.e.,
-dictionary-of-dictionaries tree data structure enabling efficient mapping from
-the machine-readable representations of type hints created by an arbitrary
-number of type hint factories defined by an external third-party package to
-their identifying sign).
-'''
-
-
-HintSignToCallableStrFormat = Dict[HintSign, CallableStrFormat]
-'''
-PEP-compliant type hint matching a **sign-to-string-formatter map** (i.e.,
-dictionary mapping from signs uniquely identifying type hints to
-:meth:`str.format` methods bound to code snippets type-checking various aspects
-of those type hints).
 '''
 
 # ....................{ CODE                               }....................
@@ -493,6 +432,19 @@ zero or more 2-tuples of the form ``(item_index, item)``, where:
 * ``item`` is the currently enumerated item.
 '''
 
+# ....................{ LIST                               }....................
+ListStrs = List[str]
+'''
+PEP-compliant type hint matching a list of strings.
+'''
+
+# ....................{ MAPPING                            }....................
+MappingStrToAny = Mapping[str, object]
+'''
+PEP-compliant type hint matching a mapping mapping from keys to arbitrary
+objects.
+'''
+
 # ....................{ OBJECT                             }....................
 GetObjectAttrsDir = List[str] | None
 '''
@@ -542,10 +494,75 @@ FrozenSetTypes = FrozenSet[type]
 PEP-compliant type hint matching *any* frozen set of zero or more types.
 '''
 
+# ....................{ SIGN                               }....................
+HintSignOrNoneOrSentinel = HintSign | None | Iota
+'''
+PEP-compliant type hint matching either a **sign** (i.e., :class:`.HintSign`
+object uniquely identifying type hint), the :data:`None` singleton, or the
+sentinel placeholder.
+'''
+
+# ....................{ SIGN ~ container                   }....................
+FrozenSetHintSign = FrozenSet[HintSign]
+'''
+PEP-compliant type matching matching a frozen set of **signs** (i.e.,
+:class:`.HintSign` objects uniquely identifying type hints).
+'''
+
+
+IterableHintSign = Iterable[HintSign]
+'''
+PEP-compliant type matching matching a iterable of **signs** (i.e.,
+:class:`.HintSign` objects uniquely identifying type hints).
+'''
+
+# ....................{ SIGN ~ container : dict            }....................
+DictStrToHintSign = Dict[str, HintSign]
+'''
+PEP-compliant type hint matching a dictionary mapping from strings to **signs**
+(i.e., :class:`.HintSign` objects uniquely identifying type hints).
+'''
+
+
+HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
+'''
+PEP-compliant type hint matching a **sign trie** (i.e.,
+dictionary-of-dictionaries tree data structure enabling efficient mapping from
+the machine-readable representations of type hints created by an arbitrary
+number of type hint factories defined by an external third-party package to
+their identifying sign).
+'''
+
+
+HintSignToCallableStrFormat = Dict[HintSign, CallableStrFormat]
+'''
+PEP-compliant type hint matching a **sign-to-string-formatter map** (i.e.,
+dictionary mapping from signs uniquely identifying type hints to
+:meth:`str.format` methods bound to code snippets type-checking various aspects
+of those type hints).
+'''
+
+# ....................{ STRING                             }....................
+StrOrNone = str | None
+'''
+:pep:`604`-compliant type hint matching either a string or :data:`None`.
+'''
+
+# ....................{ TUPLE                              }....................
+TupleStrOrNoneAndStr = Tuple[StrOrNone, str]
+'''
+:pep:`585`-compliant type hint matching a 2-tuple whose:
+
+* First item is either a string or :data:`None`.
+* Second item is a string.
+
+While ad-hoc, this data structure has proven useful throughout the codebase.
+'''
+
 # ....................{ TYPE                               }....................
 AbstractSetTypes = AbstractSet[type]
 '''
-:pep:`585`-compliant type hint matching *any* set of zero or more classes.
+:pep:`585`-compliant type hint matching a set of zero or more classes.
 '''
 
 
@@ -687,7 +704,7 @@ superclass).
 '''
 
 
-BeartypeForwardRefArgs = Tuple[str | None, str, TupleTypes]
+BeartypeForwardRefArgs = Tuple[StrOrNone, str, TupleTypes]
 '''
 PEP-compliant type hint matching a **forward reference proxy argument list**
 (i.e., tuple of all parameters passed to each call of the low-level private
@@ -726,7 +743,19 @@ instances definitely encapsulating pathnames).
 
 # ....................{ PEP ~ 484                          }....................
 # Type hints required to fully comply with PEP 484.
-#
+
+HintPep484ForwardRef = str | ForwardRef
+'''
+Union of all :pep:`484`--compliant **forward reference types** (i.e., classes of
+all forward reference objects).
+
+See Also
+--------
+:data:`beartype._data.cls.data_cls.TYPES_PEP484_FORWARDREF`
+    Further details.
+'''
+
+# ....................{ PEP ~ 484 : tower                  }....................
 # Note that type unions are intentionally defined to preferably be PEP
 # 604-compliant (e.g., "float | int"). Why? Because obsolete PEP 484-compliant
 # type unions (e.g., "Union[float, int]") fail to support various edge cases,
@@ -778,20 +807,6 @@ TupleTypeVars = Tuple[TypeVar, ...]
 '''
 :pep:`585`-compliant type hint matching a tuple of zero or more
 :pep:`484`-compliant **type variables** (i.e., :class:`.TypeVar` objects).
-'''
-
-# ....................{ PEP ~ (484|585)                    }....................
-# Type hints required to fully comply with both PEP 484 *AND* 585.
-
-Pep484585ForwardRef = str | ForwardRef
-'''
-Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
-(i.e., classes of all forward reference objects).
-
-See Also
---------
-:data:`.HINT_PEP484585_FORWARDREF_TYPES`
-    Further details.
 '''
 
 # ....................{ PEP ~ (484|612|646)                }....................

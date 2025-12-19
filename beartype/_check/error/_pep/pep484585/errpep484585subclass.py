@@ -24,8 +24,8 @@ from beartype._data.hint.sign.datahintsigns import (
 )
 from beartype._util.cls.pep.clspep3119 import die_unless_object_issubclassable
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.hint.pep.proposal.pep484585.pep484585ref import (
-    import_pep484585_ref_type)
+from beartype._util.hint.pep.proposal.pep484.pep484ref import (
+    import_pep484_ref_type)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.utilpepsign import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
@@ -87,7 +87,7 @@ def find_cause_pep484585_subclass(cause: ViolationCause) -> ViolationCause:
     # If this child hint is a forward reference to a superclass...
     if hint_child_sign is HintSignForwardRef:
         # Superclass referred to by this absolute or relative forward reference.
-        hint_child = import_pep484585_ref_type(
+        hint_child = import_pep484_ref_type(
             hint=hint_child,  # type: ignore[arg-type]
             cls_stack=cause.cls_stack,
             func=cause.func,

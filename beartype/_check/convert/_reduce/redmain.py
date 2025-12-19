@@ -80,16 +80,22 @@ def reduce_hint(
     two lower-level private reducers:
 
     * The memoized :func:`._reduce_hint_cached` reducer, responsible for
-      efficiently reducing *most* (but not all) type hints.
+      efficiently reducing *most* (but not all) type hints. Memoized reducers
+      accept only the passed hint as a mandatory parameter, for efficiency.
     * The unmemoized :func:`._reduce_hint_uncached` reducer, responsible for
       inefficiently reducing the small subset of type hints contextually
-      requiring these problematic parameters.
+      requiring these problematic parameters. Unmemoized reducers accept *all*
+      optional parameters passed to this higher-level :func:`.reduce_hint`
+      function as mandatory parameters, for generality. Unmemoized reducers are
+      thus also required to accept a **variadic keyword argument** (e.g.,
+      ``**kwargs``) as a trailing parameter, matching all mandatory parameters
+      *not* explicitly required by those unmemoized reducers.
 
     Parameters
     ----------
     hint : Hint
         Type hint to be possibly reduced.
-    arg_kind : Optional[ArgKind]
+    arg_kind : Optional[ArgKind], default: None
         Either:
 
         * If this hint annotates a parameter of some callable, that parameter's
@@ -99,16 +105,16 @@ def reduce_hint(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    cls_stack : TypeStack, optional
+    cls_stack : TypeStack, default: None
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf, default: BEARTYPE_CONF_DEFAULT
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to the default beartype configuration.
-    decor_meta : Optional[BeartypeDecorMeta], optional
+    decor_meta : Optional[BeartypeDecorMeta], default: None
         Either:
 
         * If this hint annotates a parameter or return of some callable, the
@@ -550,6 +556,15 @@ def _reduce_hint_cached(
         #FIXME: [SPEED] Is there any point to passing the "exception_prefix"
         #parameter? Possibly. Not sure. Isn't this parameter a constant? No?
         #Does it actually vary with context? Can't recall. Investigate up!
+        #FIXME: The way to validate this would be as follows:
+        #    assert exception_prefix is EXCEPTION_PREFIX
+        #
+        #If that assertion passes, then just use the "EXCEPTION_PREFIX" constant
+        #in *ALL* cached hint reducers in lieu of this inefficient
+        #"exception_prefix" parameter.
+        #
+        #If that assertion fails, then document below why. The world needs to
+        #know the horrible truth! *heh*
 
         # Reduce this hint by calling this reducer.
         #
@@ -583,7 +598,13 @@ def _reduce_hint_uncached(
         Sign with which to seed (i.e., initialize) this reduction. See also the
         :func:`.reduce_hint` docstring for further details.
 
-    All remaining keyword parameters are silently ignored.
+    All remaining keyword parameters are passed as is to the underlying
+    lower-level PEP-specific reducer called by this higher-level PEP-agnostic
+    reducer. In other words, *all* unmemoized reducers accept *all* parameters
+    accepted by the parent :func:`.reduce_hint` function defined above.
+    Unmemoized reducers are thus also required to accept a **variadic keyword
+    argument** (e.g., ``**kwargs``) as a trailing parameter, matching all
+    mandatory parameters *not* explicitly required by those unmemoized reducers.
 
     Returns
     -------
@@ -619,7 +640,7 @@ def _reduce_hint_uncached(
     # Unmemoized reducer reducing this hint if any *OR* "None" otherwise.
     hint_reducer_uncached = HINT_SIGN_TO_REDUCE_HINT_UNCACHED_get(hint_sign)  # type: ignore[arg-type]
 
-    # If a unmemoized reducer reduces this hint...
+    # If an unmemoized reducer reduces this hint...
     if hint_reducer_uncached is not None:
         # print(f'[_reduce_hint_cached] Reducing cached hint {repr(hint)}...')
 
@@ -823,8 +844,12 @@ _REDUCE_HINT_CHILD_ARG_NAMES_UNSAFE = frozenset((
 
     # Applicable *ONLY* to root hints directly annotating callable parameters
     # or returns.
-    'decor_meta',
     'pith_name',
+
+    #FIXME: Actually, this should probably be omitted now. Forward reference
+    #reduction requires this to efficiently reduce *ALL* forward references,
+    #regardless of whether those are root or child forward references.
+    'decor_meta',
 ))
 '''
 Frozen set of the names of all **unsafe child type hint reducer keyword

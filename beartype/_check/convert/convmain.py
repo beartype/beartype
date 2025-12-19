@@ -25,7 +25,7 @@ from beartype._conf.confmain import BeartypeConf
 from beartype._conf.confcommon import BEARTYPE_CONF_DEFAULT
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.sign.datahintsigncls import HintSign
+# from beartype._data.hint.sign.datahintsigncls import HintSign
 from beartype._data.kind.datakindiota import SENTINEL
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
@@ -53,8 +53,8 @@ def sanify_hint_root_func(
     type hint** (i.e., possibly PEP-noncompliant hint annotating the parameter
     or return with the passed name of the passed callable) if this hint is both
     reducible and unignorable, this hint unmodified if this hint is both
-    irreducible and unignorable, or :data:`.HINT_SANE_IGNORABLE` otherwise (i.e., if
-    this hint is ignorable).
+    irreducible and unignorable, or :data:`.HINT_SANE_IGNORABLE` otherwise
+    (i.e., if this hint is ignorable).
 
     Specifically, this function:
 
@@ -155,7 +155,7 @@ def sanify_hint_root_func(
 
         # Safely set the hint annotating the parameter or return with the passed
         # name of the decorated callable to the passed hint in a portable manner
-        # consistent with both PEP 649 and Python >= 3.14.
+        # consistent with both PEPs 649 and 749 under Python >= 3.14.
         decor_meta.set_func_pith_hint(pith_name=pith_name, hint=hint)
     # Else, this possibly PEP-noncompliant hint was *NOT* coerced into a
     # PEP-compliant hint, implying this hint to already be PEP-compliant.

@@ -210,7 +210,10 @@ jobs:
     # Time in minutes to wait on the command pipeline run below to exit
     # *BEFORE* sending a non-graceful termination request (i.e., "SIGTERM"
     # under POSIX-compliant systems).
-    timeout-minutes: 10
+    #
+    # Note that 10 minutes is no longer enough to run the full project test
+    # suite across all supported Python versions and platforms, sadly.
+    timeout-minutes: 20
 
     # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.

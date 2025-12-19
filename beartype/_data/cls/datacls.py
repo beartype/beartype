@@ -229,19 +229,19 @@ generics are thus mostly useless for most real-world purposes.
 '''
 
 # ....................{ TYPES ~ pep : (484|585)            }....................
-TYPES_PEP484585_REF = (str, ForwardRef)
+TYPES_PEP484_FORWARDREF = (str, ForwardRef)
 '''
 Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
 types** (i.e., classes of all forward reference objects).
 
 Specifically, this union contains:
 
-* :class:`str`, the class of all :pep:`585`-compliant forward reference objects
+* :class:`str`, the type of all :pep:`585`-compliant forward reference objects
   implicitly preserved by all :pep:`585`-compliant type hint factories when
   subscripted by a string.
-* :class:`HINT_PEP484_FORWARDREF_TYPE`, the class of all :pep:`484`-compliant
-  forward reference objects implicitly created by all :mod:`typing` type hint
-  factories when subscripted by a string.
+* :class:`.ForwardRef`, the type of all :pep:`484`-compliant forward reference
+  objects implicitly created by all :mod:`typing` type hint factories when
+  subscripted by a string.
 
 While :pep:`585`-compliant type hint factories preserve string-based forward
 references as is, :mod:`typing` type hint factories coerce string-based forward
