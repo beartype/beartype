@@ -16,10 +16,10 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip
+# from beartype_test._util.mark.pytskip import skip
 
 # ....................{ TESTS ~ getter                     }....................
-@skip('Currently broken.')
+# @skip('Currently broken.')
 def test_get_hint_pep484_ref_names_absolute() -> None:
     '''
     Test
@@ -45,10 +45,22 @@ def test_get_hint_pep484_ref_names_absolute() -> None:
     # Fully-qualified name of the current module defining this unit test.
     THIS_MODULE_NAME = __name__
 
+    # Arbitrary absolute forward reference module names defined as strings.
+    ALAS_ALAS_MODULE = 'He_overleaps.the'
+    THE_MASK_OF_ANARCHY_MODULE = 'as_I.lay_asleep'
+    WITH_GREAT_POWER_IT_MODULE = 'And_with.great_power.it_forth'
+
+    # Arbitrary absolute forward reference basenames defined as strings.
+    ALAS_ALAS_BASENAME = 'bounds'
+    THE_MASK_OF_ANARCHY_BASENAME = 'in_Italy'
+    WITH_GREAT_POWER_IT_BASENAME = 'led_me'
+
     # Arbitrary absolute forward references defined as strings.
-    ALAS_ALAS = 'He_overleaps.the.bounds'
-    THE_MASK_OF_ANARCHY = 'as_I.lay_asleep.in_Italy'
-    WITH_GREAT_POWER_IT = 'And_with.great_power.it_forth.led_me'
+    ALAS_ALAS = f'{ALAS_ALAS_MODULE}.{ALAS_ALAS_BASENAME}'
+    THE_MASK_OF_ANARCHY = (
+        f'{THE_MASK_OF_ANARCHY_MODULE}.{THE_MASK_OF_ANARCHY_BASENAME}')
+    WITH_GREAT_POWER_IT = (
+        f'{WITH_GREAT_POWER_IT_MODULE}.{WITH_GREAT_POWER_IT_BASENAME}')
 
     # Arbitrary absolute forward reference defined as a non-string.
     WITH_GREAT_POWER = ForwardRef(WITH_GREAT_POWER_IT)
@@ -83,12 +95,12 @@ def test_get_hint_pep484_ref_names_absolute() -> None:
     # Assert that this getter preserves an absolute forward reference in string
     # format as is.
     assert get_hint_pep484_ref_names_absolute(THE_MASK_OF_ANARCHY) == (
-        None, THE_MASK_OF_ANARCHY)
+        THE_MASK_OF_ANARCHY_MODULE, THE_MASK_OF_ANARCHY_BASENAME)
 
     # Assert that this getter preserves an absolute forward reference in
     # "typing.ForwardRef" format as is.
     assert get_hint_pep484_ref_names_absolute(WITH_GREAT_POWER) == (
-        None, WITH_GREAT_POWER_IT)
+        WITH_GREAT_POWER_IT_MODULE, WITH_GREAT_POWER_IT_BASENAME)
 
     # Assert that this getter canonicalizes a relative forward reference against
     # the "__module__" dunder attribute of a function to the expected string.

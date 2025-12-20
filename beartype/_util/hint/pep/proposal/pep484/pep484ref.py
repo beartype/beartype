@@ -238,6 +238,7 @@ def get_hint_pep484_ref_names_absolute(
     assert isinstance(func, NoneTypeOr[Callable]), (
         f'{repr(func)} neither callable nor "None".')
 
+    # ....................{ LOCALS                         }....................
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference. Notably, the following
     # constraints now hold:
@@ -261,6 +262,7 @@ def get_hint_pep484_ref_names_absolute(
     # thus already (...hopefully) fully-qualified.
     is_hint_type_name_qualified = '.' in hint_type_name
 
+    # ....................{ HEURISTIC ~ nested class       }....................
     # If...
     if (
         # This reference was *NOT* instantiated with a module name (i.e., this
@@ -317,18 +319,36 @@ def get_hint_pep484_ref_names_absolute(
     # Else, this reference was already instantiated with a module name *AND* ...
     #FIXME: Comment us up, please. *sigh*
 
+    # ....................{ HEURISTIC ~ absolute reference }....................
+    # If...
+    if (
+        # The fully-qualified name of the module defining the attribute to which
+        # this reference refers still has yet to be decided *AND*...
+        not hint_module_name and
+        # This classname contains one or more "." characters and is thus already
+        # (...hopefully) fully-qualified...
+        is_hint_type_name_qualified
+    ):
+        # Possibly empty fully-qualified module name and unqualified
+        # basename of the type referred to by this reference.
+        hint_module_name, _, hint_type_name = hint_type_name.rpartition('.')
+    # Else, either ... *OR* this classname contains *NO* "." characters.
+    #FIXME: Comment us up, please. *sigh*
+
+    # ....................{ HEURISTIC ~ relative reference }....................
     # If the fully-qualified name of the module defining the attribute to which
     # this reference refers still has yet to be decided...
     if not hint_module_name:
-        # Else, this reference does *NOT* annotate a method of a class.
-        #
-        # If this classname contains one or more "." characters and is thus
-        # already (...hopefully) fully-qualified...
-        if is_hint_type_name_qualified:
-            # Possibly empty fully-qualified module name and unqualified
-            # basename of the type referred to by this reference.
-            hint_module_name, _, hint_type_name = hint_type_name.rpartition('.')
-        # Else, this classname contains *NO* "." characters.
+        #FIXME: Improve commentary, please. Notably, note why classes *MUST* be
+        #prioritized over callables. See the docstring with respect to
+        #"typing.NamedTuple". *sigh*
+        if cls_stack:
+            # Fully-qualified name of the module defining this class.
+            hint_module_name = get_object_module_name_or_none(cls_stack[-1])
+
+            #FIXME: Comment us up, please. *sigh*
+            hint_module_name_origin = cls_stack
+        #FIXME: Comment us up, please. *sigh*
         #
         # If this reference annotates a function...
         elif func:
@@ -366,26 +386,43 @@ def get_hint_pep484_ref_names_absolute(
             )
     #FIXME: Comment us up, please. *sigh*
 
-    #FIXME: Document why this edge case occurs. Notably, either:
-    #* Valid relative references containing *NO* "." characters.
+    # ....................{ HEURISTIC ~ malicious object   }....................
+    #FIXME: Document why this rare edge case occurs. Notably, either:
     #* Malicious classes (whose __module__ attributes are either "None",
     #  the empty string, or an unimportable module).
     #* Malicious forward references (whose "."-delimited prefix is an
     #  unimportable module).
 
-    # While it is still *NOT* the case that...
+    # If it is still *NOT* the case that...
+    #
+    # Note that this edge case rarely arises. Efficiency is *NOT* a concern.
     if not (
         # The fully-qualified name of the module defining the attribute to which
         # this reference refers is known *AND*...
         hint_module_name and
+        #FIXME: Comment us up, please. Basically, calling is_module() is
+        #dangerous at this early decoration time. We only do so if we can do so
+        #safely, which is when this module name ideally refers to the module
+        #currently being imported. *sigh*
+        #FIXME: Also, DRY violation between here and below. Probably best just
+        #to inject a "!!! CAVEATS: Synchronize... !!!" banner here. *shrug*
         # That module is importable *AND*...
-        is_module(hint_module_name)
+        (not hint_module_name_origin or is_module(hint_module_name))
     # Then fallback to...
     ):
         #FIXME: Improve commentary, please. Notably, note why classes *MUST* be
         #prioritized over callables. See the docstring with respect to
         #"typing.NamedTuple". *sigh*
-        if cls_stack and hint_module_name_origin is not cls_stack:
+        #FIXME: Duplicates logic above. Whatevahs!
+        #FIXME: This is some pretty ad-hoc logic. Tests pass, but... *YIKES*.
+
+        # If a builtin type with this classname exists, assume this reference
+        # refers to this builtin type exposed by the standard "builtins" module.
+        if hint_type_name in TYPE_BUILTIN_NAME_TO_TYPE:
+            # Fully-qualified name of the standard "builtins" module. Note that
+            # this module is *ALWAYS* guaranteed to be importable.
+            hint_module_name = BUILTINS_MODULE_NAME
+        elif cls_stack and hint_module_name_origin is not cls_stack:
             # Fully-qualified name of the module defining this class.
             hint_module_name = get_object_module_name_or_none(cls_stack[-1])
         # If this reference annotates a callable, then fallback to...
@@ -395,14 +432,12 @@ def get_hint_pep484_ref_names_absolute(
         # Else, this reference does *NOT* annotate a callable.
 
         # If it is still *NOT* the case that...
-        #
-        # Note that this edge case rarely arises. Efficiency is *NOT* a concern.
         if not (
             # The fully-qualified name of the module defining the attribute to
             # which this reference refers is known *AND*...
             hint_module_name and
             # That module is importable *AND*...
-            is_module(hint_module_name)
+            (not hint_module_name_origin or is_module(hint_module_name))
         # There exists *NO* usable module from which to import the attribute to
         # which this reference refers. In this case, raise an exception.
         ):
