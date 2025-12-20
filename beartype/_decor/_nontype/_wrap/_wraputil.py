@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._data.code.datacodename import CODE_PITH_ROOT_NAME_PLACEHOLDER
+from beartype._data.typing.datatyping import TupleStrs
 from beartype._check.code.codescope import add_func_scope_ref
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
@@ -20,7 +21,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.pep.proposal.pep484.pep484ref import (
-    get_hint_pep484_ref_names_relative_to)
+    get_hint_pep484_ref_names_absolute)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
 
@@ -29,7 +30,7 @@ def unmemoize_func_wrapper_code(
     decor_meta: BeartypeDecorMeta,
     func_wrapper_code: str,
     pith_repr: str,
-    hint_refs_type_basename: tuple,
+    hint_refs_type_basename: TupleStrs,
 ) -> str:
     '''
     Convert the passed memoized code snippet type-checking any parameter or
@@ -57,7 +58,7 @@ def unmemoize_func_wrapper_code(
     pith_repr : str
         Machine-readable representation of the name of this parameter or
         return.
-    hint_refs_type_basename : tuple
+    hint_refs_type_basename : tuple[str]
         Tuple of the unqualified classnames referred to by all relative forward
         reference type hints visitable from the current root type hint.
 
@@ -102,13 +103,12 @@ def unmemoize_func_wrapper_code(
             # Possibly undefined fully-qualified module name and possibly
             # unqualified classname referred to by this relative forward
             # reference, relative to the decorated type stack and callable.
-            ref_module_name, ref_name = (
-                get_hint_pep484_ref_names_relative_to(
-                    hint=ref_basename,
-                    cls_stack=cls_stack,
-                    func=func,
-                    exception_prefix=EXCEPTION_PLACEHOLDER,
-                ))
+            ref_module_name, ref_name = get_hint_pep484_ref_names_absolute(
+                hint=ref_basename,
+                cls_stack=cls_stack,
+                func=func,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
+            )
 
             # Name of the hidden parameter providing this forward reference
             # proxy to be passed to this wrapper function.

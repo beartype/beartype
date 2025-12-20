@@ -15,11 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import (
-    Dict,
-    Optional,
-    Type,
-)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.typing.datatyping import (
     BeartypeForwardRef,
@@ -27,20 +22,23 @@ from beartype._data.typing.datatyping import (
     TupleTypes,
 )
 from beartype._check.forward.reference.fwdrefabc import (
-    _BeartypeForwardRefIndexableABC,
-    _BeartypeForwardRefIndexableABC_BASES,
+    BeartypeForwardRefSubbableABC,
+    BeartypeForwardRefSubbableABC_BASES,
+    BeartypeForwardRefSubbedABC,
+    BeartypeForwardRefSubbedABC_BASES,
 )
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.text.utiltextidentifier import die_unless_identifier
+from typing import Optional
 
 # ....................{ FACTORIES                          }....................
-def make_forwardref_indexable_subtype(
+def make_forwardref_subbable_subtype(
     scope_name: Optional[str],
     hint_name: str,
-) -> Type[_BeartypeForwardRefIndexableABC]:
+) -> type[BeartypeForwardRefSubbableABC]:
     '''
     Create and return a new **subscriptable forward reference subclass** (i.e.,
-    concrete subclass of the :class:`._BeartypeForwardRefIndexableABC` abstract
+    concrete subclass of the :class:`.BeartypeForwardRefSubbableABC` abstract
     base class (ABC) deferring the resolution of the unresolved type hint with
     the passed name, transparently permitting this type hint to be subscripted
     by any arbitrary positional or keyword parameters).
@@ -72,7 +70,7 @@ def make_forwardref_indexable_subtype(
 
     Returns
     -------
-    Type[_BeartypeForwardRefIndexableABC]
+    type[BeartypeForwardRefSubbableABC]
         Subscriptable forward reference subclass referencing this type hint.
 
     Raises
@@ -91,7 +89,68 @@ def make_forwardref_indexable_subtype(
     return _make_forwardref_subtype(  # type: ignore[return-value]
         scope_name=scope_name,
         hint_name=hint_name,
-        type_bases=_BeartypeForwardRefIndexableABC_BASES,
+        type_bases=BeartypeForwardRefSubbableABC_BASES,
+    )
+
+
+def make_forwardref_subbed_subtype(
+    scope_name: Optional[str],
+    hint_name: str,
+) -> type[BeartypeForwardRefSubbedABC]:
+    '''
+    Create and return a new **subscriptable forward reference subclass** (i.e.,
+    concrete subclass of the :class:`.BeartypeForwardRefSubbedABC` abstract
+    base class (ABC) deferring the resolution of the unresolved type hint with
+    the passed name, transparently permitting this type hint to be subscripted
+    by any arbitrary positional or keyword parameters).
+
+    This factory is effectively memoized despite not being explicitly memoized
+    (e.g., by the :func:`callable_cached` decorator), as the lower-level private
+    :func:`._make_forwardref_subtype` factory called by this higher-level public
+    factory is itself internally memoized.
+
+    Parameters
+    ----------
+    scope_name : Optional[str]
+        Possibly ignored lexical scope name. Specifically:
+
+        * If ``hint_name`` is absolute (i.e., contains one or more ``"."``
+          delimiters), this parameter is silently ignored in favour of the
+          fully-qualified name of the module prefixing ``hint_name``.
+        * If ``hint_name`` is relative (i.e., contains *no* ``"."`` delimiters),
+          this parameter declares the absolute (i.e., fully-qualified) name of
+          the lexical scope to which this unresolved type hint is relative.
+
+        The fully-qualified name of the module prefixing ``hint_name`` (if any)
+        thus *always* takes precedence over this lexical scope name, which only
+        provides a fallback to resolve relative forward references. While
+        unintuitive, this is needed to resolve absolute forward references.
+    hint_name : str
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be referenced.
+
+    Returns
+    -------
+    type[BeartypeForwardRefSubbedABC]
+        Subscriptable forward reference subclass referencing this type hint.
+
+    Raises
+    ------
+    BeartypeDecorHintForwardRefException
+        If either:
+
+        * ``hint_name`` is *not* a syntactically valid Python identifier.
+        * ``scope_name`` is neither:
+
+          * A syntactically valid Python identifier.
+          * :data:`None`.
+    '''
+
+    # Subscriptable forward reference to be returned.
+    return _make_forwardref_subtype(  # type: ignore[return-value]
+        scope_name=scope_name,
+        hint_name=hint_name,
+        type_bases=BeartypeForwardRefSubbedABC_BASES,
     )
 
 # ....................{ PRIVATE ~ factories                }....................
@@ -111,14 +170,14 @@ def _make_forwardref_subtype(
     ----------
     scope_name : Optional[str]
         Possibly ignored lexical scope name. See
-        :func:`.make_forwardref_indexable_subtype` for further details.
+        :func:`.make_forwardref_subbable_subtype` for further details.
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         the type hint referenced by this forward reference subclass.
     type_bases : Tuple[type, ...]
         Tuple of all base classes to be inherited by this forward reference
         subclass. For simplicity, this *must* be a 1-tuple ``(type_base,)``
-        where ``type_base`` is a :class:`._BeartypeForwardRefIndexableABC`
+        where ``type_base`` is a :class:`.BeartypeForwardRefSubbableABC`
         subclass.
 
     Returns
@@ -155,7 +214,7 @@ def _make_forwardref_subtype(
     #   attribute and is thus also universal.
     #
     # How did the caller guarantee the above pair of constraints? Typically, by
-    # calling the external get_hint_pep484_ref_names_relative_to() getter in
+    # calling the external get_hint_pep484_ref_names_absolute() getter in
     # the "beartype._util.hint.pep.proposal.pep484.pep484ref" submodule.
     #
     # Clearly, these constraints are mutually exclusive. Exactly one holds.
@@ -201,6 +260,19 @@ def _make_forwardref_subtype(
     # Else, this attribute name is a syntactically valid Python identifier.
 
     # ....................{ LOCALS                         }....................
+    #FIXME: Refactor to render the parent
+    #get_hint_pep484_ref_names_absolute() getter more generically useful.
+    #Specifically:
+    #* Copy the logic below into the get_hint_pep484_ref_names_absolute()
+    #  getter.
+    #* Refactor *ALL* "Optional[str]" type hints throughout both this subpackage
+    #  *AND* the companion "pep484ref" submodule to be "str" instead.
+    #* Validate above that "type_module_name" is a non-"None" string.
+    #* Remove the duplicated logic below.
+    #FIXME: Actually... is this harmless? Sure, it's inefficient. We get that.
+    #Duplication is bad, certainly. But it doesn't appear to be causing any
+    #genuine issues at the moment. *shrug*
+
     # Possibly empty fully-qualified module name and unqualified basename of the
     # type referred to by this forward reference.
     type_module_name, _, type_name = hint_name.rpartition('.')
@@ -238,7 +310,7 @@ def _make_forwardref_subtype(
     return forwardref_subtype
 
 # ....................{ PRIVATE ~ globals                  }....................
-_forwardref_args_to_forwardref: Dict[
+_forwardref_args_to_forwardref: dict[
     BeartypeForwardRefArgs, BeartypeForwardRef] = {}
 '''
 **Forward reference proxy cache** (i.e., dictionary mapping from the tuple of

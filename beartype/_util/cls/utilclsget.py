@@ -78,6 +78,13 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
     return None
 
 # ....................{ GETTERS ~ scope                    }....................
+#FIXME: Define a new get_type_globals() getter with a similar one-liner to that
+#suggested by PEP 563 (lol):
+#      cls_globals = vars(sys.modules[cls_stack[-1].__module__])
+#
+#Of course, note that "__module__" may be either "None" *OR* an imaginary
+#in-memory string that has no relation to "sys.modules". Care is thus warranted.
+
 #FIXME: Unit test us up, please.
 def get_type_locals(
     # Mandatory parameters.

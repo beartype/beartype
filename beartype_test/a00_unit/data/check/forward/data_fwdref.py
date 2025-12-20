@@ -13,7 +13,7 @@ exercising known edge cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
+    make_forwardref_subbable_subtype)
 
 # ....................{ CONSTANTS                          }....................
 PACKAGE_NAME = 'beartype_test.a00_unit.data'
@@ -53,7 +53,7 @@ Fully-qualified name of the current test module.
 '''
 
 # ....................{ FORWARDREFS ~ invalid              }....................
-FORWARDREF_RELATIVE_CIRCULAR = make_forwardref_indexable_subtype(
+FORWARDREF_RELATIVE_CIRCULAR = make_forwardref_subbable_subtype(
     # Fully-qualified name of the current test module.
     SCOPE_NAME,
     # Unqualified basename of this global currently being declared.
@@ -69,7 +69,7 @@ own data submodule.
 '''
 
 # ....................{ FORWARDREFS ~ valid                }....................
-FORWARDREF_ABSOLUTE = make_forwardref_indexable_subtype(
+FORWARDREF_ABSOLUTE = make_forwardref_subbable_subtype(
     # Intentionally ignored fully-qualified name of this test submodule.
     SCOPE_NAME,
     CLASS_NAME,
@@ -80,7 +80,7 @@ Forward reference proxy to an unsubscripted class referenced with an absolute
 '''
 
 
-FORWARDREF_RELATIVE = make_forwardref_indexable_subtype(
+FORWARDREF_RELATIVE = make_forwardref_subbable_subtype(
     MODULE_NAME, CLASS_BASENAME)
 '''
 Forward reference proxy to an unsubscripted class referenced with a
@@ -88,7 +88,7 @@ relative (i.e., unqualified) name.
 '''
 
 
-FORWARDREF_MODULE_ABSOLUTE = make_forwardref_indexable_subtype(
+FORWARDREF_MODULE_ABSOLUTE = make_forwardref_subbable_subtype(
     # Intentionally ignored fully-qualified name of this test submodule.
     SCOPE_NAME,
     MODULE_NAME,

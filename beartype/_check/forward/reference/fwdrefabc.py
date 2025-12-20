@@ -17,7 +17,6 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     NoReturn,
     Optional,
-    Type,
 )
 from beartype._data.typing.datatyping import (
     LexicalScope,
@@ -130,9 +129,12 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         # referenced by this forward reference.
         return issubclass(obj, cls.__type_beartype__)  # type: ignore[arg-type]
 
-# ....................{ SUPERCLASSES ~ index               }....................
+# ....................{ SUPERCLASSES ~ subscription        }....................
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
+
+# Note that this subclass is referenced in class scope by subsequent subclasses
+# and thus intentionally declared first.
+class BeartypeForwardRefSubbedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
     subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
@@ -168,7 +170,7 @@ class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
 
 
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
+class BeartypeForwardRefSubbableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference
     subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
@@ -179,11 +181,11 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
 
     # ....................{ DUNDERS                        }....................
     @classmethod
-    def __class_getitem__(cls, *args, **kwargs) -> (
-        Type[_BeartypeForwardRefIndexedABC]):
+    def __class_getitem__(
+        cls, *args, **kwargs) -> type[BeartypeForwardRefSubbedABC]:
         '''
         Create and return a new **subscripted forward reference subclass**
-        (i.e., concrete subclass of the :class:`._BeartypeForwardRefIndexedABC`
+        (i.e., concrete subclass of the :class:`.BeartypeForwardRefSubbedABC`
         abstract base class (ABC) deferring the resolution of the type hint with
         the passed name, subscripted by the passed positional and keyword
         arguments).
@@ -203,15 +205,13 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.reference.fwdrefmake import (
-            _make_forwardref_subtype)
+            make_forwardref_subbed_subtype)
 
         # Subscripted forward reference to be returned.
-        forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
-            _make_forwardref_subtype(  # type: ignore[assignment]
-                hint_name=cls.__name_beartype__,
-                scope_name=cls.__scope_name_beartype__,
-                type_bases=_BeartypeForwardRefIndexedABC_BASES,
-            ))
+        forwardref_indexed_subtype = make_forwardref_subbed_subtype(
+            scope_name=cls.__scope_name_beartype__,
+            hint_name=cls.__name_beartype__,
+        )
 
         # Classify the arguments subscripting this forward reference.
         forwardref_indexed_subtype.__args_beartype__ = args  # pyright: ignore[reportGeneralTypeIssues]
@@ -221,15 +221,15 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
         return forwardref_indexed_subtype
 
 # ....................{ PRIVATE ~ tuples                   }....................
-_BeartypeForwardRefIndexableABC_BASES = (_BeartypeForwardRefIndexableABC,)
+BeartypeForwardRefSubbableABC_BASES = (BeartypeForwardRefSubbableABC,)
 '''
-1-tuple containing *only* the :class:`._BeartypeForwardRefIndexableABC`
+1-tuple containing *only* the :class:`.BeartypeForwardRefSubbableABC`
 superclass to reduce space and time consumption.
 '''
 
 
-_BeartypeForwardRefIndexedABC_BASES = (_BeartypeForwardRefIndexedABC,)
+BeartypeForwardRefSubbedABC_BASES = (BeartypeForwardRefSubbedABC,)
 '''
-1-tuple containing *only* the :class:`._BeartypeForwardRefIndexedABC`
+1-tuple containing *only* the :class:`.BeartypeForwardRefSubbedABC`
 superclass to reduce space and time consumption.
 '''

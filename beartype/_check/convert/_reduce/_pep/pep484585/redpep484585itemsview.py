@@ -50,7 +50,7 @@ def reduce_hint_pep484585_itemsview(hint: Hint, exception_prefix: str) -> Hint:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+    from beartype._check.convert._reduce._pep.pep484.redpep484core import (
         reduce_hint_pep484_deprecated)
 
     # If this hint is a PEP 484-compliant deprecated "typing.ItemsView[...]"

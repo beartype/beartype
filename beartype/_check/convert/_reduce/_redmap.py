@@ -22,7 +22,7 @@ from beartype._check.convert._reduce._nonpep.api.redapinumpy import (
     reduce_hint_numpy_ndarray)
 from beartype._check.convert._reduce._nonpep.api.redapipandera import (
     reduce_hint_pandera)
-from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+from beartype._check.convert._reduce._pep.pep484.redpep484core import (
     reduce_hint_pep484_any,
     reduce_hint_pep484_deprecated,
     reduce_hint_pep484_none,

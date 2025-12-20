@@ -435,7 +435,7 @@ zero or more 2-tuples of the form ``(item_index, item)``, where:
 # ....................{ LIST                               }....................
 ListStrs = List[str]
 '''
-PEP-compliant type hint matching a list of strings.
+:pep:`585`-compliant type hint matching a list of strings.
 '''
 
 # ....................{ MAPPING                            }....................
@@ -549,6 +549,20 @@ StrOrNone = str | None
 '''
 
 # ....................{ TUPLE                              }....................
+TupleStrs = Tuple[str, ...]
+'''
+:pep:`585`-compliant type hint matching a tuple of strings.
+'''
+
+
+TupleStrAndStr = Tuple[str, str]
+'''
+:pep:`585`-compliant type hint matching a 2-tuple whose first and second items
+are both strings. While ad-hoc, this data structure has proven useful throughout
+the codebase.
+'''
+
+
 TupleStrOrNoneAndStr = Tuple[StrOrNone, str]
 '''
 :pep:`585`-compliant type hint matching a 2-tuple whose:

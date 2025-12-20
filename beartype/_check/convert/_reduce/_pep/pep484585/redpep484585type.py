@@ -59,7 +59,7 @@ def reduce_hint_pep484585_type(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._check.convert._reduce._pep.pep484.redpep484 import (
+    from beartype._check.convert._reduce._pep.pep484.redpep484core import (
         reduce_hint_pep484_deprecated)
     from beartype._check.convert._reduce.redmain import reduce_hint_child
 

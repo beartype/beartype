@@ -114,7 +114,7 @@ from beartype._cave._cavefast import (
     Pep695ParameterizableTypes,
 )
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
+    make_forwardref_subbable_subtype)
 from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._data.typing.datatypingport import Hint
 from beartype._data.typing.datatyping import (
@@ -632,7 +632,7 @@ def iter_hint_pep695_unsubbed_forwardrefs(
             #   "hint_ref_name") is required here. Why? Subscription. A
             #   stringified forward reference *CANNOT* be subscripted by
             #   arbitrary child type hints; a forward reference proxy can be.
-            hint_ref = make_forwardref_indexable_subtype(
+            hint_ref = make_forwardref_subbable_subtype(
                 hint_module_name, hint_ref_name)
 
             # Yield this forward reference proxy to the caller.

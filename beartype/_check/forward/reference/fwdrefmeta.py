@@ -257,11 +257,11 @@ class BeartypeForwardRefMeta(type):
 
         # Avoid circular import dependencies.
         from beartype._check.forward.reference.fwdrefmake import (
-            make_forwardref_indexable_subtype)
+            make_forwardref_subbable_subtype)
 
         # Return a new fully-qualified forward reference subclass concatenated
         # as described above.
-        return make_forwardref_indexable_subtype(
+        return make_forwardref_subbable_subtype(
             cls.__scope_name_beartype__,  # type: ignore[arg-type]
             f'{cls.__name_beartype__}.{hint_name}',
         )
@@ -350,8 +350,8 @@ class BeartypeForwardRefMeta(type):
         # metadata representing this subscription.
         #
         # Ideally, we would test whether this is a subclass of the
-        # "_BeartypeForwardRefIndexedABC" superclass as follows:
-        #     if issubclass(cls, _BeartypeForwardRefIndexedABC):
+        # "BeartypeForwardRefSubbedABC" superclass as follows:
+        #     if issubclass(cls, BeartypeForwardRefSubbedABC):
         #
         # Sadly, doing so invokes the __subclasscheck__() dunder method defined
         # above, which invokes the

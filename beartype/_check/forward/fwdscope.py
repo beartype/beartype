@@ -36,9 +36,9 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Type
 from beartype._data.typing.datatyping import LexicalScope
 from beartype._check.forward.reference.fwdrefabc import (
-    _BeartypeForwardRefIndexableABC)
+    BeartypeForwardRefSubbableABC)
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
+    make_forwardref_subbable_subtype)
 from beartype._util.func.utilfuncframe import (
     get_frame_caller_module_name_or_none,
     is_frame_caller_beartype,
@@ -156,7 +156,7 @@ class BeartypeForwardScope(LexicalScope):
 
     # ..................{ DUNDERS                            }..................
     def __missing__(
-        self, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
+        self, hint_name: str) -> Type[BeartypeForwardRefSubbableABC]:
         '''
         Dunder method explicitly called by the superclass
         :meth:`dict.__getitem__` method implicitly called on each ``[``- and
@@ -262,7 +262,7 @@ class BeartypeForwardScope(LexicalScope):
 
         Returns
         -------
-        Type[_BeartypeForwardRefIndexableABC]
+        Type[BeartypeForwardRefSubbableABC]
             Forward reference proxy deferring the resolution of this unresolved
             type hint.
 
@@ -355,7 +355,7 @@ class BeartypeForwardScope(LexicalScope):
         # assumed to be trustworthy. Don't let us down, @beartype! Not again!
 
         # Forward reference proxy to be returned.
-        forwardref_subtype = make_forwardref_indexable_subtype(
+        forwardref_subtype = make_forwardref_subbable_subtype(
             self._scope_name, hint_name)
 
         # Cache this proxy.

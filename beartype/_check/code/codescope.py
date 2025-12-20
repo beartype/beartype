@@ -62,7 +62,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
+    make_forwardref_subbable_subtype)
 from beartype._check.forward.reference.fwdreftest import is_beartype_forwardref
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
@@ -80,7 +80,7 @@ from beartype._util.cls.pep.clspep3119 import (
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484.pep484ref import (
-    get_hint_pep484_ref_names)
+    get_hint_pep484_ref_names_relative)
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Set
 from typing import Optional
@@ -135,7 +135,7 @@ def add_func_scope_ref(
     '''
 
     # Forward reference proxy referring to this class.
-    hint_ref = make_forwardref_indexable_subtype(ref_module_name, ref_name)
+    hint_ref = make_forwardref_subbable_subtype(ref_module_name, ref_name)
 
     # Name of a new parameter passing this forward reference proxy.
     hint_ref_arg_name = add_func_scope_attr(
@@ -572,7 +572,7 @@ def express_func_scope_type_ref(
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    ref_module_name, ref_name = get_hint_pep484_ref_names(
+    ref_module_name, ref_name = get_hint_pep484_ref_names_relative(
         hint=forwardref, exception_prefix=hints_meta.exception_prefix)
 
     # If either...
