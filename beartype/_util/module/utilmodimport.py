@@ -126,23 +126,32 @@ def import_module_or_none(
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodget import get_module_imported_or_none
 
-    # If this module name is *NOT* a syntactically valid Python identifier,
-    # raise an exception.
-    die_unless_identifier(
-        text=module_name,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this module name is a syntactically valid Python identifier.
-
     # Module cached with "sys.modules" if this module has already been imported
     # elsewhere under the active Python interpreter *OR* "None" otherwise.
+    #
+    # Note that this is an optimization, albeit an extremely valuable one.
+    # Module importation is one of the most (if not *THE* most) expensive
+    # operations made available by the core Python language.
     module = get_module_imported_or_none(module_name)
 
     # If this module has already been imported, return this cached module.
     if module is not None:
         return module
     # Else, this module has yet to be imported.
+
+    # If this module name is *NOT* a syntactically valid Python identifier,
+    # raise a human-readable exception.
+    #
+    # Note that we intentionally defer this validation until *AFTER* performing
+    # the above memoization. Since the get_module_imported_or_none() getter only
+    # trivially performs a dictionary lookup against this string, the validity
+    # of this string is irrelevant to that memoization.
+    die_unless_identifier(
+        text=module_name,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this module name is a syntactically valid Python identifier.
 
     # Attempt to dynamically import and return this module.
     try:

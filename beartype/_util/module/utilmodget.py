@@ -218,17 +218,74 @@ def get_object_module_name(obj: object) -> str:
 
 
 #FIXME: Unit test us up, please.
-def get_object_module_name_or_none(obj: object) -> Optional[str]:
+def get_object_module_name_or_none(
+    # Mandatory parameters.
+    obj: object,
+
+    # Optional parameters.
+    is_module_importable_or_none: bool = False,
+) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this object
-    defines the ``__module__`` dunder instance variable *or* :data:`None`
-    otherwise.
+    defines the ``__module__`` dunder attribute *or* :data:`None` otherwise.
+
+    Caveats
+    -------
+    **The name returned by this getter should be assumed to be untrustworthy**
+    unless the optional ``is_module_importable_or_none=True`` parameter is passed.
+    Outlier objects may define ``__module__`` dunder attributes to refer to
+    non-existent or otherwise unimportable modules. Objects exhibiting this
+    behaviour include:
+
+    * Well-intended objects defined only dynamically in-memory and thus
+      physically residing in *no* module.
+    * Malicious objects intentionally defining erroneous ``__module__`` dunder
+      attributes, which Python technically permits.
+
+    **The optional** ``is_module_importable_or_none=True`` **parameter is also
+    unsafe to pass in the general case.** Doing so instructs this high-level
+    getter to internally call the lower-level
+    :func:`beartype._util.module.utilmodtest.is_module` tester, which
+    necessarily imports that module as an unavoidable side effect. Importing
+    arbitrary external modules can (and often will) induce a circular import and
+    thus fatal error from # Python itself on that importation resembling:
+
+        ImportError: cannot import name '{attribute_name}' from partially
+        initialized module '{module_name}' (most likely due to a circular
+        import)
+
+    **Callers should only pass the optional**
+    ``is_module_importable_or_none=True`` **parameter when doing so is
+    guaranteed to be safe** or at least no less safe than *not* passing this
+    parameter. Since :mod:`beartype` has no control over external module
+    imports, the *only* context in which it is safe to pass this parameter is
+    when this object resides in the currently imported module (typically due to
+    this object being the currently decorated object). In this case, this module
+    name also ideally refers to the module currently being imported -- which,
+    due to currently being imported, obviously imposes no risk of inducing a
+    circular import when trivially re-imported.
 
     Parameters
     ----------
     obj : object
         Object to be inspected.
+    is_module_importable_or_none : bool, default: False
+        Either:
+
+        * If :data:`True`, that module is required to be importable. Note that
+          it is unsafe to enable this parameter in the general case. See the
+          caveats above for further discussion. Specifically, if this object
+          defines a ``__module__`` dunder attribute referring to:
+
+          * An non-existent or otherwise unimportable module, this getter
+            returns :data:`None`.
+          * An importable module, this getter returns the name of that module.
+
+        * If :data:`False`, that module is permitted to be unimportable. In this
+          case, *no* validation is performed on this name.
+
+        Defaults to :data:`False` for safety.
 
     Returns
     -------
@@ -239,9 +296,32 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
           object declares a ``__module__`` dunder attribute.
         * :data:`None` otherwise.
     '''
+    assert isinstance(is_module_importable_or_none, bool), (
+        f'{repr(is_module_importable_or_none)} not boolean.')
 
-    # Let it be, speaking one-liners of wisdom.
-    return getattr(obj, '__module__', None)
+    # Fully-qualified name of the module declaring this object if this object
+    # defines a "__module__" dunder attribute *OR* "None" otherwise.
+    obj_module_name = getattr(obj, '__module__', None)
+
+    # If...
+    if (
+        # If this object defines a "__module__" dunder attribute *AND*...
+        obj_module_name and
+        # The caller requests we validate the importability of this module...
+        is_module_importable_or_none
+    ):
+        # Avoid circular import dependencies. Ironic, isn't it?
+        from beartype._util.module.utilmodtest import is_module
+
+        # If this module is unimportable, nullify this name for safety.
+        if not is_module(obj_module_name):
+            obj_module_name = None
+        # Else, this module is importable. In this case, preserve this name.
+    # Else, the caller requests we *NOT* validate the importability of this
+    # module. In this case, preserve this name as is.
+
+    # Return this object's module name.
+    return obj_module_name
 
 # ....................{ GETTERS ~ object : type : name     }....................
 #FIXME: Unit test us up, please.
