@@ -21,6 +21,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     Callable,
 )
+from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.error.errcause import ViolationCause
@@ -275,13 +276,13 @@ class HintLogicQuasiiterable(HintLogicABC):
 
         # Python expression evaluating to the "collections.abc.Collection" ABC
         # as a hidden parameter passed to the current wrapper function.
-        collection_abc_expr = hints_meta.add_func_scope_type_or_types(
-            CollectionABC)
+        collection_abc_expr = add_hints_meta_scope_type_or_types(
+            hints_meta=hints_meta, type_or_types=CollectionABC)
 
         # Python expression evaluating to the "collections.abc.Sequence" ABC as
         # a hidden parameter passed to the current wrapper function.
-        sequence_abc_expr = hints_meta.add_func_scope_type_or_types(
-            SequenceABC)
+        sequence_abc_expr = add_hints_meta_scope_type_or_types(
+            hints_meta=hints_meta, type_or_types=SequenceABC)
 
         # Increment the integer suffixing the name of a unique local variable
         # storing the value of this child pith *BEFORE* defining this variable.

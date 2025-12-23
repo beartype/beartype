@@ -215,7 +215,7 @@ def _make_forwardref_subtype(
     #
     # How did the caller guarantee the above pair of constraints? Typically, by
     # calling the external get_hint_pep484_ref_names_absolute() getter in
-    # the "beartype._util.hint.pep.proposal.pep484.pep484ref" submodule.
+    # the "beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative" submodule.
     #
     # Clearly, these constraints are mutually exclusive. Exactly one holds.
     # Regardless of which constraint holds, this pair of "hint_name" and

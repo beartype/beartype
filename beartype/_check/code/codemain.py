@@ -51,7 +51,10 @@ from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
 )
-from beartype._check.code.codescope import express_func_scope_type_ref
+from beartype._check.code.codescope import (
+    add_hints_meta_scope_type_or_types,
+    express_hints_meta_scope_type_ref,
+)
 from beartype._check.code._pep.codepep484604 import (
     make_hint_pep484604_check_expr)
 from beartype._check.code._pep.pep484585.codepep484585container import (
@@ -499,11 +502,14 @@ def make_check_expr(
                 hints_meta.func_curr_code = CODE_PEP484_INSTANCE_format(
                     pith_curr_expr=hints_meta.pith_curr_expr,
                     # Python expression evaluating to this origin type.
-                    hint_curr_expr=hints_meta.add_func_scope_type_or_types(
+                    hint_curr_expr=add_hints_meta_scope_type_or_types(
+                        hints_meta=hints_meta,
                         # Origin type of this hint if any *OR* raise an
                         # exception -- which should *NEVER* happen, as this hint
                         # was validated above to be supported.
-                        get_hint_pep_origin_type_isinstanceable(hint_curr)),
+                        type_or_types=get_hint_pep_origin_type_isinstanceable(
+                            hint_curr)
+                    ),
                 )
             # Else, this hint is either subscripted, not shallowly
             # type-checkable, *OR* deeply type-checkable.
@@ -513,7 +519,7 @@ def make_check_expr(
             elif hint_curr_sign is HintSignForwardRef:
                 # Python expression evaluating to a new forward reference proxy
                 # encapsulating the type referred to by this forward reference.
-                hints_meta.hint_curr_expr = express_func_scope_type_ref(
+                hints_meta.hint_curr_expr = express_hints_meta_scope_type_ref(
                     hints_meta=hints_meta,
                     forwardref=hint_curr,  # type: ignore[arg-type]
                 )
@@ -775,8 +781,12 @@ def make_check_expr(
                     # mapping hint as a hidden beartype-specific parameter
                     # injected into the signature of this wrapper function.
                     hints_meta.hint_curr_expr = (
-                        hints_meta.add_func_scope_type_or_types(
-                            get_hint_pep_origin_type_isinstanceable(hint_curr)))
+                        add_hints_meta_scope_type_or_types(
+                            hints_meta=hints_meta,
+                            type_or_types=(
+                                get_hint_pep_origin_type_isinstanceable(
+                                    hint_curr)),
+                        ))
 
                     # 2-tuple of the possibly ignorable insane child key and
                     # value hints subscripting this mapping hint, defined as
@@ -1165,7 +1175,7 @@ def make_check_expr(
                         # superclass, expose this forward reference to the body
                         # of this wrapper function. See above for commentary.
                         if hint_child_sign is HintSignForwardRef:
-                            hint_curr_expr = express_func_scope_type_ref(
+                            hint_curr_expr = express_hints_meta_scope_type_ref(
                                 hints_meta=hints_meta,
                                 forwardref=hint_child,  # type: ignore[arg-type]
                             )
@@ -1200,9 +1210,8 @@ def make_check_expr(
                             # Else, this child hint is an issubclassable object.
 
                             # Python expression evaluating to this child hint.
-                            hint_curr_expr = (
-                                hints_meta.add_func_scope_type_or_types(
-                                    hint_child))  # type: ignore[arg-type]
+                            hint_curr_expr = add_hints_meta_scope_type_or_types(
+                                hints_meta=hints_meta, type_or_types=hint_child)  # type: ignore[arg-type]
 
                         # Code type-checking this pith against this superclass.
                         hints_meta.func_curr_code = CODE_PEP484585_SUBCLASS_format(
@@ -1308,14 +1317,17 @@ def make_check_expr(
 
                         # Python expression evaluating to a tuple of the unique
                         # types of all literal objects subscripting this hint.
-                        hint_child_types_expr=hints_meta.add_func_scope_type_or_types({
+                        hint_child_types_expr=add_hints_meta_scope_type_or_types(
+                            hints_meta=hints_meta,
                             #FIXME: Optimize by refactoring into a "while"
                             #loop. Also, this should probably be a "frozenset"
                             #rather than "set". *sigh*
                             # Set comprehension of all unique literal objects
                             # subscripting this hint, implicitly discarding all
                             # duplicate such objects.
-                            type(hint_child) for hint_child in hint_childs}),
+                            type_or_types={
+                                type(hint_child) for hint_child in hint_childs
+                            }),
                     )
 
                     #FIXME: Optimize by refactoring into a "while" loop. *sigh*
@@ -1402,8 +1414,8 @@ def make_check_expr(
         #   faster submodule generating PEP-noncompliant code instead.
         elif isinstance(hint_curr, type):
             # Python expression evaluating to this type.
-            hints_meta.hint_curr_expr = hints_meta.add_func_scope_type_or_types(
-                hint_curr)
+            hints_meta.hint_curr_expr = add_hints_meta_scope_type_or_types(
+                hints_meta=hints_meta, type_or_types=hint_curr)
         # ................{ NON-PEP ~ bad                      }................
         # Else, this hint is neither PEP-compliant *NOR* a class. In this case,
         # raise an exception. Note that:

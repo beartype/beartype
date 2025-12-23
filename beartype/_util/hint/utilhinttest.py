@@ -381,9 +381,9 @@ def is_hint_needs_cls_stack(hint: Hint) -> bool:
     #
     # Note:
     # * The fully-qualified names of exact typing modules (e.g., "typing",
-    #   "typing_extensions") is intentionally ignored. Although we could
-    #   certainly explicitly test for both, doing so would only needlessly
-    #   reduce efficiency. By omitting explicit tests for both, this tester
+    #   "typing_extensions") are intentionally ignored. Although we certainly
+    #   *COULD* explicitly test for both, doing so would only needlessly reduce
+    #   efficiency. By omitting explicit tests for both, this tester
     #   intentionally returns false positives for extremely edge case hints
     #   whose representations contain syntactically related but semantically
     #   unrelated substrings (e.g., "typing.Literal['.Self']", which is clearly

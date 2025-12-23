@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.pep.checkpep484585generic import (
     get_hint_pep484585_generic_unsubbed_bases_unerased)
@@ -116,7 +117,7 @@ def make_hint_pep484585_generic_unsubbed_check_expr(
         pith_curr_assign_expr=hints_meta.pith_curr_assign_expr,
         # Python expression evaluating to this unsubscripted isinstanceable
         # generic type.
-        hint_curr_expr=hints_meta.add_func_scope_type_or_types(
-            hint_isinstanceable),
+        hint_curr_expr=add_hints_meta_scope_type_or_types(
+            hints_meta=hints_meta, type_or_types=hint_isinstanceable),
     )
     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')

@@ -14,14 +14,18 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._data.typing.datatyping import TypeStack
 from beartype._data.typing.datatypingport import Hint
-from beartype._util.hint.pep.proposal.pep484.pep484ref import (
-    get_hint_pep484_ref_names_absolute)
+from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
+    get_hint_pep484_ref_names_absolute_type_nested)
 
 # ....................{ REDUCERS ~ forwardref              }....................
 #FIXME: Add to the "_redmap" submodule, please.
 #FIXME: Unit test us up, please.
 #FIXME: Finalize implementation, please. Useful reductions for this reducer to
 #eventually perform include:
+#* Of a relative unqualified forward reference referring to a non-nested class
+#  to that class if the "cls_stack" contains *ONLY* that class.
+#* Of a relative qualified forward reference referring to a nested class to that
+#  class if the "cls_stack" contains two or more classes.
 #* Of an absolute unqualified forward reference referring to a builtin type.
 #  Pretty sure we have similar functionality elsewhere. Our PEP 563 resolver,
 #  perhaps? *shrug*
@@ -113,19 +117,53 @@ def reduce_hint_pep484_ref(
         * Else, this hint unmodified.
     '''
 
-    #* Of a relative unqualified forward reference referring to a non-nested class
-    #  to that class if the "cls_stack" contains *ONLY* that class.
-    #* Of a relative qualified forward reference referring to a nested class to that
-    #  class if the "cls_stack" contains two or more classes.
+    #FIXME: *INSUFFICIENT,* obviously. Refactor as follows:
+    #* First, we need to generalize the is_hint_needs_cls_stack() tester. That's
+    #  currently memoized. Sadly, we'll need to stop doing that and drop the
+    #  "@callable_cached" decoration. Then we'll need to revise its signature to
+    #  something resembling:
+    #      def is_hint_needs_cls_stack(
+    #          hint: Hint, cls_stack: TypeStack = None) -> bool:
+    #
+    #  Lastly, we'll need to revise that tester's trailing test to consider the
+    #  passed "cls_stack" as well:
+    #      return (
+    #          'Self' in hint_repr or
+    #          #FIXME: Comment all of this up, obviously. The idea here is that
+    #          #a type stack is needed if this hint appears to contain a
+    #          #self-reference to #the currently decorated possibly nested class.
+    #          (
+    #              cls_stack and
+    #              cls_stack[-1].__name__ in hint_repr
+    #          )
+    #      )
+    #* Next, we need to finally attend to the dangling "FIXME: DRY violation.
+    #  The same logic appears in "_wrapargs" as well. It looks like what we
+    #  *PROBABLY* want to do here is:" comment that resides elsewhere.
+    #* Once we've done that, we then need to utilize this generalized logic for
+    #  detecting whether the "cls_stack" is required in that dangling comment:
+    #      cls_stack = (
+    #          decor_meta.cls_stack
+    #          if is_hint_needs_cls_stack(
+    #              hint=hint_insane, cls_stack=decor_meta.cls_stack) else
+    #          None
+    #      )
+    #* Last, we'll need to check whether the returned "hint_module_name" is
+    #  "None" or not with return logic resembling:
+    #      if hint_module_name:
+    #          return cls_stack[-1]
 
-    # Fully-qualified module name and unqualified classname referred to by this
-    # forward reference, canonicalized relative to the module declaring the
-    # passed type stack.
-    hint_module_name, hint_type_name = get_hint_pep484_ref_names_absolute(
-        hint=hint,  # pyright: ignore
-        cls_stack=cls_stack,
-        exception_prefix=exception_prefix,
-    )
+    #FIXME: Comment us up. *sigh*
+    if cls_stack:
+        # Fully-qualified module name and unqualified classname referred to by
+        # this forward reference, canonicalized relative to the module declaring
+        # the passed type stack.
+        hint_module_name, hint_type_name = (
+            get_hint_pep484_ref_names_absolute_type_nested(
+                hint_type_name=hint,  # pyright: ignore
+                cls_stack=cls_stack,
+                exception_prefix=exception_prefix,
+            ))
 
     # Return this forward reference unmodified as a fallback.
     return hint

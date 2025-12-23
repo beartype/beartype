@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPepException
+from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import HINT_SANE_IGNORABLE
 from beartype._check.logic.logmap import (
@@ -54,8 +55,9 @@ def make_hint_pep484585_container_check_expr(hints_meta: HintsMeta) -> None:
 
     # Python expression evaluating to the origin type of this hint as a hidden
     # beartype-specific parameter injected into the signature of this wrapper.
-    hints_meta.hint_curr_expr = hints_meta.add_func_scope_type_or_types(
-        get_hint_pep_origin_type_isinstanceable(hint))
+    hints_meta.hint_curr_expr = add_hints_meta_scope_type_or_types(
+        hints_meta=hints_meta, type_or_types=(
+            get_hint_pep_origin_type_isinstanceable(hint)))
     # print(f'Container type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
     # Tuple of all child hints subscripting this hint if any *OR* the empty

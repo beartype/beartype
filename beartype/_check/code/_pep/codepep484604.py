@@ -25,6 +25,7 @@ from beartype.typing import (
     List,
     Tuple,
 )
+from beartype._check.code.codescope import add_hints_meta_scope_type_or_types
 from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._check.metadata.hint.hintsane import (
     HINT_IGNORABLE,
@@ -256,8 +257,8 @@ def make_hint_pep484604_check_expr(hints_meta: HintsMeta) -> None:
             # doing so by falling back to the usual approach. See also this
             # relevant self-StackOverflow post:
             #       https://stackoverflow.com/a/40054478/2809027
-            hint_curr_expr=hints_meta.add_func_scope_type_or_types(
-                hint_childs_nonpep.keys()),
+            hint_curr_expr=add_hints_meta_scope_type_or_types(
+                hints_meta=hints_meta, type_or_types=hint_childs_nonpep.keys()),
         )
 
     # ....................{ FORMAT ~ pep                   }....................
