@@ -286,8 +286,8 @@ class HintsMeta(FixedList):
         '''
 
         # Classify all passed parameters.
-        self.conf = conf
         self.cls_stack = cls_stack
+        self.conf = conf
 
         # 1-based indentation level describing the initial level of indentation
         # appropriate for the root hint.

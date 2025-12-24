@@ -14,9 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._data.cls.datacls import TYPES_PEP484_FORWARDREF
+from beartype._cave._cavefast import HintPep484RefTypes
 from beartype._data.typing.datatyping import (
-    HintPep484ForwardRef,
+    HintPep484Ref,
     TupleStrOrNoneAndStr,
     TypeException,
 )
@@ -70,7 +70,7 @@ def die_unless_hint_pep484_ref(
     '''
 
     # If this object is *NOT* a forward reference type hint, raise an exception.
-    if not isinstance(hint, TYPES_PEP484_FORWARDREF):
+    if not isinstance(hint, HintPep484RefTypes):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
@@ -86,7 +86,7 @@ def die_unless_hint_pep484_ref(
 #FIXME: Unit test us up, please.
 def get_hint_pep484_ref_names_relative(
     # Mandatory parameters.
-    hint: HintPep484ForwardRef,
+    hint: HintPep484Ref,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -225,7 +225,7 @@ def get_hint_pep484_ref_names_relative(
 #FIXME: Unit test us up, please.
 def import_pep484_ref_type(
     # Mandatory parameters.
-    hint: HintPep484ForwardRef,
+    hint: HintPep484Ref,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -246,7 +246,7 @@ def import_pep484_ref_type(
 
     Parameters
     ----------
-    hint : HintPep484ForwardRef
+    hint : HintPep484Ref
         Forward reference type hint to be resolved.
     exception_cls : Type[Exception], default: BeartypeDecorHintForwardRefException
         Type of exception to be raised in the event of a fatal error. Defaults

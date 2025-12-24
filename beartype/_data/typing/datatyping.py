@@ -758,14 +758,14 @@ instances definitely encapsulating pathnames).
 # ....................{ PEP ~ 484                          }....................
 # Type hints required to fully comply with PEP 484.
 
-HintPep484ForwardRef = str | ForwardRef
+HintPep484Ref = str | ForwardRef
 '''
 Union of all :pep:`484`--compliant **forward reference types** (i.e., classes of
 all forward reference objects).
 
 See Also
 --------
-:data:`beartype._data.cls.data_cls.TYPES_PEP484_FORWARDREF`
+:data:`beartype._cave._cavefast.HintPep484RefTypes`
     Further details.
 '''
 

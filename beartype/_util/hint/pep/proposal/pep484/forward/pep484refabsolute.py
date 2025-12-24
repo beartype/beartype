@@ -17,7 +17,7 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.typing.datatyping import (
-    HintPep484ForwardRef,
+    HintPep484Ref,
     TupleStrAndStr,
     TupleStrOrNoneAndStr,
     TypeException,
@@ -37,7 +37,7 @@ from typing import Optional
 #FIXME: Resolve *ALL* unit tests marked 'Currently broken.' *sigh*
 def get_hint_pep484_ref_names_absolute(
     # Mandatory parameters.
-    hint: HintPep484ForwardRef,
+    hint: HintPep484Ref,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
@@ -460,7 +460,7 @@ def get_hint_pep484_ref_names_absolute(
 #    private attributes required thereby should be shifted there.
 def get_hint_pep484_ref_names_absolute_new(
     # Mandatory parameters.
-    hint: HintPep484ForwardRef,
+    hint: HintPep484Ref,
 
     # Optional parameters.
     cls_stack: TypeStack = None,
@@ -817,11 +817,49 @@ def get_hint_pep484_ref_names_absolute_new(
             exception_prefix=exception_prefix,
         )
 
-    # Return this fully-qualified module name and unqualified classname.
+    # Return the 2-tuple of these names.
+    return hint_module_name, hint_type_name
+
+# ....................{ GETTERS ~ str                      }....................
+def get_hint_pep484_ref_names_absolute_str(
+    hint_type_name: str, **kwargs) -> TupleStrOrNoneAndStr:
+    '''
+    Possibly undefined fully-qualified module name and possibly unqualified
+    classname referred to by the forward reference ``hint`` parameter passed to
+    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, trivially
+    canonicalized with low-level string munging ignoring high-level concerns
+    like the type stack or callable annotated by this reference.
+
+    Specifically, this canonicalizer splits this reference on the rightmost
+    ``"."`` delimiter in this reference and then returns the 2-tuple
+    ``(hint_module_name, hint_type_name)`` such that:
+
+    * ``hint_module_name`` is the possibly empty substring preceding that
+      delimiter.
+    * ``hint_type_name`` is the non-empty substring following that delimiter.
+
+    Parameters
+    ----------
+    hint_type_name : str
+        Possibly unqualified classname referred to by that forward reference.
+
+    All remaining keyword arguments are silently ignored.
+
+    Returns
+    -------
+    tuple[Optional[str], str]
+        2-tuple ``(hint_module_name, hint_type_name)`` as detailed above.
+    '''
+
+    # Possibly empty fully-qualified module name and unqualified basename of the
+    # type referred to by this reference.
+    hint_module_name, _, hint_type_name = hint_type_name.rpartition('.')
+
+    # Return the 2-tuple of these names.
     return hint_module_name, hint_type_name
 
 # ....................{ GETTERS ~ cls_stack                }....................
-#FIXME: Unit test us up, please.
+#FIXME: Unit test us up, please. *sigh*
 def get_hint_pep484_ref_names_absolute_type_nested(
     # Mandatory parameters.
     hint_type_name: str,
@@ -884,7 +922,7 @@ def get_hint_pep484_ref_names_absolute_type_nested(
     # relative forward reference.
     hint_module_name: Optional[str] = None
 
-    # If this reference annotates a method of a class...
+    # If this reference annotates a method of a type...
     if cls_stack:
         # Number of possibly nested classes currently being decorated by the
         # @beartype decorator.
@@ -895,7 +933,7 @@ def get_hint_pep484_ref_names_absolute_type_nested(
         is_cls_stack_nested = cls_stack_len >= 2
 
         # True only if this reference refers to the currently decorated (i.e.,
-        # most deeply nested) class currently being decorated by @beartype,
+        # most deeply nested) type currently being decorated by @beartype,
         # defaulting to false for safety.
         is_hint_self = False
 
@@ -909,7 +947,7 @@ def get_hint_pep484_ref_names_absolute_type_nested(
         if (
             # This reference contains one or more "." delimiters and is thus at
             # least partially qualified and thus possibly refers to a nested
-            # class *AND*...
+            # type *AND*...
             is_hint_type_name_qualified and
             # At least two nested classes are currently being decorated by the
             # @beartype decorator...
@@ -919,38 +957,59 @@ def get_hint_pep484_ref_names_absolute_type_nested(
             # list is guaranteed to contain at least two basenames.
             hint_type_names = hint_type_name.split('.')
 
+            # Number of unqualified basenames comprising this reference.
+            hint_type_names_len = len(hint_type_names)
+
             # If the number of unqualified basenames comprising this reference
             # is the number of nested classes currently being decorated by the
             # @beartype decorator, this classname *COULD* be that of the
-            # currently decorated (i.e., most deeply nested) such class. In this
+            # currently decorated (i.e., most deeply nested) such type. In this
             # case...
             #
             # Note that this test is an optimization gating the *MUCH* slower
             # iterative test performed below.
             if len(hint_type_names) == cls_stack_len:
-                # type_name_index = 0
+                # 0-based index of the current unqualified basename comprising
+                # this reference being visited by the "while" loop below.
+                hint_type_name_index = 0
 
-                #FIXME: Inefficient, but who cares at the moment. Perform
-                #manual iteration when we feel like optimizing this. *sigh*
-                #FIXME: Comment us up, please. *sigh*
-                type_nested_names = list(
-                    type_nested.__name__ for type_nested in cls_stack)
+                # While this index is still valid...
+                while hint_type_name_index < hint_type_names_len:
+                    # If...
+                    if (
+                        # The current unqualified basename comprising this
+                        # reference is *NOT*...
+                        hint_type_names[hint_type_name_index] !=
+                        # The current unqualified basename of the corresponding
+                        # nested type currently being decorated...
+                        cls_stack[hint_type_name_index].__name__
+                    ):
+                        # Then this reference *CANNOT* refer to this type. In
+                        # this case, immediately halt iteration.
+                        break
+                    # Else, this reference *COULD* possibly refer to this type.
+                    # Continue onto the next such pair of strings to decide.
 
-                #FIXME: Comment us up, please. *sigh*
-                if hint_type_names == type_nested_names:
+                    # Increment this index.
+                    hint_type_name_index += 1
+                # If this index is no longer valid, the above "while" loop
+                # successfully halted *WITHOUT* the above "break" statement from
+                # being performed. In this case, this reference necessarily
+                # refers to this type. Note this fact.
+                else:
                     is_hint_self = True
         # Else, either this reference contains no "." delimiters (and is thus
-        # unqualified) *OR* only one non-nested class is currently being
+        # unqualified) *OR* only one non-nested type is currently being
         # decorated by the @beartype decorator.
         #
         # If ...
         elif (
             # This reference is unqualified *AND*...
             not is_hint_type_name_qualified and
-            # Only one non-nested class is currently being decorated by the
+            # Only one non-nested type is currently being decorated by the
             # @beartype decorator *AND*...
             not is_cls_stack_nested and
-            # This unqualified reference refers to that class...
+            # This unqualified reference refers to that type...
             hint_type_name == cls_stack[-1].__name__
         ):
             # Note this fact.
@@ -958,10 +1017,10 @@ def get_hint_pep484_ref_names_absolute_type_nested(
         # Else, either this reference is qualified, two or more nested classes
         # are currently being decorated by the @beartype decorator, *OR* this
         # this unqualified reference does *NOT* refer to the currently decorated
-        # class. In either case, this canonicalizer *CANNOT* canonicalize this
+        # type. Regardless, this canonicalizer *CANNOT* canonicalize this
         # reference.
 
-        # If this reference refers to the currently decorated class...
+        # If this reference refers to the currently decorated type...
         if is_hint_self:
             # Fully-qualified name of the module defining this type if this
             # module is importable *OR* "None" otherwise. Since this reducer is
@@ -979,10 +1038,11 @@ def get_hint_pep484_ref_names_absolute_type_nested(
             # circular import and thus exception from Python itself).
             hint_module_name = get_object_module_name_or_none(
                 obj=cls_stack[-1], is_module_importable_or_none=True)
-    # Else, this reference does *NOT* annotate a method of a class. In this
-    # case, preserve this module and type name as is.
+        # Else, this reference does *NOT* refer to the currently decorated type.
+    # Else, this reference does *NOT* annotate a method of a type. In this
+    # case, preserve this module and classname as is.
 
-    # Return this possibly canonicalized module and type name.
+    # Return this possibly canonicalized module and classname.
     return hint_module_name, hint_type_name
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -1008,6 +1068,14 @@ _HINT_CANONICALIZERS: tuple[_HintCanonicalizer, ...] = (
     # necessitating that this canonicalizer be performed first.
     get_hint_pep484_ref_names_absolute_type_nested,
 
+    # Canonicalize a relative forward reference with low-level string munging
+    # splitting this reference into its constituent module and type names,
+    # ignoring high-level concerns like the type stack or callable annotated by
+    # this reference. If this canonicalizer succeeds, this reference was in fact
+    # an absolute rather than relative forward reference. This canonicalizer
+    # disambiguates between these two distinct kinds of references and is thus
+    # typically performed earlier than other (but *NOT* all) canonicalizers.
+    get_hint_pep484_ref_names_absolute_str,
 )
 '''
 Tuple of all **canonicalizers** (i.e., callables in the

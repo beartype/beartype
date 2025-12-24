@@ -69,7 +69,7 @@ from beartype._check.metadata.hint.hintsmeta import HintsMeta
 from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
 from beartype._data.typing.datatyping import (
     LexicalScope,
-    HintPep484ForwardRef,
+    HintPep484Ref,
     SetOrTupleTypes,
     TypeOrSetOrTupleTypes,
     TupleTypes,
@@ -581,14 +581,16 @@ def add_func_scope_types(
 
 # ....................{ EXPRESSERS ~ type                  }....................
 def express_hints_meta_scope_type_ref(
-    hints_meta: HintsMeta, forwardref: HintPep484ForwardRef) -> str:
+    hints_meta: HintsMeta, hint: HintPep484Ref) -> str:
     '''
-    Python expression evaluating to the passed :pep:`484`- or
+    Python expression evaluating to the **referent** (typically but *not* always
+    merely a PEP-noncompliant isinstanceable type rather than a full-blown
+    PEP-compliant type hint) referred to by the passed :pep:`484`- or
     :pep:`585`-compliant **forward reference** (i.e., either fully-qualified
-    name *or* unqualified basename of an arbitrary class that typically has yet
-    to be declared) when accessed via the beartypistry singleton added as a new
-    key-value pair of the local scope encapsulated by the passed type-checking
-    metadata queue, whose:
+    name *or* unqualified basename of an arbitrary attribute that typically has
+    yet to be declared) when accessed via the beartypistry singleton added as a
+    new key-value pair of the local scope encapsulated by the passed
+    type-checking metadata queue, whose:
 
     * Key is the string
       :attr:`beartype._data.code.datacodename.ARG_NAME_TYPISTRY`.
@@ -599,7 +601,7 @@ def express_hints_meta_scope_type_ref(
     hints_meta : HintsMeta
         Stack of metadata describing all visitable hints currently discovered by
         this breadth-first search (BFS).
-    forwardref : HintPep484ForwardRef
+    hint : HintPep484Ref
         Forward reference to be expressed relative to the local or global scope
         encapsulated by this stack of metadata.
 
@@ -617,23 +619,19 @@ def express_hints_meta_scope_type_ref(
     assert isinstance(hints_meta, HintsMeta), (
         f'{repr(hints_meta)} not "HintsMeta" object.')
 
+    #FIXME: This should almost certainly call the higher-level
+    #get_hint_pep484_ref_names_absolute() getter, instead. This lower-level
+    #getter is all but useless for all practical intents and purposes. *sigh*
+
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
     ref_module_name, ref_name = get_hint_pep484_ref_names_relative(
-        hint=forwardref, exception_prefix=hints_meta.exception_prefix)
+        hint=hint, exception_prefix=hints_meta.exception_prefix)
 
     # If either...
     if (
         # This reference was instantiated with a module name...
         ref_module_name or
-
-        #FIXME: Generalize to consider "hints_meta.cls_stack", please. Doing so
-        #efficiently should be a fun puzzle. \o/
-        #FIXME: Indeed, this is a nice macro-optimization that we should have
-        #considered sooner. If "ref_name" matches the fully-qualified possibly
-        #nested classname implied by "hints_meta.cls_stack", then this function
-        #should trivially call and return the result of add_func_scope_type().
-
         # This classname contains one or more "." characters and is thus already
         # (...hopefully) fully-qualified...
         '.' in ref_name

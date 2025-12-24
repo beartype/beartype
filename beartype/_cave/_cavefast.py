@@ -73,7 +73,7 @@ from io import IOBase as _IOBase
 from typing import (
     TYPE_CHECKING,
     Any,
-    Tuple as _TupleTyping,
+    ForwardRef as _ForwardRef,
 )
 
 # Note that:
@@ -1003,6 +1003,28 @@ that enumeration's type and should be directly referenced as such: e.g.,
    ...     return str(superlative).lower()
 '''
 
+# ....................{ TYPES ~ hint : pep : 484           }....................
+HintPep484RefTypes: tuple[type, ...] = (str, _ForwardRef)
+'''
+Tuple union of all :pep:`484`-compliant **forward reference type hint types**
+(i.e., types of all type hints encapsulating references to other objects that
+typically have yet to be defined).
+
+Specifically, this union contains:
+
+* :class:`str`, the type of all forward reference objects implicitly preserved
+  by all :pep:`585`-compliant type hint factories when subscripted by a string.
+* :class:`._ForwardRef`, the type of all forward reference objects implicitly
+  created by all :mod:`typing` type hint factories when subscripted by a string.
+
+While :pep:`585`-compliant type hint factories preserve string-based forward
+references as is, :mod:`typing` type hint factories coerce string-based forward
+references into higher-level objects encapsulating those strings. The latter
+approach is the demonstrably wrong approach, because encapsulating strings only
+harms space and time complexity at runtime with *no* concomitant benefits. As is
+often the case, :pep:`585` has the right of it.
+'''
+
 # ....................{ TYPES ~ hint : pep : 585           }....................
 # If this submodule is currently being statically type-checked by a pure static
 # type-checker, ignore false positives complaining that this type is not a type.
@@ -1064,8 +1086,7 @@ This type is a version-agnostic generalization of the standard
 '''
 
 
-HintPep604ItemTypes: _TupleTyping[type, ...] = (
-    type, HintGenericSubscriptedType)
+HintPep604ItemTypes: tuple[type, ...] = (type, HintGenericSubscriptedType)
 '''
 Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
 objects permissible as the items of new unions), including:
@@ -1113,7 +1134,7 @@ This type is a version-agnostic generalization of the standard
 '''
 
 
-HintPep612ParamSpecVarTypes: _TupleTyping[type, ...] = (
+HintPep612ParamSpecVarTypes: tuple[type, ...] = (
     HintPep612ParamSpecArgType, HintPep612ParamSpecKwargType,)
 '''
 Tuple of all :pep:`612`-compliant **parameter specification variadic parameter

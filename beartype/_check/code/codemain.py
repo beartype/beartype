@@ -520,9 +520,7 @@ def make_check_expr(
                 # Python expression evaluating to a new forward reference proxy
                 # encapsulating the type referred to by this forward reference.
                 hints_meta.hint_curr_expr = express_hints_meta_scope_type_ref(
-                    hints_meta=hints_meta,
-                    forwardref=hint_curr,  # type: ignore[arg-type]
-                )
+                    hints_meta=hints_meta, hint=hint_curr)  # type: ignore[arg-type]
 
                 #FIXME: *REDUNDANT.* Shallow type-checking code defined below
                 #already performs this exact same logic. Excise us up, please.
@@ -1176,9 +1174,7 @@ def make_check_expr(
                         # of this wrapper function. See above for commentary.
                         if hint_child_sign is HintSignForwardRef:
                             hint_curr_expr = express_hints_meta_scope_type_ref(
-                                hints_meta=hints_meta,
-                                forwardref=hint_child,  # type: ignore[arg-type]
-                            )
+                                hints_meta=hints_meta, hint=hint_child)  # type: ignore[arg-type]
                         # Else, this child hint is *NOT* a forward reference. In
                         # this case...
                         else:

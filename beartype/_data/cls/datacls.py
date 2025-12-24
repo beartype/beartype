@@ -228,28 +228,6 @@ Note that these generics are *not* :pep:`544`-compliant protocols. These
 generics are thus mostly useless for most real-world purposes.
 '''
 
-# ....................{ TYPES ~ pep : (484|585)            }....................
-TYPES_PEP484_FORWARDREF = (str, ForwardRef)
-'''
-Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
-types** (i.e., classes of all forward reference objects).
-
-Specifically, this union contains:
-
-* :class:`str`, the type of all :pep:`585`-compliant forward reference objects
-  implicitly preserved by all :pep:`585`-compliant type hint factories when
-  subscripted by a string.
-* :class:`.ForwardRef`, the type of all :pep:`484`-compliant forward reference
-  objects implicitly created by all :mod:`typing` type hint factories when
-  subscripted by a string.
-
-While :pep:`585`-compliant type hint factories preserve string-based forward
-references as is, :mod:`typing` type hint factories coerce string-based forward
-references into higher-level objects encapsulating those strings. The latter
-approach is the demonstrably wrong approach, because encapsulating strings only
-harms space and time complexity at runtime with *no* concomitant benefits.
-'''
-
 # ....................{ TYPES ~ pep : 544                  }....................
 #FIXME: *YIKES.* This omits "typing_extensions.Protocol", which is a distinct
 #type from "typing.Protocol". *sigh*
