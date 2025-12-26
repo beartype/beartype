@@ -820,44 +820,6 @@ def get_hint_pep484_ref_names_absolute_new(
     # Return the 2-tuple of these names.
     return hint_module_name, hint_type_name
 
-# ....................{ GETTERS ~ str                      }....................
-def get_hint_pep484_ref_names_absolute_str(
-    hint_type_name: str, **kwargs) -> TupleStrOrNoneAndStr:
-    '''
-    Possibly undefined fully-qualified module name and possibly unqualified
-    classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, trivially
-    canonicalized with low-level string munging ignoring high-level concerns
-    like the type stack or callable annotated by this reference.
-
-    Specifically, this canonicalizer splits this reference on the rightmost
-    ``"."`` delimiter in this reference and then returns the 2-tuple
-    ``(hint_module_name, hint_type_name)`` such that:
-
-    * ``hint_module_name`` is the possibly empty substring preceding that
-      delimiter.
-    * ``hint_type_name`` is the non-empty substring following that delimiter.
-
-    Parameters
-    ----------
-    hint_type_name : str
-        Possibly unqualified classname referred to by that forward reference.
-
-    All remaining keyword arguments are silently ignored.
-
-    Returns
-    -------
-    tuple[Optional[str], str]
-        2-tuple ``(hint_module_name, hint_type_name)`` as detailed above.
-    '''
-
-    # Possibly empty fully-qualified module name and unqualified basename of the
-    # type referred to by this reference.
-    hint_module_name, _, hint_type_name = hint_type_name.rpartition('.')
-
-    # Return the 2-tuple of these names.
-    return hint_module_name, hint_type_name
-
 # ....................{ GETTERS ~ cls_stack                }....................
 #FIXME: Unit test us up, please. *sigh*
 def get_hint_pep484_ref_names_absolute_type_nested(
@@ -1045,6 +1007,102 @@ def get_hint_pep484_ref_names_absolute_type_nested(
     # Return this possibly canonicalized module and classname.
     return hint_module_name, hint_type_name
 
+# ....................{ PRIVATE ~ getters                  }....................
+def _get_hint_pep484_ref_names_absolute_str(
+    hint_type_name: str, **kwargs) -> TupleStrOrNoneAndStr:
+    '''
+    Possibly undefined fully-qualified module name and possibly unqualified
+    classname referred to by the forward reference ``hint`` parameter passed to
+    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, trivially
+    canonicalized with low-level string munging ignoring high-level concerns
+    like the type stack or callable annotated by this reference.
+
+    Specifically, this canonicalizer splits this reference on the rightmost
+    ``"."`` delimiter in this reference and then returns the 2-tuple
+    ``(hint_module_name, hint_type_name)`` such that:
+
+    * ``hint_module_name`` is the possibly empty substring preceding that
+      delimiter.
+    * ``hint_type_name`` is the non-empty substring following that delimiter.
+
+    Parameters
+    ----------
+    hint_type_name : str
+        Possibly unqualified classname referred to by that forward reference.
+
+    All remaining keyword arguments are silently ignored.
+
+    Returns
+    -------
+    tuple[Optional[str], str]
+        2-tuple ``(hint_module_name, hint_type_name)`` as detailed above.
+    '''
+
+    # Possibly empty fully-qualified module name and unqualified basename of the
+    # type referred to by this reference.
+    hint_module_name, _, hint_type_name = hint_type_name.rpartition('.')
+
+    # Return the 2-tuple of these names.
+    return hint_module_name, hint_type_name
+
+
+def _get_hint_pep484_ref_names_absolute_type_current(
+    hint_type_name: str,
+    cls_stack: TypeStack,
+    **kwargs
+) -> TupleStrOrNoneAndStr:
+    '''
+    Possibly undefined fully-qualified module name and possibly unqualified
+    classname referred to by the forward reference ``hint`` parameter passed to
+    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, canonicalized
+    relative to the module declaring the currently decorated (i.e., most deeply
+    nested) class on the type stack *or* preserved as is otherwise.
+
+    Parameters
+    ----------
+    hint_type_name : str
+        Possibly unqualified classname referred to by that forward reference.
+    cls_stack : TypeStack
+        Either:
+
+        * If this forward reference annotates a method of a class, the
+          corresponding **type stack** (i.e., tuple of the one or more nested
+          :func:`beartype.beartype`-decorated classes lexically containing that
+          method).
+        * Else, :data:`None`.
+
+    All remaining keyword arguments are silently ignored.
+
+    Returns
+    -------
+    tuple[Optional[str], str]
+        2-tuple ``(hint_module_name, hint_type_name)`` where:
+
+        * ``hint_module_name`` is either:
+
+          * If ``cls_stack`` is not :data:`None`, the module declaring the
+            currently decorated (i.e., most deeply nested) class on this stack.
+          * Else, :data:`None`.
+
+        * ``hint_type_name`` is the passed parameter of the same name as is.
+    '''
+    assert isinstance(cls_stack, NoneTypeOr[Sequence]), (
+        f'{repr(cls_stack)} neither sequence nor "None".')
+
+    # Possibly undefined fully-qualified name of the module to be returned.
+    hint_module_name: Optional[str] = None
+
+    # If this reference annotates a method of a type...
+    if cls_stack:
+        # Fully-qualified name of the module defining the currently decorated
+        # class, accessible as the most deeply nested type on the type stack.
+        hint_module_name = get_object_module_name_or_none(cls_stack[-1])
+    # Else, this reference does *NOT* annotate a method of a type. In this
+    # case, preserve this module and classname as is.
+
+    # Return this possibly canonicalized module and classname.
+    return hint_module_name, hint_type_name
+
 # ....................{ PRIVATE ~ hints                    }....................
 _HintCanonicalizer = Callable[..., TupleStrOrNoneAndStr]
 '''
@@ -1068,14 +1126,21 @@ _HINT_CANONICALIZERS: tuple[_HintCanonicalizer, ...] = (
     # necessitating that this canonicalizer be performed first.
     get_hint_pep484_ref_names_absolute_type_nested,
 
-    # Canonicalize a relative forward reference with low-level string munging
+    # Canonicalize an absolute forward reference with low-level string munging
     # splitting this reference into its constituent module and type names,
     # ignoring high-level concerns like the type stack or callable annotated by
     # this reference. If this canonicalizer succeeds, this reference was in fact
     # an absolute rather than relative forward reference. This canonicalizer
     # disambiguates between these two distinct kinds of references and is thus
     # typically performed earlier than other (but *NOT* all) canonicalizers.
-    get_hint_pep484_ref_names_absolute_str,
+    # Absolute forward references take precedence over relative forward
+    # references, necessitating that this canonicalizer be performed *BEFORE*
+    # all remaining canonicalizers unique to relative forward references.
+    _get_hint_pep484_ref_names_absolute_str,
+
+    # Canonicalize a relative forward reference relative to the fully-qualified
+    # name of the module defining the currently decorated possibly nested class.
+    _get_hint_pep484_ref_names_absolute_type_current,
 )
 '''
 Tuple of all **canonicalizers** (i.e., callables in the
