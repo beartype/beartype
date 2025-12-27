@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ getter                     }....................
 def test_get_hint_pep484_ref_names_relative() -> None:
     '''
-    Test
+    Test the
     :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative.get_hint_pep484_ref_names_relative`
     getter.
     '''

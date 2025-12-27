@@ -23,7 +23,7 @@ This submodule unit tests the public API of the private
 # @skip('Currently broken.')
 def test_get_hint_pep484_ref_names_absolute() -> None:
     '''
-    Test
+    Test the
     :func:`beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute.get_hint_pep484_ref_names_absolute`
     getter.
     '''

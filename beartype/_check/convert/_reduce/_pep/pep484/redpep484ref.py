@@ -12,10 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.typing.datatyping import TypeStack
+from beartype._data.typing.datatyping import (
+    HintPep484Ref,
+    TypeStack,
+)
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-    get_hint_pep484_ref_names_absolute_type_nested)
+    canonicalize_ref_relative_to_type_name)
 
 # ....................{ REDUCERS ~ forwardref              }....................
 #FIXME: Add to the "_redmap" submodule, please.
@@ -78,7 +81,7 @@ from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
 #any other way. The remainder of the above reductions are merely optimizations
 #(albeit useful optimizations at that).
 def reduce_hint_pep484_ref(
-    hint: Hint,
+    hint: HintPep484Ref,
     cls_stack: TypeStack,
     exception_prefix: str,
     **kwargs
@@ -131,15 +134,14 @@ def reduce_hint_pep484_ref(
     #          'Self' in hint_repr or
     #          #FIXME: Comment all of this up, obviously. The idea here is that
     #          #a type stack is needed if this hint appears to contain a
-    #          #self-reference to #the currently decorated possibly nested class.
+    #          #self-reference to the currently decorated possibly nested class.
     #          (
     #              cls_stack and
     #              cls_stack[-1].__name__ in hint_repr
     #          )
     #      )
-    #* Next, we need to finally attend to the dangling "FIXME: DRY violation.
-    #  The same logic appears in "_wrapargs" as well. It looks like what we
-    #  *PROBABLY* want to do here is:" comment that resides elsewhere.
+    #* Next, we need to finally attend to the dangling "FIXME: DRY violation..."
+    #  comment. The same logic appears in "_wrapargs" as well.
     #* Once we've done that, we then need to utilize this generalized logic for
     #  detecting whether the "cls_stack" is required in that dangling comment:
     #      cls_stack = (
@@ -148,22 +150,36 @@ def reduce_hint_pep484_ref(
     #              hint=hint_insane, cls_stack=decor_meta.cls_stack) else
     #          None
     #      )
-    #* Last, we'll need to check whether the returned "hint_module_name" is
-    #  "None" or not with return logic resembling:
-    #      if hint_module_name:
-    #          return cls_stack[-1]
 
-    #FIXME: Comment us up. *sigh*
+    # If this forward reference annotates a method of a possibly nested type
+    # currently being decorated by the @beartype decorator...
     if cls_stack:
-        # Fully-qualified module name and unqualified classname referred to by
-        # this forward reference, canonicalized relative to the module declaring
-        # the passed type stack.
-        hint_module_name, hint_type_name = (
-            get_hint_pep484_ref_names_absolute_type_nested(
-                hint_type_name=hint,  # pyright: ignore
-                cls_stack=cls_stack,
-                exception_prefix=exception_prefix,
-            ))
+        # "hint_module_name" is either:
+        # * If this is a relative forward reference referring to the possibly
+        #   nested and thus partially-qualified name of that type (e.g.,
+        #   "OuterType.InnerType"), the fully-qualified module name declaring
+        #   that type.
+        # * Else, "None".
+        #
+        # In either case, the second returned value (typically referred to as
+        # "hint_type_name") is guaranteed to be the passed "hint" unmodified and
+        # thus trivially ignorable as the "_" placeholder.
+        hint_module_name, _ = canonicalize_ref_relative_to_type_name(
+            hint_type_name=hint,  # pyright: ignore
+            cls_stack=cls_stack,
+            exception_prefix=exception_prefix,
+        )
 
-    # Return this forward reference unmodified as a fallback.
-    return hint
+        # If this is a relative forward reference referring to the possibly
+        # nested and thus partially-qualified name of that type (e.g.,
+        # "OuterType.InnerType"), reduce this inefficient reference to this
+        # efficient type.
+        if hint_module_name:
+            hint = cls_stack[-1]  # type: ignore[assignment]
+        # Else, this is *NOT* such a reference. In this case, silently preserve
+        # this reference as is.
+    # Else, this forward reference does *NOT* annotate such a method. In this
+    # case, silently preserve this reference as is.
+
+    # Return this possibly reduced forward reference.
+    return hint  # pyright: ignore
