@@ -165,10 +165,7 @@ def reduce_hint_pep484_ref(
         # "hint_type_name") is guaranteed to be the passed "hint" unmodified and
         # thus trivially ignorable as the "_" placeholder.
         hint_module_name, _ = canonicalize_ref_relative_to_type_name(
-            hint_type_name=hint,  # pyright: ignore
-            cls_stack=cls_stack,
-            exception_prefix=exception_prefix,
-        )
+            hint=hint, cls_stack=cls_stack, exception_prefix=exception_prefix)
 
         # If this is a relative forward reference referring to the possibly
         # nested and thus partially-qualified name of that type (e.g.,
