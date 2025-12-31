@@ -214,7 +214,7 @@ def _make_forwardref_subtype(
     #   attribute and is thus also universal.
     #
     # How did the caller guarantee the above pair of constraints? Typically, by
-    # calling the external get_hint_pep484_ref_names_absolute() getter in
+    # calling the external canonicalize_hint_pep484_ref() getter in
     # the "beartype._util.hint.pep.proposal.pep484.forward.pep484refrelative" submodule.
     #
     # Clearly, these constraints are mutually exclusive. Exactly one holds.
@@ -261,10 +261,9 @@ def _make_forwardref_subtype(
 
     # ....................{ LOCALS                         }....................
     #FIXME: Refactor to render the parent
-    #get_hint_pep484_ref_names_absolute() getter more generically useful.
+    #canonicalize_hint_pep484_ref() getter more generically useful.
     #Specifically:
-    #* Copy the logic below into the get_hint_pep484_ref_names_absolute()
-    #  getter.
+    #* Copy the logic below into the canonicalize_hint_pep484_ref() getter.
     #* Refactor *ALL* "Optional[str]" type hints throughout both this subpackage
     #  *AND* the companion "pep484ref" submodule to be "str" instead.
     #* Validate above that "type_module_name" is a non-"None" string.

@@ -105,7 +105,7 @@ def get_hint_pep484_ref_names_relative(
     Caveats
     -------
     **Callers are recommended to call the higher-level**
-    :func:`.get_hint_pep484_ref_names_absolute` **getter rather than this
+    :func:`.canonicalize_hint_pep484_ref` **getter rather than this
     lower-level getter,** which fails to guarantee canonicalization and is thus
     considerably less safe.
 
@@ -256,7 +256,7 @@ def import_pep484_ref_type(
         exception message. Defaults to the empty string.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.get_hint_pep484_ref_names_absolute` getter.
+    :func:`.canonicalize_hint_pep484_ref` getter.
 
     Returns
     -------
@@ -284,7 +284,7 @@ def import_pep484_ref_type(
 
     See Also
     --------
-    :func:`.get_hint_pep484_ref_names_absolute`
+    :func:`.canonicalize_hint_pep484_ref`
         Further details.
     '''
 
@@ -292,12 +292,12 @@ def import_pep484_ref_type(
     from beartype._check.forward.reference.fwdrefmake import (
         make_forwardref_subbable_subtype)
     from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-        get_hint_pep484_ref_names_absolute)
+        canonicalize_hint_pep484_ref)
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference relative to this type
     # stack and callable.
-    hint_module_name, hint_ref_name = get_hint_pep484_ref_names_absolute(
+    hint_module_name, hint_ref_name = canonicalize_hint_pep484_ref(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,

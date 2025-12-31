@@ -69,7 +69,7 @@ from beartype._util.error.utilerrraise import reraise_exception_placeholder
 from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-    get_hint_pep484_ref_names_absolute)
+    canonicalize_hint_pep484_ref)
 from itertools import count
 from warnings import (
     catch_warnings,
@@ -745,7 +745,7 @@ def _make_func_checker(
             # pragmatically infeasible.
             if hint_refs_type_basename:
                 # Defer to a low-level getter to raise a reasonable exception.
-                get_hint_pep484_ref_names_absolute(
+                canonicalize_hint_pep484_ref(
                     # First relative forward reference in this type hint,
                     # arbitrarily chosen for convenience.
                     hint=hint_refs_type_basename[0],

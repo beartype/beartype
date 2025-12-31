@@ -21,7 +21,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-    get_hint_pep484_ref_names_absolute)
+    canonicalize_hint_pep484_ref)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from collections.abc import Iterable
 
@@ -103,7 +103,7 @@ def unmemoize_func_wrapper_code(
             # Possibly undefined fully-qualified module name and possibly
             # unqualified classname referred to by this relative forward
             # reference, relative to the decorated type stack and callable.
-            ref_module_name, ref_name = get_hint_pep484_ref_names_absolute(
+            ref_module_name, ref_type_name = canonicalize_hint_pep484_ref(
                 hint=ref_basename,
                 cls_stack=cls_stack,
                 func=func,
@@ -115,7 +115,7 @@ def unmemoize_func_wrapper_code(
             ref_expr = add_func_scope_ref(
                 func_scope=func_scope,
                 ref_module_name=ref_module_name,
-                ref_name=ref_name,
+                ref_name=ref_type_name,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
 
@@ -126,7 +126,7 @@ def unmemoize_func_wrapper_code(
                 # This placeholder substring cached into this code with...
                 old=(
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
-                    f'{ref_name}'
+                    f'{ref_type_name}'
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
                 # This Python expression evaluating to this class when accessed

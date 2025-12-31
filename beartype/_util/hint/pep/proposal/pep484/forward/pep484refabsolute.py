@@ -12,6 +12,116 @@ parent objects to resolve those hints against).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: The following logic at the head of the canonicalize_hint_pep484_ref()
+#implementation made considerable sense under Python < 3.13:
+#    hint_module_name, hint_type_name = get_hint_pep484_ref_names_relative(
+#        hint=hint,
+#        exception_cls=exception_cls,
+#        exception_prefix=exception_prefix,
+#    )
+#
+#After all, "typing.ForwardRef" objects were just thin wrappers around simple
+#strings. Reducing the former to the latter was reasonable. Under Python >=
+#3.14, however, reducing "typing.ForwardRef" objects to the 2-tuple
+#"(hint_module_name, hint_type_name)" is a *REALLY* bad idea.
+#"typing.ForwardRef" objects are actually "annotationlib.ForwardRef" objects,
+#now. They encapsulate *A LOT* of awesome functionality that cannot reasonably
+#be reduced to two strings like we are currently doing.
+#
+#Generalize this as follows, please:
+#* If this is Python >= 3.14, the passed "hint" is a "typing.ForwardRef" object,
+#  *AND* this object defines a sufficient number of PEP 649-compliant dunder
+#  attributes to ensure that its evaluate() method can safely canonicalize that
+#  reference if relative to the referent it refers to:
+#  * Then preserve this "hint" as is by trivially returning this "hint"
+#    unmodified.
+#
+#Note that what exactly "a sufficient number of PEP 649-compliant dunder
+#attributes" means can be reverse-engineered from the ForwardNef.evaluate()
+#method. Specifically, if this hint defines one or more of these instance
+#variables to be non-"None", then this hint can be safely canonicalized and
+#resolved by calling hint.evaluate():
+#* "hint.__forward_module__".
+#* "hint.__globals__".
+#* "hint.__owner__".
+#FIXME: Of course, this isn't enough. Callers currently expect this getter to
+#return 2-tuples of strings -- not single "typing.ForwardRef" objects.
+#Refactoring the codebase from the former approach to the latter will prove...
+#non-trivial yet extremely valuable.
+#
+#First, let's start with "typing.ForwardRef". In and of itself,
+#"typing.ForwardRef" isn't enough. Unlike beartype-specific forward reference
+#proxies, the "typing.ForwardRef" type does *NOT* have a metaclass defining the
+#__instancecheck__() dunder method. In fact, the "typing.ForwardRef" type does
+#*NOT* have a metaclass... *PERIOD.* Without the __instancecheck__() dunder
+#method, "typing.ForwardRef" objects are unusable in a general-purpose context.
+#
+#To render "typing.ForwardRef" objects usable in a general-purpose context,
+#we'll need to:
+#* Define a new "__annotationlib_beartype__: Optional[typing.ForwardRef] = None"
+#  class variable in the existing "BeartypeForwardRefABC" superclass.
+#* Generalize the "BeartypeForwardRefMeta.__type_beartype__" property method to
+#  preferentially resolve this forward reference via "annotationlib"-specific
+#  rather than beartype-specific functionality: e.g.,
+#      @property
+#      def __type_beartype__(cls: BeartypeForwardRef) -> type:
+#         ...
+#         if cls.__annotationlib_beartype__ is not None:
+#             referent = cls.__annotationlib_beartype__.evaluate()
+#* Define a new make_forwardref_annotationlib_subtype() factory function in the
+#  existing "beartype._check.forward.reference.fwdrefmake" submodule with
+#  signature resembling:
+#      from typing import ForwardRef
+#      def make_forwardref_annotationlib_subtype(
+#          hint: ForwardRef) -> type[BeartypeForwardRefABC]:
+#* Define a new reusable "Pep484RefCanonicalized" type hint in the existing
+#  "beartype._data.typing.datatyping" submodule resembling:
+#      Pep484RefCanonicalized = typing.ForwardRef | tuple[str, str]
+#* Define a new higher-level make_forwardref_annotationlib_subtype() factory
+#  function in the existing "beartype._check.forward.reference.fwdrefmake"
+#  submodule with signature and logic resembling:
+#      from beartype._data.typing.datatyping import Pep484RefCanonicalized
+#      from typing import ForwardRef
+#
+#      def make_forwardref_canonicalized_subtype(
+#          hint: Pep484RefCanonicalized) -> type[BeartypeForwardRefABC]:
+#          if isinstance(hint, tuple):
+#              #FIXME: Validate tuple length here, obviously. *sigh*
+#              hint_module_name, hint_type_name = hint
+#              return make_forwardref_subbable_subtype(
+#                  scope_name=hint_module_name,
+#                  hint_name=hint_type_name,
+#              )
+#          elif isinstance(hint, ForwardRef):
+#              return make_forwardref_annotationlib_subtype(hint)
+#FIXME: Next, we'll need to hunt down *ALL* calls to
+#get_hint_pep484_ref_names_relative() throughout the codebase. These calls are
+#now all problematic, because they improperly reduce "typing.ForwardRef" objects
+#to 2-tuples of strings. We'll need to ideally refactor these calls into calls
+#to canonicalize_hint_pep484_ref() instead.
+#FIXME: Next, we'll need to hunt down *ALL* calls to
+#canonicalize_hint_pep484_ref() throughout the codebase. These calls are fine,
+#but the parent logic that's calling them is no longer fine. Why? Because that
+#logic assumes canonicalize_hint_pep484_ref() to return 2-tuples of strings.
+#Parent logic will now need to *STOP* unpacking the value returned by
+#canonicalize_hint_pep484_ref(). Instead, parent logic should simply pass that
+#return value around without inspecting its contents too deeply.
+#FIXME: Relatedly, the existing
+#beartype._check.code.codescope.add_func_scope_ref() function is... problematic.
+#As it is, that function is just a thin shim around the more full-bodied
+#make_forwardref_subbable_subtype() and add_func_scope_attr() functions that do
+#all the actual real work. At the very least, we'll need to refactor
+#add_func_scope_ref() to accept a single "hint: Pep484RefCanonicalized"
+#parameter rather than the two parameters it currently accepts.
+#FIXME: Once all of that's working, consider:
+#* Privatizing the lower-level make_forwardref_annotationlib_subtype() and
+#  make_forwardref_subbable_subtype() factory functions.
+#* Refactoring all calls to those functions to the higher-level
+#  make_forwardref_canonicalized_subtype() factory function instead.
+#
+#Lots to do... but surely fun and valuable stuff! Surely! Oh, Gods...
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype._cave._cavefast import HintPep484RefTypes
@@ -30,6 +140,7 @@ from beartype._util.text.utiltextlabel import (
     label_callable,
     label_type,
 )
+from beartype._util.text.utiltextmunge import uppercase_str_char_first
 from collections.abc import (
     Callable,
     Sequence,
@@ -40,10 +151,8 @@ from typing import (
     Optional,
 )
 
-# ....................{ GETTERS                            }....................
-#FIXME: Add additional unit tests to test all edge case implied by the new
-#_canonicalize_ref_relative_to_type_name() canonicalizer, please.
-def get_hint_pep484_ref_names_absolute(
+# ....................{ CANONICALIZERS                     }....................
+def canonicalize_hint_pep484_ref(
     # Mandatory parameters.
     hint: HintPep484Ref,
 
@@ -207,7 +316,7 @@ def get_hint_pep484_ref_names_absolute(
     )
 
     # 0-based index of the current canonicalizer (i.e., private getter in the
-    # _get_hint_pep484_ref_names_absolute_*() family of private getters
+    # _canonicalize_hint_pep484_ref_*() family of private getters
     # responsible for canonicalizing this reference) being attempted from the
     # "_HINT_CANONICALIZERS" tuple by the "while" loop performed below,
     # initialized so as to iterate starting at the first canonicalizer.
@@ -278,9 +387,8 @@ def get_hint_pep484_ref_names_absolute(
     # Return the 2-tuple of these names.
     return hint_module_name, hint_type_name
 
-# ....................{ GETTERS ~ cls_stack                }....................
-#FIXME: Unit test us up, please. *sigh*
-def canonicalize_ref_relative_to_type_name(
+
+def canonicalize_hint_pep484_ref_relative_to_type_name(
     # Mandatory parameters.
     hint: HintPep484Ref,
     cls_stack: TypeStack,
@@ -348,10 +456,12 @@ def canonicalize_ref_relative_to_type_name(
             exception_prefix=exception_prefix,
         )
 
-        # If this forward reference is already absolute, return this
-        # fully-qualified module name and unqualified classname as is.
+        # If this forward reference is already absolute, this forward reference
+        # *CANNOT* be definition be relative (let alone relative to a type on
+        # the passed type stack). In this case, feign ignorance by silently
+        # destroying this module name. It is what it is.
         if hint_module_name:
-            return hint_module_name, hint
+            return None, hint
         # Else, this forward reference is relative as expected.
     # Else, this forward reference is a simple string. This is the common
     # case. In this case, preserve this string as is.
@@ -365,8 +475,6 @@ def canonicalize_ref_relative_to_type_name(
     )
 
 # ....................{ PRIVATE ~ raisers                  }....................
-#FIXME: *GIGATONS OF EDGE CASES HERE.* Are we actually unit-testing any of this
-#at the moment? Uhh. No idea, honestly. *lolz but sad*
 def _die_as_ref_uncanonicalizable(
     hint_module_name: Optional[str],
     hint_type_name: str,
@@ -381,7 +489,7 @@ def _die_as_ref_uncanonicalizable(
     object indirectly referring to a user-defined type that typically has yet to
     be defined, relative to a user-defined module whose name is unknown) could
     *not* be canonicalized into an absolute forward reference by the parent
-    :func:`.get_hint_pep484_ref_names_absolute` getter.
+    :func:`.canonicalize_hint_pep484_ref` getter.
 
     Parameters
     ----------
@@ -389,12 +497,12 @@ def _die_as_ref_uncanonicalizable(
         Possibly undefined fully-qualified name of the module referred to be
         this relative forward reference.
 
-    See :func:`.get_hint_pep484_ref_names_absolute` on all remaining parameters.
+    See :func:`.canonicalize_hint_pep484_ref` on all remaining parameters.
 
     Raises
     ------
     exception_cls
-        See :func:`.get_hint_pep484_ref_names_absolute` for further details.
+        See :func:`.canonicalize_hint_pep484_ref` for further details.
     '''
     assert isinstance(hint_module_name, NoneTypeOr[str]), (
         f'{repr(hint_module_name)} neither string nor "None".')
@@ -463,11 +571,11 @@ def _die_as_ref_uncanonicalizable(
 
         # Fully-qualified name of the module defining this type if that module
         # is importable *OR* "None" otherwise. See relevant commentary in the
-        # lower-level canonicalize_ref_relative_to_type_name() getter.
+        # lower-level canonicalize_hint_pep484_ref_relative_to_type_name() getter.
         hint_module_name_cls = get_object_module_name_or_none(
             obj=cls,
             # See relevant commentary in the lower-level
-            # canonicalize_ref_relative_to_type_name() getter.
+            # canonicalize_hint_pep484_ref_relative_to_type_name() getter.
             is_module_importable_or_none=True,
         )
 
@@ -475,7 +583,7 @@ def _die_as_ref_uncanonicalizable(
         exception_submessage_type = (
             # Substring describing this type, prefixed by whitespace to simplify
             # logic below.
-            f' {label_type(cls)} '
+            f' {uppercase_str_char_first(label_type(cls))} '
             # Substring describing this type's module.
             f'{_get_exception_submessage_module_name(hint_module_name_cls)}'
         )
@@ -488,7 +596,7 @@ def _die_as_ref_uncanonicalizable(
         hint_module_name_func = get_object_module_name_or_none(
             obj=func,
             # See relevant commentary in the lower-level
-            # canonicalize_ref_relative_to_type_name() getter.
+            # canonicalize_hint_pep484_ref_relative_to_type_name() getter.
             is_module_importable_or_none=True,
         )
 
@@ -496,7 +604,7 @@ def _die_as_ref_uncanonicalizable(
         exception_submessage_func = (
             # Substring describing this function, prefixed by whitespace to
             # simplify logic below.
-            f' {label_callable(func)} '
+            f' {uppercase_str_char_first(label_callable(func))} '
             # Substring describing this function's module.
             f'{_get_exception_submessage_module_name(hint_module_name_func)}'
         )
@@ -508,19 +616,19 @@ def _die_as_ref_uncanonicalizable(
         # Append this message by...
         exception_message += (
             ':'
-            f'\n* {exception_submessage_type}'
-            f'\n* {exception_submessage_func}'
+            f'\n*{exception_submessage_type}'
+            f'\n*{exception_submessage_func}'
         )
     # Else, both exception submessages were *NOT* defined above.
     #
     # If only the type-specific submessage is defined, append that.
     elif exception_submessage_type:
-        exception_message += f' {exception_submessage_type}'
+        exception_message += exception_submessage_type
     # Else, the type-specific submessage is undefined.
     #
     # If only the function-specific submessage is defined, append that.
     elif exception_submessage_func:
-        exception_message += f' {exception_submessage_func}'
+        exception_message += exception_submessage_func
     # Else, the function-specific submessage is undefined. Since this implies
     # *NO* exception submessage to be defined, append a placeholder suffix that
     # admits we have no idea anymore. Guh!
@@ -573,7 +681,7 @@ def _canonicalize_ref_absolute(
     '''
     Possibly undefined fully-qualified module name and possibly unqualified
     classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, trivially
+    the parent :func:`.canonicalize_hint_pep484_ref` getter, trivially
     canonicalized with low-level string munging ignoring high-level concerns
     like the type stack or callable annotated by this reference.
 
@@ -632,7 +740,7 @@ def _canonicalize_ref_relative_to_type_name(
     '''
     Possibly undefined fully-qualified module name and possibly unqualified
     classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, canonicalized
+    the parent :func:`.canonicalize_hint_pep484_ref` getter, canonicalized
     relative to the module declaring the passed type stack if this classname is
     the partially-qualified name of the currently decorated (i.e., most deeply
     nested) class on the passed type stack *or* preserved as is otherwise.
@@ -810,7 +918,7 @@ def _canonicalize_ref_relative_to_type_owner(
     '''
     Possibly undefined fully-qualified module name and possibly unqualified
     classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, canonicalized
+    the parent :func:`.canonicalize_hint_pep484_ref` getter, canonicalized
     relative to the module declaring the currently decorated (i.e., most deeply
     nested) class on the passed type stack *or* preserved as is otherwise.
 
@@ -856,7 +964,7 @@ def _canonicalize_ref_relative_to_type_owner(
         hint_module_name = get_object_module_name_or_none(
             cls_stack[-1],
             # See relevant commentary in the lower-level
-            # canonicalize_ref_relative_to_type_name() getter.
+            # canonicalize_hint_pep484_ref_relative_to_type_name() getter.
             is_module_importable_or_none=True,
         )
     # Else, this reference does *NOT* annotate a method of a type. In this
@@ -874,7 +982,7 @@ def _canonicalize_ref_relative_to_func_owner(
     '''
     Possibly undefined fully-qualified module name and possibly unqualified
     classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, canonicalized
+    the parent :func:`.canonicalize_hint_pep484_ref` getter, canonicalized
     relative to the module declaring the passed (presumably currently decorated)
     callable *or* preserved as is otherwise.
 
@@ -916,7 +1024,7 @@ def _canonicalize_ref_relative_to_func_owner(
         hint_module_name = get_object_module_name_or_none(
             obj=func,
             # See relevant commentary in the lower-level
-            # canonicalize_ref_relative_to_type_name() getter.
+            # canonicalize_hint_pep484_ref_relative_to_type_name() getter.
             is_module_importable_or_none=True,
         )
     # Else, this reference does *NOT* annotate a function. In this case,
@@ -931,7 +1039,7 @@ def _canonicalize_ref_relative_to_builtins(
     '''
     Possibly undefined fully-qualified module name and possibly unqualified
     classname referred to by the forward reference ``hint`` parameter passed to
-    the parent :func:`.get_hint_pep484_ref_names_absolute` getter, canonicalized
+    the parent :func:`.canonicalize_hint_pep484_ref` getter, canonicalized
     relative to the standard :mod:`builtins` module if this classname is that of
     a builtin type (e.g., :class:`int`) *or* preserved as is otherwise.
 
@@ -969,7 +1077,7 @@ def _canonicalize_ref_relative_to_builtins(
     # Else, this reference does *NOT* refer to a builtin type. In this case,
     # there exists *NO* owner module against which to canonicalize this relative
     # forward reference. In this case, the parent
-    # get_hint_pep484_ref_names_absolute() getter *SHOULD* raise an exception.
+    # canonicalize_hint_pep484_ref() getter *SHOULD* raise an exception.
     # We need not (and should not) attempt to raise an exception ourselves.
 
     # Return this possibly canonicalized module and classname.
@@ -979,7 +1087,7 @@ def _canonicalize_ref_relative_to_builtins(
 _HintCanonicalizer = Callable[..., TupleStrOrNoneAndStr]
 '''
 :pep:`585`-compliant type hint matching a **canonicalizer** (i.e., callable in
-the ``_get_hint_pep484_ref_names_absolute_*()`` family of private getters called
+the ``_canonicalize_hint_pep484_ref_*()`` family of private getters called
 to canonicalize :pep:`484`-compliant relative forward references).
 '''
 
@@ -1032,7 +1140,7 @@ _HINT_CANONICALIZERS: tuple[_HintCanonicalizer, ...] = (
     # this canonicalizer (which performs the former) be performed *BEFORE* the
     # _canonicalize_ref_relative_to_func_owner() canonicalizer (which performs
     # the latter). See also the "Caveats" section of the docstring of the
-    # get_hint_pep484_ref_names_absolute() getter, which details why types are
+    # canonicalize_hint_pep484_ref() getter, which details why types are
     # preferable to callables when resolving relative forward references.
     _canonicalize_ref_relative_to_type_owner,
 
@@ -1053,10 +1161,10 @@ _HINT_CANONICALIZERS: tuple[_HintCanonicalizer, ...] = (
 )
 '''
 Tuple of all **canonicalizers** (i.e., callables in the
-``_get_hint_pep484_ref_names_absolute_*()`` family of private getters called to
+``_canonicalize_hint_pep484_ref_*()`` family of private getters called to
 canonicalize :pep:`484`-compliant relative forward references), ordered in
 descending order of importance to ensure that iteration internally performed by
-the parent :func:`.get_hint_pep484_ref_names_absolute` getter iteratively calls
+the parent :func:`.canonicalize_hint_pep484_ref` getter iteratively calls
 the most important of these canonicalizers first.
 '''
 
@@ -1064,6 +1172,6 @@ the most important of these canonicalizers first.
 _HINT_CANONICALIZER_INDEX_MAX = len(_HINT_CANONICALIZERS)
 '''
 0-based index of the last **canonicalizer** (i.e., callable in the
-``_get_hint_pep484_ref_names_absolute_*()`` family of private getters called to
+``_canonicalize_hint_pep484_ref_*()`` family of private getters called to
 canonicalize :pep:`484`-compliant relative forward references).
 '''

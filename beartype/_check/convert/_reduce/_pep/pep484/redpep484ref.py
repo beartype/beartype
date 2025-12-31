@@ -18,7 +18,7 @@ from beartype._data.typing.datatyping import (
 )
 from beartype._data.typing.datatypingport import Hint
 from beartype._util.hint.pep.proposal.pep484.forward.pep484refabsolute import (
-    canonicalize_ref_relative_to_type_name)
+    canonicalize_hint_pep484_ref_relative_to_type_name)
 
 # ....................{ REDUCERS ~ forwardref              }....................
 #FIXME: Add to the "_redmap" submodule, please.
@@ -164,7 +164,7 @@ def reduce_hint_pep484_ref(
         # In either case, the second returned value (typically referred to as
         # "hint_type_name") is guaranteed to be the passed "hint" unmodified and
         # thus trivially ignorable as the "_" placeholder.
-        hint_module_name, _ = canonicalize_ref_relative_to_type_name(
+        hint_module_name, _ = canonicalize_hint_pep484_ref_relative_to_type_name(
             hint=hint, cls_stack=cls_stack, exception_prefix=exception_prefix)
 
         # If this is a relative forward reference referring to the possibly

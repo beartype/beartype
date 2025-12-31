@@ -620,21 +620,26 @@ def express_hints_meta_scope_type_ref(
         f'{repr(hints_meta)} not "HintsMeta" object.')
 
     #FIXME: This should almost certainly call the higher-level
-    #get_hint_pep484_ref_names_absolute() getter, instead. This lower-level
+    #canonicalize_hint_pep484_ref() getter, instead. This lower-level
     #getter is all but useless for all practical intents and purposes. *sigh*
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    ref_module_name, ref_name = get_hint_pep484_ref_names_relative(
+    ref_module_name, ref_type_name = get_hint_pep484_ref_names_relative(
         hint=hint, exception_prefix=hints_meta.exception_prefix)
 
     # If either...
     if (
         # This reference was instantiated with a module name...
         ref_module_name or
+        #FIXME: *NOPE*. This assumption no longer holds. Relative forward
+        #references to nested classes necessarily contain one or more "."
+        #characters. Yet, the parent module to which these references are
+        #relative is unknown at this early time. They need to instead be handled
+        #by the "else:" branch below. *sigh*
         # This classname contains one or more "." characters and is thus already
         # (...hopefully) fully-qualified...
-        '.' in ref_name
+        '.' in ref_type_name
     # Then this classname is either absolute *OR* relative to some module. In
     # either case, the class referred to by this reference can now be
     # dynamically imported at a later time. In this case...
@@ -644,7 +649,7 @@ def express_hints_meta_scope_type_ref(
         ref_expr = add_func_scope_ref(
             func_scope=hints_meta.func_wrapper_scope,
             ref_module_name=ref_module_name,
-            ref_name=ref_name,
+            ref_name=ref_type_name,
             exception_prefix=hints_meta.exception_prefix,
         )
     # Else, this classname is unqualified. In this case...
@@ -656,7 +661,7 @@ def express_hints_meta_scope_type_ref(
         # In either case, this set now exists.
 
         # Add this unqualified classname to this set.
-        hints_meta.hint_refs_type_basename.add(ref_name)
+        hints_meta.hint_refs_type_basename.add(ref_type_name)
 
         # Placeholder substring to be replaced by the caller with a Python
         # expression evaluating to this unqualified classname canonicalized
@@ -664,7 +669,7 @@ def express_hints_meta_scope_type_ref(
         # when accessed via the private "__beartypistry" parameter.
         ref_expr = (
             f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
-            f'{ref_name}'
+            f'{ref_type_name}'
             f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
         )
 
